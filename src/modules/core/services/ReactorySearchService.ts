@@ -40,7 +40,7 @@ class ReactorySearchService implements Reactory.Service.ISearchService {
     return {
       limit: results.limit,
       offset: results.offset,
-      total: results.totalHits,
+      total: results.estimatedTotalHits,
       results: results.hits.map((hit) => hit as T),
     }
   }
@@ -65,7 +65,8 @@ class ReactorySearchService implements Reactory.Service.ISearchService {
     }
   }
 
-  async delete<T>(index: string, id: string): Promise<boolean> {
+  async deleteIndex<T>(index: string): Promise<boolean> {
+    await this.client.deleteIndexIfExists(index)
     return true
   }
   async onStartup(): Promise<void> {

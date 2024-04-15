@@ -17,6 +17,8 @@ export const services: Reactory.Service.IReactoryServiceDefinition<any>[] = [];
  */
 export const serviceRegister: Reactory.Service.IReactoryServiceRegister = {}
 
+const instances: any = {}
+
 
 /**
  * We load the enabled module service details into a map and array.
@@ -102,12 +104,24 @@ export const getService = (id: string,
       })
     }
     
-    const singleton_key = `svc_instance::${id}`;
+    const request_key = `svc_request::${id}`;
     
-    if (context.state[singleton_key] !== null && context.state[singleton_key] !== undefined  && lifeCycle === "singleton") {      
-      let $svc = context.state[singleton_key];
-      context.log(` 🔥🔥 Found Service Instance matching key ${singleton_key} 🔥🔥`, { svc: $svc }, 'debug')
-      return context.state[singleton_key];
+    /**
+     * Check if the service is in the request context state
+     */
+    if (context.state[request_key] !== null && context.state[request_key] !== undefined  && lifeCycle === "request") {      
+      context.log(`Found Service Instance matching key ${request_key}`, 'debug')
+      return context.state[request_key];
+    }
+
+    /**
+     * Check if the service is a singleton which will be for services
+     * that are for the entire life period of the service uptime.
+     */
+    const singleton_key = `svc_instance::${id}`;
+    if(instances[singleton_key] && lifeCycle === "singleton") {
+      context.log(`Service singleton instance found`);
+      return instances[singleton_key];
     }
 
     const svc: Reactory.Service.IReactoryService = serviceRegister[id].service({ ...props, $services: serviceRegister, $dependencies: $deps }, context) as Reactory.Service.IReactoryService;
@@ -129,9 +143,17 @@ export const getService = (id: string,
       }
     });
 
-    if (context.state[singleton_key] === null && context.state[singleton_key] === undefined  && lifeCycle === "singleton") {      
-      context.log(` 🔥🔥 Setting Singleton service key ${singleton_key} 🔥🔥`, { svc: svc }, 'debug')
-      context.state[singleton_key] = svc;
+    if (context.state[request_key] === null && context.state[request_key] === undefined  && lifeCycle === "request") {      
+      context.log(` 🔥🔥 Setting Request service key ${request_key} 🔥🔥`, { svc: svc }, 'debug')
+      context.state[request_key] = svc;
+    }
+
+    if(lifeCycle === "singleton" && 
+      ( 
+        null === instances[singleton_key] || 
+        undefined === instances[singleton_key]
+      )) {
+        instances[singleton_key] = svc;
     }
 
     return svc;
@@ -153,13 +175,16 @@ export const startServices = async (props: any, context: any): Promise<boolean> 
   try {
     let startup_promises: Promise<void>[] = []
 
-    services.forEach((service: Reactory.Service.IReactoryServiceDefinition) => {
+    services.forEach((service: Reactory.Service.IReactoryServiceDefinition<any>) => {
       const instance = getService(service.id, props, context);
 
       if (instance.onStartup) {
         startup_promises.push((instance as Reactory.Service.IReactoryStartupAwareService).onStartup());
       }
 
+      if(service.lifeCycle === "singleton") {
+        service.instance = instance;
+      }
     });
 
     let resuts = await Promise.all(startup_promises).then();

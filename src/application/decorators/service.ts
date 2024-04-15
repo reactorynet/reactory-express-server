@@ -23,9 +23,9 @@ function service(options: Partial<Reactory.Service.IReactoryServiceDefinition<an
       },
       dependencies: options.dependencies,
       serviceType: options.serviceType,
+      lifeCycle: options.lifeCycle || "instance", 
       ...options
     };
-
     constructor.prototype.reactory = reactory;
   };
 }

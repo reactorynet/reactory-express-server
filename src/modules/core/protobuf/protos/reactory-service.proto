@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package core;
+
+// The greeting service definition.
+service SystemService {
+  // Sends a greeting
+  rpc getApiStatus (ApiStatusRequest) returns (ApiStatusReply) {}
+}
+
+// Api Status Request
+message ApiStatusRequest {
+  string id = 1;
+}
+
+// The response message containing the greetings
+message ApiStatusReply {
+  string id = 1;
+  string when = 2;
+  string status = 3; //should return "API-OK" or "API-ERROR"
+}

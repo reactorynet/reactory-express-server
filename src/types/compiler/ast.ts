@@ -1,4 +1,5 @@
 import { CSTNode, CSTProgramNode } from "./cst";
+import { Operator, OperatorType } from "./shared";
 
 export type ASTNodeType =
   | 'Program'               // Represents the root of the program
@@ -24,8 +25,11 @@ export type ASTNodeType =
   | 'Block'                 // Represents a block of statements
   | 'FunctionDeclaration'   // Represents the declaration of a function/macro
   | 'ParameterList'         // Represents a list of parameters for a function/macro
+  | 'FunctionDeclaration'   // Represents the declaration of a function/macro
+  | 'FunctionBody'          // Represents the body of a function/macro
   | 'FunctionCall'          // Represents a function/macro call
   | 'Assignment'            // Represents an assignment to a variable
+  | 'Operation'             // Represenet an operation on a variable
   | 'Sequence'              // Represents a sequence of operations or statements
   | 'Comment';              // Represents a comment
 
@@ -42,21 +46,13 @@ export type ASTNodeType =
   | 'MacroInvocation'
   | 'MacroChain'
   | 'MacroBranch'
-export interface ASTNode {
+export interface ASTNode {  
   type: ASTNodeType;
   next?: ASTNode;
+  cst?: CSTNode[];
 }
 
-export interface ProgramNode extends ASTNode {
-  type: 'Program';
-  body: ASTNode[];
-  options?: {
-    strict?: boolean;
-    version?: string;
-    mode?: 'workflow' | 'script';
-    host?: 'server' | 'web' | 'mobile' | 'cli' | 'desktop';
-  }
-}
+
 
 export interface MacroInvocationNode extends ASTNode {
   type: 'MacroInvocation';
@@ -114,9 +110,13 @@ export interface BooleanLiteralNode extends ExpressionNode {
 
 export type LiteralNode = StringLiteralNode | NumberLiteralNode | BooleanLiteralNode;
 
+export type VariableOperation = "read" | "write" | "declare" | "delete";
 export interface VariableNode extends ASTNode {
   type: 'Variable';
-  name: string;
+  name: string;  
+  right: LiteralNode | ExpressionNode | FunctionDeclarationNode;
+  operation: VariableOperation;
+  operator?: Operator;
 }
 
 export interface BinaryExpressionNode extends ExpressionNode {
@@ -179,6 +179,29 @@ export interface BlockNode extends ASTNode {
 export interface CommentNode extends ASTNode {
   type: 'Comment';
   value: string;
+}
+
+export interface FunctionDeclarationNode extends ASTNode { 
+  type: 'FunctionDeclaration';
+  name: string;
+  params: VariableNode[];
+  body: KnownASTBodyNodes[];
+}
+
+export type KnownASTBodyNodes = CommentNode | VariableNode | 
+  FunctionCallNode | FunctionDeclarationNode | MacroInvocationNode | 
+  MacroChainNode | MacroBranchNode | MacroGroupNode | ExpressionNode | 
+  LoopNode | SwitchCaseNode | TryCatchStatementNode | BlockNode;
+
+export interface ProgramNode extends ASTNode {
+  type: 'Program';
+  body: KnownASTBodyNodes[];
+  options?: {
+    strict?: boolean;
+    version?: string;
+    mode?: 'workflow' | 'script';
+    host?: 'server' | 'web' | 'mobile' | 'cli' | 'desktop';
+  }
 }
 
 /**

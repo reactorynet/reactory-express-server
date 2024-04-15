@@ -1,11 +1,12 @@
 # host server
-$tableSpace1 = @db("connection_id", "dbo.Table");
-$tableSpace2 = @db("connection_id2", "OtherTable");
+$customer = @db("main_mysql", "dbo.Customer");
+$users = @db("main_customer", "Users");
 $results = [];
 
-declare search {
-  $results = select id from $tableSpace1 where $var.name = $name;
-  $results += select id from $tableSpace2 where $var.name = $name; 
+declare search($name) {
+  $results = select id from $customer where $customer.name = $name;
+  $results += select id from $users where $users.username like $name; 
+  $results = distinct($results);
 }
 
-@search
+@search($context.state.input)

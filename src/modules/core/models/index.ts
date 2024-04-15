@@ -61,7 +61,6 @@ type CoreModelTypes =
   typeof ProjectBoard |
   typeof ReactoryClient |
   typeof ReactoryResource |
-  typeof ReactorySupportTicket |
   typeof ReactoryTranslation |
   typeof Region |
   typeof Statistic |
@@ -358,33 +357,6 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     stem: 'reactory-resource',
     tags: ['reactory-resource', 'reactory', 'system'],
     component: ReactoryResource,
-    domain: 'model',
-    overwrite: true,
-    roles: [],
-    features: [],
-  },
-  {
-    nameSpace: 'core',
-    version: '1.0.0',
-    name: 'ReactorySupportTicket',
-    description: 'Provides a reactory support ticket model for the server',
-
-    stem: 'reactory-support-ticket',
-    tags: ['reactory-support-ticket', 'reactory', 'system'],
-    component: ReactorySupportTicket,
-    domain: 'model',
-    overwrite: true,
-    roles: [],
-    features: [],
-  },
-  {
-    nameSpace: 'core',
-    version: '1.0.0',
-    name: 'ReactoryTranslation',
-    description: 'Provides a reactory translation model for the server',
-    stem: 'reactory-translation',
-    tags: ['reactory-translation', 'reactory', 'system'],
-    component: ReactoryTranslation,
     domain: 'model',
     overwrite: true,
     roles: [],

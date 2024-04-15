@@ -1,1 +1,1 @@
-export { default as SingleLineHelloWorldASTProgramNode } from './SingleLineHelloWorld';
+export { default as NameProgramASTProgramNode } from './NameProgram';

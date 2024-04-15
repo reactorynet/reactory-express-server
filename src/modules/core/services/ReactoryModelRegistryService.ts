@@ -13,6 +13,7 @@ import { service } from "@reactory/server-core/application/decorators/service";
   version: "1.0.0",
   description: "Provides registry features for any reactory model",
   serviceType: "data",
+  lifeCycle: "singleton",  
   dependencies: [
     { id: "core.FetchService@1.0.0", alias: "fetchService" },
     { id: "core.ReactoryFileService@1.0.0", alias: "fileService" },
@@ -26,6 +27,8 @@ export class ReactoryModelRegistry
   version: string = "1.0.0";
   context: Server.IReactoryContext;
 
+  private instance: ReactoryModelRegistry = undefined; 
+
   private modelRegistry: IReactoryComponentDefinition<unknown>[] = [];
   private replacedModels: IReactoryComponentDefinition<unknown>[] = [];
 
@@ -36,7 +39,12 @@ export class ReactoryModelRegistry
     props: Service.IReactoryServiceProps,
     context: Server.IReactoryContext
   ) {
-    this.context = context;
+    if(!ReactoryModelRegistry.instance) {
+      this.context = context;
+      ReactoryModelRegistry.instance = this;
+    }
+    
+    return ReactoryModelRegistry.instance;
   }
 
   description?: string;
@@ -44,7 +52,16 @@ export class ReactoryModelRegistry
   toString: ((includeVersion?: boolean) => string) & (() => string);
 
   onStartup(): Promise<void> {
-    // load all models that are registered with the module in     
+    // load all models that are registered with the module in
+    const that = this;
+    if(this.context && Array.isArray(this.context?.modules) === true) {
+      this.context.modules.forEach((module) => {
+        module?.models?.forEach((model) => {
+          that.register(model);
+        });
+      });     
+    }
+    
     return Promise.resolve();
   }
 

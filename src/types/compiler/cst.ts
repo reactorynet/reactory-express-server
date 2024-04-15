@@ -1,10 +1,15 @@
 import { Token } from "./lexer";
-
+import { Operator, OperatorType } from "./shared";
 // Define a type for all the possible node types in the CST
 export type CSTNodeType =
   | 'AccessControlList'
   | 'Program'
+  | 'ImportDirective'
+  | 'ExportDirective'
+  | 'HostDirective'
+  | 'UseDirective'
   | 'Directive'
+  | 'PropertyAccess'
   | 'MacroInvocation'
   | 'MacroName'
   | 'MacroArguments'
@@ -15,6 +20,13 @@ export type CSTNodeType =
   | 'HexadecimalLiteral'
   | 'NumberLiteral'
   | 'BooleanLiteral'
+  | 'ObjectLiteral'
+  | 'NullLiteral'
+  | 'UndefinedLiteral'
+  | 'TableLiteral'
+  | 'ServiceLiteral'
+  | 'ComponentLiteral'
+  | 'FunctionLiteral'
   | 'Grouping'
   | 'Chaining'
   | 'Branching'
@@ -23,6 +35,8 @@ export type CSTNodeType =
   | 'ElifBranch'
   | 'ElseBranch'
   | 'SwitchControl'
+  | 'SelectBlock'
+  | 'TableBlock'
   | 'TryCatch'
   | 'TryBlock'
   | 'CatchBlock'
@@ -33,64 +47,15 @@ export type CSTNodeType =
   | 'Operator'
   | 'ComparisonOperator'
   | 'Punctuation'
-  | 'VariableIdentifier'  
+  | 'VariableDeclaration'
+  | 'VariableIdentifier'
+  | 'TypeIdentifier'
+  | 'ComponentIdentifier'
   | 'Whitespace'
   | 'Comment'
   | 'Newline'
   | 'EOF';
 
-export type OperatorType = 'Assignment' 
-  | 'Addition'
-  | 'Subtraction' 
-  | 'Multiplication' 
-  | 'Division' 
-  | 'Modulus' 
-  | 'Exponentiation' 
-  | 'LogicalAnd' 
-  | 'LogicalOr' 
-  | 'LogicalNot' 
-  | 'BitwiseAnd' 
-  | 'BitwiseOr' 
-  | 'BitwiseNot' 
-  | 'BitwiseXor' 
-  | 'BitwiseLeftShift' 
-  | 'BitwiseRightShift' 
-  | 'BitwiseUnsignedRightShift' 
-  | 'Equals' 
-  | 'NotEquals' 
-  | 'GreaterThan' 
-  | 'GreaterThanOrEqual' 
-  | 'LessThan' 
-  | 'LessThanOrEqual';
-
-export enum Operator {
-  Assignment = 1,
-  Addition = 2,
-  Subtraction = 4,
-  Multiplication = 8,
-  Division = 16,
-  Modulus = 32,
-  Exponentiation = 64,
-  LogicalAnd = 128,
-  LogicalOr = 256,
-  LogicalNot = 512,
-  BitwiseAnd = 1024,
-  BitwiseOr = 2048,
-  BitwiseNot = 4096,
-  BitwiseXor = 8192,
-  BitwiseLeftShift = 16384,
-  BitwiseRightShift = 32768,
-  BitwiseUnsignedRightShift = 65536,
-  Equals = 131072,
-  NotEquals = 262144,
-  GreaterThan = 524288,
-  GreaterThanOrEqual = 1048576,
-  LessThan = 2097152,
-  LessThanOrEqual = 4194304,
-  Unary = 8388608,
-  Binary = 16777216,
-  Ternary = 33554432,
-}
 
 // Defines meta data information about the input source code
 export type CSTSourceInfo = {
@@ -159,6 +124,56 @@ export interface CSTIfControlNode extends CSTNode {
   elseBranch?: CSTElseBranchNode; // The else branch, if present
 }
 
+export interface CSTTypeIdentifierNode extends CSTNode { 
+  type: 'TypeIdentifier';
+  identifier: CSTNode;
+  typeArguments?: CSTNode[];
+}
+
+export interface CSTComponentIdentifierNode extends CSTNode { 
+  type: 'ComponentIdentifier';
+  identifier: string;
+  componentType?: string;
+}
+
+
+export interface CSTVariableIdentifierNode extends CSTNode { 
+  type: 'VariableIdentifier';
+  identifier: CSTNode;
+  variableType?: CSTTypeIdentifierNode;
+}
+
+export interface CSTNullLiteralNode extends CSTNode { }
+
+export interface CSTUndefinedLiteralNode extends CSTNode { }
+
+export interface CSTTableLiteralNode extends CSTNode { }
+
+export interface CSTServiceLiteralNode extends CSTNode { }
+
+export interface CSTComponentLiteralNode extends CSTNode { }
+
+
+
+export type ValidVariableChildren = 
+  CSTWhitespaceNode |
+  CSTVariableIdentifierNode |
+  CSTOperatorNode | 
+  CSTStringLiteralNode |
+  CSTNumberLiteralNode |
+  CSTBooleanLiteralNode | 
+  CSTObjectLiteralNode |
+  CSTNullLiteralNode |
+  CSTUndefinedLiteralNode | 
+  CSTTableLiteralNode |
+  CSTServiceLiteralNode |
+  CSTComponentLiteralNode
+export interface CSTVariableDeclarationNode extends CSTNode { 
+  type: 'VariableDeclaration';
+  children: ValidVariableChildren[]
+  readonly?: boolean; 
+}
+
 export interface CSTSwitchControlNode extends CSTNode {
   type: 'SwitchControl';
   discriminant: CSTNode;
@@ -195,6 +210,10 @@ export interface CSTNumberLiteralNode extends CSTNode {
 export interface CSTBooleanLiteralNode extends CSTNode {
   type: 'BooleanLiteral';
   // Value is the boolean literal (e.g., true, false)
+}
+
+export interface CSTObjectLiteralNode extends CSTNode {
+  type: 'ObjectLiteral';
 }
 
 export interface CSTHexadecimalLiteralNode extends CSTNode {
@@ -256,6 +275,7 @@ export interface CSTAccessControlListNode extends CSTNode {
 export interface CSTDirectiveNode extends CSTNode {
   type: 'Directive';
   // Value is the directive name eg import, export, use, etc.
+  directiveType: 'import' | 'export' | 'host' | 'acl' | 'use'
 }
 
 // The root type for the CST
@@ -272,11 +292,14 @@ export type CSTChildNodeTypes =
   CSTTryCatchNode | 
   CSTWhileLoopNode | 
   CSTLiteralNode | 
+  CSTOperatorNode |
   CSTStringLiteralNode | 
   CSTNumberLiteralNode | 
   CSTBooleanLiteralNode | 
   CSTHexadecimalLiteralNode | 
-  CSTIdentifierNode | 
+  CSTIdentifierNode |
+  CSTVariableDeclarationNode |
+  CSTVariableIdentifierNode | 
   CSTOperatorNode | 
   CSTComparisonOperationNode | 
   CSTPunctuationNode |
@@ -288,7 +311,8 @@ export type CSTChildNodeTypes =
 export interface CSTProgramNode extends CSTNode {
   type: 'Program';
   children: CSTChildNodeTypes[];
-  acl?: CSTNode;  
+  acl?: CSTNode;
+  directives?: CSTNode[];  
 }
 
 
@@ -332,6 +356,12 @@ export interface CSTParsingContext {
   sourceInfo: CSTSourceInfo;
   // The current state of the parser
   state: CSTParserState;
+  // The path to the current node in the CST
+  // this will be a string of the form "rootNodeIndex.parentNodeIndex.currentNodeIndex"
+  // e.g., "0.1.2" would be the path to the third child of the second child of the root node
+  activePath: string;
   // Validates the CST Root Node
   validate: () => boolean;
+  // child context
+  children?: CSTParsingContext[];
 }

@@ -17,9 +17,7 @@ import {
   BusinessUnit,
 } from "@reactory/server-core/models/index";
 import O365 from "@reactory/server-modules/reactory-azure/services/graph";
-import { launchSurveyForDelegate } from '@reactory/server-modules/mores/services/Survey';
-import { Mores } from '@reactory/server-modules/mores/types/mores';
-import { organigramEmails } from "@reactory/server-core/emails";
+
 import ApiError, {
   RecordNotFoundError,
 } from "@reactory/server-core/exceptions";
@@ -27,19 +25,17 @@ import crypto from 'crypto';
 import logger from "@reactory/server-core/logging";
 import Reactory from "@reactory/reactory-core";
 
-import { SURVEY_EVENTS_TO_TRACK } from "@reactory/server-core/models/index";
 import Mongoose from "mongoose";
 import { execml } from "@reactory/server-core/graph/client";
 
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
 
-import UserDemographics from "@reactory/server-modules/core/models/UserDemographics";
-
 const uuid = require("uuid");
 
-
-
+/**
+ * TODO: This resolver needs to be refactored to a class resolver.
+ */
 const userResolvers = {
   
   Email: {
@@ -111,11 +107,13 @@ const userResolvers = {
     username(obj: { username: any }) {
       return obj.username;
     },
-    peers(usr: { _id: any; memberships: { organizationId: any }[] }) {
-      return Organigram.findOne({
-        user: usr._id,
-        organization: usr.memberships[0].organizationId,
-      }).exec();
+    peers(usr: Reactory.Models.IUserDocument) { 
+      if(usr && usr?.memberships?.length > 0, usr.memberships[0]?.organizationId) {        
+        return Organigram.findOne({
+          user: usr._id,
+          organization: usr.memberships[0]?.organizationId,
+        }).exec();
+      }     
     },
     memberships(
       usr: { memberships: Reactory.IMembership[] },
@@ -326,24 +324,7 @@ const userResolvers = {
         }
       });
     },
-    // createTask(
-    //   obj: any,
-    //   { id, taskInput }: any,
-    //   context: Reactory.Server.IReactoryContext
-    // ) {
-    //   const { _id } = context.user;
-    //   return co.wrap(function* createTaskGenerator(userId, task) {
-    //     const created = yield new Task({
-    //       ...task,
-    //       user: ObjectId(userId),
-    //       createdAt: new Date().valueOf(),
-    //       updatedAt: new Date().valueOf(),
-    //     })
-    //       .save()
-    //       .then();
-    //     return created;
-    //   })(id || _id.toString(), taskInput);
-    // },
+   
     async confirmPeers(
       obj: any,
       { id, organization, surveyId }: any,
@@ -365,100 +346,12 @@ const userResolvers = {
       if (lodash.isNil(userOrganigram) === true)
         throw new RecordNotFoundError("User Organigram Record Not Found");
 
-      let survey: Mores.ISurveyDocument = null;
+      
       userOrganigram.confirmedAt = new Date();
       userOrganigram.updatedAt = new Date();
       await userOrganigram.save().then()
 
-      if (surveyId) {
-        survey = await Survey.findById(new ObjectId(surveyId))
-          .populate("delegates.assessments")
-          .populate("delegates.delegate").then()
-          if (userOrganigram && userOrganigram.peers.length > 0) {
-            const updated = await Survey.updateOne({_id: new ObjectId(surveyId), delegates: 
-              {$elemMatch: {delegate: new ObjectId(id)}}}, 
-              {'delegates.$.nomineeConfirmed': true}, {new: true}).then()
-        } else throw new ApiError('No Peers to confirm')
-        if (survey && survey.options) {
-          //@ts-ignore
-          const {autoLaunchOnPeerConfirm, minimumPeers} = survey.options
-          const entryData: Mores.IDelegateEntryDataStruct = {
-            entry: null,
-            entryIdx: -1,
-            message: 'Awaiting instruction',
-            error: false,
-            success: true,
-            patch: false,
-          };
-        }
-      } 
-
-
-
-      const emailPromises = [];
-      for (
-        let peerIndex = 0;
-        peerIndex < userOrganigram.peers.length;
-        peerIndex += 1
-      ) {
-        logger.info(
-          `Sending peer notification to ${userOrganigram.peers[peerIndex].user.firstName}`
-        );
-        let mustSend = userOrganigram.peers[peerIndex].inviteSent !== true;
-
-        if (
-          mustSend === false &&
-          userOrganigram.peers[peerIndex].confirmed === true
-        ) {
-          const whenConfirmed = moment(
-            userOrganigram.peers[peerIndex].confirmedAt
-          );
-          if (moment.isMoment(whenConfirmed) === true) {
-            mustSend =
-              Math.abs(moment().diff(whenConfirmed, "day", true)) >= 30;
-          }
-        }
-
-        if (mustSend === true) {
-          const { user } = userOrganigram;
-          emailPromises.push(
-            organigramEmails.confirmedAsPeer(
-              userOrganigram.peers[peerIndex].user,
-              user,
-              userOrganigram.peers[peerIndex].relationship,
-              userOrganigram.organization,
-              userOrganigram,
-              peerIndex,
-              survey
-            )
-          );
-        }
-      }
-
-      logger.info(
-        `Created ${emailPromises.length} promises to send invite peer confirmation emails`
-      );
-      try {
-        if (emailPromises.length > 0) {
-          await Promise.all(emailPromises).then((res) => {
-            if (survey)
-              survey.addTimelineEntry(
-                SURVEY_EVENTS_TO_TRACK.NOMINEES_CONFIRMED,
-                `Nominees confirmed @ ${moment().format("DD MMM YYYY HH:mm")}.`,
-                null,
-                true
-              );
-          });
-        }
-      } catch (emailError) {
-        logger.error(
-          `Error processing email promises ${emailError.message}`,
-          emailError
-        );
-      }
-      await userOrganigram.save().then();
-
-      return Organigram.findById(userOrganigram._id);
+      return userOrganigram;
     },
     async removePeer(
       obj: any,
@@ -1054,9 +947,7 @@ const userResolvers = {
 
 @resolver
 class UserResolver {
-  
-  
-
+  // TODO: Convert the resolver struct to a resolver class.
 
 }
 

@@ -41,7 +41,7 @@ import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
 import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
-import ReactoryContextProvider from 'context/ReactoryContextProvider';
+import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
 import AuthHelper from '@reactory/server-core/authentication/strategies/helpers';
 // @ts-ignore
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
@@ -117,8 +117,6 @@ export const ReactoryServer = async () => {
   let reactoryExpress: Application;
 
   let mongoose_result = null;
-
-
 
   const ca = sslrootcas.create();
   https.globalAgent.options.ca = ca;
@@ -388,15 +386,10 @@ Environment Settings:
       logger.error(colors.red("Could not successfully start the express server"), err);
       process.exit(-1)
     });
-
     reactoryExpress.use(flash());
-
-
 
   }).catch((startupError) => {
     logger.error(colors.red('Server was unable to start successfully.'), startupError);
     process.exit(0);
   });
-
-
 }

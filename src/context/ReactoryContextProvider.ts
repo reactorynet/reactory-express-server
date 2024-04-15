@@ -10,6 +10,7 @@ import modules from '@reactory/server-core/modules';
 import i18next, { t } from 'i18next';
 import Reactory from '@reactory/reactory-core';
 import { scrubEmail } from '@reactory/server-core/utils/string';
+import Cache from "@reactory/server-modules/core/models/CoreCache";
 import { ReactoryAnonUser } from './AnonUser';
 
 const DEFAULT_CONTEXT: Partial<Reactory.Server.IReactoryContext> = {
@@ -38,6 +39,10 @@ const DEFAULT_CONTEXT: Partial<Reactory.Server.IReactoryContext> = {
   getService: function <T extends Reactory.Service.IReactoryService>(fqn: string, props?: unknown, context?: Reactory.Server.IReactoryContext, lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE): T {
     throw new Error('Function not implemented.');
   },
+
+  getValue: function <T>(key: string, defaultValue?: T): T { return null },
+  setValue: function <T>(key: string, value: T, ttl?: number): Promise<void> { return Promise.resolve()},
+  removeValue: function (key: string): Promise<void> { return Promise.resolve() },
   lang: '',
   languages: []
 };
@@ -256,7 +261,27 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
         newContext = await partnerContextService.getContext(newContext).then();
       }
     }
-  } 
+  }
+  
+  const getValue = async<T>(key: string): Promise<T> => {
+    // @ts-ignore
+    return (await Cache.getItem(key, false, newContext)) as T;
+  }
+
+  const setValue = async<T>(key: string, value: T, ttl?: number): Promise<void> => {
+    // @ts-ignore
+    return await Cache.setItem(key, value, ttl, newContext.partner);
+  }
+
+  const removeValue = async(key: string): Promise<void> => {    
+    await Cache.deleteOne({ key, partner: newContext.partner._id }).exec();        
+  }
+
+  newContext.getValue = getValue;
+  newContext.setValue = setValue;
+  newContext.removeValue = removeValue;
+
+  
   // no configuration for this partner that overloads /
   // extends the default context so we just return the current context.
   return newContext;
