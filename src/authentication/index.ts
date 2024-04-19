@@ -9,6 +9,10 @@ import logger from '@reactory/server-core/logging';
  * Reactory Authentication Configuration
  */
 class AuthConfig {
+  /**
+   * A static method to configure the authentication strategies
+   * @param app 
+   */
   static Configure = (app: Application) => {
     app.use(passport.initialize());
     // Passport calls serializeUser and deserializeUser to

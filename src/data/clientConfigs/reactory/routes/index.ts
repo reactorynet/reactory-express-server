@@ -35,9 +35,13 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       {
         key: 'authlist',
         value: {
-          type: 'bool',
+          type: 'array',
           authlist: [
-            'local'            
+            'local',
+            { provider: 'google', component: 'core.GoogleLoginButton@1.0.0' },
+            { provider: 'microsoft', component: 'microsoft.MicrosoftLogin@1.0.0' },
+            { provider: 'github', component: 'core.GitHubLoginButton@1.0.0' },
+            { provider: 'okta', component: 'core.OktaLoginButton@1.0.0' }                        
           ],
         },
       },

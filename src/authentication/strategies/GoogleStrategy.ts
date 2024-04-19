@@ -1,5 +1,9 @@
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+
+//@ts-ignore
+import GoogleStrategy from 'passport-google-oidc';
 import Helpers, { OnDoneCallback } from './helpers';
+import { Application } from 'express';
+import passport from 'passport';
 
 const { 
   GOOGLE_CLIENT_ID = 'GOOGLE_CLIENT_ID',
@@ -8,7 +12,7 @@ const {
 } = process.env
 
 
-const GoogleAuthStrategy = new GoogleStrategy({
+const GoogleOAuthStrategy = new GoogleStrategy({
   clientID: GOOGLE_CLIENT_ID,
   clientSecret: GOOGLE_CLIENT_SECRET,
   callbackURL: 'http://localhost:3000/auth/google/callback',
@@ -29,9 +33,23 @@ const GoogleAuthStrategy = new GoogleStrategy({
   };
 
   // TODO: Find or create the user in your database
-  // ...
-
+  // ..
   return done(null, user);
 });
 
-export default GoogleAuthStrategy;
+export const useGoogleRoutes = (app: Application) => { 
+  app.get(
+    '/auth/google',
+    passport.authenticate('google', { scope: ['openid', 'email', 'profile'] }),
+  );
+
+  app.get(
+    '/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    (req, res) => {
+      res.redirect('/');
+    },
+  );
+};
+
+export default GoogleOAuthStrategy;
