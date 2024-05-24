@@ -12,7 +12,6 @@ import {
   GeneratorColumnDefinition
 } from 'reactory/types';
 
-import { ReactoryApplicationsForm } from 'data/forms/core/dashboard';
 
 const listSchemas = async (props: GeneratorConfig): Promise<GeneratorDatabaseDefinition> => {
 

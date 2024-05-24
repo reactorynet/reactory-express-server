@@ -1,16 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import Rollup from 'rollup';
-import { forEach, isArray, takeRight } from 'lodash';
+import { isArray } from 'lodash';
 import Reactory from '@reactory/reactory-core';
 import modules from '@reactory/server-core/modules';
-import { resolveInclude } from 'ejs';
-import messages from 'bot/sparky/messages';
-import { cwd } from 'process';
-
-
-
-
 
 class ReactoryFormService implements Reactory.Service.IReactoryFormService {
 
@@ -131,7 +121,7 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return form;
   }
 
-  delete(form: Reactory.Forms.IReactoryForm): boolean {
+  delete(form: Reactory.Forms.IReactoryForm): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
 

@@ -4,7 +4,7 @@ import {
   useReactoryLocalRoutes,
 } from './LocalStrategy';
 import { default as JwtStrategy } from './JWTStrategy';
-import { default as GoogleStrategy, useGoogleRoutes } from './GoogleStrategy';
+import { default as GoogleStrategy, useGoogleRoutes } from './google/GoogleStrategy';
 import { default as FacebookStrategy } from './FacebookStrategy';
 import { default as GithubStrategy } from './GithubStrategy';
 import { default as TwitterStrategy } from './TwitterStrategy';
