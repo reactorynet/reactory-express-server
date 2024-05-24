@@ -208,7 +208,6 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
             }
             break;
           }
-
           default: {
             tokens.push({ type, value: text, position: { ...position } });
           }
