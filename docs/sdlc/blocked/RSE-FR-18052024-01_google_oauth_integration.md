@@ -49,6 +49,10 @@ We need to integrate Google OAuth with our application using PassportJS. This wi
 **Date**: 18-05-2024
 **Comment**: Currently figuring out how to correctly hydrate the reactory client ID and secret from the state during the callback handled at /auth/google/callback. There is a dependency on session to hydrate from the session and set the correct context for the flow. We need to know which client ID it is, in order to redirect to the correct application outlet. Currently, when the flow executes, we are not able to set the callback URL to include client ID and secret key. Looking at using session state.
 
+**Author**: Werner Weber
+**Date**: 24-May-2024
+**Comment**: Moving ticket to blocked, first need to update and fix the current baseline tests in order to extend on the testing capability. Adding ticket RSE-BUG-24052024-01_fix_baseline_unit_test.
+
 **Suggestions**:
 **Co-pilot & ChatGPT4o**:
 Based on the comment, it seems like the issue is about correctly identifying the client during the OAuth callback. Here are some potential solutions:
