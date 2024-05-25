@@ -1,4 +1,13 @@
-import { fqn, title, min, max, id, nullable, defaultValue } from '@reactory/server-core/schema/reflection';
+import { 
+  fqn, 
+  title, 
+  min, 
+  max, 
+  id, 
+  nullable, 
+  defaultValue 
+} from '@reactory/server-core/schema/reflection';
+
 import { ObjectId } from 'mongodb';
 
 export type SupportTicketModelConstructorArgs = {

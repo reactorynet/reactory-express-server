@@ -9,10 +9,10 @@
 **Assignee:** Werner Weber
 
 ### Description:
-There is an issue with the baseline unit tests in Jest. The tests are failing and need to be fixed.
+There is an issue with the baseline core unit tests in Jest. The tests are failing and need to be fixed.
 
 ### Steps to Reproduce:
-1. Run the Jest test suite. `bin/jest.sh reactory local`
+1. Run the Jest test suite. `bin/jest.sh reactory local core`
 2. Observe the failing baseline tests.
 
 ### Expected Behavior:
@@ -20,9 +20,6 @@ All baseline tests should pass successfully.
 
 ### Actual Behavior:
 Baseline tests are failing.
-
-### Additional Context:
-Baseline login has changed, need to update the unit tests
 
 ### Acceptance Criteria:
 1. All baseline tests pass successfully.
@@ -33,3 +30,7 @@ Baseline login has changed, need to update the unit tests
 
 ### Labels:
 bug, high-priority, testing
+
+### Comments
+
+26 May 2024 @wweber - moved the ApiStatus tests that was in the root test folder to the modules/core/resolvers/ApiStatus folder. The SupportTicket reflection test has been disabled as that feature is a WIP and will be completed as part of that feature.

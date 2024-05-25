@@ -1,5 +1,6 @@
 
 
+import 'reflect-metadata';
 import Reactory from "@reactory/reactory-core";
 
 /**
