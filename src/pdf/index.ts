@@ -296,7 +296,6 @@ router.get('/:nameSpace/:name', async (req, res) => {
 
   if (reportPdfComponent && reportPdfComponent.component) {
     try {
-      debugger
       const context = await ReactoryContext(null, { user: req.user, partner: req.partner });
       const resolvedData = await reportPdfComponent.component.resolver(req.query, context).then();
       generate({ data: resolvedData, definition: reportPdfComponent.component }, res, false, req);

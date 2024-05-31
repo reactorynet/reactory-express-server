@@ -1,10 +1,11 @@
+import path from 'path';
 import Reactory from '@reactory/reactory-core';
 import { resolver, query, property } from "@reactory/server-core/models/graphql/decorators/resolver";
 import { ReactoryAnonUser } from 'context/AnonUser';
-import { isNil, isArray, sortBy, filter, intersection, uniq } from 'lodash';
+import { isNil, isArray, filter, intersection, uniq } from 'lodash';
 import moment from 'moment';
-import { ObjectId } from 'mongodb';
-const packageJson = require('../../../../../package.json');
+const packageJson = require(path.join(process.cwd(), 'package.json'));
+
 
 
 /***
@@ -149,6 +150,7 @@ const getActiveTheme = (_: Reactory.Models.IApiStatus, args: { theme: string, mo
   return activeTheme
 }
 
+//@ts-ignore
 @resolver
 class ApiStatus {
 
@@ -190,9 +192,27 @@ class ApiStatus {
           //if no roles are specified, we assume we don't care about the role, only need them to be authentication
           if (!route.roles || route.roles.length === 0) permitted = true; 
           //if anon is true, we deny access as the route is not public
-          if (anon) permitted = false;
+          //we can rewrite the route to show the login page instead
+          if (anon === true) {
+            let loginRoute = routes.find((r: Reactory.Routing.IReactoryRoute) => r.path === '/login');
+            $routes.push({ 
+              path: route.path,
+              args: route.args,
+              roles: ["ANON"],
+              components: loginRoute.components,
+              exact: route.exact,
+              id: route.id,
+              key: route.key,
+              redirect: route.redirect,
+              title: loginRoute.title,
+              public: true, 
+              componentFqn: loginRoute.componentFqn,
+              componentProps: loginRoute.componentProps,              
+            });
+            permitted = false;
+          }
           
-          if (anon == false && route.roles && route.roles.length > 0) {
+          if (anon === false && route.roles && route.roles.length > 0) {
             route.roles.forEach((role: string) => {
               if (hasRole(role, partner._id) === true) {
                 permitted = true;
@@ -235,9 +255,7 @@ class ApiStatus {
 
   @property("ApiStatus", "colorSchemes")
   colorSchemes(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
-    
-    const themeOptions: Reactory.UX.IReactoryTheme = getActiveTheme(apiStatus, params, context).options;
-
+    const themeOptions: any = getActiveTheme(apiStatus, params, context).options;
     let primary = themeOptions?.palette?.primary?.main; // default primary color
     let secondary = themeOptions?.palette?.secondary?.main
 
@@ -276,8 +294,10 @@ class ApiStatus {
     });
 
     let _context: Reactory.Models.IReactoryLoggedInContext = {
+      //@ts-ignore
       user: {
-        id: loggedInUser._id?.toString(),
+        _id: loggedInUser?._id,
+        id: loggedInUser?._id?.toString(),
         firstName: loggedInUser.firstName,
         lastName: loggedInUser.lastName,
         fullNameWithEmail: loggedInUser.fullNameWithEmail,
@@ -289,7 +309,7 @@ class ApiStatus {
         alt_roles: alt_roles,
         additional: {},
       },
-      id: loggedInUser._id.toString(),
+      id: loggedInUser?._id?.toString() || `${loggedInUser.id || -1}`,
       memberships,
       roles: roles,
       businessUnit: null,
@@ -298,6 +318,7 @@ class ApiStatus {
       additional: [],
       altRoles: alt_roles
     };
+    
     return _context;
   }
 
@@ -325,7 +346,7 @@ class ApiStatus {
     if (skipResfresh === false && isAnon === false) {
       context.log(`apiStatus called for ${user.firstName} ${user.lastName}, performing profile refresh`, {}, 'debug');
       try {
-        const refreshResult = await systemService.query(`
+        const refreshResult: any = await systemService.query(`
           query RefreshProfile($id:String, $skipImage: Boolean) {
             refreshProfileData(id: $id, skipImage: $skipImage) {
               user {

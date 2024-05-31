@@ -1,5 +1,18 @@
-import { CSTElifBranchNode, CSTElseBranchNode, CSTIfControlNode, CSTNode, CSTOperatorNode, CSTParsingContext, CSTSourceInfo, Operator } from "@reactory/server-core/types/compiler/cst";
+import { 
+  CSTDirectiveNode, 
+  CSTElifBranchNode, 
+  CSTElseBranchNode, 
+  CSTIfControlNode, 
+  CSTNode, 
+  CSTOperatorNode, 
+  CSTParsingContext, 
+  CSTProgramNode, 
+  CSTSourceInfo, 
+  CSTVariableDeclarationNode, 
+} from "@reactory/server-core/types/compiler/cst";
+import { Operator } from "@reactory/server-core/types/compiler/shared";
 import { TokenType, Token } from "@reactory/server-core/types/compiler/lexer";
+
 
 /**
  * createCST takes an array of tokens and returns a CST
@@ -7,46 +20,103 @@ import { TokenType, Token } from "@reactory/server-core/types/compiler/lexer";
  * @returns 
  */
 export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode => {
-      
+  
+  // Create the root node
+  const cst: CSTProgramNode = {
+    type: 'Program',
+    token: null, // the root node has no token
+    children: [],
+    acl: null,
+    directives: [],
+    value: null,
+  };
+
   // defines the current expression context
   // that tells us about the surrounding expressions
   // or tokens. This will help us to determine
   // how to parse the current token and return the 
   // appropriate CST node
-  const currentExpressionContext: CSTParsingContext = { 
+  const context: CSTParsingContext = { 
     currentToken: null,
     currentTokenIndex: 0,
     nextToken: null,
     nextTokenIndex: null,
     previousToken: null,
     previousTokenIndex: null,
-    currentNode: null,
-    currentNodeIndex: null,
-    parentNode: null,
-    parentNodeIndex: null,
-    rootNode: null,
-    rootNodeIndex: null,
+    currentNode: cst,
+    currentNodeIndex: 0,
+    parentNode: cst,
+    parentNodeIndex: 0,
+    rootNode: cst,
+    rootNodeIndex: 0,
     sourceInfo: sourceInfo,
     state: {},
+    activePath: '0', // the current path in the CST
     validate: () => true,
+    children: [],
   };
+
+  /**
+   * Helper function to update the context
+   * @param delta - the delta to apply to the context
+   */
+  const updateContext = (delta: Partial<CSTParsingContext>) => { 
+    context.currentToken = delta.currentToken || context.currentToken;
+    context.currentTokenIndex = delta.currentTokenIndex || context.currentTokenIndex;
+    context.nextToken = delta.nextToken || context.nextToken;
+    context.nextTokenIndex = delta.nextTokenIndex || context.nextTokenIndex;
+    context.previousToken = delta.previousToken || context.previousToken;
+    context.previousTokenIndex = delta.previousTokenIndex || context.previousTokenIndex;
+    context.currentNode = delta.currentNode || context.currentNode;
+    context.currentNodeIndex = delta.currentNodeIndex || context.currentNodeIndex;
+    context.parentNode = delta.parentNode || context.parentNode;
+    context.parentNodeIndex = delta.parentNodeIndex || context.parentNodeIndex;
+    context.rootNode = delta.rootNode || context.rootNode;
+    context.rootNodeIndex = delta.rootNodeIndex || context.rootNodeIndex;
+    context.sourceInfo = delta.sourceInfo || context.sourceInfo;
+    context.state = delta.state || context.state;
+    context.children = delta.children || context.children;
+  }
 
 
   /**
    * Returns the next token in the array and increments the current index
    * @returns 
    */
-  const nextToken = (): Token => tokens[currentExpressionContext.currentTokenIndex++];
+  const nextToken = (): Token => tokens[context.currentTokenIndex++];
   /**
    * Returns the current token in the array
    * @returns 
    */
-  const currentToken = (): Token => tokens[currentExpressionContext.currentTokenIndex - 1];
+  const currentToken = (): Token => tokens[context.currentTokenIndex - 1];
   /**
    * Returns the next token in the array without incrementing the current index
    * @returns 
    */
-  const peekToken = (): Token => tokens[currentExpressionContext.currentTokenIndex];
+  const peekToken = (): Token => tokens[context.currentTokenIndex];
+
+  /**
+   * Returns the previous token in the stack from the reference
+   * of the the current node index. uses the parent node as the 
+   * reference point
+   * @returns 
+   */
+  const previousNode = (_context: CSTParsingContext): CSTNode => {
+    const { activePath } = _context;
+    const pathParts = activePath.split(".");
+    
+    let item = _context.rootNode;
+    pathParts.forEach((part, index) => { 
+      if(index > 0) { 
+        const itemIndex = parseInt(pathParts[pathParts.length - 1]);
+        if(itemIndex > -1) {
+          item = item.children[itemIndex - 1];
+        }
+      }
+    });
+
+    return item;
+  };
 
 
   /**
@@ -113,6 +183,15 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       macroTagNode.children[1].value += currentArgumentToken.value;
 
       switch(currentArgumentToken.type) {
+        case "DOT": {
+          argumentNode.children.push({
+            type: 'PropertyAccess',
+            token: currentArgumentToken,
+            children: [],
+          });
+
+          break;
+        }
         case "STRING_LITERAL": {
           argumentNode.type = "StringLiteral";
           argumentNode.value = currentArgumentToken.value;
@@ -206,6 +285,9 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
 
     let next = nextToken();
 
+    const oldParent = context.parentNode;
+    updateContext({ parentNode: node, currentNodeIndex: 0, activePath: `${context.activePath}.0` });
+
     while (next && next.type !== closingType) { 
         // Check for another opening token and handle it recursively
         if (next.type === "PAREN_OPEN" || next.type === "BRACKET_OPEN" || next.type === "CURLY_OPEN") {
@@ -217,6 +299,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
             node.children.push(nextNode);
         }
         next = nextToken();
+        updateContext({ activePath: `${context.activePath}.${node.children.length}` })
     }
 
     // If we exit the loop without finding the closing token, it's an error
@@ -224,10 +307,13 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
         throw new Error(`Expected closing type ${closingType}, but found ${next.type}`);
     }
 
+    // restore the old parent
+    const pathParts = context.activePath.split(".");
+    pathParts.pop();
+    updateContext({ parentNode: oldParent, activePath: pathParts.join(".") });
+
     return node;
-}
-
-
+  }
 
   const parseChaining = (): CSTNode => { 
     const node: CSTNode = {
@@ -302,7 +388,6 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     return node;
   }
 
-
   const parseIfControl = (token: Token): CSTIfControlNode => { 
     const node: CSTIfControlNode = {
       type: 'IfControl',
@@ -357,32 +442,33 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     token = nextToken();
     let controlFlowComplete = false;
 
-    while(!controlFlowComplete) { 
-      let next = peekToken();
-      if(next !== null && next.type !== 'EOF') { 
-        switch(token.type) {           
-          case "ELIF": {
-            node.elifBranches.push(parseElifBranch());
-            break;
+    if(token.type !== "EOF")  {
+      while(!controlFlowComplete) { 
+        let next = peekToken();
+        if(next !== null && next.type !== 'EOF') { 
+          switch(token.type) {           
+            case "ELIF": {
+              node.elifBranches.push(parseElifBranch());
+              break;
+            }
+            case "ELSE": { 
+              node.elseBranch = parseElseBranch();
+              break;
+            }
+            case "WHITESPACE": {
+              node.children.push(parseWhitespace(token));
+              break;
+            }
+            default: { 
+              controlFlowComplete = true;
+            }
           }
-          case "ELSE": { 
-            node.elseBranch = parseElseBranch();
-            break;
-          }
-          case "WHITESPACE": {
-            node.children.push(parseWhitespace(token));
-            break;
-          }
-          default: { 
-            controlFlowComplete = true;
-          }
+          token = nextToken();
+        } else {
+          controlFlowComplete = true;
         }
-        token = nextToken();
-      } else {
-        controlFlowComplete = true;
       }
-    }
-    
+    }        
     return node;
   }
 
@@ -447,7 +533,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       children: [],
     };
     
-    switch(token.type) {
+    switch(token.type) {      
       case "STRING_LITERAL": {
         node.type = "StringLiteral";
         node.value = token.value;
@@ -463,6 +549,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
         node.value = token.value;
         break;
       }
+      case "IDENTIFIER": 
       case "VARIABLE": {
         node.type = "VariableIdentifier";
         node.value = token.value;
@@ -482,8 +569,23 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
         node.children.push(parseGrouping(token));
         break;
       }
+      case "DOT": {
+        const previous = previousNode(context);        
+        if (previous.type === "Literal" || 
+            previous.type === "VariableIdentifier" || 
+            previous.type === "MacroInvocation") {
+          // we are accessing a property
+          node.type = "PropertyAccess";
+          node.value = token.value;
+          previous.children.push(node);
+          return null;
+        } 
+        break;
+      }
       default: {
-        throw new Error(`Unexpected token type: ${token.type}, STRING_LITERAL, NUMBER_LITERAL, BOOLEAN_LITERAL, VARIABLE, MACRO_START, PAREN_OPEN, or BRACKET_OPEN expected`);
+        throw new Error(`Unexpected token type: ${token.type} ${token.value} found at:
+        ${process.cwd()}/${token.position.src} @${token.position.line}:${token.position.column}
+        STRING_LITERAL, NUMBER_LITERAL, BOOLEAN_LITERAL, VARIABLE, MACRO_START, PAREN_OPEN, or BRACKET_OPEN expected`);
       }
     }
 
@@ -603,7 +705,6 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     return node;
   }
     
-
   const parsePunctuation = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'Punctuation',
@@ -640,13 +741,36 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     return node;
   }
 
-  const parseVariableIdentifier = (token: Token): CSTNode => {
-    const node: CSTNode = {
-      type: 'VariableIdentifier',
-      children: [],
-    };    
-    node.value = token.value;
-    return node;
+  const parseVariableDeclaration = (token: Token): CSTVariableDeclarationNode => {
+
+    if(token.type === "VAR" || token.type === "VARIABLE") { 
+      const node: CSTVariableDeclarationNode = {
+        type: 'VariableDeclaration',
+        children: [],
+      };
+      node.value = token.value;
+      node.readonly = token.value === "const";
+        
+      
+    
+     // process tokens until we find a SEMICOLON 
+     // and add to the children
+      let next = nextToken();
+      while(next.type !== "SEMICOLON") {
+        node.children.push(parseToken(next));
+        next = nextToken();
+        if(next.type === "EOF") {
+          throw new Error(`Unexpected end of file, SEMICOLON expected`);
+        }
+      }
+
+      node.children.push(parseToken(next));
+
+      return node;
+
+    } else {
+      throw new Error(`Unexpected token type: ${token.type} found ${token.position.src}@${token.position.line}:${token.position.column}`);
+    }
   }
 
   const parseComparisonOperator = (token: Token): CSTNode => {
@@ -658,13 +782,63 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     return node;
   }
 
+  /**
+   * Parses a directive token into a CSTDirective node
+   * @param token 
+   * @returns 
+   */
+  const parseDirective = (token: Token): null => { 
+    const directiveNode: CSTDirectiveNode = { 
+      type: 'Directive',
+      token: token,
+      children: [],
+      value: token.value,
+      directiveType: null,
+    }
+
+    let directive = token.value.replace("#", "");
+    const [ directiveText, ...rest ] = directive.split(" ");
+    switch (directiveText) { 
+      case "import": {
+        directiveNode.directiveType = "import";
+        directiveNode.value = rest.join(" ");
+        break;
+      }
+      case "export": {
+        directiveNode.directiveType = "export";
+        directiveNode.value = rest.join(" ");
+        break;
+      }
+      case "host": {
+        directiveNode.directiveType = "host";
+        directiveNode.value = rest.join(" ");
+        break;
+      }
+      case "acl": {
+        directiveNode.directiveType = "acl";
+        directiveNode.value = rest.join(" ");
+        break;
+      }
+      case "use": {
+        directiveNode.directiveType = "use";
+        directiveNode.value = rest.join(" ");
+        break;
+      }
+    }
+    cst.directives.push(directiveNode);
+
+    return null; // we don't need to do anything with the directive token
+  }
+
   const parseEOF = (_: Token): CSTNode => {     
-    return null;
+    return null; // we don't need to do anything with the EOF token
   }
 
   const parseToken = (token: Token): CSTNode => { 
     switch (token.type.toString()) {
       case "IDENTIFIER":
+        return parseIdentifier(token);
+      case "DOT":
         return parseIdentifier(token);
       case "MACRO_START":
         return parseMacroInvocation(token);
@@ -706,34 +880,38 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "SEMICOLON":
         return parsePunctuation(token);
       case "VARIABLE":
-        return parseVariableIdentifier(token);
+      case "VAR":
+        return parseVariableDeclaration(token);
       case "WHITESPACE":
-        return parseWhitespace(token);
+        // we add the whitespace to the CST so that we can reconstruct the original source code
+        // if needed. This is useful for debugging or generating source maps.
+        return parseWhitespace(token); 
       case "COMMENT":
         return parseComment(token);
       case "NEWLINE":
         return parseNewLine(token);
+      case "DIRECTIVE": 
+        return parseDirective(token);
       case "EOF":
         return parseEOF(token);
       default:
-        throw new Error(`Unexpected token type: ${token.type}`);
+        throw new Error(`Unexpected token type: ${token.type} found ${token.position.src}@${token.position.line}:${token.position.column}`);
     }
-  
   }
 
-  // Create the root node
-  const cst: CSTNode = {
-    type: 'Program',
-    token: null, // the root node has no token
-    children: [],
-  };
-
   // parse the main program
-  while (currentExpressionContext.currentTokenIndex < tokens.length - 1) {
+  while (context.currentTokenIndex < tokens.length - 1) {
     const token = nextToken(); 
     //parse the token 
     const node = parseToken(token);
-    if(node) cst.children.push(node);
+    // ensure we only add nodes that have a type
+    if(node && node.type) { 
+      cst.children.push(node);  
+      updateContext({ 
+        currentNode: node, currentNodeIndex: cst.children.length - 1,
+        activePath: `${context.activePath}.${cst.children.length - 1}`
+      });
+    }
   }
 
   return cst;

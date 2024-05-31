@@ -67,6 +67,7 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
     }
     
     doc.end();
+    return Promise.resolve();
   }
 
   generate(definition: any, stream: WriteStream): Promise<any> {
@@ -84,13 +85,13 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
     
   }
 
-  pdfDefinitions(): Reactory.IReactoryPdfComponent {
+  pdfDefinitions(): Reactory.Pdf.IReactoryPdfComponent {
     throw new Error('Method not implemented.');
   }
 
-  onStartup(): Promise<boolean> {
+  onStartup(): Promise<void> {
     this.context.log(`PdfService ${this.context.colors.green('STARTUP OKAY')}`)
-    return Promise.resolve(true);
+    return Promise.resolve();
   }
 
   getExecutionContext(): Reactory.Server.IReactoryContext {
@@ -102,11 +103,14 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
     return true;
   }
 
-  static reactory: Reactory.Service.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition<PdfService> = {
     id: 'core.PdfService@1.0.0',
-    name: 'PDF Rendering Service',
+    nameSpace: 'core',
+    name: 'PdfService',
+    version: '1.0.0',
+    serviceType: 'pdf',
     description: 'A basic PDF rendering service that will render PDFs using PDF make',
-    service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
+    service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext): PdfService => {
       return new PdfService(props, context);
     },
     dependencies: [

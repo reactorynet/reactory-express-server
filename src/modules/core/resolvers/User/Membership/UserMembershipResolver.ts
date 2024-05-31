@@ -46,7 +46,7 @@ class UserMembershipResolver {
     if (obj.organizationId === null || obj.organizationId === undefined) return null;
   
     const organizationService: Reactory.Service.IReactoryOrganizationService = context.getService('core.OrganizationService@1.0.0') as Reactory.Service.IReactoryOrganizationService;
-    return organizationService.get(obj.organizationId);
+    return await organizationService.get(obj.organizationId);
   }
 
   @property(UserMembership, "lastLogin")

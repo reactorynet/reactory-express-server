@@ -1,4 +1,4 @@
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from '@reactory/reactory-core';
 
 
 class GoogleMapsService implements Reactory.Service.IReactoryContextAwareService {
@@ -15,7 +15,7 @@ class GoogleMapsService implements Reactory.Service.IReactoryContextAwareService
 
   context: Reactory.Server.IReactoryContext;
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
+  constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.context = context;
     this.getPlaces = this.getPlaces.bind(this);
     this.getPlaceDetails = this.getPlaceDetails.bind(this);
@@ -67,11 +67,13 @@ class GoogleMapsService implements Reactory.Service.IReactoryContextAwareService
 
 export default {
   id: 'core.GoogleMapsService@1.0.0',
-  name: 'Reactory Google Maps Service',
+  nameSpace: 'core',
+  name: 'GoogleMapsService',
+  version: '1.0.0',
   description: 'A light weight google mapping service that provides search and place details.',
   dependencies: [],
   serviceType: 'data',
-  service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
+  service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
     return new GoogleMapsService(props, context);
   }
 };

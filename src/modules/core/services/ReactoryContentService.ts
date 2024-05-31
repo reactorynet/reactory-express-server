@@ -197,8 +197,10 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
 
   static reactory: Reactory.Service.IReactoryServiceDefinition = {
     id: "core.ReactoryContentService@1.0.0",
-    name: "Support Service",
-    description: "Service for logging and managing reactory support tickets",
+    nameSpace: "core",
+    name: "ReactoryContentService",
+    version: "1.0.0",
+    description: "Service for managing content in the reactory system",
     service: (
       props: Reactory.Service.IReactoryServiceProps,
       context: Reactory.Server.IReactoryContext) => {

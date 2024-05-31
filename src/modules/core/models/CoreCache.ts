@@ -34,11 +34,11 @@ const CacheSchema: Schema<Cache> = new Schema<Cache>({
 });
 
 CacheSchema.statics.getItem = async function getItem(cacheKey: string, includeKey: boolean = false, context: Reactory.Server.IReactoryContext) {
-  let cached = await this.findOne({ key: cacheKey, partner: context.partner._id }).then();
+  const cached = await this.findOne({ key: cacheKey }).then();
 
-  if (cached !== null && typeof cached === 'object' && cached.ttl) {
-    if (moment(cached.ttl).isBefore(moment(), 'milliseconds')) {
-      cached.remove();
+  if (cached !== null && typeof cached === 'object') {
+    if (cached.ttl !== null && isNaN(cached.ttl) === false && moment(cached.ttl).isBefore(moment(), 'milliseconds')) {
+      CacheModel.deleteOne({ key: cacheKey }).exec();
       return null;
     } else {
       if (includeKey === true) {
@@ -57,13 +57,18 @@ CacheSchema.statics.getItem = async function getItem(cacheKey: string, includeKe
   return null;
 };
 
-CacheSchema.statics.setItem = async (cacheKey: string, item: any | any[], ttl: number, partner: any) => {
-  return new CacheModel({
-    partner: partner ? partner._id : null,
+CacheSchema.statics.setItem = async (cacheKey: string, item: any | any[], ttl: number, partner: Reactory.Models.IReactoryClientDocument) => {
+  let values: any = {
     key: cacheKey,
     item,
-    ttl: (new Date().valueOf()) + ((ttl || 60) * 1000),
-  }).save().then();
+    ttl: null,  
+  };
+  
+  if(ttl !== null && ttl !== undefined && isNaN(ttl) === false){ 
+    values.ttl = (new Date().valueOf()) + (ttl * 1000);
+  }
+
+  return new CacheModel(values).save().then();
 };
 
 

@@ -234,7 +234,7 @@ const main = async (vargs: string[]): Promise<void> => {
     }
 
     let command: string = cargs.length >= 1 && cargs[0].indexOf('-') === -1 ? cargs[0] : null;
-    let commandArgs: string[] = [];
+    let commandArgs: string[] = cargs.length >= 2 ? cargs.slice(1) : [];
 
     if (cargs.length >= 2) {
       for(let i = 2; i < vargs.length; i++) { 

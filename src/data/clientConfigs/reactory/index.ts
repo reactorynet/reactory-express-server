@@ -30,7 +30,7 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   email: REACTORY_APPLICATION_EMAIL,
   salt: 'generate',
   password: REACTORY_APPLICATION_PASSWORD,
-  siteUrl: REACTORY_SITE_URL || 'https://localhost:3000', 
+  siteUrl: REACTORY_SITE_URL || 'http://localhost:3000', 
   emailSendVia: process.env.REACTORY_EMAIL_SEND_VIA || 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/forgot-password',

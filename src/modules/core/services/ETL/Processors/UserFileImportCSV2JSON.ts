@@ -1,17 +1,16 @@
 'use strict';
-import path from 'path';
 import fs from 'fs';
 import readline from 'readline';
 
 import Reactory from '@reactory/reactory-core';
-import ApiError from 'exceptions';
+import ApiError from '@reactory/server-core/exceptions';
 
 const DefaultOptions = {
   delimiter: ",",
   firstRowIsHeader: true,
 }
 
-class UserFileImportCSV2JSON implements Reactory.IProcessor {
+class UserFileImportCSV2JSON implements Reactory.Service.IProcessor {
 
   context: Reactory.Server.IReactoryContext;
 
@@ -22,7 +21,7 @@ class UserFileImportCSV2JSON implements Reactory.IProcessor {
   props: any;
 
   fileService: Reactory.Service.IReactoryFileService;
-  packageManager: Reactory.IReactoryImportPackageManager;
+  packageManager: Reactory.Service.IReactoryImportPackageManager;
 
   constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.context = context;
@@ -31,7 +30,7 @@ class UserFileImportCSV2JSON implements Reactory.IProcessor {
     this.packageManager = props.packman;
   }
 
-  async process(params: Reactory.IProcessorParams, nextProcessor?: Reactory.IProcessor): Promise<any> {
+  async process(params: Reactory.Models.IProcessorParams, nextProcessor?: Reactory.Service.IProcessor): Promise<any> {
     const that = this;
     that.context.log(`Method call UserFileImportCSV2JSON.process(params, nextProcessor?)`);
     let output: any[] = [];
@@ -84,7 +83,7 @@ class UserFileImportCSV2JSON implements Reactory.IProcessor {
 
     await processLineByLine();
 
-    let $next: Reactory.IProcessor = this.packageManager.getNextProcessor();
+    let $next: Reactory.Service.IProcessor = this.packageManager.getNextProcessor();
 
     // if (nextProcessor && nextProcessor.process) {
     //   $next = nextProcessor;
@@ -124,11 +123,13 @@ class UserFileImportCSV2JSON implements Reactory.IProcessor {
 
   static reactory = {
     id: 'core.UserFileImportCSV2JSON@1.0.0',
-    name: 'ReactoryUserFileCSV2JSONProcessor',
+    nameSpace: 'core',
+    name: 'UserFileImportCSV2JSON',
+    version: '1.0.0',
     description: 'Reactory Service for converting a csv file with user data to a json structure',
     dependencies: UserFileImportCSV2JSON.dependencies,
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
+    service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new UserFileImportCSV2JSON(props, context);
     }
   };

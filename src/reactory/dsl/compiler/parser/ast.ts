@@ -1,10 +1,11 @@
-import { CSTNode, CSTOperatorNode, CSTProgramNode } from "@reactory/server-core/types/compiler/cst";
+import { CSTNode, CSTOperatorNode, CSTProgramNode, CSTVariableDeclarationNode } from "@reactory/server-core/types/compiler/cst";
 import { 
   ASTNode, 
   BooleanLiteralNode, 
   CST2ASTContext, 
   ExpressionNode, 
   HexLiteralNode, 
+  LiteralNode, 
   MacroInvocationNode, 
   NumberLiteralNode, 
   ProgramNode, 
@@ -12,6 +13,8 @@ import {
   VariableNode 
 } from '@reactory/server-core/types/compiler/ast';
 import { TokenType, Token } from "@reactory/server-core/types/compiler/lexer";
+import { Operator } from "types/compiler/shared";
+import { c } from "tar";
 
 
 
@@ -129,6 +132,60 @@ export const createAST = (cst: CSTProgramNode): ProgramNode => {
     if(node.type === "BooleanLiteral") return parseBooleanLiteral(node);
     if(node.type === "HexadecimalLiteral") return parseHexadecimalLiteral(node);
     throw new Error(`Unexpected literal type: ${node.type}`);
+  }
+
+  const parseVariableDeclaration = (node: CSTVariableDeclarationNode): VariableNode => {
+    const variableNode: VariableNode = {
+        type: 'Variable',
+        name: null,
+        right: null,
+        operation: 'declare',
+      };
+
+      // declaration CST node should have children 
+      // elements that has the details of the 
+      // declaration and assignment
+      let stack: CSTNode[] = node.children;
+      if(stack && stack.length > 0) {
+        stack = stack.reverse();
+        //work backwards through the stack and pop off the last element
+        for(let i = stack.length -1; i > 0; i--) { 
+          const child = stack[i];
+          switch(child.type) { 
+            case "Whitespace":
+            case "Punctuation":              
+              break;
+            case "StringLiteral":
+            case "NumberLiteral":
+            case "BooleanLiteral":
+            case "HexadecimalLiteral":
+            case "ComponentLiteral":
+            case "ServiceLiteral":
+            case "FunctionLiteral": {
+              variableNode.right = parseLiteral(child);
+              break;
+            }
+            case "VariableIdentifier": {
+              variableNode.name = child.value;
+              break;
+            }
+            case "Operator": { 
+              const operator = child.value;
+              if(operator === "=") {
+                variableNode.operation = "declare";
+              } else { 
+                throw new Error(`Unexpected operator: ${operator}`);
+              }
+              break;
+            }
+          }
+          
+          stack.pop();
+        }
+        
+      }
+
+    return variableNode;
   }
  
   const parseVariableIdentifier = (node: CSTNode): VariableNode => { 
@@ -313,6 +370,9 @@ export const createAST = (cst: CSTProgramNode): ProgramNode => {
         return parseOperator(node as CSTOperatorNode);
       case "Punctuation":
         return parsePunctuation(node);
+      case "VariableDeclaration": {
+        return parseVariableDeclaration(node);
+      }
       case "VariableIdentifier":
          return parseVariableIdentifier(node);
       case "Whitespace":

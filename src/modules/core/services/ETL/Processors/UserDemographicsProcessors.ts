@@ -64,7 +64,7 @@ const SetUserDemographicsMutation = `mutation MoresUpdateUserDemographic($input:
   }
 }`;
 
-class UserDemographicsProcessor implements Reactory.IProcessor {
+class UserDemographicsProcessor implements Reactory.Service.IProcessor {
 
   context: Reactory.Server.IReactoryContext;
 
@@ -141,7 +141,7 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
    * 
    * @param params - paramters can include row offset
    */
-  async process(params: Reactory.IProcessorParams, nextProcessor?: Reactory.IProcessor): Promise<any> {
+  async process(params: Reactory.Models.IProcessorParams, nextProcessor?: Reactory.Service.IProcessor): Promise<any> {
 
     const { offset = 0, file, import_package, process_index = 0, next, input = [], preview = false, processors = [] } = params;
     const that = this;
@@ -501,7 +501,7 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
       new_output.push(user_import);
     }
 
-    let $next: Reactory.IProcessor = this.packageManager.getNextProcessor();
+    let $next: Reactory.Service.IProcessor = this.packageManager.getNextProcessor();
 
     output = new_output;
 
@@ -517,7 +517,9 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
   static dependencies: ['core.ReactoryFileService@1.0.0'];
   static reactory = {
     id: 'core.UserFileImportProcessDemographics@1.0.0',
-    name: 'Reactory User File Import Demographics',
+    nameSpace: 'core',
+    name: 'UserFileImportProcessDemographics',
+    version: '1.0.0',
     description: 'Reactory Service for importing demographics.',
     dependencies: [
       { id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' },
@@ -525,7 +527,7 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
       { id: "core.UserService@1.0.0", alias: 'userService' }
     ],
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
+    service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new UserDemographicsProcessor(props, context);
     }
   };

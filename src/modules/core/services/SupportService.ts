@@ -124,13 +124,15 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     return true;
   }
   
-  static reactory: Reactory.Service.IReactoryServiceDefinition = {  
+  static reactory: Reactory.Service.IReactoryServiceDefinition<ReactorySupportService> = {  
     id: "core.ReactorySupportService@1.0.0",
-    name: "Support Service",
+    nameSpace: "core",
+    name: "ReactorySupportService",
+    version: "1.0.0",
     description: "Service for logging and managing reactory support tickets",
     service: (
       props: Reactory.Service.IReactoryServiceProps, 
-      context: Reactory.Server.IReactoryContext) => {
+      context: Reactory.Server.IReactoryContext): ReactorySupportService => {
         return new ReactorySupportService(props, context);
     },
     dependencies: [],

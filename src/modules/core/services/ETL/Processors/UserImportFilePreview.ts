@@ -3,7 +3,7 @@ import Reactory from '@reactory/reactory-core';
 
 
 
-class UserImportFilePreview implements Reactory.IProcessor {
+class UserImportFilePreview implements Reactory.Service.IProcessor {
 
   context: Reactory.Server.IReactoryContext;
 
@@ -30,7 +30,7 @@ class UserImportFilePreview implements Reactory.IProcessor {
    * The main execution function is process
    * @param params - paramters can include row offset
    */
-  async process(params: any, next?: Reactory.IProcessor): Promise<any> {
+  async process(params: any, next?: Reactory.Service.IProcessor): Promise<any> {
 
     this.context.user.hasAnyRole(this.context.partner._id);
 
@@ -41,13 +41,15 @@ class UserImportFilePreview implements Reactory.IProcessor {
 
   static reactory = {
     id: 'core.UserFileImportPreview@1.0.0',
-    name: 'Reactory User File Import Preview Generator',
+    name: 'UserFileImportPreview',
+    nameSpace: 'core',
+    version: '1.0.0',
     description: 'Reactory Service for valdating an import file for users',
     dependencies: [
       { id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' }
     ],
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
+    service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new UserImportFilePreview(props, context);
     }
   }

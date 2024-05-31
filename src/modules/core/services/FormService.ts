@@ -1,16 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import Rollup from 'rollup';
-import { forEach, isArray, takeRight } from 'lodash';
+import { isArray } from 'lodash';
 import Reactory from '@reactory/reactory-core';
 import modules from '@reactory/server-core/modules';
-import { resolveInclude } from 'ejs';
-import messages from 'bot/sparky/messages';
-import { cwd } from 'process';
-
-
-
-
 
 class ReactoryFormService implements Reactory.Service.IReactoryFormService {
 
@@ -52,6 +42,13 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
       }
     });
     return Promise.resolve(_form);
+  }
+
+  async search(form: Partial<Reactory.Forms.IReactoryForm>, targetModule?: string, where?: Reactory.Service.FormStore[]): Promise<Reactory.Forms.IReactoryForm[]> {
+    let _forms: Reactory.Forms.IReactoryForm[] = [];
+    
+
+    return _forms
   }
 
   list(): Promise<Reactory.Forms.IReactoryForm[]> {
@@ -124,7 +121,7 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return form;
   }
 
-  delete(form: Reactory.Forms.IReactoryForm): boolean {
+  delete(form: Reactory.Forms.IReactoryForm): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
 
@@ -183,11 +180,12 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     this.compiler = compiler;
   }
 
-  static reactory: Reactory.Service.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition<ReactoryFormService> = {
     id: 'core.ReactoryFormService@1.0.0',
     description: 'Reactory Form Service',
+    nameSpace: 'core',
     name: 'ReactoryFormService',
-    service: (props, context) => {
+    service: (props, context): ReactoryFormService => {
       return new ReactoryFormService(props, context)
     },
     dependencies: [

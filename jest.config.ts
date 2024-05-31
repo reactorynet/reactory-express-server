@@ -1,6 +1,8 @@
 
-import type { Config } from 'jest';
-import type { JestConfigWithTsJest, TsJestTransformerOptions } from 'ts-jest'
+import type { 
+  JestConfigWithTsJest, 
+  TsJestTransformerOptions 
+} from 'ts-jest'
 
 export default async (): Promise<JestConfigWithTsJest> => {
 

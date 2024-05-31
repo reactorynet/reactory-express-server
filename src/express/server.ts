@@ -25,6 +25,7 @@ import flash from 'connect-flash';
 import mongooseConnection from '@reactory/server-core/models/mongoose';
 import corsOptions from '@reactory/server-core/express/cors';
 import reactoryClientAuthenticationMiddleware from '@reactory/server-core/middleware/ReactoryClient';
+import ReactoryContextMiddleWare from '@reactory/server-core/middleware/ReactoryContext';
 import userAccountRouter from '@reactory/server-core/useraccount';
 import reactory from '@reactory/server-core/reactory';
 import froala from '@reactory/server-core/froala';
@@ -34,14 +35,14 @@ import typeDefs from '@reactory/server-core/models/graphql/types';
 import resolvers from '@reactory/server-core/models/graphql/resolvers';
 import directiveProviders from '@reactory/server-core/models/graphql/directives';
 
-import AuthConfig from '@reactory/server-core/authentication';
+import { ConfigureAuthentication } from '@reactory/server-core/authentication';
 import workflow from '@reactory/server-core/workflow';
 import pdf from '@reactory/server-core/pdf';
 import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
 import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
-import ReactoryContextProvider from 'context/ReactoryContextProvider';
+import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
 import AuthHelper from '@reactory/server-core/authentication/strategies/helpers';
 // @ts-ignore
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
@@ -92,7 +93,7 @@ const {
   DEVELOPER_ID,
   SYSTEM_USER_ID = 'not-set',
   MAIL_REDIRECT_ADDRESS
-} = process.env;
+} = process.env as Reactory.Server.ReactoryEnvironment;
 
 /**
  * Helper function to hide text we don't want to log to 
@@ -110,15 +111,13 @@ const hideText = (text: string = '') => {
 
 
 /**
- * The main function to start reactory server api. 
+ * The main function to start reactory server. 
  */
-export const ReactoryServer = async () => {
+export const ReactoryServer = async (): Promise<Application> => {
 
   let reactoryExpress: Application;
 
   let mongoose_result = null;
-
-
 
   const ca = sslrootcas.create();
   https.globalAgent.options.ca = ca;
@@ -179,19 +178,6 @@ Environment Settings:
   MAX_FILE_UPLOAD (size): ${MAX_FILE_UPLOAD} !NOTE! This affects all file uploads.
   SECRET_SAUCE: '${hideText(SECRET_SAUCE)}',
   MAIL_REDIRECT_ADDRESS: ${MAIL_REDIRECT_ADDRESS}
-  
-  =========================================
-         Microsoft OAuth2 Settings
-  =========================================
-  OAUTH_APP_ID: ${OAUTH_APP_ID}
-  OAUTH_APP_PASSWORD: ${hideText(OAUTH_APP_PASSWORD)}
-  OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI}
-  OAUTH_SCOPES: ${OAUTH_SCOPES}
-  OAUTH_AUTHORITY: ${OAUTH_AUTHORITY}
-  OAUTH_ID_METADATA: ${OAUTH_ID_METADATA}
-  OAUTH_AUTHORIZE_ENDPOINT: ${OAUTH_AUTHORIZE_ENDPOINT}
-  OAUTH_TOKEN_ENDPOINT: ${OAUTH_TOKEN_ENDPOINT}
-  =========================================  
 `;
 
   logger.info(ENV_STRING_DEBUG);
@@ -240,19 +226,19 @@ Environment Settings:
     res.render('error', { error: err })
   });
       
-  // For all routes we rune the cors middleware with options
   reactoryExpress.use('*', cors(corsOptions));
   reactoryExpress.use(reactoryClientAuthenticationMiddleware);
+  reactoryExpress.use(ReactoryContextMiddleWare);
   reactoryExpress.use(i18nextHttp.handle(i18n));
   reactoryExpress.use(
     queryRoot,
-    passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
+    passport.authenticate(['jwt', 'anonymous'], 
+    { session: false }), 
+    bodyParser.urlencoded({ extended: true }),
     bodyParser.json({
       limit: MAX_FILE_UPLOAD,
     }),
   );
-
-  // let $schemaDirectives: Record<string, typeof SchemaDirectiveVisitor> = {};
 
   try {
 
@@ -294,33 +280,54 @@ Environment Settings:
 
   reactoryExpress.set('trust proxy', NODE_ENV === 'development' ? 0 : 1);
 
-  // TODO: Werner Weber - investigate session and session management for auth.
-  // This session ONLY applies to authentication when authenticating via the
-  // passportjs authentication module.
+  const getSessionStore = () => { 
+
+    switch(process.env.REACTORY_SESSION_STORE) { 
+      case 'file-store': {
+        logger.debug('Using file store for session');
+        const FileStore = require('session-file-store')(session);
+        return new FileStore({
+          path: '/tmp/sessions',
+          ttl: 60 * 5,
+          retries: 0,
+          reapInterval: 60 * 5,
+        });
+      }
+      case 'mongo': {
+        const MongoStore = require('connect-mongo')(session);
+        logger.debug('Using mongo store for session');
+        return new MongoStore({
+          mongooseConnection: mongoose_result.connection,
+          collection: 'reactory_sessions',
+          ttl: 60 * 5,
+          autoRemove: 'native',
+          touchAfter: 24 * 3600,
+        });
+      }
+      default: {
+        logger.debug('Using memory store for session');
+        return new session.MemoryStore();
+      }
+    }
+  }
+
+  // Session should ONLY be used for authentication when authenticating via the
+  // passportjs authentication modules that requires session storage for the
+  // authentication process.
   const sessionOptions: session.SessionOptions = {
-    // name: "connect.sid", 
+    name: `${SERVER_ID}.sid`, 
     secret: SECRET_SAUCE,
     resave: false,
     saveUninitialized: false,
     unset: 'destroy',
-    // proxy: NODE_ENV === 'development' ? false : true,
+    store: getSessionStore(),
     cookie: {
       domain: DOMAIN_NAME,
-      maxAge: 60 * 5 * 1000,
-      // httpOnly: NODE_ENV === 'development' ? true : false,
-      // sameSite: 'lax',
-      // secure: NODE_ENV === 'development' ? false : true,
+      maxAge: 60 * 5 * 1000,                
     },
   };
 
-  const oldOptions: session.SessionOptions = {
-    secret: SECRET_SAUCE,
-    resave: false,
-    saveUninitialized: false,
-    unset: 'destroy',
-  };
-
-  reactoryExpress.use(session(oldOptions));
+  reactoryExpress.use(session(sessionOptions));
   reactoryExpress.use(bodyParser.urlencoded({ extended: false }));
   reactoryExpress.use(bodyParser.json({ limit: MAX_FILE_UPLOAD }));
 
@@ -335,20 +342,25 @@ Environment Settings:
   }
 
 
-  amq.raiseSystemEvent('server.startup.begin');
+  amq.raiseSystemEvent('server.startup.begin', {});
 
   if (SYSTEM_USER_ID === 'not-set') {
     logger.warn("SYSTEM_USER_ID env variable is not set - please configure in env variables");
   }
 
-
   // TODO: Werner Weber - Update the start result object to contain
   // more useful information about the server environment, configuration
   // output.
-  startup().then((startResult: any) => {
-    AuthConfig.Configure(reactoryExpress);
+  try {
+    const startResult = await startup();
+    ConfigureAuthentication(reactoryExpress);
     reactoryExpress.use(userAccountRouter);
-    reactoryExpress.use('/reactory', reactory);
+    // TODO: Werner Weber - Update the route configuration to use the
+    // load the routes from the modules and the core.
+    // i.e. 
+    // RouteConfig.Configure(reactoryExpress);
+    // see ticket 
+    // reactory-server-express/docs/sdlc/todo/maintenance/RSE-MAINT-19052024-03_refactor_routing_configuration.md
     reactoryExpress.use('/froala', froala);
     reactoryExpress.use('/deliveries', froala);
     reactoryExpress.use('/workflow', workflow);
@@ -359,44 +371,52 @@ Environment Settings:
     //reactoryExpress.use('/excel', ExcelRouter);
 
     reactoryExpress.use('/amq', amq.router);
+    reactoryExpress.use(flash());
     reactoryExpress.use(resourcesPath,
       passport.authenticate(['jwt', 'anonymous'], { session: false }),
       bodyParser.urlencoded({ extended: true }),
       express.static(APP_DATA_ROOT || publicFolder));
 
-    expressServer = reactoryExpress.listen(typeof API_PORT === "string" ? parseInt(API_PORT) : API_PORT, SERVER_IP, () => {
-      logger.info(asciilogo);
-      if (graphcompiled === true) {
-        const graphql_api_root = resolveUrl(API_URI_ROOT, queryRoot);
+    const startExpressServer = (): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        expressServer = reactoryExpress.listen(typeof API_PORT === "string" ? parseInt(API_PORT) : API_PORT, SERVER_IP, () => {
+          logger.info(`\n\n${asciilogo}\n\n`);
+          if (graphcompiled === true) {
+            const graphql_api_root = resolveUrl(API_URI_ROOT, queryRoot);
 
-        logger.info(colors.green(`✅ Running a GraphQL API server at ${graphql_api_root}`));
-        if (NODE_ENV === 'development' && DEVELOPER_ID) {
-          User.find({ email: DEVELOPER_ID }).then((user_result) => {
-            const auth_token = AuthHelper.jwtTokenForUser(user_result[0], { exp: moment().add(1, 'hour').unix() })
-            logger.debug(`Developer id ${DEVELOPER_ID} access graphiql docs ${resolveUrl(API_URI_ROOT, `cdn/graphiql/index.html?auth_token=${auth_token}`)}`)
-          });
+            logger.info(colors.green(`✅ Running a GraphQL API server at ${graphql_api_root}`));
+            if (NODE_ENV === 'development' && DEVELOPER_ID) {
+              User.find({ email: DEVELOPER_ID }).then((user_result) => {
+                const auth_token = AuthHelper.jwtTokenForUser(user_result[0], { exp: moment().add(1, 'hour').unix() })
+                logger.debug(`Developer id ${DEVELOPER_ID} access graphiql docs ${resolveUrl(API_URI_ROOT, `cdn/graphiql/index.html?auth_token=${auth_token}`)}`)
+              });
 
-        }
-      }
-      else logger.info(colors.yellow(`🩺 GraphQL API not available - ${graphError}`));
+            }
+          }
+          else logger.info(colors.yellow(`🩺 GraphQL API not available - ${graphError}`));
 
-      logger.info(colors.green('✅ System Initialized/Ready, enabling app'));
+          logger.info(colors.green('✅ System Initialized/Ready, enabling app'));
 
-      global.REACTORY_SERVER_STARTUP = new Date();
-      amq.raiseSystemEvent('server.startup.complete');
-    }).on("error", (err) => {
-      logger.error(colors.red("Could not successfully start the express server"), err);
-      process.exit(-1)
-    });
+          global.REACTORY_SERVER_STARTUP = new Date();
+          amq.raiseSystemEvent('server.startup.complete');
+          resolve();
+        }).on("error", (err) => {
+          logger.error(colors.red("Could not successfully start the express server"), err);
+          reject(err);
+        });
+      });
+    };
 
-    reactoryExpress.use(flash());
-
-
-
-  }).catch((startupError) => {
+    try {
+      await startExpressServer();
+    } catch (error) {
+      logger.error(colors.red('Could not start the express server'), error);
+      process.exit(-1);
+    }
+    
+    return reactoryExpress;
+  } catch (startupError) {
     logger.error(colors.red('Server was unable to start successfully.'), startupError);
-    process.exit(0);
-  });
-
-
+    process.exit(-1);
+  }
 }

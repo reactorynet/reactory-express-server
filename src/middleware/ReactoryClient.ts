@@ -1,6 +1,10 @@
 import { isNil } from 'lodash';
 import { ReactoryClient } from '@reactory/server-core/models';
+import { 
+  encoder 
+} from '@reactory/server-core/utils';
 import logger from '@reactory/server-core/logging';
+import { Request, Response } from 'express';
 
 const bypassUri = [
   '/cdn/content/',
@@ -10,25 +14,39 @@ const bypassUri = [
   '/cdn/themes/',
   '/cdn/ui/',
   '/favicon.ico',
-  '/auth/microsoft/openid',
+  '/auth/'
 ];
 
 
+/**
+ * The reactory client authentication middleware is responsible for authenticating
+ * the client application that is making the request. The client application should
+ * provide a client id and a client secret in the headers of the request.
+ * 
+ * However where headers are not available by default, the client id and secret can 
+ * be passed as query parameters. 
+ * 
+ * As fallback for authentication, the client id and secret can be passed as part of the
+ * state of the request or stored using session storage. Where session storage is used 
+ * deployments need to ensure that sessions are sticky, meaning for multi instance deployments
+ * the session storage needs to be shared across all instances.
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
+const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, next: Function) => {
 
-const ReactoryClientAuthenticationMiddleware = (req: any, res: any, next: Function) => {
+  const { headers, query, params, session } = req;
+  let clientId = headers['x-client-key'];
+  let clientPwd = headers['x-client-pwd'];
+  let serverBypass = headers['x-reactory-pass'];
 
-
-  let clientId = req.headers['x-client-key'];
-  let clientPwd = req.headers['x-client-pwd'];
-  let serverBypass = req.headers['x-reactory-pass'];
-
-  let query = req.query;
-
-  if (isNil(clientId) === true) clientId = req.params.clientId;
+  if (isNil(clientId) === true) clientId = params.clientId;
   if (isNil(clientId) === true) clientId = query.clientId;
-  if (isNil(clientId) === true) clientId = query['x-client-key'];
-
-  if (isNil(clientPwd) === true) clientPwd = req.params.secret;
+  if (isNil(clientId) === true) clientId = query['x-client-key']; 
+       
+  if (isNil(clientPwd) === true) clientPwd = params.secret;
   if (isNil(clientPwd) === true) clientPwd = query.secret;
   if (isNil(clientPwd) === true) clientPwd = query['x-client-pwd'];
 
@@ -36,9 +54,7 @@ const ReactoryClientAuthenticationMiddleware = (req: any, res: any, next: Functi
 
   let bypass = false;
   if (req.originalUrl) {
-    for (let i = 0; i < bypassUri.length; i += 1) {
-      if (!bypass) bypass = req.originalUrl.toString().indexOf(bypassUri[i]) >= 0;
-    }
+    bypass = bypassUri.some(uri => req.originalUrl.includes(uri));
   }
 
   if (bypass === true) {
@@ -46,17 +62,19 @@ const ReactoryClientAuthenticationMiddleware = (req: any, res: any, next: Functi
     return;
   }
 
-
-
   if (isNil(clientId) === true || clientId === '') {
-    res.status(401).send({ error: 'no-client-id' });
+    res.status(401).send({ 
+      error: 'no-client-id',
+      description: 'You did not provide a client id in the request Please provide a valid client id.',       
+    });
   } else {
     logger.debug(`ReactoryClientAuthenticationMiddleware:: extracted partner key: ${clientId}`);
     try {
       ReactoryClient.findOne({ key: clientId }).then((clientResult: any) => {
         if (isNil(clientResult) === true ) { 
           logger.debug(`ReactoryClientAuthenticationMiddleware:: ${clientId} no credentials / configuration entry found.`)
-          res.status(401).send({ error: `X-Client-Key / clientId ${clientId} Credentials Invalid. Please check that your client id is correct` });
+          res.status(401).send({ 
+            error: `X-Client-Key / clientId ${clientId} Credentials Invalid. Please check that your client id is correct` });
           return;
         }
 

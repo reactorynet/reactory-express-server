@@ -9,7 +9,7 @@ import { updateUserProfileImage } from '@reactory/server-core/application/admin/
 import logger from '@reactory/server-core/logging';
 import ApiError from "@reactory/server-core/exceptions";
 import moment from "moment";
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from '@reactory/reactory-core';
 
 export interface IPersonalDemographicsInput {
   userId?: string,

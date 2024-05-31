@@ -61,7 +61,6 @@ type CoreModelTypes =
   typeof ProjectBoard |
   typeof ReactoryClient |
   typeof ReactoryResource |
-  typeof ReactorySupportTicket |
   typeof ReactoryTranslation |
   typeof Region |
   typeof Statistic |
@@ -231,7 +230,6 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'Menu',
     version: '1.0.0',
     description: 'Provides a menu model for the server',
-
     stem: 'menu',
     tags: ['menu', 'core', 'system'],
     component: Menu,
@@ -315,7 +313,6 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'Project',
     description: 'Provides a project model for the server',
-
     stem: 'project',
     tags: ['project', 'core', 'system'],
     component: Project,
@@ -343,7 +340,6 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'ReactoryClient',
     description: 'Provides a reactory client model for the server',
-
     stem: 'reactory-client',
     tags: ['reactory-client', 'reactory', 'system'],
     component: ReactoryClient,
@@ -369,37 +365,8 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
   {
     nameSpace: 'core',
     version: '1.0.0',
-    name: 'ReactorySupportTicket',
-    description: 'Provides a reactory support ticket model for the server',
-
-    stem: 'reactory-support-ticket',
-    tags: ['reactory-support-ticket', 'reactory', 'system'],
-    component: ReactorySupportTicket,
-    domain: 'model',
-    overwrite: true,
-    roles: [],
-    features: [],
-  },
-  {
-    nameSpace: 'core',
-    version: '1.0.0',
-    name: 'ReactoryTranslation',
-    description: 'Provides a reactory translation model for the server',
-
-    stem: 'reactory-translation',
-    tags: ['reactory-translation', 'reactory', 'system'],
-    component: ReactoryTranslation,
-    domain: 'model',
-    overwrite: true,
-    roles: [],
-    features: [],
-  },
-  {
-    nameSpace: 'core',
-    version: '1.0.0',
     name: 'Region',
     description: 'Provides a region model for the server',
-
     stem: 'region',
     tags: ['region', 'core', 'system'],
     component: Region,
@@ -413,7 +380,6 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'Statistic',
     description: 'Provides a statistic model for the server',
-
     stem: 'statistic',
     tags: ['statistic', 'core', 'system'],
     component: Statistic,

@@ -72,7 +72,9 @@ class FrequencyDistribution implements Reactory.Service.FrequencyDistribution {
 
 @service({
   id: "core.ReactoryNLPService@1.0.0",
-  name: "Natural Language Processing Service",
+  nameSpace: "core",
+  version: "1.0.0",
+  name: "ReactoryNLPService",
   description: "Natural Language Processing Service for reactory, uses the Natural library for nodejs",
   serviceType: "data",
   dependencies: [
@@ -462,8 +464,6 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
   setFetchService(fetchService: Reactory.Service.IFetchService)  {
     this.fetchService = fetchService;   
   }
-
-  
 }
 
 export default ReactoryNLPService;

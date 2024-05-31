@@ -5,7 +5,7 @@ import readline from 'readline';
 import Reactory from '@reactory/reactory-core';
 
 
-class UserFileImportValidation implements Reactory.IProcessor {
+class UserFileImportValidation implements Reactory.Service.IProcessor {
 
   context: Reactory.Server.IReactoryContext;
 
@@ -86,13 +86,15 @@ class UserFileImportValidation implements Reactory.IProcessor {
 
   static reactory = {
     id: 'core.UserFileImportValidation@1.0.0',
-    name: 'Reactory User File Import Validation',
+    nameSpace: 'core',
+    name: 'UserFileImportValidation',
+    version: '1.0.0',
     description: 'Reactory Service for valdating an import file for users',
     dependencies: [
       { id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' }
     ],
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
+    service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new UserFileImportValidation(props, context);
     }
   }

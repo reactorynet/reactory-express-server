@@ -37,6 +37,18 @@ checkEnvVars(){
 
 checkEnvVars
 
+checkMeiliSearch(){
+  if curl -f http://localhost:7700/health; then
+    echo "MeiliSearch is running."
+  else
+    echo "MeiliSearch is not running."
+    sh ./bin/meilisearch.sh
+  fi
+  echo "Checked MeiliSearch"
+}
+
+checkMeiliSearch
+
 echo "Starting Reactory Development Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}"
 sh ./bin/generate.sh ${1:-reactory} ${2:-local}
 NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx nodemon -e js,ts,tsx,graphql --exec npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
