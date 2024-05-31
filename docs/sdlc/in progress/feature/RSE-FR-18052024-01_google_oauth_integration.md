@@ -53,6 +53,12 @@ We need to integrate Google OAuth with our application using PassportJS. This wi
 **Date**: 24-May-2024
 **Comment**: Moving ticket to blocked, first need to update and fix the current baseline tests in order to extend on the testing capability. Adding ticket RSE-BUG-24052024-01_fix_baseline_unit_test.
 
+**Author**: Werner Weber
+**Date**: 26-May-2024
+**Comment**: Moving ticket back to in progress. RSE-BUG-24052024-01 has been completed and mereged in v1.1.0_RC1. Working on updating unit testing for google auth.
+
+
+
 **Suggestions**:
 **Co-pilot & ChatGPT4o**:
 Based on the comment, it seems like the issue is about correctly identifying the client during the OAuth callback. Here are some potential solutions:
