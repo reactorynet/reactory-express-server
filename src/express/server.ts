@@ -36,7 +36,7 @@ import resolvers from '@reactory/server-core/models/graphql/resolvers';
 import directiveProviders from '@reactory/server-core/models/graphql/directives';
 
 import { ConfigureAuthentication } from '@reactory/server-core/authentication';
-import workflow from '@reactory/server-core/workflow';
+import workflow, { workflowRunner, WorkFlowRunner } from '@reactory/server-core/workflow';
 import pdf from '@reactory/server-core/pdf';
 import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
@@ -113,7 +113,13 @@ const hideText = (text: string = '') => {
 /**
  * The main function to start reactory server. 
  */
-export const ReactoryServer = async (): Promise<Application> => {
+export const ReactoryServer = async (): Promise<{ 
+  app: Application, 
+  server: http.Server,
+  apolloServer: ApolloServer,
+  workflowHost: WorkFlowRunner,
+  stop: () => void
+}> => {
 
   let reactoryExpress: Application;
 
@@ -125,7 +131,7 @@ export const ReactoryServer = async (): Promise<Application> => {
   const packageJson = require(`${process.cwd()}/package.json`);
 
   try {
-    mongoose_result = await mongooseConnection.then();
+    mongoose_result = await mongooseConnection();
     logger.debug('✅Connection to mongoose complete');
   } catch (error) {
     logger.error(colors.red(`
@@ -144,6 +150,8 @@ export const ReactoryServer = async (): Promise<Application> => {
     process.exit(0);
   }
 
+  
+
 
   process.on('unhandledRejection', (error) => {
     // Will print "unhandledRejection err is not defined"
@@ -152,6 +160,7 @@ export const ReactoryServer = async (): Promise<Application> => {
   });
 
   process.on('SIGINT', () => {
+    workflowRunner.stop();
     logger.info('Shutting Down Reactory Server');
     process.exit(0);
   });
@@ -243,6 +252,9 @@ Environment Settings:
   try {
 
     let $schema: GraphQLSchema = makeExecutableSchema({
+      resolverValidationOptions : { 
+        requireResolversForResolveType: false 
+      },
       typeDefs,
       resolvers,
     });
@@ -377,7 +389,7 @@ Environment Settings:
       bodyParser.urlencoded({ extended: true }),
       express.static(APP_DATA_ROOT || publicFolder));
 
-    const startExpressServer = (): Promise<void> => {
+    const startExpressServer = (): Promise<http.Server> => {
       return new Promise((resolve, reject) => {
         expressServer = reactoryExpress.listen(typeof API_PORT === "string" ? parseInt(API_PORT) : API_PORT, SERVER_IP, () => {
           logger.info(`\n\n${asciilogo}\n\n`);
@@ -399,12 +411,28 @@ Environment Settings:
 
           global.REACTORY_SERVER_STARTUP = new Date();
           amq.raiseSystemEvent('server.startup.complete');
-          resolve();
+          resolve(expressServer);
         }).on("error", (err) => {
           logger.error(colors.red("Could not successfully start the express server"), err);
           reject(err);
         });
       });
+    };
+
+    const stopServer = () => { 
+      if(expressServer) { 
+        expressServer.close(() => {
+          logger.info('Express Server Stopped');
+        });
+      }
+      if(workflowRunner) {
+        workflowRunner.stop();
+        logger.info('Workflow Host Stopped');
+      }
+      if(mongoose_result) {
+        mongoose_result.connection.close();
+        logger.info('Mongoose Connection Closed');
+      }
     };
 
     try {
@@ -414,7 +442,13 @@ Environment Settings:
       process.exit(-1);
     }
     
-    return reactoryExpress;
+    return { 
+      app: reactoryExpress,
+      server: expressServer,
+      apolloServer,
+      workflowHost: workflowRunner,
+      stop: stopServer
+    }
   } catch (startupError) {
     logger.error(colors.red('Server was unable to start successfully.'), startupError);
     process.exit(-1);
