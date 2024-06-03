@@ -35,8 +35,6 @@ else
   npm i
 fi
 
-
-
 # check environment variables
 check_env_vars
 echo "🛠️ Loading Environment ./config/${1:-reactory}/${2:-local} "

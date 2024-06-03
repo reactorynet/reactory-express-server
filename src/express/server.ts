@@ -24,6 +24,7 @@ import flash from 'connect-flash';
  */
 import mongooseConnection from '@reactory/server-core/models/mongoose';
 import corsOptions from '@reactory/server-core/express/cors';
+import configureMiddleWare from '@reactory/server-core/middleware';
 import reactoryClientAuthenticationMiddleware from '@reactory/server-core/middleware/ReactoryClient';
 import ReactoryContextMiddleWare from '@reactory/server-core/middleware/ReactoryContext';
 import userAccountRouter from '@reactory/server-core/useraccount';
@@ -236,8 +237,7 @@ Environment Settings:
   });
       
   reactoryExpress.use('*', cors(corsOptions));
-  reactoryExpress.use(reactoryClientAuthenticationMiddleware);
-  reactoryExpress.use(ReactoryContextMiddleWare);
+  configureMiddleWare(reactoryExpress);
   reactoryExpress.use(i18nextHttp.handle(i18n));
   reactoryExpress.use(
     queryRoot,
@@ -371,8 +371,7 @@ Environment Settings:
     // load the routes from the modules and the core.
     // i.e. 
     // RouteConfig.Configure(reactoryExpress);
-    // see ticket 
-    // reactory-server-express/docs/sdlc/todo/maintenance/RSE-MAINT-19052024-03_refactor_routing_configuration.md
+    // see ticket https://github.com/reactorynet/reactory-express-server/issues/15
     reactoryExpress.use('/froala', froala);
     reactoryExpress.use('/deliveries', froala);
     reactoryExpress.use('/workflow', workflow);

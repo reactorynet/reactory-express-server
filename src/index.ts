@@ -26,7 +26,7 @@ ReactoryContextProvider(null, null).then((context: Reactory.Server.IReactoryCont
 // Start the Reactory Express Server
 // Express server is always started regardless of gRPC status
 ReactoryServer().then((result: any) => {
-  logger.info(`Reactory Server started.`, result);
+  logger.info(`Reactory Server started.`);
 }).catch((err) => {
   logger.error(`Reactory Server startup failed. (${err.message})`, err);
 });

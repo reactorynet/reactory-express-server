@@ -4,7 +4,7 @@ import {
   encoder 
 } from '@reactory/server-core/utils';
 import logger from '@reactory/server-core/logging';
-import { Request, Response } from 'express';
+import { Request, Response, Application } from 'express';
 
 const bypassUri = [
   '/cdn/content/',
@@ -37,7 +37,7 @@ const bypassUri = [
  */
 const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, next: Function) => {
 
-  const { headers, query, params, session } = req;
+  const { headers, query, params } = req;
   let clientId = headers['x-client-key'];
   let clientPwd = headers['x-client-pwd'];
   let serverBypass = headers['x-reactory-pass'];
@@ -109,5 +109,9 @@ const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, nex
     }
   }
 };
+
+export const configureApp = (app: Application) => { 
+  app.use(ReactoryClientAuthenticationMiddleware);
+}
 
 export default ReactoryClientAuthenticationMiddleware;
