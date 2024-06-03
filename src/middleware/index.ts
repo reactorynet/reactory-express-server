@@ -1,5 +1,6 @@
 import express from 'express';
-import {configureApp as configureReactoryClient } from './ReactoryClient';
+import ReactoryClientMiddleware from './ReactoryClient';
+import ReactoryContextMiddleWare from './ReactoryContext';
 import configureMorgan from './Morgan';
 
 const {
@@ -7,11 +8,11 @@ const {
 } = process.env;
 
 const configureMiddleware = (app: express.Application) => {
-  configureReactoryClient(app);
+  app.use(ReactoryClientMiddleware);
+  app.use(ReactoryContextMiddleWare);
 
   if (MORGAN_MIDDLEWARE_ENABLED === 'true')
     configureMorgan(app);
-
 }
 
 export default configureMiddleware;

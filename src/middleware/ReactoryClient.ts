@@ -43,12 +43,12 @@ const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, nex
   let serverBypass = headers['x-reactory-pass'];
 
   if (isNil(clientId) === true) clientId = params.clientId;
-  if (isNil(clientId) === true) clientId = query.clientId;
-  if (isNil(clientId) === true) clientId = query['x-client-key']; 
+  if (isNil(clientId) === true) clientId = query.clientId as string;
+  if (isNil(clientId) === true) clientId = query['x-client-key'] as string; 
        
   if (isNil(clientPwd) === true) clientPwd = params.secret;
-  if (isNil(clientPwd) === true) clientPwd = query.secret;
-  if (isNil(clientPwd) === true) clientPwd = query['x-client-pwd'];
+  if (isNil(clientPwd) === true) clientPwd = query.secret as string;
+  if (isNil(clientPwd) === true) clientPwd = query['x-client-pwd'] as string;
 
   logger.debug(`ReactoryClientAuthenticationMiddleware:: Client key: [${clientId}], Client Token: [${clientPwd}], Original Url: ${req.originalUrl}`, { query: req.query, params: req.params, method: req.method });
 
@@ -83,6 +83,7 @@ const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, nex
           //validate  
           if (serverBypass === `${clientResult.password}+${clientResult.salt}`) {
             logger.debug('Validating Server Bypass - Passed');
+            // @ts-ignore
             req.partner = clientResult;
             next();
           } else {
@@ -94,6 +95,7 @@ const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, nex
             return;
           }
           else {
+            // @ts-ignore
             req.partner = clientResult;
             next();
           }
