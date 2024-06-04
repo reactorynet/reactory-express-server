@@ -7,6 +7,7 @@ import GoogleStrategy from 'passport-google-oidc';
 import Helpers, { OnDoneCallback } from '../helpers';
 import { Application, Response } from 'express';
 import passport from 'passport';
+import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from 'models';
 
 const { 
@@ -107,11 +108,13 @@ export const useGoogleRoutes = (app: Application) => {
     '/auth/google/start', 
     (req: Reactory.Server.ReactoryExpressRequest, res: Response, next) => {
 
+      logger.debug('Starting Google OAuth flow');
+
       try {
         const state = encoder.encodeState({
           "x-client-key": req.query['x-client-key'],
           "x-client-pwd": req.query['x-client-pwd'],
-        })
+        });
         // @ts-ignore
         req.session.oauthState = state;
         passport.authenticate('google', { 
@@ -121,7 +124,8 @@ export const useGoogleRoutes = (app: Application) => {
           passReqToCallback: true,
           state
         })(req, res, next);
-      } catch (ex){        
+      } catch (ex){
+        logger.error('An error occurred while trying to authenticate with Google', ex);        
         res.status(500).send({ error: 'An error occurred while trying to authenticate with Google', ex });
       }
     } 

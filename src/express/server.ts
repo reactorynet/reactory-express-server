@@ -1,6 +1,5 @@
 'use strict'
 import fs from 'fs';
-
 import moment from 'moment';
 import cors from 'cors';
 import path from 'path';
@@ -11,31 +10,18 @@ import express, { Application, NextFunction } from 'express';
 import session from 'express-session';
 import bodyParser from 'body-parser';
 import passport from 'passport';
-import i18next from 'i18next';
 import i18nextHttp from 'i18next-http-middleware';
-import i18nextFSBackend from 'i18next-fs-backend';
 import { ApolloServer, ApolloServerExpressConfig, makeExecutableSchema, SchemaDirectiveVisitor } from 'apollo-server-express';
-
 import flash from 'connect-flash';
-/**
- * Disabling the linting for the import statements
- * as eslint is not configure to deal with the
- * correct aliasing configured in tsconfig and package.json
- */
 import mongooseConnection from '@reactory/server-core/models/mongoose';
 import corsOptions from '@reactory/server-core/express/cors';
 import configureMiddleWare from '@reactory/server-core/middleware';
-import reactoryClientAuthenticationMiddleware from '@reactory/server-core/middleware/ReactoryClient';
-import ReactoryContextMiddleWare from '@reactory/server-core/middleware/ReactoryContext';
 import userAccountRouter from '@reactory/server-core/useraccount';
-import reactory from '@reactory/server-core/reactory';
 import froala from '@reactory/server-core/froala';
-
 import resources from '@reactory/server-core/resources';
 import typeDefs from '@reactory/server-core/models/graphql/types';
 import resolvers from '@reactory/server-core/models/graphql/resolvers';
 import directiveProviders from '@reactory/server-core/models/graphql/directives';
-
 import { ConfigureAuthentication } from '@reactory/server-core/authentication';
 import workflow, { workflowRunner, WorkFlowRunner } from '@reactory/server-core/workflow';
 import pdf from '@reactory/server-core/pdf';
@@ -45,7 +31,6 @@ import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
 import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
 import AuthHelper from '@reactory/server-core/authentication/strategies/helpers';
-// @ts-ignore
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
 import colors from 'colors/safe';
 import http from 'http';
@@ -80,14 +65,6 @@ const {
   MODE,
   NODE_ENV = 'development',
   DOMAIN_NAME,
-  OAUTH_APP_ID,
-  OAUTH_APP_PASSWORD,
-  OAUTH_REDIRECT_URI,
-  OAUTH_SCOPES,
-  OAUTH_AUTHORITY,
-  OAUTH_ID_METADATA,
-  OAUTH_AUTHORIZE_ENDPOINT,
-  OAUTH_TOKEN_ENDPOINT,
   SECRET_SAUCE,
   SERVER_ID,
   MAX_FILE_UPLOAD = '20mb',
@@ -151,9 +128,6 @@ export const ReactoryServer = async (): Promise<{
     process.exit(0);
   }
 
-  
-
-
   process.on('unhandledRejection', (error) => {
     // Will print "unhandledRejection err is not defined"
     logger.error('unhandledRejection', error);
@@ -186,7 +160,6 @@ Environment Settings:
   MODE: ${MODE}
   MONGOOSE: ${MONGOOSE}
   MAX_FILE_UPLOAD (size): ${MAX_FILE_UPLOAD} !NOTE! This affects all file uploads.
-  SECRET_SAUCE: '${hideText(SECRET_SAUCE)}',
   MAIL_REDIRECT_ADDRESS: ${MAIL_REDIRECT_ADDRESS}
 `;
 
@@ -269,6 +242,7 @@ Environment Settings:
     });
 
     const expressConfig: ApolloServerExpressConfig = {
+      logger: logger,
       schema: $schema,
       context: ReactoryContextProvider,
       uploads: {

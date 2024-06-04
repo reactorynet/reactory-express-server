@@ -8,9 +8,15 @@ const {
 } = process.env;
 
 const configureMiddleware = (app: express.Application) => {
-  app.use(ReactoryClientMiddleware);
+  // load the context middleware first.
+  // This will set the context of the request whether
+  // the client is authenticated or not.
   app.use(ReactoryContextMiddleWare);
-
+  // load the client middleware next.
+  // This will authenticate the client and set the client
+  // object on context for the request.
+  app.use(ReactoryClientMiddleware);
+  // load the morgan middleware if enabled.
   if (MORGAN_MIDDLEWARE_ENABLED === 'true')
     configureMorgan(app);
 }

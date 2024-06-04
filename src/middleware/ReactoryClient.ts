@@ -6,6 +6,13 @@ import {
 import logger from '@reactory/server-core/logging';
 import { Request, Response, Application } from 'express';
 
+// Reconsider the use of this approach. 
+// We want to ensure that the server bypass is not used
+// and that client id and secret are used for authentication
+// for routes to content folders we want to ensure that requests
+// for images and other static content are not authenticated with headers
+// or query parameters, but we should check the host and validate the request
+// based on the host.
 const bypassUri = [
   '/cdn/content/',
   '/cdn/plugins/',
@@ -35,22 +42,14 @@ const bypassUri = [
  * @param next 
  * @returns 
  */
-const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, next: Function) => {
+const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: Function) => {
 
-  const { headers, query, params } = req;
+  const { headers, query, context } = req;
   let clientId = headers['x-client-key'];
   let clientPwd = headers['x-client-pwd'];
-  let serverBypass = headers['x-reactory-pass'];
-
-  if (isNil(clientId) === true) clientId = params.clientId;
-  if (isNil(clientId) === true) clientId = query.clientId as string;
+  
   if (isNil(clientId) === true) clientId = query['x-client-key'] as string; 
-       
-  if (isNil(clientPwd) === true) clientPwd = params.secret;
-  if (isNil(clientPwd) === true) clientPwd = query.secret as string;
   if (isNil(clientPwd) === true) clientPwd = query['x-client-pwd'] as string;
-
-  logger.debug(`ReactoryClientAuthenticationMiddleware:: Client key: [${clientId}], Client Token: [${clientPwd}], Original Url: ${req.originalUrl}`, { query: req.query, params: req.params, method: req.method });
 
   let bypass = false;
   if (req.originalUrl) {
@@ -72,42 +71,29 @@ const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, nex
     try {
       ReactoryClient.findOne({ key: clientId }).then((clientResult: any) => {
         if (isNil(clientResult) === true ) { 
-          logger.debug(`ReactoryClientAuthenticationMiddleware:: ${clientId} no credentials / configuration entry found.`)
+          logger.warning(`ReactoryClientAuthenticationMiddleware:: ${clientId} no credentials / configuration entry found.`)
           res.status(401).send({ 
-            error: `X-Client-Key / clientId ${clientId} Credentials Invalid. Please check that your client id is correct` });
+            error: 'Credentials Invalid.' });
+          return;
+        } 
+        if (clientResult.validatePassword(clientPwd) === false) {
+          res.status(401).send({ error: 'Credentials Invalid' });
           return;
         }
-
-        if (isNil(serverBypass) === false) {
-          logger.debug('Validating Server Bypass');
-          //validate  
-          if (serverBypass === `${clientResult.password}+${clientResult.salt}`) {
-            logger.debug('Validating Server Bypass - Passed');
-            // @ts-ignore
-            req.partner = clientResult;
-            next();
-          } else {
-            res.status(401).send({ error: 'Your Server ByPass Failed', code: '401' });
-          }
-        } else {
-          if (clientResult.validatePassword(clientPwd) === false) {
-            res.status(401).send({ error: 'Invalid api client credentials' });
-            return;
-          }
-          else {
-            // @ts-ignore
-            req.partner = clientResult;
-            next();
-          }
+        else {
+          // @ts-ignore
+          req.partner = clientResult;
+          context.partner = clientResult;
+          next();
         }
       }).catch((clientGetError) => {
         logger.error(`Error loading ${clientId}`, clientGetError);
-        res.status(401).send({ error: 'Invalid api client credentials [ERR]' });
+        res.status(401).send({ error: 'Credentials Invalid' });
       });
 
     } catch (loadClientError) {
       logger.error(`Error loading the client from id ${clientId}`, loadClientError);
-      res.status(503).send({ error: 'Server could not validate the client credentials' });
+      res.status(503).send({ error: 'Server Error' });
     }
   }
 };

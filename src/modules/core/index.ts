@@ -27,6 +27,11 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
   models: [ ...models ],
   clientPlugins: [],
   serverPlugins: [],
+  cli: [],
+  description: 'Reactory Core Module',
+  grpc: null,
+  passportProviders: [],
+  pdfs: [],
 };
 
 export default ReactoryCoreModule

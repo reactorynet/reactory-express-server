@@ -26,14 +26,10 @@ const morganFormat = ':method :url :status :response-time ms - :res[content-leng
 const morganMiddleware = morgan(morganFormat, {
   stream: {
     write: (message: string) => {
-      // Extract the URL from the log message
-      const urlMatch = message.match(/"(GET|POST|PUT|DELETE|PATCH|OPTIONS) (.*?) HTTP/);
-      if (urlMatch && urlMatch[2]) {
-        const url = urlMatch[2];
-        // Check if the URL matches any of the regex filters
-        if (regexFilters.some((regex: RegExp) => regex.test(url))) {
-          logger.info(message.trim());
-        }
+      // include only messages that match the filters
+      const matched = regexFilters.some(filter => filter.test(message));
+      if(matched === true) { 
+        logger.debug(message);
       }
     }
   }
@@ -48,7 +44,8 @@ const responseBodyCaptureMiddleware = (_req: any, res: { send: (body: any) => an
   next();
 };
 
-const configureApp = (app: express.Application) => { 
+const configureApp = (app: express.Application) => {
+  logger.info('Configuring Morgan Middleware'); 
   app.use(responseBodyCaptureMiddleware);
   app.use(morganMiddleware);
 }
