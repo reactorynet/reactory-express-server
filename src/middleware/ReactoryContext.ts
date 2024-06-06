@@ -7,7 +7,7 @@ import ReactoryContextProvider from '@reactory/server-core/context/ReactoryConte
  * @param next 
  */
 const ReactoryContextMiddleWare = (req: Express.Request, res: Express.Response, next: Function) => {
-  ReactoryContextProvider(req.session, {}).then((context: Reactory.Server.IReactoryContext) => {
+  ReactoryContextProvider(null,{}).then((context: Reactory.Server.IReactoryContext) => {
     //@ts-ignore
     req.context = context;
     next();

@@ -264,56 +264,7 @@ Environment Settings:
     logger.error(graphError);
   }
 
-  reactoryExpress.set('trust proxy', NODE_ENV === 'development' ? 0 : 1);
-
-  const getSessionStore = () => { 
-
-    switch(process.env.REACTORY_SESSION_STORE) { 
-      case 'file-store': {
-        logger.debug('Using file store for session');
-        const FileStore = require('session-file-store')(session);
-        return new FileStore({
-          path: '/tmp/sessions',
-          ttl: 60 * 5,
-          retries: 0,
-          reapInterval: 60 * 5,
-        });
-      }
-      case 'mongo': {
-        const MongoStore = require('connect-mongo')(session);
-        logger.debug('Using mongo store for session');
-        return new MongoStore({
-          mongooseConnection: mongoose_result.connection,
-          collection: 'reactory_sessions',
-          ttl: 60 * 5,
-          autoRemove: 'native',
-          touchAfter: 24 * 3600,
-        });
-      }
-      default: {
-        logger.debug('Using memory store for session');
-        return new session.MemoryStore();
-      }
-    }
-  }
-
-  // Session should ONLY be used for authentication when authenticating via the
-  // passportjs authentication modules that requires session storage for the
-  // authentication process.
-  const sessionOptions: session.SessionOptions = {
-    name: `${SERVER_ID}.sid`, 
-    secret: SECRET_SAUCE,
-    resave: false,
-    saveUninitialized: false,
-    unset: 'destroy',
-    store: getSessionStore(),
-    cookie: {
-      domain: DOMAIN_NAME,
-      maxAge: 60 * 5 * 1000,                
-    },
-  };
-
-  reactoryExpress.use(session(sessionOptions));
+  reactoryExpress.set('trust proxy', NODE_ENV === 'development' ? 0 : 1);  
   reactoryExpress.use(bodyParser.urlencoded({ extended: false }));
   reactoryExpress.use(bodyParser.json({ limit: MAX_FILE_UPLOAD }));
 

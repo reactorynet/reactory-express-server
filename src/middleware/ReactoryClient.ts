@@ -21,7 +21,6 @@ const bypassUri = [
   '/cdn/themes/',
   '/cdn/ui/',
   '/favicon.ico',
-  '/auth/'
 ];
 
 
@@ -45,13 +44,8 @@ const bypassUri = [
 const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: Function) => {
 
   const { headers, query, context } = req;
-  let clientId = headers['x-client-key'];
-  let clientPwd = headers['x-client-pwd'];
-  
-  if (isNil(clientId) === true) clientId = query['x-client-key'] as string; 
-  if (isNil(clientPwd) === true) clientPwd = query['x-client-pwd'] as string;
 
-  let bypass = false;
+  let bypass: boolean = false;
   if (req.originalUrl) {
     bypass = bypassUri.some(uri => req.originalUrl.includes(uri));
   }
@@ -59,6 +53,46 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
   if (bypass === true) {
     next();
     return;
+  }
+
+  let clientId: string = headers['x-client-key'] as string;
+  let clientPwd: string = headers['x-client-pwd'] as string;
+  
+  if( isNil(clientId) === true && 
+      isNil(clientPwd) === true) {
+        const queryKeys = Object.keys(query);
+        if(queryKeys.includes('x-client-key') === true) {
+          clientId = decodeURIComponent(query['x-client-key'] as string);
+        }
+
+        if(queryKeys.includes('x-client-pwd') === true) {
+          clientPwd = decodeURIComponent(query['x-client-pwd'] as string);
+        }
+  }
+  //check if session storage is used
+  if(isNil(clientId) === true) { 
+    const { session } = req;
+    if(isNil(session) === false ){
+      const sessionKeys = Object.keys(session);
+      if(sessionKeys.includes('x-client-key') === true) {
+        // @ts-ignore
+        clientId = session['x-client-key'];
+      }
+      if(sessionKeys.includes('x-client-pwd') === true) {
+      // @ts-ignore
+      clientPwd = session['x-client-pwd'];
+      }
+
+      if(sessionKeys.includes('authState') === true ) {
+        //@ts-ignore
+        const state = session['authState'];
+        const stateData = encoder.decodeState(state);
+        if(isNil(stateData) === false) {
+          clientId = stateData['x-client-key'];
+          clientPwd = stateData['x-client-pwd'];
+        }
+      }
+    }
   }
 
   if (isNil(clientId) === true || clientId === '') {
@@ -71,9 +105,8 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
     try {
       ReactoryClient.findOne({ key: clientId }).then((clientResult: any) => {
         if (isNil(clientResult) === true ) { 
-          logger.warning(`ReactoryClientAuthenticationMiddleware:: ${clientId} no credentials / configuration entry found.`)
           res.status(401).send({ 
-            error: 'Credentials Invalid.' });
+            error: 'Credentials Invalid' });
           return;
         } 
         if (clientResult.validatePassword(clientPwd) === false) {

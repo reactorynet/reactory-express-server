@@ -1,6 +1,8 @@
 import express from 'express';
 import ReactoryClientMiddleware from './ReactoryClient';
 import ReactoryContextMiddleWare from './ReactoryContext';
+import ReactorySessionMiddleware from './ReactorySession';
+
 import configureMorgan from './Morgan';
 
 const {
@@ -8,7 +10,8 @@ const {
 } = process.env;
 
 const configureMiddleware = (app: express.Application) => {
-  // load the context middleware first.
+  // configure the session middleware first.
+  ReactorySessionMiddleware(app);
   // This will set the context of the request whether
   // the client is authenticated or not.
   app.use(ReactoryContextMiddleWare);

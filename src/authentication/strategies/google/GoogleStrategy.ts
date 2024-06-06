@@ -22,12 +22,14 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
   clientSecret: GOOGLE_CLIENT_SECRET,
   callbackURL: GOOLGE_CALLBACK_URL,
   passReqToCallback: true,
-}, async (req: Reactory.Server.ReactoryExpressRequest, authority: string, profile: any, options: any, done: OnDoneCallback) => {
+}, async (req: Reactory.Server.ReactoryExpressRequest, 
+    authority: string, 
+    profile: any, 
+    options: any, 
+    done: OnDoneCallback) => {
   // This callback function is called when the user has successfully authenticated with Google.
   // The `profile` object contains information about the authenticated user.
-  // You can use this information to find or create a corresponding user in your database.
-  // Once you've found or created a user, you can call the `done` function to indicate success.
-
+  
   const email = profile.emails && profile.emails[0].value;
   const googleId = profile.id;
   const { name, displayName } = profile;
@@ -36,7 +38,7 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
   if(!context.partner) {
     // check if we have oauthState in the session
     // @ts-ignore
-    if(!session.oauthState) {
+    if(!session.authState) {
       return done(new Error('Invalid state'), false);
     }
     // @ts-ignore
@@ -107,16 +109,14 @@ export const useGoogleRoutes = (app: Application) => {
   app.get(
     '/auth/google/start', 
     (req: Reactory.Server.ReactoryExpressRequest, res: Response, next) => {
-
-      logger.debug('Starting Google OAuth flow');
-
       try {
         const state = encoder.encodeState({
           "x-client-key": req.query['x-client-key'],
           "x-client-pwd": req.query['x-client-pwd'],
+          "flow": "google"
         });
         // @ts-ignore
-        req.session.oauthState = state;
+        req.session.authState = state;
         passport.authenticate('google', { 
           scope: [
             'openid', 'email', 'profile'
@@ -138,6 +138,11 @@ export const useGoogleRoutes = (app: Application) => {
   app.get(
     '/auth/google/callback', (req: Reactory.Server.ReactoryExpressRequest, res: Response) => {
       const { context } = req;
+      // check if we have oauthState in the session
+      if(!req.session.authState) { 
+        res.status(401).send({ error: 'Invalid state' });
+      }
+
       let failureRedirectUrl = '/auth/google/failure';
       if(context && context.partner) { 
         failureRedirectUrl = `${context.partner.siteUrl}/auth/google/failure`;

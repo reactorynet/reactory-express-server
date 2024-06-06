@@ -58,7 +58,11 @@ describe('Google OAuth Strategy', () => {
         });
               
     const response = await request
-      .get(`auth/google/start?x-client-key=${REACTORY_CLIENT_KEY}&x-client-pwd=${REACTORY_CLIENT_PWD}`);
+      .get(`auth/google/start`)
+      .query({
+        'x-client-key': REACTORY_CLIENT_KEY,
+        'x-client-pwd': REACTORY_CLIENT_PWD
+      });
 
     expect(response.status)
       .toBe(302);
@@ -66,7 +70,7 @@ describe('Google OAuth Strategy', () => {
       .toContain(mockLocation);
   }, 10000);
 
-  test('should produce a 401 error page if client key is missing or invalid', async () => { 
+  test('should produce a 401 error page if client key is invalid', async () => { 
     const response = await request
       .get('auth/google/start')
       .query({
@@ -75,15 +79,27 @@ describe('Google OAuth Strategy', () => {
       });
 
     expect(response.status).toBe(401);
-    expect(response.body.error).toBe('no-client-id');    
+    expect(response.body.error).toBe('Credentials Invalid');    
   });
 
+  test('should produce a 401 error page if client pwd is invalid', async () => { 
+    const response = await request
+      .get('auth/google/start')
+      .query({
+        'x-client-key': REACTORY_CLIENT_KEY,
+        'x-client-pwd': 'invalidClientPwd'
+      });
+
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe('Credentials Invalid');
+  });
 
   test('should handle Google OAuth callback successfully given a valid client and pwd', async () => {
     // given a valid state parameter
     const state = encoder.encodeState({
       "x-client-key": REACTORY_CLIENT_KEY,
       "x-client-pwd": REACTORY_CLIENT_PWD,
+      "flow": "google"
     });
 
     // Mock the token exchange call to Google's OAuth endpoint
