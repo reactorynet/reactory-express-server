@@ -1,6 +1,5 @@
 'use strict'
 import fs from 'fs';
-
 import moment from 'moment';
 import cors from 'cors';
 import path from 'path';
@@ -11,32 +10,20 @@ import express, { Application, NextFunction } from 'express';
 import session from 'express-session';
 import bodyParser from 'body-parser';
 import passport from 'passport';
-import i18next from 'i18next';
 import i18nextHttp from 'i18next-http-middleware';
-import i18nextFSBackend from 'i18next-fs-backend';
 import { ApolloServer, ApolloServerExpressConfig, makeExecutableSchema, SchemaDirectiveVisitor } from 'apollo-server-express';
-
 import flash from 'connect-flash';
-/**
- * Disabling the linting for the import statements
- * as eslint is not configure to deal with the
- * correct aliasing configured in tsconfig and package.json
- */
 import mongooseConnection from '@reactory/server-core/models/mongoose';
 import corsOptions from '@reactory/server-core/express/cors';
-import reactoryClientAuthenticationMiddleware from '@reactory/server-core/middleware/ReactoryClient';
-import ReactoryContextMiddleWare from '@reactory/server-core/middleware/ReactoryContext';
+import configureMiddleWare from '@reactory/server-core/middleware';
 import userAccountRouter from '@reactory/server-core/useraccount';
-import reactory from '@reactory/server-core/reactory';
 import froala from '@reactory/server-core/froala';
-
 import resources from '@reactory/server-core/resources';
 import typeDefs from '@reactory/server-core/models/graphql/types';
 import resolvers from '@reactory/server-core/models/graphql/resolvers';
 import directiveProviders from '@reactory/server-core/models/graphql/directives';
-
 import { ConfigureAuthentication } from '@reactory/server-core/authentication';
-import workflow from '@reactory/server-core/workflow';
+import workflow, { workflowRunner, WorkFlowRunner } from '@reactory/server-core/workflow';
 import pdf from '@reactory/server-core/pdf';
 import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
@@ -44,7 +31,6 @@ import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
 import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
 import AuthHelper from '@reactory/server-core/authentication/strategies/helpers';
-// @ts-ignore
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
 import colors from 'colors/safe';
 import http from 'http';
@@ -79,14 +65,6 @@ const {
   MODE,
   NODE_ENV = 'development',
   DOMAIN_NAME,
-  OAUTH_APP_ID,
-  OAUTH_APP_PASSWORD,
-  OAUTH_REDIRECT_URI,
-  OAUTH_SCOPES,
-  OAUTH_AUTHORITY,
-  OAUTH_ID_METADATA,
-  OAUTH_AUTHORIZE_ENDPOINT,
-  OAUTH_TOKEN_ENDPOINT,
   SECRET_SAUCE,
   SERVER_ID,
   MAX_FILE_UPLOAD = '20mb',
@@ -113,7 +91,13 @@ const hideText = (text: string = '') => {
 /**
  * The main function to start reactory server. 
  */
-export const ReactoryServer = async (): Promise<Application> => {
+export const ReactoryServer = async (): Promise<{ 
+  app: Application, 
+  server: http.Server,
+  apolloServer: ApolloServer,
+  workflowHost: WorkFlowRunner,
+  stop: () => void
+}> => {
 
   let reactoryExpress: Application;
 
@@ -125,7 +109,7 @@ export const ReactoryServer = async (): Promise<Application> => {
   const packageJson = require(`${process.cwd()}/package.json`);
 
   try {
-    mongoose_result = await mongooseConnection.then();
+    mongoose_result = await mongooseConnection();
     logger.debug('✅Connection to mongoose complete');
   } catch (error) {
     logger.error(colors.red(`
@@ -144,7 +128,6 @@ export const ReactoryServer = async (): Promise<Application> => {
     process.exit(0);
   }
 
-
   process.on('unhandledRejection', (error) => {
     // Will print "unhandledRejection err is not defined"
     logger.error('unhandledRejection', error);
@@ -152,6 +135,7 @@ export const ReactoryServer = async (): Promise<Application> => {
   });
 
   process.on('SIGINT', () => {
+    workflowRunner.stop();
     logger.info('Shutting Down Reactory Server');
     process.exit(0);
   });
@@ -176,7 +160,6 @@ Environment Settings:
   MODE: ${MODE}
   MONGOOSE: ${MONGOOSE}
   MAX_FILE_UPLOAD (size): ${MAX_FILE_UPLOAD} !NOTE! This affects all file uploads.
-  SECRET_SAUCE: '${hideText(SECRET_SAUCE)}',
   MAIL_REDIRECT_ADDRESS: ${MAIL_REDIRECT_ADDRESS}
 `;
 
@@ -227,8 +210,7 @@ Environment Settings:
   });
       
   reactoryExpress.use('*', cors(corsOptions));
-  reactoryExpress.use(reactoryClientAuthenticationMiddleware);
-  reactoryExpress.use(ReactoryContextMiddleWare);
+  configureMiddleWare(reactoryExpress);
   reactoryExpress.use(i18nextHttp.handle(i18n));
   reactoryExpress.use(
     queryRoot,
@@ -243,6 +225,9 @@ Environment Settings:
   try {
 
     let $schema: GraphQLSchema = makeExecutableSchema({
+      resolverValidationOptions : { 
+        requireResolversForResolveType: false 
+      },
       typeDefs,
       resolvers,
     });
@@ -257,6 +242,7 @@ Environment Settings:
     });
 
     const expressConfig: ApolloServerExpressConfig = {
+      logger: logger,
       schema: $schema,
       context: ReactoryContextProvider,
       uploads: {
@@ -278,56 +264,7 @@ Environment Settings:
     logger.error(graphError);
   }
 
-  reactoryExpress.set('trust proxy', NODE_ENV === 'development' ? 0 : 1);
-
-  const getSessionStore = () => { 
-
-    switch(process.env.REACTORY_SESSION_STORE) { 
-      case 'file-store': {
-        logger.debug('Using file store for session');
-        const FileStore = require('session-file-store')(session);
-        return new FileStore({
-          path: '/tmp/sessions',
-          ttl: 60 * 5,
-          retries: 0,
-          reapInterval: 60 * 5,
-        });
-      }
-      case 'mongo': {
-        const MongoStore = require('connect-mongo')(session);
-        logger.debug('Using mongo store for session');
-        return new MongoStore({
-          mongooseConnection: mongoose_result.connection,
-          collection: 'reactory_sessions',
-          ttl: 60 * 5,
-          autoRemove: 'native',
-          touchAfter: 24 * 3600,
-        });
-      }
-      default: {
-        logger.debug('Using memory store for session');
-        return new session.MemoryStore();
-      }
-    }
-  }
-
-  // Session should ONLY be used for authentication when authenticating via the
-  // passportjs authentication modules that requires session storage for the
-  // authentication process.
-  const sessionOptions: session.SessionOptions = {
-    name: `${SERVER_ID}.sid`, 
-    secret: SECRET_SAUCE,
-    resave: false,
-    saveUninitialized: false,
-    unset: 'destroy',
-    store: getSessionStore(),
-    cookie: {
-      domain: DOMAIN_NAME,
-      maxAge: 60 * 5 * 1000,                
-    },
-  };
-
-  reactoryExpress.use(session(sessionOptions));
+  reactoryExpress.set('trust proxy', NODE_ENV === 'development' ? 0 : 1);  
   reactoryExpress.use(bodyParser.urlencoded({ extended: false }));
   reactoryExpress.use(bodyParser.json({ limit: MAX_FILE_UPLOAD }));
 
@@ -359,8 +296,7 @@ Environment Settings:
     // load the routes from the modules and the core.
     // i.e. 
     // RouteConfig.Configure(reactoryExpress);
-    // see ticket 
-    // reactory-server-express/docs/sdlc/todo/maintenance/RSE-MAINT-19052024-03_refactor_routing_configuration.md
+    // see ticket https://github.com/reactorynet/reactory-express-server/issues/15
     reactoryExpress.use('/froala', froala);
     reactoryExpress.use('/deliveries', froala);
     reactoryExpress.use('/workflow', workflow);
@@ -377,7 +313,7 @@ Environment Settings:
       bodyParser.urlencoded({ extended: true }),
       express.static(APP_DATA_ROOT || publicFolder));
 
-    const startExpressServer = (): Promise<void> => {
+    const startExpressServer = (): Promise<http.Server> => {
       return new Promise((resolve, reject) => {
         expressServer = reactoryExpress.listen(typeof API_PORT === "string" ? parseInt(API_PORT) : API_PORT, SERVER_IP, () => {
           logger.info(`\n\n${asciilogo}\n\n`);
@@ -399,12 +335,28 @@ Environment Settings:
 
           global.REACTORY_SERVER_STARTUP = new Date();
           amq.raiseSystemEvent('server.startup.complete');
-          resolve();
+          resolve(expressServer);
         }).on("error", (err) => {
           logger.error(colors.red("Could not successfully start the express server"), err);
           reject(err);
         });
       });
+    };
+
+    const stopServer = () => { 
+      if(expressServer) { 
+        expressServer.close(() => {
+          logger.info('Express Server Stopped');
+        });
+      }
+      if(workflowRunner) {
+        workflowRunner.stop();
+        logger.info('Workflow Host Stopped');
+      }
+      if(mongoose_result) {
+        mongoose_result.connection.close();
+        logger.info('Mongoose Connection Closed');
+      }
     };
 
     try {
@@ -414,7 +366,13 @@ Environment Settings:
       process.exit(-1);
     }
     
-    return reactoryExpress;
+    return { 
+      app: reactoryExpress,
+      server: expressServer,
+      apolloServer,
+      workflowHost: workflowRunner,
+      stop: stopServer
+    }
   } catch (startupError) {
     logger.error(colors.red('Server was unable to start successfully.'), startupError);
     process.exit(-1);

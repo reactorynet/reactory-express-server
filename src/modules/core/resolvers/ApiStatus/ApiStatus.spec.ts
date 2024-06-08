@@ -1,4 +1,4 @@
-import chai from 'chai';
+import 'chai';
 import supertest from 'supertest';
 import { 
   graph
@@ -22,7 +22,7 @@ describe('Reactory API Status Query', () => {
   });
 
   it('Should return an unauthorized access status code', (done) => {    
-    request.post('/api')
+    request.post('api')
     .set('Accept', 'application/json')
     .send({ query: queries.apiStatusQuery })
     .expect(401)

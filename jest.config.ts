@@ -83,6 +83,7 @@ export default async (): Promise<JestConfigWithTsJest> => {
     displayName: 'reactory-server',
     modulePaths: ['<rootDir>/src'],
     testEnvironment: 'node',
+    detectOpenHandles: true,
     transform: {
       '^.+\\.[jt]sx?$': [
         'ts-jest', transformerOptions,

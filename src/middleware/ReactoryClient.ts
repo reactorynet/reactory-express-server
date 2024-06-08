@@ -4,8 +4,15 @@ import {
   encoder 
 } from '@reactory/server-core/utils';
 import logger from '@reactory/server-core/logging';
-import { Request, Response } from 'express';
+import { Request, Response, Application } from 'express';
 
+// Reconsider the use of this approach. 
+// We want to ensure that the server bypass is not used
+// and that client id and secret are used for authentication
+// for routes to content folders we want to ensure that requests
+// for images and other static content are not authenticated with headers
+// or query parameters, but we should check the host and validate the request
+// based on the host.
 const bypassUri = [
   '/cdn/content/',
   '/cdn/plugins/',
@@ -14,7 +21,6 @@ const bypassUri = [
   '/cdn/themes/',
   '/cdn/ui/',
   '/favicon.ico',
-  '/auth/'
 ];
 
 
@@ -35,24 +41,11 @@ const bypassUri = [
  * @param next 
  * @returns 
  */
-const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, next: Function) => {
+const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: Function) => {
 
-  const { headers, query, params, session } = req;
-  let clientId = headers['x-client-key'];
-  let clientPwd = headers['x-client-pwd'];
-  let serverBypass = headers['x-reactory-pass'];
+  const { headers, query, context } = req;
 
-  if (isNil(clientId) === true) clientId = params.clientId;
-  if (isNil(clientId) === true) clientId = query.clientId;
-  if (isNil(clientId) === true) clientId = query['x-client-key']; 
-       
-  if (isNil(clientPwd) === true) clientPwd = params.secret;
-  if (isNil(clientPwd) === true) clientPwd = query.secret;
-  if (isNil(clientPwd) === true) clientPwd = query['x-client-pwd'];
-
-  logger.debug(`ReactoryClientAuthenticationMiddleware:: Client key: [${clientId}], Client Token: [${clientPwd}], Original Url: ${req.originalUrl}`, { query: req.query, params: req.params, method: req.method });
-
-  let bypass = false;
+  let bypass: boolean = false;
   if (req.originalUrl) {
     bypass = bypassUri.some(uri => req.originalUrl.includes(uri));
   }
@@ -60,6 +53,46 @@ const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, nex
   if (bypass === true) {
     next();
     return;
+  }
+
+  let clientId: string = headers['x-client-key'] as string;
+  let clientPwd: string = headers['x-client-pwd'] as string;
+  
+  if( isNil(clientId) === true && 
+      isNil(clientPwd) === true) {
+        const queryKeys = Object.keys(query);
+        if(queryKeys.includes('x-client-key') === true) {
+          clientId = decodeURIComponent(query['x-client-key'] as string);
+        }
+
+        if(queryKeys.includes('x-client-pwd') === true) {
+          clientPwd = decodeURIComponent(query['x-client-pwd'] as string);
+        }
+  }
+  //check if session storage is used
+  if(isNil(clientId) === true) { 
+    const { session } = req;
+    if(isNil(session) === false ){
+      const sessionKeys = Object.keys(session);
+      if(sessionKeys.includes('x-client-key') === true) {
+        // @ts-ignore
+        clientId = session['x-client-key'];
+      }
+      if(sessionKeys.includes('x-client-pwd') === true) {
+        // @ts-ignore
+        clientPwd = session['x-client-pwd'];
+      }
+
+      if(sessionKeys.includes('authState') === true ) {
+        //@ts-ignore
+        const state = session['authState'];
+        const stateData = encoder.decodeState(state);
+        if(isNil(stateData) === false) {
+          clientId = stateData['x-client-key'];
+          clientPwd = stateData['x-client-pwd'];
+        }
+      }
+    }
   }
 
   if (isNil(clientId) === true || clientId === '') {
@@ -72,42 +105,34 @@ const ReactoryClientAuthenticationMiddleware = (req: Request, res: Response, nex
     try {
       ReactoryClient.findOne({ key: clientId }).then((clientResult: any) => {
         if (isNil(clientResult) === true ) { 
-          logger.debug(`ReactoryClientAuthenticationMiddleware:: ${clientId} no credentials / configuration entry found.`)
           res.status(401).send({ 
-            error: `X-Client-Key / clientId ${clientId} Credentials Invalid. Please check that your client id is correct` });
+            error: 'Credentials Invalid' });
+          return;
+        } 
+        if (clientResult.validatePassword(clientPwd) === false) {
+          res.status(401).send({ error: 'Credentials Invalid' });
           return;
         }
-
-        if (isNil(serverBypass) === false) {
-          logger.debug('Validating Server Bypass');
-          //validate  
-          if (serverBypass === `${clientResult.password}+${clientResult.salt}`) {
-            logger.debug('Validating Server Bypass - Passed');
-            req.partner = clientResult;
-            next();
-          } else {
-            res.status(401).send({ error: 'Your Server ByPass Failed', code: '401' });
-          }
-        } else {
-          if (clientResult.validatePassword(clientPwd) === false) {
-            res.status(401).send({ error: 'Invalid api client credentials' });
-            return;
-          }
-          else {
-            req.partner = clientResult;
-            next();
-          }
+        else {
+          // @ts-ignore
+          req.partner = clientResult;
+          context.partner = clientResult;
+          next();
         }
       }).catch((clientGetError) => {
         logger.error(`Error loading ${clientId}`, clientGetError);
-        res.status(401).send({ error: 'Invalid api client credentials [ERR]' });
+        res.status(401).send({ error: 'Credentials Invalid' });
       });
 
     } catch (loadClientError) {
       logger.error(`Error loading the client from id ${clientId}`, loadClientError);
-      res.status(503).send({ error: 'Server could not validate the client credentials' });
+      res.status(503).send({ error: 'Server Error' });
     }
   }
 };
+
+export const configureApp = (app: Application) => { 
+  app.use(ReactoryClientAuthenticationMiddleware);
+}
 
 export default ReactoryClientAuthenticationMiddleware;
