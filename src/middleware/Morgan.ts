@@ -10,7 +10,8 @@ const filters = [
   '/cdn/themes/',
   '/cdn/ui/',
   '/favicon.ico',
-  '/auth/'
+  '/auth/',
+  'google'
 ];
 
 const {
@@ -23,7 +24,7 @@ const regexFilters = allFilters.map(pattern => new RegExp(pattern));
 
 const morganFormat = ':method :url :status :response-time ms - :res[content-length]';
 
-const morganMiddleware = morgan(morganFormat, {
+const morganMiddleware = morgan('combined', {  
   stream: {
     write: (message: string) => {
       // include only messages that match the filters

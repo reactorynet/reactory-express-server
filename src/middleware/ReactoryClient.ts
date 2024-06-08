@@ -79,8 +79,8 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
         clientId = session['x-client-key'];
       }
       if(sessionKeys.includes('x-client-pwd') === true) {
-      // @ts-ignore
-      clientPwd = session['x-client-pwd'];
+        // @ts-ignore
+        clientPwd = session['x-client-pwd'];
       }
 
       if(sessionKeys.includes('authState') === true ) {

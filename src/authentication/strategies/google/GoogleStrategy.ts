@@ -3,7 +3,7 @@ import {
   encoder 
 } from '@reactory/server-core/utils';
 //@ts-ignore
-import GoogleStrategy from 'passport-google-oidc';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import Helpers, { OnDoneCallback } from '../helpers';
 import { Application, Response } from 'express';
 import passport from 'passport';
@@ -14,22 +14,25 @@ const {
   GOOGLE_CLIENT_ID = 'GOOGLE_CLIENT_ID',
   GOOGLE_CLIENT_SECRET = 'GOOGLE_CLIENT_SECRET',
   GOOLGE_CALLBACK_URL = 'http://localhost:4000/auth/google/callback',
+  GOOGLE_OAUTH_SCOPE = 'openid email profile https://www.googleapis.com/auth/userinfo.profile',
 } = process.env
-
 
 const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
   clientID: GOOGLE_CLIENT_ID,
   clientSecret: GOOGLE_CLIENT_SECRET,
   callbackURL: GOOLGE_CALLBACK_URL,
   passReqToCallback: true,
+  scope: GOOGLE_OAUTH_SCOPE.split(' '),
 }, async (req: Reactory.Server.ReactoryExpressRequest, 
-    authority: string, 
+    accessToken: string, 
+    refreshToken: any, 
     profile: any, 
-    options: any, 
     done: OnDoneCallback) => {
   // This callback function is called when the user has successfully authenticated with Google.
   // The `profile` object contains information about the authenticated user.
-  
+
+  // const googleProfile = await getGoogleProfile(authority);
+  logger.info('Google Profile', { profile })
   const email = profile.emails && profile.emails[0].value;
   const googleId = profile.id;
   const { name, displayName } = profile;
@@ -60,49 +63,38 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
     context.partner = partner;
   }
   const userService  = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
-
-  const user = await userService.findUserWithEmail(email);
+  const authProps = {
+    googleId,
+    displayName,
+    accessToken,
+  }
+  let user = await userService.findUserWithEmail(email);
   if(!user) {
-    const newUser = await userService.createUser({
+    user = await userService.createUser({
       email,
       firstName: name.givenName,
-      lastName: name.familyName,      
-    });
-
-    newUser.authentications.push({ 
-      provider: 'google',
-      lastLogin: new Date(),
-      props: {
-        googleId,
-        displayName,
-      }
-    });
-
-    await newUser.save()
-
-    Helpers.generateLoginToken(newUser).then((loginToken: string) => { 
-      return done(null, loginToken);
-    });
-
-  } else {
-    const googleAuth = user.authentications.find((auth) => auth.provider === 'google');
-    if(!googleAuth) {
-      user.authentications.push({ 
-        provider: 'google',
-        lastLogin: new Date(),
-        props: {
-          googleId,
-          displayName,
-        }
-      });
-
-      await user.save();
-    }
-
-    Helpers.generateLoginToken(user).then((loginToken: string) => { 
-      return done(null, loginToken);
+      lastName: name.familyName,
     });
   }
+  user.avatar = profile.photos && profile.photos[0].value;
+  user.avatarProvider = 'google';
+  const googleAuth = user.authentications.find(auth => auth.provider === 'google');
+  if(!googleAuth) {
+    user.authentications.push({ 
+      provider: 'google',
+      lastLogin: new Date(),
+      props: authProps
+    });
+  } else {
+    googleAuth.lastLogin = new Date();
+    googleAuth.props = authProps;
+  }
+
+  await user.save();
+  Helpers.generateLoginToken(user).then((loginToken) => { 
+    return done(null, loginToken);
+  });
+
 });
 
 export const useGoogleRoutes = (app: Application) => { 
@@ -118,9 +110,7 @@ export const useGoogleRoutes = (app: Application) => {
         // @ts-ignore
         req.session.authState = state;
         passport.authenticate('google', { 
-          scope: [
-            'openid', 'email', 'profile'
-          ],
+          scope: GOOGLE_OAUTH_SCOPE.split(' '),
           passReqToCallback: true,
           state
         })(req, res, next);
@@ -138,27 +128,34 @@ export const useGoogleRoutes = (app: Application) => {
   app.get(
     '/auth/google/callback', (req: Reactory.Server.ReactoryExpressRequest, res: Response) => {
       const { context } = req;
-      // check if we have oauthState in the session
-      if(!req.session.authState) { 
-        res.status(401).send({ error: 'Invalid state' });
-      }
-
-      let failureRedirectUrl = '/auth/google/failure';
-      if(context && context.partner) { 
-        failureRedirectUrl = `${context.partner.siteUrl}/auth/google/failure`;
-      }
-
-      const onCompletion = (err: string, user: any) => {
+      const failureRedirectUrl = `${context.partner.siteUrl}/auth/google/failure`;
+      
+      const onCompletion = (err: string, user: {
+        id: string,
+        firstName: string,
+        lastName: string,
+        token: string,
+      } | boolean) => {
         if(err) {
+          logger.error('An error occurred while authenticating with Google', err);
           res.status(500).send({ error: 'An error occurred while trying to authenticate with Google', err });
         } else {
-          res.status(301).redirect(`${context.partner.siteUrl}?auth_token=${user.token}`);
+          if(!user) { 
+            res.status(302)
+              .redirect(failureRedirectUrl);
+
+          } else {
+            res.status(302)
+              .redirect(`${context.partner.siteUrl}?auth_token=${(user as { token: string }).token}`);
+          }
+          
         }
       };
 
       passport.authenticate('google', { 
         failureRedirect: failureRedirectUrl,
         passReqToCallback: true,
+        scope: GOOGLE_OAUTH_SCOPE.split(' '),
       }, onCompletion)(req, res);
     });
 };

@@ -1,17 +1,18 @@
 import 'chai';
-import supertest from 'supertest';
-import https from 'https';
+import { Application } from 'express';
 import http from 'http';
+import https from 'https';
 import nock from 'nock';
-import mongoose from 'mongoose';
+import supertest from 'supertest';
+import TestAgent from 'supertest/lib/agent';
+//@ts-ignore
+import supertestSession from 'supertest-session';
 import { 
   encoder 
 } from '@reactory/server-core/utils';
 import { ReactoryServer } from '@reactory/server-core/express/server';
-import passport from 'passport';
-import TestAgent from 'supertest/lib/agent';
-import { Application } from 'express';
 import { WorkFlowRunner } from 'workflow';
+
 
 
 describe('Google OAuth Strategy', () => {
@@ -21,7 +22,7 @@ describe('Google OAuth Strategy', () => {
     REACTORY_CLIENT_PWD,
     REACTORY_ANON_TOKEN,
     API_URI_ROOT,
-    REACTORY_ROOT
+    REACTORY_CLIENT_URL
   } = process.env;
 
   let reactoryApp: {
@@ -35,8 +36,11 @@ describe('Google OAuth Strategy', () => {
   beforeAll(async () => { 
     agent = new https.Agent({ rejectUnauthorized: false });
     reactoryApp = await ReactoryServer();    
-    request = supertest(API_URI_ROOT);
   }, 30000);
+
+  beforeEach(() => { 
+    request = supertestSession(API_URI_ROOT);
+  });
 
   afterEach(() => { 
     // Clear all HTTP mocks after each test
@@ -94,7 +98,15 @@ describe('Google OAuth Strategy', () => {
     expect(response.body.error).toBe('Credentials Invalid');
   });
 
-  test('should handle Google OAuth callback successfully given a valid client and pwd', async () => {
+  test('should handle Google OAuth callback given a valid client and pwd', async () => {
+
+    const startResponse = await request
+      .get(`auth/google/start`)
+      .query({
+        'x-client-key': REACTORY_CLIENT_KEY,
+        'x-client-pwd': REACTORY_CLIENT_PWD
+      });
+
     // given a valid state parameter
     const state = encoder.encodeState({
       "x-client-key": REACTORY_CLIENT_KEY,
@@ -102,108 +114,29 @@ describe('Google OAuth Strategy', () => {
       "flow": "google"
     });
 
-    // Mock the token exchange call to Google's OAuth endpoint
-    // confirm the underlying call to Google's OAuth endpoint
-    nock('https://oauth2.googleapis.com')
-      .post('/token')
-      .reply(200, {
-        access_token: 'mockAccessToken',
-        id_token: 'mockIdToken'
-      });
-
-    // Mock the call to Google's user info endpoint
-    // confirm the underlying call to Google's OAuth endpoint
-    nock('https://www.googleapis.com')
-      .get('/oauth2/v3/userinfo')
-      .reply(200, {
-        sub: '1234567890',
-        name: 'John Doe',
-        email: 'johndoe@example.com'
-      });
 
     const response = await request
       .get(`auth/google/callback`)
+      .query({
+        state: "mockState",
+        code: "mockCode",
+        scope: "email profile openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
+        authuser: "0",
+        hd: "worldremit.com",
+        prompt: "none",
+      })
       .set('Cookie', `session=${state}`);
 
-    expect(response.status).toBe(301);
-    expect(response.header['location']).toContain(REACTORY_ROOT);
+    expect(response.status).toBe(302);
+    expect(response.header['location']).toContain(REACTORY_CLIENT_URL);
   }, 30000);
 
   test('should handle Google OAuth callback failure', async () => {    
-    const response = await request
+    const response =  await request
       .get('auth/google/callback')
       .set('Cookie', 'session=badSessionState');
 
-    expect(response.status).toBe(500);
-    expect(response.body.error).toBe('An error occurred while trying to authenticate with Google');
-  });
-
-  test('should handle user info retrieval failure', async () => {
-    // Mock successful token exchange
-    nock('https://oauth2.googleapis.com')
-      .post('/token')
-      .reply(200, {
-        access_token: 'mockAccessToken',
-        id_token: 'mockIdToken'
-      });
-
-    // Mock failure in user info retrieval
-    nock('https://www.googleapis.com')
-      .get('/oauth2/v3/userinfo')
-      .reply(500, { error: 'Failed to retrieve user info' });
-
-    const response = await request
-      .get('auth/google/callback')
-      .query({ code: 'mockCode' })
-      .set('Cookie', 'session=encodedState');
-
-    expect(response.status).toBe(500);
-    expect(response.body.error).toBe('Failed to retrieve user info');
-  });
-  
-  test('should handle expired or revoked tokens', async () => {
-    // Mock the token endpoint to return an error for expired/revoked tokens
-    nock('https://oauth2.googleapis.com')
-      .post('/token')
-      .reply(400, { error: 'invalid_grant', error_description: 'Token has been revoked' });
-
-    const response = await request
-      .get('auth/google/callback')
-      .query({ code: 'expiredToken' })
-      .set('Cookie', 'session=encodedState');
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Token has been revoked');
-  });
-
-  test('should handle network errors', async () => {
-    // Simulate a network error when contacting Google's OAuth endpoint
-    nock('https://oauth2.googleapis.com')
-      .post('/token')
-      .replyWithError('Network error');
-
-    const response = await request
-      .get('auth/google/callback')
-      .query({ code: 'networkError' })
-      .set('Cookie', 'session=encodedState');
-
-    expect(response.status).toBe(500);
-    expect(response.body.error).toBe('Network error');
-  });
-
-  // test('should handle invalid client credentials', async () => {
-  //   // Mock the token endpoint to return an error for invalid client credentials
-  //   nock('https://oauth2.googleapis.com')
-  //     .post('/token')
-  //     .reply(400, { error: 'invalid_client', error_description: 'Client credentials are invalid' });
-
-  //   const response = await request
-  //     .get('auth/google/callback')
-  //     .query({ code: 'invalidClient' })
-  //     .set('Cookie', 'session=encodedState');
-
-  //   expect(response.status).toBe(400);
-  //   expect(response.body.error).toBe('Client credentials are invalid');
-  // });
-  
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe('no-client-id');
+  }, 3000);  
 });

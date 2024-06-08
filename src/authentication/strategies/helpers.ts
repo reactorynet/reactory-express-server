@@ -71,8 +71,6 @@ export default class Helpers {
   static jwtMake = (payload: any) => { return jwt.encode(payload, jwtSecret); };
 
   static jwtTokenForUser = (user: Reactory.Models.IUser, options = {}) => {
-    logger.debug(`Generating jwtToken for user ${user.email || user.id}`)
-
     if (isNil(user)) throw new UserValidationError('User object cannot be null', { context: 'jwtTokenForUser' });
 
     const {
@@ -121,7 +119,12 @@ export default class Helpers {
     return user.save();
   }
 
-  static generateLoginToken = (user: Reactory.Models.IUserDocument, ip = 'none') => {
+  static generateLoginToken = (user: Reactory.Models.IUserDocument, ip = 'none'): Promise<{
+    id: string,
+    firstName: string,
+    lastName: string,
+    token: string,
+  }> => {
     logger.info(`generating Login token for user ${user.firstName} ${user.lastName}`);
     return new Promise((resolve, reject) => {
       user.lastLogin = moment().valueOf(); // eslint-disable-line
