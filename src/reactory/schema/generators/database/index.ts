@@ -1,5 +1,5 @@
-import MySQLFormGenerator from './mysql';
-import SqlServerFormGenerator from './sqlserver';
+import MySQLFormGenerator from './mysql/mysql';
+import SqlServerFormGenerator from './sqlserver/sqlserver';
 import { ReactoryFormGenerator } from '../types';
 
 let generators: ReactoryFormGenerator[] = [];
