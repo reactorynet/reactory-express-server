@@ -16,9 +16,6 @@ import { PostgresOptions } from "./types";
         if(!options) {
           throw new Error('No options provided');
         }
-
-        
-
         return forms;
     }
     

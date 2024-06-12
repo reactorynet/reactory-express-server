@@ -5,6 +5,7 @@ import {
   IReactoryComponentFeature,
 } from "@reactory/reactory-core"; // import necessary types
 import { service } from "@reactory/server-core/application/decorators/service";
+import { on } from "process";
 
 @service({
   id: "core.ReactoryModelRegistry@1.0.0",
@@ -56,8 +57,13 @@ export class ReactoryModelRegistry
     const that = this;
     if(this.context && Array.isArray(this.context?.modules) === true) {
       this.context.modules.forEach((module) => {
-        module?.models?.forEach((model) => {
+        module?.models?.forEach(async (model) => {
           that.register(model);
+          if ((model as Reactory.Service.IReactoryStartupAwareService).onStartup && 
+            typeof (model as Reactory.Service.IReactoryStartupAwareService).onStartup === 'function') { 
+              (model as Reactory.Service.IReactoryStartupAwareService).onStartup.bind(that);
+            await (model as Reactory.Service.IReactoryStartupAwareService).onStartup();
+          }
         });
       });     
     }
@@ -98,7 +104,7 @@ export class ReactoryModelRegistry
           m.version === model.version
       )
     ) {
-      if (overwrite) {
+      if (overwrite === true) {
         this.modelRegistry.splice(
           this.modelRegistry.findIndex((m) => m.name === model.name),
           1

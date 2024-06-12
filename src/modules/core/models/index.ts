@@ -1,3 +1,5 @@
+import { DataSource } from 'typeorm';
+import Audit from './Audit';
 import Application from './Application';
 import BusinessUnit from './BusinessUnit';
 import ClientComponent from './ClientComponent';
@@ -29,6 +31,24 @@ import Template from './Template';
 import Theme from './Theme';
 import User from './User';
 import UserDemographic from './UserDemographics';
+import Reactory from '@reactory/reactory-core';
+import logger from '@reactory/server-core/logging';
+import { encoder } from 'utils';
+import Hash from 'utils/hash';
+
+
+export const PostgresDataSource = new DataSource({ 
+  type: 'postgres',
+  host: process.env.REACTORY_POSTGRES_HOST || 'localhost',
+  port: parseInt(process.env.REACTORY_POSTGRES_PORT || '5432'),
+  username: process.env.REACTORY_POSTGRES_USER || 'reactory',
+  password: process.env.REACTORY_POSTGRES_PASSWORD || 'reactory',
+  database: process.env.REACTORY_POSTGRES_DB || 'reactory',
+  synchronize: true,
+  entities: [ Audit ]
+});
+
+
 
 export {
   Cache,
@@ -38,6 +58,8 @@ export {
 };
 
 type CoreModelTypes =
+  typeof PostgresDataSource |
+  typeof Audit |
   typeof Application |
   typeof BusinessUnit |
   typeof ClientComponent |
@@ -72,13 +94,61 @@ type CoreModelTypes =
   typeof User |
   typeof UserDemographic;
 
+
+
 export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTypes>[] = [
+  {
+    nameSpace: 'core',
+    name: 'Audit',
+    version: '1.0.0',
+    description: 'Provides an audit model for the server',
+    stem: 'audit',
+    tags: ['audit', 'core', 'system'],
+    component: Audit,
+    domain: Reactory.ComponentDomain.model,
+    overwrite: false,
+    roles: [],
+    features: [
+      {
+        feature: 'audit',
+        action: ["create", "read" ],
+        description: 'Audit feature allows for creating and reading of audit records',
+        stem: 'audit',
+        featureType: Reactory.FeatureType.object,
+      }
+    ]
+  },
+  {
+    nameSpace: 'core',
+    name: 'ReactoryPostgresDataSource',
+    version: '1.0.0',
+    description: 'Provides a postgres data source for the reactory core server functionality',
+    stem: 'postgres',
+    tags: ['postgres', 'core', 'system'],
+    component: PostgresDataSource,
+    domain: Reactory.ComponentDomain.model,
+    overwrite: false,
+    onStartup: async () => { 
+      logger.info('Synchronizing Postgres Data Source');
+      await PostgresDataSource.initialize();
+      await PostgresDataSource.synchronize();
+      const repo = PostgresDataSource.getRepository(Audit);
+      const audit = new Audit();
+      audit.user = 'system';
+      audit.action = 'db-sync';
+      audit.source = process.env.SERVER_ID || 'reactory-server-local';
+      audit.createdAt = new Date();
+      audit.signature = Hash(encoder.encodeState(audit)).toString();
+      repo.save(audit);
+      
+      logger.debug('Postgres Data Source Synchronized')
+    }
+  },
   {
     nameSpace: 'core',
     name: 'Application',
     version: '1.0.0',
     description: 'Provides an application model for the server',
-
     stem: 'application',
     tags: ['application', 'core', 'system'],
     component: Application,
@@ -92,7 +162,6 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'BusinessUnit',
     version: '1.0.0',
     description: 'Provides a business unit model for the server',
-
     stem: 'business-unit',
     tags: ['business-unit', 'core', 'system'],
     component: BusinessUnit,
@@ -477,7 +546,6 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'UserDemographics',
     version: '1.0.0',
     description: 'Provides a user demographics model for the server',
-
     stem: 'user-demographics',
     tags: ['user-demographics', 'core', 'system'],
     component: UserDemographic,
