@@ -266,7 +266,7 @@ const main = async (vargs: string[]): Promise<void> => {
       }
     }
 
-    await MongooseConnection.then();
+    await MongooseConnection();
     
     const currentContext: Partial<Reactory.Server.IReactoryContext> = {
       user,
