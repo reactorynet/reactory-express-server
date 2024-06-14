@@ -157,6 +157,12 @@ const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactory
 
   if (listGenerators) {
     rl.write(colors.green(`Listing generators...\n`));
+    const generatorServices = context.listServices({ type: 'schemaGenerator' });
+    generatorServices.forEach((service) => {
+      rl.write(colors.green(`Generator: ${service.name}\n${service.description}`));
+    });
+
+    process.exit(0);
   }
 
   if (config) {
@@ -214,8 +220,20 @@ const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactory
       output = configData.output;
     }
   }
+
+  if(generator === '') { 
+    context.error(`No generator provided`);
+    process.exit(1);
+  }
   
-  const generatorService = context.getService(generator, generatorArgs, context);
+  let generatorService: Reactory.Forms.ReactoryFormGenerator<unknown> = null;
+
+  try {
+    generatorService = context.getService<Reactory.Forms.ReactoryFormGenerator<unknown>>(generator, generatorArgs, context);
+  } catch (error) {
+    context.error(`Error loading generator: ${generator}`);
+    process.exit(1);
+  }
 
   if (!generatorService) {
     context.error(`Generator not found: ${generator}`);
@@ -228,6 +246,7 @@ const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactory
       form,
       generatorArgs
     }, context);
+
 
     if (output) {
       rl.write(colors.green(`Writing to output folder: ${output}\n`));

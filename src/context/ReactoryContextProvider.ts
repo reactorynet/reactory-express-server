@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import { getService, services } from "@reactory/server-core/services"; // eslint-disable-line
+import { getService, services, listServices } from "@reactory/server-core/services"; // eslint-disable-line
 import logger from "@reactory/server-core/logging";
 import Hash from "@reactory/server-core/utils/hash";
 import { objectMapper } from "@reactory/server-core/utils";
@@ -11,7 +11,6 @@ import i18next, { t } from "i18next";
 import Reactory from "@reactory/reactory-core";
 import { scrubEmail } from "@reactory/server-core/utils/string";
 import Cache from "@reactory/server-modules/core/models/CoreCache";
-import { ReactoryAnonUser } from "./AnonUser";
 
 colors.setTheme({
   silly: "rainbow",
@@ -36,16 +35,14 @@ colors.setTheme({
  *
  * The graph and REST API are built on top of the context provider.
  */
-export default async (
+export default async <TC extends Reactory.Server.IReactoryContext>(
   $session: any,
-  currentContext: Partial<Reactory.Server.IReactoryContext> = {}
-): Promise<Reactory.Server.IReactoryContext> => {
+  currentContext: Partial<TC> = {}
+): Promise<TC> => {
   const $id = uuid();
   const context_state = {};
-  let $context = currentContext || {};
-  let email = "anon@local";
-
-  // internal logging function
+  let $context: Partial<TC> = currentContext || {};    
+  
   const $log = (
     message: string,
     meta: any = null,
@@ -128,8 +125,7 @@ export default async (
     $user = $session.req.user;
     $partner = $session.req.partner;
     $request = $session.req;
-    $response = $session.res;
-    email = scrubEmail($user.email);
+    $response = $session.res;    
     $i18n = $session.req.i18n;
     $lng = $session.req.langauage;
     $langs = $session.req.langauages;
@@ -140,8 +136,10 @@ export default async (
       );
     $i18n = i18next;
     $partner = $context.partner;
+    //@ts-ignore
     $lng = $context.lng;
     $langs = $context.langs;
+    //@ts-ignore
     $user = $context.user;
   }
 
@@ -170,7 +168,7 @@ export default async (
    * can be considerd as the component and user container for the
    * duration of the exection.
    */
-  let newContext: Reactory.Server.IReactoryContext = {
+  let newContext: Partial<TC> = {
     ...$context,
     id: $id,
     user: $user,
@@ -228,12 +226,12 @@ export default async (
    * @param lifeCycle
    * @returns
    */
-  const $getService = (
+  const $getService = <TService>(
     id: string,
     props: any = undefined,
     $context?: Reactory.Server.IReactoryContext,
     lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE
-  ) => {
+  ): TService => {
     $log(`Getting service ${id} [${lifeCycle || "instance"}]`);
     if ($context && Object.keys($context).length > 0) {
       newContext = {
@@ -248,7 +246,7 @@ export default async (
       {
         ...newContext,
         getService: $getService,
-      },
+      } as TC,
       lifeCycle
     );
   };
@@ -285,7 +283,7 @@ export default async (
         partnerContextService &&
         typeof partnerContextService.getContext === "function"
       ) {
-        newContext = await partnerContextService.getContext(newContext).then();
+        newContext = await partnerContextService.getContext(newContext as Reactory.Server.IReactoryContext).then();
       }
     }
   }
@@ -311,8 +309,6 @@ export default async (
   newContext.getValue = getValue;
   newContext.setValue = setValue;
   newContext.removeValue = removeValue;
-
-  // no configuration for this partner that overloads /
-  // extends the default context so we just return the current context.
-  return newContext;
+  newContext.listServices = listServices;
+  return newContext as TC;
 };

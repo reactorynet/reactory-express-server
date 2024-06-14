@@ -158,7 +158,7 @@ export const getService = (id: string,
 
     return svc;
   } else {
-    throw new ApiError(`Could not get service ${id}`);
+    throw new ApiError(`Service ${id} not found in service registry.`);
   }
 }
 
@@ -187,7 +187,7 @@ export const startServices = async (props: any, context: any): Promise<boolean> 
       }
     });
 
-    let resuts = await Promise.all(startup_promises).then();
+    await Promise.all(startup_promises).then();
 
     return Promise.resolve(true);
   } catch (serviceStartupError) {
@@ -216,7 +216,7 @@ export const stopServices = async (props: any, context: any): Promise<boolean> =
       }
     });
 
-    let resuts = await Promise.all(startup_promises).then();
+    await Promise.all(startup_promises).then();
 
     return Promise.resolve(true);
   } catch (serviceStartupError) {
@@ -224,5 +224,29 @@ export const stopServices = async (props: any, context: any): Promise<boolean> =
     return Promise.resolve(false);
   }
 };
+
+
+
+export const listServices = (filter: Reactory.Service.ReactoryServiceFilter): Reactory.Service.IReactoryServiceDefinition<any>[] => {
+  let filtered: Reactory.Service.IReactoryServiceDefinition<any>[] = services;
+
+  if (filter.id) {
+    filtered = filtered.filter((svc: Reactory.Service.IReactoryServiceDefinition<any>) => svc.id === filter.id);
+  }
+
+  if (filter.name) {
+    filtered = filtered.filter((svc: Reactory.Service.IReactoryServiceDefinition<any>) => svc.name === filter.name);
+  }
+
+  if (filter.type) {
+    filtered = filtered.filter((svc: Reactory.Service.IReactoryServiceDefinition<any>) => svc.serviceType === filter.type);
+  }
+
+  if (filter.lifeCycle) {
+    filtered = filtered.filter((svc: Reactory.Service.IReactoryServiceDefinition<any>) => svc.lifeCycle === filter.lifeCycle);
+  }
+
+  return filtered;
+}
 
 export default services;
