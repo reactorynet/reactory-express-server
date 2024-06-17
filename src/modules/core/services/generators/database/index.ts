@@ -1,17 +1,5 @@
-import MySQLFormGenerator from './mysql/mysql';
-import SqlServerFormGenerator from './sqlserver/sqlserver';
-import { ReactoryFormGenerator } from '../types';
+import PostgresGenerators from './postgres';
 
-let generators: ReactoryFormGenerator[] = [];
-
-generators.push({
-    id: 'generators.MySQLFormGenerator',
-    generate: MySQLFormGenerator
-});
-
-generators.push({
-  id: 'generators.SQLServerSQLFormGenerator',
-  generate: SqlServerFormGenerator
-})
-
-export default generators;
+export default [
+  ...PostgresGenerators
+];

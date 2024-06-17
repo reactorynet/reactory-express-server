@@ -129,11 +129,8 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
     if(n < 1) {
       throw new Error(`Cannot generate ngrams for n < 1. Received: ${n}`);
     }
-
-    const { tokens } = this.tokenize(text);
-    
-    return NGrams.multrigrams(tokens, n)
-    
+    const { tokens } = this.tokenize(text);    
+    return NGrams.multrigrams(tokens, n)    
   }
   
   tag(text: string, lang?: string): Natural.Sentence {
@@ -146,8 +143,7 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
   }
   
   spellcheck(text: string, lang?: string, customDictionary?: string[]): Reactory.Models.INaturalSpellCheckResult {
-    const spellChecker = new Natural.Spellcheck(customDictionary);
-    
+    const spellChecker = new Natural.Spellcheck(customDictionary);    
     const tokens = this.tokenize(text, lang).tokens;
     const corrections: Reactory.Models.INaturalSpellCheckCorrection[] = [];
     tokens.forEach(token => { 

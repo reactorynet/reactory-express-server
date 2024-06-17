@@ -1,7 +1,7 @@
 import express from 'express';
 import moment from 'moment';
 import { isNil, isEmpty } from 'lodash';
-import Admin from '../application/admin';
+//  import Admin from '../application/admin';
 import { User } from '../models';
 import ApiError, { UserExistsError, UserValidationError, OrganizationExistsError, UserNotFoundException, SystemError } from '../exceptions';
 import AuthConfig from '../authentication';

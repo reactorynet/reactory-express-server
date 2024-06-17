@@ -1,8 +1,8 @@
 import Reactory from '@reactory/reactory-core';
-import { ClientComponent } from '@reactory/server-core/models';
+// import { ClientComponent } from '@reactory/server-core/models';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
-import { getReactoryClientWithKey } from '@reactory/server-core/application/admin/System';
+// import { getReactoryClientWithKey } from '@reactory/server-core/application/admin/System';
 
 const getComponentWithFqn = async (fqn: string) => {
   const parts = fqn.split('@');

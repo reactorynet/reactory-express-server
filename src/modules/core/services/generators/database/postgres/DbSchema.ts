@@ -6,7 +6,7 @@ import postgres from 'postgres';
 
 class PostgresSchemaProvider {
 
-  getSchemas(connection: ) {
+  getSchemas(connection: any ) {
 
   }
 

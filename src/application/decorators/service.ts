@@ -1,4 +1,7 @@
 import Reactory from '@reactory/reactory-core';
+import modules from '@reactory/server-core/modules';
+
+const wiredServices: Reactory.Service.IReactoryServiceDefinition<any>[] = [];
 
 
 /**
@@ -27,7 +30,9 @@ function service(options: Partial<Reactory.Service.IReactoryServiceDefinition<an
       ...options
     };
     constructor.prototype.reactory = reactory;
+    constructor.prototype.DEFINITION = reactory;
+    wiredServices.push(reactory);
   };
 }
 
-export { service };
+export { service, wiredServices };

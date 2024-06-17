@@ -566,8 +566,11 @@ UserSchema.statics.parse = (inputString: string): any => {
   return {};
 };
 
+UserSchema.statics.onStartup = async (context: Reactory.Server.IReactoryContext) => { 
+  
+};
+
 export const ReactoryUserSchema = UserSchema;
 
-
-const ReactoryUserModel = mongoose.model<Reactory.IUserDocument>('User', UserSchema);
+const ReactoryUserModel: mongoose.Model<Reactory.Models.IUserDocument> = mongoose.model<Reactory.Models.IUserDocument>('User', UserSchema);
 export default ReactoryUserModel;

@@ -4,7 +4,7 @@ import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-core/modules';
 import ApiError from '@reactory/server-core/exceptions';
-
+import { wiredServices } from '@reactory/server-core/application/decorators/service';
 
 type DependencySetter = <T>(deps: T) => void;
 
@@ -45,6 +45,11 @@ modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
   } catch (serviceInstallError) {
     logger.error(`Service install error: ${serviceInstallError.message}`, { serviceInstallError });
   }
+});
+
+wiredServices.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition<any>) => { 
+  services.push(serviceDefinition);
+  serviceRegister[serviceDefinition.id] = serviceDefinition;
 });
 
 const getAlias = (id: string) => {
@@ -136,9 +141,20 @@ export const getService = (id: string,
             // Call the setter function
             //@ts-ignore
             svc[setterName]($deps[dependcyAlias]);
-          } catch (setterError) {            
-            context.log(`🚨 Setter error ${setterName}; ${setterError?.message ? setterError.message : 'Unknown'} 🚨`, { service_id: id, props, setterError }, 'warning');
+          } catch (setterError) {
+            // if there is an error, we log it and continue
+            // we set the dependency on the service object 
+            // directly.
+            //@ts-ignore
+            svc[dependcyAlias] = $deps[dependcyAlias];
+            context.warn(`🚨 Setter error ${setterName}; ${setterError?.message ? setterError.message : 'Unknown'} 🚨`, { service_id: id, props, setterError }, 'warning');
           }
+        } else {
+          // if there is no setter function, we set the dependency on the service object 
+          // directly.
+          //@ts-ignore
+          svc[dependcyAlias] = $deps[dependcyAlias];
+        
         }
       }
     });
@@ -179,7 +195,7 @@ export const startServices = async (props: any, context: any): Promise<boolean> 
       const instance = getService(service.id, props, context);
 
       if (instance.onStartup) {
-        startup_promises.push((instance as Reactory.Service.IReactoryStartupAwareService).onStartup());
+        startup_promises.push((instance as Reactory.Service.IReactoryStartupAwareService).onStartup(context));
       }
 
       if(service.lifeCycle === "singleton") {

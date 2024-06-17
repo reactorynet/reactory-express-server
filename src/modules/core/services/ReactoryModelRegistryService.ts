@@ -5,7 +5,7 @@ import {
   IReactoryComponentFeature,
 } from "@reactory/reactory-core"; // import necessary types
 import { service } from "@reactory/server-core/application/decorators/service";
-import { on } from "process";
+import logger from "@reactory/server-core/logging";
 
 @service({
   id: "core.ReactoryModelRegistry@1.0.0",
@@ -14,7 +14,7 @@ import { on } from "process";
   version: "1.0.0",
   description: "Provides registry features for any reactory model",
   serviceType: "data",
-  lifeCycle: "singleton",  
+  lifeCycle: "singleton",
   dependencies: [
     { id: "core.FetchService@1.0.0", alias: "fetchService" },
     { id: "core.ReactoryFileService@1.0.0", alias: "fileService" },
@@ -28,7 +28,7 @@ export class ReactoryModelRegistry
   version: string = "1.0.0";
   context: Server.IReactoryContext;
 
-  private instance: ReactoryModelRegistry = undefined; 
+  instance: ReactoryModelRegistry = undefined;
 
   private modelRegistry: IReactoryComponentDefinition<unknown>[] = [];
   private replacedModels: IReactoryComponentDefinition<unknown>[] = [];
@@ -40,11 +40,11 @@ export class ReactoryModelRegistry
     props: Service.IReactoryServiceProps,
     context: Server.IReactoryContext
   ) {
-    if(!ReactoryModelRegistry.instance) {
+    if (!ReactoryModelRegistry.instance) {
       this.context = context;
       ReactoryModelRegistry.instance = this;
     }
-    
+
     return ReactoryModelRegistry.instance;
   }
 
@@ -52,22 +52,34 @@ export class ReactoryModelRegistry
   tags?: string[];
   toString: ((includeVersion?: boolean) => string) & (() => string);
 
-  onStartup(): Promise<void> {
+  onStartup(context: Reactory.Server.IReactoryContext): Promise<void> {
     // load all models that are registered with the module in
     const that = this;
-    if(this.context && Array.isArray(this.context?.modules) === true) {
+    if (this.context && Array.isArray(this.context?.modules) === true) {
       this.context.modules.forEach((module) => {
         module?.models?.forEach(async (model) => {
-          that.register(model);
-          if ((model as Reactory.Service.IReactoryStartupAwareService).onStartup && 
-            typeof (model as Reactory.Service.IReactoryStartupAwareService).onStartup === 'function') { 
-              (model as Reactory.Service.IReactoryStartupAwareService).onStartup.bind(that);
-            await (model as Reactory.Service.IReactoryStartupAwareService).onStartup();
+          try {
+            if (
+              (model as Reactory.Service.IReactoryStartupAwareService)
+                .onStartup &&
+              typeof (model as Reactory.Service.IReactoryStartupAwareService)
+                .onStartup === "function"
+            ) {
+              (
+                model as Reactory.Service.IReactoryStartupAwareService
+              ).onStartup.bind(that);
+              await (
+                model as Reactory.Service.IReactoryStartupAwareService
+              ).onStartup(context);
+            }
+            that.register(model);
+          } catch (error) {
+            logger.error(`Error loading model ${model.name}`, { error });
           }
         });
-      });     
+      });
     }
-    
+
     return Promise.resolve();
   }
 
@@ -135,32 +147,34 @@ export class ReactoryModelRegistry
     });
 
     if (spec.name) {
-      if(spec.name.indexOf('*') === -1 && spec?.name.length > 0) {
-        for(let i = allModels.length - 1; i >= 0; i--) {
-          if(allModels[i].name !== spec.name) {
+      if (spec.name.indexOf("*") === -1 && spec?.name.length > 0) {
+        for (let i = allModels.length - 1; i >= 0; i--) {
+          if (allModels[i].name !== spec.name) {
             allModels.pop();
           }
         }
       } else {
         // partial match
-        allModels = allModels.filter((model) => { 
-          if(spec.name.endsWith('*')) { 
-            return model.name.toLowerCase().startsWith(spec.name.slice(0, spec.name.length - 1));
+        allModels = allModels.filter((model) => {
+          if (spec.name.endsWith("*")) {
+            return model.name
+              .toLowerCase()
+              .startsWith(spec.name.slice(0, spec.name.length - 1));
           }
 
-          if(spec.name.startsWith('*')) { 
+          if (spec.name.startsWith("*")) {
             return model.name.toLowerCase().endsWith(spec.name.slice(1));
           }
 
-          if(spec.name.toLowerCase().indexOf('*') > -1) { 
-            const [start, end] = spec.name.split('*');
+          if (spec.name.toLowerCase().indexOf("*") > -1) {
+            const [start, end] = spec.name.split("*");
             return model.name.startsWith(start) && model.name.endsWith(end);
           }
         });
       }
     }
 
-    return allModels.map((model) => model.component as T) ;
+    return allModels.map((model) => model.component as T);
   }
 
   generate<T>(spec: Partial<IReactoryComponentDefinition<T>>): T {

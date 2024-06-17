@@ -15,7 +15,7 @@ export function roles(allowedRoles: string[],
   contextKey: string | 'this.context' | 'args.context' = 'this.context') {  
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {    
     let original = descriptor.value;
-    descriptor.value = function( ){
+    descriptor.value = function( ){      
       let passed: boolean;      
       let context: Reactory.Server.IReactoryContext
       switch(contextKey) {

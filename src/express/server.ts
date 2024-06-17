@@ -289,7 +289,7 @@ Environment Settings:
   // more useful information about the server environment, configuration
   // output.
   try {
-    const startResult = await startup();
+    const context = await startup();
     ConfigureAuthentication(reactoryExpress);
     reactoryExpress.use(userAccountRouter);
     // TODO: Werner Weber - Update the route configuration to use the
@@ -321,13 +321,6 @@ Environment Settings:
             const graphql_api_root = resolveUrl(API_URI_ROOT, queryRoot);
 
             logger.info(colors.green(`✅ Running a GraphQL API server at ${graphql_api_root}`));
-            if (NODE_ENV === 'development' && DEVELOPER_ID) {
-              User.find({ email: DEVELOPER_ID }).then((user_result) => {
-                const auth_token = AuthHelper.jwtTokenForUser(user_result[0], { exp: moment().add(1, 'hour').unix() })
-                logger.debug(`Developer id ${DEVELOPER_ID} access graphiql docs ${resolveUrl(API_URI_ROOT, `cdn/graphiql/index.html?auth_token=${auth_token}`)}`)
-              });
-
-            }
           }
           else logger.info(colors.yellow(`🩺 GraphQL API not available - ${graphError}`));
 
