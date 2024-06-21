@@ -59,6 +59,12 @@ export class ReactoryModelRegistry
       this.context.modules.forEach((module) => {
         module?.models?.forEach(async (model) => {
           try {
+            that.register(model);
+          } catch (error) {
+            logger.error(`Error registering model ${model.name}`, { error });
+          }
+
+          try {
             if (
               (model as Reactory.Service.IReactoryStartupAwareService)
                 .onStartup &&
@@ -72,9 +78,8 @@ export class ReactoryModelRegistry
                 model as Reactory.Service.IReactoryStartupAwareService
               ).onStartup(context);
             }
-            that.register(model);
-          } catch (error) {
-            logger.error(`Error loading model ${model.name}`, { error });
+          } catch(e) {
+            logger.error(`Error running startup for model ${model.name}`, { error: e });
           }
         });
       });

@@ -31,13 +31,6 @@ if [ ! -d "./node_modules" ]; then
   exit 1
 fi
 
-# Verify that the reactor module exists before running
-if [ ! -d "./src/modules/reactor" ]; then
-  echo "Error: reactor module not installed directory not found. Run 'npm install'."
-  exit 1
-fi
-
-
 # Run the script
 SCRIPT_PATH=./src/reactory/cli/index.ts
 if [ ! -f ${SCRIPT_PATH} ]; then

@@ -59,7 +59,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
    * @param businessUnit - business unit to assign to the user
    * @returns
    */
-  @roles(["SYSTEM_INIT", "ORG-ADMIN::${arguments[2].id}"])
+  @roles(["ADMIN", "ORG-ADMIN::${arguments[2].id}"])
   async createUserForOrganization (
     user: Reactory.Models.IUserCreateParams,
     password: string,
@@ -197,12 +197,14 @@ class UserService implements Reactory.Service.IReactoryUserService {
     return this.peerState[key];
   }
 
+  
   /**
    * Sets the peers for a user after they have been validate.
    * @param { User } user
    * @param { Array<*>} peers
    * @param { Organization } organization
    */
+  @roles(["ORG-ADMIN::${arguments[2].id}", "USER::${arguments[0].id}"])
   async setPeersForUser(
     user: Reactory.Models.IUserDocument,
     peers: any,

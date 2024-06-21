@@ -52,7 +52,7 @@ export function roles(allowedRoles: string[],
       
       //@ts-ignore
       if (passed === true) return original.apply(this, arguments);
-      else throw new InsufficientPermissions("User does not have permissions to execute this function")
+      else throw new InsufficientPermissions(`User [${context.user._id.toString()}] does not have permissions to execute ${propertyKey.toString()}`, { allowedRoles, contextKey })
     }
 
     return descriptor;

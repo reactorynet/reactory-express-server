@@ -420,7 +420,7 @@ UserSchema.methods.getMembership = function getMembership(clientId: string | mon
 
 UserSchema.methods.updateMembership = async function updateMembership(membership: Reactory.IMembershipDocument) {
   
-  const $model: Reactory.IUserDocument = this as Reactory.IUserDocument;
+  const $model: Reactory.Models.IUserDocument = this as Reactory.Models.IUserDocument;
   
   if ($model.memberships.length === 0) return;
   
