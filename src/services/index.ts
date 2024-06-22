@@ -186,8 +186,7 @@ export const getService = (id: string,
  * @param context 
  * @returns 
  */
-export const startServices = async (props: any, context: any): Promise<boolean> => {
-
+export const startServices = async (props: any, context: any): Promise<boolean> => {   
   try {
     let startup_promises: Promise<void>[] = []
 

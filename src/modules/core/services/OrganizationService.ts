@@ -335,8 +335,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 
   onStartup(): Promise<void> {
-    // nothing to do
-    this.context.log(`Core OrganizationService started 🟢`)
+    this.context.log(`Core OrganizationService STARTUP OKAY`)
     //check that the organization folder on the file system exists
     const { APP_DATA_ROOT } = process.env;
     if (!existsSync(`${APP_DATA_ROOT}/organization`)) mkdirSync(`${APP_DATA_ROOT}/organization`);

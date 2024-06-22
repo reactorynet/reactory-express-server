@@ -30,7 +30,7 @@ function service(options: Partial<Reactory.Service.IReactoryServiceDefinition<an
       ...options
     };
     constructor.prototype.reactory = reactory;
-    constructor.prototype.DEFINITION = reactory;
+    constructor.prototype.COMPONENT_DEFINITION = reactory;
     wiredServices.push(reactory);
   };
 }

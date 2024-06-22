@@ -112,7 +112,17 @@ class SystemService implements Reactory.Service.IReactorySystemService {
 
       module.services.forEach((service, idx) => { 
         try {
-          ComponentFQN(service);
+          //@ts-ignore
+          if(service.prototype?.COMPONENT_DEFINITION) { 
+            //@ts-ignore
+            ComponentFQN(service.prototype.COMPONENT_DEFINITION);
+            //@ts-ignore
+          } else if(service.prototype?.reactory) {
+            //@ts-ignore
+            ComponentFQN(service.prototype?.reactory);
+          } else {
+            ComponentFQN(service);
+          }
         } catch (ex) {
           errors.push(`Module ${fqn}} is missing a name or description for registered service at index: at index ${idx}`);
         } 
@@ -142,10 +152,13 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     type SearchableComponent = Partial<Reactory.IReactoryComponentDefinition<any>> & { id: string };
        
     const componentToSearchModel = (component: Reactory.IReactoryComponentDefinition<any>, group: string): SearchableComponent  => { 
-
+      let definition = component;
+      if(component.prototype?.COMPONENT_DEFINITION) {
+        definition = component.prototype.COMPONENT_DEFINITION;
+      }
       let searchModel: any = {
         ...component,
-        id: FQN2ID(ComponentFQN(component)),
+        id: FQN2ID(ComponentFQN(definition)),
       }
 
       delete searchModel.component;

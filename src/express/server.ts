@@ -282,7 +282,7 @@ Environment Settings:
   amq.raiseSystemEvent('server.startup.begin', {});
 
   if (SYSTEM_USER_ID === 'not-set') {
-    logger.warn("SYSTEM_USER_ID env variable is not set - please configure in env variables");
+    logger.warn(colors.yellow("SYSTEM_USER_ID env variable is not set - please configure in env variables"));
   }
 
   // TODO: Werner Weber - Update the start result object to contain

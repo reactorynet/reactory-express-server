@@ -42,7 +42,7 @@ const services = [
   ReactoryModuleCompilerService.reactory,
   ReactoryTranslationService.reactory,
   ReactoryContentService.reactory,
-  // ReactoryNLPService,
+  ReactoryNLPService,
   ReactoryModelRegistry,
   ReactorySearchService,
   ...GeneratorServices
