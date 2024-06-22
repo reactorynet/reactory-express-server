@@ -59,7 +59,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
    * @param businessUnit - business unit to assign to the user
    * @returns
    */
-  @roles(["ADMIN", "ORG-ADMIN::${arguments[2].id}"])
+  @roles(["SYSTEM", "ADMIN", "ORG-ADMIN::${arguments[2].id}"])
   async createUserForOrganization (
     user: Reactory.Models.IUserCreateParams,
     password: string,
