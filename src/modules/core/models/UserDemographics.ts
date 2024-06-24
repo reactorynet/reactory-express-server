@@ -59,5 +59,5 @@ UserDemographicSchema.statics.updateDemographic = async function updateDemograph
     return false
 }
 
-const UserDemographicsModel = mongoose.model('UserDemographic', UserDemographicSchema);
+const UserDemographicsModel = mongoose.model('UserDemographic', UserDemographicSchema, 'reactory_user_demographics');
 export default UserDemographicsModel;

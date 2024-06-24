@@ -44,5 +44,5 @@ const ProjectBoardSchema = new mongoose.Schema({
 });
 
 
-const ProjectBoardModel = mongoose.model('ProjectBoard', ProjectBoardSchema);
+const ProjectBoardModel = mongoose.model('ProjectBoard', ProjectBoardSchema, 'reactory_project_boards');
 export default ProjectBoardModel;

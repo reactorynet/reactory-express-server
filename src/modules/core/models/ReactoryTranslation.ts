@@ -47,6 +47,6 @@ const ReactoryTranslationSchema: TReactoryTranslationSchema = new Schema<Reactor
   }]
   });
 
-  const ReactoryTranslationModel = mongoose.model('ReactoryTranslation', ReactoryTranslationSchema);
+  const ReactoryTranslationModel = mongoose.model('ReactoryTranslation', ReactoryTranslationSchema, 'reactory_translations');
 
   export default ReactoryTranslationModel;

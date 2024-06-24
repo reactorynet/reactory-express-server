@@ -16,5 +16,5 @@ const NotificationSchema = mongoose.Schema({
   details: { },
 });
 
-const NotificationModel = mongoose.model('Notification', NotificationSchema);
+const NotificationModel = mongoose.model('Notification', NotificationSchema, 'reactory_notifications');
 export default NotificationModel;

@@ -42,5 +42,5 @@ const OrganigramSchema = new mongoose.Schema<Reactory.IOrganigram>({
   confirmedAt: Date,
 });
 
-const OrganigramModel = mongoose.model<Reactory.IOrganigramDocument>('Organigram', OrganigramSchema);
+const OrganigramModel = mongoose.model<Reactory.IOrganigramDocument>('Organigram', OrganigramSchema, 'reactory_organigrams');
 export default OrganigramModel;

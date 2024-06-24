@@ -52,5 +52,5 @@ const ContentSchema = new mongoose.Schema<Reactory.Models.IReactoryContent>({
   comments: [ ObjectId ]
 });
 
-const ContentModel = mongoose.model<Reactory.Models.IReactoryContentDocument>('Content', ContentSchema);
+const ContentModel = mongoose.model<Reactory.Models.IReactoryContentDocument>('Content', ContentSchema, 'reactory_content');
 export default ContentModel;

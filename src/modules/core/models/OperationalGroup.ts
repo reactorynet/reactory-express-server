@@ -19,6 +19,6 @@ OperationalGroupSchema.statics.AddOperationalGroup = async function AddOperation
   return { title: '' }
 };
 
-const OperationalGroupModel = mongoose.model<Reactory.IRegionDocument>('OperationalGroup', OperationalGroupSchema);
+const OperationalGroupModel = mongoose.model<Reactory.IRegionDocument>('OperationalGroup', OperationalGroupSchema, 'reactory_operational_groups');
 
 export default OperationalGroupModel;

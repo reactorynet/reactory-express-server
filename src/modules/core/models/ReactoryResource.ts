@@ -16,6 +16,6 @@ const ReactoryResourceSchema = new mongoose.Schema({
 
 ReactoryResourceSchema.plugin(timeStamp)
 
-const ReactoryResource = mongoose.model('ReactoryResource', ReactoryResourceSchema);
+const ReactoryResource = mongoose.model('ReactoryResource', ReactoryResourceSchema, 'reactory_resources');
 
 export default ReactoryResource;

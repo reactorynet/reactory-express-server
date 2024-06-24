@@ -78,6 +78,6 @@ Region.statics.AddRegion = async (organization: string | ObjectId, title: string
 };
 
 
-const RegionModel = mongoose.model<Reactory.Models.IRegionDocument>('Region', Region);
+const RegionModel = mongoose.model<Reactory.Models.IRegionDocument>('Region', Region, 'reactory_regions');
 
 export default RegionModel;

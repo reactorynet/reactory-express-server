@@ -3,7 +3,8 @@ import methods from './methods';
 import statics from './statics';
 const { ObjectId } = mongoose.Schema.Types;
 
-export default new mongoose.Schema<Reactory.Models.IReactoryClient>({
+
+const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReactoryClient>({
   id: ObjectId,
   key: {
     type: String,
@@ -82,3 +83,5 @@ export default new mongoose.Schema<Reactory.Models.IReactoryClient>({
   statics,
   timestamps: true
 });
+
+export default ReactoryClientMongooseSchema;

@@ -56,5 +56,5 @@ const CommentSchema = new mongoose.Schema<Reactory.Models.IReactoryComment>({
   replies: [{ type: ObjectId, ref: 'Comment' }],
 });
 
-const CommentModel = mongoose.model<Reactory.Models.IReactoryCommentDocument>('Comment', CommentSchema);
+const CommentModel = mongoose.model<Reactory.Models.IReactoryCommentDocument>('Comment', CommentSchema, 'reactory_comments');
 export default CommentModel;

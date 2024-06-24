@@ -9,7 +9,7 @@ import {
   strongRandom
 } from '@reactory/server-core/utils/string';
 
-type InitializeSystemUserCliApp = (vargs: string[], context: Reactory.Server.IReactoryContext) => Promise<void>
+type InitializeSystemUserCliApp = (vargs: string[], context: Reactory.Server.IReactoryCliContext) => Promise<void>
 
 const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[], context: Reactory.Server.IReactoryContext): Promise<void> => { 
   const { 
@@ -18,7 +18,8 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
   } = process.env;
 
   if (!REACTORY_APPLICATION_EMAIL || !REACTORY_APPLICATION_PASSWORD) {
-    context.error(`System user email or password not set. Cannot continue system user initialization.`);
+    context.error('[ConfigurationError] System user email or password not set. Cannot continue system user initialization.'
+      + 'Please check REACTORY_APPLICATION_EMAIL and REACTORY_APPLICATION_PASSWORD configuration values');
     process.exit(1);
   }
   
@@ -26,21 +27,34 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
 
   const reactoryConfig = lodash.find(clients, { key: 'reactory' });
   if(!reactoryConfig) {
-    log(`Reactory configuration not found. Cannot continue system user initialization.`);
+    log(`[ClientConfigurationError] Reactory client configuration not found. Cannot continue system user initialization.`);
     process.exit(1);
   }
 
   let reactoryClient = await ReactoryClient.findOne({ key: 'reactory' }).exec();
-  if(!reactoryClient) { 
-    reactoryClient = new ReactoryClient(reactoryConfig);
-    await reactoryClient.save();  
+  if(lodash.isNil(reactoryClient) === true) { 
+    // @ts-ignore
+    reactoryClient = await ReactoryClient.upsertFromConfig(reactoryConfig);
+    if(lodash.isNil(reactoryClient)) {
+      log(`[ClientConfigurationError] Reactory client configuration not found. Cannot continue system user initialization.`);
+      process.exit(1);
+    }
   }
 
   log(`Initializing system user ${REACTORY_APPLICATION_EMAIL}...`, {}, 'info');
 
-  const user: Partial<Reactory.Models.IUserDocument> = new ReactoryUser({
+  //@ts-ignore
+  let user: Reactory.Models.IUserDocument = await ReactoryUser.findOne({ email: REACTORY_APPLICATION_EMAIL }).exec();
+
+  if(user) {
+    log('Initial user already exists', {}, 'warning');
+    process.exit(0);
+  }
+
+  //@ts-ignore
+  user = new ReactoryUser({
     email: REACTORY_APPLICATION_EMAIL,
-    password: REACTORY_APPLICATION_PASSWORD,
+    password: "",
     firstName: 'Reactory',
     lastName: 'System',
     memberships: [],
@@ -52,10 +66,8 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
     dateOfBirth: new Date(),
   });
 
-  await user.save();
-
-  user.addRole(reactoryClient._id.toString(),  'SYSTEM');
-
+  user.setPassword(REACTORY_APPLICATION_PASSWORD);
+  user.addRole(reactoryClient._id.toString(),'SYSTEM');
   await user.save();
 
   log(`System user initialized successfully`, {}, 'info');

@@ -6,46 +6,108 @@ import CoreData from '@reactory/server-core/data';
 // } from '@reactory/server-modules/core/services/admin/User';
 import { ReactoryClientValidationError } from '@reactory/server-core/exceptions';
 import { isNil } from 'lodash';
-import ReactoryClient from './'
+import ReactoryClientModel from './'
 import Menu from '../Menu';
 import ClientComponent from '../ClientComponent';
 import User from '../User';
 
-const onStartup = async (context: Reactory.Server.IReactoryContext) => { 
+const {
+  clients,
+} = CoreData;
+
+
+const upsertFromConfig = async (clientConfig: Partial<Reactory.Models.IReactoryClient>): Promise<Reactory.Models.ReactoryClientDocument> => { 
+  const { key } = clientConfig;
+  logger.info(`Finding ReactoryClient with key ${key}`);
   
-  const {
-    clients,
-  } = CoreData;
+  const input = { ...clientConfig };
+  delete input.menus;
+  delete input.password;
+
+  let reactoryClient: Reactory.Models.ReactoryClientDocument = await ReactoryClientModel.findOne({ key }).then();
+  if (isNil(reactoryClient) === false) {
+    try {
+      // reactoryClient
+      reactoryClient = await ReactoryClientModel.findOneAndUpdate({ key }, { ...clientConfig, updatedAt: new Date() }).then();
+      logger.debug(`ReactoryClient ${reactoryClient.name} updated`);
+    } catch (upsertError) {
+      logger.error('An error occured upserting the record', upsertError);
+      throw upsertError;
+    }
+  } else {
+    try {
+      //@ts-ignore
+      reactoryClient = new ReactoryClientModel(input);
+      const validationResult = reactoryClient.validateSync();
+      if (validationResult && validationResult.errors) {
+        logger.info('Validation Result Has Errors', validationResult.errors);
+        throw new ReactoryClientValidationError('Could not validate the input', validationResult);
+      } else {
+        reactoryClient = await reactoryClient.save().then();
+      }
+    } catch (saveNewError) {
+      logger.error('Could not save the new client data', saveNewError);
+      throw saveNewError;
+    }
+  }
+
+  // 
+  const menuDefs = clientConfig.menus || [];
+  const menuRefs = [];        
+  logger.info(`Loading menus for ${reactoryClient.name}`, {}, );
+  for (let mid = 0; mid < menuDefs.length; mid += 1) {
+    try {
+      const menuFound = await Menu.findOneAndUpdate(
+        { client: reactoryClient._id, key: menuDefs[mid].key },
+        { ...menuDefs[mid], client: reactoryClient._id },
+        { upsert: true },
+      );
+      if (menuFound) menuRefs.push(menuFound._id);
+    } catch (menuErr) {
+      logger.error('Error loading menu', menuErr);
+    }
+  }
+
+  //@ts-ignore
+  reactoryClient.menus = menuRefs;
+  reactoryClient = await reactoryClient.save().then();
+
+
+  logger.debug(`Upserted ${reactoryClient.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
+  return reactoryClient;
+};
+
+const onStartup = async (context: Reactory.Server.IReactoryContext) => { 
 
   const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
 
-  /**
- * returns an array of user create for organization promises
- */
-const getUserloadPromises = (usersToLoad: any[]) => {
-  return usersToLoad.map((userOptions) => {
-    const {
-      user,
-      password,
-      roles,
-      provider,
-      partner,
-      organization,
-      businessUnit,
-    } = userOptions;
-    
-    return userService.createUser({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      avatar: user.avatar,
-      avatarProvider: user.avatarProvider,
-      dateOfBirth: user.dateOfBirth,
-      mobileNumber: user.mobileNumber,      
-      //@ts-ignore
-    }, organization);
-  });
-};
+    /**
+   * returns an array of user create for organization promises
+   */
+  const getUserloadPromises = (usersToLoad: any[]) => {
+    return usersToLoad.map((userOptions) => {
+      const {
+        user,
+        password,
+        roles,
+        provider,
+        partner,
+        organization,
+        businessUnit,
+      } = userOptions;
+      
+      return userService.createUser({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        avatar: user.avatar,
+        avatarProvider: user.avatarProvider,
+        dateOfBirth: user.dateOfBirth,
+        mobileNumber: user.mobileNumber,      
+        //@ts-ignore
+      }, organization);
+    });
+  };
 
 
   const makeUserArrayFromProps = (userItems: Reactory.Server.IStaticallyLoadedUser[], partner: Reactory.Models.IReactoryClientDocument, organization?: Reactory.Models.IOrganization, businessUnit?: Reactory.Models.IBusinessUnit) => {
@@ -117,13 +179,13 @@ const getUserloadPromises = (usersToLoad: any[]) => {
 
       const { key } = clientConfig;
       logger.info(`Finding ReactoryClient with key ${key}`);
-      reactoryClient = await ReactoryClient.findOne({ key }).then();
+      reactoryClient = await ReactoryClientModel.findOne({ key }).then();
 
       const clientData: any = { ...clientConfig, menus: [], components: componentIds.map(c => c._id) };
       delete clientData.password;
       if (isNil(reactoryClient) === false) {
         try {
-          reactoryClient = await ReactoryClient.findOneAndUpdate({ key }, { ...clientData, updatedAt: new Date() }).then();
+          reactoryClient = await ReactoryClientModel.findOneAndUpdate({ key }, { ...clientData, updatedAt: new Date() }).then();
           logger.debug(`ReactoryClient ${reactoryClient.name} updated`);
         } catch (upsertError) {
           logger.error('An error occured upserting the record', upsertError);
@@ -132,7 +194,7 @@ const getUserloadPromises = (usersToLoad: any[]) => {
         try {
           logger.debug(`ReactoryClient ${key} not found, creating`);
           //@ts-ignore
-          reactoryClient = new ReactoryClient(clientData);
+          reactoryClient = new ReactoryClientModel(clientData);
           const validationResult = reactoryClient.validateSync();
           if (validationResult && validationResult.errors) {
             logger.info('Validation Result Has Errors', validationResult.errors);
@@ -198,4 +260,5 @@ const getUserloadPromises = (usersToLoad: any[]) => {
 
 export default {
   onStartup,
+  upsertFromConfig,
 }

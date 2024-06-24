@@ -26,7 +26,18 @@ const meta = new mongoose.Schema({
 
 const UserSchema = new mongoose.Schema({
   id: ObjectId,
-  username: String,
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    index: true,
+    validate: {
+      validator: (v: string) => /^[a-z0-9_]{3,30}$/.test(v),
+      message: (props: { value: string }) => `${props.value} is not a valid username`,
+    }
+  },
   firstName: {
     type: String,
     required: true,
@@ -42,9 +53,15 @@ const UserSchema = new mongoose.Schema({
   },
   email: {
     type: String,
+    unique: true,
     index: true,
     lowercase: true,
     trim: true,
+    required: true,
+    validate: {
+      validator: (v: string) => /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(v),
+      message: (props: { value: string }) => `${props.value} is not a valid email address`,
+    },
   },
   mobileNumber: {
     type: String,
@@ -251,9 +268,8 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(
   return (isArray(matches) === true && matches.length > 0) === true;
 };
 
-
 // eslint-disable-next-line max-len
-UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId): Promise<Reactory.Models.IMembership[]> {
+UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId, context: Reactory.Server.IReactoryContext): Promise<Reactory.Models.IMembership[]> {
   logger.info(`Adding user membership ${clientId} ${role} ${organizationId} ${businessUnitId}`);
   // const matches = [];
   const $model: Reactory.Models.IUserDocument = this as Reactory.Models.IUserDocument;
@@ -430,8 +446,6 @@ UserSchema.methods.updateMembership = async function updateMembership(membership
 
 };
 
-
-
 UserSchema.methods.fullName = function fullName(email: boolean = false) { 
 
   return `${this.firstName} ${this.lastName}${email ? ` <${this.email}>` : ''}`; 
@@ -572,5 +586,5 @@ UserSchema.statics.onStartup = async (context: Reactory.Server.IReactoryContext)
 
 export const ReactoryUserSchema = UserSchema;
 
-const ReactoryUserModel: mongoose.Model<Reactory.Models.IUserDocument> = mongoose.model<Reactory.Models.IUserDocument>('User', UserSchema);
+const ReactoryUserModel: mongoose.Model<Reactory.Models.IUserDocument> = mongoose.model<Reactory.Models.IUserDocument>('User', UserSchema, 'reactory_users');
 export default ReactoryUserModel;

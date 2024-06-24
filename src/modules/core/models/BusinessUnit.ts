@@ -33,5 +33,5 @@ BusinessUnitSchema.statics.GetBusinessUnits = async function GetBusinessUnits() 
   return await this.find();
 };
 
-const BusinessUnitModel = mongoose.model<Reactory.Models.IBusinessUnitDocument>('BusinessUnit', BusinessUnitSchema);
+const BusinessUnitModel = mongoose.model<Reactory.Models.IBusinessUnitDocument>('BusinessUnit', BusinessUnitSchema, 'reactory_business_units');
 export default BusinessUnitModel;

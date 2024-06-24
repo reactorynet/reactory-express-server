@@ -133,5 +133,5 @@ OrganizationSchema.methods.setSetting = function getSettings(name: string, data:
 };
 
 
-const OrganizationModel = mongoose.model<Reactory.Models.IOrganizationDocument>('Organization', OrganizationSchema);
+const OrganizationModel = mongoose.model<Reactory.Models.IOrganizationDocument>('Organization', OrganizationSchema, 'reactory_organizations');
 export default OrganizationModel;

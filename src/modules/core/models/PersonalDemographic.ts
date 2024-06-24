@@ -73,6 +73,6 @@ PersonalDemographicSchema.statics.SetLoggedInUserDemograpics = async function Se
   return saveResponse
 }
 
-const PersonalDemographicModel = mongoose.model('PersonalDemographic', PersonalDemographicSchema);
+const PersonalDemographicModel = mongoose.model('PersonalDemographic', PersonalDemographicSchema, 'reactory_personal_demographics');
 
 export default PersonalDemographicModel;

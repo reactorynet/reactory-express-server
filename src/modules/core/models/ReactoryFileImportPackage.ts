@@ -105,5 +105,5 @@ const ReactoryFileImportPackageSchema: mongoose.Schema<Reactory.IReactoryFileImp
   },
 });
 
-const ReactoryFileImportPackage = mongoose.model<Reactory.IReactoryFileImportPackageDocument>('ReactoryFileImportPackage', ReactoryFileImportPackageSchema);
+const ReactoryFileImportPackage = mongoose.model<Reactory.IReactoryFileImportPackageDocument>('ReactoryFileImportPackage', ReactoryFileImportPackageSchema, 'reactory_file_import_packages');
 export default ReactoryFileImportPackage;

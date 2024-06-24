@@ -19,5 +19,5 @@ const ApplicationSchema = new mongoose.Schema({
   }
 });
 
-const ApplicationModel = mongoose.model('Application', ApplicationSchema);
+const ApplicationModel = mongoose.model('Application', ApplicationSchema, 'reactory_applications');
 export default ApplicationModel;
