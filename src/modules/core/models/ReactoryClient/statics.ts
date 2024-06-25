@@ -104,6 +104,7 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
         avatarProvider: user.avatarProvider,
         dateOfBirth: user.dateOfBirth,
         mobileNumber: user.mobileNumber,      
+        username: user.username,
         //@ts-ignore
       }, organization);
     });
@@ -116,7 +117,12 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
         partner,
         organization,
         businessUnit,
-        user: { firstName: usr.firstName, lastName: usr.lastName, email: usr.email },
+        user: { 
+          firstName: usr.firstName, 
+          lastName: usr.lastName, 
+          email: usr.email,
+          username: usr.username, 
+        },
         password: usr.password || 'Password123!',
         roles: usr.roles || ['USER'],
       };

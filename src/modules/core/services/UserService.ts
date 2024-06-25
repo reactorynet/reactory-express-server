@@ -76,7 +76,10 @@ class UserService implements Reactory.Service.IReactoryUserService {
       organization: organization       
     };
     try {
-      const userModel = this.modelRegistry.getModel<typeof User>("core.User")
+      const userModel = this.modelRegistry.getModel<typeof User>({
+        name: "User",
+        nameSpace: "core",
+      });
       const partnerToUse = partner;
       let foundUser = await userModel.findOne(
         { email: user.email },

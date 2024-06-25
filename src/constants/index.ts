@@ -17,7 +17,7 @@ export default {
   env: {
     NODE_ENV: NODE_ENV || 'development',
     APP_DATA_ROOT: APP_DATA_ROOT || '/data/reactory',
-    MONGOOSE: MONGOOSE || 'mongodb://localhost:27017/reactory',
+    MONGOOSE: MONGOOSE || 'mongodb://localhost:27017/reactory_local_reactory',
     API_PORT: API_PORT || 4000,
     SENDGRID_API_KEY,
     API_URI_ROOT: API_URI_ROOT || 'http://locahost:4000/',

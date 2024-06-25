@@ -64,6 +64,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     this.lang = currentContext?.lang || process.env.DEFAULT_LOCALE || "en";
     this.languages = currentContext?.languages || [this.lang];
     this.theme = currentContext?.theme || null;
+    this.modules = currentContext?.modules || modules.enabled;
   }
   
 

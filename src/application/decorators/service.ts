@@ -1,8 +1,4 @@
 import Reactory from '@reactory/reactory-core';
-import modules from '@reactory/server-core/modules';
-
-const wiredServices: Reactory.Service.IReactoryServiceDefinition<any>[] = [];
-
 
 /**
  * Service decorator function, used to decorate a class as a Reactory service.
@@ -31,8 +27,7 @@ function service(options: Partial<Reactory.Service.IReactoryServiceDefinition<an
     };
     constructor.prototype.reactory = reactory;
     constructor.prototype.COMPONENT_DEFINITION = reactory;
-    wiredServices.push(reactory);
   };
 }
 
-export { service, wiredServices };
+export { service };

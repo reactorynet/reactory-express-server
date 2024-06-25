@@ -1,4 +1,4 @@
-import {
+import Reactory, {
   Service,
   Server,
   IReactoryComponentDefinition,
@@ -26,7 +26,7 @@ export class ReactoryModelRegistry
   name: string = "core";
   nameSpace: string = "ReactoryModelRegistry";
   version: string = "1.0.0";
-  context: Server.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
   instance: ReactoryModelRegistry = undefined;
 
@@ -52,16 +52,19 @@ export class ReactoryModelRegistry
   tags?: string[];
   toString: ((includeVersion?: boolean) => string) & (() => string);
 
-  onStartup(context: Reactory.Server.IReactoryContext): Promise<void> {
+  async onStartup(): Promise<void> {
     // load all models that are registered with the module in
     const that = this;
+    const { log } = this.context;
+    log('Starting up ReactoryModelRegistry', {}, 'info', 'core.ReactoryModelRegistry')
+    let startupAwareModels: Promise<void>[] = [];
     if (this.context && Array.isArray(this.context?.modules) === true) {
       this.context.modules.forEach((module) => {
         module?.models?.forEach(async (model) => {
           try {
             that.register(model);
           } catch (error) {
-            logger.error(`Error registering model ${model.name}`, { error });
+            log(`Error registering model ${model.name} - ${error.message}`, { error }, 'error', 'core.ReactoryModelRegistry');
           }
 
           try {
@@ -71,12 +74,13 @@ export class ReactoryModelRegistry
               typeof (model as Reactory.Service.IReactoryStartupAwareService)
                 .onStartup === "function"
             ) {
+              log(`Running startup for model ${model.name}`, {}, 'debug', 'core.ReactoryModelRegistry');
               (
                 model as Reactory.Service.IReactoryStartupAwareService
-              ).onStartup.bind(that);
-              await (
-                model as Reactory.Service.IReactoryStartupAwareService
-              ).onStartup(context);
+              ).onStartup.bind(that);              
+              startupAwareModels.push(new Promise((resolve, reject) => { 
+                model.onStartup(that.context).then(resolve).catch(reject); 
+              }));
             }
           } catch(e) {
             logger.error(`Error running startup for model ${model.name}`, { error: e });
@@ -84,6 +88,9 @@ export class ReactoryModelRegistry
         });
       });
     }
+
+    // Run startup for all startup aware models
+    await Promise.all(startupAwareModels);
 
     return Promise.resolve();
   }
@@ -137,12 +144,17 @@ export class ReactoryModelRegistry
   }
 
   getModel<T>(specs: Partial<IReactoryComponentDefinition<T>>): T | null {
+    if (!specs) throw new Error('No specs provided');
+    if (typeof specs !== 'object') throw new Error('Specs must be a partial object with at least one key-value pair');
+
     const result = this.findMatchingComponent(specs);
     if (result === null) return null;
     return (result as IReactoryComponentDefinition<T>).component as T;
   }
 
   getModels<T>(spec: Partial<IReactoryComponentDefinition<T>>): T[] {
+    if (!spec) throw new Error('No specs provided');
+    if (typeof spec !== 'object') throw new Error('Specs must be a partial object with at least one key-value pair');
     //find all models where we have a partial match to the spec
     let allModels: IReactoryComponentDefinition<T>[] = [];
     this.context.modules.forEach((reactoryModule) => {

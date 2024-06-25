@@ -11,6 +11,7 @@ const users: Reactory.Server.IStaticallyLoadedUser[] = [
     roles: ['ADMIN', 'DEVELOPER'],
     firstName: 'Reactory',
     lastName: 'Admin',
+    username: 'reactory',
     password: REACTORY_APPLICATION_PASSWORD,
   }
 ]

@@ -4,7 +4,6 @@ import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-core/modules';
 import ApiError from '@reactory/server-core/exceptions';
-import { wiredServices } from '@reactory/server-core/application/decorators/service';
 
 type DependencySetter = <T>(deps: T) => void;
 
@@ -45,11 +44,6 @@ modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
   } catch (serviceInstallError) {
     logger.error(`Service install error: ${serviceInstallError.message}`, { serviceInstallError });
   }
-});
-
-wiredServices.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition<any>) => { 
-  services.push(serviceDefinition);
-  serviceRegister[serviceDefinition.id] = serviceDefinition;
 });
 
 const getAlias = (id: string) => {
@@ -186,28 +180,21 @@ export const getService = (id: string,
  * @param context 
  * @returns 
  */
-export const startServices = async (props: any, context: any): Promise<boolean> => {   
+export const startServices = async (props: any, context: Reactory.Server.IReactoryContext): Promise<boolean> => {   
   try {
-    let startup_promises: Promise<void>[] = []
-
-    services.forEach((service: Reactory.Service.IReactoryServiceDefinition<any>) => {
+    let promises = [];
+    for (let i = 0; i < services.length; i++) {
+      const service = services[i];
       const instance = getService(service.id, props, context);
-
-      if (instance.onStartup) {
-        startup_promises.push((instance as Reactory.Service.IReactoryStartupAwareService).onStartup(context));
+      if (instance.onStartup && typeof instance.onStartup === 'function') {
+        await instance.onStartup();
       }
+    }
 
-      if(service.lifeCycle === "singleton") {
-        service.instance = instance;
-      }
-    });
-
-    await Promise.all(startup_promises).then();
-
-    return Promise.resolve(true);
+    return true;
   } catch (serviceStartupError) {
     logger.error('An error occured while starting some services, please check log for details', serviceStartupError)
-    return Promise.resolve(false);
+    return false;
   }
 };
 
