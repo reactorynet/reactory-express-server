@@ -239,10 +239,17 @@ Environment Settings:
       }
     });
 
+    
     const expressConfig: ApolloServerExpressConfig = {
       logger: logger,
       schema: $schema,
-      context: ReactoryContextProvider,
+      context: async (options, args2) => { 
+        const req = options.req;
+        if(req.context) return req.context;
+        else {
+          return await ReactoryContextProvider(null, {});
+        }
+      },
       uploads: {
         maxFileSize: 20000000,
         maxFiles: 10,

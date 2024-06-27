@@ -102,10 +102,12 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
         lastName: user.lastName,
         email: user.email,
         avatar: user.avatar,
+        roles,
         avatarProvider: user.avatarProvider,
         dateOfBirth: user.dateOfBirth,
         mobileNumber: user.mobileNumber,      
         username: user.username,
+        password: password
         //@ts-ignore
       }, organization);
     });

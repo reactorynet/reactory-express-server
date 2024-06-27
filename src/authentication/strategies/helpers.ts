@@ -10,7 +10,7 @@ import amq from '@reactory/server-core/amq';
 
 const jwtSecret = process.env.SECRET_SAUCE;
 
-export type OnDoneCallback = (error: Error | null, user?: Partial<Reactory.Models.IUser> | string | false, info?: any) => void;
+export type OnDoneCallback = (error: Error | null, user?: Partial<Reactory.Models.IUserDocument> | string | false, info?: any) => void;
 
 export interface OAuthProfile {
   id: string;

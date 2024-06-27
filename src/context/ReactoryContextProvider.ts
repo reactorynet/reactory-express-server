@@ -71,6 +71,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
       objectMapper,
     }
     this.container = ReactoryContainer;
+    this.log = this.log.bind(this);
   }
   
 
@@ -79,7 +80,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 
   log(message: string, meta: any = null, type: Reactory.Service.LOG_TYPE = "debug", clazz: string = '') {
-    const logMessage = `${message}`;
+    const logMessage = `[${Hash(this.id)}]${message}`;
     switch (type) {
       case "e":
       case "err":
@@ -173,7 +174,8 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
 
 const getContext = async <TResult extends Reactory.Server.IReactoryContext>(session: any, currentContext: Partial<Reactory.Server.IReactoryContext> = {}): Promise<Reactory.Server.IReactoryContext> => { 
   const context = new ReactoryContext(session, currentContext);
-  return await context.extend<TResult>();
+  await context.extend<TResult>();
+  return context;
 }
 
 export default getContext;

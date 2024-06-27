@@ -58,6 +58,7 @@ const Applications: Reactory.Forms.IReactoryForm = {
   title: "${props.context.i18n.t('forms:applicationTitle')}",
   registerAsComponent: true,
   version: "1.0.0",
+  roles: ['USER'],
   widgetMap: [
     {
       componentFqn: "core.ContentWidget@1.0.0",

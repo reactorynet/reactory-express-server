@@ -69,6 +69,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
     partner: Reactory.Models.IReactoryClientDocument,
     businessUnit: Reactory.Models.IBusinessUnit
   ): Promise<CreateUserResult> {
+    const { context } = this;
     const result: CreateUserResult = { 
       errors: [], 
       organization: organization       
@@ -88,7 +89,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
           lastName: 1,
         }
       ).then();
-      logger.info(
+      context.info(
         `Using partner ${partnerToUse.name} to create user ${user.email} ${
           foundUser ? "EXISTING" : "NEW"
         }`
@@ -115,15 +116,10 @@ class UserService implements Reactory.Service.IReactoryUserService {
             businessUnit && businessUnit._id ? businessUnit._id : null, // eslint-disable-line no-underscore-dangle
           provider,
           enabled: true,
-          roles: union(
-            isFunction(partnerToUse.getDefaultUserRoles)
-              ? partnerToUse.getDefaultUserRoles()
-              : [],
-            roles
-          ),
+          roles: roles.length == 1 && roles[0].toUpperCase().indexOf("ANON") >= 0 ? roles : union(roles, ["USER"]),
         };
 
-        logger.debug("Checking Membership", { user, membership });
+        context.debug("Checking Membership", { user, membership });
         if (
           foundUser.hasMembership(
             membership.clientId,
@@ -522,9 +518,9 @@ class UserService implements Reactory.Service.IReactoryUserService {
   ): Promise<Reactory.Models.IUserDocument> {
     const result = await this.createUserForOrganization(
       userInput,
-      crypto.randomBytes(16).toString("hex"),
+      userInput?.password ? userInput.password : crypto.randomBytes(16).toString("hex"),
       organization,
-      ["USER"],
+      userInput?.roles ? userInput.roles : ["USER"],
       "LOCAL",
       this.context.partner,
       null

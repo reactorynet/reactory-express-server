@@ -6,12 +6,13 @@ import ReactoryContextProvider from '@reactory/server-core/context/ReactoryConte
  * @param res 
  * @param next 
  */
-const ReactoryContextMiddleWare = (req: Express.Request, res: Express.Response, next: Function) => {
+const ReactoryContextMiddleWare = (req: Request, res: Response, next: Function) => {
   ReactoryContextProvider(null,{}).then((context: Reactory.Server.IReactoryContext) => {
     //@ts-ignore
     req.context = context;
     context.request = req;
     context.response = res;
+    context.debug(`ReactoryContextMiddleWare:: created for route ${req.url}`)
     next();
   }).catch((err) => {
     // @ts-ignore
