@@ -85,6 +85,38 @@ export type CoreModelTypes =
   | typeof UserDemographic;
 
 
+export { default as User } from './User';
+export { default as Audit } from './Audit';
+export { default as Application } from './Application';
+export { default as BusinessUnit } from './BusinessUnit';
+export { default as ClientComponent } from './ClientComponent';
+export { default as Comment } from './Comment';
+export { default as Content } from './Content';
+export { default as Cache } from './CoreCache';
+export { default as CoreCategory } from './CoreCategory';
+export { default as CoreFile } from './CoreFile';
+export { default as EmailQueue } from './EmailQueue';
+export { default as Menu } from './Menu';
+export { default as Notification } from './Notification';
+export { default as OperationalGroup } from './OperationalGroup';
+export { default as Organigram } from './Organigram';
+export { default as Organization } from './Organization';
+export { default as PersonalDemographic } from './PersonalDemographic';
+export { default as Project } from './Project';
+export { default as ProjectBoard } from './ProjectBoard';
+export { default as ReactoryClient } from './ReactoryClient';
+export { default as ReactoryResource } from './ReactoryResource';
+export { default as ReactorySupportTicket } from './ReactorySupportTicket';
+export { default as ReactoryTranslation } from './ReactoryTranslation';
+export { default as Region } from './Region';
+export { default as Statistic } from './Statistic';
+export { default as StatisticPackage } from './Statistic';
+export { default as Task } from './Task';
+export { default as Team } from './Team';
+export { default as Template } from './Template';
+export { default as Theme } from './Theme';
+export { default as UserDemographic } from './UserDemographics';
+
 export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTypes>[] =
   [
     {
@@ -121,7 +153,7 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       domain: Reactory.ComponentDomain.model,
       overwrite: false,
       onStartup: async (context: Reactory.Server.IReactoryContext) => {
-        logger.info("Synchronizing Postgres Data Source");
+        context.info("Synchronizing Postgres Data Source");
         await PostgresDataSource.initialize();
         await PostgresDataSource.synchronize();
         const repo = PostgresDataSource.getRepository(Audit);
@@ -133,8 +165,7 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
         audit.signature = Hash(encoder.encodeState(audit)).toString();
         repo.save(audit);
 
-        logger.debug("Postgres Data Source Synchronized");
-
+        context.debug("Postgres Data Source Synchronized");
         context.state.postgres = PostgresDataSource;
       },
     },
@@ -592,6 +623,5 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       features: [],
     },
   ];
-;
 
 export default ModelDefinitions;

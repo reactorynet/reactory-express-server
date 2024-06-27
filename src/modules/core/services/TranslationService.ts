@@ -14,8 +14,6 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
   props: Reactory.Service.IReactoryServiceProps;
   context: Reactory.Server.IReactoryContext;
   
-
-
   constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;

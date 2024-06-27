@@ -1,7 +1,7 @@
 import schema from './schema';
 import uiSchema from './uiSchema';
 import modules from './modules';
-import { ReactoryClient } from '@reactory/server-core/models';
+import ReactoryClient from '@reactory/server-modules/core/models/ReactoryClient';
 import _ from 'lodash';
 interface IApplicationsFormData { 
   greeting: string, 

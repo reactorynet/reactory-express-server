@@ -10,6 +10,8 @@ const ReactoryContextMiddleWare = (req: Express.Request, res: Express.Response, 
   ReactoryContextProvider(null,{}).then((context: Reactory.Server.IReactoryContext) => {
     //@ts-ignore
     req.context = context;
+    context.request = req;
+    context.response = res;
     next();
   }).catch((err) => {
     // @ts-ignore

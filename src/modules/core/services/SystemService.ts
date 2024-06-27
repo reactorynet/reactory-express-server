@@ -1,6 +1,6 @@
 import Reactory from '@reactory/reactory-core';
 import modules from '@reactory/server-core/modules';
-import { ReactoryClient, Menu } from '@reactory/server-core/models';
+import { ReactoryClient, Menu } from '@reactory/server-modules/core/models'
 import { ObjectId } from 'bson';
 import { execql, execml } from '@reactory/server-core/graph/client'
 import { map } from 'lodash';

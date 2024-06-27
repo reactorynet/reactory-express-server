@@ -69,8 +69,6 @@ class UserService implements Reactory.Service.IReactoryUserService {
     partner: Reactory.Models.IReactoryClientDocument,
     businessUnit: Reactory.Models.IBusinessUnit
   ): Promise<CreateUserResult> {
-    // eslint-disable-line max-len
-    
     const result: CreateUserResult = { 
       errors: [], 
       organization: organization       

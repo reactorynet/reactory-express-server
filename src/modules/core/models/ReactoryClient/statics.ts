@@ -10,6 +10,7 @@ import ReactoryClientModel from './'
 import Menu from '../Menu';
 import ClientComponent from '../ClientComponent';
 import User from '../User';
+import { strongRandom } from 'utils';
 
 const {
   clients,
@@ -123,7 +124,7 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
           email: usr.email,
           username: usr.username, 
         },
-        password: usr.password || 'Password123!',
+        password: usr.password || strongRandom(),
         roles: usr.roles || ['USER'],
       };
     });

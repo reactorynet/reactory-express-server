@@ -27,10 +27,8 @@ import workflow, { workflowRunner, WorkFlowRunner } from '@reactory/server-core/
 import pdf from '@reactory/server-core/pdf';
 import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
-import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
 import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
-import AuthHelper from '@reactory/server-core/authentication/strategies/helpers';
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
 import colors from 'colors/safe';
 import http from 'http';
@@ -214,7 +212,7 @@ Environment Settings:
   reactoryExpress.use(i18nextHttp.handle(i18n));
   reactoryExpress.use(
     queryRoot,
-    passport.authenticate(['jwt', 'anonymous'], 
+    passport.authenticate(['jwt'], 
     { session: false }), 
     bodyParser.urlencoded({ extended: true }),
     bodyParser.json({
