@@ -243,7 +243,7 @@ Environment Settings:
     const expressConfig: ApolloServerExpressConfig = {
       logger: logger,
       schema: $schema,
-      context: async (options, args2) => { 
+      context: async (options: any) => { 
         const req = options.req;
         if(req.context) return req.context;
         else {

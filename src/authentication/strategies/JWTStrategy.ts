@@ -50,8 +50,11 @@ const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.
       if (isNil(userResult)) {
         return done(null, false);
       }
-      if(request.context) {
+      if(request.context) {        
         request.context.user = userResult;
+        if (userResult.hasRole(request.context.partner._id.toString(), 'ANON')) {
+          request.context.user.anon = true;
+        }
         request.context.debug(`User ${userResult._id.toString()} authenticated and set on context: ${request.context.id}`)
       }
       amq.raiseWorkFlowEvent('user.authenticated', { user: userResult, payload, method: 'bearer-token' });

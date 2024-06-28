@@ -168,7 +168,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   logoutroute,
   forgotpasswordroute,
   resetpasswordroute,
-  logoutroute,
   {
     key: 'home_authenticated',
     title: 'Home (Authenticated)',

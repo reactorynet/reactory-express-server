@@ -72,6 +72,18 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     }
     this.container = ReactoryContainer;
     this.log = this.log.bind(this);
+    this.debug = this.debug.bind(this);
+    this.warn = this.warn.bind(this);
+    this.error = this.error.bind(this);
+    this.info = this.info.bind(this);
+    this.getService = this.getService.bind(this);
+    this.hasRole = this.hasRole.bind(this);
+    this.getValue = this.getValue.bind(this);
+    this.setValue = this.setValue.bind(this);
+    this.removeValue = this.removeValue.bind(this);
+    this.extend = this.extend.bind(this);
+    this.listServices = this.listServices.bind(this);
+    
   }
   
 
