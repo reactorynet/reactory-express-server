@@ -1,9 +1,24 @@
-import { Forms } from '@reactory/reactory-core';
+import Reactory, { Forms } from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
-import { PostgresOptions } from './types'
+import { PostgresOptions, Context, Generator } from './types'
+import { service } from '@reactory/server-core/application/decorators';
 
+@service({
+  id: 'core.ReactoryPostgresGenerator@1.0.0',
+  description: 'Generates forms based on Postgres database tables, views, views, and functions.',
+  tags: ['postgres', 'form', 'generator', 'database'],
+  nameSpace: 'core',
+  name: 'ReactoryPostgresGenerator',
+  version: '1.0.0',
+  dependencies: [{
+    id: 'core.PostgresTableToFormGenerator@1.0.0',
+    alias: 'tableGenerator'
+  }],
+  roles: ['DEVELOPER'],
+  serviceType: 'schemaGeneration'
+})
 class ReactoryPostgresGenerator implements 
-  Reactory.Forms.ReactoryFormGenerator<PostgresOptions>  {
+  Reactory.Forms.ReactoryFormGeneratorService<PostgresOptions, Context>  {
   
   id: string;
   optionsForm?: string;
@@ -11,21 +26,15 @@ class ReactoryPostgresGenerator implements
   service: string;
   method: string; 
 
+  tableGenerator: Generator<PostgresTableOptions, Context>;
 
-  constructor(options: PostgresOptions) {
-    this.id = 'core-generators.PostgresFormGenerator@1.0.0';
-    this.options = options;
-    this.service = 'postgres';
-    this.method = 'generate';
-  }
-
-  _id(): string {
-    return this.id;
+  constructor(props: PostgresOptions, context: TC) {
+    this.options = props;
   }
   
 
-  async generate(options: Forms.IReactoryRelationDatabaseFormGeneratorOptions): Promise<Forms.IReactoryForm[]> {
-    logger.info('Generating Postgres Form(s)', { options });
+  async generate(): Promise<Forms.IReactoryForm[]> {
+    logger.info('Generating Postgres Form(s)', { options: this.options });
     return [];
   }
 }

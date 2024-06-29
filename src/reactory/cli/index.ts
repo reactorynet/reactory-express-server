@@ -1,13 +1,13 @@
 import fs from 'fs';
-import { get, template } from 'lodash';
+import { template } from 'lodash';
 import readline from 'readline';
+import yaml from "js-yaml";
 import Reactory from '@reactory/reactory-core';
 import ReactoryContextProvider from 'context/ReactoryContextProvider';
 import colors from './colors';
 import i18next from '@reactory/server-core/express/i18n';
-import Mongoose, { mongo } from 'mongoose';
 import MongooseConnection from '@reactory/server-core/models/mongoose';
-import { ReactoryClient } from 'models';
+import { ReactoryClient } from '@reactory/server-modules/core/models';
 import ReactoryModules from '@reactory/server-core/modules'
 
 type TCLI = (kwargs: string[], context?: Reactory.Server.IReactoryContext) => Promise<void>;
@@ -96,6 +96,7 @@ const getCLI = (name: string): Reactory.IReactoryComponentDefinition<TCLI> => {
  * user to specify the environment, user, password, partner, etc.
  * and then return the remaining arguments to be processed by the
  * command.
+ * -cf, --config: The configuration file to use for the command.
  * --cname: The environment name to use for the command. (this value is used by the cli.sh and cli.cmd file)
  * --cenv: The environment to use for the command. (this value is used by the cli.sh file)
  * -p, --partner: The partner to use for the command.
@@ -211,18 +212,53 @@ const processCliArgs = async (vargs: string[]): Promise<string[]> => {
  * ```
  * @param vargs - The variable length command line arguments passed to the CLI as a string array
  * vargs[0] = The is the cli.sh or cli.cmd file.
- * vargs[1] = The command to execute or command switch for the CLI.
+ * vargs[1] = The command to execute or command switch for the CLI or a yaml file.
  * vargs[2..n] = The options for the command.
  */
 const main = async (vargs: string[]): Promise<void> => {
   try {
+    if(vargs.length === 0) {
+      console.error(colors.red('No arguments provided.'));
+      process.exit(1);
+    };
+
     let userName: string = null;
     let password: string = null;
     let partnerKey: string = null;
+    let configFile: string = null;
     let user: Reactory.Models.IUserDocument = null;
     let partner: Reactory.Models.IReactoryClientDocument = null;
+    const currentContext: Partial<Reactory.Server.IReactoryContext> = {
+      user,
+      partner,
+      i18n: i18next,
+    }
+    const context = await ReactoryContextProvider(null, currentContext);
+    const { i18n } = context;
+    const { t } = i18n;
+
     //copy the vargs to a new array as we will be potentially modifying it.
     let cargs: string[] = [...vargs.slice(4)];
+
+    if(cargs[0] && cargs[0].indexOf('.yaml') !== -1 && fs.existsSync(cargs[0]) === true){ 
+      //we will process the yaml file.
+      const file = fs.readFileSync(cargs[0]).toString();
+      const yaml = require('js-yaml');
+      const config = yaml.load(file);
+      if(!config) {
+        console.error(colors.red('Invalid yaml file.'));
+        process.exit(1);
+      }
+
+      if(config.user) userName = config.user;
+      if(config.password) password = config.password;
+      
+      if(config.jobs.length > 0) { 
+        //we will use the first job as the command.
+        if(config.jobs[0].cli) cargs = [config.jobs[0].cli];
+        if(config.jobs[0].args) cargs = [...cargs, config.jobs[0].args];
+      }
+    }
 
     if (cargs.length === 0) return;
     if (cargs[0] && cargs[0].indexOf('-') !== -1) {
@@ -240,6 +276,12 @@ const main = async (vargs: string[]): Promise<void> => {
       for(let i = 2; i < vargs.length; i++) { 
         const [key, value] = vargs[i].split('=');
         switch(key) {
+          case 'cf':
+          case '--config':
+            {
+              configFile = value;
+              break;
+            }
           case '-u':
           case '--user':
             {
@@ -268,15 +310,6 @@ const main = async (vargs: string[]): Promise<void> => {
 
     await MongooseConnection();
     
-    const currentContext: Partial<Reactory.Server.IReactoryContext> = {
-      user,
-      partner,
-      i18n: i18next,
-    }
-    const context = await ReactoryContextProvider(null, currentContext);
-    const { i18n } = context;
-    const { t } = i18n;
-
     if(partnerKey) {
       //we will use the context, to get the 
       //partner service and get the partner.

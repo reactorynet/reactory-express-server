@@ -1,6 +1,7 @@
 
 Reactory cli help
 =================
+-cf, --config - specify a yaml configuration file to use
 -h, --help - displays this help message
 -l, --list [module] - lists commands available, providing module will filter results
 --cname - specifies the configuration name (default: reactory)
@@ -12,4 +13,9 @@ Reactory cli help
 
 e.g. To start the reactory AI bot reactor and use the command line use
 
-> cli.sh reactor -p=reactory -u=reactory@local -pwd=Password123! --cenv=local --cname=reactory
+> cli.sh Reactor -p=reactory -u=reactory@local -pwd=Password123! --cenv=local --cname=reactory
+
+using a config file
+
+> cli.sh ./path/to/config.yaml
+> cli.sh Reactor -p=reactory -cf=./path/to/config.yaml

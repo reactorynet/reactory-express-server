@@ -165,7 +165,10 @@ export const getService = (id: string,
       )) {
         instances[singleton_key] = svc;
     }
-
+    // ensure that the service has the correct name, namespace and version
+    svc.name = svcDef.name;
+    svc.nameSpace = svcDef.nameSpace;
+    svc.version = svcDef.version;
     return svc;
   } else {
     throw new ApiError(`Service ${id} not found in service registry.`);
@@ -229,7 +232,7 @@ export const stopServices = async (props: any, context: any): Promise<boolean> =
 
 
 
-export const listServices = (filter: Reactory.Service.ReactoryServiceFilter): Reactory.Service.IReactoryServiceDefinition<any>[] => {
+export const listServices = (filter: Reactory.Server.ReactoryServiceFilter): Reactory.Service.IReactoryServiceDefinition<any>[] => {
   let filtered: Reactory.Service.IReactoryServiceDefinition<any>[] = services;
 
   if (filter.id) {

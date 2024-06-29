@@ -1,23 +1,23 @@
-import Reactory from '@reactory/reactory-core';
-import logger from '@reactory/server-core/logging';
-import fs from 'fs';
-import path from 'path';
-import yaml from 'js-yaml';
-import { ReadLine } from 'readline';
-import colors from 'colors/safe';
+import Reactory from "@reactory/reactory-core";
+import logger from "@reactory/server-core/logging";
+import fs from "fs";
+import path from "path";
+import yaml from "js-yaml";
+import { ReadLine } from "readline";
+import colors from "colors/safe";
 
 // set theme
 colors.setTheme({
-  silly: 'rainbow',
-  input: 'grey',
-  verbose: 'cyan',
-  prompt: 'grey',
-  info: 'green',
-  data: 'grey',
-  help: 'cyan',
-  warn: 'yellow',
-  debug: 'blue',
-  error: 'red'
+  silly: "rainbow",
+  input: "grey",
+  verbose: "cyan",
+  prompt: "grey",
+  info: "green",
+  data: "grey",
+  help: "cyan",
+  warn: "yellow",
+  debug: "blue",
+  error: "red",
 });
 
 const HelpText = `
@@ -29,7 +29,7 @@ parameters:
 -m --module <module-name> eg -m core
 -f --form <form-name> eg -f user
 -c --config <config-file> eg -c ./path/to/config.json / -c ./path/to/config.yaml
--g --generator <generator-name> eg -g mongoose
+-g --generator <generator-name> eg -g PostgresTableToFormGenerator
 -l --list-generators
 -gargs --generator-args <generator-args> eg -gargs 'arg1=val1,arg2=val2'
 -o --output <output-folder> eg -o ./path/to/output
@@ -37,9 +37,12 @@ parameters:
 -v --verbose
 `;
 
-type ReactoryCliApp = (vargs: string[], context: Reactory.Server.IReactoryContext) => Promise<void>
+type ReactoryCliApp = (
+  vargs: string[],
+  context: Reactory.Server.IReactoryContext
+) => Promise<void>;
 
-interface ConfigFile { 
+interface ConfigFile {
   module?: string;
   form?: string;
   generator: string;
@@ -48,9 +51,9 @@ interface ConfigFile {
 }
 
 /**
- * The SchemaGenCli function is used as a CLI plugin for the Reactory CLI tool. 
+ * The SchemaGenCli function is used as a CLI plugin for the Reactory CLI tool.
  * The SchemaGenCli function is used to generate schemas for your forms in your reactory modules.
- * 
+ *
  * The command line interface for the SchemaGenCli is as follows:
  * parameters:
  * -m --module <module-name> eg -m core
@@ -59,12 +62,15 @@ interface ConfigFile {
  * -g --generator <generator-name> eg -g mongoose
  * -l --list-generators
  * -gargs --generator-args <generator-args> eg -gargs 'arg1=val1,arg2=val2'
- * -o --output <output-folder> eg -o ./path/to/output  
+ * -o --output <output-folder> eg -o ./path/to/output
  * -h --help
- * @param kwargs 
- * @param context 
+ * @param kwargs
+ * @param context
  */
-const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactoryContext): Promise<void> => { 
+const SchemaGenCli = async (
+  kwargs: string[],
+  context: Reactory.Server.IReactoryContext
+): Promise<void> => {
   if (kwargs.length === 0) {
     context.error(`No arguments provided`);
     process.exit(1);
@@ -75,74 +81,72 @@ const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactory
     process.exit(1);
   }
 
-  const { 
-    modules,
-  } = context;
+  const { modules, state } = context;
 
   const rl: ReadLine = context.readline as ReadLine;
 
-  let module: string = '';
-  let form: string = '';
-  let config: string = '';
-  let generator: string = '';
+  let module: string = "";
+  let form: string = "";
+  let config: string = "";
+  let generator: string = "";
   let listGenerators: boolean = false;
   let generatorArgs: any = {};
-  let output: string = '';
+  let output: string = "";
   let help: boolean = false;
   let verbose: boolean = false;
 
   for (let i = 0; i < kwargs.length; i++) {
     let arg: string;
     let argv: string | boolean = null;
-    if (kwargs[i].indexOf('=') === -1) {
+    if (kwargs[i].indexOf("=") === -1) {
       arg = kwargs[i];
       argv = true;
     } else {
-      arg = kwargs[i].split('=')[0];
-      argv = kwargs[i].split('=')[1];
+      arg = kwargs[i].split("=")[0];
+      argv = kwargs[i].split("=")[1];
     }
 
     switch (arg) {
-      case '-m':
-      case '--module':
+      case "-m":
+      case "--module":
         module = argv as string;
         break;
-      case '-f':
-      case '--form':
+      case "-f":
+      case "--form":
         form = argv as string;
         break;
-      case '-c':
-      case '--config':
+      case "-c":
+      case "--config":
         config = argv as string;
         break;
-      case '-g':
-      case '--generator':
+      case "-g":
+      case "--generator":
         generator = argv as string;
         break;
-      case '-l':
-      case '--list-generators':
+      case "-l":
+      case "--list-generators":
         listGenerators = true;
         break;
-      case '-gargs':
-      case '--generator-args':
+      case "-gargs":
+      case "--generator-args":
         // convert the kvp string to an object
         const args = argv as string;
-        const argArray = args.split(',');
+        const argArray = args.split(",");
         argArray.forEach((arg) => {
-          const [key, value] = arg.split('=');
+          const [key, value] = arg.split("=");
           generatorArgs[key] = value;
         });
         break;
-      case '-o':
-      case '--output':
+      case "-o":
+      case "--output":
         output = argv as string;
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         help = true;
         break;
-      case '-v':
-      case '--verbose':
+      case "-v":
+      case "--verbose":
         verbose = true;
         break;
       default:
@@ -156,10 +160,17 @@ const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactory
   }
 
   if (listGenerators) {
-    rl.write(colors.green(`Listing generators...\n`));
-    const generatorServices = context.listServices({ type: 'schemaGenerator' });
+    rl.write(colors.green('Listing generators...'));
+    const generatorServices = context.listServices({
+      type: "schemaGeneration",
+    });
     generatorServices.forEach((service) => {
-      rl.write(colors.green(`Generator: ${service.name}\n${service.description}`));
+      rl.write(
+        colors.green(`
+  ${service.nameSpace}.${service.name}@${service.version}
+  ${service.description}
+`)
+      );
     });
 
     process.exit(0);
@@ -175,13 +186,13 @@ const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactory
       process.exit(1);
     }
 
-    const fileText = fs.readFileSync(file, 'utf8')
+    const fileText = fs.readFileSync(file, "utf8");
     let configData: ConfigFile = {
-      generator: '',
-      options: {}
+      generator: "",
+      options: {},
     };
 
-    if (file.indexOf('.json') > -1) {
+    if (file.indexOf(".json") > -1) {
       //load json
       try {
         configData = JSON.parse(fileText);
@@ -189,12 +200,11 @@ const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactory
         context.error(`Error parsing JSON file: ${file}`);
         process.exit(1);
       }
-
-    } else if (file.indexOf('.yaml') > -1) {
+    } else if (file.indexOf(".yaml") > -1) {
       //load yaml
       try {
         configData = yaml.load(fileText) as ConfigFile;
-      } catch (error) { 
+      } catch (error) {
         context.error(`Error parsing YAML file: ${file}`);
         process.exit(1);
       }
@@ -221,15 +231,17 @@ const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactory
     }
   }
 
-  if(generator === '') { 
+  if (generator === "") {
     context.error(`No generator provided`);
     process.exit(1);
   }
-  
+
   let generatorService: Reactory.Forms.ReactoryFormGenerator<unknown> = null;
 
   try {
-    generatorService = context.getService<Reactory.Forms.ReactoryFormGenerator<unknown>>(generator, generatorArgs, context);
+    generatorService = context.getService<
+      Reactory.Forms.ReactoryFormGenerator<unknown>
+    >(generator, generatorArgs, context);
   } catch (error) {
     context.error(`Error loading generator: ${generator}`);
     process.exit(1);
@@ -240,13 +252,18 @@ const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactory
     process.exit(1);
   }
 
-  if(generatorService.generate && typeof generatorService.generate === 'function') { 
-    const forms = await generatorService.generate({
-      module,
-      form,
-      generatorArgs
-    }, context);
-
+  if (
+    generatorService.generate &&
+    typeof generatorService.generate === "function"
+  ) {
+    const forms = await generatorService.generate(
+      {
+        module,
+        form,
+        generatorArgs,
+      },
+      context
+    );
 
     if (output) {
       rl.write(colors.green(`Writing to output folder: ${output}\n`));
@@ -268,35 +285,38 @@ const SchemaGenCli = async (kwargs: string[], context: Reactory.Server.IReactory
       });
     }
   }
-  
-  rl.write(colors.green(`Generation complete.\n`));
-}
 
+  rl.write(colors.green(`Generation complete.\n`));
+};
 
 /**
  * ReactorCliApp definition
  */
-const ReactorCliAppDefinition: Reactory.IReactoryComponentDefinition<ReactoryCliApp> = {
-  nameSpace: 'core',
-  name: 'SchemaGen',
-  version: '1.0.0',
-  description: HelpText,
-  component: SchemaGenCli,
-  domain: Reactory.ComponentDomain.generator,
-  features: [{
-    feature: 'SchemaGen',
-    featureType: Reactory.FeatureType.function,
-    action: ['generate', 'schema-generate'],
-    stem: 'generate',
-  }],
-  overwrite: false,
-  roles: ['USER'],
-  stem: 'manager',
-  tags: ['schema', 'cli', 'generator'],
-  toString(includeVersion) {
-    return includeVersion ? `${this.nameSpace}.${this.name}@${this.version}` : this.name;
-  },
+const ReactorCliAppDefinition: Reactory.IReactoryComponentDefinition<ReactoryCliApp> =
+  {
+    nameSpace: "core",
+    name: "SchemaGen",
+    version: "1.0.0",
+    description: HelpText,
+    component: SchemaGenCli,
+    domain: Reactory.ComponentDomain.generator,
+    features: [
+      {
+        feature: "SchemaGen",
+        featureType: Reactory.FeatureType.function,
+        action: ["generate", "schema-generate"],
+        stem: "generate",
+      },
+    ],
+    overwrite: false,
+    roles: ["USER"],
+    stem: "manager",
+    tags: ["schema", "cli", "generator"],
+    toString(includeVersion) {
+      return includeVersion
+        ? `${this.nameSpace}.${this.name}@${this.version}`
+        : this.name;
+    },
+  };
 
-}
-
-export default ReactorCliAppDefinition
+export default ReactorCliAppDefinition;
