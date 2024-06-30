@@ -83,7 +83,6 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     this.removeValue = this.removeValue.bind(this);
     this.extend = this.extend.bind(this);
     this.listServices = this.listServices.bind(this);
-    
   }
   
 
@@ -184,10 +183,11 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 }
 
-const getContext = async <TResult extends Reactory.Server.IReactoryContext>(session: any, currentContext: Partial<Reactory.Server.IReactoryContext> = {}): Promise<Reactory.Server.IReactoryContext> => { 
+const getContext = async <TResult extends Reactory.Server.IReactoryContext>(session: any, currentContext: Partial<TResult> = {}): Promise<TResult> => { 
   const context = new ReactoryContext(session, currentContext);
   await context.extend<TResult>();
-  return context;
+  // @ts-ignore
+  return context as TResult;
 }
 
 export default getContext;
