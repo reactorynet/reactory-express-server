@@ -10,7 +10,7 @@ import {
   SQLFilter,
   SQLColumn,
   QueryStringResultWithCount,
-} from './types';
+} from '../types';
 import Reactory from '@reactory/reactory-core'
 
 let pool: mysql.Pool = null;

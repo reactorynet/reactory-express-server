@@ -1,6 +1,6 @@
 import Reactory, { Forms } from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
-import { PostgresOptions, Context, Generator } from './types'
+import { PostgresOptions, Context, Generator, PostgresTableOptions, PostgresConnectionCredentials } from './types'
 import { service } from '@reactory/server-core/application/decorators';
 
 @service({
@@ -22,20 +22,55 @@ class ReactoryPostgresGenerator implements
   
   id: string;
   optionsForm?: string;
-  options?: any;
   service: string;
-  method: string; 
+  method: string;
+  
+  [key: string]: unknown;
+  nameSpace: string;
+  name: string;
+  version: string;
+  props: PostgresOptions;
+  context: Reactory.Server.IReactoryContext;
 
   tableGenerator: Generator<PostgresTableOptions, Context>;
 
-  constructor(props: PostgresOptions, context: TC) {
-    this.options = props;
+  constructor(props: PostgresOptions, context: Context) {
+    this.props = props;
+    this.context = context;
+  }
+  
+  toString(includeVersion?: boolean): string {
+    return includeVersion ? `${this.nameSpace}.${this.name}@${this.version}` : this.name;
   }
   
 
   async generate(): Promise<Forms.IReactoryForm[]> {
-    logger.info('Generating Postgres Form(s)', { options: this.options });
-    return [];
+    const { context, props } = this;
+    const { connection, entities, outputs } = props;
+    const { partner, user, state } = context;
+    context.info(`${this.toString(true)} - Generating forms from Postgres database using connection ${connection}`);
+    const connectionSetting = partner.getSetting<PostgresConnectionCredentials>(connection);
+    if (!connectionSetting || !connectionSetting.data) {
+      context.error(`Connection settings not found for ${connection}. Please check client settings for ${partner.name} (key ${partner.key})`);
+      return [];
+    }
+    
+    const forms: Forms.IReactoryForm[] = [];
+
+    try {
+      this.tableGenerator.props = {
+        connection,
+        entities,
+        outputs
+      };
+      this.tableGenerator.generate();
+    } catch(e) {
+      context.error(`Error generating forms from Postgres database ${connection}`, e);
+    }
+  }
+
+  setTableGenerator(generator: Generator<PostgresTableOptions, Context>) {
+    this.tableGenerator = generator;
   }
 }
 

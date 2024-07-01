@@ -1,15 +1,8 @@
-import Organization from './Organization';
-import Users from './Users';
-import Survey from './Survey';
-import { queryAsync as mysql } from './mysql';
 
-const drivers = {
-  mysql 
-};
+import mysql from './mysql';
+import postgres from './postgres';
 
 export default {
-  Organization,
-  Users,
-  Survey,
-  mysql
+  mysql,
+  postgres,
 };

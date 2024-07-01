@@ -1,5 +1,4 @@
 import Reactory from "@reactory/reactory-core";
-import logger from "@reactory/server-core/logging";
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
@@ -236,12 +235,12 @@ const SchemaGenCli = async (
     process.exit(1);
   }
 
-  let generatorService: Reactory.Forms.ReactoryFormGenerator<unknown> = null;
+  let generatorService: Reactory.Forms.ReactoryFormGeneratorService<unknown, unknown> = null;
 
   try {
     generatorService = context.getService<
-      Reactory.Forms.ReactoryFormGenerator<unknown>
-    >(generator, generatorArgs, context);
+      Reactory.Forms.ReactoryFormGeneratorService<unknown, unknown>
+    >(generator, generatorArgs);
   } catch (error) {
     context.error(`Error loading generator: ${generator}`);
     process.exit(1);
@@ -256,14 +255,7 @@ const SchemaGenCli = async (
     generatorService.generate &&
     typeof generatorService.generate === "function"
   ) {
-    const forms = await generatorService.generate(
-      {
-        module,
-        form,
-        generatorArgs,
-      },
-      context
-    );
+    const forms = await generatorService.generate();
 
     if (output) {
       rl.write(colors.green(`Writing to output folder: ${output}\n`));

@@ -101,20 +101,4 @@ class PostgresTableToFormGenerator
   }
 }
 
-const PostgresTableGeneratorServiceDefinition: Reactory.Service.IReactoryServiceDefinition<PostgresTableToFormGenerator> =
-  {
-    nameSpace: "core",
-    name: "PostgresTableToFormGenerator",
-    version: "1.0.0",
-    description: "Generates a form from a Postgres table schema",
-    service: (props: any, context: Reactory.Server.IReactoryContext) =>
-      new PostgresTableToFormGenerator(props, context),
-    lifeCycle: "instance",
-    dependencies: [
-      { id: "core.ReactoryNLPService@1.0.0", alias: "nlpService" },
-    ],
-    serviceType: "schemaGeneration",
-    secondaryTypes: ["build", "codeGeneration"],
-  };
-
-export default PostgresTableGeneratorServiceDefinition;
+export default PostgresTableToFormGenerator;

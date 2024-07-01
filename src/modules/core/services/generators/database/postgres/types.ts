@@ -15,4 +15,4 @@ export type PostgresConnectionCredentials = {
 export type PostgresOptions = Options<PostgresConnectionCredentials>;
 type Column = Reactory.Forms.IReactoryDatabaseEntityColumn;
 
-export type PostgresTableOptions = Options<PostgresOptions & { table: string, columns: Column[] }>;
+export type PostgresTableOptions = Options<{}>;
