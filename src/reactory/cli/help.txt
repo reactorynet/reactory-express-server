@@ -10,12 +10,16 @@ Reactory cli help
 -u, --user: The user to use for the command.
 -pwd, --password: The password to use for the command.
 --modules: List all the modules available.
-
+-svc, --service: Tells the CLI to execute a service function
+-svcp, --service-props: Props to pass to service
+-svcpm, --service-props-map: An object map to use create properties for the function
+-svcpb, --service-props-builder: An id of for a props builder service that will produce props for this service invocation
 e.g. To start the reactory AI bot reactor and use the command line use
 
 > cli.sh Reactor -p=reactory -u=reactory@local -pwd=Password123! --cenv=local --cname=reactory
-
+> cli.su core.Service@1.0.0 -p=reactory -u=reactory@local -pwd=Password123! -svc=serviceMethod -svcp=[] -svcpm={'foo': 'bar'}
 using a config file
 
 > cli.sh ./path/to/config.yaml
 > cli.sh Reactor -p=reactory -cf=./path/to/config.yaml
+

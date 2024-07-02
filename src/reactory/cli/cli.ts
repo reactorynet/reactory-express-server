@@ -353,7 +353,12 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
   
       let command: string = cargs.length >= 1 && cargs[0].indexOf('-') === -1 ? cargs[0] : null;
       let commandArgs: string[] = cargs.length >= 2 ? cargs.slice(1) : [];
-  
+      let isServiceCall: boolean = false;
+      let serviceMethod: string = null;
+      let serviceProps: any = {};
+      let servicePropsMap: Reactory.ObjectMap = null;
+      let servicePropsBuilder: string = null;
+
       if (cargs.length >= 2) {
         for(let i = 2; i < vargs.length; i++) { 
           const [key, value] = vargs[i].split('=');
@@ -376,6 +381,26 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
                 partnerKey = value;
                 break;
               }
+            case '-svc':
+            case '--service': 
+              {
+                serviceMethod = value;
+                isServiceCall = true;
+                break;
+              }
+            case '-svcp':
+            case '--service-props': {
+              serviceProps = eval(value);
+              break;
+            }
+            case '-svcpm':
+            case '--service-props-map': { 
+              servicePropsMap = eval(value);
+            }
+            case '-svcpb':
+            case '--service-props-builder': { 
+              servicePropsBuilder = value;
+            }
             default:
               {
                 break;
@@ -384,17 +409,37 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
         }
       }
 
+      let jobs: Job[] = [];
+      if(isServiceCall) {
+        const propsBuilder = context.getService<Reactory.Service.IReactoryService & { build: ()=>Promise<any>  }>(servicePropsBuilder, {});
+        if(propsBuilder) {
+          const builtProps = await propsBuilder.build();
+          serviceProps = { ...serviceProps, ...builtProps };
+        }
+        jobs = [
+          {
+            service: command,
+            method: serviceMethod,
+            params: serviceProps,
+            props: serviceProps,
+            propsMap: serviceProps            
+          }
+        ];
+      } else {
+        jobs = [
+          {
+            command,
+            args: commandArgs
+          }
+        ];
+      }
+
       config = {
         version: '1.0.0',
         user: userName,
         partner: partnerKey,
         password: password,
-        jobs: [
-          { 
-            command,
-            args: commandArgs
-          }
-        ],
+        jobs,
       }
     }
 
