@@ -47,23 +47,21 @@ class ReactoryPostgresGenerator implements
   async generate(): Promise<Forms.IReactoryForm[]> {
     const { context, props } = this;
     const { connection, entities, outputs } = props;
-    const { partner, user, state } = context;
+    const { partner, user, state, i18n } = context;
     context.info(`${this.toString(true)} - Generating forms from Postgres database using connection ${connection}`);
     const connectionSetting = partner.getSetting<PostgresConnectionCredentials>(connection);
     if (!connectionSetting || !connectionSetting.data) {
-      context.error(`Connection settings not found for ${connection}. Please check client settings for ${partner.name} (key ${partner.key})`);
+      context.error(`Connection settings not found for ${connection}. Please check client settings for ${i18n.t(partner.name)} (key ${partner.key})`);
       return [];
     }
     
-    const forms: Forms.IReactoryForm[] = [];
-
     try {
       this.tableGenerator.props = {
         connection,
         entities,
         outputs
       };
-      this.tableGenerator.generate();
+      return await this.tableGenerator.generate();
     } catch(e) {
       context.error(`Error generating forms from Postgres database ${connection}`, e);
     }

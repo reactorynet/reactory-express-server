@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import { getService, services, listServices } from "@reactory/server-core/services"; // eslint-disable-line
+import ServiceManager from '@reactory/server-core/services/ServiceManager';
 import logger from "@reactory/server-core/logging";
 import Hash from "@reactory/server-core/utils/hash";
 import { objectMapper } from "@reactory/server-core/utils";
@@ -50,14 +50,15 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   host: string | "cli" | "express"; 
   [key: string]: unknown;
   
+  private serviceManager: ServiceManager;
+
   constructor(session: any, currentContext: Partial<Reactory.Server.IReactoryContext> = {}) {
     this.id = uuid();
     this.state = currentContext?.state || {};
     this.user = currentContext?.user || null;
     this.partner = currentContext?.partner || null;
     this.colors = currentContext?.colors || colors;
-    this.session = currentContext?.session || session;
-    this.services = currentContext?.services || services;
+    this.session = currentContext?.session || session; 
     this.request = currentContext?.request || null;
     this.response = currentContext?.response || null;
     this.i18n = currentContext?.i18n || i18next;
@@ -83,11 +84,13 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     this.removeValue = this.removeValue.bind(this);
     this.extend = this.extend.bind(this);
     this.listServices = this.listServices.bind(this);
+    this.serviceManager = ServiceManager.getInstance(this);
+    this.services = this.serviceManager.getServices();
   }
   
 
   listServices(filter: Reactory.Server.ReactoryServiceFilter): Reactory.Service.IReactoryServiceDefinition<any>[] {
-    return listServices(filter);
+    return this.serviceManager.listServices(filter);
   }
 
   log(message: string, meta: any = null, type: Reactory.Service.LOG_TYPE = "debug", clazz: string = '') {
@@ -135,7 +138,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   getService<TService>(id: string, props: any = undefined, lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE): TService {
     this.log(`Getting service ${id} [${lifeCycle || "instance"}]`);
     
-    return getService(
+    return this.serviceManager.getService(
       id,
       props,
       this,

@@ -1,4 +1,4 @@
-{
+const emojis = {
   "100": "💯",
   "1234": "🔢",
   "umbrella_with_rain_drops": "☔",
@@ -1623,3 +1623,5 @@
   "congratulations": "㊗️",
   "secret": "㊙️"
 }
+
+export default emojis;

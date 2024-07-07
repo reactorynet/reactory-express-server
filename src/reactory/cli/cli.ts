@@ -21,6 +21,7 @@ import {
 } from './types';
 
 
+
 const getStartupText = () => fs.readFileSync(require.resolve('./startup.txt')).toString();
 
 const DEFAULT_COMPLETIONS = ['help', 'exit', 'quit', 'exec'];
@@ -347,7 +348,7 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
     } else {
       if (cargs.length === 0) {
         console.error(colors.red(t('cli:common.noArguments', 'No arguments provided and no config present')));
-        return;
+        process.exit(1);
       }
   
   

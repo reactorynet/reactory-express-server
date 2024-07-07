@@ -1,7 +1,5 @@
 import Reactory from '@reactory/reactory-core';
 
-
-
 interface StatusWidgetDependencies {
   React: Reactory.React,
   Material: Reactory.Client.Web.IMaterialModule,

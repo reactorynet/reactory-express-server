@@ -1,0 +1,12 @@
++ */
++ *.svg
++ *.png
++ *.jpeg
++ *.xml
++ *.json
++ *.graphql
++ *.yml
++ *.yaml
++ *.md
++ *.cert
+- *

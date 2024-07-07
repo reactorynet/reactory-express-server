@@ -12,8 +12,8 @@ type ModuleContext = Reactory.Server.IReactoryContext & {};
   name: "ReactoryModuleGenerator",
   version: "1.0.0",
   description: "Generates a Reactory module structure",
-  domain: Reactory.ComponentDomain.module,
-  serviceType: Reactory.Service.LifecycleServiceTypes.codeGeneration,
+  domain: "module",
+  serviceType: "codeGeneration",
   lifeCycle: "singleton",
   dependencies: [
     {
@@ -22,23 +22,20 @@ type ModuleContext = Reactory.Server.IReactoryContext & {};
     },
   ],
   secondaryTypes: [
-    Reactory.Service.LifecycleServiceTypes.development,
-    Reactory.Service.LifecycleServiceTypes.continuousIntegration,
+    "development",
+    "continuousIntegration",
   ],
   features: [
     {
       feature: "generateModule",
-      featureType: Reactory.FeatureType.function,
+      featureType: "function",
       description: "Generates a Reactory module structure",
       action: ["generate", "module-generate"],
       stem: "generate",
     },
   ],
 })
-class ModuleGenerator extends Reactory.Service.ReactoryService<
-  ModuleProperties,
-  ModuleContext
-> {
+class ModuleGenerator extends Reactory.Service.ReactoryService<ModuleProperties, ModuleContext> {
   templateService: Reactory.Service.IReactoryTemplateService;
 
   constructor(props: ModuleProperties, context: ModuleContext) {
@@ -46,7 +43,7 @@ class ModuleGenerator extends Reactory.Service.ReactoryService<
     this.props = props;
     this.context = context;
   }
-
+  
   /**
    * Generates a Reactory module structure, using the provided module properties.
    * @param module

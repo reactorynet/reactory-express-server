@@ -1,6 +1,6 @@
 import mysql, { MysqlError, FieldInfo } from 'mysql';
-import logger from '../logging';
-import ApiError from '../exceptions';
+import logger from '@reactory/server-core/logging';
+import ApiError from '@reactory/server-core/exceptions';
 import {
   QueryStringGenerator,
   SQLQuery,

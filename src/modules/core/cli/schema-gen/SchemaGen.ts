@@ -4,6 +4,7 @@ import path from "path";
 import yaml from "js-yaml";
 import { ReadLine } from "readline";
 import colors from "colors/safe";
+import { ENVIRONMENT } from "types/constants";
 
 // set theme
 colors.setTheme({
@@ -41,12 +42,13 @@ type ReactoryCliApp = (
   context: Reactory.Server.IReactoryContext
 ) => Promise<void>;
 
-interface ConfigFile {
+interface ConfigFile<TOptions = any> {
   module?: string;
   form?: string;
   generator: string;
-  options: any;
-  output?: string;
+  options: TOptions;
+  output?: string | "state" | "console";
+  format?: string | "json" | "yaml";
 }
 
 /**
@@ -91,6 +93,8 @@ const SchemaGenCli = async (
   let listGenerators: boolean = false;
   let generatorArgs: any = {};
   let output: string = "";
+  let format: string = "json";
+  let options: any = {};
   let help: boolean = false;
   let verbose: boolean = false;
 
@@ -114,6 +118,11 @@ const SchemaGenCli = async (
       case "--form":
         form = argv as string;
         break;
+      case "-fmt":
+      case "--format": {
+        format = argv as string;
+        break;
+      }
       case "-c":
       case "--config":
         config = argv as string;
@@ -123,7 +132,7 @@ const SchemaGenCli = async (
         generator = argv as string;
         break;
       case "-l":
-      case "--list-generators":
+      case "--list":
         listGenerators = true;
         break;
       case "-gargs":
@@ -159,10 +168,18 @@ const SchemaGenCli = async (
   }
 
   if (listGenerators) {
-    rl.write(colors.green('Listing generators...'));
-    const generatorServices = context.listServices({
+    rl.write(colors.green("Listing generators..."));
+    let generatorServices = context.listServices({
       type: "schemaGeneration",
     });
+
+    generatorServices = [
+      ...generatorServices,
+      ...context.listServices({
+        type: "codeGeneration",
+      }),
+    ];
+
     generatorServices.forEach((service) => {
       rl.write(
         colors.green(`
@@ -177,7 +194,7 @@ const SchemaGenCli = async (
 
   if (config) {
     rl.write(colors.green(`Loading configuration file: ${config}\n`));
-    //load the config file
+    // load the config file
     // resolve the config file location
     const file = path.resolve(config);
     if (!fs.existsSync(file)) {
@@ -228,6 +245,10 @@ const SchemaGenCli = async (
     if (configData.output) {
       output = configData.output;
     }
+
+    if (configData.format) {
+      format = configData.format;
+    }
   }
 
   if (generator === "") {
@@ -235,7 +256,10 @@ const SchemaGenCli = async (
     process.exit(1);
   }
 
-  let generatorService: Reactory.Forms.ReactoryFormGeneratorService<unknown, unknown> = null;
+  let generatorService: Reactory.Forms.ReactoryFormGeneratorService<
+    unknown,
+    unknown
+  > = null;
 
   try {
     generatorService = context.getService<
@@ -257,6 +281,82 @@ const SchemaGenCli = async (
   ) {
     const forms = await generatorService.generate();
 
+    switch (output) {
+      case "state": {
+        let state_key = ReactorCliAppDefinition.toString(true);
+        context.state[state_key] = forms;
+        break;
+      }
+      case "console": {
+        forms.forEach((form) => {
+
+          let contents = "";
+          switch(format) {
+            case "json": {
+              contents = JSON.stringify(form, null, 2);
+              break;
+            }
+            case "yaml": {
+              contents = yaml.dump(form);
+              break;
+            }
+          }
+
+          rl.write(
+            colors.green(
+              `Generated: ${form.nameSpace}.${form.name}@${form.version}\n`
+            )
+          );
+          rl.write(colors.yellow(contents));
+          rl.write(
+            colors.grey(
+              "\n============================================================\n"
+            )
+          );
+        });
+        break;
+      }
+      default: {
+        //check if the output a template string
+        let _destination = path.resolve(
+          path.join(ENVIRONMENT.REACTORY_DATA, "schemas/generated")
+        );
+
+        if (output.indexOf("${") > -1) {
+          _destination = context.utils.lodash.template(output)({
+            forms,
+            env: process.env,
+            context,
+          });
+        }
+
+        if (!fs.existsSync(_destination)) {
+          fs.mkdirSync(_destination, { recursive: true });
+        }
+
+        rl.write(colors.green(`Writing to output folder: ${_destination}\n`));
+
+        forms.forEach((form) => {
+          const fileName = `${form.name}.${format}`;
+          const filePath = path.resolve(_destination, fileName);
+          let contents = "";
+          switch(format) {
+            case "json": {
+              contents = JSON.stringify(form, null, 2);
+              break;
+            }
+            case "yaml": {
+              contents = yaml.dump(form);
+              break;
+            }
+          }
+          fs.writeFileSync(filePath, contents);
+        });
+
+        break;
+      }
+    }
+
     if (output) {
       rl.write(colors.green(`Writing to output folder: ${output}\n`));
       const outputFolder = path.resolve(output);
@@ -270,12 +370,22 @@ const SchemaGenCli = async (
         fs.writeFileSync(filePath, JSON.stringify(form, null, 2));
       });
     } else {
-      forms.forEach((form) => {
-        rl.write(colors.green(`Form: ${form.name}\n`));
-        rl.write(colors.green(`Fields: ${form.fields.length}\n`));
-        rl.write(colors.green(`Relations: ${form.relations.length}\n`));
-      });
+      if (forms && forms.length > 0) {
+        forms.forEach((form) => {
+          rl.write(
+            colors.green(
+              `Generated: ${form.nameSpace}.${form.name}@${form.version}\n`
+            )
+          );
+        });
+        context.state.forms = forms;
+      } else {
+        rl.write(colors.green(`No forms generated\n`));
+      }
     }
+  } else {
+    context.error(`Generator does not have a generate method`);
+    process.exit(1);
   }
 
   rl.write(colors.green(`Generation complete.\n`));
@@ -291,7 +401,7 @@ const ReactorCliAppDefinition: Reactory.IReactoryComponentDefinition<ReactoryCli
     version: "1.0.0",
     description: HelpText,
     component: SchemaGenCli,
-    domain: Reactory.ComponentDomain.generator,
+    domain: Reactory.ComponentDomain.plugin,
     features: [
       {
         feature: "SchemaGen",

@@ -1,5 +1,6 @@
 node_modules/
 dist/
+bin/server
 /*-audit.json
 package-lock.json
 build/*

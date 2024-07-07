@@ -47,8 +47,8 @@ modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
 });
 
 const getAlias = (id: string) => {
-  const [fullname, version] = id.split('@');
-  const [nameSpace, name] = fullname.split('.');
+  const [fullname, _] = id.split('@');
+  const [__, name] = fullname.split('.');
 
   return name;
 }

@@ -43,3 +43,14 @@ package_exists() {
     echo "Package $package_name is not installed"
   fi
 }
+
+# Checks if MeiliSearch is running
+check_meili_search(){
+  if curl -f http://localhost:7700/health; then
+    echo "MeiliSearch is running."
+  else
+    echo "MeiliSearch is not running."
+    sh ./bin/meilisearch.sh
+  fi
+  echo "Checked MeiliSearch"
+}

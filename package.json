@@ -16,7 +16,8 @@
     }
   ],
   "moduleNameMapper": {
-    "^reactory/server-core(.*)$": "<rootDir>/src/"
+    "^reactory/server-core(.*)$": "<rootDir>/src/",
+    "^reactory/server-modules(.*)$": "<rootDir>/src/modules/"  
   },
   "scripts": {
     "rollup": "rollup --config rollup.config.dev.js",
@@ -113,6 +114,7 @@
     "mocha": "10.2.0",
     "moment": "^2.24.0",
     "mongodb": "5.8.0",
+    "mongodb-extjson": "^1.0.4",
     "mongoose": "7.1.1",
     "morgan": "^1.10.0",
     "mysql": "^2.18.1",
@@ -138,7 +140,6 @@
     "passport-local": "^1.0.0",
     "passport-oauth2-refresh": "2.1.0",
     "passport-okta-oauth20": "1.1.0",
-    "passport-twitter": "^1.0.4",
     "pdfkit": "^0.10.0",
     "pdfmake": "^0.1.68",
     "pg": "^8.12.0",
@@ -147,6 +148,7 @@
     "pngjs": "3.4.0",
     "postal": "^2.0.5",
     "postgres": "^3.4.4",
+    "pm2": "5.4.1",
     "pug": "^3.0.2",
     "react": "17.0.2  ",
     "react-dom": "17.0.2",
@@ -177,7 +179,7 @@
     "winston-daily-rotate-file": "^3.3.3",
     "workflow-es": "^2.3.5",
     "workflow-es-mongodb": "^2.1.0",
-    "ws": "^7.0.1",
+    "ws": "^7.5.9",
     "zip-folder": "^1.0.0"
   },
   "devDependencies": {

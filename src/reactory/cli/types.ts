@@ -1,6 +1,6 @@
 import Reactory from "@reactory/reactory-core";
 
-export type CliContext = Reactory.Server.IReactoryContext & Reactory.Server.IReactoryCliContext { }
+export type CliContext = Reactory.Server.IReactoryContext & Reactory.Server.IReactoryCliContext;
 
 export type TCLI = (kwargs: string[], context?: CliContext) => Promise<void>;
 
