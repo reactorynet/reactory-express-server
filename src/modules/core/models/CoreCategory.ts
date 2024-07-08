@@ -26,6 +26,6 @@ const CoreCategorySchema = new mongoose.Schema({
 });
 
 
-const CoreCategoryModel = mongoose.model('CoreCategory', CoreCategorySchema);
+const CoreCategoryModel = mongoose.model('CoreCategory', CoreCategorySchema, 'reactory_core_categories');
 
 export default CoreCategoryModel;

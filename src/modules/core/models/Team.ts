@@ -31,5 +31,5 @@ TeamSchema.statics.GetAllTeams = async function GetAllTeams() {
   return await this.find();
 };
 
-const TeamModel = mongoose.model<Reactory.Models.ITeamDocument>('Team', TeamSchema);
+const TeamModel = mongoose.model<Reactory.Models.ITeamDocument>('Team', TeamSchema, 'reactory_teams');
 export default TeamModel;

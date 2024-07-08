@@ -34,21 +34,21 @@ const LIGHT_PALETTE: Reactory.UX.ITheme = {
     mode: 'light',
     primary: {
       light: '#c55e00',
-      main: '#f95e20',
+      main: '#ff8d00',
       dark: '#be2900',
       contrastText: '#000000',
       colors: [],
     },
     secondary: {
-      light: '#c55e00',
+      light: '#9968ED',
       main: '#ff8d00',
       dark: '#c55e00',
       contrastText: '#000000',
       colors: [],
     },
     background: {
-      paper: '#f9ebc0',
-      default: '#d3c7a2'
+      paper: '#ffffff',
+      default: '#ffffff'
     }
   },
   type: 'material'

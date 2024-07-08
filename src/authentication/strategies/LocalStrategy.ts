@@ -1,13 +1,15 @@
-import { User } from '@reactory/server-core/models';
+import { User } from '@reactory/server-modules/core/models'
 import logger from '@reactory/server-core/logging';
 import { BasicVerifyFunctionWithRequest, BasicStrategy } from 'passport-http';
 import Helpers, { OnDoneCallback } from './helpers';
 import { Application } from 'express';
 import passport from 'passport';
+import Reactory from '@reactory/reactory-core';
 
 
-const authenticate: BasicVerifyFunctionWithRequest = async (req: Express.Request, username: string, password: string, done: OnDoneCallback) => {
-  logger.debug(`Authenticating ${username.split('').map((e,i) => i===0 || i === username.length ? e : 'x')} with local strategy`)
+const authenticate: BasicVerifyFunctionWithRequest = async (req: Reactory.Server.ReactoryExpressRequest, username: string, password: string, done: OnDoneCallback) => {
+  const { context } = req;
+  context.debug(`Authenticating with local strategy`)
   User.findOne({ email: username }).then((userResult) => {
     if (userResult === null || userResult === undefined) {
       done(null, false, { message: 'Incorrect Credentials Supplied' });
@@ -17,6 +19,7 @@ const authenticate: BasicVerifyFunctionWithRequest = async (req: Express.Request
       Helpers.generateLoginToken(userResult).then((loginToken: string) => {
         logger.info('User logged in and session added');
         req.user = userResult;
+        req.context.user = userResult;
         done(null, loginToken);
       });
     } else {

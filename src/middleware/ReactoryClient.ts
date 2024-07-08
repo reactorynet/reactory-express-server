@@ -1,5 +1,5 @@
 import { isNil } from 'lodash';
-import { ReactoryClient } from '@reactory/server-core/models';
+import ReactoryClient from '@reactory/server-modules/core/models/ReactoryClient';
 import { 
   encoder 
 } from '@reactory/server-core/utils';
@@ -25,6 +25,14 @@ const bypassUri = [
 
 
 /**
+ * A list of validated clients
+ * to keep in memory for quick access
+ */
+const validatedClients: {
+  [key: string]: { client: Reactory.Models.IReactoryClientDocument, timestamp: number},
+} = {};
+
+/**
  * The reactory client authentication middleware is responsible for authenticating
  * the client application that is making the request. The client application should
  * provide a client id and a client secret in the headers of the request.
@@ -44,7 +52,7 @@ const bypassUri = [
 const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: Function) => {
 
   const { headers, query, context } = req;
-
+  context.debug(`ReactoryClientAuthenticationMiddleware:: executing`)
   let bypass: boolean = false;
   if (req.originalUrl) {
     bypass = bypassUri.some(uri => req.originalUrl.includes(uri));
@@ -103,6 +111,14 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
   } else {
     logger.debug(`ReactoryClientAuthenticationMiddleware:: extracted partner key: ${clientId}`);
     try {
+      if (validatedClients[clientId] !== undefined && validatedClients[clientId].timestamp > Date.now() - 300000){
+        // @ts-ignore
+        req.partner = validatedClients[clientId].client;
+        context.partner = validatedClients[clientId].client;
+        next();
+        return;
+      }
+
       ReactoryClient.findOne({ key: clientId }).then((clientResult: any) => {
         if (isNil(clientResult) === true ) { 
           res.status(401).send({ 
@@ -117,6 +133,7 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
           // @ts-ignore
           req.partner = clientResult;
           context.partner = clientResult;
+          validatedClients[clientId] = { client: clientResult, timestamp: Date.now()};
           next();
         }
       }).catch((clientGetError) => {

@@ -1,4 +1,5 @@
 import { isArray } from 'lodash';
+import { roles } from '@reactory/server-core/authentication/decorators'
 import Reactory from '@reactory/reactory-core';
 import modules from '@reactory/server-core/modules';
 
@@ -51,6 +52,7 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return _forms
   }
 
+  //@roles(['ADMIN', 'USER', 'ANON'])
   list(): Promise<Reactory.Forms.IReactoryForm[]> {
     const _forms: Reactory.Forms.IReactoryForm[] = [];
     const that = this;
@@ -60,6 +62,7 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
           if (form) {
             let allow_form: boolean = true;
             if (form.roles && form.roles.length > 0) {
+              allow_form = false;
               form.roles.forEach((role: string) => {
                 if (that.getExecutionContext().hasRole(role) === true) {
                   allow_form = true;

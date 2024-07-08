@@ -12,7 +12,7 @@ import ApiError, {
 import { Cache } from '@reactory/server-core/modules/core/models';
 import AuthConfig from '../authentication';
 import allSchemas from './schema';
-import generators from './schema/generators';
+import generators from '../modules/core/services/generators';
 import logger from '../logging';
 import Reactory from '@reactory/reactory-core';
 import * as ReactorySchemaTypes from './types';

@@ -1,14 +1,14 @@
 import { ObjectId } from 'mongodb';
 import moment from 'moment';
-
-import { Organization, BusinessUnit } from '@reactory/server-core/models';
-import { updateOrganizationLogo } from '../../../../application/admin/Organization';
-import * as UserService from '../../../../application/admin/User';
+//  import { Organization, BusinessUnit } from '@reactory/server-modules/core/models';
+//  import { updateOrganizationLogo } from '@reactory/server-modules/core/services/admin/Organization';
+//  import * as UserService from '@reactory/server-modules/core/services/admin/User';
 import ApiError, { OrganizationNotFoundError } from '@reactory/server-core/exceptions';;
 
 import Reactory from '@reactory/reactory-core';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
 
+// TODO: Convert to a reactory resolver class type.
 
 const {
   APP_DATA_ROOT,

@@ -27,10 +27,8 @@ import workflow, { workflowRunner, WorkFlowRunner } from '@reactory/server-core/
 import pdf from '@reactory/server-core/pdf';
 import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
-import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
 import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
-import AuthHelper from '@reactory/server-core/authentication/strategies/helpers';
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
 import colors from 'colors/safe';
 import http from 'http';
@@ -214,7 +212,7 @@ Environment Settings:
   reactoryExpress.use(i18nextHttp.handle(i18n));
   reactoryExpress.use(
     queryRoot,
-    passport.authenticate(['jwt', 'anonymous'], 
+    passport.authenticate(['jwt'], 
     { session: false }), 
     bodyParser.urlencoded({ extended: true }),
     bodyParser.json({
@@ -241,10 +239,17 @@ Environment Settings:
       }
     });
 
+    
     const expressConfig: ApolloServerExpressConfig = {
       logger: logger,
       schema: $schema,
-      context: ReactoryContextProvider,
+      context: async (options: any) => { 
+        const req = options.req;
+        if(req.context) return req.context;
+        else {
+          return await ReactoryContextProvider(null, {});
+        }
+      },
       uploads: {
         maxFileSize: 20000000,
         maxFiles: 10,
@@ -282,14 +287,14 @@ Environment Settings:
   amq.raiseSystemEvent('server.startup.begin', {});
 
   if (SYSTEM_USER_ID === 'not-set') {
-    logger.warn("SYSTEM_USER_ID env variable is not set - please configure in env variables");
+    logger.warn(colors.yellow("SYSTEM_USER_ID env variable is not set - please configure in env variables"));
   }
 
   // TODO: Werner Weber - Update the start result object to contain
   // more useful information about the server environment, configuration
   // output.
   try {
-    const startResult = await startup();
+    const context = await startup();
     ConfigureAuthentication(reactoryExpress);
     reactoryExpress.use(userAccountRouter);
     // TODO: Werner Weber - Update the route configuration to use the
@@ -321,13 +326,6 @@ Environment Settings:
             const graphql_api_root = resolveUrl(API_URI_ROOT, queryRoot);
 
             logger.info(colors.green(`✅ Running a GraphQL API server at ${graphql_api_root}`));
-            if (NODE_ENV === 'development' && DEVELOPER_ID) {
-              User.find({ email: DEVELOPER_ID }).then((user_result) => {
-                const auth_token = AuthHelper.jwtTokenForUser(user_result[0], { exp: moment().add(1, 'hour').unix() })
-                logger.debug(`Developer id ${DEVELOPER_ID} access graphiql docs ${resolveUrl(API_URI_ROOT, `cdn/graphiql/index.html?auth_token=${auth_token}`)}`)
-              });
-
-            }
           }
           else logger.info(colors.yellow(`🩺 GraphQL API not available - ${graphError}`));
 

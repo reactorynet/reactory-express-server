@@ -14,7 +14,7 @@ const TaskSchema = new mongoose.Schema({
     type: ObjectId,
     ref: 'Project',
   },
-  shortCodeId: Number, // https://app.ageofteams.com/tasks/aot/00000001
+  shortCodeId: Number,
   title: String,
   description: String,
   percentComplete: Number,
@@ -31,13 +31,13 @@ const TaskSchema = new mongoose.Schema({
     {
       linkId: ObjectId,
       linkedTo: String,
-      linkType: String, // task etc.
-    }, // done in planned section
+      linkType: String,
+    },
   ],
   user: {
     required: true,
     type: ObjectId,
-  }, // assigned user
+  },
   createdAt: {
     type: Date,
     required: true,
@@ -49,5 +49,5 @@ const TaskSchema = new mongoose.Schema({
 });
 
 
-const TaskModel = mongoose.model('Task', TaskSchema);
+const TaskModel = mongoose.model('Task', TaskSchema, 'reactory_tasks');
 export default TaskModel;

@@ -18,7 +18,7 @@ const MenuItemSchema = new mongoose.Schema({
   ]
 });
 
-export const MenuItemModel = mongoose.model('MenuItem', MenuItemSchema);
+export const MenuItemModel = mongoose.model('MenuItem', MenuItemSchema, 'reactory_menu_items');
 
 const MenuSchema = new mongoose.Schema({
   id: ObjectId,
@@ -61,5 +61,5 @@ const MenuSchema = new mongoose.Schema({
 });
 
 MenuSchema.index({ client: 1, key: -1 });
-const MenuModel = mongoose.model('Menu', MenuSchema);
+const MenuModel = mongoose.model('Menu', MenuSchema, 'reactory_menus');
 export default MenuModel;

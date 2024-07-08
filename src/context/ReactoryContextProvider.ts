@@ -1,17 +1,16 @@
 import { v4 as uuid } from "uuid";
-import { getService, services } from "@reactory/server-core/services"; // eslint-disable-line
+import ServiceManager from '@reactory/server-core/services/ServiceManager';
 import logger from "@reactory/server-core/logging";
 import Hash from "@reactory/server-core/utils/hash";
 import { objectMapper } from "@reactory/server-core/utils";
-import lodash, { isArray } from "lodash";
+import lodash, { has } from "lodash";
 import colors from "colors/safe";
 import { ReactoryContainer } from "@reactory/server-core/ioc";
 import modules from "@reactory/server-core/modules";
 import i18next, { t } from "i18next";
-import Reactory from "@reactory/reactory-core";
-import { scrubEmail } from "@reactory/server-core/utils/string";
+import Reactory, { React } from "@reactory/reactory-core";
 import Cache from "@reactory/server-modules/core/models/CoreCache";
-import { ReactoryAnonUser } from "./AnonUser";
+import { Container } from "inversify";
 
 colors.setTheme({
   silly: "rainbow",
@@ -25,294 +24,173 @@ colors.setTheme({
   debug: "blue",
   error: "red",
 });
-/***
- * The Reactory Context Provider creates a context
- * for the execution thread which is passed through with each request
- * and response. The context provider is the the primary
- * interaction point for the application and the services.
- *
- * It acts as a micro container for the application and provides
- * a set of services and utilities that can be used by the application
- *
- * The graph and REST API are built on top of the context provider.
- */
-export default async (
-  $session: any,
-  currentContext: Partial<Reactory.Server.IReactoryContext> = {}
-): Promise<Reactory.Server.IReactoryContext> => {
-  const $id = uuid();
-  const context_state = {};
-  let $context = currentContext || {};
-  let email = "anon@local";
 
-  // internal logging function
-  const $log = (
-    message: string,
-    meta: any = null,
-    type: Reactory.Service.LOG_TYPE = "debug",
-    clazz: string = ''
-  ) => {
-    const $message = `${message}`;
+export class ReactoryContext implements Reactory.Server.IReactoryContext {
+  id: string;
+  user: Reactory.Models.IUserDocument;
+  partner: Reactory.Models.IReactoryClientDocument;
+  colors: unknown;
+  lang: string;
+  languages: string[];
+  theme: Reactory.UX.IReactoryTheme;
+  palette: Reactory.UX.IThemePalette;
+  services: Reactory.Service.IReactoryService[];
+  state: {
+    [key: string]: unknown;
+  };
+  utils: any;
+  session: any;
+  response?: Express.Response;
+  request?: Express.Request;
+  i18n: typeof i18next;
+  lng: string;
+  langs: string[];
+  modules: Reactory.Server.IReactoryModule[];
+  container: Container;
+  host: string | "cli" | "express"; 
+  [key: string]: unknown;
+  
+  private serviceManager: ServiceManager;
+
+  constructor(session: any, currentContext: Partial<Reactory.Server.IReactoryContext> = {}) {
+    this.id = uuid();
+    this.state = currentContext?.state || {};
+    this.user = currentContext?.user || null;
+    this.partner = currentContext?.partner || null;
+    this.colors = currentContext?.colors || colors;
+    this.session = currentContext?.session || session; 
+    this.request = currentContext?.request || null;
+    this.response = currentContext?.response || null;
+    this.i18n = currentContext?.i18n || i18next;
+    this.lang = currentContext?.lang || process.env.DEFAULT_LOCALE || "en";
+    this.languages = currentContext?.languages || [this.lang];
+    this.theme = currentContext?.theme || null;
+    this.modules = currentContext?.modules || modules.enabled;
+    this.utils = {
+      hash: Hash,
+      lodash,
+      objectMapper,
+    }
+    this.container = ReactoryContainer;
+    this.log = this.log.bind(this);
+    this.debug = this.debug.bind(this);
+    this.warn = this.warn.bind(this);
+    this.error = this.error.bind(this);
+    this.info = this.info.bind(this);
+    this.getService = this.getService.bind(this);
+    this.hasRole = this.hasRole.bind(this);
+    this.getValue = this.getValue.bind(this);
+    this.setValue = this.setValue.bind(this);
+    this.removeValue = this.removeValue.bind(this);
+    this.extend = this.extend.bind(this);
+    this.listServices = this.listServices.bind(this);
+    this.serviceManager = ServiceManager.getInstance(this);
+    this.services = this.serviceManager.getServices();
+  }
+  
+
+  listServices(filter: Reactory.Server.ReactoryServiceFilter): Reactory.Service.IReactoryServiceDefinition<any>[] {
+    return this.serviceManager.listServices(filter);
+  }
+
+  log(message: string, meta: any = null, type: Reactory.Service.LOG_TYPE = "debug", clazz: string = '') {
+    const logMessage = `[${Hash(this.id)}]${message}`;
     switch (type) {
       case "e":
       case "err":
-      case "error": {
-        logger.error(colors.red($message), meta);
+      case "error":
+        logger.error(colors.red(logMessage), meta);
         break;
-      }
       case "w":
       case "warn":
-      case "warning": {
-        logger.warn(colors.yellow($message), meta);
+      case "warning":
+        logger.warn(colors.yellow(logMessage), meta);
         break;
-      }
       case "i":
-      case "info": {
-        logger.warn(colors.gray($message), meta);
+      case "info":
+        logger.info(colors.gray(logMessage), meta);
         break;
-      }
       case "d":
       case "deb":
       case "debug":
-      default: {
-        logger.debug(colors.blue($message), meta);
-      }
+      default:
+        logger.debug(colors.blue(logMessage), meta);
+        break;
     }
-  };
-
-  const $debug = (
-    message: string,
-    meta: any = null,
-    clazz: string = ''
-  ) => {
-    $log(message, meta, "debug", clazz);
-  };
-
-  const $warn = (
-    message: string,
-    meta: any = null,
-    clazz: string = ''
-  ) => {
-    $log(message, meta, "warn", clazz);
-  };
-
-  const $error = (
-    message: string,
-    meta: any = null,
-    clazz: string = ''
-  ) => {
-    $log(message, meta, "error", clazz);
-  };
-
-  const $info = (
-    message: string,
-    meta: any = null,
-    clazz: string = ''
-  ) => {
-    $log(message, meta, "info", clazz);
-  };
-
-  let $user: Reactory.Models.IUserDocument = $context.user
-    ? $context.user
-    : null;
-  let $partner: Reactory.Models.TReactoryClient = $context.partner
-    ? $context.partner
-    : null;
-  let $request = null;
-  let $response = null;
-  let $i18n: typeof i18next = null;
-  let $lng: string = process.env.DEFAULT_LOCALE || "en";
-  let $langs: string[] = [$lng];
-  //if the context is being used in the context of a session
-  if ($session !== null && $session !== undefined) {
-    $user = $session.req.user;
-    $partner = $session.req.partner;
-    $request = $session.req;
-    $response = $session.res;
-    email = scrubEmail($user.email);
-    $i18n = $session.req.i18n;
-    $lng = $session.req.langauage;
-    $langs = $session.req.langauages;
-  } else {
-    if (!$context)
-      throw new Error(
-        `No context provided to the context provider while using outside of a session`
-      );
-    $i18n = i18next;
-    $partner = $context.partner;
-    $lng = $context.lng;
-    $langs = $context.langs;
-    $user = $context.user;
   }
 
-  let theme: Reactory.UX.IReactoryTheme = null;
-
-  if ($partner?.themes && isArray($partner?.themes) === true) {
-    $partner.themes.forEach((t: Reactory.UX.IReactoryTheme) => {
-      if (t.name == $partner.theme) {
-        theme = t;
-      }
-    });
+  debug(message: string, meta: any = null, clazz: string = '') {
+    this.log(message, meta, "debug", clazz);
   }
 
-  let palette: Reactory.UX.IThemePalette = null;
-
-  if (theme && theme.modes) {
-    theme.modes.forEach((themeMode) => {
-      if (themeMode.mode === theme.defaultThemeMode) {
-        palette = themeMode.options.palette;
-      }
-    });
+  warn(message: string, meta: any = null, clazz: string = '') {
+    this.log(message, meta, "warn", clazz);
   }
 
-  /**
-   * The Reactory Context Provider is the base provider and
-   * can be considerd as the component and user container for the
-   * duration of the exection.
-   */
-  let newContext: Reactory.Server.IReactoryContext = {
-    ...$context,
-    id: $id,
-    user: $user,
-    partner: $partner,
-    $request,
-    $response,
-    i18n: $i18n,
-    lng: $lng,
-    langs: $langs,
-    modules: modules.enabled,
-    container: ReactoryContainer,
-    log: $log,
-    info: $info,
-    warn: $warn,
-    debug: $debug,
-    error: $error,
-    hasRole: (
-      role: string,
-      partner?: Reactory.Models.IReactoryClient,
-      organization?: Reactory.Models.IOrganizationDocument,
-      businessUnit?: Reactory.Models.IBusinessUnitDocument
-    ) => {
-      if ($session.req.user === null || $session.req.user === undefined) {
-        return false;
-      }
+  error(message: string, meta: any = null, clazz: string = '') {
+    this.log(message, meta, "error", clazz);
+  }
 
-      if ($session.req.user && $session.req.user.hasRole) {
-        return $session.req.user.hasRole(
-          partner && partner._id ? partner._id : $session.req.partner._id,
-          role,
-          organization && organization._id ? organization._id : undefined,
-          businessUnit && businessUnit._id ? businessUnit._id : undefined
-        );
-      } else {
-        return false;
-      }
-    },
-    utils: {
-      hash: Hash,
-      objectMapper,
-      lodash,
-    },
-    colors,
-    state: context_state,
-    theme,
-    palette,
-    services,
-  };
+  info(message: string, meta: any = null, clazz: string = '') {
+    this.log(message, meta, "info", clazz);
+  }
 
-  /**
-   * Internal function wrapper for getting a service from the service registry
-   * @param id
-   * @param props
-   * @param $context
-   * @param lifeCycle
-   * @returns
-   */
-  const $getService = (
-    id: string,
-    props: any = undefined,
-    $context?: Reactory.Server.IReactoryContext,
-    lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE
-  ) => {
-    $log(`Getting service ${id} [${lifeCycle || "instance"}]`);
-    if ($context && Object.keys($context).length > 0) {
-      newContext = {
-        ...newContext,
-        ...$context,
-      };
-    }
-
-    return getService(
+  getService<TService>(id: string, props: any = undefined, lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE): TService {
+    this.log(`Getting service ${id} [${lifeCycle || "instance"}]`);
+    
+    return this.serviceManager.getService(
       id,
       props,
-      {
-        ...newContext,
-        getService: $getService,
-      },
+      this,
       lifeCycle
-    );
-  };
-
-  newContext.getService = $getService;
-
-  if (
-    $session !== null &&
-    $session !== undefined &&
-    $session.req !== null &&
-    $session.req !== undefined
-  ) {
-    $session.req.context = newContext;
+    ) as TService;
   }
 
-  if ($partner && $partner.getSetting) {
-    /**
-     * We check in the configuration settings if there is a "execution_context_service" key.
-     * if the key is found and if it is a string with an @ in the indicator then we can assume
-     * this is specific provider for the partner which will extend / overwrite elements of the
-     * context provider.
-     */
-    const executionContextServiceName = newContext.partner.getSetting<string>(
-      "execution_context_service"
-    );
-    if (
-      executionContextServiceName &&
-      executionContextServiceName.data &&
-      `${executionContextServiceName.data}`.indexOf("@") > 0
-    ) {
-      const partnerContextService: Reactory.Server.IExecutionContextProvider =
-        $getService(executionContextServiceName.data);
-      if (
-        partnerContextService &&
-        typeof partnerContextService.getContext === "function"
-      ) {
-        newContext = await partnerContextService.getContext(newContext).then();
+  hasRole(role: string, partner?: Reactory.Models.IPartner, organization?: Reactory.Models.IOrganizationDocument, businessUnit?: Reactory.Models.IBusinessUnitDocument):boolean {
+    if (this.user && typeof this.user.hasRole === "function") {
+      return this.user.hasRole(
+        partner && partner._id ? partner._id : this.partner._id,
+        role,
+        organization && organization._id ? organization._id.toString() : undefined,
+        businessUnit && businessUnit._id ? businessUnit._id.toString() : undefined
+      );
+    } else {
+      return false;
+    }
+  };
+
+  getValue<T>(key: string, defaultValue?: Promise<T>): Promise<T> {
+    //@ts-ignore
+    return Cache.getItem(key, false, this.partner) as Promise<T>;
+  }
+
+  setValue<T>(key: string, value: T, ttl?: number): Promise<void> {
+    //@ts-ignore
+    return Cache.setItem(key, value, ttl, this.partner);
+  }
+
+  removeValue(key: string): Promise<void> {
+    Cache.deleteOne({ key, partner: this.partner._id }).exec();
+    return Promise.resolve();
+  }
+
+  async extend<TResult extends Reactory.Server.IReactoryContext>(): Promise<TResult> { 
+    if(this.partner) {
+      const serviceName = this.partner.getSetting<string>("context-provider")
+      if (serviceName.data) {
+        const service = this.getService<Reactory.Server.IExecutionContextProvider>(serviceName.data);
+        return await service.getContext(this) as TResult;      
       }
     }
+    return this as unknown as TResult;
   }
+}
 
-  const getValue = async <T>(key: string): Promise<T> => {
-    // @ts-ignore
-    return (await Cache.getItem(key, false, newContext)) as T;
-  };
+const getContext = async <TResult extends Reactory.Server.IReactoryContext>(session: any, currentContext: Partial<TResult> = {}): Promise<TResult> => { 
+  const context = new ReactoryContext(session, currentContext);
+  await context.extend<TResult>();
+  // @ts-ignore
+  return context as TResult;
+}
 
-  const setValue = async <T>(
-    key: string,
-    value: T,
-    ttl?: number
-  ): Promise<void> => {
-    // @ts-ignore
-    return await Cache.setItem(key, value, ttl, newContext.partner);
-  };
-
-  const removeValue = async (key: string): Promise<void> => {
-    await Cache.deleteOne({ key, partner: newContext.partner._id }).exec();
-  };
-
-  newContext.getValue = getValue;
-  newContext.setValue = setValue;
-  newContext.removeValue = removeValue;
-
-  // no configuration for this partner that overloads /
-  // extends the default context so we just return the current context.
-  return newContext;
-};
+export default getContext;

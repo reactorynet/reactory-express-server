@@ -38,6 +38,5 @@ checkEnvVars(){
 checkEnvVars
 
 echo "Starting Reactory Development Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}"
-sh ./bin/generate.sh ${1:-reactory} ${2:-local}
-NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} bun ./src/index.ts
+NODE_PATH=./bin/server env-cmd -f ./config/${1:-reactory}/.env.${2:-local} bun ./bin/server/index.js
  

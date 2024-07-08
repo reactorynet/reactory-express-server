@@ -1,7 +1,7 @@
 import schema from './schema';
 import uiSchema from './uiSchema';
 import modules from './modules';
-import { ReactoryClient } from '@reactory/server-core/models';
+import ReactoryClient from '@reactory/server-modules/core/models/ReactoryClient';
 import _ from 'lodash';
 interface IApplicationsFormData { 
   greeting: string, 
@@ -58,6 +58,7 @@ const Applications: Reactory.Forms.IReactoryForm = {
   title: "${props.context.i18n.t('forms:applicationTitle')}",
   registerAsComponent: true,
   version: "1.0.0",
+  roles: ['USER'],
   widgetMap: [
     {
       componentFqn: "core.ContentWidget@1.0.0",

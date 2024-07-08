@@ -7,12 +7,10 @@ import { User } from '@reactory/server-core/models/index';
 import { UserValidationError } from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';
 import amq from '@reactory/server-core/amq';
-import { id } from 'schema/reflection';
-
 
 const jwtSecret = process.env.SECRET_SAUCE;
 
-export type OnDoneCallback = (error: Error | null, user?: Partial<Reactory.Models.IUser> | string | false, info?: any) => void;
+export type OnDoneCallback = (error: Error | null, user?: Partial<Reactory.Models.IUserDocument> | string | false, info?: any) => void;
 
 export interface OAuthProfile {
   id: string;

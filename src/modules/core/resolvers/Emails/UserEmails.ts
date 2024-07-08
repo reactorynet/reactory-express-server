@@ -4,7 +4,7 @@ import om from 'object-mapper';
 import logger from '@reactory/server-core/logging';
 import {
   EmailQueue,
-} from '@reactory/server-core/models';
+} from '@reactory/server-modules/core/models'
 
 import O365 from '@reactory/server-modules/reactory-azure/services/graph';
 import ApiError from '@reactory/server-core/exceptions';

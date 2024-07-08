@@ -71,7 +71,11 @@ module.exports = function (api) {
   return {
     presets,
     plugins,
-    ignore: ['node_modules/**/*'],
+    ignore: [
+      '**/*.json',
+      '**/*.graphql',
+      'node_modules/**/*'
+    ],
     include: ['src/**/*', 'node_modules/reactory/@reactory/reactory-core/**/*']
   };
 };

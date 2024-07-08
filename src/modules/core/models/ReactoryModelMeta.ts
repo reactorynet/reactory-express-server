@@ -40,6 +40,6 @@ ReactoryModelMetaSchema.statics = {
 }
 
 
-const ReactoryModelMeta: Reactory.Mongo.ReactoryModelMetaDocument = Mongoose.model("ReactoryModelMeta", ReactoryModelMetaSchema)
+const ReactoryModelMeta: Reactory.Mongo.ReactoryModelMetaDocument = Mongoose.model("ReactoryModelMeta", ReactoryModelMetaSchema, "reactory_model_meta")
 
 export default ReactoryModelMeta

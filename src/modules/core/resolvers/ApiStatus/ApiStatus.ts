@@ -12,7 +12,7 @@ const packageJson = require(path.join(process.cwd(), 'package.json'));
  * Helper function to return roles for a user from the context object
  */
 const getRoles = async (context: Reactory.Server.IReactoryContext): Promise <{ roles: string[], alt_roles: string[] }> => {
-
+  context.debug(`getRoles called for ${context?.user?.firstName} ${context?.user?.lastName}`)
   const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
 
   const { user, partner } = context;

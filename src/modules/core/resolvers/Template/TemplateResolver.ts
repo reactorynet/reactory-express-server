@@ -5,7 +5,7 @@ import logger from '@reactory/server-core/logging';
 import {
     Organization,
     Template,
-} from '@reactory/server-core/models';
+} from '@reactory/server-modules/core/models'
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import Reactory from '@reactory/reactory-core';
 

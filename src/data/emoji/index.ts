@@ -1,3 +1,3 @@
-const emojis: any = require('./emojis.json');
+import emojis from './emojis';
 
 export default emojis;

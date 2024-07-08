@@ -16,7 +16,7 @@ const Statistic = new mongoose.Schema({
 
 Statistic.plugin(time);
 
-export const StatisticModel = mongoose.model('Statistic', Statistic);
+export const StatisticModel = mongoose.model('Statistic', Statistic, 'reactory_statistics');
 
 const StatisticsPackage = new mongoose.Schema({
   id: ObjectId,
@@ -36,5 +36,5 @@ const StatisticsPackage = new mongoose.Schema({
 
 StatisticsPackage.plugin(time)
 
-const StatisticPackage = mongoose.model('StatisticsPackage', StatisticsPackage);
+const StatisticPackage = mongoose.model('StatisticsPackage', StatisticsPackage, 'reactory_statistics_packages');
 export default StatisticPackage;

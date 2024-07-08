@@ -44,5 +44,5 @@ const ThemeSchema = new mongoose.Schema({
 });
 
 
-const ThemeModel = mongoose.model('Theme', ThemeSchema);
+const ThemeModel = mongoose.model('Theme', ThemeSchema, 'reactory_themes');
 export default ThemeModel;

@@ -1,10 +1,11 @@
-import {
+import Reactory, {
   Service,
   Server,
   IReactoryComponentDefinition,
   IReactoryComponentFeature,
 } from "@reactory/reactory-core"; // import necessary types
 import { service } from "@reactory/server-core/application/decorators/service";
+import logger from "@reactory/server-core/logging";
 
 @service({
   id: "core.ReactoryModelRegistry@1.0.0",
@@ -13,7 +14,7 @@ import { service } from "@reactory/server-core/application/decorators/service";
   version: "1.0.0",
   description: "Provides registry features for any reactory model",
   serviceType: "data",
-  lifeCycle: "singleton",  
+  lifeCycle: "singleton",
   dependencies: [
     { id: "core.FetchService@1.0.0", alias: "fetchService" },
     { id: "core.ReactoryFileService@1.0.0", alias: "fileService" },
@@ -25,9 +26,9 @@ export class ReactoryModelRegistry
   name: string = "core";
   nameSpace: string = "ReactoryModelRegistry";
   version: string = "1.0.0";
-  context: Server.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
-  private instance: ReactoryModelRegistry = undefined; 
+  instance: ReactoryModelRegistry = undefined;
 
   private modelRegistry: IReactoryComponentDefinition<unknown>[] = [];
   private replacedModels: IReactoryComponentDefinition<unknown>[] = [];
@@ -39,11 +40,11 @@ export class ReactoryModelRegistry
     props: Service.IReactoryServiceProps,
     context: Server.IReactoryContext
   ) {
-    if(!ReactoryModelRegistry.instance) {
+    if (!ReactoryModelRegistry.instance) {
       this.context = context;
       ReactoryModelRegistry.instance = this;
     }
-    
+
     return ReactoryModelRegistry.instance;
   }
 
@@ -51,17 +52,46 @@ export class ReactoryModelRegistry
   tags?: string[];
   toString: ((includeVersion?: boolean) => string) & (() => string);
 
-  onStartup(): Promise<void> {
+  async onStartup(): Promise<void> {
     // load all models that are registered with the module in
     const that = this;
-    if(this.context && Array.isArray(this.context?.modules) === true) {
+    const { log } = this.context;
+    log('Starting up ReactoryModelRegistry', {}, 'info', 'core.ReactoryModelRegistry')
+    let startupAwareModels: Promise<void>[] = [];
+    if (this.context && Array.isArray(this.context?.modules) === true) {
       this.context.modules.forEach((module) => {
-        module?.models?.forEach((model) => {
-          that.register(model);
+        module?.models?.forEach(async (model) => {
+          try {
+            that.register(model);
+          } catch (error) {
+            log(`Error registering model ${model.name} - ${error.message}`, { error }, 'error', 'core.ReactoryModelRegistry');
+          }
+
+          try {
+            if (
+              (model as Reactory.Service.IReactoryStartupAwareService)
+                .onStartup &&
+              typeof (model as Reactory.Service.IReactoryStartupAwareService)
+                .onStartup === "function"
+            ) {
+              log(`Running startup for model ${model.name}`, {}, 'debug', 'core.ReactoryModelRegistry');
+              (
+                model as Reactory.Service.IReactoryStartupAwareService
+              ).onStartup.bind(that);              
+              startupAwareModels.push(new Promise((resolve, reject) => { 
+                model.onStartup(that.context).then(resolve).catch(reject); 
+              }));
+            }
+          } catch(e) {
+            logger.error(`Error running startup for model ${model.name}`, { error: e });
+          }
         });
-      });     
+      });
     }
-    
+
+    // Run startup for all startup aware models
+    await Promise.all(startupAwareModels);
+
     return Promise.resolve();
   }
 
@@ -98,7 +128,7 @@ export class ReactoryModelRegistry
           m.version === model.version
       )
     ) {
-      if (overwrite) {
+      if (overwrite === true) {
         this.modelRegistry.splice(
           this.modelRegistry.findIndex((m) => m.name === model.name),
           1
@@ -114,12 +144,17 @@ export class ReactoryModelRegistry
   }
 
   getModel<T>(specs: Partial<IReactoryComponentDefinition<T>>): T | null {
+    if (!specs) throw new Error('No specs provided');
+    if (typeof specs !== 'object') throw new Error('Specs must be a partial object with at least one key-value pair');
+
     const result = this.findMatchingComponent(specs);
     if (result === null) return null;
     return (result as IReactoryComponentDefinition<T>).component as T;
   }
 
   getModels<T>(spec: Partial<IReactoryComponentDefinition<T>>): T[] {
+    if (!spec) throw new Error('No specs provided');
+    if (typeof spec !== 'object') throw new Error('Specs must be a partial object with at least one key-value pair');
     //find all models where we have a partial match to the spec
     let allModels: IReactoryComponentDefinition<T>[] = [];
     this.context.modules.forEach((reactoryModule) => {
@@ -129,32 +164,34 @@ export class ReactoryModelRegistry
     });
 
     if (spec.name) {
-      if(spec.name.indexOf('*') === -1 && spec?.name.length > 0) {
-        for(let i = allModels.length - 1; i >= 0; i--) {
-          if(allModels[i].name !== spec.name) {
+      if (spec.name.indexOf("*") === -1 && spec?.name.length > 0) {
+        for (let i = allModels.length - 1; i >= 0; i--) {
+          if (allModels[i].name !== spec.name) {
             allModels.pop();
           }
         }
       } else {
         // partial match
-        allModels = allModels.filter((model) => { 
-          if(spec.name.endsWith('*')) { 
-            return model.name.toLowerCase().startsWith(spec.name.slice(0, spec.name.length - 1));
+        allModels = allModels.filter((model) => {
+          if (spec.name.endsWith("*")) {
+            return model.name
+              .toLowerCase()
+              .startsWith(spec.name.slice(0, spec.name.length - 1));
           }
 
-          if(spec.name.startsWith('*')) { 
+          if (spec.name.startsWith("*")) {
             return model.name.toLowerCase().endsWith(spec.name.slice(1));
           }
 
-          if(spec.name.toLowerCase().indexOf('*') > -1) { 
-            const [start, end] = spec.name.split('*');
+          if (spec.name.toLowerCase().indexOf("*") > -1) {
+            const [start, end] = spec.name.split("*");
             return model.name.startsWith(start) && model.name.endsWith(end);
           }
         });
       }
     }
 
-    return allModels.map((model) => model.component as T) ;
+    return allModels.map((model) => model.component as T);
   }
 
   generate<T>(spec: Partial<IReactoryComponentDefinition<T>>): T {

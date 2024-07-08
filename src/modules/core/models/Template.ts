@@ -170,5 +170,5 @@ TemplateSchema.statics.templates = async (client: any, organization: any = null)
   return [];
 };
 
-const TemplateModel = mongoose.model<Reactory.Models.ITemplate>('Template', TemplateSchema);
+const TemplateModel = mongoose.model<Reactory.Models.ITemplate>('Template', TemplateSchema, 'reactory_templates');
 export default TemplateModel

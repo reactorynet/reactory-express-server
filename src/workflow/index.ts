@@ -168,7 +168,7 @@ export class WorkFlowRunner {
   async getPersistenceProvider(): Promise<MongoDBPersistence> {
     if (MONGOOSE) {
       logger.debug('Using Mongoose for Workflow Persistence');
-      const mongopersistence = new MongoDBPersistence(MONGOOSE);
+      const mongopersistence = new MongoDBPersistence(MONGOOSE);      
       await mongopersistence.connect;
       return mongopersistence
     }

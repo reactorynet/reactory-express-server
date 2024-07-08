@@ -21,7 +21,7 @@ import ReactoryNLPService from './ReactoryNLPService';
 import ReactoryModelRegistry from "./ReactoryModelRegistryService";
 import ReactorySearchService from "./ReactorySearchService";
 //custom services to be expressed here
-
+import GeneratorServices from './generators';
 
 const services = [
   GoogleMapsService,
@@ -45,6 +45,7 @@ const services = [
   ReactoryNLPService,
   ReactoryModelRegistry,
   ReactorySearchService,
+  ...GeneratorServices
 ]
 
 export default services;

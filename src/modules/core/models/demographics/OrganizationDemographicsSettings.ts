@@ -57,6 +57,6 @@ const OrganizationDemographicSettingsSchema: Schema<Reactory.Models.IOrganizatio
 });
 
 
-const OrganizationDemographicSettings = model<Reactory.Models.IOrganizationDemographicSettingsDocument>('OrganizationDemographicSettings', OrganizationDemographicSettingsSchema);
+const OrganizationDemographicSettings = model<Reactory.Models.IOrganizationDemographicSettingsDocument>('OrganizationDemographicSettings', OrganizationDemographicSettingsSchema, 'reactory_organization_demographic_settings');
 
 export default OrganizationDemographicSettings;

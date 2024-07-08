@@ -1,6 +1,5 @@
 import Reactory from '@reactory/reactory-core';
 
-
 /**
  * Service decorator function, used to decorate a class as a Reactory service.
  * The system will use this decorator to register the service with the system.
@@ -27,6 +26,7 @@ function service(options: Partial<Reactory.Service.IReactoryServiceDefinition<an
       ...options
     };
     constructor.prototype.reactory = reactory;
+    constructor.prototype.COMPONENT_DEFINITION = reactory;
   };
 }
 

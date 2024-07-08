@@ -18,6 +18,6 @@ const AgeDemographicsSchema: Schema<Reactory.Models.IAgeDemographicDocument> = n
   }
 });
 
-const AgeDemographic = model<Reactory.Models.IAgeDemographicDocument>('AgeDemographic', AgeDemographicsSchema);
+const AgeDemographic = model<Reactory.Models.IAgeDemographicDocument>('AgeDemographic', AgeDemographicsSchema, 'reactory_age_demographics');
 
 export default AgeDemographic;

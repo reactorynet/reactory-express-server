@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import moment from 'moment';
-import logger from '@reactory/server-core/logging';
 import Reactory from '@reactory/reactory-core';
 
 const { ObjectId } = mongoose.Schema.Types;
@@ -40,17 +39,12 @@ PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async function Ge
 };
 
 PersonalDemographicSchema.methods.age = function age() {
-  ;
-
   const { dob } = this;
-
   if (dob === null) return -1;
-
   const $dob = moment(dob);
   if (moment.isMoment($dob) === true) {
     return moment().diff($dob, 'years')
   }
-
   return -1;
 }
 
@@ -68,23 +62,17 @@ export interface ISetPersonalDemographicsParams {
 
 
 PersonalDemographicSchema.statics.SetLoggedInUserDemograpics = async function SetLoggedInUserDemograpics(args: any, context: Reactory.Server.IReactoryContext): Promise<any> {
-
-  logger.debug(`PERSONAL DEMOGRAPHICS SCHEMA:: ${JSON.stringify(args)}`);
-
   const { user, partner } = context;
   const { race, age, gender, position, region, operationalGroup, businessUnit, team } = args;
-
   const saveResponse = await this.findOneAndUpdate(
     { userId: user._id },
     { userId: user._id, race, age, gender, position, region, operationalGroup, businessUnit, team },
     { new: true, upsert: true }
   );
 
-  logger.debug(`PERSONAL DEMOGRAPHICS SCHEMA SAVE :: ${saveResponse}`);
-
   return saveResponse
 }
 
-const PersonalDemographicModel = mongoose.model('PersonalDemographic', PersonalDemographicSchema);
+const PersonalDemographicModel = mongoose.model('PersonalDemographic', PersonalDemographicSchema, 'reactory_personal_demographics');
 
 export default PersonalDemographicModel;

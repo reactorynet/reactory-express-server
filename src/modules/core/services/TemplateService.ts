@@ -4,7 +4,7 @@ import lodash from 'lodash';
 import Reactory from '@reactory/reactory-core';
 import { TemplateType } from '@reactory/server-core/types/constants';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
-import { Template } from '@reactory/server-core/models';
+import { Template } from '@reactory/server-modules/core/models'
 import logger from '@reactory/server-core/logging';
 import { ObjectId} from 'mongodb';
 

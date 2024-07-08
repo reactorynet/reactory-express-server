@@ -1,3 +1,4 @@
+import coreClis from './cli';
 import coreResolvers from './resolvers';
 import coreTypes from './graph/types';
 import directives from './graph/directives';
@@ -27,7 +28,7 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
   models: [ ...models ],
   clientPlugins: [],
   serverPlugins: [],
-  cli: [],
+  cli: [...coreClis],
   description: 'Reactory Core Module',
   grpc: null,
   passportProviders: [],

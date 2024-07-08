@@ -5,6 +5,7 @@ CONFIG_NAME="reactory"
 CONFIG_ENV="local"
 WATCH_MODE=false
 
+KWARGS=
 # Loop through the arguments
 for arg in "$@"; do
   case $arg in
@@ -12,7 +13,7 @@ for arg in "$@"; do
       --cname=*) CONFIG_NAME="${arg#*=}" ;;
       --cenv=*) CONFIG_ENV="${arg#*=}" ;;
       --debug) DEBUG=true ;;
-      *) ;;
+      *) KWARGS="$KWARGS $arg" ;;
   esac
 done
 
@@ -31,13 +32,6 @@ if [ ! -d "./node_modules" ]; then
   exit 1
 fi
 
-# Verify that the reactor module exists before running
-if [ ! -d "./src/modules/reactor" ]; then
-  echo "Error: reactor module not installed directory not found. Run 'npm install'."
-  exit 1
-fi
-
-
 # Run the script
 SCRIPT_PATH=./src/reactory/cli/index.ts
 if [ ! -f ${SCRIPT_PATH} ]; then
@@ -50,26 +44,25 @@ if [ "$DEBUG" = true ]; then
   NODE_DEBUG_OPTIONS="--inspect"
 fi
 
+echo $KWARGS
+
 # Check if watch mode is enabled
 if [ "$WATCH_MODE" = true ]; then
   NODE_PATH=./src env-cmd -f ${ENV_FILE} npx nodemon -e js,ts,tsx,graphql --exec npx babel-node ${SCRIPT_PATH} \
-    ${NODE_DEBUG_OPTIONS} \
-    --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow \
-    --extensions=".js,.ts" \
+    --presets @babel/env \
+    --extensions ".js,.ts" \
     --max_old_space_size=2000000 \
-    --config_name=${CONFIG_NAME} \
-    --config_env=${CONFIG_ENV} \
-    "$@"
+    $KWARGS
 else
   NODE_PATH=./src env-cmd -f ${ENV_FILE} npx babel-node ${SCRIPT_PATH} \
-    ${NODE_DEBUG_OPTIONS} \
-    --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow \
-    --extensions=".js,.ts" \
+    --presets @babel/env \
+    --extensions ".js,.ts" \
     --max_old_space_size=2000000 \
-    --config_name=${CONFIG_NAME} \
-    --config_env=${CONFIG_ENV} \
-    "$@"
+    $KWARGS
+
 fi
+
+# NODE_PATH=./src env-cmd -f ./config/reactory/.env.local npx babel-node $SCRIPT_PATH --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
 
 # Check the exit status of the script
 if [ $? -eq 0 ]; then

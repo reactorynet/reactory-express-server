@@ -1,11 +1,11 @@
-import mongoose, { Schema, MongooseDocument, Model } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 const { ObjectId } = mongoose.Schema.Types;
 import moment from 'moment';
 
-import logger from '../../../logging';
+import logger from '@reactory/server-core/logging';
 import Reactory from '@reactory/reactory-core'
 
-export interface ICache extends MongooseDocument {
+export interface ICache extends Document {
   id: any,
   key: string,
   partner: any,
@@ -84,6 +84,6 @@ CacheSchema.statics.clean = function Clean() {
 
 };
 
-const CacheModel = mongoose.model<Cache>('Cache', CacheSchema);
+const CacheModel = mongoose.model<Cache>('Cache', CacheSchema, 'reactory_cache');
 
 export default CacheModel;

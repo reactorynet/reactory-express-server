@@ -4,7 +4,7 @@ import {
   Team,
   Organization,
   User,
-} from '@reactory/server-core/models';
+} from '@reactory/server-modules/core/models'
 
 import { OrganizationNotFoundError, BusinessUnitExistsError, ValidationError, RecordNotFoundError } from '@reactory/server-core/exceptions';
 

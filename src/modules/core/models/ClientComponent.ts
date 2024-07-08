@@ -54,5 +54,5 @@ const ClientComponentSchema = new mongoose.Schema({
   },
 });
 
-const ClientComponentModel = mongoose.model('ClientComponent', ClientComponentSchema);
+const ClientComponentModel = mongoose.model('ClientComponent', ClientComponentSchema, 'reactory_client_components');
 export default ClientComponentModel;

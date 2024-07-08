@@ -33,6 +33,6 @@ const DemographicsSchema: Schema<Reactory.Models.IDemographicDocument> = new Sch
 });
 
 
-const Demographic = model<Reactory.Models.IDemographicDocument>('Demographic', DemographicsSchema);
+const Demographic = model<Reactory.Models.IDemographicDocument>('Demographic', DemographicsSchema, 'reactory_demographics');
 
 export default Demographic;

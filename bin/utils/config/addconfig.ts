@@ -28,12 +28,12 @@ const main = (kwargs: string[]) => {
   if(kwargs.length > 0) {
     kwargs.forEach((arg) => {
       const [key, value] = arg.split('=');
-      if(key === '--config_name') {
+      if(key === '--reactory_config_name') {
         DEFAULT_SERVER_CONFIG.name = value;
         DEFAULT_CLIENT_CONFIG.name = value;
       }
 
-      if(key === '--config_env'){
+      if(key === '--reactory_config_env'){
         DEFAULT_SERVER_CONFIG.environment = value;
         DEFAULT_CLIENT_CONFIG.environment = value;
       }

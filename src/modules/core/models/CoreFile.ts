@@ -278,6 +278,6 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
 };
 
 
-const ReactoryFile: ReactoryFileModel = mongoose.model<Reactory.Models.IReactoryFileModel>('ReactoryFile', ReactoryFileSchema);
+const ReactoryFile: ReactoryFileModel = mongoose.model<Reactory.Models.IReactoryFileModel>('ReactoryFile', ReactoryFileSchema, 'reactory_files');
 
 export default ReactoryFile;

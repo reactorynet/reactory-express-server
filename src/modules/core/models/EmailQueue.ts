@@ -77,5 +77,5 @@ EmailQueueSchema.statics.UserEmailsWithTextSearch = async function (user, filter
   }
 };
 
-const EmailQueueModel = mongoose.model('EmailQueue', EmailQueueSchema);
+const EmailQueueModel = mongoose.model('EmailQueue', EmailQueueSchema, 'reactory_email_queue');
 export default EmailQueueModel;
