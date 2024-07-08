@@ -9,4 +9,6 @@
 + *.yaml
 + *.md
 + *.cert
++ *.ejs
++ *.rxs
 - *

@@ -291,13 +291,18 @@ const SchemaGenCli = async (
         forms.forEach((form) => {
 
           let contents = "";
-          switch(format) {
-            case "json": {
-              contents = JSON.stringify(form, null, 2);
-              break;
-            }
+          switch(format) {            
             case "yaml": {
               contents = yaml.dump(form);
+              break;
+            }
+            case "ts": {
+              contents = `export default ${JSON.stringify(form, null, 2)}`
+              break;
+            }
+            case "json":
+            default: {
+              contents = JSON.stringify(form, null, 2);
               break;
             }
           }
@@ -341,12 +346,17 @@ const SchemaGenCli = async (
           const filePath = path.resolve(_destination, fileName);
           let contents = "";
           switch(format) {
-            case "json": {
-              contents = JSON.stringify(form, null, 2);
-              break;
-            }
             case "yaml": {
               contents = yaml.dump(form);
+              break;
+            }
+            case "ts": {
+              contents = `export default ${JSON.stringify(form, null, 2)}`;
+              break;
+            }
+            case "json":
+            default: {
+              contents = JSON.stringify(form, null, 2);
               break;
             }
           }
@@ -355,34 +365,7 @@ const SchemaGenCli = async (
 
         break;
       }
-    }
-
-    if (output) {
-      rl.write(colors.green(`Writing to output folder: ${output}\n`));
-      const outputFolder = path.resolve(output);
-      if (!fs.existsSync(outputFolder)) {
-        fs.mkdirSync(outputFolder, { recursive: true });
-      }
-
-      forms.forEach((form) => {
-        const fileName = `${form.name}.json`;
-        const filePath = path.resolve(outputFolder, fileName);
-        fs.writeFileSync(filePath, JSON.stringify(form, null, 2));
-      });
-    } else {
-      if (forms && forms.length > 0) {
-        forms.forEach((form) => {
-          rl.write(
-            colors.green(
-              `Generated: ${form.nameSpace}.${form.name}@${form.version}\n`
-            )
-          );
-        });
-        context.state.forms = forms;
-      } else {
-        rl.write(colors.green(`No forms generated\n`));
-      }
-    }
+    } 
   } else {
     context.error(`Generator does not have a generate method`);
     process.exit(1);

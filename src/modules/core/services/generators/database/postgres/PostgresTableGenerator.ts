@@ -44,6 +44,7 @@ class PostgresTableToFormGenerator extends Reactory.Service.ReactoryService<TP, 
     super();
     this.props = props;
     this.context = context;
+
     this.toJSType = this.toJSType.bind(this);
     this.getName = this.getName.bind(this);
     this.generateGridForEntity = this.generateGridForEntity.bind(this);
@@ -205,7 +206,7 @@ class PostgresTableToFormGenerator extends Reactory.Service.ReactoryService<TP, 
           nullable: column.is_nullable === "YES",
           ordinal: column.ordinal_position,
           autoIncrement: column.is_identity === "YES" || column.column_default === "nextval('${entity.name}_id_seq'::regclass)",
-          defaultValue: column.column_default === "nextval('${entity.name}_id_seq'::regclass)" ? null : column.column_default,
+          defaultValue: column.column_default === `nextval('${entity.name}_id_seq'::regclass)` ? null : column.column_default,
           required: column.is_nullable === "NO",
           unique: column.is_updatable === "NO",
           readonly: column.is_updatable === "NO",
