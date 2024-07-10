@@ -8,7 +8,7 @@ import Helpers, { OnDoneCallback } from '../helpers';
 import { Application, Response } from 'express';
 import passport from 'passport';
 import logger from '@reactory/server-core/logging';
-import { ReactoryClient } from 'models';
+import { ReactoryClient } from '@reactory/server-modules/core/models';
 
 const { 
   GOOGLE_CLIENT_ID = 'GOOGLE_CLIENT_ID',
@@ -37,7 +37,7 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
   const googleId = profile.id;
   const { name, displayName } = profile;
   
-  const { context, session } = req;
+  const { context, session, runAsSystem } = req;
   if(!context.partner) {
     // check if we have oauthState in the session
     // @ts-ignore
@@ -68,8 +68,10 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
     displayName,
     accessToken,
   }
+
   let user = await userService.findUserWithEmail(email);
   if(!user) {
+
     user = await userService.createUser({
       email,
       firstName: name.givenName,

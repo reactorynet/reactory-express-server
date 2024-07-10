@@ -1,4 +1,4 @@
-import ApiError from 'exceptions';
+import ApiError from '@reactory/server-core/exceptions';
 import Postgres from 'postgres'
 
 

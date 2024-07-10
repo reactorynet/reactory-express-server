@@ -4,7 +4,7 @@ import { ReactoryClient, Menu } from '@reactory/server-modules/core/models'
 import { ObjectId } from 'bson';
 import { execql, execml } from '@reactory/server-core/graph/client'
 import { map } from 'lodash';
-import { ComponentFQN, FQN2ID } from 'utils/string';
+import { ComponentFQN, FQN2ID } from '@reactory/server-core/utils/string';
 
 
 interface IModuleValidationResult {

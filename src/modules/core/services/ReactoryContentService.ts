@@ -4,7 +4,7 @@ import path from 'path';
 import svg_to_png from 'svg-to-png';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { Content } from '@reactory/server-core/models'
-import logger from 'logging';
+import logger from '@reactory/server-core/logging';
 import { pathExistsSync } from 'fs-extra';
 
 class ReactoryContentService implements Reactory.Service.IReactoryContentService {

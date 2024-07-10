@@ -34,7 +34,7 @@ import UserDemographic from "./UserDemographics";
 import Reactory from "@reactory/reactory-core";
 import logger from "@reactory/server-core/logging";
 import { encoder, strongRandom } from "@reactory/server-core/utils";
-import Hash from "utils/hash";
+import Hash from "@reactory/server-core/utils/hash";
 
 export const PostgresDataSource = new DataSource({
   type: "postgres",

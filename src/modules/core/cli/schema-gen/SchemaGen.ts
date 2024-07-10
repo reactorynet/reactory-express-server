@@ -4,7 +4,7 @@ import path from "path";
 import yaml from "js-yaml";
 import { ReadLine } from "readline";
 import colors from "colors/safe";
-import { ENVIRONMENT } from "types/constants";
+import { ENVIRONMENT } from "@reactory/server-core/types/constants";
 
 // set theme
 colors.setTheme({
@@ -319,6 +319,10 @@ const SchemaGenCli = async (
             )
           );
         });
+        break;
+      }
+      case "storage": {
+        // store the output in mongo or some other storage
         break;
       }
       default: {

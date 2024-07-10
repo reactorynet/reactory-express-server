@@ -1,5 +1,4 @@
-import { service } from 'application/decorators';
-import { roles } from 'authentication/decorators';
+import { service } from '@reactory/server-core/application/decorators';
 import { MeiliSearch, TaskStatus } from 'meilisearch';
 
 

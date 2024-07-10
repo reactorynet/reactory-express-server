@@ -1,7 +1,7 @@
 import path from 'path';
 import Reactory from '@reactory/reactory-core';
 import { resolver, query, property } from "@reactory/server-core/models/graphql/decorators/resolver";
-import { ReactoryAnonUser } from 'context/AnonUser';
+import { ReactoryAnonUser } from '@reactory/server-core/context/AnonUser';
 import { isNil, isArray, filter, intersection, uniq } from 'lodash';
 import moment from 'moment';
 const packageJson = require(path.join(process.cwd(), 'package.json'));

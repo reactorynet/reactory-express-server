@@ -3,7 +3,7 @@ import logger from '@reactory/server-core/logging';
 import { startServices } from '@reactory/server-core/services';
 import Reactory from '@reactory/reactory-core';
 import ReactoryClient from '@reactory/server-modules/core/models/ReactoryClient';
-import ReactoryContextProvider from 'context/ReactoryContextProvider';
+import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
 import Helpers from '@reactory/server-core/authentication/strategies/helpers';
 
 const startup = async (): Promise<Reactory.Server.IReactoryContext> => {

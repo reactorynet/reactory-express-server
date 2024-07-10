@@ -1,16 +1,13 @@
 import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 import CoreData from '@reactory/server-core/data';
-// import { 
-//   createUserForOrganization
-// } from '@reactory/server-modules/core/services/admin/User';
 import { ReactoryClientValidationError } from '@reactory/server-core/exceptions';
 import { isNil } from 'lodash';
 import ReactoryClientModel from './'
 import Menu from '../Menu';
 import ClientComponent from '../ClientComponent';
 import User from '../User';
-import { strongRandom } from 'utils';
+import { strongRandom } from '@reactory/server-core/utils';
 
 const {
   clients,

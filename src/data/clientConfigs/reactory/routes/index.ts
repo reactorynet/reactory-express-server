@@ -5,7 +5,7 @@ import {
   resetpasswordroute,
   forgotpasswordroute,  
 } from '@reactory/server-core/data/clientConfigs/helpers/defaultRoutes';
-import { ENVIRONMENT } from 'types/constants';
+import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
 /**
  * Static Content Mappings

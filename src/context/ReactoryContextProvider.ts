@@ -184,6 +184,22 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     }
     return this as unknown as TResult;
   }
+
+  async getSystemUser(): Promise<Reactory.Models.IUserDocument> { 
+    return this.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0').findUserWithEmail(process.env.SYSTEM_USER_EMAIL);
+  }
+
+  async runAs<TResult>(user: Reactory.Models.IUserDocument,  target: Promise<TResult>): Promise<TResult> { 
+    const oldUser = this.user;
+    this.user = user;
+    const result = await target;
+    this.user = oldUser;
+    return result;
+  }
+
+  async runAsSystem<TResult>(target: Promise<TResult>): Promise<TResult> { 
+    return this.runAs(await this.getSystemUser(), target);
+  }
 }
 
 const getContext = async <TResult extends Reactory.Server.IReactoryContext>(session: any, currentContext: Partial<TResult> = {}): Promise<TResult> => { 

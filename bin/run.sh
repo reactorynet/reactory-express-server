@@ -10,5 +10,5 @@
 #$SECONDS - The number of seconds since the script was started.
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
-NODE_PATH=./bin/server env-cmd -f ./config/${1:-reactory}/.env.${2:-local} node ./bin/server/${1:reactory}/index.js
+NODE_PATH=./bin/server env-cmd -f ./config/${1:-reactory}/.env.${2:-local} node ./bin/server/${1:-reactory}/index.js
  

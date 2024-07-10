@@ -1,7 +1,7 @@
 
 import Reactory from '@reactory/reactory-core';
 import { resolver, query, property, mutation } from "@reactory/server-core/models/graphql/decorators/resolver";
-import ApiError, { RecordNotFoundError } from 'exceptions';
+import ApiError from '@reactory/server-core/exceptions';
 
 
 export interface IReactoryFormSaveArgs {  
@@ -11,6 +11,7 @@ export interface IReactoryFormSaveArgs {
   git?: Reactory.Git.GitOptions
 }
 
+// @ts-ignore
 @resolver
 class ReactoryFormResolver {
 
