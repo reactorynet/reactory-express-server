@@ -1,8 +1,8 @@
 import { ReactoryCodeFactory } from './ReactoryCodeFactory';
 
-const generate = (params: any) => {
+const generate = () => {
   ReactoryCodeFactory.ModuleImportGenerator();
   ReactoryCodeFactory.ClientConfigImportGenerator();
 }
 
-generate({});
+generate();
