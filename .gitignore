@@ -11,6 +11,8 @@ yarn.lock
 .env*
 config/*
 !config/reactory/.env.sample
+!config/reactory/.dockerignore
+!config/reactory/Dockerfile
 !config/reactory/pm2.sample.config.js
 !config/README.MD
 

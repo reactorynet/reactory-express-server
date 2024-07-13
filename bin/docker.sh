@@ -17,4 +17,6 @@
 source ./bin/shared/shell-utils.sh
 check_env_vars
 echo "🛠️ Loading Environment ./config/${1:-reactory}/${2:-local} "
-docker-compose -f ./config/${1:-reactory}/docker-compose.yaml --env-file ./config/${1:-reactory}/.env.${2:-local} ${3:-up}
+BUILD_VERSION=$(node -p "require('./package.json').version")
+
+docker buildx b --pull --file="./config/${1:-reactory}/Dockerfile" --tag=${1-reactory}-${2:-local}:latest

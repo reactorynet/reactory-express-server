@@ -68,7 +68,7 @@ export default class Helpers {
 
   static jwtMake = (payload: any) => { return jwt.encode(payload, jwtSecret); };
 
-  static jwtTokenForUser = (user: Reactory.Models.IUser, options = {}) => {
+  static jwtTokenForUser = (user: Reactory.Models.IUserDocument, options = {}) => {
     if (isNil(user)) throw new UserValidationError('User object cannot be null', { context: 'jwtTokenForUser' });
 
     const {
@@ -91,21 +91,15 @@ export default class Helpers {
       ...options,
     };
 
-    let _user = user;
-
-    if (user && user._doc) {
-      _user = user._doc;
-    }
-
     return {
       ...authOptions,
-      userId: `${_user._id ? _user._id.toString() : _user.id.toString()}`, // eslint-disable-line no-underscore-dangle
+      userId: `${user._id.toString()}`,
       refresh: uuid(),
       name: `${user.firstName} ${user.lastName}`,
     };
   }
 
-  static addSession = (user: Reactory.Models.IUserDocument, token: any, ip = '-', clientId = 'not-set') => {
+  static addSession = async (user: Reactory.Models.IUserDocument, token: any, ip = '-', clientId = 'not-set') => {
     user.sessionInfo = [];
     user.sessionInfo.push({
       id: uuid(),
@@ -114,27 +108,30 @@ export default class Helpers {
       jwtPayload: token,
     });
 
-    return user.save();
+    try { 
+      await user.save();
+    } catch (err) {
+      logger.error(`Error saving user session info`, err);
+    }
+
+    return user;
   }
 
-  static generateLoginToken = (user: Reactory.Models.IUserDocument, ip = 'none'): Promise<{
+  static generateLoginToken = async (user: Reactory.Models.IUserDocument, ip = 'none'): Promise<{
     id: string,
     firstName: string,
     lastName: string,
     token: string,
   }> => {
     logger.info(`generating Login token for user ${user.firstName} ${user.lastName}`);
-    return new Promise((resolve, reject) => {
-      user.lastLogin = moment().valueOf(); // eslint-disable-line
-      const jwtPayload = Helpers.jwtTokenForUser(user);
-      Helpers.addSession(user, jwtPayload, ip).then((savedUser) => {
-        resolve({
-          id: savedUser?._id?.toHexString(),
-          firstName: savedUser.firstName,
-          lastName: savedUser.lastName,
-          token: Helpers.jwtMake(jwtPayload),
-        });
-      }).catch((sessionSetError) => { reject(sessionSetError); });
-    });
+    user.lastLogin = moment().valueOf(); // eslint-disable-line
+    const jwtPayload = Helpers.jwtTokenForUser(user);
+    await Helpers.addSession(user, jwtPayload, ip);
+    return {
+      id: user?._id?.toHexString(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      token: Helpers.jwtMake(jwtPayload),
+    };
   }; 
 }
