@@ -1,18 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import Rollup from 'rollup';
-import { forEach, isArray, takeRight } from 'lodash';
-import modules from '@reactory/server-core/modules';
-import { resolveInclude } from 'ejs';
-import messages from 'bot/sparky/messages';
 import { cwd } from 'process';
 import Reactory from "@reactory/reactory-core";
 
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
-
-const rollup = require('rollup');
-const loadingConfigFile = require('rollup/dist/loadConfigFile');
 
 /**
  * Service class that provides access to forms for the logged in user
