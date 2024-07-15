@@ -6,27 +6,16 @@ import https from 'https';
 // @ts-ignore
 import sslrootcas from 'ssl-root-cas/latest';
 import express, { Application, NextFunction } from 'express';
-import bodyParser from 'body-parser';
-import passport from 'passport';
-import i18nextHttp from 'i18next-http-middleware';
-import flash from 'connect-flash';
 import mongooseConnection from '@reactory/server-core/models/mongoose';
 import configureMiddleWare from 'express/middleware';
-import userAccountRouter from '@reactory/server-core/useraccount';
-import froala from '@reactory/server-core/froala';
-import resources from '@reactory/server-core/resources';
-
 import { ConfigureAuthentication } from '@reactory/server-core/authentication';
-import workflow, { workflowRunner, WorkFlowRunner } from '@reactory/server-core/workflow';
-import pdf from '@reactory/server-core/pdf';
+import { workflowRunner, WorkFlowRunner } from '@reactory/server-core/workflow';
 import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
 import logger from '@reactory/server-core/logging';
-import resolveUrl from '@reactory/server-core/utils/url/resolve';
+import ConfigureRoutes from '@reactory/server-core/express/routes';
 import colors from 'colors/safe';
 import http from 'http';
-import i18n from '@reactory/server-core/express/i18n';
-import { ApolloServer } from '@apollo/server';
 
 // set theme
 colors.setTheme({
@@ -196,28 +185,8 @@ Environment Settings:
   try {
     const context = await startup();
     ConfigureAuthentication(reactoryExpress);
-    reactoryExpress.use(userAccountRouter);
-    // TODO: Werner Weber - Update the route configuration to use the
-    // load the routes from the modules and the core.
-    // i.e. 
-    // RouteConfig.Configure(reactoryExpress);
-    // see ticket https://github.com/reactorynet/reactory-express-server/issues/15
-    reactoryExpress.use('/froala', froala);
-    reactoryExpress.use('/deliveries', froala);
-    reactoryExpress.use('/workflow', workflow);
-    reactoryExpress.use('/resources', resources);
-    reactoryExpress.use('/pdf', passport.authenticate(
-      ['jwt'], { session: false }),
-      bodyParser.urlencoded({ extended: true }), pdf);
-    //reactoryExpress.use('/excel', ExcelRouter);
-
-    reactoryExpress.use('/amq', amq.router);
-    reactoryExpress.use(flash());
-    reactoryExpress.use(resourcesPath,
-      passport.authenticate(['jwt', 'anonymous'], { session: false }),
-      bodyParser.urlencoded({ extended: true }),
-      express.static(APP_DATA_ROOT || publicFolder));
-
+    ConfigureRoutes(reactoryExpress);
+    
     const startExpressServer = async (): Promise<http.Server> => {
       return new Promise((resolve, reject) => {
         httpServer.listen(typeof API_PORT === "string" ? parseInt(API_PORT) : API_PORT, SERVER_IP, () => {
