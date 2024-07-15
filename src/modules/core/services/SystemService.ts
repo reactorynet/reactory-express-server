@@ -2,7 +2,7 @@ import Reactory from '@reactory/reactory-core';
 import modules from '@reactory/server-core/modules';
 import { ReactoryClient, Menu } from '@reactory/server-modules/core/models'
 import { ObjectId } from 'bson';
-import { execql, execml } from '@reactory/server-core/graph/client'
+import { queryGraph as execql, mutateGraph as execml } from '@reactory/server-core/graph/ReactoryApolloClient'
 import { map } from 'lodash';
 import { ComponentFQN, FQN2ID } from '@reactory/server-core/utils/string';
 
@@ -38,11 +38,11 @@ class SystemService implements Reactory.Service.IReactorySystemService {
   }
 
   query(query: string, variables: any): Promise<any> {
-    return execql(query, variables, {}, this.context.user, this.context.partner);
+    return execql(query, variables, {},  this.context);
   }
   
   mutate(mutation: string, variables: any): Promise<any> {
-    return execml(mutation, variables, {}, this.context.user, this.context.partner);
+    return execml(mutation, variables, {}, this.context);
   }
 
   async getReactoryClient(id: string | ObjectId, populate?: string[]): Promise<Reactory.Models.IReactoryClientDocument | Reactory.Models.IReactoryClient> {

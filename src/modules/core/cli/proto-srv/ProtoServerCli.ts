@@ -1,6 +1,6 @@
 type ReactoryCliApp = (vargs: string[], context: Reactory.Server.IReactoryContext) => Promise<void>;
 import { ReadLine } from "readline";
-import { colors } from '@reactory/server-modules/reactor/helpers';
+import { colors } from 'modules/reactory-reactor/helpers';
 
 /**
  * The ProtoServerCliApp is a command line interface for starting and 

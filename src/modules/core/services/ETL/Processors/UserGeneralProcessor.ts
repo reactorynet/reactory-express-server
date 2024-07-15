@@ -2,9 +2,8 @@
 'use strict';
 
 import Reactory from '@reactory/reactory-core';
-import { ObjectId } from 'mongodb';
 import moment, { isMoment } from 'moment';
-import { execml, execql } from '@reactory/server-core/graph/client';
+import { mutateGraph as execml} from '@reactory/server-core/graph/ReactoryApolloClient';
 import iz from '@reactory/server-core/utils/validators';
 import { MutationResult, IUserImportStruct } from './types';
 
@@ -31,7 +30,7 @@ class UserFileImportProcessGeneral implements Reactory.Service.IProcessor {
 
   mutate = async (mutation: string, variables: any = {}): Promise<MutationResult> => {
     try {
-      const { data, errors = [] } = await execml(mutation, variables, {}, this.context.user, this.context.partner).then();
+      const { data, errors = [] } = await execml(mutation, variables, {}, this.context).then();
       return {
         data,
         errors: errors.map((e) => e.message)

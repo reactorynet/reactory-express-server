@@ -1,39 +1,21 @@
 'use strict'
 import fs from 'fs';
 import moment from 'moment';
-import cors from 'cors';
 import path from 'path';
 import https from 'https';
 // @ts-ignore
 import sslrootcas from 'ssl-root-cas/latest';
 import express, { Application, NextFunction } from 'express';
-import session from 'express-session';
-import bodyParser from 'body-parser';
-import passport from 'passport';
-import i18nextHttp from 'i18next-http-middleware';
-import { ApolloServer, ApolloServerExpressConfig, makeExecutableSchema, SchemaDirectiveVisitor } from 'apollo-server-express';
-import flash from 'connect-flash';
 import mongooseConnection from '@reactory/server-core/models/mongoose';
-import corsOptions from '@reactory/server-core/express/cors';
-import configureMiddleWare from '@reactory/server-core/middleware';
-import userAccountRouter from '@reactory/server-core/useraccount';
-import froala from '@reactory/server-core/froala';
-import resources from '@reactory/server-core/resources';
-import typeDefs from '@reactory/server-core/models/graphql/types';
-import resolvers from '@reactory/server-core/models/graphql/resolvers';
-import directiveProviders from '@reactory/server-core/models/graphql/directives';
+import configureMiddleWare from 'express/middleware';
 import { ConfigureAuthentication } from '@reactory/server-core/authentication';
-import workflow, { workflowRunner, WorkFlowRunner } from '@reactory/server-core/workflow';
-import pdf from '@reactory/server-core/pdf';
+import { workflowRunner, WorkFlowRunner } from '@reactory/server-core/workflow';
 import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
 import logger from '@reactory/server-core/logging';
-import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
-import resolveUrl from '@reactory/server-core/utils/url/resolve';
+import ConfigureRoutes from '@reactory/server-core/express/routes';
 import colors from 'colors/safe';
 import http from 'http';
-import { GraphQLSchema } from 'graphql';
-import i18n from '@reactory/server-core/express/i18n';
 
 // set theme
 colors.setTheme({
@@ -92,13 +74,16 @@ const hideText = (text: string = '') => {
 export const ReactoryServer = async (): Promise<{ 
   app: Application, 
   server: http.Server,
-  apolloServer: ApolloServer,
   workflowHost: WorkFlowRunner,
   stop: () => void
 }> => {
 
-  let reactoryExpress: Application;
+  const reactoryExpress: Application = express();
+  const httpServer: http.Server = http.createServer(reactoryExpress);
+  const resourcesPath = '/cdn';
+  const publicFolder = path.join(__dirname, 'public');
 
+  
   let mongoose_result = null;
 
   const ca = sslrootcas.create();
@@ -161,128 +146,32 @@ Environment Settings:
   MAIL_REDIRECT_ADDRESS: ${MAIL_REDIRECT_ADDRESS}
 `;
 
-  logger.info(ENV_STRING_DEBUG);
-
-  const queryRoot = '/api';
-  const resourcesPath = '/cdn';
-  const publicFolder = path.join(__dirname, 'public');
-
-  let apolloServer: ApolloServer = null;
-  let graphcompiled: boolean = false;
-  let graphError: String = '';
-
-  let expressServer: http.Server = null;
-
-  reactoryExpress = express();
+  logger.debug(ENV_STRING_DEBUG);
 
   reactoryExpress.on('error', (app) => {
     logger.error(`Application reported error`);
   });
 
   process.once('SIGUSR2', function () {
-    if (expressServer) {
+    if (httpServer) {
       logger.debug(colors.magenta('Interrupt Received, restarting'));
-      expressServer.close(() => {
+      httpServer.close(() => {
         process.kill(process.pid, 'SIGUSR2')
       })
     }
   })
 
   process.on("SIGINT", () => {
-    if (expressServer) {
+    if (httpServer) {
       console.log('Shutting down server');
-      expressServer.close(() => {
+      httpServer.close(() => {
         process.exit(0);
       })
     }
   });
-
-
-  reactoryExpress.use((err: Error, req: any, res: any, next: NextFunction) => {
-    logger.error(`Express Error Handler`, { err });
-    if (res.headersSent) {
-      return next(err)
-    }
-    res.status(500)
-    res.render('error', { error: err })
-  });
       
-  reactoryExpress.use('*', cors(corsOptions));
-  configureMiddleWare(reactoryExpress);
-  reactoryExpress.use(i18nextHttp.handle(i18n));
-  reactoryExpress.use(
-    queryRoot,
-    passport.authenticate(['jwt'], 
-    { session: false }), 
-    bodyParser.urlencoded({ extended: true }),
-    bodyParser.json({
-      limit: MAX_FILE_UPLOAD,
-    }),
-  );
-
-  try {
-
-    let $schema: GraphQLSchema = makeExecutableSchema({
-      resolverValidationOptions : { 
-        requireResolversForResolveType: false 
-      },
-      typeDefs,
-      resolvers,
-    });
-
-    directiveProviders.forEach((provider) => {
-      try {
-        logger.info(`Processing schema directive: "@${provider.name}"`);
-        $schema = provider.transformer($schema);
-      } catch (directiveErr) {
-        logger.error(`Error adding directive ${provider.name}`);
-      }
-    });
-
-    
-    const expressConfig: ApolloServerExpressConfig = {
-      logger: logger,
-      schema: $schema,
-      context: async (options: any) => { 
-        const req = options.req;
-        if(req.context) return req.context;
-        else {
-          return await ReactoryContextProvider(null, {});
-        }
-      },
-      uploads: {
-        maxFileSize: 20000000,
-        maxFiles: 10,
-      },
-    };
-
-    apolloServer = new ApolloServer(expressConfig);
-    graphcompiled = true;
-    logger.info('Graph Schema Compiled, starting express');
-  } catch (schemaCompilationError) {
-    if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`) === true) {
-      const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { encoding: 'utf-8' });
-      logger.error(`\n\n${error}`);
-    }
-
-    graphError = `Error compiling the graphql schema ${schemaCompilationError.message}`;
-    logger.error(graphError);
-  }
-
-  reactoryExpress.set('trust proxy', NODE_ENV === 'development' ? 0 : 1);  
-  reactoryExpress.use(bodyParser.urlencoded({ extended: false }));
-  reactoryExpress.use(bodyParser.json({ limit: MAX_FILE_UPLOAD }));
-
-  if (apolloServer) {
-    apolloServer.applyMiddleware({ app: reactoryExpress, path: queryRoot });
-  } else {
-    if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`) === true) {
-      const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { encoding: 'utf-8' });
-      logger.error(`\n\n${error}`);
-    }
-    logger.error(`Error compiling the graphql schema: apolloServer instance is null!`);
-  }
-
+  
+  configureMiddleWare(reactoryExpress, httpServer);
 
   amq.raiseSystemEvent('server.startup.begin', {});
 
@@ -296,44 +185,16 @@ Environment Settings:
   try {
     const context = await startup();
     ConfigureAuthentication(reactoryExpress);
-    reactoryExpress.use(userAccountRouter);
-    // TODO: Werner Weber - Update the route configuration to use the
-    // load the routes from the modules and the core.
-    // i.e. 
-    // RouteConfig.Configure(reactoryExpress);
-    // see ticket https://github.com/reactorynet/reactory-express-server/issues/15
-    reactoryExpress.use('/froala', froala);
-    reactoryExpress.use('/deliveries', froala);
-    reactoryExpress.use('/workflow', workflow);
-    reactoryExpress.use('/resources', resources);
-    reactoryExpress.use('/pdf', passport.authenticate(
-      ['jwt'], { session: false }),
-      bodyParser.urlencoded({ extended: true }), pdf);
-    //reactoryExpress.use('/excel', ExcelRouter);
-
-    reactoryExpress.use('/amq', amq.router);
-    reactoryExpress.use(flash());
-    reactoryExpress.use(resourcesPath,
-      passport.authenticate(['jwt', 'anonymous'], { session: false }),
-      bodyParser.urlencoded({ extended: true }),
-      express.static(APP_DATA_ROOT || publicFolder));
-
-    const startExpressServer = (): Promise<http.Server> => {
+    ConfigureRoutes(reactoryExpress);
+    
+    const startExpressServer = async (): Promise<http.Server> => {
       return new Promise((resolve, reject) => {
-        expressServer = reactoryExpress.listen(typeof API_PORT === "string" ? parseInt(API_PORT) : API_PORT, SERVER_IP, () => {
+        httpServer.listen(typeof API_PORT === "string" ? parseInt(API_PORT) : API_PORT, SERVER_IP, () => {
           logger.info(`\n\n${asciilogo}\n\n`);
-          if (graphcompiled === true) {
-            const graphql_api_root = resolveUrl(API_URI_ROOT, queryRoot);
-
-            logger.info(colors.green(`✅ Running a GraphQL API server at ${graphql_api_root}`));
-          }
-          else logger.info(colors.yellow(`🩺 GraphQL API not available - ${graphError}`));
-
           logger.info(colors.green('✅ System Initialized/Ready, enabling app'));
-
           global.REACTORY_SERVER_STARTUP = new Date();
           amq.raiseSystemEvent('server.startup.complete');
-          resolve(expressServer);
+          resolve(httpServer);
         }).on("error", (err) => {
           logger.error(colors.red("Could not successfully start the express server"), err);
           reject(err);
@@ -342,8 +203,8 @@ Environment Settings:
     };
 
     const stopServer = () => { 
-      if(expressServer) { 
-        expressServer.close(() => {
+      if(httpServer) { 
+        httpServer.close(() => {
           logger.info('Express Server Stopped');
         });
       }
@@ -366,8 +227,7 @@ Environment Settings:
     
     return { 
       app: reactoryExpress,
-      server: expressServer,
-      apolloServer,
+      server: httpServer,
       workflowHost: workflowRunner,
       stop: stopServer
     }

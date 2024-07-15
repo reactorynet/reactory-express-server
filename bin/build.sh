@@ -52,8 +52,8 @@ echo "Copying package.json"
 cp ./package.json $BUILD_PATH
 
 # Copy package-lock.json
-echo "Copying package-lock.json"
-cp ./package-lock.json $BUILD_PATH
+echo "Copying yarn.lock"
+cp ./yarn.lock $BUILD_PATH
 
 # Copy .env file
 echo "Copying .env file"
@@ -64,4 +64,4 @@ echo "Creating archive for deployment"
 cd $BUILD_PATH
 tar -czf ../${1:-reactory}-server-${BUILD_VERSION}.tar.gz .
 
-echo "Built Reactory Server to $BUILD_PATH"
+echo "🏆 Built Reactory Server to $BUILD_PATH"

@@ -1,12 +1,12 @@
 import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
-
+import logger from '@reactory/server-core/logging';
 /**
  * A middleware that will be used to set the context of the request
  * @param req 
  * @param res 
  * @param next 
  */
-const ReactoryContextMiddleWare = (req: Request, res: Response, next: Function) => {
+const ReactoryContextMiddleWare = (req: Express.Request, res: Response, next: Function) => {
   ReactoryContextProvider(null,{}).then((context: Reactory.Server.IReactoryContext) => {
     //@ts-ignore
     req.context = context;
@@ -15,6 +15,7 @@ const ReactoryContextMiddleWare = (req: Request, res: Response, next: Function) 
     context.debug(`ReactoryContextMiddleWare:: created for route ${req.url}`)
     next();
   }).catch((err) => {
+    logger.error(`Failed to set the context of the request: ${err.message}`);
     // @ts-ignore
     res.status(500)
       .send({ 

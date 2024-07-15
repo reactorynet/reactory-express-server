@@ -1,7 +1,7 @@
 'use strict';
 import Reactory from '@reactory/reactory-core';
 import { MutationResult, QueryResult, IUserImportStruct } from './types';
-import { execml, execql } from '@reactory/server-core/graph/client';
+import { mutateGraph as execml, queryGraph as execql } from '@reactory/server-core/graph/ReactoryApolloClient';
 import { BusinessUnit, UserDemographic, Region, Team } from '@reactory/server-modules/core/models'
 import Demographic from '@reactory/server-modules/core/models/demographics/Demographic';
 import { find } from 'lodash';

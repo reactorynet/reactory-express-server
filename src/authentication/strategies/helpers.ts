@@ -3,8 +3,8 @@ import jwt from 'jwt-simple';
 import moment, { DurationInputArg1, DurationInputArg2 } from 'moment';
 import { v4 as uuid } from 'uuid';
 import { isNil } from 'lodash';
-import { User } from '@reactory/server-core/models/index';
 import { UserValidationError } from '@reactory/server-core/exceptions';
+import { User } from '@reactory/server-modules/core/models';
 import logger from '@reactory/server-core/logging';
 import amq from '@reactory/server-core/amq';
 
