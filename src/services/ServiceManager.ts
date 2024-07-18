@@ -43,7 +43,7 @@ class ServiceManager {
           if (installedModule && installedModule.services) {
             if (installedModule.services) {
               logger.debug(
-                `🟢 Module ${installedModule.name} has ${installedModule.services.length} services available`
+                `Module ${installedModule.name}: (${installedModule.services.length}) services found.`
               );
               installedModule.services.forEach(
                 (
@@ -58,7 +58,7 @@ class ServiceManager {
                   ) {
                     $service = ($service as any).prototype.reactory;
                   }
-                  logger.debug(`  🔀 ${$service.id} [${$service.serviceType}]`);
+                  logger.debug(`🔀 ${$service.id} [${$service.serviceType}]`);
                   services.push($service);
                   serviceRegister[$service.id] = $service;
                 }

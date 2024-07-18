@@ -14,6 +14,7 @@ import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
 import logger from '@reactory/server-core/logging';
 import ConfigureRoutes from '@reactory/server-core/express/routes';
+import ConfigureViews from '@reactory/server-core/express/views';
 import colors from 'colors/safe';
 import http from 'http';
 
@@ -186,7 +187,7 @@ Environment Settings:
     const context = await startup();
     ConfigureAuthentication(reactoryExpress);
     ConfigureRoutes(reactoryExpress);
-    
+    ConfigureViews(reactoryExpress);
     const startExpressServer = async (): Promise<http.Server> => {
       return new Promise((resolve, reject) => {
         httpServer.listen(typeof API_PORT === "string" ? parseInt(API_PORT) : API_PORT, SERVER_IP, () => {

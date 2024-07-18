@@ -1,4 +1,4 @@
-FROM node:10.16.3-buster
+FROM node:20.15-alpine
 
 RUN echo "NODE Version:" && node --version
 RUN echo "NPM Version:" && npm --version
@@ -17,7 +17,6 @@ RUN tar -xvzf reactory-server-1.0.0.tar.gz
 
 RUN rm reactory-server-1.0.0.tar.gz
 
-RUN npm cache clean --force
-RUN npm install
+RUN yarn
 
 CMD ["bin/serve.sh"]

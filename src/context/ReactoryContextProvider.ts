@@ -9,7 +9,7 @@ import { ReactoryContainer } from "@reactory/server-core/ioc";
 import modules from "@reactory/server-core/modules";
 import i18next, { t } from "i18next";
 import Reactory, { React } from "@reactory/reactory-core";
-import Cache from "@reactory/server-modules/core/models/CoreCache";
+import Cache from "modules/reactory-core/models/CoreCache";
 import { Container } from "inversify";
 
 colors.setTheme({

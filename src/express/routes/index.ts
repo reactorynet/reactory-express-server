@@ -1,30 +1,41 @@
 import amq from '@reactory/server-core/amq';
-import froala from '@reactory/server-core/froala';
-import pdf from '@reactory/server-core/pdf';
-import resources from '@reactory/server-core/resources'
-import userAccount from '@reactory/server-core/useraccount';;
-import workflow from '@reactory/server-core/workflow';
-import bodyParser from 'body-parser';
+import froalaRouter from '@reactory/server-core/froala';
+import pdfRouter from '@reactory/server-core/pdf';
+import resourcesRouter from '@reactory/server-core/resources'
+import userAccountRouter from '@reactory/server-core/useraccount';;
+import workflowRouter from '@reactory/server-core/workflow';
 import express from 'express';
 import flash from 'connect-flash';
-import passport from 'passport';
+import modules from '@reactory/server-core/modules';
+import CDNRouter from './CDNRouter';
+import logger from '@reactory/server-core/logging';
 
-const ConfigureRoutes = (app: express.Application) => { 
-  app.use(userAccount);
-  app.use('/froala', froala);
-  app.use('/deliveries', froala);
-  app.use('/pdf', passport.authenticate(
-    ['jwt'], { session: false }),
-    bodyParser.urlencoded({ extended: true }), pdf);
-  app.use('/resources', resources);
-  app.use('/workflow', workflow);
-  app.use('/amq', amq.router);
-  app.use(flash());
-  app.use('/cdn',
-    passport.authenticate(['jwt', 'anonymous'], { session: false }),
-    bodyParser.urlencoded({ extended: true }),
-    express.static(process.env.APP_DATA_ROOT));
+const ConfigureRoutes = (app: express.Application) => {
   
+  const routes: { [key: string]: express.Router } = {
+    '/amq': amq.router,
+    '/froala': froalaRouter,
+    '/pdf': pdfRouter,
+    '/resources': resourcesRouter,
+    '/user': userAccountRouter,
+    '/workflow': workflowRouter,
+    '/cdn': CDNRouter
+  };
+
+  app.use(flash());
+  
+  modules.enabled.forEach((module) => { 
+    if(module.routes && Object.keys(module.routes).length > 0) {
+      Object.keys(module.routes).forEach((route) => {
+        routes[route] = module.routes[route];
+      });
+    }
+  });
+
+  Object.keys(routes).forEach((route) => {
+    logger.debug(`🔀 route handler: ${route} configured`);
+    app.use(route, routes[route]);
+  });
 }
 
 export default ConfigureRoutes;

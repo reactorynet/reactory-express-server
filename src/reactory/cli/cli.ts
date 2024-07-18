@@ -7,7 +7,7 @@ import ReactoryContextProvider from 'context/ReactoryContextProvider';
 import colors from './colors';
 import i18next from '@reactory/server-core/express/i18n';
 import MongooseConnection from '@reactory/server-core/models/mongoose';
-import { ReactoryClient } from '@reactory/server-modules/core/models';
+import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 import ReactoryModules from '@reactory/server-core/modules'
 import { 
   TCLI,

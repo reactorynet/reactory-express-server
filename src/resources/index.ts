@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import express from 'express';
 import fs from 'fs';
 import _ from 'lodash';
-import ReactoryResource from '@reactory/server-modules/core/models/ReactoryResource';
+import ReactoryResource from '@reactory/server-modules/reactory-core/models/ReactoryResource';
 import logger from '../logging';
 
 

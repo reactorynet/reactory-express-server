@@ -37,8 +37,10 @@ NODE_PATH=./src env-cmd -f $env_file npx babel ./src --presets @babel/env --exte
 # Copy additional files while preserving directory structure
 
 echo "Copying additional files"
-rsync -av --filter='merge ./bin/build.app.rsync' ./src/ $APP_BUILD_PATH
-rsync -av --filter='merge ./bin/build.bin.rsync' ./bin/ $BIN_BUILD_PATH
+rsync -av --filter='merge ./bin/build.app.rsync' ./src/ $APP_BUILD_PATH --quiet
+rsync -av --filter='merge ./bin/build.bin.rsync' ./bin/ $BIN_BUILD_PATH --quiet
+# rsync the lib/ directory
+rsync -av --filter='merge ./bin/build.lib.rsync' ./lib/ $BUILD_PATH/lib --quiet
 
 # Check if there is a pm2 configuration file
 if [ -f "./config/${1:-reactory}/pm2.${2:-local}.config.js" ]; then

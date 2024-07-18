@@ -49,6 +49,8 @@ const generate_index = () => {
 
   let file_contents = `
 /**
+ * CODE-GENERATED: Do not modify! 
+ * 
  * This file is generated with each startup, do not modify or check into the repo.
  * See the readme.md in the modules folder for more details.
  * */
@@ -68,6 +70,7 @@ const generate_index = () => {
  * */ 
 import ${import_name} from '@reactory/server-modules/${moduleDefinition.moduleEntry.replace('.ts', '').replace('.js', '')}';`;
     module_names = midx === 0 ? `\t${import_name}` : `${module_names},\n\t${import_name}`;
+    `${import_name}.path = path.join(__dirname, '${moduleDefinition.moduleEntry}');`;
   });
 
 

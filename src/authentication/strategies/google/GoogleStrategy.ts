@@ -8,7 +8,7 @@ import Helpers, { OnDoneCallback } from '../helpers';
 import { Application, Response } from 'express';
 import passport from 'passport';
 import logger from '@reactory/server-core/logging';
-import { ReactoryClient } from '@reactory/server-modules/core/models';
+import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 
 const { 
   GOOGLE_CLIENT_ID = 'GOOGLE_CLIENT_ID',

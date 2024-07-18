@@ -9,14 +9,14 @@ import ApiError, {
   UserNotFoundException,
   SystemError
 } from '../exceptions';
-import { Cache } from '@reactory/server-core/modules/core/models';
+import { Cache } from '@reactory/server-modules/reactory-core/models';
 import AuthConfig from '../authentication';
 import allSchemas from './schema';
-import generators from '../modules/core/services/generators';
+import generators from '../modules/reactory-core/services/generators';
 import logger from '../logging';
 import Reactory from '@reactory/reactory-core';
 import * as ReactorySchemaTypes from './types';
-import { ICacheStatic } from '@reactory/server-modules/core/models/CoreCache';
+import { ICacheStatic } from '@reactory/server-modules/reactory-core/models/CoreCache';
 
 /**
  * @deprecated

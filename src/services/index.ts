@@ -26,20 +26,19 @@ modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
   try {
     if (installedModule && installedModule.services) {
       if (installedModule.services) {
-        logger.debug(`🟢 Module ${installedModule.name} has ${installedModule.services.length} services available`)
+        logger.debug(`Module ${installedModule.name}: (${installedModule.services.length}) services installed`)
         installedModule.services.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition<any> | any) => {
           let $service = serviceDefinition;
           if (typeof $service === 'function' && $service?.prototype?.reactory) {
             $service = ($service as any).prototype.reactory;
           }
-          logger.debug(`  🔀 ${$service.id} [${$service.serviceType}]`);
+          logger.debug(`🔁 ${$service.id} [${$service.serviceType}]`);
           services.push($service);
           serviceRegister[$service.id] = $service
         });
-
       }
     } else {
-      logger.debug(`🟠 Module ${installedModule || 'NULL-MODULE!'} has no services available`);
+      logger.debug(`Module ${installedModule || 'NULL-MODULE!'} has no services available`);
     }
   } catch (serviceInstallError) {
     logger.error(`Service install error: ${serviceInstallError.message}`, { serviceInstallError });

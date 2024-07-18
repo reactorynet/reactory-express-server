@@ -3,14 +3,16 @@ import fileUpload from './fileUpload';
 import imageUpload from './imageUpload';
 import videoUpload from './videoUpload';
 
-const router = express.Router();
+const router = express.Router({
+  caseSensitive: true,
+  strict: true
+});
 
 const uploader = {
   file: fileUpload,
   image: imageUpload,
   video: videoUpload,
 };
-
 
 router.options('/upload/:uploadType', (req, res) => {
   if (uploader[req.params.uploadType]) res.status(203).send(`Upload ${req.params.uploadType} supported`);

@@ -19,4 +19,4 @@ check_env_vars
 echo "🛠️ Loading Environment ./config/${1:-reactory}/${2:-local} "
 BUILD_VERSION=$(node -p "require('./package.json').version")
 
-docker buildx b --pull --file="./config/${1:-reactory}/Dockerfile" --tag=${1-reactory}-${2:-local}:latest
+docker buildx b . --file="./config/${1:-reactory}/Dockerfile" --pull --tag=${1-reactory}-${2:-local}:latest

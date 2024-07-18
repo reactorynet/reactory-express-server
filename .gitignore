@@ -18,7 +18,7 @@ config/*
 
 src/modules/*
 !src/modules/generate_index.ts
-!src/modules/core
+!src/modules/reactory-core
 !src/modules/index.ts
 !src/modules/README.md
 !src/modules/available.json

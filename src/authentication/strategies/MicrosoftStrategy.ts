@@ -3,7 +3,7 @@ import passport from 'passport';
 import { Application, Request, Response } from 'express';
 import Helpers from './helpers';
 import Reactory from '@reactory/reactory-core';
-import ReactoryClient from '@reactory/server-modules/core/models/ReactoryClient';
+import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
 import logger from '@reactory/server-core/logging';
 
 const {

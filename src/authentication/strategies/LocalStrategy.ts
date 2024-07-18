@@ -1,4 +1,4 @@
-import { User } from '@reactory/server-modules/core/models'
+import { User } from '@reactory/server-modules/reactory-core/models'
 import logger from '@reactory/server-core/logging';
 import { BasicVerifyFunctionWithRequest, BasicStrategy } from 'passport-http';
 import Helpers, { OnDoneCallback } from './helpers';

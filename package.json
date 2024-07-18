@@ -6,6 +6,7 @@
   "main": "server.js",
   "module": "reactory-api",
   "private": true,
+  "type": "commonjs",
   "author": {
     "name": "Werner Weber",
     "email": "werner.weber@reactory.net"
@@ -32,12 +33,12 @@
     "url": "https://bitbucket.org/WernerWeber/reactory-server.git"
   },
   "dependencies": {
-    "@azure/storage-blob": "12.23.0",
-    "@azure/storage-file-share": "12.23.0",
-    "@azure/msal-browser": "3.19.0",
     "@apollo/client": "3.10.8",
     "@apollo/gateway": "2.8.3",
     "@apollo/server": "4.10.4",
+    "@azure/msal-browser": "3.19.0",
+    "@azure/storage-blob": "12.23.0",
+    "@azure/storage-file-share": "12.23.0",
     "@emotion/react": "11.8.1",
     "@emotion/styled": "11.8.1",
     "@flat/lame": "1.2.7",
@@ -159,7 +160,7 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-replace": "^2.0.0",
     "schema-inspector": "^2.0.1",
-    "sha1": "^1.1.1",    
+    "sha1": "^1.1.1",
     "simple-oauth2": "^2.2.1",
     "ssl-root-cas": "^1.3.1",
     "svg-to-pdfkit": "0.1.8",
@@ -225,8 +226,8 @@
     "@types/chai": "^4.2.11",
     "@types/chart.js": "2.7.15",
     "@types/co": "^4.6.2",
-    "@types/cors": "^2.8.17",
     "@types/connect-flash": "0.0.34",
+    "@types/cors": "^2.8.17",
     "@types/ejs": "^2.5.1",
     "@types/elliptic": "^6.4.12",
     "@types/express": "^4.17.2",
@@ -293,6 +294,9 @@
     "ts-jest": "^29.0.5",
     "ts-node": "10.7.0",
     "typescript": "4.5.5"
+  },
+  "resolutions": {
+    "string-width": "4.2.3"
   },
   "opencv4nodejs": {
     "disableAutoBuild": 1,

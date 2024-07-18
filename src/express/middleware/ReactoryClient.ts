@@ -1,5 +1,5 @@
 import { isNil } from 'lodash';
-import ReactoryClient from '@reactory/server-modules/core/models/ReactoryClient';
+import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
 import { 
   encoder 
 } from '@reactory/server-core/utils';

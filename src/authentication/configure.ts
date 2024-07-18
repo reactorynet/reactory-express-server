@@ -1,6 +1,6 @@
 import passport from 'passport';
 import { Application } from 'express';
-import { User } from '@reactory/server-modules/core/models'
+import { User } from '@reactory/server-modules/reactory-core/models'
 import { findIndex } from 'lodash';
 import ReactoryStrategies from '@reactory/server-core/authentication/strategies';
 import ReactoryModules from '@reactory/server-core/modules';
