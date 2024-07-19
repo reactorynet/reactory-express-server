@@ -6,10 +6,12 @@ import coreWorkflows from './workflow';
 import coreForms from './forms';
 import models from './models';
 import coreServices from './services';
+import routes from './routes';
 import translations from './data/translations';
 import Reactory from '@reactory/reactory-core';
 
 const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
+  id: 'reactory-core',
   nameSpace: 'core',
   version: '1.0.0',
   name: 'ReactoryServer',
@@ -33,6 +35,7 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
   grpc: null,
   passportProviders: [],
   pdfs: [],
+  routes,
 };
 
 export default ReactoryCoreModule

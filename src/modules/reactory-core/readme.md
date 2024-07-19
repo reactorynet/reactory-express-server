@@ -3,7 +3,7 @@ The Reactory Core Module is a collection of reusable building blocks that are us
 
 
 # Workflows
-The core module shops with a CleanCache workflow which is a basic workflow that executes periodically to expunge data from the chache.
+The core module ships with a CleanCache workflow which is a basic workflow that executes periodically to expunge data from the built in cache.
 
 # Forms
 The Reactory Core Module provides a set of pre-built forms that can be used to collect and validate user input. These forms are customizable and can be extended to meet the needs of specific applications, however it is suggested that customizations are made in your own custom modules.

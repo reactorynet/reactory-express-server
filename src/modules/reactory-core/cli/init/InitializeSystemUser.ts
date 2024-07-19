@@ -9,7 +9,7 @@ import {
   strongRandom
 } from '@reactory/server-core/utils/string';
 
-type InitializeSystemUserCliApp = (vargs: string[], context: Reactory.Server.IReactoryCliContext) => Promise<void>
+type InitializeSystemUserCliApp = Reactory.Server.TCli;
 
 const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[], context: Reactory.Server.IReactoryContext): Promise<void> => { 
   const { 

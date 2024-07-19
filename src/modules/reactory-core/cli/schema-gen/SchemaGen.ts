@@ -37,10 +37,7 @@ parameters:
 -v --verbose
 `;
 
-type ReactoryCliApp = (
-  vargs: string[],
-  context: Reactory.Server.IReactoryContext
-) => Promise<void>;
+type ReactoryCliApp = Reactory.Server.TCli;
 
 interface ConfigFile<TOptions = any> {
   module?: string;

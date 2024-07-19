@@ -54,3 +54,9 @@ check_meili_search(){
   fi
   echo "Checked MeiliSearch"
 }
+
+# function to copy the specified .env file to the root of the project
+copy_env_file(){
+  cp ./config/${1:-reactory}/.env.${2:-local} .env
+  echo "Copied .env file"
+}
