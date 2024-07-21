@@ -66,6 +66,6 @@ const SupportTicketSchema: Schema<ReactorySupportTicket> = new Schema<ReactorySu
   ]
 });
 
-const ReactorySupportTicketModel = mongoose.model('ReactorySupportTicket', SupportTicketSchema, 'reactory_support_tickets');
+const ReactorySupportTicketModel = mongoose.model<Schema<ReactorySupportTicket>>('ReactorySupportTicket', SupportTicketSchema, 'reactory_support_tickets');
 
 export default ReactorySupportTicketModel;

@@ -1,3 +1,6 @@
+import { getTypeSchema } from '@reactory/server-core/schema/reflection';
+import SupportTicketViewModel from '../models/SupportTicket.view.model';
+
 /**
  * Default Froala options
  */
@@ -22,20 +25,17 @@ export const argsUiSchema = {
   }
 }
 
-export default {
-  'ui:options': {},
-  // 'ui:field': 'GridLayout',
-  // 'ui:grid-layout': [
-  //   {
-  //     BooleanProperty: { xs: 12, lg: 12 },
-  //     StringProperty: { xs: 12, lg: 12 },      
-  //   }
-  // ],
-  // BooleanProperty: {},
-  // StringProperty: {
-  //   'ui:widget': 'FroalaWidget',
-  //   'ui:options': {
-  //     froalaOptions,
-  //   },
-  // },  
+const uiSchema: Reactory.Schema.TServerUISchemaResolver = async (form: Reactory.Forms.IReactoryForm, args: any, context: Reactory.Server.IReactoryContext, info: any): Promise<Reactory.Schema.TServerUISchema> => { 
+  
+  if (context.state.$schema !== undefined) { 
+    return context.state.$schema.uiSchema;
+  }
+
+  const instance: SupportTicketViewModel = new SupportTicketViewModel();
+  // @ts-ignore
+  const $schema = getTypeSchema<SupportTicketViewModel>(instance, context);
+  context.state.schema = $schema
+  return $schema.uiSchema;
 }
+
+export default uiSchema;

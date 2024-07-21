@@ -2,6 +2,81 @@
 
 import 'reflect-metadata';
 import Reactory from "@reactory/reactory-core";
+import uiSchema from 'modules/reactory-core/forms/AboutUs/uiSchema';
+
+
+export type StoreType = "rest" | "grapql" | "grpc" | Reactory.FQN;
+
+export type IdGenerator = "objectid" | "uuid" | "snowflake" | Reactory.FQN;
+
+/**
+ * A decorator function that sets the name of the storage model to associate with this class.
+ * @param fqn - The fully qualified name of the storage model / service that will be bound to this view model. 
+ * @returns 
+ */
+export function store(fqn: StoreType, mapper?: Reactory.FQN): ClassDecorator {
+  return function (target: any) {
+    Reflect.defineMetadata('store', fqn, target);
+    Reflect.defineMetadata('mapper', mapper, target);
+  }
+}
+
+/**
+ * A decorator that sets a class / structure for a an array type
+ * @param fqn 
+ * @returns 
+ */
+export function type(proto: any): PropertyDecorator {
+  return function (target: any, key?: string) {
+    if (!key) {
+      throw new Error("The itemType decorator can only be used on a property.");
+    }
+    Reflect.defineMetadata('itemType', proto, target, key);
+  }
+}
+
+/**
+ * Use the ref decorator to set a reference to another object schema.
+ * @param proto 
+ * @returns 
+ */
+export function ref(proto: any): PropertyDecorator { 
+  return function (target: any, key?: string) {
+    if (!key) {
+      throw new Error("The ref decorator can only be used on a property.");
+    }
+    Reflect.defineMetadata('ref', proto, target, key);
+  }
+}
+
+/**
+ * A decorator function that sets the enum properties.
+ * @param enumType 
+ * @param values 
+ * @param provider 
+ * @returns 
+ */
+export function enumType(enumType: any, values?: {key: string, value: any, title?: string}[], provider?: Reactory.FQN): PropertyDecorator { 
+  return function (target: any, key?: string) {
+    if (!key) {
+      throw new Error("The enumType decorator can only be used on a property.");
+    }
+
+    Reflect.defineMetadata('enumType', enumType, target, key);
+    if(!values && typeof enumType.getValues === 'function') {
+      values = enumType.getValues();
+    }
+
+    if(values) { 
+      Reflect.defineMetadata('enumValues', values, target, key);
+    }
+
+    if(provider) {
+      Reflect.defineMetadata('enumValueProvider', provider, target, key);
+    }
+  }
+}
+
 
 /**
 A decorator function that sets the fully qualified name(FQN) metadata for a class or property.
@@ -31,9 +106,11 @@ export function fqn(fqn: string): (target: any, key?: string) => void {
  *   id: number;
  * }
  */
-export function id(unique: boolean): PropertyDecorator {
+export function id(unique: boolean, generator: IdGenerator = "objectid"): PropertyDecorator {
   return function (target: any, propertyKey: string) {
     Reflect.defineMetadata('id', unique, target, propertyKey);
+    if (generator)
+      Reflect.defineMetadata('id-generator', generator, target, propertyKey);
   } as PropertyDecorator
 }
 
@@ -48,9 +125,10 @@ export function id(unique: boolean): PropertyDecorator {
  *   myNumber: number;
  * }
  */
-export function min(minValue: number | string | Date): PropertyDecorator {
+export function min(minValue: number | string | Date, errorString?: string): PropertyDecorator {
   return function (target: any, propertyKey: string) {
     Reflect.defineMetadata('min', minValue, target, propertyKey);
+    Reflect.defineMetadata('errorString', errorString, target, propertyKey);
   } as PropertyDecorator
 }
 
@@ -65,9 +143,10 @@ export function min(minValue: number | string | Date): PropertyDecorator {
  *   myNumber: number;
  * }
  */
-export function max(maxValue: number | string | Date): PropertyDecorator {
+export function max(maxValue: number | string | Date, errorString?: string): PropertyDecorator {
   return function (target: any, propertyKey: string) {
     Reflect.defineMetadata('max', maxValue, target, propertyKey);
+    Reflect.defineMetadata('errorString', errorString, target, propertyKey);
   } as PropertyDecorator
 }
 
@@ -85,6 +164,17 @@ export function max(maxValue: number | string | Date): PropertyDecorator {
 export function title(translationKey: string): PropertyDecorator {
   return function (target: any, propertyKey: string) {
     Reflect.defineMetadata('title', translationKey, target, propertyKey);
+  } as PropertyDecorator
+}
+
+/**
+ * A decorator function that sets a translation key for the property's description.
+ * @param translationKey 
+ * @returns 
+ */
+export function description(translationKey: string): PropertyDecorator { 
+  return function (target: any, propertyKey: string) {
+    Reflect.defineMetadata('description', translationKey, target, propertyKey);
   } as PropertyDecorator
 }
 
@@ -182,8 +272,56 @@ export function pattern(pattern: string | RegExp): PropertyDecorator {
  */
 export function required() {
   return function (target: any, propertyKey: string) {
+    if (!propertyKey) { 
+      throw new Error("The required decorator can only be used on a property.");
+    }
     Reflect.defineMetadata('required', true, target, propertyKey);
   }
+}
+
+/**
+ * A decorator function that sets a property to be read only.
+ * @returns 
+ */
+export function readOnly() { 
+  return function (target: any, propertyKey: string) {
+    if (!propertyKey) { 
+      throw new Error("The readOnly decorator can only be used on a property.");
+    }
+    Reflect.defineMetadata('readOnly', true, target, propertyKey);
+  }
+
+}
+
+
+/**
+ * A sterotype decorator that sets the stereotype for a class. 
+ * A stereotype is a classification of a class based on its characteristics for use in code generation.
+ * 
+ * Options may include:
+ * - grid
+ * - object
+ * - list
+ * 
+ * However the options are not limited to the above and can be extended as needed.
+ * @param stereoTypes 
+ * @returns 
+ */
+export function stereoTypes(stereoTypes: string[]): ClassDecorator { 
+  return function (target: any) {
+    Reflect.defineMetadata('stereoTypes', stereoTypes, target);
+  }
+}
+
+/**
+ * The widget decorator sets the widget to be used for a property.
+ * @param widget 
+ * @returns 
+ */
+export function widget(widget: string): PropertyDecorator {
+  return function (target: any, propertyKey: string) {
+    Reflect.defineMetadata('widget', widget, target, propertyKey);
+  } as PropertyDecorator
 }
 
 /**
@@ -224,10 +362,13 @@ Returns a Reactory schema for the given type.
 @param { {new(): T} } type - The type to generate the schema for.
 @returns {Reactory.Schema.AnySchema} - The schema for the given type.
 */
-export function getTypeSchema<T>(type: { new(): T }): Reactory.Schema.AnySchema {
+export function getTypeSchema<T>(type: { new(): T }, context: Reactory.Server.IReactoryContext): { schema: Reactory.Schema.AnySchema, uiSchema: Reactory.Schema.IUISchema } {
   //@ts-ignore
   const schema: Reactory.Schema.ISchema = {};
+  const uiSchema: Reactory.Schema.IUISchema = {};
+
   (schema as Reactory.Schema.ISchema).$type = `${(type as any)?.constructor?.name}`;
+  
   if (typeof type === "string" ||
     typeof type === "number" ||
     typeof type === "boolean" ||
@@ -236,68 +377,132 @@ export function getTypeSchema<T>(type: { new(): T }): Reactory.Schema.AnySchema 
       schema.type = "string";
       schema.format = "date-time";
     } else schema.type = typeof type;
+
+    if (type === null) {
+      // enum types report as null
+      // extract the enum values from the 
+      // metadata
+      const enumType = Reflect.getMetadata('enumType', type);
+      if (enumType) {
+        schema.enum = Reflect.getMetadata('enumValues', type);
+      } else {
+        schema.enum = [];
+      }
+
+      uiSchema['ui:widget'] = "select";
+
+    }
+
   } else if (Array.isArray(type)) {
     //schema.type = Reflect.getMetadata('design:nullable', type) ? ["array", "null"] : "array";
     schema.type = "array"
-    schema.items = getTypeSchema(type);
+    const itemType = Reflect.getMetadata('itemType', type);
+    if (itemType) {
+      const itemSchema = getTypeSchema(itemType, context);
+      schema.items = itemSchema.schema;
+      uiSchema.items = itemSchema.uiSchema;
+    }
   } else if (typeof type === "object" && type !== null) {
     // schema.type = Reflect.getMetadata('design:nullable', type) ? ["object", "null"] : "object";
     schema.type = "object"
     schema.properties = {};
+    schema.required = [];
 
     for (const key in type as any) {
       //@ts-ignore
       if (type.hasOwnProperty(key)) {
         //@ts-ignore
-        const propertySchema = getTypeSchema(type[key]);
+        const propertySchema = getTypeSchema(type[key], context);
         const titleKey = Reflect.getMetadata('title', type, key);
         if (titleKey) {
-          propertySchema.title = titleKey;
+          propertySchema.schema.title = titleKey;
+          if (context) {
+            const translation = context.i18n.t(titleKey);
+            if (translation) {
+              propertySchema.schema.title = translation;
+            }
+          }
         }
+
+        const descriptionKey = Reflect.getMetadata('description', type, key);
+        if (descriptionKey) {
+          propertySchema.schema.description = descriptionKey;
+          if (context) {
+            const translation = context.i18n.t(descriptionKey);
+            if (translation) {
+              propertySchema.schema.description = translation;
+            }
+          }
+        }
+
+        const format = Reflect.getMetadata('format', type, key);
+        if (format) {
+          propertySchema.schema.format = format;
+        }
+
+        const isReadOnly: boolean = Reflect.getMetadata('readOnly', type, key);
+        propertySchema.schema.readonly = isReadOnly === true;
+
+        const isRequired = Reflect.getMetadata('required', type, key);
+        if (isRequired) {
+          schema.required.push(key);
+        }
+
+        const defaultValue = Reflect.getMetadata('defaultValue', type, key);
+        if (defaultValue) {
+          propertySchema.schema.default = defaultValue;
+        }
+
+        const enumType = Reflect.getMetadata('enumType', type, key);
+        if (enumType) {
+          propertySchema.schema.enum = Reflect.getMetadata('enumValues', type, key);
+        }
+
+
         //@ts-ignore
         if (type[key]?.constructor === Number) {
           const min = Reflect.getMetadata('min', type, key);
           const max = Reflect.getMetadata('max', type, key);
           if (min) {
-            (propertySchema as Reactory.Schema.INumberSchema).minimum = min;
+            (propertySchema.schema as Reactory.Schema.INumberSchema).minimum = min;
           }
           if (max) {
-            (propertySchema as Reactory.Schema.INumberSchema).maximum = max;
+            (propertySchema.schema as Reactory.Schema.INumberSchema).maximum = max;
           }
           //@ts-ignore
         } else if (type[key]?.constructor === Date) {
           const min = Reflect.getMetadata('min', type, key);
           const max = Reflect.getMetadata('max', type, key);
           if (min) {
-            (propertySchema as Reactory.Schema.INumberSchema).minimum = min;
+            (propertySchema.schema as Reactory.Schema.INumberSchema).minimum = min;
           }
           if (max) {
-            (propertySchema as Reactory.Schema.INumberSchema).maximum = max;
+            (propertySchema.schema as Reactory.Schema.INumberSchema).maximum = max;
           }
 
-          propertySchema.type = "string";
-          propertySchema.format = Reflect.getMetadata('format', type, key) || "date-time";
+          propertySchema.schema.type = "string";
+          propertySchema.schema.format = Reflect.getMetadata('format', type, key) || "date-time";
           //@ts-ignore
         } else if (type[key]?.constructor === String) {
           const min = Reflect.getMetadata('min', type, key);
           const max = Reflect.getMetadata('max', type, key);
           const pattern = Reflect.getMetadata('pattern', type, key);
           if (min) {
-            (propertySchema as Reactory.Schema.IStringSchema).minLength = min;
+            (propertySchema.schema as Reactory.Schema.IStringSchema).minLength = min;
           }
           if (max) {
-            (propertySchema as Reactory.Schema.IStringSchema).maxLength = max;
+            (propertySchema.schema as Reactory.Schema.IStringSchema).maxLength = max;
           }
 
           if (pattern) {
-            (propertySchema as Reactory.Schema.IStringSchema).pattern = pattern;
+            (propertySchema.schema as Reactory.Schema.IStringSchema).pattern = pattern;
           }
 
-          propertySchema.type = "string";
+          propertySchema.schema.type = "string";
         }
         //@ts-ignore
         // propertySchema.type = Reflect.getMetadata('design:nullable', type, key) === true ? [propertySchema.type, "null"] : propertySchema.type;
-        schema.properties[key] = propertySchema;
+        schema.properties[key] = propertySchema.schema;
       }
     }
 
@@ -307,10 +512,36 @@ export function getTypeSchema<T>(type: { new(): T }): Reactory.Schema.AnySchema 
       schema.required = required;
     }
   }
-  return schema;
+  return { schema, uiSchema };
 }
 
 export function getUISchema<T>(type: { new(): T }): Reactory.Schema.IFormUISchema {
   return {};
+}
+
+/**
+ * Generates a graph binding for the given type.
+ * @param type 
+ * @returns 
+ */
+export function getGraphBinding<T>(type: { new(): T }): Reactory.Forms.IFormGraphDefinition {
+  const binding: Reactory.Forms.IFormGraphDefinition = {
+    clientResolvers: [],
+    mutation: {
+
+    },
+    query: {
+      name: "",
+      text: "",
+    },
+    queries: {
+      'default': {
+        name: "",
+        text: "",
+      }
+    },
+  };
+
+  return binding;
 }
 

@@ -1,5 +1,5 @@
 import Reactory, { Reactor } from '@reactory/reactory-core';
-import SupportTicketModel from '../models/SupportTicket.model';
+import SupportTicketViewModel from '../models/SupportTicket.view.model';
 describe('Reflection', () => {
 
   it('Checks schema for SupportTicket model', () => {

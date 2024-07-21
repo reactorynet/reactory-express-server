@@ -17,8 +17,8 @@ const SupportTicket: Reactory.Forms.IReactoryForm = {
   nameSpace: "core",
   name: "SupportTicket",
   version,
-  title: "Support Ticket",  
-  description: 'Form used to manage a ticket',
+  title: "reactory:support-ticket.form.title",  
+  description: 'reactory:support-ticket.form.description',
   icon: 'dynamic_form',
   avatar: `${ENVIRONMENT.CDN_ROOT}themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase(),
   registerAsComponent: true,  
@@ -28,8 +28,7 @@ const SupportTicket: Reactory.Forms.IReactoryForm = {
   uiSchema,
   uiSchemas: [],
   argsUiSchema,
-  argsComponentFqn: null,
-  
+  argsComponentFqn: null,  
   dependencies: [],
   exports: [],
   backButton: true,
@@ -39,7 +38,6 @@ const SupportTicket: Reactory.Forms.IReactoryForm = {
   widgetMap: [
     // add custom widget maps
   ],
-  
   modules
 }
 

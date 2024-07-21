@@ -19,6 +19,11 @@ Any feature within reactory will consist of the following items:
   - User Dashboard
   - Admin Dashboard
 - **Graph**
+  - Queries
+  - Mutations 
+  - Types
+  - Directives
+  - Subscriptions
 - **Workflows**:
   - Escalations
   - Automated responses
@@ -26,16 +31,36 @@ Any feature within reactory will consist of the following items:
     - Emails
     - Templates
 - **Services**:
+  - Support Service
+  - Search Service
+  - Reporting Service
 - **Translations**:
+  - Form Translations
+  - Service Translations
 - **Models**
+  - Mongo Models
+  - Postgres Models
+  - Synchronizers & Transformers
 - **Client Plugins**
+  - Widgets
+  - Grouped plugins
 - **Cli Tools**
+  - 
 - **REST**
+  - GET v1/support/tickets?page={page}&limit={limit}&search={search}&sort={sort}&sortby={sortby}
+  - GET v1/support/tickets/{id}
+  - POST v1/support/tickets
+  - PATCH v1/support/tickets/{id}
+  - PUT v1/support/tickets/{id}/file 
 - **gRPC**
-- **Extension**
+  - ?? 
+- **Extensions**
+  -  Reactor AI agent
 - **PDFs**
+  - Reports
 
 ### Navigation
+Navigation is configured per Reactory Client. Configure the menu entry in your application configuration. Use the ordinal field to set position of the menu item.
 
  ```ts
   ....
@@ -59,16 +84,80 @@ Any feature within reactory will consist of the following items:
  ```
 
 ### Route Handlers
+Route handling is also defined per client.
+
+```ts
+{
+    key: 'general-support',
+    // the titles are not currently
+    // used to display anywhere so no translations
+    // are applied here yet
+    title: 'Support Request',
+    path: '/support/request',
+    exact: true,
+    public: false,
+    roles: ['USER'],
+    componentFqn: 'core.SupportForm@1.0.0',
+    args: [{
+      key: "mode",
+      value: {
+        type: "string",
+        mode: "new"
+      }
+    }]
+  },
+
+  {
+    key: 'my-support-tickets',
+    title: 'My Open Tickets',
+    path: '/support/open',
+    exact: true,
+    public: false,
+    roles: ['USER'],
+    componentFqn: 'core.SupportTickets@1.0.0',
+    args: [
+      {
+        key: 'variant',
+        value: {
+          type: 'string',
+          variant: 'logged_in_user'
+        }
+      }
+    ]
+  },
+```
+
+### Support Models
+
+#### Mongo Model(s)
+
+#### Postgres Model(s)
 
 ### Support Request
+
+The support request form can be invoked from anywhere in the application. 
 
 ### Support Ticket
 
 ### Support Tickets
 
+Grid form that supports searching, grouping and bulk actions on the support tickets
+
 ### Support Tickets Admin
 
+Same grid form, but used in admin / agent context to provide additional functionality
+
 ### Workflows
+
+Escalation Workflow
+
+Automated responses
+
+Notifications
+
+Emails
+
+Templates
 
 ### Auditing
 
