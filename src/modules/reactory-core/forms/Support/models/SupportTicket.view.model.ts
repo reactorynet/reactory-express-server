@@ -15,7 +15,9 @@ import {
   widget,
   stereoTypes,
   required,
-  readOnly, 
+  readOnly,
+  formTitle,
+  formDescription, 
 } from '@reactory/server-core/schema/reflection';
 import ReactorySupportTicketModel from '@reactory/server-core/modules/reactory-core/models/ReactorySupportTicket';
 
@@ -87,14 +89,14 @@ export namespace SupportTicketStatus {
     }
   }
 
-  export function getValues(): string[] { 
+  export function getValues(): {key: string, value: SupportTicketStatus, label: string}[] {   
     return [
-      SupportTicketStatus.new,
-      SupportTicketStatus.open,
-      SupportTicketStatus.closed,
-      SupportTicketStatus.resolved,
-      SupportTicketStatus.withdrawn,
-      SupportTicketStatus.rejected
+      { key: "new", value: SupportTicketStatus.new, label: getKey(SupportTicketStatus.new) },
+      { key: "open", value: SupportTicketStatus.open, label: getKey(SupportTicketStatus.open) },
+      { key: "closed", value: SupportTicketStatus.closed, label: getKey(SupportTicketStatus.closed) },
+      { key: "rejected", value: SupportTicketStatus.rejected, label: getKey(SupportTicketStatus.rejected) },
+      { key: "resolved", value: SupportTicketStatus.resolved, label: getKey(SupportTicketStatus.resolved) },
+      { key: "withdrawn", value: SupportTicketStatus.withdrawn, label: getKey(SupportTicketStatus.withdrawn) },
     ]
   }
   
@@ -129,6 +131,8 @@ export type SupportTicketModelConstructorArgs = {
   "graphql", 
   "core.ReactorySupportTicketModelMapper@1.0.0")
 @stereoTypes(["object"])
+@formTitle("reactory:support-ticket.model.title")
+@formDescription("reactory:support-ticket.model.description")
 class SupportTicketViewModel {
 
   @id(true)
@@ -158,7 +162,6 @@ class SupportTicketViewModel {
   @title("reactory:support-ticket.model.status.title")
   @description("reactory:support-ticket.model.status.description")
   @defaultValue(SupportTicketStatus.new)
-  @widget("select")
   @enumType(SupportTicketStatus)
   status: SupportTicketStatus;
 

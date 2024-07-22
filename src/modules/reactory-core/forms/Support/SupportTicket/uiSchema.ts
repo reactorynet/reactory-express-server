@@ -1,4 +1,4 @@
-import { getTypeSchema } from '@reactory/server-core/schema/reflection';
+import { getUISchema } from '@reactory/server-core/schema/reflection';
 import SupportTicketViewModel from '../models/SupportTicket.view.model';
 
 /**
@@ -26,16 +26,7 @@ export const argsUiSchema = {
 }
 
 const uiSchema: Reactory.Schema.TServerUISchemaResolver = async (form: Reactory.Forms.IReactoryForm, args: any, context: Reactory.Server.IReactoryContext, info: any): Promise<Reactory.Schema.TServerUISchema> => { 
-  
-  if (context.state.$schema !== undefined) { 
-    return context.state.$schema.uiSchema;
-  }
-
-  const instance: SupportTicketViewModel = new SupportTicketViewModel();
-  // @ts-ignore
-  const $schema = getTypeSchema<SupportTicketViewModel>(instance, context);
-  context.state.schema = $schema
-  return $schema.uiSchema;
+  return getUISchema(SupportTicketViewModel, {}, "grid", context);
 }
 
 export default uiSchema;
