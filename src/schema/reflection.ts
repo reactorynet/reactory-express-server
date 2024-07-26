@@ -342,6 +342,27 @@ export function widget(widget: string, options: any): PropertyDecorator {
 }
 
 /**
+ * Provides widget map
+ * @param widgetMap 
+ * @returns 
+ */
+export function widgetMaps(widgetMaps: Reactory.Forms.IWidgetMap[]): ClassDecorator {
+  return function (target: any) {
+    Reflect.defineMetadata("widgetMaps", widgetMaps, target);
+  }
+}
+
+export type FieldLayoutOptionTypes = {} | Reactory.Schema.IGridFieldLayout;
+
+export type FieldOptions = {};
+
+export function fieldLayoutOptions(options: FieldOptions): PropertyDecorator {
+  return function (target: any, property: string) {
+    return Reflect.defineMetadata("fieldLayoutOptions", options, target, property);
+  }
+}
+
+/**
  * A function that creates an instance of a class.
  *
  * @param {new (props?: any) => T} type - The type of the class.
@@ -613,7 +634,11 @@ export function getPropertyUISchema<C, P>(
     const widget = Reflect.getMetadata("widget", instance, key);
     if (widget) {
       uiSchema["ui:widget"] = widget.id;
-      uiSchema["ui:options"] = widget.options;
+      if (typeof widget.options === 'function') {
+        uiSchema["ui:options"] = widget.options(context);
+      } else {
+        uiSchema["ui:options"] = widget.options;
+      }
     }
   }
 
@@ -643,13 +668,12 @@ export function getUISchema<C>(
 
   switch(stereoType) {
     case "grid":
-      uiSchema["ui:field"] = "GridLayout";   
-      let rows: Reactory.Schema.IGridLayout[] = [];
-      let rowSpec: any = {};
+      uiSchema["ui:field"] = "GridLayout";
+      let rowSpecs: Reactory.Schema.IGridLayout = {   };
       for (const key in instance) {
-        rowSpec[key] = {xs: 12, sm: 6, md: 4, lg: 3, xl: 2};
+        rowSpecs[key] = {xs: 12, sm: 6, md: 4, lg: 3, xl: 2, style: {}};
       }
-      uiSchema["ui:grid-layout"] = [rowSpec];
+      uiSchema["ui:grid-layout"] = [rowSpecs];
       break;
     case "list":
       uiSchema["ui:field"] = "ListLayout";

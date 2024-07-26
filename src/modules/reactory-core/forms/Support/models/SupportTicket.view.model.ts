@@ -20,8 +20,25 @@ import {
   formDescription, 
 } from '@reactory/server-core/schema/reflection';
 import ReactorySupportTicketModel from '@reactory/server-core/modules/reactory-core/models/ReactorySupportTicket';
-
 import { ObjectId } from 'mongodb';
+
+const {
+  API_ROOT
+} = process.env as Reactory.Server.ReactoryEnvironment;
+
+const FroalaOptions = (context: Reactory.Server.IReactoryContext) => ({
+  imageManagerLoadMethod: 'GET',
+  imageDefaultWidth: 300,
+  imageDefaultDisplay: 'inline',
+  imageUploadMethod: 'POST',
+  fileUploadURL: `${API_ROOT}/froala/upload/file`,
+  videoUploadURL: `${API_ROOT}/froala/upload/video`,
+  imageUploadURL: `${API_ROOT}/froala/upload/image`,
+  requestHeaders: {
+    'x-client-key': `${context.partner.key}`,
+    'x-client-pwd': `${context.partner.password}`,
+  }
+});
 
 @fqn("core.SupportTicketDocumentViewModel@1.0.0")
 class SupportTicketDocument { 
@@ -157,6 +174,7 @@ class SupportTicketViewModel {
   @title("reactory:support-ticket.model.description.title")
   @min(10, "reactory:support-ticket.model.description.minLength")
   @max(1000, "reactory:support-ticket.model.description.maxLength")
+  @widget('FroalaWidget', FroalaOptions)
   description: string;
 
   @title("reactory:support-ticket.model.status.title")
