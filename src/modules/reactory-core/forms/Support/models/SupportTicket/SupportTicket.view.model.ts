@@ -16,6 +16,7 @@ import {
   uiSchema,
   required,
   readOnly,
+  roles,
 } from '@reactory/server-core/schema/reflection';
 import ReactorySupportTicketModel from '@reactory/server-core/modules/reactory-core/models/ReactorySupportTicket';
 import { ObjectId } from 'mongodb';
@@ -226,6 +227,7 @@ class SupportTicketModel {
   @description("reactory:support-ticket.model.createdBy.description")
   @nullable()
   @type(UserBio)
+  @widget('UserBioWidget', {})
   createdBy: UserBio;
 
   @title("reactory:support-ticket.model.createdDate.title")
@@ -243,6 +245,8 @@ class SupportTicketModel {
   @nullable()
   @type(UserBio)
   @ref("UserBio")
+  @uiSchema('grid', { }, 'gridview', 'reactory:support-ticket.gridviewschema.title', 'reactory:support-ticket.gridviewschema.description', 'grid')
+  @roles(['ADMIN', 'USER'])
   assignedTo: UserBio;
 
   @title("reactory:support-ticket.model.formId.title")
@@ -302,7 +306,12 @@ class SupportTicketModel {
         lastName: 'Set',
       }
     }];
-    this.documents = [];
+    this.documents = [
+      {
+        filename: "file.txt",
+        id: new ObjectId().toHexString()
+      }
+    ];
     this.updatedDate = new Date();
   }
   

@@ -159,6 +159,14 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     }
   };
 
+  hasAnyRole(roles: string[], partner?: Reactory.Models.IPartner, organization?: Reactory.Models.IOrganizationDocument, businessUnit?: Reactory.Models.IBusinessUnitDocument):boolean {
+    if (this.user ) {
+      return roles.some((role) => this.hasRole(role, partner, organization, businessUnit))      
+    } else {
+      return false;
+    }
+  }
+
   getValue<T>(key: string, defaultValue?: Promise<T>): Promise<T> {
     //@ts-ignore
     return Cache.getItem(key, false, this.partner) as Promise<T>;

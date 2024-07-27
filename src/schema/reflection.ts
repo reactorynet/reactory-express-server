@@ -302,6 +302,21 @@ export function readOnly() {
 }
 
 /**
+ * A decorator function that sets the roles required to access a property.
+ * @param roles
+ * @returns
+ */
+export function roles<TDecorator = AnyDecorator>(roles: string[]): TDecorator {
+  return function (target: any, propertyKey?: string) {
+    if(!propertyKey) { 
+      Reflect.defineMetadata("roles", roles, target);
+    } else {
+      Reflect.defineMetadata("roles", roles, target, propertyKey);
+    }    
+  } as TDecorator;
+}
+
+/**
  * A sterotype decorator that sets the stereotype for a class.
  * A stereotype is a classification of a class based on its characteristics for use in code generation.
  *
@@ -426,6 +441,16 @@ export function getPropertySchema<C, P>(
   const property = instance[key];
 
   if (property !== null && property !== undefined) {
+    const roles = Reflect.getMetadata("roles", instance, key);
+    if (roles && roles.length > 0) {
+      if(context && context.user) { 
+        const allowed = context.hasAnyRole(roles);
+        if(!allowed) {
+          return null;
+        }
+      }
+    }
+
     const titleKey = Reflect.getMetadata("title", instance, key);
     if (titleKey) {
       schema.title = titleKey;
@@ -543,6 +568,11 @@ export function getPropertySchema<C, P>(
           //@ts-ignore
           // propertySchema.type = Reflect.getMetadata('design:nullable', type, key) === true ? [propertySchema.type, "null"] : propertySchema.type;
           schema.properties[_key] = getPropertySchema(property, _key, context);
+          //@ts-ignore
+          if (schema.properties[_key] === null) {
+            //@ts-ignore
+            delete schema.properties[_key];
+          }
         }
       }
     }
@@ -590,7 +620,12 @@ export function getSchema<C>(
   // check each property for metadata
   for (const key in instance) {
     if (instance.hasOwnProperty(key)) {
-      schema.properties[key] = getPropertySchema(instance, key, context);
+      const propertySchema = getPropertySchema(instance, key, context);
+      if(propertySchema !== null) {
+        schema.properties[key] = propertySchema;
+      } else {
+        delete schema.properties[key];
+      }
     }
   }
 
@@ -609,7 +644,15 @@ export function getPropertyUISchema<C, P>(
   const property = instance[key];
 
   if (property !== null && property !== undefined) {
-  
+    const _uiSchemas = Reflect.getMetadata("uiSchemas", instance, key); 
+    if (_uiSchemas) {
+      for (const uiSchemaDef of _uiSchemas) {
+        if (uiSchemaDef.stereoType === stereoType) {
+          return uiSchemaDef.uiSchema;
+        }
+      }
+    }
+
     const enumType = Reflect.getMetadata("enumType", instance, key);
     if (enumType) {
       const enumValues = Reflect.getMetadata("enumValues", instance, key);
@@ -636,7 +679,7 @@ export function getPropertyUISchema<C, P>(
     } else if (typeof property === "object" && property !== null) {
       // schema.type = Reflect.getMetadata('design:nullable', type) ? ["object", "null"] : "object";
     }
-  
+
     const widget = Reflect.getMetadata("widget", instance, key);
     if (widget) {
       uiSchema["ui:widget"] = widget.id;
@@ -685,12 +728,19 @@ export async function getUISchema<C>(
       if(property === null || property === undefined) continue;
       else {
         if (!(uiSchema as Reactory.Schema.IUISchema)[key]) { 
-          (uiSchema as Reactory.Schema.IUISchema)[key] = getPropertyUISchema(instance, key, stereoType, context);
+          const propertyUISchema = getPropertyUISchema(instance, key, stereoType, context);
+          if (typeof propertyUISchema === 'function') { 
+            (uiSchema as Reactory.Schema.IUISchema)[key] = await (propertyUISchema as Reactory.Schema.TServerUISchemaResolver)(form, props, context, info);
+          } else {
+            (uiSchema as Reactory.Schema.IUISchema)[key] = propertyUISchema;          
+          }
+          if ((uiSchema as Reactory.Schema.IUISchema)[key] === null) { 
+            delete (uiSchema as Reactory.Schema.IUISchema)[key];
+          }
         }        
       }
     }
   }
-
   return uiSchema as Reactory.Schema.IFormUISchema;
 }
 
