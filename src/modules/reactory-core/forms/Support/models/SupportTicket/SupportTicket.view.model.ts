@@ -13,14 +13,13 @@ import {
   store,
   enumType,
   widget,
-  stereoTypes,
+  uiSchema,
   required,
   readOnly,
-  formTitle,
-  formDescription, 
 } from '@reactory/server-core/schema/reflection';
 import ReactorySupportTicketModel from '@reactory/server-core/modules/reactory-core/models/ReactorySupportTicket';
 import { ObjectId } from 'mongodb';
+import GridUISchema from './GridUISchema';
 
 const {
   API_ROOT
@@ -47,6 +46,11 @@ class SupportTicketDocument {
 
   @title("reactory:support-ticket-document.filename.title")
   filename: string
+
+  constructor(props: Partial<SupportTicketDocument> = {}) { 
+    this.id = props.id || new ObjectId().toHexString();
+    this.filename = props.filename || "";
+  }
 }
 
 
@@ -54,6 +58,7 @@ class SupportTicketDocument {
 class UserBio {
 
   @id(true)
+  @widget('HiddenWidget', {})
   id: string;
 
   @title("reactory:support-ticket.model.createdBy.title")
@@ -61,6 +66,12 @@ class UserBio {
 
   @title("reactory:support-ticket.model.createdBy.title")
   lastName: string;
+
+  constructor(props: Partial<UserBio> = {}) {
+    this.id = props.id || new ObjectId().toHexString();
+    this.firstName = props.firstName || "";
+    this.lastName = props.lastName || "";
+  }
 }
 
 @fqn("core.SupportTicketCommentViewModel@1.0.0")
@@ -78,7 +89,25 @@ class SupportTicketComment {
   createdAt: Date;
 
   @title("reactory:support-ticket-model.comment.createdBy")
+  @type(UserBio)
   createdBy: UserBio;
+
+
+  constructor(props: Partial<SupportTicketComment> = {}) { 
+    this.id = props.id || new ObjectId().toHexString();
+    this.user = props.user || {
+      id: new ObjectId().toHexString(),
+      firstName: 'Not',
+      lastName: 'Set',
+    };
+    this.comment = props.comment || "";
+    this.createdAt = props.createdAt || new Date();
+    this.createdBy = props.createdBy || {
+      id: new ObjectId().toHexString(),
+      firstName: 'Not',
+      lastName: 'Set',
+    };
+  };
 }
 
 export enum SupportTicketStatus { 
@@ -147,15 +176,20 @@ export type SupportTicketModelConstructorArgs = {
 @store(
   "graphql", 
   "core.ReactorySupportTicketModelMapper@1.0.0")
-@stereoTypes(["object"])
-@formTitle("reactory:support-ticket.model.title")
-@formDescription("reactory:support-ticket.model.description")
-class SupportTicketViewModel {
+@uiSchema('grid', 
+  GridUISchema,
+  'gridview',
+  'reactory:support-ticket.gridviewschema.title', 
+  'reactory:support-ticket.gridviewschema.description', 'grid')
+@title("reactory:support-ticket.model.title")
+@description("reactory:support-ticket.model.description")
+class SupportTicketModel {
 
   @id(true)
   @readOnly()
   @title("reactory:support-ticket.model.id.title")
   @description("reactory:support-ticket.model.id.description")
+  @widget('HiddenWidget', {})
   id?: string;
 
   @title("reactory:support-ticket.model.request.title")
@@ -218,6 +252,7 @@ class SupportTicketViewModel {
 
   @title("reactory:support-ticket.model.comments.title")
   @description("reactory:support-ticket.model.comments.description")
+  @type(SupportTicketComment)
   comments: SupportTicketComment[];
 
   @title("reactory:support-ticket.model.documents.title")
@@ -252,12 +287,26 @@ class SupportTicketViewModel {
       lastName: 'Set',
     };
     this.formId = "";
-    this.comments = [];
+    this.comments = [{
+      id: new ObjectId().toHexString(),
+      user: {
+        id: new ObjectId().toHexString(),
+        firstName: 'Not',
+        lastName: 'Set',
+      },
+      comment: "",
+      createdAt: new Date(),
+      createdBy: {
+        id: new ObjectId().toHexString(),
+        firstName: 'Not',
+        lastName: 'Set',
+      }
+    }];
     this.documents = [];
     this.updatedDate = new Date();
   }
   
-  static fromModel(model: Reactory.Models.ReactorySupportDocument, context: Reactory.Server.IReactoryContext): SupportTicketViewModel { 
+  static fromModel(model: Reactory.Models.ReactorySupportDocument, context: Reactory.Server.IReactoryContext): SupportTicketModel { 
     const { utils } = context;
     const props: Partial<SupportTicketModelConstructorArgs> = utils.objectMapper.merge(model, {
       '_id': { target: 'id', transform: (value: any) => value.toHexString() },
@@ -274,10 +323,10 @@ class SupportTicketViewModel {
       'comments': 'comments',
       'documents': 'documents',
     });
-    return new SupportTicketViewModel(props);
+    return new SupportTicketModel(props);
   }
 
-  static toModel(viewModel: SupportTicketViewModel, context: Reactory.Server.IReactoryContext): Reactory.Models.ReactorySupportDocument { 
+  static toModel(viewModel: SupportTicketModel, context: Reactory.Server.IReactoryContext): Reactory.Models.ReactorySupportDocument { 
     const { utils } = context;
     const props: Partial<SupportTicketModelConstructorArgs> = utils.objectMapper.merge(viewModel, {
       'id': '_id',
@@ -299,4 +348,4 @@ class SupportTicketViewModel {
   }
 }
 
-export default SupportTicketViewModel;
+export default SupportTicketModel;

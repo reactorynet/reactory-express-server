@@ -5,6 +5,8 @@ export type StoreType = "rest" | "grapql" | "grpc" | Reactory.FQN;
 
 export type IdGenerator = "objectid" | "uuid" | "snowflake" | Reactory.FQN;
 
+export type AnyDecorator = ClassDecorator | PropertyDecorator;
+
 /**
  * A decorator function that sets the name of the storage model to associate with this class.
  * @param fqn - The fully qualified name of the storage model / service that will be bound to this view model.
@@ -22,12 +24,12 @@ export function store(fqn: StoreType, mapper?: Reactory.FQN): ClassDecorator {
  * @param fqn
  * @returns
  */
-export function type(proto: any): PropertyDecorator {
+export function type<C>(proto: { new(): C }): PropertyDecorator {
   return function (target: any, key?: string) {
     if (!key) {
       throw new Error("The itemType decorator can only be used on a property.");
     }
-    Reflect.defineMetadata("itemType", proto, target, key);
+    Reflect.defineMetadata("type", proto, target, key);
   };
 }
 
@@ -169,16 +171,10 @@ export function max(
  *   myProperty: string;
  * }
  */
-export function title(translationKey: string): PropertyDecorator {
+export function title<TDecorator = AnyDecorator>(translationKey: string): TDecorator {
   return function (target: any, propertyKey?: string) {
     Reflect.defineMetadata("title", translationKey, target, propertyKey);
-  } as PropertyDecorator;
-}
-
-export function formTitle(translationKey: string): ClassDecorator {
-  return function (target: any) {
-    Reflect.defineMetadata("formTitle", translationKey, target);
-  };
+  } as TDecorator;
 }
 
 /**
@@ -186,16 +182,10 @@ export function formTitle(translationKey: string): ClassDecorator {
  * @param translationKey
  * @returns
  */
-export function description(translationKey: string): PropertyDecorator {
+export function description<TDecorator = AnyDecorator>(translationKey: string): TDecorator {
   return function (target: any, propertyKey: string) {
     Reflect.defineMetadata("description", translationKey, target, propertyKey);
-  } as PropertyDecorator;
-}
-
-export function formDescription(translationKey: string): ClassDecorator {
-  return function (target: any) {
-    Reflect.defineMetadata("formDescription", translationKey, target);
-  };
+  } as TDecorator;
 }
 
 /**
@@ -324,10 +314,26 @@ export function readOnly() {
  * @param stereoTypes
  * @returns
  */
-export function stereoTypes(stereoTypes: string[]): ClassDecorator {
-  return function (target: any) {
-    Reflect.defineMetadata("stereoTypes", stereoTypes, target);
-  };
+export function uiSchema<TTarget = ClassDecorator | PropertyDecorator>(
+    stereoType: string,
+    uiSchema: Reactory.Schema.IUISchema | Reactory.Schema.TServerUISchemaResolver,
+    key: string,
+    title?: string, 
+    description?: string, 
+    icon?: string): TTarget {
+  return function (target: any, property: string) {
+    const uiSchemas = Reflect.getMetadata("uiSchemas", target) || [];
+    if(uiSchemas.indexOf(key) === -1) {
+      uiSchemas.push({ stereoType, uiSchema, title, description, icon });
+      if (property) {
+        Reflect.defineMetadata("uiSchemas", uiSchemas, target, property);
+      } else {
+        Reflect.defineMetadata("uiSchemas", uiSchemas, target);
+      }
+    } else {
+      throw new Error(`The uiSchema key ${key} already exists on the target.`);
+    }
+  } as TTarget;
 }
 
 /**
@@ -521,9 +527,9 @@ export function getPropertySchema<C, P>(
     } else if (Array.isArray(property)) {
       //schema.type = Reflect.getMetadata('design:nullable', type) ? ["array", "null"] : "array";
       schema.type = "array";
-      const itemType = Reflect.getMetadata("itemType", instance);
-      if (itemType) {
-        schema.items = getSchema(itemType, property, context);
+      const proto = Reflect.getMetadata("type", instance, key);
+      if (proto) {
+        schema.items = getSchema(proto, property, context);
       }
     } else if (typeof property === "object" && property !== null) {
       // schema.type = Reflect.getMetadata('design:nullable', type) ? ["object", "null"] : "object";
@@ -559,7 +565,7 @@ export function getSchema<C>(
   };
 
   // check reflect metadata for the class
-  const titleKey = Reflect.getMetadata("formTitle", clazz);
+  const titleKey = Reflect.getMetadata("title", clazz);
   if (titleKey) {
     schema.title = titleKey;
     if (context) {
@@ -570,7 +576,7 @@ export function getSchema<C>(
     }
   }
 
-  const descriptionKey = Reflect.getMetadata("formDescription", clazz);
+  const descriptionKey = Reflect.getMetadata("description", clazz);
   if (descriptionKey) {
     schema.description = descriptionKey;
     if (context) {
@@ -626,7 +632,7 @@ export function getPropertyUISchema<C, P>(
       // extract the enum values from the
       // metadata
     } else if (Array.isArray(property)) {
-      //schema.type = Reflect.getMetadata('design:nullable', type) ? ["array", "null"] : "array";
+      //schema.type = Reflect.getMetadata('design:nullable', type) ? ["array", "null"] : "array";      
     } else if (typeof property === "object" && property !== null) {
       // schema.type = Reflect.getMetadata('design:nullable', type) ? ["object", "null"] : "object";
     }
@@ -645,54 +651,47 @@ export function getPropertyUISchema<C, P>(
   return uiSchema;
 }
 
-export function getUISchema<C>(
+export async function getUISchema<C>(
   clazz: {
     new (props: Partial<C>): C;
   },
   props: Partial<C>,
   stereoType: Reactory.Schema.UISchemaStereotype,
-  context: Reactory.Server.IReactoryContext
-): Reactory.Schema.IFormUISchema {
+  form: Reactory.Forms.IReactoryForm,
+  context: Reactory.Server.IReactoryContext,
+  info: any
+): Promise<Reactory.Schema.IFormUISchema> {
   const instance: C = new clazz(props);
-  const uiSchema: Reactory.Schema.IFormUISchema = {};
+  let uiSchema: Reactory.Schema.IFormUISchema | Reactory.Schema.TServerUISchemaResolver = {};
   
   // check reflect metadata for the class
+  const uiSchemas = Reflect.getMetadata("uiSchemas", clazz);
+  if (uiSchemas) { 
+    for (const uiSchemaDef of uiSchemas) {
+      if (uiSchemaDef.stereoType === stereoType) {
+        uiSchema = uiSchemaDef.uiSchema;
+      }
+    }
+  }
+
+  if (uiSchema && typeof uiSchema === 'function') { 
+    uiSchema = await (uiSchema as Reactory.Schema.TServerUISchemaResolver)(form, props, context, info);
+  }
 
   // check each property for metadata
   for (const key in instance) {
     if (instance.hasOwnProperty(key)) {
       const property = instance[key];
-      uiSchema[key] = getPropertyUISchema(instance, key, stereoType, context);
+      if(property === null || property === undefined) continue;
+      else {
+        if (!(uiSchema as Reactory.Schema.IUISchema)[key]) { 
+          (uiSchema as Reactory.Schema.IUISchema)[key] = getPropertyUISchema(instance, key, stereoType, context);
+        }        
+      }
     }
   }
 
-  switch(stereoType) {
-    case "grid":
-      uiSchema["ui:field"] = "GridLayout";
-      let rowSpecs: Reactory.Schema.IGridLayout = {   };
-      for (const key in instance) {
-        rowSpecs[key] = {xs: 12, sm: 6, md: 4, lg: 3, xl: 2, style: {}};
-      }
-      uiSchema["ui:grid-layout"] = [rowSpecs];
-      break;
-    case "list":
-      uiSchema["ui:field"] = "ListLayout";
-      break;
-    case "tab":
-      uiSchema["ui:field"] = "TabLayout";
-      break;
-    case "accordion":
-      uiSchema["ui:field"] = "AccordionLayout";
-      break;
-    case "paged": 
-      uiSchema["ui:field"] = "PagedLayout";
-      break;
-    case "stepped":
-      uiSchema["ui:field"] = "SteppedLayout";
-      break;
-  }
-
-  return uiSchema;
+  return uiSchema as Reactory.Schema.IFormUISchema;
 }
 
 /**
