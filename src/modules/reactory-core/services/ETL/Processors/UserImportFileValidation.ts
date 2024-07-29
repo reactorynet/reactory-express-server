@@ -39,8 +39,6 @@ class UserFileImportValidation implements Reactory.Service.IProcessor {
    */
   async process(params: any): Promise<any> {
 
-    debugger;
-
     return new Promise((resolve, reject) => {
       const { offset = 0, file, import_package, process_index, next } = params;
 

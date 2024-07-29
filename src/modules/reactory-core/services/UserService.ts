@@ -437,7 +437,6 @@ class UserService implements Reactory.Service.IReactoryUserService {
       }
     }
 
-    debugger;
     if (trim(region).length > 0) {
       //check if it is an id
       if (ObjectId.isValid(region) === true) {

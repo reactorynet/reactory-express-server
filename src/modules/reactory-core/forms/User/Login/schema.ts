@@ -1,7 +1,7 @@
 import Reactory from '@reactory/reactory-core';
 import { UserLogin } from "../../schema/User";
 
-const schema: Reactory.ISchema = {
+const schema: Reactory.Schema.ISchema = {
   type: "object",
   title: "Login",
   properties: {

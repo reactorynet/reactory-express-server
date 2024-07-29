@@ -245,7 +245,7 @@ class SupportTicketModel {
   @nullable()
   @type(UserBio)
   @ref("UserBio")
-  @uiSchema('grid', { }, 'gridview', 'reactory:support-ticket.gridviewschema.title', 'reactory:support-ticket.gridviewschema.description', 'grid')
+  @widget('UserBioWidget', {})
   @roles(['ADMIN', 'USER'])
   assignedTo: UserBio;
 
