@@ -9,6 +9,7 @@ import menus from './menus';
 import whitelist from './whitelist';
 
 import Reactory from '@reactory/reactory-core'
+import { ObjectId } from 'mongodb';
 
 
 
@@ -45,16 +46,16 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   themes,
   plugins: [
     {
+      id: 'reactory-client-core',
+      nameSpace: 'core',
       name: 'reactory-client-core',
       description: 'Reactory Client Core Plugin. Contains the core components and services for the Reactory Client.',
       version: '1.0.0',
-      id: 'reactory-client-core',
       enabled: true,
-      nameSpace: 'core',
-      roles: ['USER'],
+      roles: ['USER', 'ANON'],
       platform: 'web',
       mimeType: 'application/javascript',
-      url: `${CDN_ROOT}/plugins/reactory-client-core/lib/reactory-client-core.js`,
+      url: `${CDN_ROOT}plugins/reactory-client-core/lib/reactory.client.core.js`,
       loader: 'script',
     }
   ],
@@ -63,14 +64,17 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
     {
       provider: 'LOCAL',
       enabled: true,
+      options: {},
     },
     {
       provider: 'FACEBOOK',
       enabled: false,
+      options: {},
     },
     {
       provider: 'GOOGLE',
       enabled: false,
+      options: {},
     },
   ],
   settings,

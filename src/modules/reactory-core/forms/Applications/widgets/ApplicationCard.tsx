@@ -1,6 +1,4 @@
-
-
-
+'use strict';
 interface IComponentsImport { 
   StaticContent: Reactory.Client.Components.StaticContentWidget,
   React: Reactory.React,

@@ -94,7 +94,7 @@ type User {
   Business for the active membership
   """
   businessUnit: BusinessUnit
-
+  
   roles: [String]
   """
   The current active membership for the user.
@@ -102,8 +102,7 @@ type User {
   activeMembership: UserMembership
   memberships: [UserMembership]
   sessionInfo: [UserSession]
-  authentications: [ UserAuthentication ]
-  legacyId: Float
+  authentications: [UserAuthentication]
   createdAt: Float!
   updatedAt: Float!
   meta: UserMeta

@@ -23,6 +23,14 @@ const users: Reactory.Server.IStaticallyLoadedUser[] = [
     lastName: 'Admin',
     username: 'reactory',
     password: REACTORY_APPLICATION_PASSWORD,
+  },
+  {
+    email: 'werner.weber@gmail.com',
+    roles: ['USER', 'ADMIN', 'DEVELOPER'],
+    firstName: 'Werner',
+    lastName: 'Weber',
+    username: 'wernerw',
+    password: 'Password123!',
   }
 ];
 

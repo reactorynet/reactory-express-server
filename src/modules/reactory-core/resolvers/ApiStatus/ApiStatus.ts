@@ -344,7 +344,7 @@ class ApiStatus {
 
 
     if (skipResfresh === false && isAnon === false) {
-      context.log(`apiStatus called for ${user.firstName} ${user.lastName}, performing profile refresh`, {}, 'debug');
+      context.log(`apiStatus called for ${user.firstName} ${user.lastName}, performing profile refresh`, {});
       try {
         const refreshResult: any = await systemService.query(`
           query RefreshProfile($id:String, $skipImage: Boolean) {
@@ -424,7 +424,8 @@ class ApiStatus {
       applicationName: partner.name,
       applicationRoles: partner.applicationRoles,
       menus: [],
-      theme: partner.theme,      
+      plugins: partner?.plugins || [],
+      theme: partner.theme,
       messages: uxmessages,
       navigationComponents,
     };

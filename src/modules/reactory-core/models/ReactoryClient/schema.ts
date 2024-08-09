@@ -3,6 +3,20 @@ import methods from './methods';
 import statics from './statics';
 const { ObjectId } = mongoose.Schema.Types;
 
+const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IReactoryApplicationPlugin>({ 
+  id: String,  
+  name: String,
+  nameSpace: String,
+  version: String,
+  description: String,
+  platform: String,
+  url: String,
+  loader: String,
+  mimeType: String,
+  options: {},
+  enabled: Boolean,
+  roles: [String],
+});
 
 const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReactoryClient>({
   id: ObjectId,
@@ -78,6 +92,7 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
     },
   ],
   whitelist: [String],
+  plugins: [ReactoryApplicationPluginSchema],
 }, {
   methods,
   statics,

@@ -35,7 +35,7 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
       containerProps: {}
     },    
     items: {
-      'ui:widget': 'ApplicationCard',
+      'ui:widget': 'core.ApplicationCard@1.0.0',
       'ui:options': {
         size: { xs: 12, sm: 12, md: 6, lg: 4, xl: 3 },
         moreRoute: "/applications/${id}"
