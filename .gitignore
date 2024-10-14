@@ -6,7 +6,7 @@ package-lock.json
 build/*
 lib/*
 !lib/readme.md
-!yarn.lock
+yarn.lock
 
 .env*
 config/*

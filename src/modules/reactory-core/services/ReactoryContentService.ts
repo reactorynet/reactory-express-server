@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
 import path from 'path';
 import svg_to_png from 'svg-to-png';
 import { roles } from '@reactory/server-core/authentication/decorators';
-import { Content } from '@reactory/server-core/models'
+import { Content } from '@reactory/server-modules/reactory-core/models';
 import logger from '@reactory/server-core/logging';
 import { pathExistsSync } from 'fs-extra';
 

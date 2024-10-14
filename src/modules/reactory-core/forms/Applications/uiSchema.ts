@@ -12,8 +12,8 @@ const greetingUISchema: Reactory.Schema.IUISchema = {
 
 const uiSchema: Reactory.Schema.IFormUISchema = {
   "ui:form": {
-    showSubmit: false,
-    showHelp: true,
+    showSubmit: true,
+    showHelp: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',  

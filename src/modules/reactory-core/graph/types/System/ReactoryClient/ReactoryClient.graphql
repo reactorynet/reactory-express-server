@@ -244,6 +244,10 @@ the front end.
 """
 type NavigationComponentDefinition {
   """
+  The unique id for the navigation component
+  """
+  id: String
+  """
   Component fully qualified name i.e. my.CustomHeader@1.0.0
   """
   componentFqn: String!

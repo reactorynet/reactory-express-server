@@ -55,8 +55,7 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
       roles: ['USER', 'ANON'],
       platform: 'web',
       mimeType: 'application/javascript',
-      url: `${CDN_ROOT}plugins/reactory-client-core/lib/reactory.client.core.js`,
-      loader: 'script',
+      uri: `${CDN_ROOT}plugins/reactory-client-core/lib/reactory.client.core.js`      
     }
   ],
   allowCustomTheme: true,

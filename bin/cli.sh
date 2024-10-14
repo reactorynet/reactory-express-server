@@ -28,7 +28,7 @@ fi
 
 # Verify that node_modules exist before running
 if [ ! -d "./node_modules" ]; then
-  echo "Error: node_modules directory not found. Run 'npm install'."
+  echo "Error: node_modules directory not found. Run 'yarn install'."
   exit 1
 fi
 
@@ -43,8 +43,6 @@ fi
 if [ "$DEBUG" = true ]; then
   NODE_DEBUG_OPTIONS="--inspect"
 fi
-
-echo $KWARGS
 
 # Check if watch mode is enabled
 if [ "$WATCH_MODE" = true ]; then

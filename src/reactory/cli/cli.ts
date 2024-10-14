@@ -340,6 +340,11 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
       if(config.user) userName = config.user;
       if(config.password) password = config.password;
       
+      if(!config.jobs) {
+        console.log(colors.yellow(t('cli.common.noJobs', `No jobs detected in ${cargs[0]}, exiting`)))
+        process.exit(1);
+      }
+
       if(config.jobs.length === 1 ){ 
         console.log(colors.green(t('cli.common.singleJob', 'Single job detected')));
       } else {

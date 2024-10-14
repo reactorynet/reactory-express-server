@@ -144,6 +144,8 @@ const ComponentDefinition = {
   tags: ['user', 'content']
 };
 
+const FQN = `${ComponentDefinition.nameSpace}.${ComponentDefinition.name}@${ComponentDefinition.version}`;
+
 
 //@ts-ignore
 if (window && window.reactory) {
@@ -159,7 +161,8 @@ if (window && window.reactory) {
     'widget');
   //@ts-ignore
   window.reactory.api.amq.raiseReactoryPluginEvent('loaded', {
-    componentFqn: `${ComponentDefinition.nameSpace}.${ComponentDefinition.name}@${ComponentDefinition.version}`,
+    fqn: FQN,
+    componentFqn: FQN,
     component: ApplicationCard
   });
 }

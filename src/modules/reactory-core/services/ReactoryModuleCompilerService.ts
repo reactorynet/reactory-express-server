@@ -277,14 +277,23 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
       const files = [
         '.jshintrc',
         '.nvmrc',
-        'tsconfig.json',
-        'package.json',
+        'tsconfig.template.json',
+        'package.template.json',
       ];
       this.context.log('Copying runtime files', { files }, 'debug', ReactoryModuleCompilerService.reactory.id);
       const assetsFolder = path.join(cwd(), 'src/modules/core/services/assets/RuntimePluginsProject');
       files.forEach((file) => {
         fs.copyFileSync(path.join(assetsFolder, file), path.join(runtimePath, file));
       });
+
+      try {
+        // rename the package.json and tsconfig.json
+        fs.renameSync(path.join(runtimePath, 'package.template.json'), path.join(runtimePath, 'package.json'));
+        fs.renameSync(path.join(runtimePath, 'tsconfig.template.json'), path.join(runtimePath, 'tsconfig.json'));
+      } catch (renameException) {
+        this.context.log('Error renaming files', { renameException }, 'error', ReactoryModuleCompilerService.reactory.id);          
+      }
+
       //run npm install in the runtime folder
       this.context.log('Running NPM Install - this may take ~3 - 5 minutes depending on your connection', { runtimePath }, 'debug', ReactoryModuleCompilerService.reactory.id)
       const { stdout, stderr } = await exec('npm install', { cwd: runtimePath });

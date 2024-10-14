@@ -32,10 +32,16 @@ type ApplicationPlugin {
   """
   platform: ApplicationPluginPlatform
   """
-  The url for the plugin. This is the location the 
+  The uri for the plugin. This is the location the 
   compiled / prepared plugin is served from.
   """
-  url: String
+  uri: String
+  """
+  The mime type for the plugin. This is used to 
+  determine how to load the plugin into the application
+  if the loader is not defined.
+  """
+  mimeType: String
   """
   A component fqn that is used to load the 
   plugin into the framework.  Each platform

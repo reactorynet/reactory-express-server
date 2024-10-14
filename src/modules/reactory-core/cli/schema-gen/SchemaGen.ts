@@ -384,7 +384,7 @@ const ReactorCliAppDefinition: Reactory.IReactoryComponentDefinition<ReactoryCli
     name: "SchemaGen",
     version: "1.0.0",
     description: HelpText,
-    component: SchemaGenCli,
+    component: SchemaGenCli as unknown as ReactoryCliApp,
     domain: Reactory.ComponentDomain.plugin,
     features: [
       {

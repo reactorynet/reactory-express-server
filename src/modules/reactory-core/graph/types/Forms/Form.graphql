@@ -14,7 +14,8 @@ or image element.
 """
 type ReactoryFormUIResource {
     """
-    A unique id that represent the UI resource
+    A unique id that represent the UI resource.
+    This should be in the format of a FQN i.e. namespace.Resource@version
     """
     id: String
     """

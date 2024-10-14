@@ -10,7 +10,7 @@ const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IR
   version: String,
   description: String,
   platform: String,
-  url: String,
+  uri: String,
   loader: String,
   mimeType: String,
   options: {},
