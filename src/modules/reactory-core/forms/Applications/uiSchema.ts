@@ -12,7 +12,7 @@ const greetingUISchema: Reactory.Schema.IUISchema = {
 
 const uiSchema: Reactory.Schema.IFormUISchema = {
   "ui:form": {
-    showSubmit: true,
+    showSubmit: false,
     showHelp: false,
     showRefresh: false,
   },

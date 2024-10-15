@@ -1,6 +1,6 @@
 import Reactory from '@reactory/reactory-core';
 
-const graphql: Reactory.IFormGraphDefinition = {
+const graphql: Reactory.Forms.IFormGraphDefinition = {
   mutation: {
     new: {
       name: 'ReactoryCreateSupportTicket',
