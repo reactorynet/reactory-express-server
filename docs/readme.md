@@ -52,8 +52,8 @@ Depending on what shell you are running, you will need to update either your `.z
 ```bash
 export REACTORY_HOME="$HOME/Projects/reactory"
 export REACTORY_DATA="$REACTORY_HOME/reactory-data"
-export REACTORY_SERVER="$REACTORY_HOME/reactory-server"
-export REACTORY_CLIENT="$REACTORY_HOME/reactory-client"
+export REACTORY_SERVER="$REACTORY_HOME/reactory-express-server"
+export REACTORY_CLIENT="$REACTORY_HOME/reactory-pwa-client"
 export REACTORY_NATIVE="$REACTORY_HOME/reactory-native"
 export REACTORY_PLUGINS="$REACTORY_DATA/plugins"
 ```
