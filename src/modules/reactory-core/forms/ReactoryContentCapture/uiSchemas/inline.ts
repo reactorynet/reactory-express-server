@@ -107,19 +107,13 @@ export const inlineEditor: Reactory.Schema.IFormUISchema = {
     }
   },
   topics: {
-    'ui:widget': 'HiddenWidget',
+    'ui:widget': 'HiddenWidget',   
     'ui:options': {
-      container: 'core.BasicContainer',
+      showLabel: false,
       style: {
         display: 'none',
         maxHeight: '0px',
-      },
-      containerProps: {
-        title: 'Page Tags',
-        style: {
-          display: "none"
-        },
-      },
-    },
+      }
+    }
   }
 };

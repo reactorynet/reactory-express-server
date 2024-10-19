@@ -79,6 +79,9 @@ Node Canvas is one of the dependencies and installation instructions for specifi
 You need to have a mongodb instance the server can connect to.  MongoDB is currently use via mongoose as the core data storage.  It is however not limited to it and mysql, sqlserver and postgress drivers can be used for storage for custom resolvers and plugins.
 
 #### Installing mongodb
+
+The preferred approach is to use the podman-compose.sh command to provide a podman environment
+
 The easiest way to install mongodb is to use the docker image.  You can find the instructions here https://hub.docker.com/_/mongo
 
 For development purposes you can use the docker image to run a local mongodb instance.  For production you can use a hosted mongodb instance or install mongodb on a server.

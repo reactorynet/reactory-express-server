@@ -52,8 +52,11 @@ const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.
       }
       if(request.context) {        
         request.context.user = userResult;
-        if (userResult.hasRole(request.context.partner._id.toString(), 'ANON')) {
-          request.context.user.anon = true;
+        if(request.context.partner) {
+          // only when we have a partner do we check the role
+          if (userResult.hasRole(request.context.partner._id.toString(), 'ANON')) {
+            request.context.user.anon = true;
+          }
         }
         request.context.debug(`User ${userResult._id.toString()} authenticated and set on context: ${request.context.id}`)
       }
