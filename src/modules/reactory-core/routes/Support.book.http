@@ -1,0 +1,46 @@
+{{
+   const btoa = require('btoa');
+   const btoastring = `${REACTORY_APPLICATION_EMAIL}:${REACTORY_APPLICATION_PASSWORD}`;
+   exports.authToken = btoa(btoastring);
+}}
+POST http://localhost:4000/login HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+x-client-key: {{REACTORY_CLIENT_KEY}}
+x-client-secret: {{REACTORY_CLIENT_PWD}}
+Authorization: Basic {{authToken}}
+
+{{
+   const { token } = response.parsedBody.user;
+   exports.jwtToken = token;
+}}
+
+HTTP/1.1 200  - OK
+x-powered-by: Express
+vary: Origin
+access-control-allow-credentials: true
+access-control-expose-headers: X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,x-client-version,x-client-name
+content-language: en-US
+content-type: application/json; charset=utf-8
+content-length: 473
+etag: W/"1d9-uAkyPL9KLr7DYgERD9T1WWvNpLw"
+date: Fri, 19 Jul 2024 22:37:32 GMT
+connection: close
+###
+GET http://localhost:4000/support/tickets
+Accept: text/html
+x-client-key: {{REACTORY_CLIENT_KEY}}
+x-client-secret: {{REACTORY_CLIENT_PWD}}
+Authorization: Bearer {{jwtToken}}
+
+HTTP/1.1 200  - OK
+x-powered-by: Express
+vary: Origin
+access-control-allow-credentials: true
+access-control-expose-headers: X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,x-client-version,x-client-name
+content-language: en-US
+content-type: text/html; charset=utf-8
+content-length: 16
+etag: W/"10-N4SFNsgbz426lY3rJiQj05PaBm0"
+date: Fri, 19 Jul 2024 22:37:33 GMT
+connection: close

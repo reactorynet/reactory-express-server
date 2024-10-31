@@ -1,0 +1,8 @@
++ backup.sh
++ cli.sh
++ meilisearch.sh
++ serve.sh
++ run.sh
++ reactory.service
++ restore2.sh
+- *

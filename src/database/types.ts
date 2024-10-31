@@ -1,4 +1,4 @@
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from '@reactory/reactory-core';
 
 
 export enum Operator {
@@ -123,6 +123,9 @@ export interface QueryStringGenerator {
 }
 
 
+/**
+ * IReactoryDatabase defines a set of abstracted functionality that can be implemented by a database provider.
+ */
 export interface IReactoryDatabase {
   Create: {
     [key: string]: (insertCommand: any | SQLInsert, request_context: Reactory.Server.IReactoryContext) => Promise<any>

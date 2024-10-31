@@ -5,17 +5,18 @@ import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-core/modules';
 import ApiError from '@reactory/server-core/exceptions';
 
-
 type DependencySetter = <T>(deps: T) => void;
 
 /**
  * services array
  */
-export const services: Reactory.Service.IReactoryServiceDefinition[] = [];
+export const services: Reactory.Service.IReactoryServiceDefinition<any>[] = [];
 /**
  * services id map
  */
 export const serviceRegister: Reactory.Service.IReactoryServiceRegister = {}
+
+const instances: any = {}
 
 
 /**
@@ -25,20 +26,19 @@ modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
   try {
     if (installedModule && installedModule.services) {
       if (installedModule.services) {
-        logger.debug(`🟢 Module ${installedModule.name} has ${installedModule.services.length} services available`)
-        installedModule.services.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition | any) => {
+        logger.debug(`Module ${installedModule.name}: (${installedModule.services.length}) services installed`)
+        installedModule.services.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition<any> | any) => {
           let $service = serviceDefinition;
           if (typeof $service === 'function' && $service?.prototype?.reactory) {
             $service = ($service as any).prototype.reactory;
           }
-          logger.debug(`  🔀 ${$service.id} [${$service.serviceType}]`);
+          logger.debug(`🔁 ${$service.id} [${$service.serviceType}]`);
           services.push($service);
           serviceRegister[$service.id] = $service
         });
-
       }
     } else {
-      logger.debug(`🟠 Module ${installedModule || 'NULL-MODULE!'} has no services available`);
+      logger.debug(`Module ${installedModule || 'NULL-MODULE!'} has no services available`);
     }
   } catch (serviceInstallError) {
     logger.error(`Service install error: ${serviceInstallError.message}`, { serviceInstallError });
@@ -46,8 +46,8 @@ modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
 });
 
 const getAlias = (id: string) => {
-  const [fullname, version] = id.split('@');
-  const [nameSpace, name] = fullname.split('.');
+  const [fullname, _] = id.split('@');
+  const [__, name] = fullname.split('.');
 
   return name;
 }
@@ -102,12 +102,24 @@ export const getService = (id: string,
       })
     }
     
-    const singleton_key = `svc_instance::${id}`;
+    const request_key = `svc_request::${id}`;
     
-    if (context.state[singleton_key] !== null && context.state[singleton_key] !== undefined  && lifeCycle === "singleton") {      
-      let $svc = context.state[singleton_key];
-      context.log(` 🔥🔥 Found Service Instance matching key ${singleton_key} 🔥🔥`, { svc: $svc }, 'debug')
-      return context.state[singleton_key];
+    /**
+     * Check if the service is in the request context state
+     */
+    if (context.state[request_key] !== null && context.state[request_key] !== undefined  && lifeCycle === "request") {      
+      context.log(`Found Service Instance matching key ${request_key}`, 'debug')
+      return context.state[request_key];
+    }
+
+    /**
+     * Check if the service is a singleton which will be for services
+     * that are for the entire life period of the service uptime.
+     */
+    const singleton_key = `svc_instance::${id}`;
+    if(instances[singleton_key] && lifeCycle === "singleton") {
+      context.log(`Service singleton instance found`);
+      return instances[singleton_key];
     }
 
     const svc: Reactory.Service.IReactoryService = serviceRegister[id].service({ ...props, $services: serviceRegister, $dependencies: $deps }, context) as Reactory.Service.IReactoryService;
@@ -122,21 +134,43 @@ export const getService = (id: string,
             // Call the setter function
             //@ts-ignore
             svc[setterName]($deps[dependcyAlias]);
-          } catch (setterError) {            
-            context.log(`🚨 Setter error ${setterName}; ${setterError?.message ? setterError.message : 'Unknown'} 🚨`, { service_id: id, props, setterError }, 'warning');
+          } catch (setterError) {
+            // if there is an error, we log it and continue
+            // we set the dependency on the service object 
+            // directly.
+            //@ts-ignore
+            svc[dependcyAlias] = $deps[dependcyAlias];
+            context.warn(`🚨 Setter error ${setterName}; ${setterError?.message ? setterError.message : 'Unknown'} 🚨`, { service_id: id, props, setterError }, 'warning');
           }
+        } else {
+          // if there is no setter function, we set the dependency on the service object 
+          // directly.
+          //@ts-ignore
+          svc[dependcyAlias] = $deps[dependcyAlias];
+        
         }
       }
     });
 
-    if (context.state[singleton_key] === null && context.state[singleton_key] === undefined  && lifeCycle === "singleton") {      
-      context.log(` 🔥🔥 Setting Singleton service key ${singleton_key} 🔥🔥`, { svc: svc }, 'debug')
-      context.state[singleton_key] = svc;
+    if (context.state[request_key] === null && context.state[request_key] === undefined  && lifeCycle === "request") {      
+      context.log(` 🔥🔥 Setting Request service key ${request_key} 🔥🔥`, { svc: svc }, 'debug')
+      context.state[request_key] = svc;
     }
 
+    if(lifeCycle === "singleton" && 
+      ( 
+        null === instances[singleton_key] || 
+        undefined === instances[singleton_key]
+      )) {
+        instances[singleton_key] = svc;
+    }
+    // ensure that the service has the correct name, namespace and version
+    svc.name = svcDef.name;
+    svc.nameSpace = svcDef.nameSpace;
+    svc.version = svcDef.version;
     return svc;
   } else {
-    throw new ApiError(`Could not get service ${id}`);
+    throw new ApiError(`Service ${id} not found in service registry.`);
   }
 }
 
@@ -148,26 +182,21 @@ export const getService = (id: string,
  * @param context 
  * @returns 
  */
-export const startServices = async (props: any, context: any): Promise<boolean> => {
-
+export const startServices = async (props: any, context: Reactory.Server.IReactoryContext): Promise<boolean> => {   
   try {
-    let startup_promises: Promise<void>[] = []
-
-    services.forEach((service: Reactory.Service.IReactoryServiceDefinition) => {
+    let promises = [];
+    for (let i = 0; i < services.length; i++) {
+      const service = services[i];
       const instance = getService(service.id, props, context);
-
-      if (instance.onStartup) {
-        startup_promises.push((instance as Reactory.Service.IReactoryStartupAwareService).onStartup());
+      if (instance.onStartup && typeof instance.onStartup === 'function') {
+        await instance.onStartup();
       }
+    }
 
-    });
-
-    let resuts = await Promise.all(startup_promises).then();
-
-    return Promise.resolve(true);
+    return true;
   } catch (serviceStartupError) {
     logger.error('An error occured while starting some services, please check log for details', serviceStartupError)
-    return Promise.resolve(false);
+    return false;
   }
 };
 
@@ -191,7 +220,7 @@ export const stopServices = async (props: any, context: any): Promise<boolean> =
       }
     });
 
-    let resuts = await Promise.all(startup_promises).then();
+    await Promise.all(startup_promises).then();
 
     return Promise.resolve(true);
   } catch (serviceStartupError) {
@@ -199,5 +228,29 @@ export const stopServices = async (props: any, context: any): Promise<boolean> =
     return Promise.resolve(false);
   }
 };
+
+
+
+export const listServices = (filter: Reactory.Server.ReactoryServiceFilter): Reactory.Service.IReactoryServiceDefinition<any>[] => {
+  let filtered: Reactory.Service.IReactoryServiceDefinition<any>[] = services;
+
+  if (filter.id) {
+    filtered = filtered.filter((svc: Reactory.Service.IReactoryServiceDefinition<any>) => svc.id === filter.id);
+  }
+
+  if (filter.name) {
+    filtered = filtered.filter((svc: Reactory.Service.IReactoryServiceDefinition<any>) => svc.name === filter.name);
+  }
+
+  if (filter.type) {
+    filtered = filtered.filter((svc: Reactory.Service.IReactoryServiceDefinition<any>) => svc.serviceType === filter.type);
+  }
+
+  if (filter.lifeCycle) {
+    filtered = filtered.filter((svc: Reactory.Service.IReactoryServiceDefinition<any>) => svc.lifeCycle === filter.lifeCycle);
+  }
+
+  return filtered;
+}
 
 export default services;

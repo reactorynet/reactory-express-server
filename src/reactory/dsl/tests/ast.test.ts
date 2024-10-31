@@ -1,13 +1,21 @@
-import { 
-  SingleLineHelloWorldASTProgramNode
-} from './mocks/ast';
 
 import { 
-  SingleLineHelloWorldProgramNode,
-  MultiLineWithConditionalProgramNode,
-  SingleLineExpressionWithArithmaticProgramNode,
+  NameProgramASTProgramNode
+} from './mocks/ast';
+import {
+  NameProgram as NameProgramCSTProgramNode
 } from './mocks/cst';
+
+const {
+  _01_VariableDeclaration: _01_VariableDeclarationAST
+} = NameProgramASTProgramNode;
+
+const {
+  _01_VariableDeclaration: _01_VariableDeclarationCST
+} = NameProgramCSTProgramNode;
+
 import { createAST } from "../compiler/parser";
+import { CSTProgramNode } from 'types/compiler/cst';
 
 describe('AST', () => {
   
@@ -15,20 +23,10 @@ describe('AST', () => {
     jest.clearAllMocks();
   });
 
-  it('should return a valid AST for @print("Hallo World!")', () => {            
-    const ast = createAST(SingleLineHelloWorldProgramNode);
-    ast.options.host = 'cli';
-    // and we expect the parse function to return the AST root
-    expect(ast.type).toEqual('Program');
-    expect(ast).toEqual(SingleLineHelloWorldASTProgramNode);
-  });
-
-  it('should return a valid AST for an expression $i = $i + 1;', () => { 
-    //given the CST 
-    const cst = SingleLineExpressionWithArithmaticProgramNode;
-    // when we create an AST
-    const ast = createAST(cst);
-    // then we expect the AST to be valid
-    expect(ast).toEqual(SingleLineHelloWorldASTProgramNode);
+  it('should create an AST from a CST', () => {
+    // when creating the AST from the given _01_VariableDeclarationCST
+    const ast = createAST(_01_VariableDeclarationCST as CSTProgramNode);
+    // then we
+    expect(ast).toEqual(_01_VariableDeclarationAST);
   });
 });

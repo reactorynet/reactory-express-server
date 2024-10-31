@@ -9,6 +9,7 @@ import menus from './menus';
 import whitelist from './whitelist';
 
 import Reactory from '@reactory/reactory-core'
+import { ObjectId } from 'mongodb';
 
 
 
@@ -30,7 +31,7 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   email: REACTORY_APPLICATION_EMAIL,
   salt: 'generate',
   password: REACTORY_APPLICATION_PASSWORD,
-  siteUrl: REACTORY_SITE_URL || 'https://localhost:3000', 
+  siteUrl: REACTORY_SITE_URL || 'http://localhost:3000', 
   emailSendVia: process.env.REACTORY_EMAIL_SEND_VIA || 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/forgot-password',
@@ -45,17 +46,16 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   themes,
   plugins: [
     {
+      id: 'reactory-client-core',
+      nameSpace: 'core',
       name: 'reactory-client-core',
       description: 'Reactory Client Core Plugin. Contains the core components and services for the Reactory Client.',
       version: '1.0.0',
-      id: 'reactory-client-core',
       enabled: true,
-      nameSpace: 'core',
-      roles: ['USER'],
+      roles: ['USER', 'ANON'],
       platform: 'web',
       mimeType: 'application/javascript',
-      url: `${CDN_ROOT}/plugins/reactory-client-core/lib/reactory-client-core.js`,
-      loader: 'script',
+      uri: `${CDN_ROOT}plugins/reactory-client-core/lib/reactory.client.core.js`      
     }
   ],
   allowCustomTheme: true,
@@ -63,14 +63,17 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
     {
       provider: 'LOCAL',
       enabled: true,
+      options: {},
     },
     {
       provider: 'FACEBOOK',
       enabled: false,
+      options: {},
     },
     {
       provider: 'GOOGLE',
       enabled: false,
+      options: {},
     },
   ],
   settings,

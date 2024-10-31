@@ -3,15 +3,14 @@ import jwt from 'jwt-simple';
 import moment, { DurationInputArg1, DurationInputArg2 } from 'moment';
 import { v4 as uuid } from 'uuid';
 import { isNil } from 'lodash';
-import { User } from '@reactory/server-core/models/index';
 import { UserValidationError } from '@reactory/server-core/exceptions';
+import { User } from '@reactory/server-modules/reactory-core/models';
 import logger from '@reactory/server-core/logging';
 import amq from '@reactory/server-core/amq';
 
-
 const jwtSecret = process.env.SECRET_SAUCE;
 
-export type OnDoneCallback = (error: Error | null, user?: Partial<Reactory.Models.IUser> | string | false, options?: any) => void;
+export type OnDoneCallback = (error: Error | null, user?: Partial<Reactory.Models.IUserDocument> | string | false, info?: any) => void;
 
 export interface OAuthProfile {
   id: string;
@@ -69,9 +68,7 @@ export default class Helpers {
 
   static jwtMake = (payload: any) => { return jwt.encode(payload, jwtSecret); };
 
-  static jwtTokenForUser = (user: Reactory.Models.IUser, options = {}) => {
-    logger.debug(`Generating jwtToken for user ${user.email || user.id}`)
-
+  static jwtTokenForUser = (user: Reactory.Models.IUserDocument, options = {}) => {
     if (isNil(user)) throw new UserValidationError('User object cannot be null', { context: 'jwtTokenForUser' });
 
     const {
@@ -94,21 +91,15 @@ export default class Helpers {
       ...options,
     };
 
-    let _user = user;
-
-    if (user && user._doc) {
-      _user = user._doc;
-    }
-
     return {
       ...authOptions,
-      userId: `${_user._id ? _user._id.toString() : _user.id.toString()}`, // eslint-disable-line no-underscore-dangle
+      userId: `${user._id.toString()}`,
       refresh: uuid(),
       name: `${user.firstName} ${user.lastName}`,
     };
   }
 
-  static addSession = (user: Reactory.Models.IUserDocument, token: any, ip = '-', clientId = 'not-set') => {
+  static addSession = async (user: Reactory.Models.IUserDocument, token: any, ip = '-', clientId = 'not-set') => {
     user.sessionInfo = [];
     user.sessionInfo.push({
       id: uuid(),
@@ -117,21 +108,30 @@ export default class Helpers {
       jwtPayload: token,
     });
 
-    return user.save();
+    try { 
+      await user.save();
+    } catch (err) {
+      logger.error(`Error saving user session info`, err);
+    }
+
+    return user;
   }
 
-  static generateLoginToken = (user: Reactory.Models.IUserDocument, ip = 'none') => {
-    logger.info('generating Login token');
-    return new Promise((resolve, reject) => {
-      user.lastLogin = moment().valueOf(); // eslint-disable-line
-      const jwtPayload = Helpers.jwtTokenForUser(user);
-      Helpers.addSession(user, jwtPayload, ip).then((savedUser) => {
-        resolve({
-          firstName: savedUser.firstName,
-          lastName: savedUser.lastName,
-          token: Helpers.jwtMake(jwtPayload),
-        });
-      }).catch((sessionSetError) => { reject(sessionSetError); });
-    });
+  static generateLoginToken = async (user: Reactory.Models.IUserDocument, ip = 'none'): Promise<{
+    id: string,
+    firstName: string,
+    lastName: string,
+    token: string,
+  }> => {
+    logger.info(`generating Login token for user ${user.firstName} ${user.lastName}`);
+    user.lastLogin = moment().valueOf(); // eslint-disable-line
+    const jwtPayload = Helpers.jwtTokenForUser(user);
+    await Helpers.addSession(user, jwtPayload, ip);
+    return {
+      id: user?._id?.toHexString(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      token: Helpers.jwtMake(jwtPayload),
+    };
   }; 
 }

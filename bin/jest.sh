@@ -38,4 +38,4 @@ fi
 # check environment variables
 check_env_vars
 echo "🛠️ Loading Environment ./config/${1:-reactory}/${2:-local} "
-NODE_PATH=./ env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx jest ${3:-**/**/*.spec.*s} --detectOpenHandles
+NODE_PATH=./ env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx jest ${3:-**/**/*.spec.*s} ${@:4} --detectOpenHandles --forceExit

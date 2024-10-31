@@ -1,0 +1,220 @@
+"""
+Contains the details for a component that can be used
+to execute an action with the additional Logged In Data
+"""
+type LoggedInContextAdditionalData {
+  id: String
+  nameSpace: String
+  name: String
+  version: String
+  data: Any
+  action: LoggedInContextExecutionAction
+}
+
+"""
+The logged in context provides context
+information about the user's current login 
+credentials
+"""
+type LoggedInContext {
+  """
+  The id will correspond with the user.id
+  """
+  id: String
+  """
+  The reactory user object
+  """
+  user: User
+  """
+  The user memberships. A user can have multiple memberships 
+  especially in multi application environments.
+  """
+  memberships: [UserMembership]
+  """
+  The active organization currently set for the user.
+  This could be null if the user is not associated with any organization or 
+  if the user is associated with multiple organization and has not selected 
+  an active organization.
+  """
+  organization: Organization
+  """
+  The active business unit currently set for the user.
+  This could be null if the user is not associated with any business unit or
+  if the user is associated with multiple business units and has not selected
+  an active business unit.
+  """
+  businessUnit: BusinessUnit
+  """
+  The active team for the user.
+  This could be null if the user not associated any team or if the user is 
+  associated with multiple teams and has not selected an active team.    
+  """
+  team: Team
+  """
+  The current role set that is associated with this LoggedInContext
+  """
+  roles: [String]
+  """
+  The roles that are associated with other reactory client apps.
+  """
+  altRoles: [String]
+  """
+  An any object that can be used by other modules to attach
+  additional properties to the user logged in context
+  which may be required for specific component.
+  ** Future use, in development ** 
+  """
+  additional: [LoggedInContextAdditionalData]
+}
+
+
+"""
+The ApiStatus type provides a full structure of the application status within the context of the 
+logged in / active user.
+"""
+type ApiStatus {
+    """
+    A unique id for the ApiStatus
+    """
+    id: String
+    """
+    The time stamp for the ApiStatus, provided in UTC.
+    """
+    when: Date!
+    """
+    Should return "API-OK" if everything compiled correctly and the server is running
+    """
+    status: String!
+    """
+    Property for the Reactory Server data 
+    """
+    server: ReactoryServer
+    """
+    The logged in context object
+    """
+    loggedIn: LoggedInContext
+    """
+    Shortcut to the logged in user first name. 
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    firstName: String
+    """
+    Shortcut to the logged in user lastName. 
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    lastName: String
+    """
+    Shortcut to the logged in user avatar. 
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    avatar: String
+    """
+    Shortcut to the logged in user first name. 
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    email: String
+    """
+    Navigation components are a set of components ids that has to be loaded
+    for navigational use. Each client application must implement their own 
+    listeners / renders for these.
+    """
+    navigationComponents: [NavigationComponentDefinition]
+    """
+    Shortcut to the logged in user organization
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    organization: Organization
+    """
+    Shortcut to the logged in user organization
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    businessUnit: BusinessUnit
+    """
+    Shortcut to the logged in user organization
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    roles: [String]
+    """
+    Shortcut to the logged in user organization
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    alt_roles: [String]
+    """
+    This defines the menus that are available to the application and the logged in 
+    user context.
+    """
+    menus: [Menu]
+    """
+    These are the routes that are available within the application 
+    and the user context
+    """
+    routes: [ClientRoute] 
+    """
+    Shortcut to the logged in user membership
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    memberships: [UserMembership] @auth(roles: ["USER"])
+    
+    """
+    The list of roles that the application itself exposes and use.
+    These are required for the client to do a role check where required.
+    """
+    applicationRoles: [String]
+
+    """
+    The application avatar. The avatar is determined by using the active 
+    application theme and checking if an asset with the name
+    application.avatar exists. If exists it will return that url otherwise
+    it will return the default string that is assigned in the 
+    configuration.    
+    """
+    applicationAvatar: String
+
+    """
+    Application name. The application name appears in the title bar in 
+    the reactory client web app and is used as the main title reference
+    for the application.
+    """
+    applicationName: String
+    
+    """
+    The active theme name.
+    """
+    
+    theme: String
+    """
+    List of themes available
+    """
+    themes: [ApplicationTheme]
+
+    """
+    The active theme for the application / user
+    """
+    activeTheme(mode: String): ApplicationTheme   
+
+    """
+    A list of plugins for the application
+    """
+    plugins: [ApplicationPlugin]
+
+    """
+    colorSchemes for the 
+    Note!!. These options will be availabe on the 
+    application active theme 
+    """
+    colorSchemes: Any
+    
+    """
+    A list of active messages for the user.
+    These messages will remain in the payload until the user has dismissed them
+    """
+    messages: [ReactoryUXMessage]
+    """
+    Server signature
+    """
+    signature: String
+    """
+    Server public key
+    """
+    publicKey: String
+}

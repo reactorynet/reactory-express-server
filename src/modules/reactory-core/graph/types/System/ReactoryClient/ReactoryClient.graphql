@@ -1,0 +1,341 @@
+
+"""
+Client Authentication configuration type. This type is used
+for configuring client auth config
+"""
+type ClientAuthConfig {
+  """
+  The provider name
+  """
+  provider: String
+  """
+  Indicates whether or not this authentication 
+  provider is enabled.
+  """
+  enabled: Boolean
+  """
+  The success callback endpoint for the provider
+  """
+  successCallbackUrl: String
+  """
+  The failed callback endpoint
+  """
+  failedCallbackUrl: String
+  """
+  Api key for the provider
+  """
+  apikey: String
+  """
+  Api password associated with the provider
+  """
+  apipass: String
+  """
+  The scopes required by the configuration
+  """
+  scopes: [String]
+}
+
+type ComponentArgs {
+  key:  String
+  value: Any
+}
+
+"""
+A client component 
+"""
+type ClientComponent {
+  id: String
+  name: String
+  nameSpace: String
+  version: String
+  title: String
+  description: String
+  author: User
+  roles: [String]
+  args: [ComponentArgs]
+}
+
+"""
+Reactory UX Message Action. The action is used by the 
+message processor on the client to activate components for the 
+user to interact with.
+"""
+type ReactoryUXMessageAction {
+  """
+  The unique id for the message action
+  """
+  id: String
+  """
+  The name of the action
+  """
+  action: String
+  title: String
+  icon: String
+  componentFqn: String
+  componentProps: Any
+  modal: Boolean
+  modalSize: String
+  priority: Int
+}
+
+"""
+Reactory UX Message type is a complex type used to 
+provide the consuming client a UX message that requires the client
+to see the message.
+"""
+type ReactoryUXMessage {
+  id: String
+  title: String
+  text: String
+  data: Any
+  via: String
+  icon: String
+  actions: [ReactoryUXMessageAction]  
+  image: String
+  requireInteraction: Boolean
+  silent: Boolean
+  timestamp: Date
+  vibrate: [Int]  
+}
+
+"""
+A client route / path used by the client for internal routing
+"""
+type ClientRoute {
+  """
+  The id for the route
+  """
+  id: String
+  """
+  The path for the route. examples would be
+  /dashboard/
+  /dashboard/{type}/{period} etc.
+  """
+  path: String
+  """
+  Indicates if this is a public route.
+  """
+  public: Boolean
+  """
+  The roles required for this route
+  """
+  roles: [String]
+  """
+  The component fully qualified name that needs to be 
+  bound to this route. 
+  i.e. 
+  - core.Dashboard@1.0.0
+  """
+  componentFqn: String
+  """
+  Indicates whether or not the route binding 
+  was specific
+  """
+  exact: Boolean
+  """
+  A redirect path if the component becomes redundant
+  """
+  redirect: String
+  """
+  An array of components that should be mounted at this route.  
+  
+  """
+  components: [ClientComponent]
+  """
+  Arguments that can need to be bound to this client component
+  Prefered method is to use the "props" to pass arguments
+  to the component
+  """
+  args: [ComponentArgs]
+  """
+  Any object props to pass to the component
+  """
+  componentProps: Any
+}
+
+"""
+A Basic Key Pair structure
+"""
+type KeyPair {
+  """
+  id for the key pair
+  """
+  id: String
+  """
+  String value for the key
+  """
+  key: String
+  """
+  An any object value
+  """
+  value: Any
+}
+
+"""
+Reactory Client type
+"""
+type ReactoryClient {
+  """
+  The unique id for the client 
+  """
+  id: String
+  """
+  The name of the reactory client 
+  """
+  name: String
+  """
+  The client key, the client key 
+  """
+  clientKey: String
+  """
+  The site url for the application
+  """
+  siteUrl: String
+  """
+  The username for the application
+  """
+  username: String
+  """
+  A system email for the application
+  """
+  email: String  
+  """
+  The avatar for the application
+  """
+  avatar: String
+  """
+  Authentication configuration for the client.
+  """
+  auth_config: [ClientAuthConfig]
+  """
+  Menus for the application
+  """
+  menus: [Menu]
+  """
+  Availble routes for the application.
+  """
+  routes: [ClientRoute]
+  """
+  white list
+  """
+  whitelist: [String]
+
+  """
+  A list of plugins required by the application
+  """
+  plugins: [ApplicationPlugin]
+
+  """
+  Date and time the client record was first created
+  """
+  createdAt: Date
+  """
+  Date and time the client record last updated
+  """
+  updatedAt: Date
+}
+
+
+
+
+"""
+Navigation component definitions are used to inject navigation aide to 
+the front end.
+"""
+type NavigationComponentDefinition {
+  """
+  The unique id for the navigation component
+  """
+  id: String
+  """
+  Component fully qualified name i.e. my.CustomHeader@1.0.0
+  """
+  componentFqn: String!
+  """
+  Any properties that should be passed to the header.
+  """
+  componentProps: Any
+  """
+  A property map that can be used to map data from the context
+  to the component.
+  """
+  componentPropertyMap: Any
+  """
+  A unique component key
+  """
+  componentKey: String
+  """
+  ? Context ?
+  """
+  componentContext: Any
+  """
+  A string type that defines where the component is mounted on the nav
+  """
+  contextType: String
+}
+
+"""
+The ReactoryServer type provides information about the server instance.
+"""
+type ReactoryServer {
+  """
+  The server id. Each server instance should have a unique id
+  """
+  id: String
+  """
+  The server version
+  """
+  version: String
+  """
+  Date and time the server instance was started
+  """
+  started: Date
+  """
+  The license associated with the server
+  """
+  license: String
+  """
+  ??? 
+  """
+  access: String
+  """
+  The server administrator
+  """
+  administrator: String
+  """
+  Contact person for this server instance
+  """
+  contact: String
+  """
+  The current mode the server is running in.  This can be either "DEVELOP", "TEST" or "PRODUCTION"
+  """
+  mode: String
+  """
+  The list of client applications this server supports
+  """
+  clients: [ReactoryClient]
+}
+
+extend type Query {
+  """
+  WILL BE DEPRECATED - use ReactoryClientWithKey instead
+  """
+  clientWithId(id: String): ReactoryClient
+
+  """
+  Fetches a ReactoryClient item with a given Key
+  """
+  ReactoryClientWithKey(key: String): ReactoryClient
+}
+
+input CreateReactoryClient {
+  name: String
+  clientKey: String
+  username: String
+  email: String
+  password: String 
+}
+
+extend type Mutation {
+  registerNewClient(input: CreateReactoryClient!): ReactoryClient  
+}

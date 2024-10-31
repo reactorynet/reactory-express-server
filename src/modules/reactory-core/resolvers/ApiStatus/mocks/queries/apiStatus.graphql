@@ -1,0 +1,211 @@
+query status($theme: String, $mode: String) {
+      apiStatus(theme: $theme, mode: $mode) {
+      applicationName
+      applicationAvatar
+      applicationRoles
+      when
+      status
+      loggedIn {
+        user {
+          id
+          firstName
+          lastName
+        }
+        organization {
+          id
+          name
+          logo
+        }
+        team {
+          id
+          name
+        }
+        businessUnit {
+          id
+          name
+          avatar
+        }
+        roles
+        altRoles
+        memberships {
+          id
+          client {
+            id
+            name
+          }
+          organization {
+            id
+            name
+            logo
+          }
+          businessUnit {
+            id
+            name
+            avatar
+          }
+          roles
+        }
+      }
+      firstName
+      lastName
+      email
+      avatar
+      roles
+      organization {
+        id
+        name
+        logo
+      }
+      businessUnit {
+        id
+        name
+        avatar
+      }
+      memberships {
+        id
+        client {
+          id
+          name
+        }
+        organization {
+          id
+          name
+          logo
+        }
+        businessUnit {
+          id
+          name
+          avatar
+        }
+        roles
+      }
+      id
+      theme
+      activeTheme(mode: $mode) {
+        id
+        type
+        name
+        nameSpace
+        version
+        description
+        modes {
+          id
+          name
+          description
+          icon
+        }
+        options
+        assets {
+          id
+          name
+          assetType
+          url
+          loader
+          options
+          data
+        }        
+      }
+      themes {
+        id
+        type
+        name
+        nameSpace
+        version
+        description        
+      }
+      server {
+        id
+        version,
+        started,
+        clients {
+          id
+          clientKey
+          name
+          siteUrl
+        }
+      }
+      colorSchemes
+      routes {
+        id
+        path
+        public
+        roles
+        componentFqn
+        exact
+        redirect
+        componentProps
+        args {
+          key
+          value
+        }
+        components {
+          nameSpace
+          name
+          version
+          args {
+            key
+            value
+          }
+          title
+          description
+          roles
+        }
+      }
+      menus {
+        id
+        key
+        name
+        target
+        roles
+        entries {
+          id
+          ordinal
+          title
+          link
+          external
+          icon
+          roles
+          items {
+            id
+            ordinal
+            title
+            link
+            external
+            icon
+            roles
+          }
+        }
+
+      }
+      messages {
+        id
+        title
+        text
+        data
+        via
+        icon
+        image
+        requireInteraction
+        silent
+        timestamp
+        actions {
+          id
+          action
+          icon
+          componentFqn
+          componentProps
+          modal
+          modalSize
+          priority
+        }
+      }
+      navigationComponents {
+				componentFqn
+				componentProps
+				componentPropertyMap
+				componentKey
+				componentContext
+        contextType
+			}
+    }
+  }

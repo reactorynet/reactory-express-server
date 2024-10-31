@@ -35,6 +35,7 @@ const MergeGraphResolvers = (resolvers: ReactoryResolver[] = []): Reactory.Graph
   };
 
   resolvers.forEach((resolver: ReactoryResolver) => {
+    
     let $resolver: Reactory.Graph.IGraphShape = {
       Query: {},
       Mutation: {},
@@ -62,13 +63,17 @@ const MergeGraphResolvers = (resolvers: ReactoryResolver[] = []): Reactory.Graph
 
     if(Object.keys($resolver).length > 0 ) {
       ['Query', 'Mutation', 'Subscription'].forEach((property: string) => {
-
-        // firt merge the Query and Mutation entries
+        // first merge the Query and Mutation entries
+        // @ts-ignore
         if (typeof $resolver[property] === 'object') {
+          //@ts-ignore
           rootResolver[property] = {
+            //@ts-ignore
             ...rootResolver[property],
+            //@ts-ignore
             ...$resolver[property]
           };
+          //@ts-ignore
           delete $resolver[property];
         }
       });

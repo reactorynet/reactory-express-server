@@ -1,12 +1,21 @@
 /**
  * AMQ - Asynchronous Message Queue. We use postal.js to create a
  * pub - sub in memory bus.
+ * 
+ * The idea is to have a simple message queue system that can be used
+ * to communicate between different parts of the application.
+ * 
+ * The system is designed to be used in a microservices architecture
+ * where different parts of the application can communicate with each other
+ * using a simple message queue system.
+ * 
+ * TODO: This should be replaced with a more robust message queue system
+ * like RabbitMQ or Kafka
  *
  * This is the basic setup and configuration of channels for UI events
  */
 import postal from 'postal';
 import * as express from 'express';
-import logger from '../logging';
 
 const router = express.Router();
 
@@ -66,15 +75,15 @@ export const $sub = {
 
 export const $pub = {
   def: (eventId, data, channel = undefined) => $chan(channel).publish(eventId, data),
-  transactions: (eventId, data = {}, partner) => $chan(DEFAULT_CHANNELS.TRANSACTIONS, partner).publish(eventId, data),
-  file: (eventId, data = {}, partner) => $chan(DEFAULT_CHANNELS.FILE, partner).publish(eventId, data),
-  data: (eventId, data = {}, partner) => $chan(DEFAULT_CHANNELS.DATA, partner).publish(eventId, data),
-  metrics: (eventId, data = {}, partner) => $chan(DEFAULT_CHANNELS.METRICS, partner).publish(eventId, data),
-  formCommand: (eventId, formData, partner) => $chan(DEFAULT_CHANNELS.FORM_COMMAND, partner).publish(eventId, formData),
-  workFlow: (eventId, data, partner) => $chan(DEFAULT_CHANNELS.WORKFLOW, partner).publish(eventId, data),
-  messageHandlerLoaded: (eventId, data, partner) => $chan(DEFAULT_CHANNELS.CROSS_ORIGIN, partner).publish(eventId, data),
-  pluginLoaded: (eventId, data, partner) => $chan(DEFAULT_CHANNELS.PLUGINS, partner).publish(eventId, data),
-  system: (eventId, data, partner) => $chan(DEFAULT_CHANNELS.SYSTEM, partner).publish(eventId, data),
+  transactions: (eventId: string, data?: any, partner?: Reactory.Models.IReactoryClient ) => $chan(DEFAULT_CHANNELS.TRANSACTIONS, partner).publish(eventId, data),
+  file: (eventId: string, data?: any, partner?: Reactory.Models.IReactoryClient ) => $chan(DEFAULT_CHANNELS.FILE, partner).publish(eventId, data),
+  data: (eventId: string, data?: any, partner?: Reactory.Models.IReactoryClient ) => $chan(DEFAULT_CHANNELS.DATA, partner).publish(eventId, data),
+  metrics: (eventId: string, data?: any, partner?: Reactory.Models.IReactoryClient ) => $chan(DEFAULT_CHANNELS.METRICS, partner).publish(eventId, data),
+  formCommand: (eventId: string, data?: any, partner?: Reactory.Models.IReactoryClient ) => $chan(DEFAULT_CHANNELS.FORM_COMMAND, partner).publish(eventId, formData),
+  workFlow: (eventId: string, data?: any, partner?: Reactory.Models.IReactoryClient ) => $chan(DEFAULT_CHANNELS.WORKFLOW, partner).publish(eventId, data),
+  messageHandlerLoaded: (eventId: string, data?: any, partner?: Reactory.Models.IReactoryClient ) => $chan(DEFAULT_CHANNELS.CROSS_ORIGIN, partner).publish(eventId, data),
+  pluginLoaded: (eventId: string, data?: any, partner?: Reactory.Models.IReactoryClient ) => $chan(DEFAULT_CHANNELS.PLUGINS, partner).publish(eventId, data),
+  system: (eventId: string, data?: any, partner?: Reactory.Models.IReactoryClient ) => $chan(DEFAULT_CHANNELS.SYSTEM, partner).publish(eventId, data),
 };
 
 

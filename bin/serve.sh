@@ -38,6 +38,6 @@ checkEnvVars(){
 
 checkEnvVars
 
-echo "Starting Reactory Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}"
-pm2 start ./config/${1:-reactory}/pm2.${2:-local}.config.js --env ${3:-development}
-pm2 monit
+echo "Starting Reactory Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-local}"
+NODE_PATH=./bin/server/${1:-reactory} env-cmd -f ./config/${1:-reactory}/.env.${2-local} npx pm2 start ./bin/server/${1:-reactory}/pm2.${2-local}.config.js --env ${3:-local}
+npx pm2 monit

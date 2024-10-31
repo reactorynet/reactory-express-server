@@ -1,10 +1,10 @@
 [
   {
-    "id": "f86ed2ac-f06a-4076-a7ce-2cda58482989",
+    "id": "reactory-core",
     "name": "ReactoryServer",
-    "key": "reactory",
+    "key": "reactory-core",
     "fqn": "core.ReactoryServer@1.0.0",
     "moduleEntry": "core/index.js",
-    "license": "Apache-2.0"  
+    "license": "MIT"  
   }
 ]

@@ -1,5 +1,10 @@
 import express from 'express';
-import { configureWorkflow, ConsoleLogger } from 'workflow-es';
+import { 
+  configureWorkflow, 
+  ConsoleLogger, 
+  IPersistenceProvider,
+  ILogger, 
+} from 'workflow-es';
 import { MongoDBPersistence } from 'workflow-es-mongodb';
 import { isArray } from 'lodash';
 import moment from 'moment';
@@ -8,6 +13,7 @@ import StartupWorkflow from './core/StartupWorkflow';
 import reactoryModules from '../modules';
 
 import logger from '../logging';
+import mongoose from 'mongoose';
 
 
 const router = express.Router();
@@ -17,6 +23,7 @@ const {
   API_PORT,
   API_URI_ROOT,
   CDN_ROOT,
+  WORKFLOW_MONGO_DB,
 } = process.env;
 
 const availableworkflows = [];
@@ -51,8 +58,32 @@ const safeCallback = (cb, params) => {
   if (typeof cb === 'function') cb(params);
 };
 
-class WorkFlowRunner {
-  constructor(props) {
+class Logger implements ILogger {
+  error(message?: any, ...optionalParams: any[]): void {
+    logger.error(message, optionalParams);
+  }
+  info(message?: any, ...optionalParams: any[]): void {
+    logger.info(message, optionalParams);
+  }
+  log(message?: any, ...optionalParams: any[]): void {
+    logger.debug(message, optionalParams);
+  } 
+
+}
+
+/**
+ * Workflow runner is a singleton class that manages the workflow engine and the workflow host.
+ */
+export class WorkFlowRunner {
+
+  connection: mongoose.Connection;
+  persistence: IPersistenceProvider;
+  state: {
+    workflows: any[],
+    host: any,
+  };
+  props: any;
+  constructor(props: any) {
     this.props = props;
     this.start = this.start.bind(this);
     this.setState = this.setState.bind(this);
@@ -134,13 +165,33 @@ class WorkFlowRunner {
     this.setState({ workflows: [...this.state.workflow, workflow] });
   }
 
+  async getPersistenceProvider(): Promise<MongoDBPersistence> {
+    if (MONGOOSE) {
+      logger.debug('Using Mongoose for Workflow Persistence');
+      const mongopersistence = new MongoDBPersistence(MONGOOSE);      
+      await mongopersistence.connect;
+      return mongopersistence
+    }
+    logger.debug('Using In Memory for Workflow Persistence');
+    return null;
+  }
+
+  async stop() { 
+    if(this.persistence) {
+      if(MONGOOSE) {
+        await (this.persistence as MongoDBPersistence).client.close();
+      }
+      this.persistence = null;      
+    }
+  }
+
   async start() {
     const config = configureWorkflow();
     const { workflows } = this.state;
-    config.useLogger(new ConsoleLogger());
-    const mongoPersistence = new MongoDBPersistence(MONGOOSE);
-    await mongoPersistence.connect;
-    config.usePersistence(mongoPersistence);
+    config.useLogger(new Logger());
+    this.persistence = await this.getPersistenceProvider();
+    
+    config.usePersistence(this.persistence);
     const host = config.getHost();
     try {
       const autoStart = [];

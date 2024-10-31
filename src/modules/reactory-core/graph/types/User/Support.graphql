@@ -1,0 +1,193 @@
+
+"""
+Reactory Support Ticket
+"""
+type ReactorySupportTicket {
+  """
+  The internal id
+  """
+  id: String
+  """
+  The user request, short title
+  """
+  request: String
+  """
+  The type of user request
+  """
+  requestType: String
+  """
+  The request description, a fuller longer detailed description
+  """
+  description: String
+  """
+  Request status
+  """
+  status: String
+  """
+  Request reference
+  """
+  reference: String
+  """
+  logged by user
+  """
+  createdBy: User
+  """
+  Date the ticket was logged
+  """
+  createdDate: Date
+  """
+  Date the ticket was updated
+  """
+  updatedDate: Date
+  """
+  Who the ticket is assigned to
+  """
+  assignedTo: User
+  """
+  Any meta data, interpretation of this will be up to the client
+  """
+  meta: Any
+  """
+  Comments array for the ticket
+  """
+  comments: [Comment]
+  """
+  The documents attached to this request
+  """
+  documents: [ReactoryFile]  
+  """
+  The form id from where the request originated
+  """
+  formId: String
+}
+
+"""
+Input type used to update a Reactory Support Ticket
+"""
+input ReactorySupportTicketUpdate {
+  """
+  The user request, short title
+  """
+  request: String
+  """
+  The type of user request
+  """
+  requestType: String
+  """
+  The request description, a fuller longer detailed description
+  """
+  description: String
+  """
+  Request status
+  """
+  status: String
+  """
+  id of the user to assgign the ticket to
+  """
+  assignTo: String
+  """
+  Comment
+  """
+  comment: String
+}
+
+"""
+Paged Reactory Support Tickets
+"""
+type PagedReactorySupportTickets {
+  """
+  Paging request
+  """
+  paging: PagingResult
+  """
+  The ticket array
+  """
+  tickets: [ReactorySupportTicket]
+}
+
+"""
+Paged Reactory Support Tickets Filter Input
+"""
+input ReactorySupportTicketFilter {
+  """
+  String array of user ids
+  """
+  assignedTo: [String]
+  """
+  String array of user status ids
+  """
+  status: [String]
+  """
+  Ticket refernce number
+  """
+  reference: [String]
+  """
+  Search string
+  """
+  searchString: String
+  """
+  Start Date
+  """
+  startDate: Date
+  """
+  End Date
+  """
+  endDate: Date
+  """
+  Date fields to search against
+  """
+  dateFields: [String]
+  """
+  Include a form id to keep the results to a specific form
+  """
+  formId: String 
+}
+
+input ReactorySupportTicketDeleteInput {
+  """
+  The ticket id to delete
+  """
+  ids: [String]!
+  """
+  The reason for the deletion
+  """
+  reason: String
+}
+
+type ReactorySupportTicketDeleteSuccess {
+  ids: [String]
+}
+
+type ReactorySupportTicketDeleteError {
+  ids: [String]
+  error: String
+}
+
+union ReactorySupportTicketDeleteResult = ReactorySupportTicketDeleteSuccess | ReactorySupportTicketDeleteError
+
+extend type Query {
+  """
+  Returns paged tickets that were created by the logged in user
+  """
+  ReactoryMySupportTickets(paging: PagingRequest, filter: ReactorySupportTicketFilter): PagedReactorySupportTickets
+  """
+  Returns support tickets based on search input
+  """
+  ReactorySupportTickets(paging: PagingRequest, filter: ReactorySupportTicketFilter): PagedReactorySupportTickets  
+}
+
+extend type Mutation {
+  """
+  Creates a new support for the logged in user
+  """
+  ReactoryCreateSupportTicket(request: String!, description: String!, requestType: String, meta: Any, formId: String): ReactorySupportTicket
+  """
+  Updates a ticket with either a status update, assignment change or comment add
+  """
+  ReactoryUpdateSupportTicket(ticket_id: String, updates: ReactorySupportTicketUpdate): ReactorySupportTicket
+
+  """
+  Deletes a / multiple support tickets
+  """
+  ReactoryDeleteSupportTicket(deleteInput: ReactorySupportTicketDeleteInput!): ReactorySupportTicketDeleteResult
+}

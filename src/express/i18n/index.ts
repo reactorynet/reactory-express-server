@@ -1,7 +1,7 @@
 import i18next from 'i18next';
 import i18nextHttp from 'i18next-http-middleware';
 import i18nextFSBackend from 'i18next-fs-backend';
-import logger from "logging";
+import logger from "@reactory/server-core/logging";
 import { getModuleDefinitions } from "@reactory/server-core/modules/helpers/moduleImportFactory";
 
 const {

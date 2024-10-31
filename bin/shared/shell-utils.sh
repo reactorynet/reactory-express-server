@@ -43,3 +43,20 @@ package_exists() {
     echo "Package $package_name is not installed"
   fi
 }
+
+# Checks if MeiliSearch is running
+check_meili_search(){
+  if curl -f http://localhost:7700/health; then
+    echo "MeiliSearch is running."
+  else
+    echo "MeiliSearch is not running."
+    sh ./bin/meilisearch.sh
+  fi
+  echo "Checked MeiliSearch"
+}
+
+# function to copy the specified .env file to the root of the project
+copy_env_file(){
+  cp ./config/${1:-reactory}/.env.${2:-local} .env
+  echo "Copied .env file"
+}

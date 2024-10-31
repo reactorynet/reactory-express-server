@@ -27,6 +27,27 @@ export const getModuleDefinitions = (): Reactory.Server.IReactoryModuleDefinitio
   return enabled;
 }
 
+const generateHeader = () => { 
+  return `
+/** 
+ * ©️ Reactory Server - Generated Code - Do not modify!
+ * CODE-GENERATED: Do not modify! 
+ * 
+ * This file is generated with each startup, do not modify or check into the repo.
+ * See the readme.md in the modules folder for more details.
+ * */
+"use strict";
+`;
+};
+
+
+const generateImport = (moduleDefinition: Reactory.Server.IReactoryModuleDefinition) => { 
+  let import_name = getImportName(moduleDefinition);
+  return `
+import ${import_name} from '@reactory/server-modules/${moduleDefinition.moduleEntry.replace('.ts', '').replace('.js', '')}';`;
+};
+
+
 /**
  * Generates __index.ts that is responsible for module includes.
  */
@@ -47,12 +68,7 @@ const generate_index = () => {
 
   logger.debug(`Found ${enabled.length} module definintions in ${filename}`);
 
-  let file_contents = `
-/**
- * This file is generated with each startup, do not modify or check into the repo.
- * See the readme.md in the modules folder for more details.
- * */
-"use strict";`;
+  let file_contents = generateHeader();
 
   let module_names = '';
   enabled.forEach((moduleDefinition: Reactory.Server.IReactoryModuleDefinition, midx: number) => {
@@ -61,12 +77,7 @@ const generate_index = () => {
 
     let import_name = getImportName(moduleDefinition);
 
-    file_contents = `${file_contents}
-
-/**
- * Generated import for module id ${moduleDefinition.id}
- * */ 
-import ${import_name} from '@reactory/server-modules/${moduleDefinition.moduleEntry.replace('.ts', '').replace('.js', '')}';`;
+    file_contents = `${file_contents}` + generateImport(moduleDefinition);
     module_names = midx === 0 ? `\t${import_name}` : `${module_names},\n\t${import_name}`;
   });
 
@@ -76,7 +87,6 @@ import ${import_name} from '@reactory/server-modules/${moduleDefinition.moduleEn
 export default [
 ${module_names}
 ];
-
 `;
 
   const __index = './src/modules/__index.ts';

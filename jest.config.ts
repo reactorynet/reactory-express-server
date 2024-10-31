@@ -1,6 +1,8 @@
 
-import type { Config } from 'jest';
-import type { JestConfigWithTsJest, TsJestTransformerOptions } from 'ts-jest'
+import type { 
+  JestConfigWithTsJest, 
+  TsJestTransformerOptions 
+} from 'ts-jest'
 
 export default async (): Promise<JestConfigWithTsJest> => {
 
@@ -81,6 +83,7 @@ export default async (): Promise<JestConfigWithTsJest> => {
     displayName: 'reactory-server',
     modulePaths: ['<rootDir>/src'],
     testEnvironment: 'node',
+    detectOpenHandles: true,
     transform: {
       '^.+\\.[jt]sx?$': [
         'ts-jest', transformerOptions,

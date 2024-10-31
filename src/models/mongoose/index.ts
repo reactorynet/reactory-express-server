@@ -15,7 +15,16 @@ export const options: ConnectOptions = {
     appName: `reactory[${SERVER_ID}@${DOMAIN_NAME}]]`,
 };
 
-const connection = mongoose.connect(MONGOOSE, options);
+export let connection: typeof mongoose;
 
-export default connection;
+const getConnection = async () => { 
+    try {
+        connection = await mongoose.connect(MONGOOSE, options);
+        return connection;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+export default getConnection;
 

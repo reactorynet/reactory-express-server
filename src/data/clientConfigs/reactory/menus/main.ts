@@ -96,7 +96,7 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
     {
       ordinal: 94, 
       title: 'reactory:reactory.menu.support', 
-      link: '/support/', 
+      link: '/support/open', 
       icon: 'help', 
       roles: ['USER'],
       items: [
@@ -105,13 +105,6 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
           title: 'reactory:reactory.menu.support-request', 
           link: '/support/request', 
           icon: 'support_agent', 
-          roles: ['USER'],
-        },
-        {
-          ordinal: 96, 
-          title: 'reactory:reactory.menu.my-support-requests', 
-          link: '/support/open', 
-          icon: 'task', 
           roles: ['USER'],
         },
       ],

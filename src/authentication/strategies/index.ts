@@ -4,10 +4,9 @@ import {
   useReactoryLocalRoutes,
 } from './LocalStrategy';
 import { default as JwtStrategy } from './JWTStrategy';
-import { default as GoogleStrategy } from './GoogleStrategy';
+import { default as GoogleStrategy, useGoogleRoutes } from './google/GoogleStrategy';
 import { default as FacebookStrategy } from './FacebookStrategy';
 import { default as GithubStrategy } from './GithubStrategy';
-import { default as TwitterStrategy } from './TwitterStrategy';
 import { default as LinkedInStrategy } from './LinkedInStrategy';
 import { 
   default as MicrosoftStrategy,
@@ -31,6 +30,7 @@ const PassportProviders: Reactory.Server.ReactoryPassportProviders = [
   {
     name: 'google',
     strategy: GoogleStrategy,
+    configure: useGoogleRoutes,
   },
   {
     name: 'facebook',
@@ -39,10 +39,6 @@ const PassportProviders: Reactory.Server.ReactoryPassportProviders = [
   {
     name: 'github',
     strategy: GithubStrategy,
-  },
-  {
-    name: 'twitter',
-    strategy: TwitterStrategy,
   },
   {
     name: 'linkedin',

@@ -68,7 +68,8 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
     [/^;/, 'SEMICOLON'],    
     [/^-->/, 'ARROW_CHAIN'],
     [/^-=>/, 'ARROW_BRANCH'],
-    [/^\$[a-zA-Z_]\w*/, 'VARIABLE'],
+    [/^\$[a-zA-Z_]\w*((\.\w+)|(\?\.\w+))*/, 'VARIABLE'],
+    //[/^\$[a-zA-Z_]\w*/, 'VARIABLE'],
     [/^"[^"\\]*(\\.[^"\\]*)*"/, 'STRING_LITERAL'], // String literals with escape characters
     [/^\d+(\.\d+)?/, 'NUMBER_LITERAL'],
     [/^(?:&&|\|\|)/, 'LOGICAL_OPERATOR'],
@@ -102,6 +103,7 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
     [/^acl\.required\b/, 'ACL_REQUIRED'],
     [/^acl\.denied\b/, 'ACL_DENIED'],
     [/^[a-zA-Z_]\w*/, 'IDENTIFIER'],
+    [/^#/, 'DIRECTIVE'],
     // executable string literals
     [/^`[^`\\]*(\\.[^`\\]*)*`/, 'EXECUTABLE_STRING_LITERAL'],
     // EOF
@@ -132,6 +134,21 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
         let [text] = match;
 
         switch(type)  {
+          case 'VARIABLE': {
+            var components = text.split('.');
+            if (components.length > 1) {
+              tokens.push({ type, value: components[0], position: { ...position } });
+              // ensure that the dot is also added as a token
+              // loop through the remaining components and add them as tokens
+              for (let i = 1; i < components.length; i++) {
+                tokens.push({ type: 'DOT', value: '.', position: { ...position } });
+                tokens.push({ type: 'IDENTIFIER', value: components[i], position: { ...position } });
+              }              
+            } else {
+              tokens.push({ type, value: text, position: { ...position } });
+            }
+            break;
+          }
           case 'NEWLINE': {
             if (ignoreNewLines === false) {
               tokens.push({ type, value: text, position: { ...position } });
@@ -142,6 +159,24 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
             if (ignoreWhitespace === false) {
               tokens.push({ type, value: text, position: { ...position } });
             }
+            break;
+          }
+          case 'DIRECTIVE': {
+            // the directive token is represented by the # character 
+            // and is followed by a directive name with options following the directive name
+            // using spaces to separate the directive name and the options
+            // i.e. # directiveName option1 option2 option3
+            // the directive name and options are separated by spaces
+
+            // we need to find the end of the directive
+            // we can do this by looking for the first occurence of '\n'
+
+            const endOfDirectiveIndex = workingInput.indexOf('\n');
+            const directiveBlock = workingInput.slice(0, endOfDirectiveIndex);
+
+            text = directiveBlock;
+            offset = workingInput.startsWith('\n') ? 1 : 0;
+            tokens.push({ type, value: directiveBlock, position: { ...position } });
             break;
           }
           case 'COMMENT': {

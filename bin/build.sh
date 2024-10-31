@@ -10,35 +10,60 @@
 #$SECONDS - The number of seconds since the script was started.
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
-shdb $0
-checkEnvVars(){
-  echo "Checking environment variables"
-  env_vars=("REACTORY_HOME" "REACTORY_DATA" "REACTORY_SERVER" "REACTORY_CLIENT" "REACTORY_PLUGINS")
-  do_exit=0
-  # Loop over each environment variable and check if it is set and points to a valid directory
-  for var in ${env_vars[@]}; do
-    if [[ -z "${!var}" ]]; then
-      echo -e "$var is not set"
-      do_exit=1
-    elif [[ ! -d "${!var}" ]]; then
-      echo -e "$var is not a valid directory"
-      do_exit=1
-    else
-      echo -e "$var is set and points to a valid directory"
-    fi
-  done
-  
-  if [[ $do_exit -eq 1 ]]; then
-    echo -e "Please set the environment variables listed above"
-    exit 1
-  fi
-  
-  echo "Checked Environment Variables"
-}
+source ./bin/shared/shell-utils.sh
 
-checkEnvVars
+check_env_vars
+
+# Generate correct imports for the selected configuration
+sh ./bin/generate.sh ${1:-reactory} ${2:-local}
+
+# read package.json to get the version
+BUILD_VERSION=$(node -p "require('./package.json').version")
 NODE_PATH=$REACTORY_SERVEr/src
 env_file=$REACTORY_SERVER/config/${1:-reactory}/.env.${2:-local}
-echo "Building Reactory Server"
-NODE_PATH=./src env-cmd -f $env_file npx babel ./src --presets @babel/env --extensions ".js,.ts" --out-dir ./lib/reactory-server 
-echo "Built Reactory Server to ./lib/reactory-server"
+BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}
+APP_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/app
+BIN_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/bin
+CONFIG_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/config
+
+echo "Building Reactory Server $BUILD_VERSION for ${1:-reactory} ${2:-local} configuration"
+# Clean the target path
+echo "Cleaning $BUILD_PATH"
+rm -rf $BUILD_PATH
+
+echo "Compiling Reactory Server"
+# Compile using npx with babel
+NODE_PATH=./src env-cmd -f $env_file npx babel ./src --presets @babel/env --extensions ".js,.ts,.jsx,.tsx" --out-dir $APP_BUILD_PATH
+# Copy additional files while preserving directory structure
+
+echo "Copying additional files"
+rsync -av --filter='merge ./bin/build.app.rsync' ./src/ $APP_BUILD_PATH --quiet
+rsync -av --filter='merge ./bin/build.bin.rsync' ./bin/ $BIN_BUILD_PATH --quiet
+# rsync the lib/ directory
+rsync -av --filter='merge ./bin/build.lib.rsync' ./lib/ $BUILD_PATH/lib --quiet
+
+# Check if there is a pm2 configuration file
+if [ -f "./config/${1:-reactory}/pm2.${2:-local}.config.js" ]; then
+  echo "Copying pm2 configuration file"
+  # Copy the pm2 configuration file to the build directory
+  cp "./config/${1:-reactory}/pm2.${2:-local}.config.js" $BUILD_PATH
+fi
+
+# Copy package.json
+echo "Copying package.json"
+cp ./package.json $BUILD_PATH
+
+# Copy package-lock.json
+echo "Copying yarn.lock"
+cp ./yarn.lock $BUILD_PATH
+
+# Copy .env file
+echo "Copying .env file"
+cp $env_file $BUILD_PATH/.env
+
+# Create archive for deployment
+echo "Creating archive for deployment"
+cd $BUILD_PATH
+tar -czf ../${1:-reactory}-server-${BUILD_VERSION}.tar.gz .
+
+echo "🏆 Built Reactory Server to $BUILD_PATH"

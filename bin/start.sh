@@ -9,34 +9,10 @@
 #$SECONDS - The number of seconds since the script was started.
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
-
-checkEnvVars(){
-  echo "Checking environment variables"
-  env_vars=("REACTORY_HOME" "REACTORY_DATA" "REACTORY_SERVER" "REACTORY_CLIENT" "REACTORY_PLUGINS")
-  do_exit=0
-  # Loop over each environment variable and check if it is set and points to a valid directory
-  for var in ${env_vars[@]}; do
-    if [[ -z "${!var}" ]]; then
-      echo -e "$var is not set"
-      do_exit=1
-    elif [[ ! -d "${!var}" ]]; then
-      echo -e "$var is not a valid directory"
-      do_exit=1
-    else
-      echo -e "$var is set and points to a valid directory"
-    fi
-  done
-  
-  if [[ $do_exit -eq 1 ]]; then
-    echo -e "Please set the environment variables listed above"
-    exit 1
-  fi
-  
-  echo "Checked Environment Variables"
-}
-
-checkEnvVars
-
+source ./bin/shared/shell-utils.sh
+check_env_vars
+check_meili_search
+copy_env_file ${1:-reactory} ${2:-local}
 echo "Starting Reactory Development Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}"
 sh ./bin/generate.sh ${1:-reactory} ${2:-local}
 NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx nodemon -e js,ts,tsx,graphql --exec npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000

@@ -1,6 +1,7 @@
 // Token types specific to the macro language
 export type TokenType =
   | 'IDENTIFIER'          // Matches macro names and variable names
+  | 'DIRECTIVE'           // Matches # followed by a directive name
   | 'MACRO_START'         // Matches '@' which denotes the start of a macro
   | 'PAREN_OPEN'          // Matches '('
   | 'PAREN_CLOSE'         // Matches ')'
@@ -9,6 +10,7 @@ export type TokenType =
   | 'CURLY_OPEN'          // Matches '{'
   | 'CURLY_CLOSE'         // Matches '}'
   | 'COMMA'               // Matches ','
+  | 'DOT'                 // Matches '.'
   | 'SEMICOLON'           // Matches ';'
   | 'ARROW_CHAIN'         // Matches '-->'
   | 'ARROW_BRANCH'        // Matches '-=>'

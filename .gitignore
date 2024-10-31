@@ -1,5 +1,6 @@
 node_modules/
 dist/
+bin/server
 /*-audit.json
 package-lock.json
 build/*
@@ -10,12 +11,14 @@ yarn.lock
 .env*
 config/*
 !config/reactory/.env.sample
+!config/reactory/.dockerignore
+!config/reactory/Dockerfile
 !config/reactory/pm2.sample.config.js
 !config/README.MD
 
 src/modules/*
 !src/modules/generate_index.ts
-!src/modules/core
+!src/modules/reactory-core
 !src/modules/index.ts
 !src/modules/README.md
 !src/modules/available.json

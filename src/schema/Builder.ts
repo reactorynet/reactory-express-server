@@ -242,11 +242,14 @@ export interface ISchemaBuilder {
 
 
 
+/**
+ * A builder class that is used to build a schema objects at runtime.
+ */
 export default class Builder implements ISchemaBuilder {
 
-  _schema: Reactory.Schema.ISchema;
-  _uiSchema: Reactory.Schema.IUISchema;
-  _parent: ISchemaBuilder;
+  private _schema: Reactory.Schema.ISchema;
+  private _uiSchema: Reactory.Schema.IUISchema;
+  private _parent: ISchemaBuilder;
 
   constructor(
     name: string = 'ObjectProperty', 

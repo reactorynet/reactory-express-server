@@ -5,13 +5,8 @@ import {
   resetpasswordroute,
   forgotpasswordroute,  
 } from '@reactory/server-core/data/clientConfigs/helpers/defaultRoutes';
+import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
-/**
- * Static Content Mappings
- */
-const staticContentMappings: Partial<Reactory.Routing.IReactoryRoute>[] = [
- 
-];
 
 
 const routes: Reactory.Routing.IReactoryRoute[] = [
@@ -35,9 +30,37 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       {
         key: 'authlist',
         value: {
-          type: 'bool',
+          type: 'array',
           authlist: [
-            'local'            
+            'local',
+            { 
+              provider: 'google', 
+              component: 'core.GoogleLoginButton@1.0.0', 
+              props: { 
+                url: `${ENVIRONMENT.API_URI_ROOT}auth/google/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
+              }
+            },
+            { 
+              provider: 'microsoft', 
+              component: 'microsoft.MicrosoftLogin@1.0.0',
+              props: { 
+                url: `${ENVIRONMENT.API_URI_ROOT}auth/microsoft/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
+              }
+            },
+            { 
+              provider: 'github', 
+              component: 'core.GitHubLoginButton@1.0.0', 
+              props: { 
+                url: `${ENVIRONMENT.API_URI_ROOT}auth/github/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
+              }
+            },
+            { 
+              provider: 'okta', 
+              component: 'core.OktaLoginButton@1.0.0', 
+              props: { 
+                url: `${ENVIRONMENT.API_URI_ROOT}auth/okta/start??x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
+              }
+            },                        
           ],
         },
       },
@@ -139,7 +162,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   logoutroute,
   forgotpasswordroute,
   resetpasswordroute,
-  logoutroute,
   {
     key: 'home_authenticated',
     title: 'Home (Authenticated)',
@@ -172,33 +194,29 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   },
   {
     key: 'myapplications',
-    title: 'Applications',
-    path: '/applications/*',
+    title: 'Application',
+    path: '/application/*',
     public: false,
     exact: true,
     roles: ['USER'],
-    componentFqn: 'reactory.Applications@1.0.0',
+    componentFqn: 'reactory.Application@1.0.0',
   },
-  {
-    key: 'profile',
-    title: 'Profile',
-    path: '/profile',
-    public: false,
-    roles: ['USER'],
-    // componentFqn: 'core.UserProfile@1.0.0',
-    // componentProps: {
-    //   withPeers: true,
-    //   withMemberships: true, 
-    // },
-    componentFqn: 'core.UserProfile@1.0.0',
-    componentProps: {
-      withPeers: true,
-      withMemberships: true,
-      withOrganigram: true,
-      components: [ 
-      ]
-    }
-  },
+  // {
+  //   key: 'profile',
+  //   title: 'Profile',
+  //   path: '/profile',
+  //   public: false,
+  //   roles: ['USER'],
+
+  //   componentFqn: 'core.UserProfile@1.0.0',
+  //   componentProps: {
+  //     withPeers: true,
+  //     withMemberships: true,
+  //     withOrganigram: true,
+  //     components: [ 
+  //     ]
+  //   }
+  // },
 
   {
     key: 'forms_with_mode_and_id',
