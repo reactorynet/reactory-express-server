@@ -2,6 +2,12 @@
 import Reactory from '@reactory/reactory-core';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
+import { error } from 'console';
+
+type DeleteArgs = { 
+  ids: string[]
+  reason?: string
+}
 @resolver
 class SupportResolver {
 
@@ -94,6 +100,34 @@ class SupportResolver {
     context: Reactory.Server.IReactoryContext) {
       const supportService: Reactory.Service.TReactorySupportService = context.getService("core.ReactorySupportService@1.0.0") as Reactory.Service.TReactorySupportService;
       return supportService.pagedRequest(args.filter, args.paging);
+  }
+  
+  @roles(["ADMIN", "SUPPORT_ADMIN"], 'args.context')
+  @mutation("ReactoryDeleteSupportTicket")
+  async deleteTickets(
+    _: any, 
+    args: { 
+      deleteInput: DeleteArgs; 
+    }, 
+    context: Reactory.Server.IReactoryContext) {
+    const supportService: Reactory.Service.TReactorySupportService = context.getService("core.ReactorySupportService@1.0.0") as Reactory.Service.TReactorySupportService;
+    try {
+      supportService.deleteRequest(args.deleteInput.ids, args.deleteInput.reason);
+      return {
+        __typename: 'ReactorySupportTicketDeleteSuccess',
+        ids: args.deleteInput.ids
+      }
+    } catch (deleteError) {
+      context.log('Error deleting tickets', { deleteError }, 'error', 'core.ReactorySupportService');
+      return {
+        __typename: 'ReactorySupportTicketDeleteError',
+        ids: args.deleteInput.ids,
+        error: context.i18n.t('reactory.support-ticket.delete.error', {           
+          defaultValue: 'Error deleting tickets' 
+        })
+      }
+    }
+    
   }
         
 }

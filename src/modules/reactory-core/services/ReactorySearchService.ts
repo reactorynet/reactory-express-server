@@ -22,7 +22,7 @@ class ReactorySearchService implements Reactory.Service.ISearchService {
 
   client: MeiliSearch;
 
-  constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
+  constructor(_: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.context = context;
     this.client = new MeiliSearch({
       host: process.env.MEILISEARCH_HOST || 'http://localhost:7700',
@@ -82,7 +82,6 @@ class ReactorySearchService implements Reactory.Service.ISearchService {
   setExecutionContext(executionContext: Reactory.Server.IReactoryContext): void {
     this.context = executionContext;
   }
-
 }
 
 export default ReactorySearchService;

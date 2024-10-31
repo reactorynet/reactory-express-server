@@ -1,6 +1,6 @@
 import Reactory from "@reactory/reactory-core";
 
-const ListUIOptions: Reactory.Client.Components.IMaterialListWidgetOptions<Reactory.Models.IReactorySupportTicket> = {      
+const ListUIOptions: Reactory.Client.Components.IMaterialListWidgetOptions = {      
     primaryText: '${itemIndex + 1}. ${item.reference}',
     secondaryText: '${item.request}',
     showAvatar: false,
@@ -56,7 +56,7 @@ const ListUIOptions: Reactory.Client.Components.IMaterialListWidgetOptions<React
 const ticketsListUISchema: Reactory.Schema.IUISchema = {
   'ui:widget': 'MaterialListWidget',
   'ui:title': null,
-  'ui:options': ListUIOptions,
+  'ui:options': ListUIOptions as Reactory.Schema.IUISchemaOptions,
 };
 
 
@@ -64,8 +64,7 @@ const BaseUISchema: Reactory.Schema.IFormUISchema = {
   'ui:form': {
     componentType: "div",
     showSubmit: false,
-    showRefresh: false,
-    container: "div",
+    showRefresh: false,    
     toolbarPosition: "top",
     toolbarStyle: {
       display: 'flex',
@@ -96,14 +95,15 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
   showLabel: false,
   allowAdd: true,
   allowDelete: true,
+  search: true,
   addButtonProps: {
     icon: 'add',
-    tooltip: 'support:add_new_ticket',
+    tooltip: 'reactory:support-ticket.ticket-grid.add-ticket-button.tooltip',
     onClick: 'core.SupportTicketWorkflow@1.0.0/addNew'
   },
   deleteButtonProps: {
-    icon: 'trash',
-    tooltip: 'support:delete_ticket',
+    icon: 'delete',
+    tooltip: 'reactory:support-ticket.ticket-grid.delete-ticket-button.tooltip',
     onClick: 'core.SupportTicketWorkflow@1.0.0/deleteTicket'
   },
   columns: [

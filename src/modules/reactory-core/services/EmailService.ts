@@ -93,90 +93,90 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
         const emailUser = await User.findById(userId).then();
 
         switch (via) {
-            case 'microsoft': {
-                if (emailUser.authentications) {
-                    const found = find(emailUser.authentications, { provider: via });
-                    logger.debug(`EMAIL USER FOUND: ${found}`);
+            // case 'microsoft': {
+            //     if (emailUser.authentications) {
+            //         const found = find(emailUser.authentications, { provider: via });
+            //         logger.debug(`EMAIL USER FOUND: ${found}`);
 
-                    const $to: Microsoft.Recipient[] = [];
-                    const $cc: Microsoft.Recipient[] = [];
-                    const $bcc: Microsoft.Recipient[] = [];
+            //         const $to: Microsoft.Recipient[] = [];
+            //         const $cc: Microsoft.Recipient[] = [];
+            //         const $bcc: Microsoft.Recipient[] = [];
 
-                    const $attachments: Microsoft.Attachment[] = [];
+            //         const $attachments: Microsoft.Attachment[] = [];
 
-                    to.forEach((toEmail) => {
-                        $to.push({ emailAddress: { address: toEmail.email, name: toEmail.display } })
-                    });
+            //         to.forEach((toEmail) => {
+            //             $to.push({ emailAddress: { address: toEmail.email, name: toEmail.display } })
+            //         });
 
-                    cc.forEach((toEmail) => {
-                        $cc.push({ emailAddress: { address: toEmail.email, name: toEmail.display } })
-                    });
+            //         cc.forEach((toEmail) => {
+            //             $cc.push({ emailAddress: { address: toEmail.email, name: toEmail.display } })
+            //         });
 
-                    bcc.forEach((toEmail) => {
-                        $bcc.push({ emailAddress: { address: toEmail.email, name: toEmail.display } })
-                    });
+            //         bcc.forEach((toEmail) => {
+            //             $bcc.push({ emailAddress: { address: toEmail.email, name: toEmail.display } })
+            //         });
 
-                    attachments.forEach((attachment) => {
-                        $attachments.push({
-                            //@ts-ignore
-                            "@odata.type": "#microsoft.graph.fileAttachment",
-                            name: attachment.filename,
-                            contentType: attachment.mimetype,
-                            contentBytes: fileService.getContentBytesAsString(attachment.path, "base64"),
-                            isInline: false,
-                            id: `${attachment.id}`,
-                            size: attachment.size,
-                        });
-                    })
+            //         attachments.forEach((attachment) => {
+            //             $attachments.push({
+            //                 //@ts-ignore
+            //                 "@odata.type": "#microsoft.graph.fileAttachment",
+            //                 name: attachment.filename,
+            //                 contentType: attachment.mimetype,
+            //                 contentBytes: fileService.getContentBytesAsString(attachment.path, "base64"),
+            //                 isInline: false,
+            //                 id: `${attachment.id}`,
+            //                 size: attachment.size,
+            //             });
+            //         })
 
 
 
-                    if (found) {
-                        const result = await O365.sendEmail(
-                            found.props.accessToken,
-                            subject,
-                            contentType as Microsoft.BodyType,
-                            body,
-                            $to,
-                            saveToSentItems,
-                            $cc,
-                            $bcc,
-                            $attachments)
-                            .then()
-                            .catch(error => {
-                                if (error.statusCode == 401) {
-                                    throw new ApiError(`Error Sending Mail. Invalid Authentication Token`, {
-                                        statusCode: error.statusCode,
-                                        type: "MSAuthenticationFailure"
-                                    });
-                                } else {
-                                    throw new ApiError(`Error Sending Mail: ${error.code} - ${error.message}`, {
-                                        statusCode: error.statusCode
-                                    });
-                                }
-                            });
+            //         if (found) {
+            //             const result = await O365.sendEmail(
+            //                 found.props.accessToken,
+            //                 subject,
+            //                 contentType as Microsoft.BodyType,
+            //                 body,
+            //                 $to,
+            //                 saveToSentItems,
+            //                 $cc,
+            //                 $bcc,
+            //                 $attachments)
+            //                 .then()
+            //                 .catch(error => {
+            //                     if (error.statusCode == 401) {
+            //                         throw new ApiError(`Error Sending Mail. Invalid Authentication Token`, {
+            //                             statusCode: error.statusCode,
+            //                             type: "MSAuthenticationFailure"
+            //                         });
+            //                     } else {
+            //                         throw new ApiError(`Error Sending Mail: ${error.code} - ${error.message}`, {
+            //                             statusCode: error.statusCode
+            //                         });
+            //                     }
+            //                 });
 
-                        if (result && result.statusCode && result.statusCode != 400) {
-                            throw new ApiError(`${result.code}. ${result.message}`);
-                        }
+            //             if (result && result.statusCode && result.statusCode != 400) {
+            //                 throw new ApiError(`${result.code}. ${result.message}`);
+            //             }
 
-                        return {
-                            Successful: true,
-                            Message: 'Your mail was sent successfully.'
-                        };
-                    }
-                    throw new ApiError('User has not authenticated with microsoft');
-                } else {
-                    throw new ApiError('User has not authenticated via microsoft');
-                }
-            }
+            //             return {
+            //                 Successful: true,
+            //                 Message: 'Your mail was sent successfully.'
+            //             };
+            //         }
+            //         throw new ApiError('User has not authenticated with microsoft');
+            //     } else {
+            //         throw new ApiError('User has not authenticated via microsoft');
+            //     }
+            // }
             case 'sendgrid': {
                 
                 if (isNil(message.subject) === false && isNil(message.body) === false) {
                     let emailAddress = { to: 'UNREOLVED', from: 'UNRESOLVED' };
                     
                     try { 
-                        emailAddress = this.resolveUserEmailAddress(emailUser); 
+                        emailAddress = this.resolveUserEmailAddress(emailUser as Reactory.Models.IUserDocument); 
                     } catch (e) { 
                         emailAddress = { to: 'ERROR_RESOLVING_EMAIL', from: 'UNRESOLVED' };
                     }

@@ -143,6 +143,28 @@ input ReactorySupportTicketFilter {
   formId: String 
 }
 
+input ReactorySupportTicketDeleteInput {
+  """
+  The ticket id to delete
+  """
+  ids: [String]!
+  """
+  The reason for the deletion
+  """
+  reason: String
+}
+
+type ReactorySupportTicketDeleteSuccess {
+  ids: [String]
+}
+
+type ReactorySupportTicketDeleteError {
+  ids: [String]
+  error: String
+}
+
+union ReactorySupportTicketDeleteResult = ReactorySupportTicketDeleteSuccess | ReactorySupportTicketDeleteError
+
 extend type Query {
   """
   Returns paged tickets that were created by the logged in user
@@ -163,4 +185,9 @@ extend type Mutation {
   Updates a ticket with either a status update, assignment change or comment add
   """
   ReactoryUpdateSupportTicket(ticket_id: String, updates: ReactorySupportTicketUpdate): ReactorySupportTicket
+
+  """
+  Deletes a / multiple support tickets
+  """
+  ReactoryDeleteSupportTicket(deleteInput: ReactorySupportTicketDeleteInput!): ReactorySupportTicketDeleteResult
 }

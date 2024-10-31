@@ -114,6 +114,11 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     
     return Promise.resolve(true)
   }
+
+  @roles(["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"])
+  deleteRequest(ids: string[], reason: string): Promise<void> {
+    return Promise.resolve();
+  }
   
   getExecutionContext(): Reactory.Server.IReactoryContext {
     // throw new Error('Method not implemented.');

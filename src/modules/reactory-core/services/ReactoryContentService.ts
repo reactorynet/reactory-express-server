@@ -30,7 +30,7 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
 
   @roles(['USER', 'ANON'])
   async getContentBySlug(slug: string): Promise<Reactory.Models.IReactoryContent> {
-    const result: Reactory.Models.IReactoryContentDocument = await Content.findOne({ slug }).then();
+    const result = await Content.findOne({ slug }).then();
     if (!result) {
       const { APP_DATA_ROOT } = process.env;
       //check if slug is a file with default value.
@@ -132,6 +132,16 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
   }
 
   @roles(['USER'])
+  async updateContent(content: Reactory.Service.ReactoryContentInput): Promise<Reactory.Models.IReactoryContent> { 
+    try {
+      logger.debug('Reactory Update Content Starting: ', content);
+      return null;      
+    } catch (error) {
+      logger.error('Reactory Update Content Error: ', error);
+    }
+  }
+
+  @roles(['USER'])
   async saveImageData(image: Reactory.Service.IReactorySvgToImageArgs): Promise<Reactory.Service.IReactorySaveImageDataResponse> {
     const { folder, filename, svg, height = 2000, width = 2000 } = image;
 
@@ -195,7 +205,7 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
     this.userService = userService;
   }
 
-  static reactory: Reactory.Service.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition<ReactoryContentService> = {
     id: "core.ReactoryContentService@1.0.0",
     nameSpace: "core",
     name: "ReactoryContentService",

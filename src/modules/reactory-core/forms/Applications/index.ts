@@ -59,16 +59,6 @@ const Applications: Reactory.Forms.IReactoryForm = {
   registerAsComponent: true,
   version: "1.0.0",
   roles: ['USER'],
-  // widgetMap: [
-  //   {
-  //     componentFqn: "core.ContentWidget@1.0.0",
-  //     widget: "ContentWidget"    
-  //   },
-  //   {
-  //     componentFqn: "core.ApplicationCard@1.0.0",
-  //     widget: "ApplicationCard"
-  //   }
-  //  ],
   helpTopics: [
     "reactory-my-applications", 
     "application-management"],

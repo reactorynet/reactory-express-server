@@ -1,4 +1,5 @@
-import AboutUsPage from './AboutUs';
+import Application from './Application';
+import Applications from './Applications';
 import ReactoryContentCapture from './ReactoryContentCapture';
 import ReactoryContentList from './ReactoryContentList';
 import ReactoryFormEditor from './ReactoryFormEditor';
@@ -9,12 +10,10 @@ import shared from './shared';
 import { Login } from './Security';
 import SupportForm from './Support/SupportRequest';
 import SupportTickets from './Support/SupportTickets';
-import Applications from './Applications';
 import SupportTicket from './Support/SupportTicket';
 export default [
+  Application,
   Applications,
-  ReactoryGlobalPlugin,
-  AboutUsPage,  
   ReactoryContentCapture,
   ReactoryContentList,
   ReactoryFormEditor,

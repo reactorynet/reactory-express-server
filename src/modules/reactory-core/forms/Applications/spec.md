@@ -5,4 +5,4 @@ Applications page / widget must list our available applications. List is read on
 No inputs required, just list our applications
 
 ## Outputs
-A dashboard that shows our application list
+A dashboard that shows our application list as tiles

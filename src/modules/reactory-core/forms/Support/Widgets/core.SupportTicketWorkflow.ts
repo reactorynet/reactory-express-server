@@ -15,11 +15,16 @@ interface ISupportTickeArgs {
   comment?: string
 }
 
+interface ISupportTicketDeleteArgs {
+  tickets: Reactory.Models.IReactorySupportTicket[]
+}
+
 interface ISupportTicketWorkflowModule {  
   openTicket(args: ISupportTickeArgs): Promise<Reactory.Models.IReactorySupportTicket>
   closeTicket(args: ISupportTickeArgs): Promise<boolean>
   commentTicket(args: ISupportTickeArgs): Promise<Reactory.Models.IReactorySupportTicket>
-  addNew(): void
+  addNew(): void,
+  deleteTicket(args: ISupportTicketDeleteArgs): Promise<void>
 }
 
 const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTicketWorkflowModule => {
@@ -59,11 +64,17 @@ const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTick
       { state: {}, replace: false })
   }
 
+
+  const deleteTicket = async (args: ISupportTicketDeleteArgs): Promise<void> => { 
+    reactory.createNotification(`${args?.tickets?.length || 0} Ticket(s) deleted`, { type: 'success' });
+  }
+
   return {
     openTicket,
     closeTicket,
     commentTicket,
-    addNew
+    addNew,
+    deleteTicket,
   }
 }
 

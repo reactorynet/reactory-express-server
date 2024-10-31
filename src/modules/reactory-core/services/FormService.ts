@@ -5,18 +5,28 @@ import modules from '@reactory/server-core/modules';
 
 class ReactoryFormService implements Reactory.Service.IReactoryFormService {
 
-  name: string;
-  nameSpace: string;
-  version: string;
-
+  name: string = 'ReactoryFormService';
+  nameSpace: string = 'core';
+  version: string = '1.0.0';
+  description?: string = 'Reactory Form service is used to manage forms in the system.';
   context: Reactory.Server.IReactoryContext;
   props: Reactory.Service.IReactoryServiceProps;
   fileService: Reactory.Service.IReactoryFileService;
+  searchService: Reactory.Service.ISearchService;
   compiler: Reactory.Service.IReactoryModuleCompilerService;
 
   constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.context = context;    
     this.props = props;
+  }
+
+  override(form: Reactory.Forms.IReactoryForm, overrides: Reactory.Forms.IReactoryForm): Promise<Reactory.Forms.IReactoryForm> {
+    throw new Error('Method not implemented.');
+  }
+  
+  toString?(includeVersion?: boolean): string {
+    if (includeVersion === true) return `${this.name}@${this.version}`;
+    return `${this.name}@${this.version}`;
   }
 
   get(id: string): Promise<Reactory.Forms.IReactoryForm> {
@@ -183,11 +193,19 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     this.compiler = compiler;
   }
 
+  setSearchService(searchService: Reactory.Service.ISearchService) {
+    this.searchService = searchService
+  }
+
   static reactory: Reactory.Service.IReactoryServiceDefinition<ReactoryFormService> = {
     id: 'core.ReactoryFormService@1.0.0',
-    description: 'Reactory Form Service',
+    description: 'Reactory Form service is used to manage forms in the system. The ',
     nameSpace: 'core',
     name: 'ReactoryFormService',
+    serviceType: "forms",
+    version: '1.0.0',
+    domain: "ui",
+    stem: "form",
     service: (props, context): ReactoryFormService => {
       return new ReactoryFormService(props, context)
     },
@@ -200,6 +218,10 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
         id: 'core.ReactoryModuleCompilerService@1.0.0',
         alias: 'compiler'
       },
+      {
+        id: 'core.ReactorySearchService@1.0.0',
+        alias: 'searchService'
+      }
     ],
   }
 }

@@ -12,7 +12,7 @@
         logger.debug('Using file store for session');
         const FileStore = require('session-file-store')(session);
         return new FileStore({
-          path: '/tmp/sessions',
+          path: process.env.REACTORY_SESSION_STORE_PATH || '/tmp/sessions',
           ttl: 60 * 5,
           retries: 0,
           reapInterval: 60 * 5,

@@ -7,12 +7,6 @@ import {
 } from '@reactory/server-core/data/clientConfigs/helpers/defaultRoutes';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
-/**
- * Static Content Mappings
- */
-const staticContentMappings: Partial<Reactory.Routing.IReactoryRoute>[] = [
- 
-];
 
 
 const routes: Reactory.Routing.IReactoryRoute[] = [
@@ -200,33 +194,29 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   },
   {
     key: 'myapplications',
-    title: 'Applications',
-    path: '/applications/*',
+    title: 'Application',
+    path: '/application/*',
     public: false,
     exact: true,
     roles: ['USER'],
-    componentFqn: 'reactory.Applications@1.0.0',
+    componentFqn: 'reactory.Application@1.0.0',
   },
-  {
-    key: 'profile',
-    title: 'Profile',
-    path: '/profile',
-    public: false,
-    roles: ['USER'],
-    // componentFqn: 'core.UserProfile@1.0.0',
-    // componentProps: {
-    //   withPeers: true,
-    //   withMemberships: true, 
-    // },
-    componentFqn: 'core.UserProfile@1.0.0',
-    componentProps: {
-      withPeers: true,
-      withMemberships: true,
-      withOrganigram: true,
-      components: [ 
-      ]
-    }
-  },
+  // {
+  //   key: 'profile',
+  //   title: 'Profile',
+  //   path: '/profile',
+  //   public: false,
+  //   roles: ['USER'],
+
+  //   componentFqn: 'core.UserProfile@1.0.0',
+  //   componentProps: {
+  //     withPeers: true,
+  //     withMemberships: true,
+  //     withOrganigram: true,
+  //     components: [ 
+  //     ]
+  //   }
+  // },
 
   {
     key: 'forms_with_mode_and_id',

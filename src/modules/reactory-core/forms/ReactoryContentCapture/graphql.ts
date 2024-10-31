@@ -14,8 +14,7 @@ import { fileAsString } from '@reactory/server-core/utils/io';
      name: 'ReactoryGetContentBySlug',
      text: fileAsString(require.resolve('./ReactoryGetContentBySlug.graphql')),
      variables: {
-       'formData.slug': 'slug',
-       '$route.params.slug': 'slug',
+       'formData.slug': 'slug',       
      },
      resultMap: {
        'id': 'id',
@@ -35,16 +34,28 @@ import { fileAsString } from '@reactory/server-core/utils/io';
        text: fileAsString(require.resolve('./ReactoryCreateContent.graphql')),
        objectMap: true,
        updateMessage: 'Creating Entry ...',
+       // @ts-ignore
        variables: mutationVariables,      
-       onSuccessMethod: 'refresh'
+       onSuccessMethod: 'refresh',
+       notification: { 
+        inAppNotification: true,
+        title: 'Content Created',
+        type: 'success',
+       },
      },
      edit: {
        name: 'ReactoryCreateContent',
        text: fileAsString(require.resolve('./ReactoryCreateContent.graphql')),
        objectMap: true,
        updateMessage: 'Updating Content ...',
+       // @ts-ignore
        variables: mutationVariables,
        onSuccessMethod:  'refresh',
+       notification: { 
+        inAppNotification: true,
+        title: 'Content Updated',
+        type: 'success',
+       },
        mergeStrategy: 'function'
      },
    },
