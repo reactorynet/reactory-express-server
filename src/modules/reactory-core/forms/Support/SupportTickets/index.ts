@@ -9,8 +9,6 @@ import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 const name = "SupportTickets";
 const nameSpace = "core";
 
-
-
 const SupportTickets: Reactory.Forms.IReactoryForm = {
   id: `${nameSpace}.${name}@${version}`,
   nameSpace,

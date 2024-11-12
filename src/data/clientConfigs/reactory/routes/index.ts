@@ -40,27 +40,27 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
                 url: `${ENVIRONMENT.API_URI_ROOT}auth/google/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
               }
             },
-            { 
-              provider: 'microsoft', 
-              component: 'microsoft.MicrosoftLogin@1.0.0',
-              props: { 
-                url: `${ENVIRONMENT.API_URI_ROOT}auth/microsoft/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
-              }
-            },
-            { 
-              provider: 'github', 
-              component: 'core.GitHubLoginButton@1.0.0', 
-              props: { 
-                url: `${ENVIRONMENT.API_URI_ROOT}auth/github/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
-              }
-            },
-            { 
-              provider: 'okta', 
-              component: 'core.OktaLoginButton@1.0.0', 
-              props: { 
-                url: `${ENVIRONMENT.API_URI_ROOT}auth/okta/start??x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
-              }
-            },                        
+            // { 
+            //   provider: 'microsoft', 
+            //   component: 'microsoft.MicrosoftLogin@1.0.0',
+            //   props: { 
+            //     url: `${ENVIRONMENT.API_URI_ROOT}auth/microsoft/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
+            //   }
+            // },
+            // { 
+            //   provider: 'github', 
+            //   component: 'core.GitHubLoginButton@1.0.0', 
+            //   props: { 
+            //     url: `${ENVIRONMENT.API_URI_ROOT}auth/github/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
+            //   }
+            // },
+            // { 
+            //   provider: 'okta', 
+            //   component: 'core.OktaLoginButton@1.0.0', 
+            //   props: { 
+            //     url: `${ENVIRONMENT.API_URI_ROOT}auth/okta/start??x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
+            //   }
+            // },                        
           ],
         },
       },

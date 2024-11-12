@@ -4,6 +4,8 @@ import { roles } from '@reactory/server-core/authentication/decorators';
 import moment from 'moment';
 import { QueryWithHelpers } from 'mongoose';
 import ReactorySupportTicketModel from '../models/ReactorySupportTicket';
+import { InsufficientPermissions } from 'exceptions';
+import { ObjectId } from 'mongodb';
 
 class ReactorySupportService implements Reactory.Service.TReactorySupportService {
   
@@ -27,8 +29,14 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     throw new Error('Method not implemented.');
   }
 
+  isAdminUser = (context: Reactory.Server.IReactoryContext): boolean => { 
+    return context.hasRole("ADMIN") === true || 
+      context.hasRole("SUPPORT_ADMIN") === true || 
+      context.hasRole("SUPPORT") === true;
+  }
+
   @roles(["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"])
-  async pagedRequest(filter: Reactory.Models.IReactorySupportTicketFilter, 
+  async pagedRequest(filter: Partial<Reactory.Models.IReactorySupportTicketFilter>, 
     pagingRequest: Reactory.Models.IPagingRequest): Promise<Reactory.Models.IPagedReactorySupportTickets> {
     
     const result: Reactory.Models.IPagedReactorySupportTickets = {
@@ -61,7 +69,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
         params.reference = { $in: filter.reference }
       }
 
-      if(`${filter.searchString}`.length > 0) {
+      if(filter?.searchString?.length > 0) {
         // params.reference = { $regex: filter.searchString, $options: "i" }
         params.description = { $regex: filter.searchString, $options: "i" }
       }
@@ -105,6 +113,40 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     });
 
     await ticket.save().then();
+
+    return ticket;
+  }
+
+  @roles(["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"])
+  async getTicket(id: string): Promise<Reactory.Models.ReactorySupportDocument> { 
+    
+    const ticket: Reactory.Models.ReactorySupportDocument = await ReactorySupportTicketModel.findById(id)
+      .exec()
+      .then() as Reactory.Models.ReactorySupportDocument;
+
+    let canView = this.isAdminUser(this.context) === true;
+    if (canView === false) {
+      // check if the user is assigned to the ticket
+      if ((ticket.assignedTo as ObjectId).equals(this.context.user._id)) {
+        canView = true;
+      }
+
+      if ((ticket.createdBy as ObjectId).equals(this.context.user._id) && canView === false) {
+        canView = true;
+      }
+    }
+    
+    if (this.isAdminUser(this.context) === false) {
+      // check if the user is assigned to the ticket
+      if ((ticket.assignedTo as Reactory.Models.IUserDocument)._id.toString() !== this.context.user._id.toString()) {
+        throw new InsufficientPermissions('User does not have Insufficient permissions to view ticket');
+      }
+
+
+      if ((ticket.createdBy as Reactory.Models.IUserDocument)._id.toString() !== this.context.user._id.toString()) {
+        throw new InsufficientPermissions('User does not have Insufficient permissions to view ticket');
+      }
+    }
 
     return ticket;
   }

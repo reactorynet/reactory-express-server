@@ -13,7 +13,10 @@ import ReactoryGraphMiddleware from './ReactoryGraph';
 import ReactoryErrorHandler from './ReactoryErrorHandler';
 
 import configureMorgan from './ReactoryMorgan';
-import { expressMiddleware } from '@apollo/server/dist/esm/express4';
+import {
+  SwaggerUi,
+  swaggerSpec,
+} from '@reactory/server-core/express/swagger/swagger';
 
 const {
   MORGAN_MIDDLEWARE_ENABLED = 'false',
@@ -46,6 +49,8 @@ const configureMiddleware = (app: express.Application, httpServer: http.Server) 
   
   //@ts-ignore
   app.use(ReactoryErrorHandler);
+
+  app.use('/swagger', SwaggerUi.serve, SwaggerUi.setup(swaggerSpec));
 
 
 }

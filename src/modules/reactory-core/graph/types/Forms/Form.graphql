@@ -973,7 +973,7 @@ extend type Query {
     """
     Returns a Reactory Form Definition with a given id
     """
-    ReactoryFormGetById(id: String!): ReactoryForm
+    ReactoryFormGetById(id: String!, options: Any): ReactoryForm
 }
 
 extend type Mutation {

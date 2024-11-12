@@ -1,5 +1,6 @@
-import { count } from 'console';
+import { registerDefaultScheme } from '@grpc/grpc-js/build/src/resolver';
 import express from 'express';
+import passport from 'passport';
 
 const router: express.IRouter = express.Router({
   caseSensitive: true,
@@ -11,31 +12,52 @@ router.get('/', (req: Reactory.Server.ReactoryExpressRequest, res: express.Respo
   res.redirect('/tickets');
 });
 
-router.get('/tickets', (req: Reactory.Server.ReactoryExpressRequest, res: express.Response) => { 
+/**
+ * Retrieve a list of support tickets. 
+ */
+router.get('/tickets', 
+  passport.authenticate('jwt', {session: false}),
+    async (req: Reactory.Server.ReactoryExpressRequest, res: express.Response) => { 
   const accepts = req.header('Accept') || 'html';
   
   const { 
     page = 1,
     limit = 10,
     sort = 'asc',
-    filter = 'all'    
-  } = req.params;
+    status    
+  } = req.params as unknown as {
+    page: number,
+    limit: number,
+    sort: 'asc' | 'desc',
+    status: 'all' | 'open' | 'closed' | 'pending' | 'resolved'
+  };
 
   const { getService } = req.context;
-  const tickets: Reactory.Models.IReactorySupportTicket[] = [];
+  const supportService: Reactory.Service.TReactorySupportService = getService("core.ReactorySupportService@1.0.0") as Reactory.Service.TReactorySupportService;
+  const result = await supportService.pagedRequest({
+  }, {
+    page: page,
+    pageSize: limit
+  }).then();
 
   switch (accepts) { 
     case 'html':
     case 'text/html':
     case 'application/html':
     case 'application/xhtml':
-      res.render('support/tickets', { tickets, page, limit, sort, filter });
+      res.render('support/tickets', { 
+        tickets: result.tickets, 
+        paging: result.paging 
+      });
       break;
     case 'application/json':
     case 'application/json-patch+json':
     case 'application/vnd.api+json':
     case 'json':
-      res.json({ tickets, page, pages: Math.ceil(tickets.length / limit), limit, sort, filter });
+      res.json({ 
+        tickets: result.tickets, 
+        paging: result.paging 
+      });
       break;
     case 'text':
     case 'text/plain':

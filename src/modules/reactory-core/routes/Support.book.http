@@ -23,8 +23,8 @@ access-control-expose-headers: X-Client-Key,X-Client-Pwd,x-client-key,x-client-p
 content-language: en-US
 content-type: application/json; charset=utf-8
 content-length: 473
-etag: W/"1d9-uAkyPL9KLr7DYgERD9T1WWvNpLw"
-date: Fri, 19 Jul 2024 22:37:32 GMT
+etag: W/"1d9-uJOximwoEFWFnZRuhsakWy/Kq34"
+date: Fri, 08 Nov 2024 04:02:15 GMT
 connection: close
 ###
 GET http://localhost:4000/support/tickets
@@ -32,15 +32,3 @@ Accept: text/html
 x-client-key: {{REACTORY_CLIENT_KEY}}
 x-client-secret: {{REACTORY_CLIENT_PWD}}
 Authorization: Bearer {{jwtToken}}
-
-HTTP/1.1 200  - OK
-x-powered-by: Express
-vary: Origin
-access-control-allow-credentials: true
-access-control-expose-headers: X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,x-client-version,x-client-name
-content-language: en-US
-content-type: text/html; charset=utf-8
-content-length: 16
-etag: W/"10-N4SFNsgbz426lY3rJiQj05PaBm0"
-date: Fri, 19 Jul 2024 22:37:33 GMT
-connection: close

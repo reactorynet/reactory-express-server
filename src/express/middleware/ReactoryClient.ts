@@ -21,6 +21,7 @@ const bypassUri = [
   '/cdn/themes/',
   '/cdn/ui/',
   '/favicon.ico',
+  '/swagger',
 ];
 
 
@@ -106,8 +107,8 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
   if (isNil(clientId) === true || clientId === '') {
     if(req.headers['accept'] === 'application/json') { 
       res.status(401).send({ 
-        error: 'no-client-id',
-        description: 'You did not provide a client id in the request Please provide a valid client id.',       
+        error: 'no-client-key',
+        description: 'You did not provide a client key in the request Please provide a valid client id.',       
       });
     } else {
       res.render('errors/401', { });

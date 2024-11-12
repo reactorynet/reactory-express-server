@@ -56,7 +56,7 @@ type ReactorySupportTicket {
   """
   documents: [ReactoryFile]  
   """
-  The form id from where the request originated
+  The form id from where the request originated. Optional
   """
   formId: String
 }

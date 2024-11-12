@@ -30,8 +30,9 @@ class ReactoryFormResolver {
   }
 
   @query("ReactoryFormGetById")
-  async getFormById(obj: any, args: {id: string}, context: Reactory.Server.IReactoryContext): Promise<Reactory.Forms.IReactoryForm> {
+  async getFormById(obj: any, args: {id: string, options: any}, context: Reactory.Server.IReactoryContext): Promise<Reactory.Forms.IReactoryForm> {
     const formSvc: Reactory.Service.IReactoryFormService = context.getService("core.ReactoryFormService@1.0.0") as Reactory.Service.IReactoryFormService;
+    context.state.formOptions = args.options;
     return formSvc.get(args.id);
   }
 
