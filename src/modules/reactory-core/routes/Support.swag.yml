@@ -1,0 +1,59 @@
+paths:
+  /support/tickets:
+    get:
+      summary: "Retrieve a list of support tickets"
+      description: "Retrieve a paginated list of support tickets with optional sorting and filtering."
+      tags: ['Support']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#components/parameters/x-client-key"
+        - $ref: "#components/parameters/x-client-pwd"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: "The page number to retrieve."
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: "The number of tickets per page."
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: "asc"
+          description: "The sort direction"
+        - in: query
+          name: status
+          schema: 
+            type: string
+            default: "open"
+            enum:
+              - "all"
+              - "open"
+              - "closed"
+              - "pending"
+              - "resolved"
+
+      responses:
+        "200":
+          description: "A list of support tickets."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tickets:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ReactorySupportTicket"
+                  page:
+                    type: integer
+                  pages:
+                    type: integer
+        "401":
+          description: "Unauthorized"

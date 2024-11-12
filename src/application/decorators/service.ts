@@ -18,7 +18,13 @@ function service(options: Partial<Reactory.Service.IReactoryServiceDefinition<an
         props: Reactory.Service.IReactoryServiceProps,
         context: Reactory.Server.IReactoryContext
       ): T => {
-        return new constructor(props, context) as T; 
+        try {
+          const instance: T = new constructor(props, context) as T;
+          return instance;
+        } catch (err) {
+          context.error(`Could not instanciate service ${options.id}`);
+          return null;
+        }
       },
       dependencies: options.dependencies,
       serviceType: options.serviceType,

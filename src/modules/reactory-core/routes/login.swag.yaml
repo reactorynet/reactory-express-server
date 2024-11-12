@@ -1,0 +1,29 @@
+securitySchemes:
+  basic:
+    type: http
+    scheme: basic
+
+paths:
+  /login:
+    post:
+      summary: "Login a user account"
+      description: "Login a user using the local authentication mechanism"
+      tags: ['System']
+      security:
+        - basic: []
+      parameters:
+        - $ref: "#components/parameters/x-client-key"
+        - $ref: "#components/parameters/x-client-pwd"
+      responses:
+        "200":
+          description: "Login successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: "JWT token for authenticated requests"
+        "401":
+          description: "Unauthorized"    
