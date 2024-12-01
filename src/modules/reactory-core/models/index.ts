@@ -581,7 +581,7 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       overwrite: true,
       onStartup: async (context: Reactory.Server.IReactoryContext) => {
         logger.debug(`Checking for system admin user`);
-        let email = process.env.SYSADMIN_EMAIL || 'system@localhost';
+        let email = process.env.SYSADMIN_EMAIL || 'system@local.host';
         let sysAdminUser = await User.findOne({
           email,
         });
