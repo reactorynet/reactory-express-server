@@ -106,6 +106,13 @@ https://github.com/nvm-sh/nvm/releases)
 ## Install Node and NPM
 If you installed nvm you can install node using (the .nvmrc file specifies the correct version as well)
 `> nvm install 16.13.2`
+
+### Install yarn
+The reactory server express make use of sub modules. Yarn is used as the package manager as it supports sub modules natively.
+
+Run `brew install yarn` if you do not already have yarn installed.
+
+
 ## Getting the code
 Reactory Server core and the client is distributed as Open Source, but it is very possible your organization has their own private repo. The reactory server can otherwise be cloned from the github repos.
 
@@ -122,14 +129,14 @@ It is advised that you create a root reactory folder, and then create sub folder
 
 This will clone the server into `reactory/reactory-server/` and the core types into `reactory/reactory-core` and the PWA client into `reactory/reactory-client/` as well as the data / or the CDN folder structure to `reactory/reactory-data/` folder.
 
-The Reactory core library is a core types definition library and is shared across all applications. It has a two npm scripts that is used for compiling and deploying the library.  The `make-install` script, will compile and package the library. The `deploy-local` will use the environment variables we set prior and deploy the library to `reactory/reactory-server/lib`,  `reactory/reactory-client/lib` and the `reactory/reactory-data/plugins/artifacts` folders. 
+The Reactory core library is a core types definition library and is shared across all applications. It has a two npm scripts that is used for compiling and deploying the library.  The `build:install` script, will compile and package and deploy the library. The `deploy-local` will use the environment variables we set prior and deploy the library to `reactory/reactory-server/lib`,  `reactory/reactory-client/lib` and the `reactory/reactory-data/plugins/artifacts` folders. 
 
 ## Install env-cmd and create a configuration file
 Before you continue with the install, make sure you have dotenv installed globally.
 
 dotenv is used for development / environment configuration when running the server from the terminal.
 pm2 configuration files are used for running within the pm2 container.
-`> npm install -g env-cmd`
+`> npm install -g env-cmd` or `yarn global add env-cmd`
 Make a copy of the sample environment file and set the settings that is applicable for your instance.
 
 `> cp reactory-server/config/reactory/.env.sample reactory-server/config/reactory/.env.local`
@@ -146,9 +153,8 @@ The [Reactory Core library](https://github.com/reactorynet/reactory-core) is cur
 
 ```bash
 > cd reactory-core
-> npm i
-> npm run make-install
-> npm run deploy-local
+> yarn install
+> yarn build:install
 ```
 If all dependencies are installed and it is the first time you run the deploy-local, it will take some time, as it is also running `npm i` on the reactory-server and reactory-client projects. If you encounter any errors, please check your environment variables and make sure they are set correctly.
 ### Install Azure Module
