@@ -37,3 +37,8 @@ src/data/clientConfigs/**
 target/
 
 .DS_Store
+certificates/*.pem
+certificates/*.key
+certificates/*.csr
+certificates/*.crt
+!certificates/readme.md

@@ -1,0 +1,2 @@
+# Certificates 
+Copy all certificates that you may require in your environment for systems to connect to the outside world. i.e. if you are behind a VPN, you may need to add the certificates here for the systems to connect and get resources.

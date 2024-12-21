@@ -46,11 +46,10 @@ package_exists() {
 
 # Checks if MeiliSearch is running
 check_meili_search(){
-  if curl -f http://localhost:7700/health; then
+  if curl -f $MEILISEARCH_HOST; then
     echo "MeiliSearch is running."
   else
-    echo "MeiliSearch is not running."
-    sh ./bin/meilisearch.sh
+    echo "MeiliSearch is not running. Please check Docker or install MeiliSearch"
   fi
   echo "Checked MeiliSearch"
 }
