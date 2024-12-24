@@ -1,5 +1,6 @@
 import morgan from 'morgan';
 import express from 'express';
+import http from 'http';
 import logger from '@reactory/server-core/logging';
 
 const filters = [
@@ -45,10 +46,30 @@ const responseBodyCaptureMiddleware = (_req: any, res: { send: (body: any) => an
   next();
 };
 
-const configureApp = (app: express.Application) => {
+const configureApp = (app: express.Application, httpServer: http.Server) => {
   logger.info('Configuring Morgan Middleware'); 
+  const {
+    MORGAN_MIDDLEWARE_ENABLED = 'false',
+  } = process.env;
+
+  if(MORGAN_MIDDLEWARE_ENABLED === 'false') {
+    logger.info('Morgan Middleware is disabled');
+    return;
+  }
+  
   app.use(responseBodyCaptureMiddleware);
   app.use(morganMiddleware);
 }
 
-export default configureApp;
+const ReactoryMorganMiddlewareDefinition: Reactory.Server.ReactoryMiddlewareDefinition = { 
+  nameSpace: "core",
+  name: "ReactoryMorganMiddleware",
+  version: "1.0.0",
+  description: "Middleware for setting up the morgan logger",
+  component: configureApp,
+  ordinal: -50,
+  type: 'configuration',
+  async: false
+}
+
+export default ReactoryMorganMiddlewareDefinition;

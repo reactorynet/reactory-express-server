@@ -1,7 +1,6 @@
 import logger from '@reactory/server-core/logging';
-import express from 'express';
 
-const ReactoryErrorHandler = (err: Error, req: Express.Request, res: Response, next: Function) => { 
+const ReactoryErrorHandler = (err: Error, req: Express.Request, res: Express.Response, next: Function) => { 
   logger.error(`Express Error Handler`, { err: req });
   // @ts-ignore
   if (res.headersSent === true) {
@@ -13,4 +12,17 @@ const ReactoryErrorHandler = (err: Error, req: Express.Request, res: Response, n
   res.render('error', { error: err })
 };
 
-export default ReactoryErrorHandler;
+
+const ReactoryErrorHandlerMiddlewareDefinition: Reactory.Server.ReactoryMiddlewareDefinition = { 
+  nameSpace: "core",
+  name: "ReactoryErrorHandler",
+  version: "1.0.0",
+  description: "Middleware for handling errors in the application",
+  component: ReactoryErrorHandler as Reactory.Server.ExpressErrorHandlerMiddlewareFunction,
+  ordinal: 99,
+  async: false,
+  type: 'function'
+};
+
+
+export default ReactoryErrorHandlerMiddlewareDefinition;

@@ -1,7 +1,6 @@
 import Reactory from '@reactory/reactory-core';
 import lodash from 'lodash';
 import ApiError, { UserNotFoundException, InsufficientPermissions } from '@reactory/server-core/exceptions';
-import logger from '@reactory/server-core/logging';
 
 /**
  * Roles decorator is used to inspect a particular execution block to see whether
@@ -12,11 +11,11 @@ import logger from '@reactory/server-core/logging';
  * @returns 
  */
 export function roles(allowedRoles: string[], 
-  contextKey: string | 'this.context' | 'args.context' = 'this.context') {  
+  contextKey: 'this.context' | 'args.context' = 'this.context') {  
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {    
     let original = descriptor.value;
     descriptor.value = function( ){      
-      let passed: boolean;      
+      let passed: boolean = false;      
       let context: Reactory.Server.IReactoryContext
       switch(contextKey) {
         case "this.context": {
@@ -33,8 +32,7 @@ export function roles(allowedRoles: string[],
           break;
         }
       }
-
-      passed = false;
+      
       if(context === null || context === undefined) throw new ApiError(`Could not extract the context for the execution to determine roles`, { allowedRoles, contextKey })            
       if (context.user === null) throw new UserNotFoundException('no user available on context', {});
       allowedRoles.forEach((role) => {
@@ -43,15 +41,12 @@ export function roles(allowedRoles: string[],
             const hasExpression = lodash.template(role, {})({ target, context, descriptor, arguments }) === "true"
             if(hasExpression === true && passed === false) passed = true;                        
           } catch(e) {}
-        } else {
-          if (context.hasRole(role) === true) {
-            passed = true;
-          }
+        } else if (context.hasRole(role) === true) {
+          passed = true;
         }        
       });
       
-      //@ts-ignore
-      if (passed === true) return original.apply(this, arguments);
+      if (passed) return original.apply(this, arguments);
       else throw new InsufficientPermissions(`User [${context.user._id.toString()}] does not have permissions to execute ${propertyKey.toString()}`, { allowedRoles, contextKey })
     }
 

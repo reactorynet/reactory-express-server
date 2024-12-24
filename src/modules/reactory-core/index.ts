@@ -9,6 +9,7 @@ import coreServices from './services';
 import routes from './routes';
 import translations from './data/translations';
 import Reactory from '@reactory/reactory-core';
+import middleware from './middleware';
 
 const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
   id: 'reactory-core',
@@ -30,11 +31,13 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
   models: [ ...models ],
   clientPlugins: [],
   serverPlugins: [],
+  //@ts-ignore
   cli: [...coreClis],
   description: 'Reactory Core Module',
   grpc: null,
   passportProviders: [],
   pdfs: [],
+  middleware,
   routes,
 };
 

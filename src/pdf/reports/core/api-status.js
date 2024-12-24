@@ -2,7 +2,7 @@
 
 const ApiStatusReport = {
   enabled: true,
-  view: 'delegate-360-assessment',
+  view: 'reactory-api-status-report',
   kind: 'pdf',
   format: 'pdf',
   name: 'Reactory Api Status Report',

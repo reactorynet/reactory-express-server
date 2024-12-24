@@ -8,6 +8,7 @@ import bodyParser from 'body-parser';
 import typeDefs from '@reactory/server-core/models/graphql/types';
 import resolvers from '@reactory/server-core/models/graphql/resolvers';
 import directiveProviders from '@reactory/server-core/models/graphql/directives';
+import plugins from '@reactory/server-core/models/graphql/plugins';
 import http from 'http';
 import express from 'express';
 import logger from '@reactory/server-core/logging';
@@ -18,14 +19,9 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
   
     const {
       NODE_ENV,
-      APP_DATA_ROOT
     } = process.env;
 
-    let schema: GraphQLSchema = null;
-    
-    let graphcompiled: boolean = false;
-    let graphError: String = '';
-
+    let schema: GraphQLSchema = null;  
     try {
       schema = makeExecutableSchema({
         resolverValidationOptions : { 
@@ -49,8 +45,7 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
         logger.error(`Error adding directive ${provider.name}`);
       }
     });
-  
-    
+      
     const expressConfig: ApolloServerOptions<Reactory.Server.IReactoryContext> = {
       logger: logger,
       schema: schema,
@@ -64,11 +59,10 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
       introspection: NODE_ENV === 'development' ? true : false,
       includeStacktraceInErrorResponses: NODE_ENV === 'development' ? true : false,
       allowBatchedHttpRequests: true,
-      persistedQueries: false,
-      typeDefs: typeDefs,
-      resolvers: resolvers,
+      persistedQueries: false,      
       plugins: [
         ApolloServerPluginDrainHttpServer({ httpServer }),
+        ...plugins,
       ],
     };
   
@@ -77,14 +71,15 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
       await apolloServer.start();
 
       app.use(
-        '/api',
+        '/graph',
         passport.authenticate(['jwt'], 
         { session: false }),
         expressMiddleware(apolloServer, {
           context: async ({ req, res }: ExpressContextFunctionArgument) => {
             //@ts-ignore
-            if(!req.context) req.context = await ReactoryContextProvider(null,{});
-            return req.context;
+            const _req = req as Reactory.Server.ReactoryExpressRequest;            
+            if(!_req.context) _req.context = await ReactoryContextProvider(null,{});
+            return _req.context;
             },
         }), 
         bodyParser.urlencoded({ extended: true }),
@@ -99,4 +94,15 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
     }
 }
 
-export default ReactoryGraphMiddleware;
+const ReactoryGraphMiddlewareDefinition: Reactory.Server.ReactoryMiddlewareDefinition = { 
+  nameSpace: "core",
+  name: "ReactoryGraphMiddleware",
+  version: "1.0.0",
+  description: "Middleware for setting up the graphql server",
+  component: ReactoryGraphMiddleware,
+  ordinal: -60,
+  type: 'configuration',
+  async: true
+};
+
+export default ReactoryGraphMiddlewareDefinition;

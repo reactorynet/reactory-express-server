@@ -1,0 +1,1 @@
+This is an experimental block chain component. It has no use aside from testing and playground for integrating BC with enterprise use cases.

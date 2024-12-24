@@ -78,7 +78,7 @@ export const clientFor = async (context: Reactory.Server.IReactoryContext): Prom
   });
 
   // const uploadLink = createUploadLink({
-  //   uri: `${localStorage.getItem('REACT_APP_API_ENDPOINT')}/api`,
+  //   uri: `${localStorage.getItem('REACT_APP_API_ENDPOINT')}/graph`,
   //   fetch: fetch
   // });
 
@@ -86,7 +86,7 @@ export const clientFor = async (context: Reactory.Server.IReactoryContext): Prom
   let resolvers: Resolvers[] = [];
 
   createClient({  
-    url: `${process.env.API_URI_ROOT}api`.replace('http', 'ws'),    
+    url: `${process.env.API_URI_ROOT}graph`.replace('http', 'ws'),    
     retryAttempts: 5,
     connectionParams: {
       Authorization: `Bearer ${token}`,
@@ -95,7 +95,7 @@ export const clientFor = async (context: Reactory.Server.IReactoryContext): Prom
   })
 
   const ws_client = createClient({
-    url: `${process.env.API_URI_ROOT}api`.replace('http', 'ws'),
+    url: `${process.env.API_URI_ROOT}graph`.replace('http', 'ws'),
     retryAttempts: 5,
     connectionParams: {
       Authorization: `Bearer ${token}`,
