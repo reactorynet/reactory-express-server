@@ -55,4 +55,15 @@
   app.use(session(sessionOptions));
 }
 
-export default ReactorySessionMiddleware;
+const ReactorySessionMiddlewareDefinition: Reactory.Server.ReactoryMiddlewareDefinition = {
+  nameSpace: "core",
+  name: "ReactorySessionMiddleware",
+  version: "1.0.0",
+  description: "Middleware for setting up session storage",
+  component: ReactorySessionMiddleware,
+  ordinal: -99,
+  type: 'configuration',
+  async: false
+}
+
+export default ReactorySessionMiddlewareDefinition;

@@ -1,58 +1,67 @@
 import express from 'express';
 import http from 'http';
-import cors from 'cors';
-import passport from 'passport';
-import bodyParser from 'body-parser';
-import i18n from '@reactory/server-core/express/i18n';
-import i18nextHttp from 'i18next-http-middleware';
-import corsOptions from '@reactory/server-core/express/cors';
-import ReactoryClientMiddleware from './ReactoryClient';
-import ReactoryContextMiddleWare from './ReactoryContext';
-import ReactorySessionMiddleware from './ReactorySession';
-import ReactoryGraphMiddleware from './ReactoryGraph';
+import logger from '@reactory/server-core/logging';
+import ReactoryModules from '@reactory/server-core/modules';
+import ReactoryBodyParser from './ReactoryBodyParser';
+import ReactoryCors from './ReactoryCors';
+import ReactoryI18n from './ReactoryI18n';
+import ReactoryClient from './ReactoryClient';
+import ReactoryContext from './ReactoryContext';
 import ReactoryErrorHandler from './ReactoryErrorHandler';
-
-import configureMorgan from './ReactoryMorgan';
-import {
-  SwaggerUi,
-  swaggerSpec,
-} from '@reactory/server-core/express/swagger/swagger';
-
-const {
-  MORGAN_MIDDLEWARE_ENABLED = 'false',
-} = process.env;
+import ReactoryGraph from './ReactoryGraph';
+import ReactoryMorgan from './ReactoryMorgan';
+import ReactorySession from './ReactorySession';
+import ReactorySwagger  from './ReactorySwagger';
+const DEFAULT_MIDDLEWARE = [
+  ReactoryCors,
+  ReactoryI18n,
+  ReactoryClient,
+  ReactoryContext,
+  ReactoryErrorHandler,
+  ReactoryGraph,
+  ReactoryMorgan,
+  ReactorySession,
+  ReactoryBodyParser,
+  ReactorySwagger
+];
 
 const configureMiddleware = (app: express.Application, httpServer: http.Server) => {
-  app.use('*',cors(corsOptions));
-  // configure the session middleware first.
-  ReactorySessionMiddleware(app);
-  // This will set the context of the request whether
-  // the client is authenticated or not.
-  // @ts-ignore
-  app.use(ReactoryContextMiddleWare);
-  // load the client middleware next.
-  // This will authenticate the client and set the client
-  // object on context for the request.
-  app.use(ReactoryClientMiddleware);
-
   
-  ReactoryGraphMiddleware(app, httpServer)
-  // load the morgan middleware if enabled.
-  if (MORGAN_MIDDLEWARE_ENABLED === 'true')
-    configureMorgan(app);
-  
-  app.use(i18nextHttp.handle(i18n));
-  
-  app.set('trust proxy', process.env.NODE_ENV === 'development' ? 0 : 1);  
-  app.use(bodyParser.urlencoded({ extended: false }));
-  app.use(bodyParser.json({ limit: process.env.MAX_FILE_UPLOAD }));
-  
-  //@ts-ignore
-  app.use(ReactoryErrorHandler);
 
-  app.use('/swagger', SwaggerUi.serve, SwaggerUi.setup(swaggerSpec));
+  let middlewares: Reactory.Server.ReactoryMiddlewareDefinition[] = [...DEFAULT_MIDDLEWARE];
+  ReactoryModules.enabled.forEach(module => { 
+    if(module.middleware && module.middleware.length > 0)
+    {
+      module.middleware.forEach(middleware => {
+        middlewares.push(middleware);
+      });
+    }
+  });
 
+  middlewares.sort((a, b) => a.ordinal - b.ordinal);
+  
+  middlewares.forEach(middleware => {     
+    if (middleware.component && middleware.type === 'configuration') {
+      logger.info(`Configuring middleware: ${middleware.nameSpace}.${middleware.name}@${middleware.version}`);
+      if (!middleware.async) {
+        (middleware.component as Reactory.Server.ExpressMiddlewareConfigurationFunction)(app, httpServer);
+      }
+      else {
+        (middleware.component as Reactory.Server.ExpressMiddlewareConfigurationFunctionAsync)(app, httpServer)
+          .then(() => {
+            logger.info(`Configured middleware: ${middleware.nameSpace}.${middleware.name}@${middleware.version}`);
+          })
+          .catch((err: Error) => {  
+            logger.error(`Error configuring middleware: ${middleware.nameSpace}.${middleware.name}@${middleware.version}`, { err });
+          });
+      }
+    }
 
+    if (middleware.component && middleware.type === 'function') {
+      logger.info(`Adding middleware: ${middleware.nameSpace}.${middleware.name}@${middleware.version}`);
+      app.use(middleware.component as Reactory.Server.ExpressMiddlewareFunction);
+    }
+  });
 }
 
 export default configureMiddleware;

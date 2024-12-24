@@ -158,4 +158,15 @@ export const configureApp = (app: Application) => {
   app.use(ReactoryClientAuthenticationMiddleware);
 }
 
-export default ReactoryClientAuthenticationMiddleware;
+const ReactoryClientAuthenticationMiddlewareDefinition: Reactory.Server.ReactoryMiddlewareDefinition = { 
+  nameSpace: "core",
+  name: "ReactoryClientAuthenticationMiddleware",
+  version: "1.0.0",
+  description: "Middleware for authenticating client applications",
+  component: ReactoryClientAuthenticationMiddleware,
+  ordinal: -70,
+  type: 'function',
+  async: false
+}
+
+export default ReactoryClientAuthenticationMiddlewareDefinition;

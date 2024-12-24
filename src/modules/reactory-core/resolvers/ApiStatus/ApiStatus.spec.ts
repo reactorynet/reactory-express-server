@@ -17,7 +17,7 @@ describe("Reactory API Status Query", () => {
 
   it("Should return an unauthorized access status code", (done) => {
     request
-      .post("api")
+      .post("graph")
       .set("Accept", "application/json")
       .send({ query: queries.apiStatusQuery })
       .expect(401)
@@ -31,7 +31,7 @@ describe("Reactory API Status Query", () => {
     const { REACTORY_CLIENT_KEY, REACTORY_CLIENT_PWD, REACTORY_ANON_TOKEN } =
       process.env;
     request
-      .post("api")
+      .post("graph")
       .set("Accept", "application/json")
       .set("Authorization", null)
       .set("x-client-key", REACTORY_CLIENT_KEY)
@@ -90,7 +90,7 @@ describe("Reactory API Status Query", () => {
           done(err);
         } else {
           request
-            .post("api")
+            .post("graph")
             .set("Accept", "application/json")
             .set("Content-Type", "application/json")
             .set("x-client-key", REACTORY_CLIENT_KEY)
