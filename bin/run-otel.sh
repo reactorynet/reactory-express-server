@@ -11,6 +11,6 @@
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
 # Note this file will only run a compiled version of the application.
-NODE_PATH=./ env-cmd -f ./.env node ./app/index.js
+NODE_PATH=./ env-cmd -f ./.env node ./app/modules/reactory-telemetry/reactory.inst.otlp.js ./app/index.js
 
  

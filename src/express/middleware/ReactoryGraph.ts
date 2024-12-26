@@ -12,7 +12,7 @@ import plugins from '@reactory/server-core/models/graphql/plugins';
 import http from 'http';
 import express from 'express';
 import logger from '@reactory/server-core/logging';
-import ReactoryContextProvider from "context/ReactoryContextProvider";
+import ReactoryContextProvider from "@reactory/server-core/context/ReactoryContextProvider";
 
 
 const ReactoryGraphMiddleware = async (app: express.Application, httpServer: http.Server) => { 

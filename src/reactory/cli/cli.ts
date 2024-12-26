@@ -3,7 +3,7 @@ import { template } from 'lodash';
 import readline from 'readline';
 import yaml from "js-yaml";
 import Reactory from '@reactory/reactory-core';
-import ReactoryContextProvider from 'context/ReactoryContextProvider';
+import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
 import colors from './colors';
 import i18next from '@reactory/server-core/express/i18n';
 import MongooseConnection from '@reactory/server-core/models/mongoose';

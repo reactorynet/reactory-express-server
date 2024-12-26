@@ -10,6 +10,7 @@
 #$SECONDS - The number of seconds since the script was started.
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
+export REACTORY_IS_BUILDING='true'
 source ./bin/shared/shell-utils.sh
 
 check_env_vars
@@ -64,6 +65,15 @@ cp $env_file $BUILD_PATH/.env
 # Create archive for deployment
 echo "Creating archive for deployment"
 cd $BUILD_PATH
-tar -czf ../${1:-reactory}-server-${BUILD_VERSION}.tar.gz .
+
+# check if the operating system is MacOS
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  # MacOS
+  tar -czf ../${1:-reactory}-server-${BUILD_VERSION}.tar.gz .
+else
+  # Linux
+  tar -czf ../${1:-reactory}-server-${BUILD_VERSION}.tar.gz .
+fi
 
 echo "🏆 Built Reactory Server to $BUILD_PATH"
+export REACTORY_IS_BUILDING='false'

@@ -5,9 +5,9 @@ import path from 'path';
 import https from 'https';
 // @ts-ignore
 import sslrootcas from 'ssl-root-cas/latest';
-import express, { Application, NextFunction } from 'express';
+import express, { Application } from 'express';
 import mongooseConnection from '@reactory/server-core/models/mongoose';
-import configureMiddleWare from 'express/middleware';
+import configureMiddleWare from '@reactory/server-core/express/middleware';
 import { ConfigureAuthentication } from '@reactory/server-core/authentication';
 import { workflowRunner, WorkFlowRunner } from '@reactory/server-core/workflow';
 import amq from '@reactory/server-core/amq';

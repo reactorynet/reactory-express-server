@@ -1,7 +1,7 @@
 import Reactory from '@reactory/reactory-core';
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
 import path from 'path';
-import svg_to_png from 'svg-to-png';
+import convertSvg from 'convert-svg-to-png';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { Content } from '@reactory/server-modules/reactory-core/models';
 import logger from '@reactory/server-core/logging';
@@ -161,18 +161,21 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
         if (svg) {
           let svgfile = path.join(fullpath, `${filename}.svg`);
           writeFileSync(svgfile, svg);
-          logger.info(`✅Saved svg to ${svgfile}`)
+          logger.debug(`Saved svg to ${svgfile}`)
           result.svgURL = path.join(cdnpath, `${filename}.svg`);
           let pngfile = path.join(fullpath, `${filename}.png`);
           result.success = true;
 
           try {
-            await svg_to_png.convert(svgfile, pngfile, { defaultWidth: `${width}px`, defaultHeight: `${height}px` });
-            logger.info(`✅Converted svg to ${pngfile}`)
+            await convertSvg(svgfile, { 
+              width,
+              height
+            });
+            logger.info(`Converted svg to ${pngfile}`)
             result.pngURL = path.join(cdnpath, `${filename}.png`);
 
           } catch (convertErr) {
-            logger.error(`💥Could not convert ${svgfile} to ${pngfile}`, convertErr)
+            logger.error(`Could not convert ${svgfile} to ${pngfile}`, convertErr)
           }
         }
       }
