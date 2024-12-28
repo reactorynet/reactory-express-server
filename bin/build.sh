@@ -20,12 +20,19 @@ sh ./bin/generate.sh ${1:-reactory} ${2:-local}
 
 # read package.json to get the version
 BUILD_VERSION=$(node -p "require('./package.json').version")
-NODE_PATH=$REACTORY_SERVEr/src
+INCLUDE_ENV=true
+NODE_PATH=$REACTORY_SERVER/src
+BUILD_OPTIONS=$REACTORY_SERVER/config/${1:-reactory}/build.${2:-local}.sh
 env_file=$REACTORY_SERVER/config/${1:-reactory}/.env.${2:-local}
 BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}
 APP_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/app
 BIN_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/bin
 CONFIG_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/config
+
+# Check if the BUILD_OPTIONS file exists, if it does, source it
+if [ -f $BUILD_OPTIONS ]; then
+  source $BUILD_OPTIONS
+fi
 
 echo "Building Reactory Server $BUILD_VERSION for ${1:-reactory} ${2:-local} configuration"
 # Clean the target path
@@ -47,7 +54,7 @@ rsync -av --filter='merge ./bin/build.lib.rsync' ./lib/ $BUILD_PATH/lib --quiet
 if [ -f "./config/${1:-reactory}/pm2.${2:-local}.config.js" ]; then
   echo "Copying pm2 configuration file"
   # Copy the pm2 configuration file to the build directory
-  cp "./config/${1:-reactory}/pm2.${2:-local}.config.js" $BUILD_PATH
+  cp "./config/${1:-reactory}/pm2.${2:-local}.config.js" $BUILD_PATH/pm2.config.js
 fi
 
 # Copy package.json
@@ -58,22 +65,18 @@ cp ./package.json $BUILD_PATH
 echo "Copying yarn.lock"
 cp ./yarn.lock $BUILD_PATH
 
-# Copy .env file
-echo "Copying .env file"
-cp $env_file $BUILD_PATH/.env
+if [ $INCLUDE_ENV = "true" ] && [ -f $env_file ]; then
+  # Copy .env file
+  echo "Copying .env file"
+  cp $env_file $BUILD_PATH/.env
+fi
 
 # Create archive for deployment
 echo "Creating archive for deployment"
 cd $BUILD_PATH
 
-# check if the operating system is MacOS
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  # MacOS
-  tar -czf ../${1:-reactory}-server-${BUILD_VERSION}.tar.gz .
-else
-  # Linux
-  tar -czf ../${1:-reactory}-server-${BUILD_VERSION}.tar.gz .
-fi
+tar -czf ../${1:-reactory}-server-${BUILD_VERSION}.tar.gz .
 
 echo "🏆 Built Reactory Server to $BUILD_PATH"
+
 export REACTORY_IS_BUILDING='false'

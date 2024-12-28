@@ -12,7 +12,5 @@
 + *.cert
 + *.ejs
 + *.rxs
-+ *.ts
-+ *.tsx
 + *.txt
 - *
