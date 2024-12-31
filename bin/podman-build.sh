@@ -18,6 +18,14 @@ source ./bin/shared/shell-utils.sh
 check_env_vars
 echo "📓 Loading Environment ./config/${1:-reactory}/${2:-local} "
 BUILD_VERSION=$(node -p "require('./package.json').version")
-TAG=reactory/${1:-reactory}-${2:-local}:$BUILD_VERSION
-echo "🛠️ Building Image $TAG"
-podman build -t $TAG -f ./config/${1:-reactory}/${3:-Dockerfile} .
+IMAGE_ORG=reactory
+IMAGE_TAG=$IMAGE_ORG/${1:-reactory}-express-server:$BUILD_VERSION
+BUILD_OPTIONS=$REACTORY_SERVER/config/${1:-reactory}/.env.build.${2:-local}
+
+# Check if the BUILD_OPTIONS file exists, if it does, source it
+if [ -f $BUILD_OPTIONS ]; then
+  source $BUILD_OPTIONS
+fi
+
+echo "💿 Building Image $IMAGE_TAG"
+podman build -t $IMAGE_TAG -f ./config/${1:-reactory}/${3:-Dockerfile} .

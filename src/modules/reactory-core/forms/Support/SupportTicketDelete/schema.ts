@@ -1,5 +1,5 @@
 import Reactory from '@reactory/reactory-core';
-import { InsufficientPermissions } from 'exceptions';
+import { InsufficientPermissions } from '@reactory/server-core/exceptions';
 /**
  * This function is used to resolve the schema for the SupportTicketDeleteAction form schema.
  * This shows how you can use state to get the ticketId and then use the ticketId to get the ticket

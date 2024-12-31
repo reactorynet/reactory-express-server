@@ -73,10 +73,8 @@ const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpr
           logger.warn(`Origin ${origin} not allowed by CORS`);
           callback(new Error('Not allowed by CORS'), false);
         }
-        return;
       } else {
         callback(new Error('Not allowed by CORS'), false);
-        return;
       }
       
     },

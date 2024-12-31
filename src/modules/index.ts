@@ -5,8 +5,12 @@ import * as fs from 'fs';
 
 
 let resolved: Reactory.Server.IReactoryModule[] = [];
+const files = [
+  `./${process.env.APPLICATION_ROOT || 'src'}/modules/__index.ts`,
+  `./${process.env.APPLICATION_ROOT || 'src'}/modules/__index.js`,
+];
 
-if (fs.existsSync('./src/modules/__index.ts') === true) {
+if (files.some(file => fs.existsSync(file))) {
   resolved = require('./__index').default;
 }
 

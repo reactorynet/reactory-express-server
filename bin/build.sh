@@ -19,13 +19,15 @@ check_env_vars
 sh ./bin/generate.sh ${1:-reactory} ${2:-local}
 
 # read package.json to get the version
+DEFAULT_APPLICATION_ROOT=app
 BUILD_VERSION=$(node -p "require('./package.json').version")
 INCLUDE_ENV=true
 NODE_PATH=$REACTORY_SERVER/src
-BUILD_OPTIONS=$REACTORY_SERVER/config/${1:-reactory}/build.${2:-local}.sh
+CLEAN_NODE_MODULES=true
+BUILD_OPTIONS=$REACTORY_SERVER/config/${1:-reactory}/.env.build.${2:-local}
 env_file=$REACTORY_SERVER/config/${1:-reactory}/.env.${2:-local}
 BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}
-APP_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/app
+APP_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/${DEFAULT_APPLICATION_ROOT}
 BIN_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/bin
 CONFIG_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/config
 
@@ -35,9 +37,25 @@ if [ -f $BUILD_OPTIONS ]; then
 fi
 
 echo "Building Reactory Server $BUILD_VERSION for ${1:-reactory} ${2:-local} configuration"
-# Clean the target path
+if [ $CLEAN_NODE_MODULES = "true" ]; then
+  echo "Cleaning node_modules"
+  rm -rf $BUILD_PATH/node_modules
+fi
+
+
+# Clean the build directory
 echo "Cleaning $BUILD_PATH"
-rm -rf $BUILD_PATH
+rm -rf $BUILD_PATH/bin
+rm -rf $BUILD_PATH/lib
+rm -rf $BUILD_PATH/src
+rm $BUILD_PATH/.env
+rm $BUILD_PATH/package.json
+rm $BUILD_PATH/yarn.lock
+if [ -f $BUILD_PATH/pm2.config.js ]; then
+  rm $BUILD_PATH/pm2.config.js
+fi
+
+# we leave other files and folders.
 
 echo "Compiling Reactory Server"
 # Compile using npx with babel
@@ -69,6 +87,15 @@ if [ $INCLUDE_ENV = "true" ] && [ -f $env_file ]; then
   # Copy .env file
   echo "Copying .env file"
   cp $env_file $BUILD_PATH/.env
+  # update the APPLICATION_ROOT variable in the .env file
+  # to match the DEFAULT_APPLICATION_ROOT value using sed
+  # check if the env file contains the APPLICATION_ROOT variable
+  # if it does, update it, if not, add it
+  if ! grep -q "APPLICATION_ROOT" $BUILD_PATH/.env; then
+    echo "APPLICATION_ROOT=${DEFAULT_APPLICATION_ROOT}" >> $BUILD_PATH/.env
+  else
+    sed -i "s/APPLICATION_ROOT=.*/APPLICATION_ROOT=${DEFAULT_APPLICATION_ROOT}/" $BUILD_PATH/.env
+  fi
 fi
 
 # Create archive for deployment

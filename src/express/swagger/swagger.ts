@@ -84,7 +84,7 @@ ReactoryModules.enabled.forEach((module) => {
   if(module.routes && Object.keys(module.routes).length > 0) {
     Object.keys(module.routes).forEach((route) => {
       // Get the root path of the module
-      const rootPath = path.resolve('./src/modules/' + module.id + '/routes/');
+      const rootPath = path.resolve(`./${process.env.APPLICATION_ROOT || 'src'}/modules/` + module.id + '/routes/');
       // get all the files in the routes directory and subdirectories
       apis.push(...getFiles(rootPath));
     });

@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { cwd } from "process";
 import Reactory from "@reactory/reactory-core";
-import { ENVIRONMENT } from "types/constants";
+import { ENVIRONMENT } from "@reactory/server-core/types/constants";
 
 const util = require("util");
 const exec = util.promisify(require("child_process").exec);

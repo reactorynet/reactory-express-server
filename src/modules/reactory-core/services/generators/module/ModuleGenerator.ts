@@ -57,10 +57,10 @@ class ModuleGenerator extends Reactory.Service.ReactoryService<ModuleProperties,
     const {} = this.context;
     const {} = this.props;
 
-    const rootPath = './src/modules/core/services/generators/module/templates';
+    const rootPath = `./${process.env.APPLICATION_ROOT || 'src'}/modules/core/services/generators/module/templates`;
 
     //check if module exists
-    const modulePath = `src/modules/${nameSpace}/${name}/${version}`;
+    const modulePath = `${process.env.APPLICATION_ROOT || 'src'}/modules/${nameSpace}/${name}/${version}`;
     if (fs.existsSync(modulePath)) {
       throw new Error(`Module ${name} already exists`);
     }
@@ -116,7 +116,7 @@ class ModuleGenerator extends Reactory.Service.ReactoryService<ModuleProperties,
       fs.writeFileSync(`${modulePath}/${folder}/index.ts`,
         this.templateService.renderTemplate(
           fs
-            .readFileSync(`./src/modules/core/services/generators/module/templates/${folder}.index.ts.ejs`, { encoding: "UTF-8" })
+            .readFileSync(`./${process.env.APPLICATION_ROOT || 'src'}/modules/core/services/generators/module/templates/${folder}.index.ts.ejs`, { encoding: "UTF-8" })
             .toString(),
           props
         )
@@ -135,7 +135,7 @@ class ModuleGenerator extends Reactory.Service.ReactoryService<ModuleProperties,
     this.context.modules.push(newModule);
     // update available.json file
     fs.writeFileSync(
-      "src/modules/available.json",
+      `${process.env.APPLICATION_ROOT || 'src'}/modules/available.json`,
       JSON.stringify(this.context.modules, null, 2)
     );
     return newModule;

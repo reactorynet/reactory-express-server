@@ -33,8 +33,6 @@ if [ -f "./config/$CONFIG_NAME/yarn.lock" ]; then
   cp "./config/$CONFIG_NAME/yarn.lock" "./yarn.lock"
 fi
 
-
-
 # if node_modules directory exists, prompt the user for input
 if [ -d "./node_modules" ]; then
   echo "node_modules directory already exists. Do you want to reinstall the dependencies? (y/n)"
