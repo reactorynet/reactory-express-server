@@ -7,7 +7,9 @@ import EnabledClients from '@reactory/server-core/data/clientConfigs';
 
 const {
   CDN_ROOT,
-  API_ROOT
+  API_ROOT,
+  CORS_DEBUG = 'false',
+  REACTORY_APP_WHITELIST = '',
 } = process.env as Reactory.Server.ReactoryEnvironment;
 
 const bypassUri = [
@@ -28,7 +30,7 @@ type CORSCallback = (error: Error, pass: boolean) => void
 const allowedHeadersString = 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,origin,authorization,x-client-name,x-client-version';
 const proxyHeaderString = 'X-Real-IP,X-Forwarded-For,X-Forwarded-Host,X-Forwarded-Proto';
 
-const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpressRequest, callback: (err: Error | null, options: CorsOptions) => void) => {
+const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpressRequest, corsDelegateCallback: (err: Error | null, options: CorsOptions) => void) => {
 
   const corsOptions: CorsOptions = {
     /**
@@ -40,20 +42,21 @@ const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpr
      * for all configured Reactory Clients
      */
     origin: (origin: string, callback: CORSCallback) => {
+      if (CORS_DEBUG === 'true') {
+        logger.info(`[CORS] Origin: ${origin}`);
+      }
+
       if(!origin) {
         callback(null, true);
         return;
       }
 
-      let whitelist: string[] = [];
+      let whitelist: string[] = REACTORY_APP_WHITELIST.split(',') || [];
 
       if (bypassUri.some((uri) => request.url.indexOf(uri) > -1 )) {
+        if (CORS_DEBUG === 'true') logger.info(`[CORS] Bypassing CORS for ${request.url}`);
         callback(null, true);
         return;
-      }
-
-      if (request?.partner) {
-        whitelist = request.partner.whitelist;
       }
 
       /**
@@ -61,22 +64,34 @@ const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpr
        * and add them to the whitelist
        */
       if(EnabledClients && EnabledClients.length > 0) {
+        if (CORS_DEBUG === 'true') logger.info(`[CORS] Enabled Clients: ${EnabledClients.map((client) => client.name)}`);
         EnabledClients.forEach((client) => {
-          whitelist = [...whitelist, ...client.whitelist];
+          if (client && client.whitelist) {
+            whitelist = [...whitelist, ...client.whitelist];
+          } else {
+            if (CORS_DEBUG === 'true') logger.warn(`[CORS] Client ${client.name} has no whitelist`);
+          }
         });
+      } else {
+        if (CORS_DEBUG === 'true') logger.warn(`[CORS] No Enabled Clients`);
       }
 
+      if (CORS_DEBUG === 'true') logger.info(`[CORS] Whitelist: ${whitelist}`);
+
       if(whitelist.length > 0) {
+        if (CORS_DEBUG === 'true') {
+          logger.info(`[CORS] Whitelist: ${whitelist}`);
+        }
         if (whitelist.indexOf(origin) !== -1) {
           callback(null, true);
-        } else {          
-          logger.warn(`Origin ${origin} not allowed by CORS`);
-          callback(new Error('Not allowed by CORS'), false);
+        } else {
+          if (CORS_DEBUG === 'true') logger.warn(`[CORS] Origin ${origin} not allowed by CORS whitelist`);
+          callback(new Error(`[CORS] Origin ${origin} not allowed by CORS whitelist`), false);
         }
       } else {
-        callback(new Error('Not allowed by CORS'), false);
+        if (CORS_DEBUG === 'true') logger.warn(`[CORS] [Whitelist Empty] Origin ${origin} not allowed by CORS`);
+        callback(new Error(`[CORS] [Whitelist Empty] Origin ${origin} not allowed by CORS`), false);
       }
-      
     },
     /**
        *
@@ -99,11 +114,7 @@ const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpr
     credentials: true,
     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
   };
-
-  callback(null, corsOptions);
+  corsDelegateCallback(null, corsOptions);
 }
-
-
-
 
 export default CorsDelegate;

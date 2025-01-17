@@ -8,7 +8,7 @@
       <h1>401 Unauthorized</h1>
   </header>
   <body>
-      <p>Sorry, you are not authorized to access this page.</p>
+    <p><%= typeof message !== 'undefined' ? message : 'Unauthorized request. Please authenticate before trying to access this resource.' %></p>
   </body>
   <footer>
       <p>Powered by Reactory</p>

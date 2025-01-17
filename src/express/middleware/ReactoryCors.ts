@@ -4,7 +4,7 @@ import cors from 'cors';
 
 const ReactoryCors = (app: Express.Application) => { 
   app.use('*',cors(CorsOptions));
-  app.set('trust proxy', process.env.NODE_ENV === 'development' ? 0 : 1);
+  app.set('trust proxy', process.env.TRUST_PROXY === 'false' ? 0 : 1);
 };
 
 const ReactoryCorsMiddlewareDefinition: Reactory.Server.ReactoryMiddlewareDefinition = {
