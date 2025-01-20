@@ -12,14 +12,14 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
   {
     compilerOptions: {},
     id: 'core.ApplicationCard@1.0.0',
-    src:  fileAsString(path.resolve(__dirname, `../widgets/ApplicationCard.${fileType}`)),
+    src:  fileAsString(path.resolve(__dirname, `../widgets/ApplicationCard.tsx`)),
     compiler: 'rollup',
     fileType
   },
   {
     compilerOptions: {},
     id: 'core.ContentWidget@1.0.0',
-    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.ContentWidget.${fileType}`)),
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.ContentWidget.tsx`)),
     compiler: 'rollup',
     fileType
   },

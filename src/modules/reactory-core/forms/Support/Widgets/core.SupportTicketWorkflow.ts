@@ -168,5 +168,8 @@ if (window && window.reactory) {
     [],
     "workflow");
   //@ts-ignore
-  window.reactory.api.amq.raiseReactoryPluginEvent('loaded', { componentFqn: `${Definition.nameSpace}.${Definition.name}@${Definition.version}`, component: SupportTicketWorkflow });
+  window.reactory.api.amq.raiseReactoryPluginEvent('loaded', { 
+    componentFqn: `${Definition.nameSpace}.${Definition.name}@${Definition.version}`, 
+    component: SupportTicketWorkflow 
+  });
 }

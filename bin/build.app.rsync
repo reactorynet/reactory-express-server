@@ -13,6 +13,8 @@
 + *.ejs
 + *.rxs
 + *.txt
++ .jshintrc
++ .nvmrc
 + modules/**/forms/*.ts
 + modules/**/forms/*.tsx
 - *

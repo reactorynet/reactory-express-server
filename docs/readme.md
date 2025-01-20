@@ -34,7 +34,7 @@ or
 wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 ```
 
-The server is currently being maintained on Node 16.13.2 and can be run on Windows using the Ubuntu on Windows feature.
+The server is currently being maintained on Node 20.15.1 and can be run on Windows using the Ubuntu on Windows feature.
 
 If you have not worked with the Ubuntu on Windows feature, you can go to the link below.
 https://ubuntu.com/tutorials/ubuntu-on-windows#1-overview

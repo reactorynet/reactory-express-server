@@ -58,7 +58,6 @@ if [ $CLEAN_NODE_MODULES = "true" ]; then
   rm -rf $BUILD_PATH/node_modules
 fi
 
-
 # Clean the build directory
 echo "♻️ Cleaning $BUILD_PATH"
 rm -rf $BUILD_PATH/bin
@@ -76,13 +75,13 @@ echo "⬇️ Compiling Reactory Server"
 # Compile using npx with babel
 NODE_PATH=./src env-cmd -f $ENV_FILE npx babel ./src --presets @babel/env --extensions ".js,.ts,.jsx,.tsx" --out-dir $APP_BUILD_PATH
 # Copy additional files while preserving directory structure
-
-
 echo "🔁 Synchhronizing additional files [app, bin, lib]"
 rsync -av --filter='merge ./bin/build.app.rsync' ./src/ $APP_BUILD_PATH --quiet
 rsync -av --filter='merge ./bin/build.bin.rsync' ./bin/ $BIN_BUILD_PATH --quiet
 # rsync the lib/ directory
 rsync -av --filter='merge ./bin/build.lib.rsync' ./lib/ $BUILD_PATH/lib --quiet
+
+# use jq to read the modules fi;e
 
 DATA_RSYNC_INCLUDE=$REACTORY_SERVER/src/config/${1:-reactory}/build.data.rsync_inc.${2:-local}
 
@@ -95,6 +94,7 @@ if [ $PACKAGE_DATA_FOLDER = "true" ]; then
     rsync -av --filter="dir-merge ./bin/build.data.rsync" --include-from="$DATA_RSYNC_INCLUDE" $REACTORY_DATA $BUILD_PATH/data --quiet
   fi
 fi
+
 
 # read the MODULES_ENABLED variable and only copy 
 # the modules we need. We will first just copy everything using
@@ -113,6 +113,17 @@ if [ -f $MODULES_FILE ]; then
   rm -rf $APP_BUILD_PATH/modules/
   # copy back the modules.
   mv $APP_BUILD_PATH/modules_temp $APP_BUILD_PATH/modules
+
+  # use jq to read the modules file and for each module we run a rsync command if 
+  # there is a build.rsync file in the module directory
+  echo "Copying module files"
+  # Read module IDs from the JSON file
+  jq -r '.[] | .id' $MODULES_FILE | while read module; do
+    if [ -f $REACTORY_SERVER/src/modules/$module/build/build.rsync ]; then
+      echo "Copying files for module $module"
+      rsync -av --filter="merge $REACTORY_SERVER/src/modules/$module/build/build.rsync" $REACTORY_SERVER/src/modules/$module/ $APP_BUILD_PATH/modules/$module --quiet
+    fi
+  done
 else
   echo "Modules file $MODULES_FILE not found, skipping module copy"
 fi
