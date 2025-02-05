@@ -6,7 +6,6 @@ import { file } from 'pdfkit';
 const { 
   NODE_ENV
 } = process.env;
-const fileType = NODE_ENV === 'development' ? 'tsx' : 'js';
 
 const modules: Reactory.Forms.IReactoryFormModule[] = [
   {
@@ -14,14 +13,14 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
     id: 'core.ApplicationCard@1.0.0',
     src:  fileAsString(path.resolve(__dirname, `../widgets/ApplicationCard.tsx`)),
     compiler: 'rollup',
-    fileType
+    fileType: 'tsx'
   },
   {
     compilerOptions: {},
     id: 'core.ContentWidget@1.0.0',
     src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.ContentWidget.tsx`)),
     compiler: 'rollup',
-    fileType
+    fileType: 'tsx'
   },
 ];
 

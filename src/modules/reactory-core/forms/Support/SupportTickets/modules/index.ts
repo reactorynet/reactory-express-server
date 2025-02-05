@@ -2,7 +2,6 @@ import Reactory from '@reactory/reactory-core';
 import { fileAsString } from '@reactory/server-core/utils/io';
 import path from 'path';
 
-
 const modules: Reactory.Forms.IReactoryFormModule[] = [
   {
     compilerOptions: {},

@@ -1,5 +1,7 @@
 + /forms/Applications/widgets/*.tsx
-+ /forms/Support/widgets/*.tsx
-+ /forms/Support/widgets/*.ts
-+ /forms/Widgets/*.tsx
++ /forms/Support/Widgets/*.tsx
++ /forms/Support/Widgets/*.ts
++ /forms/Support/Widgets/core.SupportTicketWorkflow.ts
 + /forms/Widgets/*.ts
++ /forms/Widgets/*.tsx
+- *.*

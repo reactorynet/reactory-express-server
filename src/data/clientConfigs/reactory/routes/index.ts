@@ -201,22 +201,22 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     roles: ['USER'],
     componentFqn: 'reactory.Application@1.0.0',
   },
-  // {
-  //   key: 'profile',
-  //   title: 'Profile',
-  //   path: '/profile',
-  //   public: false,
-  //   roles: ['USER'],
+  {
+    key: 'profile',
+    title: 'Profile',
+    path: '/profile',
+    public: false,
+    roles: ['USER'],
 
-  //   componentFqn: 'core.UserProfile@1.0.0',
-  //   componentProps: {
-  //     withPeers: true,
-  //     withMemberships: true,
-  //     withOrganigram: true,
-  //     components: [ 
-  //     ]
-  //   }
-  // },
+    componentFqn: 'core.UserProfile@1.0.0',
+    componentProps: {
+      withPeers: true,
+      withMemberships: true,
+      withOrganigram: true,
+      components: [ 
+      ]
+    }
+  },
 
   {
     key: 'forms_with_mode_and_id',

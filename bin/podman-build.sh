@@ -21,6 +21,7 @@ BUILD_VERSION=$(node -p "require('./package.json').version")
 IMAGE_ORG=reactory
 IMAGE_TAG=$IMAGE_ORG/${1:-reactory}-express-server:$BUILD_VERSION
 BUILD_OPTIONS=$REACTORY_SERVER/config/${1:-reactory}/.env.build.${2:-local}
+TARFILE="./build/server/${1:-reactory}/${2:-local}/$IMAGE_TAG.tar"
 
 # Check if the BUILD_OPTIONS file exists, if it does, source it
 if [ -f $BUILD_OPTIONS ]; then
@@ -29,3 +30,13 @@ fi
 
 echo "💿 Building Image $IMAGE_TAG"
 podman build -t $IMAGE_TAG -f ./config/${1:-reactory}/${3:-Dockerfile} .
+
+# Export the image from podman to a tar file
+echo "📦 Exporting Image $IMAGE_TAG to $TARFILE"
+
+# Check if the TARFILE exists, if it does, remove it
+if [ -f $TARFILE ]; then
+  rm $TARFILE
+fi
+
+podman save -o $TARFILE $IMAGE_TAG

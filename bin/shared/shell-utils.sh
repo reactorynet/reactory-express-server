@@ -14,7 +14,7 @@ check_env_vars(){
       echo -e "🟥 $var is not a valid directory"
       do_exit=1
     else
-      echo -e "🟩 $var is set and points to a valid directory"
+      echo -e "🟩 $var is valid"
     fi
   done
   
@@ -22,8 +22,6 @@ check_env_vars(){
     echo -e "🟥 Please set the environment variables listed above"
     exit 1
   fi
-  
-  echo "Checked Environment Variables"
 }
 
 # Checks if a command is available
@@ -58,4 +56,41 @@ check_meili_search(){
 copy_env_file(){
   cp ./config/${1:-reactory}/.env.${2:-local} .env
   echo "Copied .env file"
+}
+
+package_version(){
+  node -p "require('./package.json').version"
+}
+
+# function to check if node is installed
+check_node(){
+  # use the has_command function to check
+  if has_command node; then
+    echo "🟩 Node is installed"
+  else
+    echo "🟥 Node is not installed. Please install the node runtime using nvm."
+    exit 1
+  fi
+}
+
+check_podman_command(){
+  if has_command podman; then
+    echo "🟩 Podman is installed"
+  else
+    echo "🟥 Podman is not installed. Please install podman."
+    exit 1
+  fi
+}
+
+check_podman_compose_command(){
+  if has_command podman-compose; then
+    echo "🟩 Podman-Compose is installed"
+  else
+    echo "🟥 Podman-Compose is not installed. Please install podman-compose."
+    exit 1
+  fi
+}
+
+get_env_file_path(){
+  echo "$REACTORY_SERVER/config/${REACTORY_CONFIG_ID:-reactory}/.env.${REACTORY_ENV_ID:-local}"
 }

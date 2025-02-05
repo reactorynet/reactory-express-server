@@ -4,9 +4,14 @@ import {
   SwaggerUi,
   swaggerSpec,
 } from '@reactory/server-core/express/swagger/swagger';
+import log from '@reactory/server-core/logging';
 
 const ReactorySwagger = (app: Express.Application, _: Http.Server) => { 
-  app.use('/swagger', SwaggerUi.serve, SwaggerUi.setup(swaggerSpec));
+  try {
+    app.use('/swagger', SwaggerUi.serve, SwaggerUi.setup(swaggerSpec));
+  } catch (err) {
+    log.error(err);
+  }
 };
 
 const ReactorySwaggerDefinition: Reactory.Server.ReactoryMiddlewareDefinition = {  

@@ -14,7 +14,33 @@
 # Compose script is used to start the docker-compose services with 
 # the given configuration name and environment. The script will check
 # environment variables and the existence of the docker-compose file
+
+REACTORY_CONFIG_ID=${1:-reactory}
+REACTORY_ENV_ID=${2:-podman}
 source ./bin/shared/shell-utils.sh
 check_env_vars
-echo "🛠️ Loading Environment ./config/${1:-reactory}/${2:-local} "
+check_podman_command
+check_podman_compose_command
+ENV_FILE=$(get_env_file_path)
+export BUILD_VERSION=$(node -p "require('./package.json').version")
+echo "🛠️ Loading Environment $ENV_FILE"
+# Provide a warning if the environment is not set to podman
+if [ $REACTORY_ENV_ID != "podman" ]; then
+  echo "⚠️ Environment is not set to podman are you sure you want to proceed?"
+  echo "Podman configurations are specific to the podman environment and you need"
+  echo "ensure the configuration is correct before proceeding"
+  # wait for input to continue
+  read -p "Press enter to continue or ctrl+c to exit"
+fi
+# source the env file
+source $ENV_FILE
+
+if [ $PODMAN_CLEAR_CONTAINERS = "true" ]; then
+  echo "🧹 Clearing containers for project ${PODMAN_COMPOSE_PROJECT_NAME:-reactory}"
+  podman rm -f $(podman ps -aq --filter "label=io.podman.compose.project=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
+  # remove the container / project pod as well
+  podman pod rm -f $(podman pod ls -q --filter "name=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
+fi
+
+echo "🚀 Launching podman for ${1:-reactory} ${2:-podman} configuration"
 podman-compose -f ./config/${1:-reactory}/docker-compose.yaml --env-file ./config/${1:-reactory}/.env.${2:-local} ${3:-up} -d

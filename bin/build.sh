@@ -11,9 +11,32 @@
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
 export REACTORY_IS_BUILDING='true'
+REACTORY_CONFIG_ID=${1:-reactory}
+REACTORY_ENV_ID=${2:-local}
 source ./bin/shared/shell-utils.sh
-
 check_env_vars
+check_node
+
+# read package.json to get the version
+WORKING_FOLDER=$(pwd)
+DEFAULT_APPLICATION_ROOT=app
+BUILD_VERSION=$(node -p "require('./package.json').version")
+INCLUDE_ENV=true
+NODE_PATH=$REACTORY_SERVER/src
+CLEAN_NODE_MODULES=true
+BUILD_OPTIONS=$REACTORY_SERVER/config/$REACTORY_CONFIG_ID/.env.build.$REACTORY_ENV_ID
+ENV_FILE=$REACTORY_SERVER/config/$REACTORY_CONFIG_ID/.env.$REACTORY_ENV_ID
+BUILD_PATH=$REACTORY_SERVER/build/server/$REACTORY_CONFIG_ID/$REACTORY_ENV_ID
+APP_BUILD_PATH=$BUILD_PATH/${DEFAULT_APPLICATION_ROOT}
+BIN_BUILD_PATH=$BUILD_PATH/bin
+CONFIG_BUILD_PATH=$BUILD_PATH/config
+# Source the ENV_FILE
+if [ -f $ENV_FILE ]; then
+  source $ENV_FILE
+else
+  echo "Environment file $ENV_FILE not found, exiting"
+  exit -1;
+fi
 
 # Check if jq is installed
 if ! command -v jq &> /dev/null; then
@@ -24,35 +47,15 @@ if ! command -v jq &> /dev/null; then
 fi
 
 # Generate correct imports for the selected configuration
-sh ./bin/generate.sh ${1:-reactory} ${2:-local}
+sh ./bin/generate.sh $REACTORY_CONFIG_ID $REACTORY_ENV_ID
 
-# read package.json to get the version
-WORKING_FOLDER=$(pwd)
-DEFAULT_APPLICATION_ROOT=app
-BUILD_VERSION=$(node -p "require('./package.json').version")
-INCLUDE_ENV=true
-NODE_PATH=$REACTORY_SERVER/src
-CLEAN_NODE_MODULES=true
-BUILD_OPTIONS=$REACTORY_SERVER/config/${1:-reactory}/.env.build.${2:-local}
-ENV_FILE=$REACTORY_SERVER/config/${1:-reactory}/.env.${2:-local}
-BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}
-APP_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/${DEFAULT_APPLICATION_ROOT}
-BIN_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/bin
-CONFIG_BUILD_PATH=$REACTORY_SERVER/build/server/${1:-reactory}/config
-# Source the ENV_FILE
-if [ -f $ENV_FILE ]; then
-  source $ENV_FILE
-else
-  echo "Environment file $ENV_FILE not found, exiting"
-  exit -1;
-fi
 
 # Check if the BUILD_OPTIONS file exists, if it does, source it
 if [ -f $BUILD_OPTIONS ]; then
   source $BUILD_OPTIONS
 fi
 
-echo "Building Reactory Server $BUILD_VERSION for ${1:-reactory} ${2:-local} configuration"
+echo "Building Reactory Server $BUILD_VERSION for $REACTORY_CONFIG_ID $REACTORY_ENV_ID configuration"
 if [ $CLEAN_NODE_MODULES = "true" ]; then
   echo "Cleaning node_modules"
   rm -rf $BUILD_PATH/node_modules
@@ -62,9 +65,12 @@ fi
 echo "♻️ Cleaning $BUILD_PATH"
 rm -rf $BUILD_PATH/bin
 rm -rf $BUILD_PATH/lib
-rm -rf $BUILD_PATH/src
+rm -rf $BUILD_PATH/app
 rm -rf $BUILD_PATH/data
-rm $BUILD_PATH/.env
+if [ -f $BUILD_PATH/.env ]; then
+  rm $BUILD_PATH/.env
+fi
+
 rm $BUILD_PATH/package.json
 rm $BUILD_PATH/yarn.lock
 if [ -f $BUILD_PATH/pm2.config.js ]; then
@@ -73,17 +79,21 @@ fi
 
 echo "⬇️ Compiling Reactory Server"
 # Compile using npx with babel
-NODE_PATH=./src env-cmd -f $ENV_FILE npx babel ./src --presets @babel/env --extensions ".js,.ts,.jsx,.tsx" --out-dir $APP_BUILD_PATH
+# First we compile our helpers in the bin/ directory
+NODE_PATH=./src npx babel ./bin --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow --extensions ".ts" --out-dir $BUILD_PATH/bin
+# Compile the app/ directory
+NODE_PATH=./src env-cmd -f $ENV_FILE npx babel ./src --presets @babel/env --extensions ".ts,.tsx" --out-dir $APP_BUILD_PATH
 # Copy additional files while preserving directory structure
 echo "🔁 Synchhronizing additional files [app, bin, lib]"
 rsync -av --filter='merge ./bin/build.app.rsync' ./src/ $APP_BUILD_PATH --quiet
 rsync -av --filter='merge ./bin/build.bin.rsync' ./bin/ $BIN_BUILD_PATH --quiet
-# rsync the lib/ directory
+# rsync the lib/ directory as it may contain additional libraries that are not available via
+# npm or yarn.
 rsync -av --filter='merge ./bin/build.lib.rsync' ./lib/ $BUILD_PATH/lib --quiet
 
 # use jq to read the modules fi;e
 
-DATA_RSYNC_INCLUDE=$REACTORY_SERVER/src/config/${1:-reactory}/build.data.rsync_inc.${2:-local}
+DATA_RSYNC_INCLUDE=$REACTORY_SERVER/src/config/$REACTORY_CONFIG_ID/build.data.rsync_inc.$REACTORY_ENV_ID
 
 if [ $PACKAGE_DATA_FOLDER = "true" ]; then
   if [ ! -f $DATA_RSYNC_INCLUDE ]; then  
@@ -121,7 +131,9 @@ if [ -f $MODULES_FILE ]; then
   jq -r '.[] | .id' $MODULES_FILE | while read module; do
     if [ -f $REACTORY_SERVER/src/modules/$module/build/build.rsync ]; then
       echo "Copying files for module $module"
-      rsync -av --filter="merge $REACTORY_SERVER/src/modules/$module/build/build.rsync" $REACTORY_SERVER/src/modules/$module/ $APP_BUILD_PATH/modules/$module --quiet
+      rsync -rah --filter="merge $REACTORY_SERVER/src/modules/$module/build/build.rsync" $REACTORY_SERVER/src/modules/$module/ $APP_BUILD_PATH/modules/$module --quiet
+    else
+      echo "No rsync file found for module $module, skipping"
     fi
   done
 else
@@ -130,10 +142,10 @@ fi
 
 
 # Check if there is a pm2 configuration file
-if [ -f "./config/${1:-reactory}/pm2.${2:-local}.config.js" ]; then
+if [ -f "./config/$REACTORY_CONFIG_ID/pm2.$REACTORY_ENV_ID.config.js" ]; then
   echo "Copying pm2 configuration file"
   # Copy the pm2 configuration file to the build directory
-  cp "./config/${1:-reactory}/pm2.${2:-local}.config.js" $BUILD_PATH/pm2.config.js
+  cp "./config/$REACTORY_CONFIG_ID/pm2.$REACTORY_ENV_ID.config.js" $BUILD_PATH/pm2.config.js
 fi
 
 # Copy package.json
@@ -168,7 +180,7 @@ fi
 echo "Creating archive for deployment"
 cd $BUILD_PATH
 
-tar -czf ../${1:-reactory}-server-${BUILD_VERSION}.tar.gz .
+tar -czf ../$REACTORY_CONFIG_ID-server-${REACTORY_ENV_ID}-${BUILD_VERSION}.tar.gz .
 
 echo "🏆 Built Reactory Server to $BUILD_PATH"
 

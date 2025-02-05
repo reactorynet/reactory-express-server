@@ -1,6 +1,6 @@
 {
   "name": "@reactory/server-core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "displayName": "Reactory Server Express",
   "description": "Reactory Core Server",
   "main": "server.js",
@@ -13,7 +13,7 @@
   },
   "licenses": [
     {
-      "license": "Apache-2.0"
+      "license": "MIT"
     }
   ],
   "moduleNameMapper": {
@@ -21,16 +21,9 @@
     "^reactory/server-modules(.*)$": "<rootDir>/src/modules/"
   },
   "workspaces": [
-    "src/modules/*"
+    "src/modules/*",
+    "app/modules/*"
   ],
-  "scripts": {
-    "rollup": "rollup --config rollup.config.dev.js",
-    "build-serve": "npm-run-all clean build serve",
-    "make-install": "npm install & npm run build-serve",
-    "test": "mocha **/*.spec.js",
-    "jest:test": "jest",
-    "lint": "eslint . --fix"
-  },
   "repository": {
     "type": "git",
     "url": "https://bitbucket.org/WernerWeber/reactory-server.git"

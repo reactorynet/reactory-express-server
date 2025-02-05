@@ -51,6 +51,8 @@ fi
 
 if [ -f $ENV_FILE ]; then
   source $ENV_FILE
+  echo "🛠️ Loaded Environment $ENV_FILE"
+  echo $MINIKUBE_HOME
 else
   echo "Environment file $ENV_FILE not found, exiting"
   exit 0
