@@ -21,7 +21,7 @@ BUILD_VERSION=$(node -p "require('./package.json').version")
 IMAGE_ORG=reactory
 IMAGE_TAG=$IMAGE_ORG/${1:-reactory}-express-server:$BUILD_VERSION
 BUILD_OPTIONS=$REACTORY_SERVER/config/${1:-reactory}/.env.build.${2:-local}
-TARFILE="./build/server/${1:-reactory}/${2:-local}/$IMAGE_TAG.tar"
+TARFILE="./build/server/${1:-reactory}/${2:-local}/express-server-image.tar"
 
 # Check if the BUILD_OPTIONS file exists, if it does, source it
 if [ -f $BUILD_OPTIONS ]; then
