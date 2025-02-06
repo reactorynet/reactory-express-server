@@ -40,3 +40,13 @@ if [ -f $TARFILE ]; then
 fi
 
 podman save -o $TARFILE $IMAGE_TAG
+
+# check if image exported successfully
+if [ $? -ne 0 ]; then
+  echo "❌ Error exporting image $IMAGE_TAG to $TARFILE"
+  exit 1
+fi
+
+echo "🚀 Image $IMAGE_TAG exported to $TARFILE"
+
+exit 0
