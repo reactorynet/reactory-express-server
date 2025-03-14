@@ -9,6 +9,9 @@ REACTORY_CONFIG=reactory
 REACTORY_ENV=local
 REACTORY_K8_TARGET=minikube
 TF_LOG=INFO
+DRY_RUN=0
+SKIP_beforerun=0
+SKIP_afterrun=0
 extract_options() {
   NEW_ARGS=()
   for arg in "$@"; do
@@ -24,6 +27,15 @@ extract_options() {
         ;;
       --log-level=*)
         TF_LOG="${arg#*=}"
+        ;;
+      --dry-run)
+        DRY_RUN=1
+        ;;
+      --skip-beforerun)
+        SKIP_beforerun=1
+        ;;
+      --skip-afterrun)
+        SKIP_afterrun=1
         ;;
       *)
         NEW_ARGS+=("$arg")
@@ -67,15 +79,20 @@ else
   exit 0;
 fi
 
-if [ -f $TARGET_DIR/beforerun.sh ]; then
-echo "Running pre-requisites script"
+if [ -f $TARGET_DIR/beforerun.sh ] && [ "${SKIP_beforerun:-0}" -eq 0 ]; then
+  echo " Running pre-requisites script"
   source $TARGET_DIR/beforerun.sh
 fi
 
-# Pass the new arguments to terraform
-terraform -chdir=$TARGET_DIR "${NEW_ARGS[@]}"
+# check if dry run is false and run terraform
+if [ "${DRY_RUN:-0}" -eq 0 ]; then
+  # Pass the new arguments to terraform
+  terraform -chdir=$TARGET_DIR "${NEW_ARGS[@]}"
+else
+  echo "🚀 Dry run complete"  
+fi
 
-if [ -f $TARGET_DIR/afterrun.sh ]; then
-  echo "Running cleanup script"
+if [ -f $TARGET_DIR/afterrun.sh ] && [ "${SKIP_afterrun:-0}" -eq 0 ]; then
+  echo "🧹 Running cleanup script"
   source $TARGET_DIR/afterrun.sh
 fi

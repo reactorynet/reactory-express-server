@@ -11,25 +11,27 @@
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
 export REACTORY_IS_BUILDING='true'
-REACTORY_CONFIG_ID=${1:-reactory}
-REACTORY_ENV_ID=${2:-local}
+export REACTORY_CONFIG_ID=${1:-reactory}
+export REACTORY_ENV_ID=${2:-local}
 source ./bin/shared/shell-utils.sh
 check_env_vars
 check_node
-
 # read package.json to get the version
+BUILD_VERSION=$(node -p "require('./package.json').version")
+export REACTORY_BUILD_KEY="${1:-reactory}.${2:-local}@${BUILD_VERSION}"
+
 WORKING_FOLDER=$(pwd)
 DEFAULT_APPLICATION_ROOT=app
-BUILD_VERSION=$(node -p "require('./package.json').version")
 INCLUDE_ENV=true
 NODE_PATH=$REACTORY_SERVER/src
 CLEAN_NODE_MODULES=true
 BUILD_OPTIONS=$REACTORY_SERVER/config/$REACTORY_CONFIG_ID/.env.build.$REACTORY_ENV_ID
-ENV_FILE=$REACTORY_SERVER/config/$REACTORY_CONFIG_ID/.env.$REACTORY_ENV_ID
+export ENV_FILE=$REACTORY_SERVER/config/$REACTORY_CONFIG_ID/.env.$REACTORY_ENV_ID
 BUILD_PATH=$REACTORY_SERVER/build/server/$REACTORY_CONFIG_ID/$REACTORY_ENV_ID
 APP_BUILD_PATH=$BUILD_PATH/${DEFAULT_APPLICATION_ROOT}
 BIN_BUILD_PATH=$BUILD_PATH/bin
 CONFIG_BUILD_PATH=$BUILD_PATH/config
+BUILD_LOGS=$BUILD_PATH/logs
 # Source the ENV_FILE
 if [ -f $ENV_FILE ]; then
   source $ENV_FILE
@@ -56,25 +58,27 @@ if [ -f $BUILD_OPTIONS ]; then
 fi
 
 echo "Building Reactory Server $BUILD_VERSION for $REACTORY_CONFIG_ID $REACTORY_ENV_ID configuration"
-if [ $CLEAN_NODE_MODULES = "true" ]; then
-  echo "Cleaning node_modules"
-  rm -rf $BUILD_PATH/node_modules
-fi
-
 # Clean the build directory
 echo "♻️ Cleaning $BUILD_PATH"
-rm -rf $BUILD_PATH/bin
-rm -rf $BUILD_PATH/lib
-rm -rf $BUILD_PATH/app
-rm -rf $BUILD_PATH/data
-if [ -f $BUILD_PATH/.env ]; then
-  rm $BUILD_PATH/.env
-fi
+rm -rf $BUILD_PATH
 
-rm $BUILD_PATH/package.json
-rm $BUILD_PATH/yarn.lock
-if [ -f $BUILD_PATH/pm2.config.js ]; then
-  rm $BUILD_PATH/pm2.config.js
+# read the MODULES_ENABLED variable and only copy 
+# the modules we need. We will first just copy everything using
+# the rsync definitions and then rm folder that we don't
+# require afterwards
+MODULES_FILE=$REACTORY_SERVER/src/modules/$MODULES_ENABLED.json
+
+if [ -f $MODULES_FILE ]; then
+  jq -r '.[] | .id' $MODULES_FILE | while read module; do
+    if [ -f $REACTORY_SERVER/src/modules/$module/build/pre-build.sh ]; then
+      echo "Running pre-build tasks for module $module"
+      sh $REACTORY_SERVER/src/modules/$module/build/pre-build.sh
+      if [ $? -ne 0 ]; then
+        echo "❌ Error: pre-build script failed for module $module"
+        exit 1
+      fi
+    fi
+  done
 fi
 
 echo "⬇️ Compiling Reactory Server"
@@ -84,33 +88,24 @@ NODE_PATH=./src npx babel ./bin --presets=@babel/env,@babel/preset-typescript,@b
 # Compile the app/ directory
 NODE_PATH=./src env-cmd -f $ENV_FILE npx babel ./src --presets @babel/env --extensions ".ts,.tsx" --out-dir $APP_BUILD_PATH
 # Copy additional files while preserving directory structure
-echo "🔁 Synchhronizing additional files [app, bin, lib]"
+echo "🔁 Synchronizing additional files [app, bin, lib]"
 rsync -av --filter='merge ./bin/build.app.rsync' ./src/ $APP_BUILD_PATH --quiet
 rsync -av --filter='merge ./bin/build.bin.rsync' ./bin/ $BIN_BUILD_PATH --quiet
 # rsync the lib/ directory as it may contain additional libraries that are not available via
 # npm or yarn.
 rsync -av --filter='merge ./bin/build.lib.rsync' ./lib/ $BUILD_PATH/lib --quiet
 
-# use jq to read the modules fi;e
-
 DATA_RSYNC_INCLUDE=$REACTORY_SERVER/src/config/$REACTORY_CONFIG_ID/build.data.rsync_inc.$REACTORY_ENV_ID
 
 if [ $PACKAGE_DATA_FOLDER = "true" ]; then
   if [ ! -f $DATA_RSYNC_INCLUDE ]; then  
     echo "🔁 Synchronising Reactory Data [build.data.rsync_inc]"
-    rsync -av --filter='dir-merge ./bin/build.data.rsync' $REACTORY_DATA $BUILD_PATH/data --quiet
+    rsync -av --filter='dir-merge ./bin/build.data.rsync' $REACTORY_DATA/ $BUILD_PATH/data --quiet
   else
     echo "🔁 Synchronising Reactory Data [$DATA_RSYNC_INCLUDE]"
-    rsync -av --filter="dir-merge ./bin/build.data.rsync" --include-from="$DATA_RSYNC_INCLUDE" $REACTORY_DATA $BUILD_PATH/data --quiet
+    rsync -av --filter="dir-merge ./bin/build.data.rsync" --include-from="$DATA_RSYNC_INCLUDE" $REACTORY_DATA/ $BUILD_PATH/data --quiet
   fi
 fi
-
-
-# read the MODULES_ENABLED variable and only copy 
-# the modules we need. We will first just copy everything using
-# the rsync definitions and then rm folder that we don't
-# require afterwards
-MODULES_FILE=$REACTORY_SERVER/src/modules/$MODULES_ENABLED.json
 
 if [ -f $MODULES_FILE ]; then
   echo "Generating temporary rsync filter file for modules"
@@ -129,6 +124,11 @@ if [ -f $MODULES_FILE ]; then
   echo "Copying module files"
   # Read module IDs from the JSON file
   jq -r '.[] | .id' $MODULES_FILE | while read module; do
+    if [ -f $REACTORY_SERVER/src/modules/$module/build/post-build.sh ]; then
+      echo "Running post-build tasks for module $module"
+      sh $REACTORY_SERVER/src/modules/$module/build/post-build.sh    
+    fi
+
     if [ -f $REACTORY_SERVER/src/modules/$module/build/build.rsync ]; then
       echo "Copying files for module $module"
       rsync -rah --filter="merge $REACTORY_SERVER/src/modules/$module/build/build.rsync" $REACTORY_SERVER/src/modules/$module/ $APP_BUILD_PATH/modules/$module --quiet
@@ -139,7 +139,6 @@ if [ -f $MODULES_FILE ]; then
 else
   echo "Modules file $MODULES_FILE not found, skipping module copy"
 fi
-
 
 # Check if there is a pm2 configuration file
 if [ -f "./config/$REACTORY_CONFIG_ID/pm2.$REACTORY_ENV_ID.config.js" ]; then
@@ -155,6 +154,16 @@ cp ./package.json $BUILD_PATH
 # Copy package-lock.json
 echo "Copying yarn.lock"
 cp ./yarn.lock $BUILD_PATH
+
+# Copy jsconfig.json
+echo "Copying jsconfig.json"
+cp ./jsconfig.json $BUILD_PATH
+# update the target jsconfig.json file to include the correct paths
+# for the modules and the application root
+
+cd $BUILD_PATH
+sed 's/src/app/g' jsconfig.json > jsconfig_temp.json && mv jsconfig_temp.json jsconfig.json
+cd $WORKING_FOLDER
 
 if [ $INCLUDE_ENV = "true" ] && [ -f $ENV_FILE ]; then
   # Copy .env file
@@ -179,8 +188,19 @@ fi
 # Create archive for deployment
 echo "Creating archive for deployment"
 cd $BUILD_PATH
-
-tar -czf ../$REACTORY_CONFIG_ID-server-${REACTORY_ENV_ID}-${BUILD_VERSION}.tar.gz .
+if [ $INCLUDE_DATA_WITH_IMAGE = "true" ]; then
+  echo "Including data folder in archive"
+  tar -czf ../$REACTORY_CONFIG_ID-server-${REACTORY_ENV_ID}-${BUILD_VERSION}.tar.gz .
+else
+  echo "Excluding data folder from archive"
+  if [ -d $BUILD_PATH/data ]; then    
+    mv $BUILD_PATH/data /tmp
+  fi
+  tar -czf ../$REACTORY_CONFIG_ID-server-${REACTORY_ENV_ID}-${BUILD_VERSION}.tar.gz .  
+  if [ -d /tmp/data ]; then
+    mv /tmp/data $BUILD_PATH
+  fi
+fi
 
 echo "🏆 Built Reactory Server to $BUILD_PATH"
 

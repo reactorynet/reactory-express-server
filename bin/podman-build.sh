@@ -17,6 +17,8 @@
 source ./bin/shared/shell-utils.sh
 check_env_vars
 echo "📓 Loading Environment ./config/${1:-reactory}/${2:-local} "
+export REACTORY_CONFIG_ID=${1:-reactory}
+export REACTORY_ENV_ID=${2:-local}
 BUILD_VERSION=$(node -p "require('./package.json').version")
 IMAGE_ORG=reactory
 IMAGE_TAG=$IMAGE_ORG/${1:-reactory}-express-server:$BUILD_VERSION
@@ -28,8 +30,16 @@ if [ -f $BUILD_OPTIONS ]; then
   source $BUILD_OPTIONS
 fi
 
+# check if a image with the same tag exists
+if podman images | grep -q $IMAGE_TAG; then
+  echo "🚀 Image $IMAGE_TAG already exists"
+  # delete the image
+  echo "🗑️ Deleting Image $IMAGE_TAG
+  podman rmi $IMAGE_TAG"
+fi
+
 echo "💿 Building Image $IMAGE_TAG"
-podman build -t $IMAGE_TAG -f ./config/${1:-reactory}/${3:-Dockerfile} .
+podman build --build-arg REACTORY_CONFIG_ID=${REACTORY_CONFIG_ID} --build-arg REACTORY_ENV_ID=${REACTORY_ENV_ID} -t $IMAGE_TAG -f ./config/${1:-reactory}/${3:-Dockerfile} .
 
 # Export the image from podman to a tar file
 echo "📦 Exporting Image $IMAGE_TAG to $TARFILE"

@@ -153,6 +153,8 @@
     "simple-oauth2": "^2.2.1",
     "ssl-root-cas": "^1.3.1",
     "svg-to-pdfkit": "0.1.8",
+    "swagger-jsdoc": "6.2.8",
+    "swagger-ui-express": "4.1.6",
     "convert-svg-to-png": "0.6.4",
     "tar": "7.4.0",
     "tedious": "18.2.4",
@@ -282,8 +284,6 @@
     "superagent-verbose-errors": "^1.0.1",
     "supertest": "^4.0.2",
     "supertest-session": "^5.0.1",
-    "swagger-jsdoc": "6.2.8",
-    "swagger-ui-express": "4.1.6",
     "ts-jest": "^29.0.5",
     "ts-node": "10.7.0",
     "typescript": "4.5.5"
