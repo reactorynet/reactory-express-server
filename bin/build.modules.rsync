@@ -14,10 +14,6 @@
 + /reactory-reactor/**
 + /reactory-queue/
 + /reactory-queue/**
-+ /zepz-engineer/
-+ /zepz-engineer/**
-+ /zepz-customer/
-+ /zepz-customer/**
 + /reactory-communicator/
 + /reactory-communicator/**
 - *
