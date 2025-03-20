@@ -375,7 +375,6 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
                 userName = value;
                 break;
               }
-            case '-pwd':
             case '--password':
               {
                 password = value;
