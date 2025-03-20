@@ -8,7 +8,16 @@ import * as DailyRotateFileTransport from "winston-daily-rotate-file";
  * @returns 
  */
 export const getLogging = () => {
-  const { APP_DATA_ROOT } = process.env;
+  const { APP_DATA_ROOT, REACTORY_IS_BUILDING = 'false' } = process.env;
+  if (REACTORY_IS_BUILDING === 'true') {
+    return winston.createLogger({
+      level: process.env.LOG_LEVEL || 'debug',
+      format: winston.format.simple(),
+      transports: [
+        new winston.transports.Console(),
+      ],
+    });
+  }
   if (!APP_DATA_ROOT) throw new Error("APP_DATA_ROOT is not defined, please check your .env file");
   if (!existsSync(APP_DATA_ROOT)) throw new Error("APP_DATA_ROOT does not exist, please check your .env file");
   if (!existsSync(`${APP_DATA_ROOT}/logging`)) mkdirSync(`${APP_DATA_ROOT}/logging`);

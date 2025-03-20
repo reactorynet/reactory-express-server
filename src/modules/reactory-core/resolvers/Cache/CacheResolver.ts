@@ -1,4 +1,4 @@
-import Cache  from "modules/reactory-core/models/CoreCache";
+import Cache from "@reactory/server-modules/reactory-core/models/CoreCache";
 import logger from "@reactory/server-core/logging";
 
 interface ReactoryGetCachedItemParams {

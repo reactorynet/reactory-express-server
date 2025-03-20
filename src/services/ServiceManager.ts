@@ -208,11 +208,10 @@ class ServiceManager {
     const { services, getService } = this;
     try {
       let promises = [];
-      for (let i = 0; i < services.length; i++) {
-        const service = services[i];
+      for (const service of services) {
         const instance = getService(service.id, props, context);
         if (instance.onStartup && typeof instance.onStartup === 'function') {
-          await instance.onStartup();
+          await instance.onStartup(context);
         }
       }
   

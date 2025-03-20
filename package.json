@@ -1,6 +1,6 @@
 {
   "name": "@reactory/server-core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "displayName": "Reactory Server Express",
   "description": "Reactory Core Server",
   "main": "server.js",
@@ -13,7 +13,7 @@
   },
   "licenses": [
     {
-      "license": "Apache-2.0"
+      "license": "MIT"
     }
   ],
   "moduleNameMapper": {
@@ -21,16 +21,9 @@
     "^reactory/server-modules(.*)$": "<rootDir>/src/modules/"
   },
   "workspaces": [
-    "src/modules/*"
+    "src/modules/*",
+    "app/modules/*"
   ],
-  "scripts": {
-    "rollup": "rollup --config rollup.config.dev.js",
-    "build-serve": "npm-run-all clean build serve",
-    "make-install": "npm install & npm run build-serve",
-    "test": "mocha **/*.spec.js",
-    "jest:test": "jest",
-    "lint": "eslint . --fix"
-  },
   "repository": {
     "type": "git",
     "url": "https://bitbucket.org/WernerWeber/reactory-server.git"
@@ -160,7 +153,9 @@
     "simple-oauth2": "^2.2.1",
     "ssl-root-cas": "^1.3.1",
     "svg-to-pdfkit": "0.1.8",
-    "svg-to-png": "4.0.0",
+    "swagger-jsdoc": "6.2.8",
+    "swagger-ui-express": "4.1.6",
+    "convert-svg-to-png": "0.6.4",
     "tar": "7.4.0",
     "tedious": "18.2.4",
     "typeorm": "0.3.20",
@@ -289,8 +284,6 @@
     "superagent-verbose-errors": "^1.0.1",
     "supertest": "^4.0.2",
     "supertest-session": "^5.0.1",
-    "swagger-jsdoc": "6.2.8",
-    "swagger-ui-express": "4.1.6",
     "ts-jest": "^29.0.5",
     "ts-node": "10.7.0",
     "typescript": "4.5.5"

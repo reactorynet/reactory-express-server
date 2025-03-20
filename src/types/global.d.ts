@@ -7,5 +7,3 @@ declare namespace NodeJS {
     REACTORY_SERVER_STARTUP: Date;
   }
 }
-
-declare module 'svg-to-png';

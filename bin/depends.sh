@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# This script is used to manage dependencies for the Reactory project.
+# It allows setting the configuration name and environment, and optionally enables watch mode.
+# The script checks for the existence of the environment file, copies the yarn.lock file if present,
+# prompts the user to reinstall dependencies if the node_modules directory exists, installs dependencies,
+# and then copies the yarn.lock file back to the configuration directory.
+
 # Default values
 CONFIG_NAME="reactory"
 CONFIG_ENV="local"
@@ -7,7 +13,7 @@ WATCH_MODE=false
 
 KWARGS=
 
-# Loop through the arguments
+# Loop through the arguments and set the variables
 for arg in "$@"; do
   case $arg in
       --watch) WATCH_MODE=true ;;
@@ -32,8 +38,6 @@ if [ -f "./config/$CONFIG_NAME/yarn.lock" ]; then
   # copy the file to the root directory
   cp "./config/$CONFIG_NAME/yarn.lock" "./yarn.lock"
 fi
-
-
 
 # if node_modules directory exists, prompt the user for input
 if [ -d "./node_modules" ]; then

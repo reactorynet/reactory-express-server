@@ -8,7 +8,7 @@
       <h1>500 Server Error</h1>
   </header>
   <body>
-      <p>Server encountered an error</p>
+    <p><%= typeof message !== 'undefined' ? message : 'Server encountered an error' %></p>
   </body>
   <footer>
       <p>Powered by Reactory</p>

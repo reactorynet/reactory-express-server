@@ -1,8 +1,13 @@
++ /shared/shell-utils.sh
++ addconfig.sh
 + backup.sh
++ bun.sh
 + cli.sh
++ depends.sh
 + meilisearch.sh
 + serve.sh
 + run.sh
++ run-otel.sh
 + reactory.service
 + restore2.sh
-- *
+- *.*

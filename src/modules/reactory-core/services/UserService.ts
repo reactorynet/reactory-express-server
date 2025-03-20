@@ -4,10 +4,15 @@ import ApiError, {
   RecordNotFoundError,
 } from "@reactory/server-core/exceptions";
 import User from '@reactory/server-modules/reactory-core/models/User'
-import { trim, union, isNil, isFunction } from "lodash";
+import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
+import { trim, union, isNil, find } from "lodash";
 import crypto from "crypto";
 import { roles } from "@reactory/server-core/authentication/decorators";
 import logger from "@reactory/server-core/logging";
+import { strongRandom } from "@reactory/server-core/utils";
+import { 
+  clients,
+} from '@reactory/server-core/data'
 interface PeersState {
   [key: string]: Reactory.Models.IOrganigramDocument;
 }
@@ -80,7 +85,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
         nameSpace: "core",
       });
       const partnerToUse = partner;
-      let foundUser = await userModel.findOne(
+      let foundUser: Reactory.Models.IUserDocument = await userModel.findOne(
         { email: user.email },
         {
           _id: 1,
@@ -280,6 +285,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
     if (!user) throw new RecordNotFoundError(`User not found`);
     if (dob) user.dateOfBirth = dob;
 
+    // TODO: Werner - 2021-09-29 - Refactor this to use the Demographic model
     context.log(
       `MoresUpdateUserDemographic >>  Processing User Demographics ${user.email}`,
       {
@@ -595,6 +601,70 @@ class UserService implements Reactory.Service.IReactoryUserService {
   ): boolean {
     this.context = executionContext;
     return true;
+  }
+
+  async initializeSystemUser(): Promise<Reactory.Models.IUserDocument>{
+    const { 
+      REACTORY_APPLICATION_EMAIL = 'system@localhost',
+      REACTORY_APPLICATION_PASSWORD = strongRandom(16),
+    } = process.env;
+
+    const { context } = this;
+  
+    if (!REACTORY_APPLICATION_EMAIL || !REACTORY_APPLICATION_PASSWORD) {
+      context.error('[ConfigurationError] System user email or password not set. Cannot continue system user initialization.'
+        + 'Please check REACTORY_APPLICATION_EMAIL and REACTORY_APPLICATION_PASSWORD configuration values');
+      throw new RecordNotFoundError('System user email or password not set. Cannot continue system user initialization.');
+    }
+    
+    const { log } = context;
+  
+    const reactoryConfig = find(clients, { key: 'reactory' });
+    if(!reactoryConfig) {
+      log(`[ClientConfigurationError] Reactory client configuration not found. Cannot continue system user initialization.`);
+      throw new RecordNotFoundError('Reactory client configuration not found. Cannot continue system user initialization.');
+    }
+  
+    let reactoryClient = await ReactoryClient.findOne({ key: 'reactory' }).exec();
+    if(isNil(reactoryClient) === true) { 
+      // @ts-ignore
+      reactoryClient = await ReactoryClient.upsertFromConfig(reactoryConfig);
+      if(isNil(reactoryClient)) {
+        log(`[ClientConfigurationError] Reactory client configuration not found. Cannot continue system user initialization.`);
+        process.exit(1);
+      }
+    }
+  
+    log(`Initializing system user ${REACTORY_APPLICATION_EMAIL}...`, {}, 'info');
+  
+    //@ts-ignore
+    let user: Reactory.Models.IUserDocument = await User.findOne({ email: REACTORY_APPLICATION_EMAIL }).exec();
+  
+    if(user) {
+      log('Initial user already exists', {}, 'warning');
+      return user;
+    }
+  
+    //@ts-ignore
+    user = new User({
+      email: REACTORY_APPLICATION_EMAIL,
+      password: "",
+      firstName: 'Reactory',
+      lastName: 'System',
+      memberships: [],
+      username: 'reactory',
+      salt: strongRandom(16),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      active: true,
+      dateOfBirth: new Date(),
+    });
+  
+    user.setPassword(REACTORY_APPLICATION_PASSWORD);
+    user.addRole(reactoryClient._id.toString(),'SYSTEM');
+    await user.save();
+  
+    log(`System user initialized successfully`, {}, 'info');
   }
 
   static reactory: Reactory.Service.IReactoryServiceDefinition<UserService> = {

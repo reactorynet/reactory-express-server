@@ -8,7 +8,7 @@
       <h1>404 Not Found</h1>
   </header>
   <body>
-      <p>Sorry, the resource you are looking for cannot be found.</p>
+      <p><%= typeof message !== 'undefined' ? message : 'The resource you are looking for could not be found.' %></p>
   </body>
   <footer>
       <p>Powered by Reactory</p>

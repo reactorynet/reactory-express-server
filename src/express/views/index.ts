@@ -17,7 +17,7 @@ const ConfigureViews = (reactoryExpress: express.Application): void => {
   });
   reactoryExpress.set('view engine', 'ejs');
   reactoryExpress.set('views', viewFolders);
-  logger.debug(`✅ View folders configured: ${viewFolders.join(', ')}`);
+  logger.debug(`✅ View folders configured: ${viewFolders.join('\n')}`);
 };
 
 export default ConfigureViews;

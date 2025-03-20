@@ -5,8 +5,7 @@ import path from 'path';
 const { 
   NODE_ENV
 } = process.env;
-const fileType = NODE_ENV === 'development' ? 'tsx' : 'js';
-const relativePath = `../../Widgets/core.SupportTicketStatusWidget.${fileType}`;
+const relativePath = `../../Widgets/core.SupportTicketStatusWidget.tsx`;
 const src = fileAsString(path.resolve(__dirname, relativePath));
 
 const modules: Reactory.Forms.IReactoryFormModule[] = [
@@ -15,7 +14,7 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
     id: 'core.SupportStatusWidget@1.0.0',
     src,
     compiler: 'rollup',
-    fileType
+    fileType: 'tsx'
   }
 ];
 

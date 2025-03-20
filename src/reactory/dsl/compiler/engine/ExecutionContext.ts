@@ -1,4 +1,4 @@
-import ReactoryContextProvider from "context/ReactoryContextProvider";
+import ReactoryContextProvider from "@reactory/server-core/context/ReactoryContextProvider";
 
 
 export type ValidHost = 'cli' | 'server' | 'mock';

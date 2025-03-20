@@ -59,7 +59,11 @@ const configureMiddleware = (app: express.Application, httpServer: http.Server) 
 
     if (middleware.component && middleware.type === 'function') {
       logger.info(`Adding middleware: ${middleware.nameSpace}.${middleware.name}@${middleware.version}`);
-      app.use(middleware.component as Reactory.Server.ExpressMiddlewareFunction);
+      try {
+        app.use(middleware.component as Reactory.Server.ExpressMiddlewareFunction);
+      } catch (err) {
+        logger.error(`Error adding middleware: ${middleware.nameSpace}.${middleware.name}@${middleware.version}`, { err });
+      }
     }
   });
 }

@@ -1,5 +1,4 @@
 import amq from '@reactory/server-core/amq';
-import froalaRouter from '@reactory/server-core/froala';
 import pdfRouter from '@reactory/server-core/pdf';
 import resourcesRouter from '@reactory/server-core/resources'
 import userAccountRouter from '@reactory/server-core/useraccount';;
@@ -13,8 +12,7 @@ import logger from '@reactory/server-core/logging';
 const ConfigureRoutes = (app: express.Application) => {
   
   const routes: { [key: string]: express.Router } = {
-    '/amq': amq.router,
-    '/froala': froalaRouter,
+    '/amq': amq.router,    
     '/pdf': pdfRouter,
     '/resources': resourcesRouter,
     '/user': userAccountRouter,

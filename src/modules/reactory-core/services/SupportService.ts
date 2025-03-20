@@ -4,7 +4,7 @@ import { roles } from '@reactory/server-core/authentication/decorators';
 import moment from 'moment';
 import { QueryWithHelpers } from 'mongoose';
 import ReactorySupportTicketModel from '../models/ReactorySupportTicket';
-import { InsufficientPermissions } from 'exceptions';
+import { InsufficientPermissions } from '@reactory/server-core/exceptions';
 import { ObjectId } from 'mongodb';
 
 class ReactorySupportService implements Reactory.Service.TReactorySupportService {
@@ -22,10 +22,10 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   } 
   
 
-  async updateTicket(ticket_id: string, updates: Reactory.Models.IReactorySupportTicketUpdate): Promise<Reactory.IReactorySupportTicket | Reactory.IReactorySupportTicketDocument> {
+  async updateTicket(ticket_id: string, updates: Reactory.Models.IReactorySupportTicketUpdate): Promise<Reactory.Models.IReactorySupportTicket | Reactory.Models.IReactorySupportTicketDocument> {
     throw new Error('Method not implemented.');
   }
-  async attachDocument(ticket_id: string, file: File, name: string): Promise<Reactory.Models.IReactorySupportTicket | Reactory.IReactorySupportTicketDocument> {
+  async attachDocument(ticket_id: string, file: File, name: string): Promise<Reactory.Models.IReactorySupportTicket | Reactory.Models.IReactorySupportTicketDocument> {
     throw new Error('Method not implemented.');
   }
 

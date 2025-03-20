@@ -15,5 +15,6 @@ check_meili_search
 copy_env_file ${1:-reactory} ${2:-local}
 echo "Starting Reactory Development Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}"
 sh ./bin/generate.sh ${1:-reactory} ${2:-local}
+# TODO: Update the start script so that it checks the loaded modules
+# and runs any pre-start scripts that are available in the module.
 NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx nodemon -e js,ts,tsx,graphql --exec npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
- 

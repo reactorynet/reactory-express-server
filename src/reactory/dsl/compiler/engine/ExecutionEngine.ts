@@ -1,7 +1,7 @@
 import { ASTNode, MacroInvocationNode, ProgramNode, StringLiteralNode, VariableNode } from "@reactory/server-core/types/compiler/ast";
 import { createCST, createAST, tokenize } from '../parser';
 import DSLExecutionContext from "./ExecutionContext";
-import { CSTProgramNode } from "types/compiler/cst";
+import { CSTProgramNode } from "@reactory/server-core/types/compiler/cst";
 
 /**
  * Executes a program AST node.

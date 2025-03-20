@@ -15,7 +15,7 @@ const {
 } = NameProgramCSTProgramNode;
 
 import { createAST } from "../compiler/parser";
-import { CSTProgramNode } from 'types/compiler/cst';
+import { CSTProgramNode } from '@reactory/server-core/types/compiler/cst';
 
 describe('AST', () => {
   

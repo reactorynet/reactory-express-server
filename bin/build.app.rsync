@@ -12,7 +12,7 @@
 + *.cert
 + *.ejs
 + *.rxs
-+ *.ts
-+ *.tsx
 + *.txt
++ modules/**/forms/*.ts
++ modules/**/forms/*.tsx
 - *

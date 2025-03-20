@@ -3,6 +3,7 @@
  * imports file for the modules we want to run.
  */
 import fs from 'fs';
+import path from 'path';
 import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 
@@ -15,14 +16,39 @@ const getImportName = (moduleDefinition: Reactory.Server.IReactoryModuleDefiniti
   return $import_name;
 };
 
+const resolveModulesFolder = (): string => {   
+  const DEVELOPMENT_PATH = path.join(process.cwd(), `src/modules`);
+  const PRODUCTION_PATH = path.join(process.cwd(), `app/modules`);
+  let folder = "";
+  if (fs.existsSync(DEVELOPMENT_PATH)) { 
+    folder = DEVELOPMENT_PATH;
+  } else if (fs.existsSync(PRODUCTION_PATH) === true) { 
+    folder = PRODUCTION_PATH;
+  }
+  return folder;
+}
+
+const getModuleDefinitionsFile = (): string => { 
+  const { MODULES_ENABLED } = process.env;
+  const folder = resolveModulesFolder();
+  const DEVELOPMENT_PATH = path.join(folder, `${MODULES_ENABLED}.json`);
+  const PRODUCTION_PATH = path.join(folder, `${MODULES_ENABLED}.json`);  
+  let filename = "";
+  if (fs.existsSync(DEVELOPMENT_PATH)) { 
+    filename = DEVELOPMENT_PATH;
+  } else if (fs.existsSync(PRODUCTION_PATH) === true) { 
+    filename = PRODUCTION_PATH;
+  }
+  return filename;
+}
+
 export const getModuleDefinitions = (): Reactory.Server.IReactoryModuleDefinition[] => {
-  const { MODULES_ENABLED } = process.env;  
-  const filename = `${MODULES_ENABLED}.json`
+  const filename = getModuleDefinitionsFile();  
   let enabled: Reactory.Server.IReactoryModuleDefinition[] = []
-  if (fs.existsSync(`./src/modules/${filename}`) === true) {
-    enabled = require(`../${filename}`);
+  if (fs.existsSync(filename) === true) {
+    enabled = require(filename);
   } else {
-    throw new Error(`The module specification file (./src/modules/${filename}) does not exist, please create it and restart the server`);    
+    throw new Error(`The module specification file (${filename}) does not exist, please create it and restart the server`);    
   }
   return enabled;
 }
@@ -40,7 +66,6 @@ const generateHeader = () => {
 `;
 };
 
-
 const generateImport = (moduleDefinition: Reactory.Server.IReactoryModuleDefinition) => { 
   let import_name = getImportName(moduleDefinition);
   return `
@@ -52,17 +77,15 @@ import ${import_name} from '@reactory/server-modules/${moduleDefinition.moduleEn
  * Generates __index.ts that is responsible for module includes.
  */
 const generate_index = () => {
-
   const { MODULES_ENABLED } = process.env;
-
   logger.debug(`#### REACTORY CODE - ModleImportFactory ####\n🟠  ModuleImportFactory >> __index.ts generator executing for module spec ${MODULES_ENABLED || 'NA'}`);
 
-  const filename = `${MODULES_ENABLED}.json`
+  const filename = getModuleDefinitionsFile();
   let enabled: Reactory.Server.IReactoryModuleDefinition[] = []
-  if (fs.existsSync(`./src/modules/${filename}`) === true) {
-    enabled = require(`../${filename}`);
+  if (fs.existsSync(filename) === true) {
+    enabled = require(filename);
   } else {
-    logger.error(`The module specification file (./src/modules/${filename}) does not exist, please create it and restart the server`);
+    logger.error(`The module specification file (${filename}) does not exist, please create it and restart the server`);
     process.exit(0);
   }
 
@@ -89,7 +112,7 @@ ${module_names}
 ];
 `;
 
-  const __index = './src/modules/__index.ts';
+  const __index = path.join(resolveModulesFolder(), '__index.ts');
   let do_write = false;
   let file_exists = fs.existsSync(__index);
   if (file_exists === true) {
@@ -98,7 +121,6 @@ ${module_names}
   } else {
     do_write = true;
   }
-
 
   if (do_write === true) {
     if (file_exists === true) {

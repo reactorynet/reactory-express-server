@@ -189,7 +189,7 @@ export const startServices = async (props: any, context: Reactory.Server.IReacto
       const service = services[i];
       const instance = getService(service.id, props, context);
       if (instance.onStartup && typeof instance.onStartup === 'function') {
-        await instance.onStartup();
+        await instance.onStartup(context);
       }
     }
 
