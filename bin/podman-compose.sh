@@ -43,4 +43,4 @@ if [ $PODMAN_CLEAR_CONTAINERS = "true" ]; then
 fi
 
 echo "🚀 Launching podman for ${1:-reactory} ${2:-podman} configuration"
-podman-compose -f ./config/${1:-reactory}/docker-compose.yaml --env-file ./config/${1:-reactory}/.env.${2:-local} ${3:-up} -d
+podman-compose -f $(pwd)/config/${1:-reactory}/docker-compose.yaml --env-file ./config/${1:-reactory}/.env.${2:-local} ${3:-up} -d

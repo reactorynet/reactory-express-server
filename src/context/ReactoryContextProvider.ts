@@ -40,7 +40,9 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   };
   utils: any;
   session: any;
+  // @ts-ignore
   response?: Express.Response;
+  // @ts-ignore
   request?: Express.Request;
   i18n: typeof i18next;
   lng: string;
@@ -84,8 +86,9 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     this.removeValue = this.removeValue.bind(this);
     this.extend = this.extend.bind(this);
     this.listServices = this.listServices.bind(this);
-    this.serviceManager = ServiceManager.getInstance(this);
+    this.serviceManager = ServiceManager.getInstance(this as unknown as Reactory.Server.IReactoryContext);
     this.services = this.serviceManager.getServices();
+    this.host = currentContext?.host || "express";
   }
   
 
@@ -141,7 +144,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     return this.serviceManager.getService(
       id,
       props,
-      this,
+      this as unknown as Reactory.Server.IReactoryContext,
       lifeCycle
     ) as TService;
   }

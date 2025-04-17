@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import Websocket from 'ws';
 import { 
   ApolloClient,
   Resolvers,
@@ -64,35 +65,37 @@ export const clientFor = async (context: Reactory.Server.IReactoryContext): Prom
     persistor.purge();
   }
 
+  let clientKey = context.partner ? context.partner.key : 'reactory';
+  let clientPwd = context.partner ? `${process.env[context.partner.key.toUpperCase() + '_APPLICATION_PASSWORD']}` : `${process.env.REACTORY_APPLICATION_PASSWORD}`;
+
   const authLink = setContext((_, { headers }) => {
+
+    const nextHeaders = {
+      ...headers,
+      authorization: token ? `Bearer ${Helpers.jwtMake(token)}` : "",
+      'x-client-key': `${clientKey}`,
+      'x-client-pwd': `${clientPwd}`,
+      'x-client-version': `${packageInfo.version}`,
+      'x-client-name': packageInfo.name,
+      'x-client-context-host': context?.host || 'express',
+    };
+
     return {
-      headers: {
-        ...headers,
-        authorization: token ? `Bearer ${token}` : "",
-        'x-client-key': `${process.env.REACT_APP_CLIENT_KEY}`,
-        'x-client-pwd': `${process.env.REACT_APP_CLIENT_PASSWORD}`,
-        'x-client-version': `${packageInfo.version}`,
-        'x-client-name': packageInfo.name
-      }
+      headers: nextHeaders
     }
   });
 
-  // const uploadLink = createUploadLink({
-  //   uri: `${localStorage.getItem('REACT_APP_API_ENDPOINT')}/graph`,
-  //   fetch: fetch
-  // });
+  // Create HTTP link for non-subscription operations
+  const httpLink = new HttpLink({
+    uri: `${process.env.API_URI_ROOT}graph`,
+    fetch: fetch as any
+  });
+
+  // Compose auth middleware with the HTTP link
+  const authHttpLink = authLink.concat(httpLink);
 
   let clientTypeDefs: string[] = [];
   let resolvers: Resolvers[] = [];
-
-  createClient({  
-    url: `${process.env.API_URI_ROOT}graph`.replace('http', 'ws'),    
-    retryAttempts: 5,
-    connectionParams: {
-      Authorization: `Bearer ${token}`,
-      authToken: token
-    }    
-  })
 
   const ws_client = createClient({
     url: `${process.env.API_URI_ROOT}graph`.replace('http', 'ws'),
@@ -100,7 +103,8 @@ export const clientFor = async (context: Reactory.Server.IReactoryContext): Prom
     connectionParams: {
       Authorization: `Bearer ${token}`,
       authToken: token
-    }
+    },
+    webSocketImpl: Websocket
   })
 
   const ws_link = new GraphQLWsLink(ws_client);
@@ -114,7 +118,7 @@ export const clientFor = async (context: Reactory.Server.IReactoryContext): Prom
       );
     },
     ws_link,
-    authLink,
+    authHttpLink, // Use the composed HTTP link with auth
   );
 
   const client: ApolloClient<NormalizedCacheObject> = new ApolloClient<NormalizedCacheObject>({

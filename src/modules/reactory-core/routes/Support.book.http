@@ -15,16 +15,15 @@ Authorization: Basic {{authToken}}
    exports.jwtToken = token;
 }}
 
-HTTP/1.1 200  - OK
+HTTP/1.1 401  - Unauthorized
 x-powered-by: Express
 vary: Origin
 access-control-allow-credentials: true
 access-control-expose-headers: X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,x-client-version,x-client-name
-content-language: en-US
 content-type: application/json; charset=utf-8
-content-length: 473
-etag: W/"1d9-uJOximwoEFWFnZRuhsakWy/Kq34"
-date: Fri, 08 Nov 2024 04:02:15 GMT
+content-length: 31
+etag: W/"1f-sMAi1XfEJKDPV9ajpjCQqYQmOuM"
+date: Wed, 26 Mar 2025 23:46:19 GMT
 connection: close
 ###
 GET http://localhost:4000/support/tickets

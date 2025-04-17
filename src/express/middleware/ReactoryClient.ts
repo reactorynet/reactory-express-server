@@ -105,15 +105,21 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
   }
 
   if (isNil(clientId) === true || clientId === '') {
-    if(req.headers['accept'] === 'application/json') { 
-      res.status(401).send({ 
-        error: 'no-client-key',
-        description: 'You did not provide a client key in the request Please provide a valid client id.',       
-      });
-    } else {
-      res.render('errors/401', { });
+
+    switch(req.headers['accept']) {
+      case 'application/json':
+      case 'text/event-stream':
+        res.status(401).send({
+          error: 'no-client-key',
+          description: 'You did not provide a client key in the request Please provide a valid client id.',
+        });
+        break;
+      case 'text/html': 
+      default:
+        res.render('errors/401', { });
+        break;
     }
-    
+    return; 
   } else {
     logger.debug(`ReactoryClientAuthenticationMiddleware:: extracted partner key: ${clientId}`);
     try {
@@ -124,7 +130,7 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
         next();
         return;
       }
-
+      
       ReactoryClient.findOne({ key: clientId }).then((clientResult: any) => {
         if (isNil(clientResult) === true ) { 
           res.status(401).send({ 
