@@ -54,19 +54,19 @@ const getAlias = (id: string) => {
 
 /**
  * Returns a service based on the service id and injects any properties required into the service.
- * @param id - The string id
+ * @param serviceId - The string id
  * @param props - The props we want to pass to the service.
  * @param context - The request context that needs to be passed to te service.
  * @param lifeCycle - The service life cycle we want to use for this service.
  * @returns 
  */
-export const getService = (id: string,
+export const getService = (serviceId: string,
   props: any = {},
   context: Reactory.Server.IReactoryContext, 
   lifeCycle: Reactory.Service.SERVICE_LIFECYCLE = "instance"): any => {
 
-  if (serviceRegister[id]) {
-    const svcDef = serviceRegister[id];
+  if (serviceRegister[serviceId]) {
+    const svcDef = serviceRegister[serviceId];
     let $deps: any = {}; //holder for the dependencies.
 
     /**
@@ -92,7 +92,7 @@ export const getService = (id: string,
       if (hasIt === true) {
         $deps[alias] = getService($id as string, props, context,);
       } else {
-        context.log(`🚨 Dependency not found ${dep} 🚨`, { service_id: id, props, missing: dep }, 'warning');
+        context.log(`🚨 Dependency not found 🚨`, { service_id: serviceId, props, missing: dep }, 'warning');
       }
     }
 
@@ -102,7 +102,7 @@ export const getService = (id: string,
       })
     }
     
-    const request_key = `svc_request::${id}`;
+    const request_key = `svc_request::${serviceId}`;
     
     /**
      * Check if the service is in the request context state
@@ -116,13 +116,13 @@ export const getService = (id: string,
      * Check if the service is a singleton which will be for services
      * that are for the entire life period of the service uptime.
      */
-    const singleton_key = `svc_instance::${id}`;
+    const singleton_key = `svc_instance::${serviceId}`;
     if(instances[singleton_key] && lifeCycle === "singleton") {
       context.log(`Service singleton instance found`);
       return instances[singleton_key];
     }
 
-    const svc: Reactory.Service.IReactoryService = serviceRegister[id].service({ ...props, $services: serviceRegister, $dependencies: $deps }, context) as Reactory.Service.IReactoryService;
+    const svc: Reactory.Service.IReactoryService = serviceRegister[serviceId].service({ ...props, $services: serviceRegister, $dependencies: $deps }, context) as Reactory.Service.IReactoryService;
     //try to auto bind services with property setter binders.
     Object.keys($deps).map((dependcyAlias: string) => {
       let isSet = false;
@@ -140,7 +140,7 @@ export const getService = (id: string,
             // directly.
             //@ts-ignore
             svc[dependcyAlias] = $deps[dependcyAlias];
-            context.warn(`🚨 Setter error ${setterName}; ${setterError?.message ? setterError.message : 'Unknown'} 🚨`, { service_id: id, props, setterError }, 'warning');
+            context.warn(`🚨 Setter error ${setterName}; ${setterError?.message ? setterError.message : 'Unknown'} 🚨`, { service_id: serviceId, props, setterError }, 'warning');
           }
         } else {
           // if there is no setter function, we set the dependency on the service object 
@@ -170,7 +170,7 @@ export const getService = (id: string,
     svc.version = svcDef.version;
     return svc;
   } else {
-    throw new ApiError(`Service ${id} not found in service registry.`);
+    throw new ApiError(`Service ${serviceId} not found in service registry.`);
   }
 }
 

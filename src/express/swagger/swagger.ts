@@ -56,8 +56,7 @@ const getFiles = (dir: string): string[] => {
         try {
           // read the schema file and add it to the schemas object            
           try {
-            schemaText = fs.readFileSync(filepath).toString();
-            logger.debug(`Schema file content: \n${schemaText}\n`);
+            schemaText = fs.readFileSync(filepath).toString();            
           } catch (fileReadError) {
             logger.error(`Error reading schema file: ${filepath}`, fileReadError);
           }
@@ -77,9 +76,7 @@ const getFiles = (dir: string): string[] => {
         } catch (error) {
           logger.error(`Error reading swagger file: ${filepath}`, error);
         }
-
-        if (content != "") {
-          logger.debug(`Swagger file content: \n${content}\n`);
+        if (content != "") {          
           try {
             const configItem: any = yaml.load(content, { json: true, schema: yaml.JSON_SCHEMA });
             if (configItem?.paths) {
