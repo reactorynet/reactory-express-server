@@ -336,6 +336,16 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   },
 
   {
+    key: 'reactor',
+    title: 'Reactory Reactor',
+    path: '/reactor/*',
+    exact: true,
+    public: true,
+    roles: ['ADMIN'],
+    componentFqn: 'reactory.ReactorChat@1.0.0',
+  },
+
+  {
     key: 'organizations',
     title: 'Organizations List',
     path: '/organizations/',

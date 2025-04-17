@@ -91,6 +91,13 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
           icon: 'offline_bolt', 
           roles: ['DEVELOPER', 'ADMIN'],
         },
+        {
+          ordinal: 2,
+          title: 'reactory:reactory.menu.reactor',
+          link: '/reactor/',
+          icon: 'chat',
+          roles: ['DEVELOPER', 'ADMIN', 'USER'],          
+        }
       ]
     },
     {
