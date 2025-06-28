@@ -1,10 +1,7 @@
 
-import logger from '@reactory/server-core/logging';
-import { fileAsString } from '@reactory/server-core/utils/io';
+import { loadGraphQLTypeDefinitions } from '@reactory/server-core/graph/graphql-loader';
 
-const typeDefs: string[] = [];
-
-[
+const CoreTypeDefinitions = loadGraphQLTypeDefinitions([
   'Charts/ReactoryCharts',
   'System/Scalars',
   'System/Enums',
@@ -37,15 +34,6 @@ const typeDefs: string[] = [];
   'Communications/Notification',
   'SQL/ReactorySQL',
   'Finance/Payments',
-].forEach((name) => {
-  try {
-    const fileName = `./${name}.graphql`;
-    logger.debug(`Adding [CORE][${fileName}]`);
-    const source = fileAsString(require.resolve(fileName));
-    typeDefs.push(`${source}`);
-  } catch (e) {
-    logger.error(`Error loading type definition, please check file: ${name}`, { error: e });
-  }
-});
+], __dirname, 'CORE');
 
-export default typeDefs;
+export default CoreTypeDefinitions;

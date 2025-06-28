@@ -40,6 +40,9 @@ if [ $PODMAN_CLEAR_CONTAINERS = "true" ]; then
   podman rm -f $(podman ps -aq --filter "label=io.podman.compose.project=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
   # remove the container / project pod as well
   podman pod rm -f $(podman pod ls -q --filter "name=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
+  # remove all volumes attached to the project
+  echo "🧹 Removing volumes for project ${PODMAN_COMPOSE_PROJECT_NAME:-reactory}"
+  podman volume rm -f $(podman volume ls -q --filter "name=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
 fi
 
 echo "🚀 Launching podman for ${1:-reactory} ${2:-podman} configuration"

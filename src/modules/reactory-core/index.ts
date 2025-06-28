@@ -33,7 +33,7 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
   serverPlugins: [],
   //@ts-ignore
   cli: [...coreClis],
-  description: 'Reactory Core Module',
+  description: 'Reactory Core Module. The core module for the Reactory Server, providing essential services, models, and workflows.',
   grpc: null,
   passportProviders: [],
   pdfs: [],

@@ -24,43 +24,7 @@ export const profileSmall = {
   ],
 };
 
-
-export const towerStoneMenuDef = {
-  name: 'Main',
-  key: 'left-nav',
-  target: 'left-nav',
-  roles: ['USER'],
-  entries: [
-    {
-      ordinal: 0, title: 'Home', link: '/', icon: 'dashboard', roles: ['USER'],
-    },
-    {
-      ordinal: 5, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
-    },
-    {
-      ordinal: 6, title: 'Admin', link: '/admin/', icon: 'supervisor_account', roles: ['ADMIN'],
-      items: [
-        {
-          ordinal: 0, title: 'Static Content', link: '/static-content/', icon: 'pencil', roles: ['DEVELOPER', 'ADMIN']
-        },
-      ],
-    },
-    {
-      ordinal: 17, title: 'Develop', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN'],
-      items: [
-        {
-          ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN']
-        },
-        {
-          ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
-        },
-      ]
-    },
-  ],
-};
-
 export default [
   profileSmall,
-  towerStoneMenuDef,
 ];
 

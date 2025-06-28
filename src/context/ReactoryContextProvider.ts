@@ -97,7 +97,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 
   log(message: string, meta: any = null, type: Reactory.Service.LOG_TYPE = "debug", clazz: string = '') {
-    const logMessage = `[${Hash(this.id)}]${message}`;
+    const logMessage = `[${Hash(this.id)}]${message} @ ${clazz ? clazz : this.constructor.name}`;
     switch (type) {
       case "e":
       case "err":

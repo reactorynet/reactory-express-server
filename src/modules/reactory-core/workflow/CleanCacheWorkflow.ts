@@ -5,14 +5,14 @@ import logger from '@reactory/server-core/logging';
 
 
 class BeforeCacheClean extends StepBody {
-  run(context) {    
+  run(context: any) {    
     return ExecutionResult.next();
   }
 }
 
 
 class CleanCache extends StepBody {
-  run(context) {
+  run(context: any) {
     Cache.clean();
     logger.debug(`WF: Cleaning Cache ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);      
     return ExecutionResult.next();
@@ -20,7 +20,7 @@ class CleanCache extends StepBody {
 }
 
 class AfterCacheClean extends StepBody {
-  run(context) {    
+  run(context: any) {    
     return ExecutionResult.next();
   }
 }
@@ -40,21 +40,16 @@ class CleanCacheWorkflow implements Reactory.Workflow.IWorkflow {
   };
   version: string = '1.0.0';
 
-  constructor() {
-    
-  }
-  
-
   build(builder: any) {
     builder
-      .startWith(BeforeCacheClean).input((step, data) => {
+      .startWith(BeforeCacheClean).input((step: { when: any; props: any; }, data: { when: any; props: any; }) => {
         step.when = data.when;
         step.props = data.props;
-      }).then(CleanCache).input((step, data) => {
+      }).then(CleanCache).input((step: { when: number; props: any; }, data: { props: any; }) => {
           step.when = moment().valueOf();          
           Cache.clean();
           step.props = data.props;
-      }).then(AfterCacheClean).input(( step, data) => {
+      }).then(AfterCacheClean).input(( step: { when: number; props: any; }, data: { props: any; }) => {
           step.when = moment().valueOf();
           step.props = data.props;
       });                   

@@ -5,6 +5,9 @@ import ApiError, {
 } from "@reactory/server-core/exceptions";
 import User from '@reactory/server-modules/reactory-core/models/User'
 import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
+import Organization from '@reactory/server-modules/reactory-core/models/Organization';
+import Region from '@reactory/server-modules/reactory-core/models/Region';
+import Team from '@reactory/server-modules/reactory-core/models/Team';
 import { trim, union, isNil, find } from "lodash";
 import crypto from "crypto";
 import { roles } from "@reactory/server-core/authentication/decorators";
@@ -13,6 +16,9 @@ import { strongRandom } from "@reactory/server-core/utils";
 import { 
   clients,
 } from '@reactory/server-core/data'
+import Constants from '@reactory/server-core/constants';
+import fs from 'fs';
+import path from 'path';
 interface PeersState {
   [key: string]: Reactory.Models.IOrganigramDocument;
 }
@@ -536,10 +542,52 @@ class UserService implements Reactory.Service.IReactoryUserService {
     }
   }
 
-  updateUser(
+  async updateUser(
     userInput: Reactory.Models.IUser
   ): Promise<Reactory.Models.IUserDocument> {
-    throw new Error("Method not implemented.");
+    // load the user by id
+    const user = await this.findUserById(userInput.id);
+    if (!user) {
+      throw new RecordNotFoundError(`User with id ${userInput.id} not found`);
+    }
+    // update the user properties
+    user.firstName = userInput.firstName || user.firstName;
+    user.lastName = userInput.lastName || user.lastName;
+    user.email = userInput.email || user.email;
+    user.username = userInput.username || user.username;
+    user.active = userInput.active !== undefined ? userInput.active : user.active;
+    user.dateOfBirth = userInput.dateOfBirth || user.dateOfBirth;
+    user.mobileNumber = userInput.mobileNumber || user.mobileNumber;
+    user.avatar = userInput.avatar || user.avatar;
+
+    // check if the avatar is a valid URL or base64 string
+    if (userInput.avatar && !/^https?:\/\//.test(userInput.avatar) && !/^data:image\//.test(userInput.avatar)) {
+      throw new ApiError("Invalid avatar URL or base64 string");
+    }
+
+    // if the avatar is a base64 string save it as a file
+    // for the user profile
+    if (userInput.avatar && /^data:image\//.test(userInput.avatar)) {
+      const base64Data = userInput.avatar.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${user._id.toString()}.png`;
+      const filePath = path.join(Constants.env.APP_DATA_ROOT, 'profiles', userInput.id, fileName);
+      
+      // save the file to the CDN
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      fs.writeFileSync(filePath, buffer);
+      user.avatar = fileName; // save the file path to the user
+    }
+
+    // save the user
+    try {
+      const updatedUser = await user.save();
+      this.context.log(`User ${user.email} updated successfully`, {}, 'info');
+      return updatedUser;
+    } catch (error) {
+      this.context.error(`Error updating user ${user.email}: ${error.message}`, {}, 'error');
+      throw new ApiError(`Error updating user: ${error.message}`);
+    }
   }
 
   async findUserWithEmail(
@@ -665,6 +713,49 @@ class UserService implements Reactory.Service.IReactoryUserService {
     await user.save();
   
     log(`System user initialized successfully`, {}, 'info');
+  }
+
+  // List all users
+  async listAllUsers(): Promise<Reactory.Models.IUserDocument[]> {
+    return (await User.find({}).exec()) as unknown as Reactory.Models.IUserDocument[];
+  }
+
+  // Search users by email (regex) and sort
+  async searchUser(searchString: string, sort: string = 'email'): Promise<Reactory.Models.IUserDocument[]> {
+    return (await User.find({ email: { $regex: searchString, $options: 'i' } })
+      .sort(`-${sort}`)
+      .exec()) as unknown as Reactory.Models.IUserDocument[];
+  }
+
+  // Find organization by ID
+  async findOrganizationById(organizationId: string): Promise<Reactory.Models.IOrganizationDocument> {
+    return (await Organization.findById(organizationId).exec()) as unknown as Reactory.Models.IOrganizationDocument;
+  }
+
+  // Update user profile
+  async updateUserProfile(id: string, profileData: any): Promise<Reactory.Models.IUserDocument> {
+    return (await User.findByIdAndUpdate(id, profileData, { new: true }).exec()) as unknown as Reactory.Models.IUserDocument;
+  }
+
+  // Set user password
+  async setUserPassword(userId: string, password: string, authToken?: string): Promise<Reactory.Models.IUserDocument> {
+    const user = await User.findById(userId).exec() as Reactory.Models.IUserDocument;
+    if (!user) throw new ApiError('User not found');
+    if (typeof user.setPassword === 'function') {
+      user.setPassword(password);
+    } else {
+      throw new ApiError('User model does not support setPassword');
+    }
+    return (await user.save()) as unknown as Reactory.Models.IUserDocument;
+  }
+
+  // Delete user (soft delete)
+  async deleteUser(id: string): Promise<boolean> {
+    const user = await User.findById(id).exec() as Reactory.Models.IUserDocument;
+    if (!user) throw new ApiError('User not found');
+    user.deleted = true;
+    await user.save();
+    return true;
   }
 
   static reactory: Reactory.Service.IReactoryServiceDefinition<UserService> = {

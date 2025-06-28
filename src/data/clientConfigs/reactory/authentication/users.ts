@@ -14,11 +14,13 @@ const USERS_TO_LOAD: Reactory.Server.IStaticallyLoadedUser[] = [];
 
 const USERS_YAML = `${process.env.APPLICATION_ROOT || 'app'}/data/clientConfigs/reactory/authentication/users.yaml`;
 if (fs.existsSync(USERS_YAML)) {
+  logger.info(`Loading users from YAML file: ${USERS_YAML}`);
   try {
     const yamlContent = fs.readFileSync(USERS_YAML, 'utf8');
     const yaml_users = yaml.load(yamlContent);
-    if (yaml_users && Array.isArray(yaml_users.users)) {
-      USERS_TO_LOAD.push(...yaml_users.users);
+    if (yaml_users && Array.isArray(yaml_users)) {
+      USERS_TO_LOAD.push(...yaml_users);
+      
     }
   } catch (error) {
     logger.error(`Error loading users from YAML file: ${error.message}`);

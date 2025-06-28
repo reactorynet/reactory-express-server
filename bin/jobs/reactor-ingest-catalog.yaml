@@ -1,0 +1,21 @@
+# reactory-cli configuration version: 1.0.0
+version: 1.0.0
+
+# specify the reactory client and user
+# for the cli
+partner: reactory
+user: ${env.REACTORY_APPLICATION_EMAIL}
+password: ${env.REACTORY_APPLICATION_PASSWORD}
+
+jobs:
+  - command: Csv2Json
+    args:
+     - --source=${env.ZEPZ_ENGINEERING_SERVICE_OWNERS_CSV}
+     - --output=${env.ZEPZ_ENGINEERING_SERVICE_OWNERS_JSON}
+  - command: GraphManagerCli
+    args: 
+     - --catalog=${env.ZEPZ_ENGINEERING_SOURCE}
+     - --patchfile=${env.ZEPZ_ENGINEERING_SERVICE_OWNERS_JSON}
+     - --sid=${env.ZEPZ_ENGINEERING_SID}
+     - --gid=${env.ZEPZ_ENGINEERING_GID}
+     

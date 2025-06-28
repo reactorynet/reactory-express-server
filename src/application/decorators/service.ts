@@ -22,7 +22,7 @@ function service(options: Partial<Reactory.Service.IReactoryServiceDefinition<an
           const instance: T = new constructor(props, context) as T;
           return instance;
         } catch (err) {
-          context.error(`Could not instanciate service ${options.id}`);
+          context.error(`Could not instanciate service ${options.id} ${err.message}`);
           return null;
         }
       },

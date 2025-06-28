@@ -225,7 +225,7 @@ const MultiStageJobRunner = async (config: CliConfig, context: CliContext) => {
         args
       } = job as CliJob;
       const cli: Reactory.IReactoryComponentDefinition<TCLI> = getCLI(command);
-      if(cli && cli.component) {
+      if(cli?.component) {
         try {
           await cli.component(args, context);
         } catch(error) { 
@@ -245,13 +245,13 @@ const MultiStageJobRunner = async (config: CliConfig, context: CliContext) => {
         method,
         params = {},
         state = {},
-        sync = true,
+        async = true,
       } = job as ServiceJob;
 
       const svc = context.getService(service, {});
       // @ts-ignore
       if(typeof svc[method] === 'function') {
-        if (sync === true) 
+        if (async === false) 
           //@ts-ignore
           svc[method](params)
         else

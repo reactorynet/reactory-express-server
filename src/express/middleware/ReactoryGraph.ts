@@ -1,5 +1,5 @@
 import { ApolloServer, ApolloServerOptions } from "@apollo/server";
-import { expressMiddleware, ExpressMiddlewareOptions, ExpressContextFunctionArgument } from "@apollo/server/express4"
+import { expressMiddleware, ExpressContextFunctionArgument } from "@apollo/server/express4"
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
 import { GraphQLSchema } from "graphql";
 import { makeExecutableSchema } from "@graphql-tools/schema";
@@ -13,6 +13,7 @@ import http from 'http';
 import express from 'express';
 import logger from '@reactory/server-core/logging';
 import ReactoryContextProvider from "@reactory/server-core/context/ReactoryContextProvider";
+
 
 
 const ReactoryGraphMiddleware = async (app: express.Application, httpServer: http.Server) => { 
@@ -34,7 +35,7 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
         resolvers,
       });
     } catch (schemaError) { 
-      logger.error(`Error compiling the schema: ${schemaError.message}`);
+      logger.error(`Error compiling the schema: ${schemaError.message}`, schemaError);
     }
     
     directiveProviders.forEach((provider) => {
@@ -42,7 +43,7 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
         logger.info(`Processing schema directive: "@${provider.name}"`);
         schema = provider.transformer(schema);
       } catch (directiveErr) {
-        logger.error(`Error adding directive ${provider.name}`);
+        logger.error(`Error adding directive ${provider.name}`, directiveErr);
       }
     });
       
@@ -51,13 +52,13 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
       schema: schema,
       csrfPrevention: true,
       apollo: {
-        graphId: 'reactory',
+        graphId: process.env.APPLICATION_ID || 'reactory',
         graphVariant: 'default',
       },
       cache: 'bounded',
       nodeEnv: NODE_ENV,
-      introspection: NODE_ENV === 'development' ? true : false,
-      includeStacktraceInErrorResponses: NODE_ENV === 'development' ? true : false,
+      introspection: NODE_ENV === 'development',
+      includeStacktraceInErrorResponses: NODE_ENV === 'development',
       allowBatchedHttpRequests: true,
       persistedQueries: false,      
       plugins: [
@@ -88,9 +89,9 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
         }),
       );
 
-      logger.info('✅ Apollo server stared OKAY');
-    } catch (apolloStarterror) {     
-      logger.error(`Error starting the apollo server: ${apolloStarterror.message}`);
+      logger.info('✅ Apollo server started OKAY');
+    } catch (apolloStarterror) {
+      logger.error('❌ Apollo server FAILED to start', apolloStarterror);      
     }
 }
 

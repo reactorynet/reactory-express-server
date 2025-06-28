@@ -11,7 +11,7 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
       link: '/', 
       icon: 'dashboard', 
       roles: ['USER', 'ADMIN'],
-    },    
+    },
     {
       ordinal: 2, 
       title: "reactory:reactory.menu.about-reactory", 
@@ -94,10 +94,10 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
         {
           ordinal: 2,
           title: 'reactory:reactory.menu.reactor',
-          link: '/reactor/',
+          link: '/reactor/chat',
           icon: 'chat',
           roles: ['DEVELOPER', 'ADMIN', 'USER'],          
-        }
+        },       
       ]
     },
     {

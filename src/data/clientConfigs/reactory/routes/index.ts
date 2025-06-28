@@ -338,13 +338,12 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   {
     key: 'reactor',
     title: 'Reactory Reactor',
-    path: '/reactor/*',
+    path: '/reactor/chat/*',
     exact: true,
-    public: true,
-    roles: ['ADMIN'],
+    public: false,
+    roles: ['USER'],
     componentFqn: 'reactory.ReactorChat@1.0.0',
-  },
-
+  }, 
   {
     key: 'organizations',
     title: 'Organizations List',

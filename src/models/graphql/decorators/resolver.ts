@@ -6,8 +6,8 @@ import Reactory from '@reactory/reactory-core';
  * Server to use this class object as a resolver, instead of 
  * @param constructor 
  */
-export function resolver(): void {
-  //does nothing, we simply use it to flag Resovler classes.
+export function resolver() {
+  //does nothing, we simply use it to flag Resovler classes.  
 }
 
 /**
@@ -39,26 +39,27 @@ export function property(objectKey: string, property: string) {
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {
     
     if(target) {
-      if(!target.resolver) {
-        target.resolver = {
-          Query: {},
-          Mutation: {},
-          Subscription: {}
-        }
-      }
+      target.resolver ??= {
+        Query: {},
+        Mutation: {},
+        Subscription: {}
+      };
 
-      if (!target.resolver.Query) target.resolver.Query = {};
+      target.resolver.Query ??= {};
       if (!target.resolver.Mutation) target.resolver.Mutation = {};
 
       if(objectKey === "Query") {
+        target.resolver.Query ??= {};
         target.resolver.Query[property] = target[propertyKey];
       }
 
       if(objectKey === "Mutation") {
+        target.resolver.Mutation ??= {};
         target.resolver.Mutation[property] = target[propertyKey];
       }
 
       if(objectKey === "Subscription") {
+        target.resolver.Subscription ??= {};
         target.resolver.Subscription[property] = target[propertyKey];
       }
 
