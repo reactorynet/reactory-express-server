@@ -14,6 +14,17 @@ class UserResolver {
     return obj._id;
   }
 
+  @property('User', 'avatar')
+  avatar(obj: { avatar: string, _id: any }) {
+    if (obj.avatar && obj.avatar.length > 0) {
+      if (obj.avatar.startsWith('http')) {
+        return obj.avatar;
+      }
+      return `${process.env.CDN_ROOT}profiles/${obj._id}/${obj.avatar}`;
+    }
+    return `${process.env.CDN_ROOT}profiles/default/default.png`;
+  }
+
   @property('User', 'fullName')
   fullName(user: { fullName: () => any; firstName: any; lastName: any }) {
     if (!user) return 'null-user';

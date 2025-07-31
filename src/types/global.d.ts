@@ -7,3 +7,8 @@ declare namespace NodeJS {
     REACTORY_SERVER_STARTUP: Date;
   }
 }
+
+declare module 'ssl-root-cas/latest' {
+  const sslrootcas: any;
+  export = sslrootcas;
+}

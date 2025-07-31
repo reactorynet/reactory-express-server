@@ -342,7 +342,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     exact: true,
     public: false,
     roles: ['USER'],
-    componentFqn: 'reactory.ReactorChat@1.0.0',
+    componentFqn: 'reactor.ReactorChat@1.0.0',
   }, 
   {
     key: 'organizations',

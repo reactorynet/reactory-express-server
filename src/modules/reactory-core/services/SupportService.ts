@@ -152,8 +152,6 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   }
   
   onStartup(): Promise<any> {
-    // throw new Error('Method not implemented.');
-    
     return Promise.resolve(true)
   }
 

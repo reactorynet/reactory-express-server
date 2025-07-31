@@ -85,6 +85,14 @@ const UserSchema = new mongoose.Schema({
     type: ObjectIdSchema,
     ref: 'Organization',
   },
+  ownedTeams: [{
+    type: ObjectIdSchema,
+    ref: 'Team',
+  }],
+  teamMemberships: [{
+    type: ObjectIdSchema,
+    ref: 'Team',
+  }],
   memberships: [
     {
       clientId: {
@@ -165,7 +173,8 @@ UserSchema.methods.fullName = function fullName(email = false) {
 /**
  * Extension Method on Model to check for a particular role / claim
  */
-UserSchema.methods.hasRole = function hasRole(clientId: string, role = 'USER', organizationId: string | OID = null, businessUnitId: string | OID = null) {
+UserSchema.methods.hasRole = function hasRole(clientId: string, role = 'USER', 
+  organizationId: string | typeof ObjectId = null, businessUnitId: string | typeof ObjectId = null) {
   if (this.memberships.length === 0) return false;
 
   let matches = [];
@@ -261,13 +270,10 @@ UserSchema.methods.addRole = async function addRole
   businessUnitId: Id, 
   context: Reactory.Server.IReactoryContext): Promise<Reactory.Models.IMembership[]> {
   const $model: Reactory.Models.IUserDocument = this as Reactory.Models.IUserDocument;
-  let dirty = false;
-
+  
   if (ObjectId.isValid(clientId) === false) return [];
 
-  if ($model.memberships === null || $model.memberships === undefined) {
-    $model.memberships = new mongoose.Types.Array<Reactory.Models.IMembershipDocument>();
-  }
+  $model.memberships ??= new mongoose.Types.Array<Reactory.Models.IMembershipDocument>();
 
   if ($model.memberships.length === 0) {
     logger.info('User has no memberships, adding');
@@ -280,8 +286,6 @@ UserSchema.methods.addRole = async function addRole
       authProvider: 'default',
       lastLogin: null,
     });
-
-    dirty = true;
   }  
 
   // @ts-ignore

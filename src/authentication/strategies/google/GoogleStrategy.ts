@@ -15,6 +15,7 @@ const {
   GOOGLE_CLIENT_SECRET = 'GOOGLE_CLIENT_SECRET',
   GOOLGE_CALLBACK_URL = 'http://localhost:4000/auth/google/callback',
   GOOGLE_OAUTH_SCOPE = 'openid email profile https://www.googleapis.com/auth/userinfo.profile',
+  
 } = process.env
 
 const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
@@ -30,14 +31,21 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
     done: OnDoneCallback) => {
   // This callback function is called when the user has successfully authenticated with Google.
   // The `profile` object contains information about the authenticated user.
-
+      
   // const googleProfile = await getGoogleProfile(authority);
   logger.info('Google Profile', { profile })
+  const { context, session } = req;
+  const userService  = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
+
   const email = profile.emails && profile.emails[0].value;
   const googleId = profile.id;
   const { name, displayName } = profile;
   
-  const { context, session, runAsSystem } = req;
+  if (!context.user) {
+    // log in the system user.
+    context.user = await userService.findUserWithEmail(process.env.REACTORY_APPLICATION_EMAIL);
+  }
+  
   if(!context.partner) {
     // check if we have oauthState in the session
     // @ts-ignore
@@ -62,7 +70,7 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
 
     context.partner = partner;
   }
-  const userService  = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
+  
   const authProps = {
     googleId,
     displayName,

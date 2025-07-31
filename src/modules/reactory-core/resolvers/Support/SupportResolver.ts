@@ -8,6 +8,7 @@ type DeleteArgs = {
   ids: string[]
   reason?: string
 }
+// @ts-ignore - this has to be called without the () as this throws an error in the decorator
 @resolver
 class SupportResolver {
 

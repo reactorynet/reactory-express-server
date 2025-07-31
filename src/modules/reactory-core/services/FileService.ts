@@ -38,7 +38,7 @@ interface IFileDownloadResult {
 
 export class ReactoryFileService implements Reactory.Service.IReactoryFileService {
 
-    name: string = 'FileService';
+    name: string = 'ReactoryFileService';
     nameSpace: string = 'core';
     version: string = '1.0.0';
 
@@ -346,8 +346,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                         upload_context = `reactory::failed::context`
                     }
                 }
-
-
+                // 
                 const reactoryFile: any = {
                     id: new ObjectID(),
                     filename,

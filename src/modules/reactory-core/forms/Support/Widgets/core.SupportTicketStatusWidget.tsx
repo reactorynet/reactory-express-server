@@ -140,7 +140,7 @@ const Definition: any = {
 }
 
 //@ts-ignore
-if (window && window.reactory) {
+if (window?.reactory?.api) {
   //@ts-ignore
   window.reactory.api.registerComponent(Definition.nameSpace,
     Definition.name,

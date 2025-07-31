@@ -1,6 +1,15 @@
 import Reactory from '@reactory/reactory-core';
+import { service } from '@reactory/server-core/application/decorators';
 
-
+@service({
+  name: "ReactoryWorkflowService",
+  nameSpace: "core",
+  version: "1.0.0",
+  description: "Service for managing workflows in Reactory",
+  id: "core.ReactoryWorkflowService@1.0.0",
+  serviceType: "workflow",
+  dependencies: []
+})
 class ReactoryWorkflowService implements Reactory.Service.IReactoryWorkflowService {
 
   name: string;
@@ -43,19 +52,6 @@ class ReactoryWorkflowService implements Reactory.Service.IReactoryWorkflowServi
   setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
     return true;
-  }
-
-  static definition: Reactory.Service.IReactoryServiceDefinition = {
-    id: 'core.ReactoryWorkflowService@1.0.0',
-    nameSpace: 'core',
-    name: 'ReactoryWorkflowService',
-    version: '1.0.0',
-    description: 'Provides service functionality for workflows',
-    service: (props, context) => {
-      return new ReactoryWorkflowService(props, context);
-    },
-    dependencies: [],
-    serviceType: "workflow"
   }
 }
 

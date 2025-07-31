@@ -54,7 +54,7 @@ class SystemService implements Reactory.Service.IReactorySystemService {
 
     const client = await qry.exec();
     
-    return client;
+    return client as Reactory.Models.IReactoryClient;
   }
 
   private validateModule(module: Reactory.Server.IReactoryModule): { valid: boolean, errors: string[]  } {
@@ -147,7 +147,6 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     //index modules
     const { enabled } = modules;
     const { searchService, context } = this;
-    const { log } = context;
 
     type SearchableComponent = Partial<Reactory.IReactoryComponentDefinition<any>> & { id: string };
        

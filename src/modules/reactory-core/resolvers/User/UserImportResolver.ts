@@ -198,7 +198,7 @@ const graph: any = {
      */
     AddFileToImportPackage: async (parent: any, params: { file: any, workload_id: string }, context: Reactory.Server.IReactoryContext) => {
       try {
-        debugger
+        
         const { workload_id, file } = params;
         const fileService: Reactory.Service.IReactoryFileService = context.getService('core.ReactoryFileService@1.0.0') as Reactory.Service.IReactoryFileService;
         //upload the file and associate with the workload package
@@ -212,8 +212,7 @@ const graph: any = {
           rename: false,
           catalog: true,
         }).then();
-
-        debugger
+        
         try {
           // get the package manager server.
           const packman: Reactory.IReactoryImportPackageManager = context.getService('core.ReactoryFileImportPackageManager@1.0.0') as Reactory.IReactoryImportPackageManager

@@ -61,10 +61,14 @@ export class ReactoryModelRegistry
     if (this.context && Array.isArray(this.context?.modules) === true) {
       this.context.modules.forEach((module) => {
         module?.models?.forEach(async (model) => {
+          if (!model) {
+            log(`Model is undefined in module ${module.name}`, {}, 'error', 'core.ReactoryModelRegistry');
+            return;
+          }             
           try {
             that.register(model);
           } catch (error) {
-            log(`Error registering model ${model.name} - ${error.message}`, { error }, 'error', 'core.ReactoryModelRegistry');
+            log(`Error registering model ${model?.name} - ${error.message}`, { error }, 'error', 'core.ReactoryModelRegistry');
           }
 
           try {

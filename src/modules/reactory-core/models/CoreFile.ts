@@ -277,6 +277,8 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
   });
 };
 
+// declare type that represents the ReactorFileDocument 
+export type ReactoryFileDocument = MongooseDocument & Reactory.Models.IReactoryFileModel;
 
 const ReactoryFile: ReactoryFileModel = mongoose.model<Reactory.Models.IReactoryFileModel>('ReactoryFile', ReactoryFileSchema, 'reactory_files');
 

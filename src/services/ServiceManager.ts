@@ -168,9 +168,9 @@ class ServiceManager {
       ].service(
         { ...props, $services: serviceRegister, $dependencies: $deps },
         context
-      ) as Reactory.Service.IReactoryService;
+      );
       //try to auto bind services with property setter binders.
-      Object.keys($deps).map((dependcyAlias: string) => {
+      Object.keys($deps).forEach((dependcyAlias: string) => {
         let isSet = false;
         if (!isSet) {
           const setterName = `set${dependcyAlias
@@ -192,9 +192,7 @@ class ServiceManager {
               //@ts-ignore
               svc[dependcyAlias] = $deps[dependcyAlias];
               context.warn(
-                `🚨 Setter error ${setterName}; ${
-                  setterError?.message ? setterError.message : "Unknown"
-                } 🚨`,
+                `🚨 Setter error ${setterName}; ${setterError?.message ?? "Unknown"} 🚨`,
                 { service_id: id, props, setterError },
                 "warning"
               );

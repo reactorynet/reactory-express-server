@@ -30,8 +30,12 @@ type ReactorySaveImageDataResponse {
   svgURL: String
 }
 
+input ReactoryGetContentOptionsInput {
+  basePath: String
+}
+
 extend type Query {
-  ReactoryGetContentBySlug(slug: String!): ReactoryContent
+  ReactoryGetContentBySlug(slug: String!, options: ReactoryGetContentOptionsInput): ReactoryContent
   ReactoryGetContentByTags(tags: [String]!): [ ReactoryContent ]
   ReactoryGetContentById(id: String!): [ ReactoryContent ]
   ReactoryGetContentList: [ ReactoryContent ]

@@ -111,7 +111,20 @@ const Csv2JsonCli = async (
       mapping = JSON.parse(mapText);
     } else if (mapFile.endsWith(".yaml") || mapFile.endsWith(".yml")) {
       mapping = yaml.load(mapText) as Record<string, string>;
-    } else {
+    } else if (mapFile.endsWith(".js")) {
+      // If it's a JS file, we assume it exports a mapping object
+      try {
+        mapping = require(mapPath);
+        if (typeof mapping !== "object") {
+          context.error("Mapping file must export an object");
+          process.exit(1);
+        }
+      } catch (err) {
+        context.error(`Error loading mapping file: ${err.message}`);
+        process.exit(1);
+      }
+    } 
+    else {
       context.error("Mapping file must be .json or .yaml");
       process.exit(1);
     }

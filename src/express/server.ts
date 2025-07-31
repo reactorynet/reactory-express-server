@@ -1,9 +1,7 @@
 'use strict'
 import fs from 'fs';
 import moment from 'moment';
-import path from 'path';
 import https from 'https';
-// @ts-ignore
 import sslrootcas from 'ssl-root-cas/latest';
 import express, { Application } from 'express';
 import mongooseConnection from '@reactory/server-core/models/mongoose';
@@ -46,10 +44,8 @@ const {
   MODE,
   NODE_ENV = 'development',
   DOMAIN_NAME,
-  SECRET_SAUCE,
   SERVER_ID,
   MAX_FILE_UPLOAD = '20mb',
-  DEVELOPER_ID,
   SYSTEM_USER_ID = 'not-set',
   MAIL_REDIRECT_ADDRESS
 } = process.env as Reactory.Server.ReactoryEnvironment;
@@ -81,9 +77,6 @@ export const ReactoryServer = async (): Promise<{
 
   const reactoryExpress: Application = express();
   const httpServer: http.Server = http.createServer(reactoryExpress);
-  const resourcesPath = '/cdn';
-  const publicFolder = path.join(__dirname, 'public');
-
   
   let mongoose_result = null;
 
@@ -180,11 +173,8 @@ Environment Settings:
     logger.warn(colors.yellow("SYSTEM_USER_ID env variable is not set - please configure in env variables"));
   }
 
-  // TODO: Werner Weber - Update the start result object to contain
-  // more useful information about the server environment, configuration
-  // output.
   try {
-    const context = await startup();
+    await startup();
     ConfigureAuthentication(reactoryExpress);
     ConfigureRoutes(reactoryExpress);
     ConfigureViews(reactoryExpress);

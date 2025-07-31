@@ -2,7 +2,6 @@ import ApiStatus from './ApiStatus';
 import OrganizationResolver from './Organization/OrganizationResolver';
 import Organization from './Organization/Organization';
 import BusinessUnitResolver from './Organization/BusinessUnitResolver';
-import ProjectResolver from './Organization/ProjectResolver';
 import TeamResolver from './Organization/TeamResolver';
 import ReactoryContent from './ReactoryContent';
 import UserEmail from './Emails/UserEmails';
@@ -34,7 +33,6 @@ export default mergeGraphResolver([
   ClientRouteResolver,
   OrganizationResolver,
   BusinessUnitResolver,
-  ProjectResolver,
   Resources,
   Statistics,
   TeamResolver,

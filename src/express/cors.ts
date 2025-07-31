@@ -27,7 +27,7 @@ const bypassUri = [
 
 type CORSCallback = (error: Error, pass: boolean) => void
 
-const allowedHeadersString = 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,origin,authorization,x-client-name,x-client-version';
+const allowedHeadersString = 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,origin,authorization,x-client-name,x-client-version,apollo-require-preflight,x-apollo-operation-name';
 const proxyHeaderString = 'X-Real-IP,X-Forwarded-For,X-Forwarded-Host,X-Forwarded-Proto';
 
 const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpressRequest, corsDelegateCallback: (err: Error | null, options: CorsOptions) => void) => {

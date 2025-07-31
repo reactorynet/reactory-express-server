@@ -122,9 +122,9 @@ export const getService = (serviceId: string,
       return instances[singleton_key];
     }
 
-    const svc: Reactory.Service.IReactoryService = serviceRegister[serviceId].service({ ...props, $services: serviceRegister, $dependencies: $deps }, context) as Reactory.Service.IReactoryService;
+    const svc: Reactory.Service.IReactoryService = serviceRegister[serviceId].service({ ...props, $services: serviceRegister, $dependencies: $deps }, context);
     //try to auto bind services with property setter binders.
-    Object.keys($deps).map((dependcyAlias: string) => {
+    Object.keys($deps).forEach((dependcyAlias: string) => {
       let isSet = false;
       if (!isSet) {
         const setterName = `set${dependcyAlias.substring(0, 1).toUpperCase()}${dependcyAlias.substring(1)}`;
@@ -140,7 +140,7 @@ export const getService = (serviceId: string,
             // directly.
             //@ts-ignore
             svc[dependcyAlias] = $deps[dependcyAlias];
-            context.warn(`🚨 Setter error ${setterName}; ${setterError?.message ? setterError.message : 'Unknown'} 🚨`, { service_id: serviceId, props, setterError }, 'warning');
+            context.warn(`🚨 Setter error ${setterName}; ${setterError?.message ?? 'Unknown'} 🚨`, { service_id: serviceId, props, setterError }, 'warning');
           }
         } else {
           // if there is no setter function, we set the dependency on the service object 
@@ -183,16 +183,14 @@ export const getService = (serviceId: string,
  * @returns 
  */
 export const startServices = async (props: any, context: Reactory.Server.IReactoryContext): Promise<boolean> => {   
-  try {
-    let promises = [];
-    for (let i = 0; i < services.length; i++) {
-      const service = services[i];
+  try {    
+    for (const service of services) {
       const instance = getService(service.id, props, context);
+      logger.debug(`Starting service ${service.id} (${service.name})`, { service });
       if (instance.onStartup && typeof instance.onStartup === 'function') {
         await instance.onStartup(context);
       }
     }
-
     return true;
   } catch (serviceStartupError) {
     logger.error('An error occured while starting some services, please check log for details', serviceStartupError)
@@ -212,7 +210,7 @@ export const stopServices = async (props: any, context: any): Promise<boolean> =
   try {
     let startup_promises: Promise<void>[] = []
 
-    services.forEach((service: Reactory.Service.IReactoryServiceDefinition) => {
+    services.forEach((service: Reactory.Service.IReactoryServiceDefinition<any>) => {
       const instance = getService(service.id, props, context);
 
       if (instance.onShutdown) {

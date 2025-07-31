@@ -11,6 +11,7 @@ const resolvers = {
   Any: Scalars.Any,
   ObjID: Scalars.ObjID,
   Date: Scalars.Date,
+  Upload: Scalars.Upload,
 };
 
 const installedModulesResolvers: Reactory.Graph.IGraphShape[] = [];

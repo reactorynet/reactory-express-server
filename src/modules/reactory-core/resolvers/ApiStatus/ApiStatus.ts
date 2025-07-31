@@ -143,7 +143,9 @@ const getActiveTheme = (_: Reactory.Models.IApiStatus, args: { theme: string, mo
   if (activeTheme.modes) {
     let modeOptions = activeTheme.modes.find((mode) => { return mode.mode === $thememode });
     if (modeOptions) {
-      activeTheme.options = { ...modeOptions.options }
+      activeTheme.options = { 
+        ...modeOptions.options,        
+      }
     }
   }
 
