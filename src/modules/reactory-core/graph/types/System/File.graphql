@@ -32,6 +32,7 @@ type ReactoryFile {
   path: String
   alias: String
   filename: String
+  description: String
   alt: [String]
   link: String
   mimetype: String
@@ -46,4 +47,52 @@ type ReactoryFile {
   tags: [String]
   remotes: [ReactoryFileRemoteEntry]
   timeline: [Timeline]
+}
+
+type ReactorFileUpdateSuccess {
+  success: Boolean
+  file: ReactoryFile
+}
+
+type ReactorFileDeleteSuccess {
+  success: Boolean
+  id: String
+}
+
+type ReactoryFileUploadSuccess {
+  success: Boolean
+  file: ReactoryFile
+}
+
+type ReactoryFileUpdateError {
+  error: String
+  message: String
+}
+
+type ReactoryFileUploadError {
+  error: String
+  message: String
+}
+
+type ReactoryFileDeleteError {
+  error: String
+  message: String
+}
+
+type ReactoryRemoteSyncError {
+  error: String
+  message: String
+  remoteId: String
+}
+
+union ReactoryFileRemoteSyncResult = ReactoryFileRemoteEntry | ReactoryRemoteSyncError
+union ReactoryFileUploadResult = ReactoryFileUploadSuccess | ReactoryFileUploadError
+union ReactoryFileUpdateResult = ReactorFileUpdateSuccess | ReactoryFileUpdateError
+union ReactoryFileDeleteResult = ReactorFileDeleteSuccess | ReactoryFileDeleteError
+
+type Mutation {
+  ReactoryUploadFile(file: Upload!, alias: String, path: String, uploadContext: String): ReactoryFileUploadResult
+  ReactoryUpdateFile(id: String!, alias: String, path: String, filename: String, mimetype: String, size: Int): ReactoryFileUpdateResult
+  ReactoryDeleteFile(id: String!): ReactoryFileDeleteResult
+  ReactorySyncFileToRemote(id: String!, remoteId: String!): ReactoryFileRemoteSyncResult
 }

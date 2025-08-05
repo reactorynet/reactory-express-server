@@ -4,7 +4,7 @@ import fs, { writeFile } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { promisify } from 'util';
-import { ObjectID, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import sha1 from 'sha1';
 import Hash from '@reactory/server-core/utils/hash';
 import Reactory from '@reactory/reactory-core';
@@ -348,7 +348,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                 }
                 // 
                 const reactoryFile: any = {
-                    id: new ObjectID(),
+                    id: new ObjectId(),
                     filename,
                     mimetype,
                     alias: $filename,

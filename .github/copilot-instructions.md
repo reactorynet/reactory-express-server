@@ -50,3 +50,10 @@ Reactory uses a modular architecture with the following design patterns:
 - **Modules**: Reactory has a `src/modules` directory where each module contains its own routes, controllers, services, models, form schemas, graph definitions, views, cli and other components. Each module holds a ReactoryModuleDefinition in the `src/modules/<module>/index.ts` that brings together all the module's components.
 - **Dependency Injection**: Services and repositories are injected into controllers to promote loose coupling.
 - **Middleware**: Common functionality such as authentication, logging, and error handling is implemented as middleware and lives in `src/express/middleware`. 
+
+## Important! - Development and Testing
+- Use `bin/start.sh` to start the server in development mode - do not use yarn start or npm start.
+ - Use `bin/start-otel.sh` to start the server and enable OTEL telemetry.
+- Use `bin/jest.sh` to run tests.
+- Use `bin/cli.sh` to run Reactory CLI commands.
+- Use `yarn` for all package related tasks
