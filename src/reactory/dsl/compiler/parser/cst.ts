@@ -322,7 +322,19 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
                         nodeType = "NumberLiteral";
                         break;
                     case "IDENTIFIER":
+                        nodeType = "VariableIdentifier";
+                        break;
+                    case "ASSIGNMENT":
+                        nodeType = "Operator";
+                        break;
+                    case "ARITHMETIC_OPERATOR":
+                        nodeType = "Operator";
+                        break;
+                    case "DOT":
                         nodeType = "Identifier";
+                        break;
+                    case "SEMICOLON":
+                        nodeType = "Punctuation";
                         break;
                     case "NEWLINE":
                         nodeType = "Newline";
@@ -336,6 +348,13 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
                     value: next.value,
                     children: [],
                 };
+                
+                // Set operator value for assignment and arithmetic operators
+                if (next.type === "ASSIGNMENT" && next.value === "=") {
+                    (nextNode as any).operator = 1; // Operator.Assignment
+                } else if (next.type === "ARITHMETIC_OPERATOR" && next.value === "+") {
+                    (nextNode as any).operator = 16777218; // Operator.Binary | Operator.Addition
+                }
                 node.children.push(nextNode);
             }
         }
@@ -587,6 +606,18 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       children: [],
     };    
     node.value = token.value;
+    
+    // For switch statements, we need to create separate nodes for the discriminant and cases
+    // The expected structure is: SwitchControl node, then Grouping nodes for discriminant and cases
+    // So we just return the SwitchControl node and let the main parser handle the discriminant and cases
+    // But we need to skip the WHITESPACE token that might follow the SWITCH token
+    
+    // Skip whitespace after SWITCH
+    let next = peekToken();
+    if (next && next.type === "WHITESPACE") {
+      nextToken(); // consume the whitespace
+    }
+    
     return node;
   }
 
@@ -596,6 +627,18 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       children: [],
     };    
     node.value = token.value;
+    
+    // For try-catch statements, we need to create separate nodes for the try block and catch block
+    // The expected structure is: TryCatch node, then Grouping nodes for try and catch blocks
+    // So we just return the TryCatch node and let the main parser handle the try and catch blocks
+    // But we need to skip the WHITESPACE token that might follow the TRY/CATCH/FINALLY token
+    
+    // Skip whitespace after TRY/CATCH/FINALLY
+    let next = peekToken();
+    if (next && next.type === "WHITESPACE") {
+      nextToken(); // consume the whitespace
+    }
+    
     return node;
   }
 
@@ -612,6 +655,27 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     // But we need to skip the WHITESPACE token that might follow the WHILE token
     
     // Skip whitespace after WHILE
+    let next = peekToken();
+    if (next && next.type === "WHITESPACE") {
+      nextToken(); // consume the whitespace
+    }
+    
+    return node;
+  }
+
+  const parseForLoop = (token: Token): CSTNode => { 
+    const node: CSTNode = {
+      type: 'ForLoop',
+      children: [],
+    };    
+    node.value = token.value;
+    
+    // For for loops, we need to create separate nodes for the initialization, condition, and body
+    // The expected structure is: ForLoop node, then Grouping nodes for condition and body
+    // So we just return the ForLoop node and let the main parser handle the condition and body
+    // But we need to skip the WHITESPACE token that might follow the FOR token
+    
+    // Skip whitespace after FOR
     let next = peekToken();
     if (next && next.type === "WHITESPACE") {
       nextToken(); // consume the whitespace
@@ -995,7 +1059,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "WHILE":
         return parseWhileLoop(token);
       case "FOR":
-        return parseWhileLoop(token); // Use while loop parser for now
+        return parseForLoop(token);
       case "NUMBER_LITERAL":
       case "STRING_LITERAL":
       case "BOOLEAN_LITERAL":
@@ -1010,6 +1074,11 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "COMMA":
         return parsePunctuation(token);
       case "VARIABLE":
+        return {
+          type: 'VariableIdentifier',
+          children: [],
+          value: token.value,
+        };
       case "VAR":
         return parseVariableDeclaration(token);
       case "WHITESPACE":
