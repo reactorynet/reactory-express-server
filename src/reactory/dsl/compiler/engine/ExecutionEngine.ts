@@ -39,12 +39,12 @@ export const executeProgram = async (programNode: ProgramNode, context: DSLExecu
   return results;
 }
 
-const executeMacro = async (macroNode: MacroInvocationNode, context: DSLExecutionContext) => { 
-  const args = await Promise.all(macroNode.arguments.map(arg => executeNode(arg, context)));
-  return context.executeFunction(macroNode.name, args);
+const executeMacro = async (macroNode: MacroInvocationNode, context: DSLExecutionContext): Promise<any> => { 
+  const args: any[] = await Promise.all(macroNode.arguments.map(arg => executeNode(arg, context)));
+  return await context.executeFunction(macroNode.name, args);
 }
 
-const executeMacroChain = async (chainNode: MacroChainNode, context: DSLExecutionContext) => {
+const executeMacroChain = async (chainNode: MacroChainNode, context: DSLExecutionContext): Promise<any> => {
   // Execute the source macro first
   const sourceResult = await executeNode(chainNode.source, context);
   
@@ -52,13 +52,13 @@ const executeMacroChain = async (chainNode: MacroChainNode, context: DSLExecutio
   const destinationArgs = chainNode.destination.arguments;
   if (destinationArgs.length > 0) {
     // Replace the first argument with the source result
-    destinationArgs[0] = { type: 'StringLiteral', value: sourceResult };
+    destinationArgs[0] = { type: 'StringLiteral', value: sourceResult } as StringLiteralNode;
   }
   
   return await executeNode(chainNode.destination, context);
 }
 
-const executeMacroBranch = async (branchNode: MacroBranchNode, context: DSLExecutionContext) => {
+const executeMacroBranch = async (branchNode: MacroBranchNode, context: DSLExecutionContext): Promise<any> => {
   // Evaluate the condition
   const conditionResult = await executeNode(branchNode.condition, context);
   
@@ -70,19 +70,19 @@ const executeMacroBranch = async (branchNode: MacroBranchNode, context: DSLExecu
   }
 }
 
-const executeMacroGroup = async (groupNode: MacroGroupNode, context: DSLExecutionContext) => {
-  const results = [];
+const executeMacroGroup = async (groupNode: MacroGroupNode, context: DSLExecutionContext): Promise<any[]> => {
+  const results: any[] = [];
   
   // Execute all nodes in the group
   for (const node of groupNode.body) {
-    const result = await executeNode(node, context);
+    const result: any = await executeNode(node, context);
     results.push(result);
   }
   
   return results;
 }
 
-const executeConditional = async (conditionalNode: ConditionalExpressionNode, context: DSLExecutionContext) => {
+const executeConditional = async (conditionalNode: ConditionalExpressionNode, context: DSLExecutionContext): Promise<any> => {
   const testResult = await executeNode(conditionalNode.test, context);
   
   if (testResult) {
@@ -94,8 +94,8 @@ const executeConditional = async (conditionalNode: ConditionalExpressionNode, co
   return null;
 }
 
-const executeLoop = async (loopNode: LoopNode, context: DSLExecutionContext) => {
-  const results = [];
+const executeLoop = async (loopNode: LoopNode, context: DSLExecutionContext): Promise<any[]> => {
+  const results: any[] = [];
   
   while (true) {
     const testResult = await executeNode(loopNode.test, context);
@@ -106,7 +106,7 @@ const executeLoop = async (loopNode: LoopNode, context: DSLExecutionContext) => 
     
     // Execute the loop body
     for (const node of loopNode.body) {
-      const result = await executeNode(node, context);
+      const result: any = await executeNode(node, context);
       results.push(result);
     }
   }
@@ -130,7 +130,7 @@ const executeSwitchCase = async (switchNode: SwitchCaseNode, context: DSLExecuti
   }
 }
 
-const executeTryCatch = async (tryCatchNode: TryCatchStatementNode, context: DSLExecutionContext) => {
+const executeTryCatch = async (tryCatchNode: TryCatchStatementNode, context: DSLExecutionContext): Promise<any> => {
   try {
     // Execute the try block
     return await executeNode(tryCatchNode.tryBlock, context);
@@ -148,27 +148,27 @@ const executeTryCatch = async (tryCatchNode: TryCatchStatementNode, context: DSL
   }
 }
 
-const executeBlock = async (blockNode: BlockNode, context: DSLExecutionContext) => {
-  const results = [];
+const executeBlock = async (blockNode: BlockNode, context: DSLExecutionContext): Promise<any[]> => {
+  const results: any[] = [];
   
   for (const node of blockNode.body) {
-    const result = await executeNode(node, context);
+    const result: any = await executeNode(node, context);
     results.push(result);
   }
   
   return results;
 }
 
-const executeVariable = async (variableNode: VariableNode, context: DSLExecutionContext) => {
+const executeVariable = async (variableNode: VariableNode, context: DSLExecutionContext): Promise<any> => {
 
   if (variableNode.operation === 'declare') {
-    const value = await executeNode(variableNode.right, context);
+    const value: any = await executeNode(variableNode.right, context);
     context.set(variableNode.name, value);
     return value;
   }
 
   if(variableNode.operation === 'write') {
-    const value = await executeNode(variableNode.right, context);
+    const value: any = await executeNode(variableNode.right, context);
     context.set(variableNode.name, value);
     return value;
   }
@@ -205,7 +205,7 @@ const execute = async (input: string, context: DSLExecutionContext) => {
   }
 }
 
-const executeNode = (node: ASTNode, context: DSLExecutionContext) => {
+const executeNode = async (node: ASTNode, context: DSLExecutionContext): Promise<any> => {
   switch (node.type) {
     case 'MacroInvocation':
       return executeMacro(node as MacroInvocationNode, context);
