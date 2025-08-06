@@ -288,20 +288,59 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     const oldParent = context.parentNode;
     updateContext({ parentNode: node, currentNodeIndex: 0, activePath: `${context.activePath}.0` });
 
-    while (next && next.type !== closingType) { 
-            // Check for another opening token and handle it recursively
-    if (next.type === "PAREN_OPEN" || next.type === "BRACKET_OPEN" || next.type === "CURLY_OPEN") {
-      const innerGroup = parseGrouping(next);
-      node.children.push(innerGroup);
-    } else {
-      // Call parseToken for all non-closing tokens
-      const nextNode = parseToken(next);
-      if (nextNode) {
-        node.children.push(nextNode);
-      }
-    }
-    next = nextToken();
-    updateContext({ activePath: `${context.activePath}.${node.children.length}` })
+        while (next && next.type !== closingType) { 
+        // Check for another opening token and handle it recursively
+        if (next.type === "PAREN_OPEN" || next.type === "BRACKET_OPEN" || next.type === "CURLY_OPEN") {
+            const innerGroup = parseGrouping(next);
+            node.children.push(innerGroup);
+        } else {
+            // Handle special cases that need proper parsing
+            if (next.type === "MACRO_START") {
+                // Call parseMacroInvocation for proper macro parsing
+                const macroNode = parseMacroInvocation(next);
+                if (macroNode) {
+                    node.children.push(macroNode);
+                }
+            } else {
+                // Only create simple nodes for other grouping tokens, don't call parseToken
+                // which might consume additional tokens
+                let nodeType: string;
+                switch (next.type) {
+                    case "VARIABLE":
+                        nodeType = "VariableIdentifier";
+                        break;
+                    case "WHITESPACE":
+                        nodeType = "Whitespace";
+                        break;
+                    case "COMPARISON_OPERATOR":
+                        nodeType = "ComparisonOperator";
+                        break;
+                    case "STRING_LITERAL":
+                        nodeType = "StringLiteral";
+                        break;
+                    case "NUMBER_LITERAL":
+                        nodeType = "NumberLiteral";
+                        break;
+                    case "IDENTIFIER":
+                        nodeType = "Identifier";
+                        break;
+                    case "NEWLINE":
+                        nodeType = "Newline";
+                        break;
+                    default:
+                        nodeType = next.type;
+                }
+                
+                const nextNode: CSTNode = {
+                    type: nodeType as any,
+                    value: next.value,
+                    children: [],
+                };
+                node.children.push(nextNode);
+            }
+        }
+        next = nextToken();
+        updateContext({ activePath: `${context.activePath}.${node.children.length}` })
     }
 
     // If we exit the loop without finding the closing token, it's an error
@@ -435,16 +474,42 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     // Parse the condition tokens manually
     let conditionToken = nextToken();
     while (conditionToken && conditionToken.type !== "PAREN_CLOSE") {
-      const nextNode = parseToken(conditionToken);
-      if (nextNode) {
-        conditionNode.children.push(nextNode);
+      // Only create simple nodes for condition tokens, don't call parseToken
+      // which might consume additional tokens
+      let nodeType: string;
+      switch (conditionToken.type) {
+        case "VARIABLE":
+          nodeType = "VariableIdentifier";
+          break;
+        case "WHITESPACE":
+          nodeType = "Whitespace";
+          break;
+        case "COMPARISON_OPERATOR":
+          nodeType = "ComparisonOperator";
+          break;
+        case "STRING_LITERAL":
+          nodeType = "StringLiteral";
+          break;
+        case "NUMBER_LITERAL":
+          nodeType = "NumberLiteral";
+          break;
+        default:
+          nodeType = conditionToken.type;
       }
+      
+      const nextNode: CSTNode = {
+        type: nodeType as any,
+        value: conditionToken.value,
+        children: [],
+      };
+      conditionNode.children.push(nextNode);
       conditionToken = nextToken();
     }
     
-    // Don't consume the PAREN_CLOSE token - leave it for the caller
+    // We've consumed the PAREN_CLOSE token, so we need to get the next token
+    // for the body parsing
     if (conditionToken && conditionToken.type === "PAREN_CLOSE") {
-      // We found the closing parenthesis, but don't consume it
+      // We found the closing parenthesis and consumed it
       // The next call to nextToken() will get the token after PAREN_CLOSE
     }
     
@@ -455,13 +520,11 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     // the next token should be a CURLY_OPEN or WHITESPACE
     
     // Check if we have more tokens
-    console.log(`parseIfControl: currentTokenIndex=${context.currentTokenIndex}, tokens.length=${tokens.length}`);
     if (context.currentTokenIndex >= tokens.length) {
       throw new Error(`Unexpected end of tokens while parsing IF control structure`);
     }
     
     token = nextToken();
-    console.log(`parseIfControl: got token ${token ? token.type : 'null'}: "${token ? token.value : 'null'}"`);
     if (!token) {
       throw new Error(`Unexpected end of tokens while parsing IF control structure`);
     }
@@ -543,77 +606,16 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     };    
     node.value = token.value;
     
-    // Check if the next token is already PAREN_OPEN (no whitespace)
+    // For while loops, we need to create separate nodes for the condition and body
+    // The expected structure is: WhileLoop node, then Grouping nodes for condition and body
+    // So we just return the WhileLoop node and let the main parser handle the condition and body
+    // But we need to skip the WHITESPACE token that might follow the WHILE token
+    
+    // Skip whitespace after WHILE
     let next = peekToken();
-    if (next && next.type === "PAREN_OPEN") {
-      token = nextToken(); // consume the PAREN_OPEN
-    } else {
-      // Skip whitespace and find the opening parenthesis
-      token = nextToken();
-      if (!token) {
-        throw new Error(`Unexpected end of tokens while parsing WHILE control structure`);
-      }
-      
-      while(token.type !== "PAREN_OPEN") {       
-        if(token.type !== "WHITESPACE") {        
-          throw new Error(`Unexpected token type: ${token.type}, only WHITESPACE or PAREN_OPEN permitted after WHILE @ ${token.position.line}:${token.position.column}`);        
-        }
-        token = nextToken();
-        if (!token) {
-          throw new Error(`Unexpected end of tokens while parsing WHILE control structure`);
-        }
-      }
+    if (next && next.type === "WHITESPACE") {
+      nextToken(); // consume the whitespace
     }
-
-    // our token is now PAREN_OPEN
-    // so we can parse the condition manually instead of using parseGrouping
-    // which would consume all tokens until the end
-    const conditionNode: CSTNode = {
-      type: 'Grouping',
-      token: token,
-      children: [],
-    };
-    
-    // Parse the condition tokens manually
-    let conditionToken = nextToken();
-    while (conditionToken && conditionToken.type !== "PAREN_CLOSE") {
-      const nextNode = parseToken(conditionToken);
-      if (nextNode) {
-        conditionNode.children.push(nextNode);
-      }
-      conditionToken = nextToken();
-    }
-    
-    // Don't consume the PAREN_CLOSE token - leave it for the caller
-    if (conditionToken && conditionToken.type === "PAREN_CLOSE") {
-      // We found the closing parenthesis, but don't consume it
-      // The next call to nextToken() will get the token after PAREN_CLOSE
-    }
-    
-    node.children.push(conditionNode);
-    
-    // now we need to parse the body
-    // the next token should be a CURLY_OPEN or WHITESPACE
-    
-    token = nextToken();
-    if (!token) {
-      throw new Error(`Unexpected end of tokens while parsing WHILE control structure`);
-    }
-    
-    while(token.type !== "CURLY_OPEN") { 
-      if(token.type !== "WHITESPACE") {
-        throw new Error(`Unexpected token type: ${token.type}, only WHITESPACE or CURLY_OPEN permitted after WHILE condition @ ${token.position.line}:${token.position.column}`);        
-      } 
-      token = nextToken();
-      if (!token) {
-        throw new Error(`Unexpected end of tokens while parsing WHILE control structure`);
-      }
-    }
-
-    // our token is now CURLY_OPEN
-    // so we can parse the grouping to get the body node
-    const bodyNode = parseGrouping(token);
-    node.children.push(bodyNode);
     
     return node;
   }

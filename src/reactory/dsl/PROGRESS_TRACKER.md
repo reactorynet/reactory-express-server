@@ -10,7 +10,7 @@
 | Component | Tests Passing | Total Tests | Status |
 |-----------|---------------|-------------|--------|
 | Lexer | 12 | 13 | 🟡 Mostly Working |
-| CST Parser | 7 | 13 | 🔴 Needs Fixes |
+| CST Parser | 12 | 13 | 🟢 Nearly Complete |
 | AST | 1 | 1 | ✅ Working |
 | Engine | 1 | 1 | 🟡 Basic Working |
 
@@ -22,11 +22,11 @@
 **Timeline**: 1-2 weeks
 
 #### 1.1 Fix CST Parser Token Handling
-- [ ] Add missing token type handlers
-- [ ] Implement proper error recovery
-- [ ] Add support for control structure parsing
-- [ ] Fix variable declaration parser edge cases
-- [ ] Handle undefined tokens gracefully
+- [x] Add missing token type handlers
+- [x] Implement proper error recovery
+- [x] Add support for control structure parsing
+- [x] Fix variable declaration parser edge cases
+- [x] Handle undefined tokens gracefully
 
 #### 1.2 Complete Control Structure Parsing
 - [ ] Implement `parseIfControl()` for conditional statements
