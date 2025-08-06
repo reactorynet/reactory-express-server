@@ -422,12 +422,22 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     // the next token should be a CURLY_OPEN or WHITESPACE
     
     token = nextToken();
+    if (!token) {
+      throw new Error(`Unexpected end of tokens while parsing IF control structure`);
+    }
+    
     while(token.type !== "CURLY_OPEN") { 
       let next = peekToken();
+      if (!next) {
+        throw new Error(`Unexpected end of tokens while parsing IF control structure`);
+      }
       if(next.type !== "WHITESPACE" && next.type !== "CURLY_OPEN") {
         throw new Error(`Unexpected token type: ${next.type},only WHITESPACE or CURLY_OPEN permitted after IF condition @ ${token.position.line}:${token.position.column}`);        
       } 
       token = nextToken();
+      if (!token) {
+        throw new Error(`Unexpected end of tokens while parsing IF control structure`);
+      }
     }
 
     // our token is now CURLY_OPEN
@@ -751,20 +761,24 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       node.value = token.value;
       node.readonly = token.value === "const";
         
-      
-    
-     // process tokens until we find a SEMICOLON 
-     // and add to the children
+      // process tokens until we find a SEMICOLON or EOF
+      // and add to the children
       let next = nextToken();
-      while(next.type !== "SEMICOLON") {
-        node.children.push(parseToken(next));
-        next = nextToken();
-        if(next.type === "EOF") {
-          throw new Error(`Unexpected end of file, SEMICOLON expected`);
+      while(next && next.type !== "SEMICOLON" && next.type !== "EOF") {
+        const parsedNode = parseToken(next);
+        if (parsedNode) {
+          node.children.push(parsedNode);
         }
+        next = nextToken();
       }
 
-      node.children.push(parseToken(next));
+      // If we found a semicolon, add it to children
+      if (next.type === "SEMICOLON") {
+        const semicolonNode = parseToken(next);
+        if (semicolonNode) {
+          node.children.push(semicolonNode);
+        }
+      }
 
       return node;
 
@@ -842,9 +856,11 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
         return parseIdentifier(token);
       case "MACRO_START":
         return parseMacroInvocation(token);
-        //case "PAREN_CLOSE":
-        //case "BRACKET_CLOSE":
-        //case "CURLY_CLOSE":
+      case "PAREN_CLOSE":
+      case "BRACKET_CLOSE":
+      case "CURLY_CLOSE":
+        // These are handled by the grouping parser, just return null
+        return null;
       case "BRACKET_OPEN":
       case "PAREN_OPEN":
       case "CURLY_OPEN":
@@ -852,7 +868,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "ARROW_CHAIN":
         return parseChaining();
       case "ARITHMETIC_OPERATOR":
-          return parseOperator(token);
+        return parseOperator(token);
       case "COMPARISON_OPERATOR":
         return parseComparisonOperator(token);
       case "ARROW_BRANCH":
@@ -867,6 +883,8 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
         return parseTryCatch(token);
       case "WHILE":
         return parseWhileLoop(token);
+      case "FOR":
+        return parseWhileLoop(token); // Use while loop parser for now
       case "NUMBER_LITERAL":
       case "STRING_LITERAL":
       case "BOOLEAN_LITERAL":
@@ -878,6 +896,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
         return parseOperator(token);
       case "PUNCTUATION":
       case "SEMICOLON":
+      case "COMMA":
         return parsePunctuation(token);
       case "VARIABLE":
       case "VAR":

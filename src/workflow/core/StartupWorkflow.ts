@@ -4,34 +4,40 @@ import logger from '../../logging';
 
 
 class BeforeStartup extends StepBody {
-  run(context) {
-    logger.debug(`WF: Before Startup ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);
+  when: any;
+  
+  run(context: any) {
+    logger.debug(`Workflow Startup: Before Startup ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);
     return ExecutionResult.next();
   }
 }
 
 
 class AfterStartup extends StepBody {
-  run(context) {
-    logger.debug(`WF: After Startup ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);
+  when: any;
+  
+  run(context: any) {
+    logger.debug(`Workflow Startup: After Startup ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);
     return ExecutionResult.next();
   }
 }
 
 
 class StartupWorkflow {
+  id: string;
+  version: number;
+  
   constructor() {
-    this.id = 'reactory.StartupWorkflow';
+    this.id = 'reactory.StartupWorkflow@1.0.0';
     this.version = 1;
   }
 
-  build(builder) {
-    // console.log('building', builder);
+  build(builder: any) {    
     builder
-      .startWith(BeforeStartup).input((step, data) => {
+      .startWith(BeforeStartup).input((step: any, data: any) => {
         step.when = data.when;
       })
-      .then(AfterStartup).input((step, data) => {
+      .then(AfterStartup).input((step: any, data: any) => {
         step.when = data.when;
       });
   }
