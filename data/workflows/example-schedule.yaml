@@ -4,7 +4,7 @@ description: "Runs daily cleanup tasks at 2 AM UTC"
 workflow:
   id: "reactory.CleanupWorkflow"
   version: "1.0.0"
-  namespace: "reactory"
+  nameSpace: "reactory"
 schedule:
   cron: "0 2 * * *"  # Every day at 2 AM UTC
   timezone: "UTC"

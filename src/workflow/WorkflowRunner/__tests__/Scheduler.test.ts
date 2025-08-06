@@ -42,7 +42,7 @@ describe('WorkflowScheduler', () => {
     workflow: {
       id: 'test.workflow',
       version: '1.0.0',
-      namespace: 'test',
+      nameSpace: 'test',
     },
     schedule: {
       cron: '0 * * * *',

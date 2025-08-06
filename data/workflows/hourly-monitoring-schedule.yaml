@@ -4,7 +4,7 @@ description: "Runs system health checks every hour"
 workflow:
   id: "reactory.MonitoringWorkflow"
   version: "1.0.0"
-  namespace: "reactory"
+  nameSpace: "reactory"
 schedule:
   cron: "0 * * * *"  # Every hour at minute 0
   timezone: "UTC"

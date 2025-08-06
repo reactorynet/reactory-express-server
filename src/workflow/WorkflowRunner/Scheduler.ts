@@ -14,7 +14,7 @@ export interface IScheduleConfig {
   workflow: {
     id: string;
     version: string;
-    namespace?: string;
+    nameSpace?: string;
   };
   schedule: {
     cron: string;
@@ -324,6 +324,7 @@ export class WorkflowScheduler {
         scheduledAt: scheduledWorkflow.lastRun.toISOString(),
         scheduleId: config.id,
         runCount: scheduledWorkflow.runCount,
+        nameSpace: config.workflow.nameSpace,
       };
 
       // Execute the workflow with retry logic

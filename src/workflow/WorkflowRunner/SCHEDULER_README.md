@@ -42,9 +42,9 @@ id: "unique-schedule-id"
 name: "Human Readable Name"
 description: "Optional description of what this schedule does"
 workflow:
-  id: "workflow.namespace.WorkflowName"
+  id: "workflow.nameSpace.WorkflowName"
   version: "1.0.0"
-  namespace: "optional-namespace"
+  nameSpace: "optional-nameSpace"
 schedule:
   cron: "0 2 * * *"  # Cron expression
   timezone: "UTC"     # Optional, defaults to UTC
@@ -126,7 +126,7 @@ interface IScheduleConfig {
   workflow: {
     id: string;
     version: string;
-    namespace?: string;
+    nameSpace?: string;
   };
   schedule: {
     cron: string;
@@ -179,7 +179,7 @@ description: "Runs daily cleanup tasks at 2 AM UTC"
 workflow:
   id: "reactory.CleanupWorkflow"
   version: "1.0.0"
-  namespace: "reactory"
+  nameSpace: "reactory"
 schedule:
   cron: "0 2 * * *"
   timezone: "UTC"
@@ -205,7 +205,7 @@ description: "Runs system health checks every hour"
 workflow:
   id: "reactory.MonitoringWorkflow"
   version: "1.0.0"
-  namespace: "reactory"
+  nameSpace: "reactory"
 schedule:
   cron: "0 * * * *"
   timezone: "UTC"
@@ -231,7 +231,7 @@ description: "Generates weekly reports every Monday at 9 AM"
 workflow:
   id: "reactory.ReportWorkflow"
   version: "1.0.0"
-  namespace: "reactory"
+  nameSpace: "reactory"
 schedule:
   cron: "0 9 * * 1"
   timezone: "America/New_York"
