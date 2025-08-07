@@ -158,6 +158,8 @@ class DSLExecutionContext  {
   private errorRecovery: ErrorRecovery;
   private executionStack: VariableScope[] = [];
   private asyncOperations: Promise<any>[] = [];
+  private outputVariables: Map<string, any> = new Map();
+  private outputVariableHistory: any[] = [];
 
 
   constructor(context: Reactory.Server.IReactoryContext, host: ValidHost, state?: Map<string, any>) {
@@ -425,6 +427,40 @@ class DSLExecutionContext  {
 
   attemptRecovery(strategyName: string, ...args: any[]): any {
     return this.errorRecovery.attemptRecovery(strategyName, this.context, ...args);
+  }
+
+  // Output variable handling
+  setOutput(key: string, value: any): void {
+    this.outputVariables.set(key, value);
+    this.outputVariableHistory.push({ key, value, timestamp: Date.now() });
+  }
+
+  getOutput(key: string): any {
+    return this.outputVariables.get(key);
+  }
+
+  getOutputHistory(): any[] {
+    return [...this.outputVariableHistory];
+  }
+
+  clearOutputs(): void {
+    this.outputVariables.clear();
+    this.outputVariableHistory = [];
+  }
+
+  getLastOutput(): any {
+    if (this.outputVariableHistory.length > 0) {
+      const last = this.outputVariableHistory[this.outputVariableHistory.length - 1];
+      return last.value;
+    }
+    return undefined;
+  }
+
+  getOutputAtIndex(index: number): any {
+    if (index >= 0 && index < this.outputVariableHistory.length) {
+      return this.outputVariableHistory[index].value;
+    }
+    return undefined;
   }
 
   /**

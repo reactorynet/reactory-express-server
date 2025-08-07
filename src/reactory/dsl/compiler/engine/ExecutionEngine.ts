@@ -41,12 +41,20 @@ export const executeProgram = async (programNode: ProgramNode, context: DSLExecu
 
 const executeMacro = async (macroNode: MacroInvocationNode, context: DSLExecutionContext): Promise<any> => { 
   const args: any[] = await Promise.all(macroNode.arguments.map(arg => executeNode(arg, context)));
-  return await context.executeFunction(macroNode.name, args);
+  const result = await context.executeFunction(macroNode.name, args);
+  
+  // Store the result as output variable
+  context.setOutput('$out', result);
+  
+  return result;
 }
 
 const executeMacroChain = async (chainNode: MacroChainNode, context: DSLExecutionContext): Promise<any> => {
   // Execute the source macro first
   const sourceResult = await executeNode(chainNode.source, context);
+  
+  // Store the result as output variable
+  context.setOutput('$out', sourceResult);
   
   // Pass the result to the destination macro
   const destinationArgs = chainNode.destination.arguments;
@@ -62,11 +70,18 @@ const executeMacroBranch = async (branchNode: MacroBranchNode, context: DSLExecu
   // Evaluate the condition
   const conditionResult = await executeNode(branchNode.condition, context);
   
+  // Store the condition result as output variable
+  context.setOutput('$condition', conditionResult);
+  
   // Execute the appropriate branch based on the condition
   if (conditionResult) {
-    return await executeNode(branchNode.successBranch, context);
+    const successResult = await executeNode(branchNode.successBranch, context);
+    context.setOutput('$out', successResult);
+    return successResult;
   } else {
-    return await executeNode(branchNode.failureBranch, context);
+    const failureResult = await executeNode(branchNode.failureBranch, context);
+    context.setOutput('$out', failureResult);
+    return failureResult;
   }
 }
 

@@ -14,4 +14,25 @@ export {
   type IScheduleConfig,
   type IScheduledWorkflow,
   type ISchedulerStats
-} from './Scheduler'; 
+} from './Scheduler';
+
+export {
+  ErrorHandler,
+  CircuitBreaker,
+  type IErrorContext,
+  type IRetryConfig,
+  type ICircuitBreakerConfig,
+  type ITimeoutConfig,
+  ErrorCategory,
+  ErrorSeverity
+} from './ErrorHandler';
+
+export {
+  WorkflowLifecycleManager,
+  WorkflowStatus,
+  WorkflowPriority,
+  type IWorkflowInstance,
+  type IWorkflowDependency,
+  type IWorkflowLifecycleConfig,
+  type IWorkflowLifecycleStats
+} from './LifecycleManager'; 

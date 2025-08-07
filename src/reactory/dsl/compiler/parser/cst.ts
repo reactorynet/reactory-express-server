@@ -132,6 +132,37 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       children: [],
     };
     
+    // Parse the string interpolation content
+    const content = token.value.slice(1, -1); // Remove backticks
+    const parts = content.split(/(\$\{[^}]+\})/); // Split by ${...} expressions
+    
+    for (const part of parts) {
+      if (part.startsWith('${') && part.endsWith('}')) {
+        // This is a variable expression
+        const variableContent = part.slice(2, -1); // Remove ${ and }
+        
+        // Create a variable identifier node for the interpolation
+        const variableNode: CSTNode = {
+          type: 'VariableIdentifier',
+          value: variableContent,
+          token: token,
+          children: [],
+        };
+        
+        stringInterpolationNode.children.push(variableNode);
+      } else if (part.length > 0) {
+        // This is a literal string part
+        const literalNode: CSTNode = {
+          type: 'StringLiteral',
+          value: part,
+          token: token,
+          children: [],
+        };
+        
+        stringInterpolationNode.children.push(literalNode);
+      }
+    }
+    
     return stringInterpolationNode;
   }
 
@@ -147,9 +178,13 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       value: token.value,
       children: [],
     };
-    const identifierToken = nextToken();
-
-    if(identifierToken.type !== "IDENTIFIER") throw new Error(`Unexpected token type: ${identifierToken.type}, IDENTIFIER expected`);
+        const identifierToken = nextToken();
+    
+    // Handle different token types that can be macro names
+    const validMacroTokens = ["IDENTIFIER", "MACRO_START", "IF", "VAR", "WHILE", "FOR", "TRY", "SWITCH"];
+    if(!validMacroTokens.includes(identifierToken.type)) {
+      throw new Error(`Unexpected token type: ${identifierToken.type}, IDENTIFIER or macro keyword expected`);
+    }
     
     macroTagNode.children.push({
       type: 'MacroName',
