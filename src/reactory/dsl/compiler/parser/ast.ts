@@ -255,6 +255,56 @@ export const createAST = (cst: CSTProgramNode): ProgramNode => {
     return null;
   }
 
+  const parseChaining = (node: CSTNode): MacroChainNode => {
+    const macroChainNode: MacroChainNode = {
+      type: 'MacroChain',
+      source: null,
+      destination: null,
+    };
+
+    // Extract source and destination from children
+    if (node.children.length >= 2) {
+      const sourceNode = parseNode(node.children[0]);
+      const destinationNode = parseNode(node.children[1]);
+      
+      if (sourceNode.type === 'MacroInvocation') {
+        macroChainNode.source = sourceNode as MacroInvocationNode;
+      }
+      
+      if (destinationNode.type === 'MacroInvocation') {
+        macroChainNode.destination = destinationNode as MacroInvocationNode;
+      }
+    }
+
+    return macroChainNode;
+  }
+
+  const parseBranching = (node: CSTNode): MacroBranchNode => {
+    const macroBranchNode: MacroBranchNode = {
+      type: 'MacroBranch',
+      condition: null,
+      successBranch: null,
+      failureBranch: null,
+    };
+
+    // Extract condition and branches from children
+    if (node.children.length >= 2) {
+      const conditionNode = parseNode(node.children[0]);
+      const branchesNode = parseNode(node.children[1]);
+      
+      if (conditionNode.type === 'MacroInvocation') {
+        macroBranchNode.condition = conditionNode as MacroInvocationNode;
+      }
+      
+      if (branchesNode.type === 'MacroGroup' && branchesNode.body.length >= 2) {
+        macroBranchNode.successBranch = branchesNode.body[0];
+        macroBranchNode.failureBranch = branchesNode.body[1];
+      }
+    }
+
+    return macroBranchNode;
+  }
+
   /**
    * Whitespace is removed from the program as it has no semantic meaning
    * @param node 
@@ -345,10 +395,10 @@ export const createAST = (cst: CSTProgramNode): ProgramNode => {
         return parseLiteral(node);        
       // case "Grouping":
       //   return parseGrouping(node);
-      // case "Chaining":
-      //   return parseChaining(node);
-      // case "Branching":
-      //   return parseBranching(node);
+      case "Chaining":
+        return parseChaining(node);
+      case "Branching":
+        return parseBranching(node);
       // case "Nesting":
       //   return parseNesting(node);
       // case "IfControl":

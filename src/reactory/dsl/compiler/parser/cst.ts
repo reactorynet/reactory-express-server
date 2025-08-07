@@ -382,6 +382,21 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     };
     const token = nextToken();
     node.value = token.value;
+    
+    // Parse the source macro (before the -->)
+    const sourceToken = currentToken();
+    if (sourceToken && sourceToken.type === 'MACRO_START') {
+      const sourceMacro = parseMacroInvocation(sourceToken);
+      node.children.push(sourceMacro);
+    }
+    
+    // Parse the destination macro (after the -->)
+    const destinationToken = peekToken();
+    if (destinationToken && destinationToken.type === 'MACRO_START') {
+      const destinationMacro = parseMacroInvocation(destinationToken);
+      node.children.push(destinationMacro);
+    }
+    
     return node;
   }
 
@@ -392,6 +407,23 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       children: [],
     };
     node.value = token.value;
+    
+    // Parse the condition macro (before the -=>)
+    const conditionToken = currentToken();
+    if (conditionToken && conditionToken.type === 'MACRO_START') {
+      const conditionMacro = parseMacroInvocation(conditionToken);
+      node.children.push(conditionMacro);
+    }
+    
+    // Parse the success and failure branches (after the -=>)
+    const nextTokenValue = peekToken();
+    if (nextTokenValue && nextTokenValue.type === 'BRACKET_OPEN') {
+      // Parse grouped macros [success, failure]
+      const groupToken = nextToken();
+      const groupNode = parseGrouping(groupToken);
+      node.children.push(groupNode);
+    }
+    
     return node;
   }
 

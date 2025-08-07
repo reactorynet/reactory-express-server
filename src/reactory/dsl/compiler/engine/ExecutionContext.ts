@@ -183,20 +183,28 @@ class DSLExecutionContext  {
    */
   setupFunctions() {
     // Synchronous functions
-    this.functionRegistry.register('print', (args: any[]) => {
+    this.functionRegistry.register('print', (args: any[]): string => {
       const argsWithoutContext = args.slice(0, args.length - 1);
       console.log(...argsWithoutContext);
       return argsWithoutContext.join(' ');
     });
 
-    this.functionRegistry.register('var', (args: any[]) => {
-      const [name, value] = args;
+    this.functionRegistry.register('var', (args: any[]): any => {
+      const argsWithoutContext = args.slice(0, args.length - 1);
+      const [name, value] = argsWithoutContext;
+      if (name === undefined) {
+        return undefined;
+      }
       this.currentScope.set(name, value);
       return value;
     });
 
-    this.functionRegistry.register('get', (args: any[]) => {
-      const [name] = args;
+    this.functionRegistry.register('get', (args: any[]): any => {
+      const argsWithoutContext = args.slice(0, args.length - 1);
+      const [name] = argsWithoutContext;
+      if (name === undefined) {
+        return undefined;
+      }
       return this.currentScope.get(name);
     });
 
@@ -214,6 +222,73 @@ class DSLExecutionContext  {
       await new Promise(resolve => setTimeout(resolve, 200));
       return `Mock response from ${url}`;
     }, true);
+
+    // Control flow macros
+    this.functionRegistry.register('if', (args: any[]): any => {
+      const argsWithoutContext = args.slice(0, args.length - 1);
+      const [condition, trueBlock, falseBlock] = argsWithoutContext;
+      if (condition) {
+        return trueBlock;
+      } else if (falseBlock !== undefined) {
+        return falseBlock;
+      }
+      return null;
+    });
+
+    this.functionRegistry.register('while', (args: any[]): any[] => {
+      const argsWithoutContext = args.slice(0, args.length - 1);
+      const [condition, body] = argsWithoutContext;
+      const results: any[] = [];
+      while (condition) {
+        const result = body;
+        results.push(result);
+        // Update condition (this would need to be evaluated in real implementation)
+        break; // Prevent infinite loops in this mock implementation
+      }
+      return results;
+    });
+
+    this.functionRegistry.register('for', (args: any[]): any[] => {
+      const argsWithoutContext = args.slice(0, args.length - 1);
+      const [init, condition, increment, body] = argsWithoutContext;
+      const results: any[] = [];
+      // Mock implementation - in real usage, these would be evaluated
+      for (let i = 0; i < 3; i++) { // Mock loop limit
+        const result = body;
+        results.push(result);
+      }
+      return results;
+    });
+
+    this.functionRegistry.register('try', (args: any[]): any => {
+      const argsWithoutContext = args.slice(0, args.length - 1);
+      const [tryBlock, catchBlock, finallyBlock] = argsWithoutContext;
+      try {
+        const result = typeof tryBlock === 'function' ? tryBlock() : tryBlock;
+        if (finallyBlock) {
+          typeof finallyBlock === 'function' ? finallyBlock() : finallyBlock;
+        }
+        return result;
+      } catch (error) {
+        let catchResult;
+        if (catchBlock) {
+          catchResult = typeof catchBlock === 'function' ? catchBlock(error) : catchBlock;
+        }
+        if (finallyBlock) {
+          typeof finallyBlock === 'function' ? finallyBlock() : finallyBlock;
+        }
+        return catchResult;
+      }
+    });
+
+    this.functionRegistry.register('switch', (args: any[]): any => {
+      const argsWithoutContext = args.slice(0, args.length - 1);
+      const [value, cases] = argsWithoutContext;
+      if (cases && cases[value]) {
+        return cases[value];
+      }
+      return null;
+    });
   }
 
   /**
