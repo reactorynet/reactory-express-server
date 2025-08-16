@@ -24,6 +24,39 @@ type Timeline {
   message: String
 }
 
+type ReactoryUserFilesLoadOptions {
+  limit: Int
+  offset: Int
+  sortBy: String
+  sortOrder: String
+  search: String
+  includeFolders: Boolean
+}
+
+input ReactoryUserFilesLoadOptionsInput {
+  limit: Int
+  offset: Int
+  sortBy: String
+  sortOrder: String
+  search: String
+  includeFolders: Boolean
+}
+
+"""
+File delete input type allows for delete either by ID or path.
+If both are provided, the ID takes precedence.
+If the id is not found or the path does not exist, an error will be returned.
+"""
+input ReactoryFileDeleteInput {
+  id: String
+  path: String
+}
+
+type ReactoryFolder {  
+  name: String
+  path: String
+}
+
 type ReactoryFile {
   id: String
   hash: Int
@@ -49,12 +82,12 @@ type ReactoryFile {
   timeline: [Timeline]
 }
 
-type ReactorFileUpdateSuccess {
+type ReactoryFileUpdateSuccess {
   success: Boolean
   file: ReactoryFile
 }
 
-type ReactorFileDeleteSuccess {
+type ReactoryFileDeleteSuccess {
   success: Boolean
   id: String
 }
@@ -85,14 +118,75 @@ type ReactoryRemoteSyncError {
   remoteId: String
 }
 
+type ReactoryUserFiles {
+  path: String
+  loadOptions: ReactoryUserFilesLoadOptions
+  folders: [ReactoryFolder]
+  files: [ReactoryFile]
+}
+
+type ReactoryUserFilesErrorResponse {
+  error: String
+  message: String
+}
+
+type ReactoryFolderCreateSuccess {
+  success: Boolean
+  folder: ReactoryFolder
+}
+
+type ReactoryFolderCreateError {
+  error: String
+  message: String
+}
+
+type ReactoryFolderDeleteSuccess {
+  success: Boolean
+  path: String
+}
+
+type ReactoryFolderDeleteError {
+  error: String
+  message: String
+}
+
+type ReactoryItemMoveSuccess {
+  success: Boolean
+  newPath: String
+  itemType: String
+}
+
+type ReactoryItemMoveError {
+  error: String
+  message: String
+}
+
 union ReactoryFileRemoteSyncResult = ReactoryFileRemoteEntry | ReactoryRemoteSyncError
 union ReactoryFileUploadResult = ReactoryFileUploadSuccess | ReactoryFileUploadError
-union ReactoryFileUpdateResult = ReactorFileUpdateSuccess | ReactoryFileUpdateError
-union ReactoryFileDeleteResult = ReactorFileDeleteSuccess | ReactoryFileDeleteError
+union ReactoryFileUpdateResult = ReactoryFileUpdateSuccess | ReactoryFileUpdateError
+union ReactoryFileDeleteResult = ReactoryFileDeleteSuccess | ReactoryFileDeleteError
+union ReactoryFolderCreateResult = ReactoryFolderCreateSuccess | ReactoryFolderCreateError
+union ReactoryFolderDeleteResult = ReactoryFolderDeleteSuccess | ReactoryFolderDeleteError
+union ReactoryItemMoveResult = ReactoryItemMoveSuccess | ReactoryItemMoveError
+union ReactoryUserFileResults = ReactoryUserFiles | ReactoryUserFilesErrorResponse
+
+type Query {
+  """
+  Fetches files for the current logged in user from their user home folder on the reactory server.
+  The path can be specified to fetch files from a specific folder.
+  If no path is provided, it defaults to the user's home folder.
+  The loadOptions can be used to control pagination, sorting, and searching of files.
+  If loadOptions is not provided, it defaults to loading the first 20 files.
+  """
+  ReactoryUserFiles(path: String, loadOptions: ReactoryUserFilesLoadOptionsInput): ReactoryUserFileResults
+}
 
 type Mutation {
   ReactoryUploadFile(file: Upload!, alias: String, path: String, uploadContext: String): ReactoryFileUploadResult
   ReactoryUpdateFile(id: String!, alias: String, path: String, filename: String, mimetype: String, size: Int): ReactoryFileUpdateResult
-  ReactoryDeleteFile(id: String!): ReactoryFileDeleteResult
+  ReactoryDeleteFile(input: ReactoryFileDeleteInput!): ReactoryFileDeleteResult
   ReactorySyncFileToRemote(id: String!, remoteId: String!): ReactoryFileRemoteSyncResult
+  ReactoryCreateFolder(name: String!, path: String!): ReactoryFolderCreateResult
+  ReactoryDeleteFolder(path: String!): ReactoryFolderDeleteResult
+  ReactoryMoveItem(itemPath: String!, newPath: String!, itemType: String!): ReactoryItemMoveResult
 }

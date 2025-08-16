@@ -1,0 +1,28 @@
+overwrite: true
+schema: './src/modules/**/*.graphql'
+documents: null
+generates:
+  ./server/modules/:
+    preset: graphql-modules
+    presetConfig:
+      baseTypesPath: ./base.types.g.ts
+      filename: ./module.types.g.ts
+      useGraphQLModules: false
+    config:
+      useIndexSignature: true
+      maybeValue: T | undefined
+      contextType: ./context.types#MockServerContext
+      scalars:
+        Void: void
+        CurrencyCode: string
+        CountryCode: string
+        BigDecimal: number
+        DateTime: string
+    plugins:
+      - add:
+          content:
+            - '/* THIS IS AN AUTO-GENERATED FILE. DO NOT EDIT IT! */'
+            - '/* eslint-disable eslint-comments/no-unlimited-disable */'
+            - '/* eslint-disable */'
+      - typescript
+      - typescript-resolvers

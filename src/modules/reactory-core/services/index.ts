@@ -1,7 +1,7 @@
 import moment from "moment";
 import EmailService from './EmailService'
 import TemplateService from './TemplateService'
-import FileService from './FileService';
+import FileService from './ReactoryFileService';
 import { ReactoryExcelWriterServiceDefinition } from '@reactory/server-core/excel/ExcelWriter';
 import OrganizationServiceDefinition from '@reactory/server-modules/reactory-core/services/OrganizationService';
 import GoogleMapsService from "./location/GoogleMapsService";
