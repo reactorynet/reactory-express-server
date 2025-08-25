@@ -10,6 +10,8 @@ import modules from "@reactory/server-core/modules";
 import i18next, { t } from "i18next";
 import Reactory, { React } from "@reactory/reactory-core";
 import Cache from "@reactory/server-modules/reactory-core/models/CoreCache";
+import ReactoryClientModel from "@reactory/server-modules/reactory-core/models/ReactoryClient";
+import UserModel from "@reactory/server-modules/reactory-core/models/User";
 import { Container } from "inversify";
 
 colors.setTheme({
@@ -210,6 +212,14 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
 
   async runAsSystem<TResult>(target: Promise<TResult>): Promise<TResult> { 
     return this.runAs(await this.getSystemUser(), target);
+  }
+
+  async forPartner(partnerId: string): Promise<void> {
+    this.partner = await ReactoryClientModel.findOne({ key: partnerId }).exec() as Reactory.Models.IReactoryClientDocument;
+  }
+
+  async forUser(email: string): Promise<void> {
+    this.user = await UserModel.findOne({ email }).exec() as Reactory.Models.IUserDocument;
   }
 }
 

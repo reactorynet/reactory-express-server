@@ -1,300 +1,506 @@
-# WorkflowRunner Module
+# WorkflowRunner - Central Orchestrator
 
 ## Overview
 
-The WorkflowRunner module is a robust, TypeScript-based workflow execution engine that manages the lifecycle of workflows in the Reactory system. It provides a centralized way to register, start, and manage workflows with enhanced error handling and async/await patterns.
-
-## Features
-
-### ✅ Core Features
-- **Workflow Registration**: Register and validate workflows
-- **Async/Await Pattern**: Modern async/await implementation
-- **Error Handling**: Robust error handling that prevents service crashes
-- **State Management**: Immutable state management with change tracking
-- **AMQ Integration**: Message queue integration for distributed workflows
-- **Persistence Support**: MongoDB persistence with fallback to in-memory
-- **Auto-start Workflows**: Support for workflows that start automatically
-- **TypeScript Support**: Full TypeScript support with comprehensive types
-
-### 🔄 Enhanced Features
-- **Retry Mechanism**: Automatic retry for failed workflows
-- **Circuit Breaker**: Circuit breaker pattern for external dependencies
-- **Timeout Handling**: Configurable timeouts for long-running workflows
-- **Performance Monitoring**: Built-in performance metrics and monitoring
-- **Security**: Input validation and audit logging
-- **Scalability**: Support for horizontal scaling and load balancing
+The `WorkflowRunner` is the central orchestrator and singleton manager for the entire workflow engine. It acts as the primary interface for all workflow operations and coordinates between the various management components.
 
 ## Architecture
 
-```
-WorkflowRunner
-├── Core Engine
-│   ├── Workflow Host Management
-│   ├── State Management
-│   └── Error Handling
-├── Persistence Layer
-│   ├── MongoDB Provider
-│   └── In-Memory Fallback
-├── Message Queue
-│   ├── AMQ Integration
-│   └── Event Handling
-└── Configuration
-    ├── Workflow Registration
-    ├── Auto-start Configuration
-    └── Environment Settings
+```mermaid
+graph TB
+    subgraph "WorkflowRunner Core"
+        WR[WorkflowRunner<br/>Singleton Instance]
+        WH[WorkflowHost<br/>workflow-es Engine]
+        PERSIST[MongoDB Persistence<br/>State Storage]
+    end
+    
+    subgraph "Management Components"
+        SCH[Scheduler<br/>Cron Management]
+        LCM[LifecycleManager<br/>Instance Lifecycle]
+        EH[ErrorHandler<br/>Error Recovery]
+        CM[ConfigurationManager<br/>Config Management]
+        SM[SecurityManager<br/>Security & Audit]
+    end
+    
+    subgraph "External Interfaces"
+        API[REST API]
+        AMQ[Message Queue]
+        MODULE[Reactory Modules]
+    end
+    
+    WR --> WH
+    WR --> SCH
+    WR --> LCM
+    WR --> EH
+    WR --> CM
+    WR --> SM
+    
+    WH --> PERSIST
+    
+    API --> WR
+    AMQ --> WR
+    MODULE --> WR
+    
+    style WR fill:#4CAF50,color:#fff
+    style WH fill:#2196F3,color:#fff
 ```
 
-## Usage
+## Key Responsibilities
 
-### Basic Usage
+### 1. Central Orchestration
+- Single point of entry for all workflow operations
+- Coordinates between management components
+- Manages workflow registration and discovery
+- Handles workflow lifecycle events
+
+### 2. Instance Management
+- Creates and tracks workflow instances
+- Manages instance state transitions
+- Coordinates between multiple workflow executions
+- Provides unified status reporting
+
+### 3. Integration Hub
+- Interfaces with external systems (REST API, AMQ)
+- Loads workflows from Reactory modules
+- Manages persistent connections (MongoDB)
+- Handles cross-cutting concerns
+
+## Initialization Flow
+
+```mermaid
+sequenceDiagram
+    participant App as Application
+    participant WR as WorkflowRunner
+    participant WH as WorkflowHost
+    participant DB as MongoDB
+    participant SCH as Scheduler
+    participant Components as Other Components
+    
+    App->>WR: new WorkflowRunner(props)
+    App->>WR: initialize()
+    
+    WR->>DB: connect to MongoDB
+    WR->>WH: create WorkflowHost
+    WR->>WH: configure persistence
+    
+    loop Register Workflows
+        WR->>WH: registerWorkflow(workflow)
+    end
+    
+    WR->>WH: start()
+    WR->>SCH: initialize()
+    WR->>Components: initialize all components
+    WR->>WR: setupAmqEventHandlers()
+    WR->>WR: startAutoStartWorkflows()
+    
+    WR-->>App: initialization complete
+```
+
+## Workflow Registration
+
+### Automatic Registration from Modules
 
 ```typescript
-import { WorkflowRunner, DefaultWorkflows } from './WorkflowRunner';
-
-// Create a workflow runner instance
-const workflowRunner = new WorkflowRunner({ 
-  workflows: DefaultWorkflows 
+// Workflows are automatically discovered from Reactory modules
+const availableworkflows: IWorkflow[] = [];
+reactoryModules.enabled.forEach((reactoryModule) => {
+  if (isArray(reactoryModule.workflows)) {    
+    reactoryModule.workflows.forEach((workflow: any) => {
+      if (typeof workflow === 'object' && workflow.category === 'workflow') {
+        logger.debug(`🔀 Loading workflow for module ${reactoryModule.name}`, workflow);        
+        availableworkflows.push(workflow);
+      }
+    });
+  }
 });
-
-// Initialize the runner
-await workflowRunner.initialize();
-
-// Start a workflow
-const result = await workflowRunner.startWorkflow('workflow-id', '1.0.0', { data: 'test' });
-
-// Stop the runner
-await workflowRunner.stop();
 ```
 
-### Custom Workflow Registration
+### Manual Registration
 
 ```typescript
-import { WorkflowRunner, IWorkflow } from './WorkflowRunner';
-
-const customWorkflow: IWorkflow = {
-  nameSpace: 'myapp',
-  name: 'CustomWorkflow',
-  version: '1.0.0',
-  component: MyWorkflowComponent,
+// Register a workflow manually
+workflowRunner.registerWorkflow({
+  nameSpace: 'my-namespace',
+  name: 'my-workflow',
+  version: '1.0',
+  component: MyWorkflowClass,
   category: 'workflow',
   autoStart: false,
   props: {
-    timeout: 5000,
-    retries: 3
+    customProperty: 'value'
   }
-};
-
-const runner = new WorkflowRunner({ 
-  workflows: [customWorkflow] 
 });
 ```
 
-### Error Handling
+## Workflow Execution Modes
+
+### 1. Direct Execution
 
 ```typescript
-try {
-  await workflowRunner.initialize();
-} catch (error) {
-  // Handle initialization errors
-  logger.error('Failed to initialize workflow runner', error);
-}
-
-// The runner won't crash the service on workflow errors
-// Errors are logged and handled gracefully
+// Start a workflow immediately
+const instanceId = await workflowRunner.startWorkflow(
+  'my-workflow',      // workflow ID
+  '1.0',              // version
+  {                   // workflow data
+    inputData: 'value',
+    userId: '12345'
+  }
+);
 ```
 
-## API Reference
+### 2. Scheduled Execution
 
-### Classes
-
-#### `WorkflowRunner`
-
-Main class for managing workflow execution.
-
-**Constructor**
 ```typescript
-constructor(props: IWorkflowRunnerProps)
+// Workflows started by the scheduler
+const scheduleConfig: IScheduleConfig = {
+  id: 'daily-task',
+  name: 'Daily Task Execution',
+  workflow: {
+    id: 'daily-workflow',
+    version: '1.0'
+  },
+  schedule: {
+    cron: '0 9 * * *',  // Daily at 9 AM
+    enabled: true
+  }
+};
+
+await workflowRunner.scheduler.addSchedule(scheduleConfig);
 ```
 
-**Methods**
+### 3. Event-Driven Execution
 
-- `async initialize(): Promise<void>` - Initialize the workflow runner
-- `async startWorkflow(id: string, version: string, data: any): Promise<any>` - Start a specific workflow
-- `registerWorkflow(workflow: IWorkflow): void` - Register a new workflow
-- `async stop(): Promise<void>` - Stop the workflow runner
-- `getState(): IWorkflowState` - Get current state
-- `isInitialized(): boolean` - Check if initialized
-
-### Interfaces
-
-#### `IWorkflow`
 ```typescript
-interface IWorkflow {
-  nameSpace: string;
-  name: string;
-  version: string;
-  component: any;
-  category: string;
-  autoStart?: boolean;
-  props?: any;
-}
+// Workflows triggered by AMQ messages
+amq.subscribe('workflow.trigger', (message) => {
+  workflowRunner.startWorkflow(
+    message.workflowId,
+    message.version,
+    message.data
+  );
+});
 ```
 
-#### `IWorkflowState`
+### 4. Auto-Start Execution
+
+```typescript
+// Workflows with autoStart: true are executed during initialization
+const autoStartWorkflow: IWorkflow = {
+  nameSpace: 'system',
+  name: 'initialization-workflow',
+  version: '1.0',
+  component: InitWorkflow,
+  category: 'workflow',
+  autoStart: true,  // This workflow starts automatically
+  props: {
+    when: Date.now()
+  }
+};
+```
+
+## State Management
+
+### Workflow State Interface
+
 ```typescript
 interface IWorkflowState {
-  workflows: IWorkflow[];
-  host: WorkflowHost | null;
+  workflows: IWorkflow[];        // Registered workflows
+  host: WorkflowHost | null;     // workflow-es host instance
 }
 ```
 
-#### `IWorkflowRunnerProps`
+### State Transitions
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uninitialized
+    Uninitialized --> Initializing: initialize()
+    Initializing --> Running: success
+    Initializing --> Error: failure
+    Running --> Stopping: stop()
+    Running --> Error: error
+    Stopping --> Stopped: success
+    Error --> Uninitialized: reset
+    Stopped --> [*]
+```
+
+## Error Handling Integration
+
+### Error Context Propagation
+
 ```typescript
-interface IWorkflowRunnerProps {
-  workflows?: IWorkflow[];
+private async handleWorkflowError(
+  workflowId: string,
+  version: string,
+  error: Error,
+  context: any
+): Promise<void> {
+  const errorContext: IErrorContext = {
+    workflowId,
+    version,
+    attempt: 1,
+    maxAttempts: 3,
+    timestamp: new Date(),
+    category: this.categorizeError(error),
+    severity: this.determineErrorSeverity(error),
+    originalError: error,
+    metadata: context
+  };
+
+  await this.errorHandler.handleError(errorContext);
+}
+```
+
+### Circuit Breaker Integration
+
+```typescript
+private async executeWithCircuitBreaker<T>(
+  operation: () => Promise<T>,
+  workflowId: string
+): Promise<T> {
+  const circuitBreaker = this.errorHandler.getCircuitBreaker(workflowId);
+  
+  return circuitBreaker.execute(operation, {
+    workflowId,
+    version: '1.0',
+    attempt: 1,
+    maxAttempts: 3,
+    timestamp: new Date(),
+    category: ErrorCategory.SYSTEM,
+    severity: ErrorSeverity.MEDIUM,
+    originalError: new Error('Circuit breaker test')
+  });
+}
+```
+
+## Monitoring and Observability
+
+### Metrics Collection
+
+```typescript
+class WorkflowRunner {
+  // Built-in metrics collection
+  private collectMetrics(): IWorkflowRunnerMetrics {
+    return {
+      totalWorkflows: this.state.workflows.length,
+      activeInstances: this.getActiveInstanceCount(),
+      completedToday: this.getCompletedTodayCount(),
+      errorRate: this.calculateErrorRate(),
+      averageExecutionTime: this.calculateAverageExecutionTime(),
+      resourceUtilization: this.getResourceUtilization()
+    };
+  }
+}
+```
+
+### Health Check Integration
+
+```typescript
+// Health check endpoint implementation
+router.get('/status', (req, res) => {
+  const health = {
+    status: workflowRunner.isInitialized ? 'healthy' : 'unhealthy',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    components: {
+      workflowHost: workflowRunner.host?.isRunning() || false,
+      database: workflowRunner.connection?.readyState === 1,
+      scheduler: workflowRunner.scheduler?.isRunning() || false
+    },
+    metrics: workflowRunner.getMetrics()
+  };
+  
+  res.json(health);
+});
+```
+
+## API Integration
+
+### REST API Endpoints
+
+```typescript
+// Start workflow endpoint
+router.post('/start/:workflowId', async (req, res) => {
+  try {
+    const version = typeof req.query.version === 'string' ? req.query.version : '1';
+    const data = { ...req.query, ...req.body };
+    
+    // Security validation
+    await workflowRunner.securityManager.validateRequest(req);
+    
+    // Start workflow
+    const instanceId = await workflowRunner.startWorkflow(
+      req.params.workflowId,
+      version,
+      data
+    );
+    
+    res.json({ 
+      success: true, 
+      instanceId,
+      message: 'Workflow started successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+```
+
+### AMQ Event Handling
+
+```typescript
+private async setupAmqEventHandlers(): Promise<void> {
+  // Workflow trigger events
+  amq.subscribe('workflow.start', async (message) => {
+    await this.handleWorkflowStartEvent(message);
+  });
+  
+  // Workflow control events
+  amq.subscribe('workflow.pause', async (message) => {
+    await this.pauseWorkflow(message.instanceId);
+  });
+  
+  amq.subscribe('workflow.resume', async (message) => {
+    await this.resumeWorkflow(message.instanceId);
+  });
+  
+  amq.subscribe('workflow.cancel', async (message) => {
+    await this.cancelWorkflow(message.instanceId);
+  });
 }
 ```
 
 ## Configuration
 
-### Environment Variables
-
-- `MONGOOSE`: MongoDB connection string for persistence
-- `WORKFLOW_MONGO_DB`: Workflow-specific database name
-
-### Workflow Configuration
+### Constructor Configuration
 
 ```typescript
-const workflowConfig = {
-  timeout: 30000,        // 30 seconds
-  retries: 3,           // Retry failed workflows
-  maxConcurrent: 10,    // Maximum concurrent workflows
-  autoStart: true,      // Start automatically
-  interval: 60000       // Interval for recurring workflows
-};
+interface IWorkflowRunnerProps {
+  workflows?: IWorkflow[];           // Pre-defined workflows
+  persistence?: {                    // Database configuration
+    connectionString: string;
+    options?: any;
+  };
+  components?: {                     // Component configurations
+    scheduler?: Partial<ISchedulerConfig>;
+    errorHandler?: Partial<IErrorHandlerConfig>;
+    lifecycle?: Partial<ILifecycleConfig>;
+    configuration?: Partial<IConfigurationManagerConfig>;
+    security?: Partial<ISecurityManagerConfig>;
+  };
+}
 ```
 
-## Testing
-
-### Running Tests
-
-```bash
-# Run all tests
-npm test
-
-# Run with coverage
-npm run test:coverage
-
-# Run specific test file
-npm test WorkflowRunner.test.ts
-```
-
-### Test Coverage
-
-The WorkflowRunner module includes comprehensive tests covering:
-
-- ✅ Constructor behavior
-- ✅ Initialization process
-- ✅ Workflow registration
-- ✅ Workflow execution
-- ✅ Error handling
-- ✅ State management
-- ✅ AMQ integration
-- ✅ Persistence layer
-
-## Error Handling Strategy
-
-### Graceful Degradation
-
-The WorkflowRunner implements a robust error handling strategy:
-
-1. **Service Stability**: Errors don't crash the service
-2. **Error Logging**: All errors are logged with context
-3. **Fallback Mechanisms**: Automatic fallbacks for failed components
-4. **Recovery**: Automatic recovery where possible
-
-### Error Types
-
-- **Initialization Errors**: Handled during startup
-- **Workflow Errors**: Isolated to individual workflows
-- **AMQ Errors**: Handled without affecting other workflows
-- **Persistence Errors**: Fallback to in-memory storage
-
-## Performance Considerations
-
-### Optimization Features
-
-- **Lazy Initialization**: Components initialized only when needed
-- **Connection Pooling**: Efficient database connection management
-- **Memory Management**: Proper cleanup of resources
-- **Async Operations**: Non-blocking async/await patterns
-
-### Monitoring
-
-- **Execution Metrics**: Track workflow performance
-- **Resource Usage**: Monitor memory and CPU usage
-- **Error Rates**: Track and alert on error patterns
-- **Response Times**: Monitor workflow execution times
-
-## Migration from Legacy
-
-### Breaking Changes
-
-1. **Async/Await**: All methods now use async/await
-2. **TypeScript**: Full TypeScript support with strict types
-3. **Error Handling**: Improved error handling strategy
-4. **State Management**: Immutable state management
-
-### Migration Guide
+### Environment Configuration
 
 ```typescript
-// Old way
-workflowRunner.start().then(({ host, autoStart }) => {
-  // handle result
+// Environment-based configuration
+const workflowRunner = new WorkflowRunner({
+  workflows: DefaultWorkflows,
+  persistence: {
+    connectionString: process.env.MONGODB_URI || 'mongodb://localhost:27017/workflows',
+    options: {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    }
+  },
+  components: {
+    scheduler: {
+      enabled: process.env.SCHEDULER_ENABLED === 'true',
+      configPath: process.env.SCHEDULER_CONFIG_PATH
+    },
+    errorHandler: {
+      maxRetries: parseInt(process.env.MAX_RETRIES || '3'),
+      circuitBreakerEnabled: process.env.CIRCUIT_BREAKER_ENABLED === 'true'
+    }
+  }
 });
-
-// New way
-const { host, autoStart } = await workflowRunner.initialize();
 ```
 
-## Contributing
+## Best Practices
 
-### Development Setup
+### 1. Singleton Pattern
+- Use the exported singleton instance: `workflowRunner`
+- Avoid creating multiple instances
+- Initialize once during application startup
 
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Run tests: `npm test`
-4. Make changes following TDD approach
-5. Submit pull request
+### 2. Error Handling
+- Always handle initialization errors
+- Implement graceful degradation for component failures
+- Use proper logging for debugging
 
-### Code Style
+### 3. Resource Management
+- Monitor memory usage for long-running workflows
+- Implement proper cleanup for completed workflows
+- Use connection pooling for database operations
 
-- Use TypeScript strict mode
-- Follow async/await patterns
-- Implement comprehensive error handling
-- Write tests for all new features
-- Update documentation for changes
+### 4. Performance Optimization
+- Register workflows during initialization, not runtime
+- Use batch operations for bulk workflow starts
+- Implement appropriate timeouts and limits
 
-## Roadmap
+## Troubleshooting
 
-### Phase 1: Core Stability ✅
-- [x] Basic workflow execution
-- [x] Error handling
-- [x] State management
-- [x] AMQ integration
+### Common Issues
 
-### Phase 2: Enhanced Features 🔄
-- [ ] Retry mechanism
-- [ ] Circuit breaker pattern
-- [ ] Performance monitoring
-- [ ] Configuration management
+1. **Initialization Failures**
+   ```typescript
+   // Check database connectivity
+   if (!workflowRunner.connection?.readyState === 1) {
+     logger.error('Database connection failed');
+   }
+   
+   // Verify workflow registration
+   const registeredWorkflows = workflowRunner.getRegisteredWorkflows();
+   logger.info('Registered workflows:', registeredWorkflows.map(w => w.name));
+   ```
 
-### Phase 3: Advanced Features 📋
-- [ ] Security enhancements
-- [ ] Scalability improvements
-- [ ] Advanced error recovery
-- [ ] Distributed execution
+2. **Memory Leaks**
+   ```typescript
+   // Monitor workflow instances
+   const activeInstances = await workflowRunner.getActiveInstances();
+   if (activeInstances.length > THRESHOLD) {
+     logger.warn('High number of active instances:', activeInstances.length);
+   }
+   ```
 
-## License
+3. **Performance Issues**
+   ```typescript
+   // Check component health
+   const stats = await workflowRunner.getStats();
+   logger.info('Performance stats:', {
+     averageExecutionTime: stats.averageExecutionTime,
+     errorRate: stats.errorRate,
+     activeInstances: stats.activeInstances
+   });
+   ```
 
-This module is part of the Reactory system and follows the same licensing terms. 
+### Debug Mode
+
+```typescript
+// Enable debug logging
+process.env.NODE_ENV = 'development';
+process.env.DEBUG = 'workflow:*';
+
+// Initialize with debug options
+const workflowRunner = new WorkflowRunner({
+  workflows: DefaultWorkflows,
+  debug: true,
+  verbose: true
+});
+```
+
+## Future Enhancements
+
+- **Workflow Designer Integration**: Visual workflow builder support
+- **Multi-tenant Support**: Isolated workflow execution per tenant
+- **Advanced Metrics**: Machine learning-based performance analytics
+- **Distributed Execution**: Multi-node workflow distribution
+- **Real-time Updates**: WebSocket-based status updates
+
+---
+
+The WorkflowRunner serves as the foundation for all workflow operations in the Reactory system. Its modular design and comprehensive feature set make it suitable for both simple automation tasks and complex enterprise workflows.

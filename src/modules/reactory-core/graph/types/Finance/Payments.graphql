@@ -35,6 +35,8 @@ type PaymentClient {
 
 type PaymentBankAccount {
   bankName: String
+  bankCode: String
+  swiftCode: String
   branchCode: String
   branchName: String
   accountNo: String

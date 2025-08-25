@@ -4,8 +4,8 @@ import yaml from 'js-yaml';
 import cron from 'node-cron';
 import moment from 'moment';
 import logger from '../../logging';
-import { WorkflowRunner } from './WorkflowRunner';
-import { IWorkflow } from './WorkflowRunner';
+import { WorkflowRunner } from '../WorkflowRunner/WorkflowRunner';
+import { IWorkflow } from '../WorkflowRunner/WorkflowRunner';
 
 export interface IScheduleConfig {
   id: string;

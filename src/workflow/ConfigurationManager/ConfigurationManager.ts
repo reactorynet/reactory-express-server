@@ -6,8 +6,9 @@ import logger from '../../logging';
 
 export interface IWorkflowConfig {
   id: string;
-  version: string;
   nameSpace?: string;
+  name: string;
+  version: string;
   enabled: boolean;
   maxRetries: number;
   timeout: number; // milliseconds

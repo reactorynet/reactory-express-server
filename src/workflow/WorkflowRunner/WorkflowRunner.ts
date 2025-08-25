@@ -9,12 +9,11 @@ import { MongoDBPersistence } from 'workflow-es-mongodb';
 import { isArray } from 'lodash';
 import moment from 'moment';
 import amq from '../../amq';
-import StartupWorkflow from '../core/StartupWorkflow';
 import reactoryModules from '../../modules';
 import logger from '../../logging';
 import mongoose from 'mongoose';
-import { WorkflowScheduler } from './Scheduler';
-import { ErrorHandler, IErrorContext, ErrorCategory, ErrorSeverity } from './ErrorHandler';
+import { WorkflowScheduler } from '../Scheduler/Scheduler';
+import { ErrorHandler, IErrorContext, ErrorCategory, ErrorSeverity } from '../ErrorHandler/ErrorHandler';
 import {
   WorkflowLifecycleManager,
   WorkflowStatus,
@@ -22,9 +21,9 @@ import {
   type IWorkflowInstance,
   type IWorkflowDependency,
   type IWorkflowLifecycleStats
-} from './LifecycleManager';
-import { ConfigurationManager, type IWorkflowConfig } from './ConfigurationManager';
-import { SecurityManager, type IInputValidationResult } from './SecurityManager';
+} from '../LifecycleManager/LifecycleManager';
+import { ConfigurationManager, type IWorkflowConfig } from '../ConfigurationManager/ConfigurationManager';
+import { SecurityManager, type IInputValidationResult } from '../SecurityManager/SecurityManager';
 
 const {
   MONGOOSE,
@@ -80,14 +79,7 @@ reactoryModules.enabled.forEach((reactoryModule) => {
   }
 });
 
-export const DefaultWorkflows: IWorkflow[] = [
-  {
-    nameSpace: 'reactory',
-    name: 'Startup',
-    version: '1.0.0',
-    component: StartupWorkflow,
-    category: 'workflow',
-  },
+export const DefaultWorkflows: IWorkflow[] = [  
   ...availableworkflows,
 ];
 
@@ -213,7 +205,7 @@ export class WorkflowRunner {
           logger.debug('Reactory workflow starting via amq', payload);
           const { id, version, data, src } = payload;
           const startResult = await this.startWorkflow(id, version, data);
-          logger.debug(`Workflow ${id}@${version} has been started`, startResult);
+          logger.debug(`Workflow ${id} has been started`, startResult);
           amq.raiseWorkFlowEvent(`reactory.workflow.started:${src}`, startResult);
         } catch (error) {
           logger.error('Failed to start workflow via AMQ', error);

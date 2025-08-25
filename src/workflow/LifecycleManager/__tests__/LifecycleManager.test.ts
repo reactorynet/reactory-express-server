@@ -6,7 +6,7 @@ import {
   type IWorkflowDependency,
   type IWorkflowLifecycleConfig,
   type IWorkflowLifecycleStats
-} from '../LifecycleManager';
+} from '../../LifecycleManager/LifecycleManager';
 
 // Mock dependencies
 jest.mock('../../../logging', () => ({

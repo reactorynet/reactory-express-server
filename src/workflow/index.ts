@@ -8,7 +8,7 @@ export {
   type IScheduleConfig,
   type IScheduledWorkflow,
   type ISchedulerStats
-} from './WorkflowRunner/Scheduler';
+} from './Scheduler/Scheduler';
 
 export {
   ErrorHandler,
@@ -19,7 +19,7 @@ export {
   type ITimeoutConfig,
   ErrorCategory,
   ErrorSeverity
-} from './WorkflowRunner/ErrorHandler';
+} from './ErrorHandler/ErrorHandler';
 
 export {
   WorkflowLifecycleManager,
@@ -29,7 +29,7 @@ export {
   type IWorkflowDependency,
   type IWorkflowLifecycleConfig,
   type IWorkflowLifecycleStats
-} from './WorkflowRunner/LifecycleManager';
+} from './LifecycleManager/LifecycleManager';
 
 export {
   ConfigurationManager,
@@ -37,7 +37,7 @@ export {
   type IConfigurationManagerConfig,
   type IConfigurationValidationResult,
   type IConfigurationChangeEvent
-} from './WorkflowRunner/ConfigurationManager';
+} from './ConfigurationManager/ConfigurationManager';
 
 export {
   SecurityManager,
@@ -48,7 +48,9 @@ export {
   type ISecurityManagerConfig,
   type IInputValidationResult,
   type IRateLimitInfo
-} from './WorkflowRunner/SecurityManager';
+} from './SecurityManager/SecurityManager';
+
+
 
 const router = express.Router();
 // Create a singleton instance of the WorkflowRunner

@@ -612,15 +612,7 @@ export class SecurityManager extends EventEmitter {
   private async loadWorkflowPermissions(): Promise<void> {
     // In a real implementation, this would load from a database
     // For now, we'll create some sample permissions
-    const samplePermissions: IWorkflowPermission[] = [
-      {
-        workflowId: 'reactory.StartupWorkflow',
-        version: '1.0.0',
-        permissions: ['workflow.execute'],
-        allowedUsers: ['admin'],
-        allowedRoles: ['admin'],
-        requireAuth: true
-      },
+    const samplePermissions: IWorkflowPermission[] = [     
       {
         workflowId: 'reactory.DataProcessingWorkflow',
         version: '1.0.0',

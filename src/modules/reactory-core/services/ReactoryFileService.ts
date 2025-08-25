@@ -137,7 +137,7 @@ export class ReactoryFileService
     let file = await ReactoryFileModel.findOne({
       path: filePath,
       owner: this.context.user._id,
-    });
+    }).exec();
     if (!file) {
       // check if the file exists in the root folder
       let resolvedPath = path.join(APP_DATA_ROOT, filePath);
@@ -397,7 +397,7 @@ export class ReactoryFileService
   async getFileModel(id: string): Promise<Reactory.Models.IReactoryFileModel> {
     return await ReactoryFileModel.findOne({
       id: ObjectId.createFromHexString(id),
-    });
+    }).exec();
   }
   sync(): Promise<Reactory.Models.IReactoryFileModel[]> {
     throw new Error("Method not implemented.");
@@ -589,9 +589,10 @@ export class ReactoryFileService
     mimetype: string,
     alias?: string,
     context?: string,
-    partner?: Reactory.IReactoryClientDocument,
-    owner?: Reactory.IUserDocument
-  ): Promise<Reactory.IReactoryFileModel> => {
+    partner?: Reactory.Models.IReactoryClient,
+    owner?: Reactory.Models.IUser,
+    id?: string
+  ): Promise<Reactory.Models.IReactoryFileModel> => {
     // Check if image is valid
 
     if (fs.existsSync(filename) === false) {
@@ -604,7 +605,7 @@ export class ReactoryFileService
     );
 
     const link = `${filename.replace(`${APP_DATA_ROOT}/`, CDN_ROOT)}`;
-    const _id: ObjectId = new ObjectId();
+    const _id: ObjectId = id ? ObjectId.createFromHexString(id) : new ObjectId();
     const $filename = path.basename(filename);
     const $path = filename
       .replace(APP_DATA_ROOT, "")
