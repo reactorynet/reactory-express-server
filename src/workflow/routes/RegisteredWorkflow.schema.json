@@ -1,0 +1,66 @@
+{
+  "type": "object",
+  "title": "RegisteredWorkflow",
+  "description": "Information about a registered workflow",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Workflow Name",
+      "description": "Unique name of the workflow"
+    },
+    "namespace": {
+      "type": "string",
+      "title": "Namespace",
+      "description": "Namespace the workflow belongs to"
+    },
+    "version": {
+      "type": "string",
+      "title": "Version",
+      "description": "Version of the workflow"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "Description of what the workflow does"
+    },
+    "tags": {
+      "type": "array",
+      "title": "Tags",
+      "description": "Tags associated with the workflow",
+      "items": {
+        "type": "string"
+      }
+    },
+    "author": {
+      "type": "string",
+      "title": "Author",
+      "description": "Author of the workflow"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At",
+      "description": "When the workflow was created"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Updated At",
+      "description": "When the workflow was last updated"
+    },
+    "isActive": {
+      "type": "boolean",
+      "title": "Is Active",
+      "description": "Whether the workflow is currently active"
+    },
+    "dependencies": {
+      "type": "array",
+      "title": "Dependencies",
+      "description": "Workflow dependencies",
+      "items": {
+        "$ref": "#components/schemas/WorkflowDependency"
+      }
+    }
+  },
+  "required": ["name", "namespace", "version"]
+}

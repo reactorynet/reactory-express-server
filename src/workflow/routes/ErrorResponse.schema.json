@@ -1,0 +1,35 @@
+{
+  "type": "object",
+  "title": "ErrorResponse",
+  "description": "Standard error response object",
+  "properties": {
+    "error": {
+      "type": "string",
+      "title": "Error Message",
+      "description": "Human readable error message"
+    },
+    "code": {
+      "type": "string",
+      "title": "Error Code",
+      "description": "Machine readable error code"
+    },
+    "details": {
+      "type": "object",
+      "title": "Error Details",
+      "description": "Additional error details",
+      "additionalProperties": true
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Timestamp",
+      "description": "When the error occurred"
+    },
+    "requestId": {
+      "type": "string",
+      "title": "Request ID",
+      "description": "Unique identifier for the request that caused this error"
+    }
+  },
+  "required": ["error", "code"]
+}

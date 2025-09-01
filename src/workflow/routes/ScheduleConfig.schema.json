@@ -1,0 +1,72 @@
+{
+  "type": "object",
+  "title": "ScheduleConfig",
+  "description": "Configuration for creating or updating a workflow schedule",
+  "properties": {
+    "workflowName": {
+      "type": "string",
+      "title": "Workflow Name",
+      "description": "Name of the workflow to schedule"
+    },
+    "namespace": {
+      "type": "string",
+      "title": "Namespace",
+      "description": "Namespace of the workflow"
+    },
+    "cronExpression": {
+      "type": "string",
+      "title": "Cron Expression",
+      "description": "Cron expression defining the schedule (e.g., '0 0 * * *' for daily at midnight)"
+    },
+    "timezone": {
+      "type": "string",
+      "title": "Timezone",
+      "description": "Timezone for the schedule (default: 'UTC')",
+      "default": "UTC"
+    },
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the schedule should be enabled",
+      "default": true
+    },
+    "startDate": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Start Date",
+      "description": "When the schedule should start (optional)"
+    },
+    "endDate": {
+      "type": "string",
+      "format": "date-time",
+      "title": "End Date",
+      "description": "When the schedule should end (optional)"
+    },
+    "maxExecutions": {
+      "type": "integer",
+      "title": "Max Executions",
+      "description": "Maximum number of executions (-1 for unlimited)",
+      "default": -1
+    },
+    "input": {
+      "type": "object",
+      "title": "Input Data",
+      "description": "Default input data for scheduled executions",
+      "additionalProperties": true
+    },
+    "tags": {
+      "type": "array",
+      "title": "Tags",
+      "description": "Tags to associate with the schedule",
+      "items": {
+        "type": "string"
+      }
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "Description of the schedule"
+    }
+  },
+  "required": ["workflowName", "namespace", "cronExpression"]
+}

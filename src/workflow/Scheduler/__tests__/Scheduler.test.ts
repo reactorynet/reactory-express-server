@@ -1,5 +1,5 @@
-import { WorkflowScheduler, IScheduleConfig } from '../../Scheduler/Scheduler';
-import { WorkflowRunner } from '../WorkflowRunner';
+import { WorkflowScheduler, IScheduleConfig } from '../Scheduler';
+import { WorkflowRunner } from '../../WorkflowRunner/WorkflowRunner';
 import fs from 'fs';
 import path from 'path';
 

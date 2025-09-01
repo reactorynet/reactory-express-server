@@ -1,0 +1,794 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Reactory YAML Workflow Definition",
+  "description": "Schema for defining declarative workflows in YAML format",
+  "type": "object",
+  "required": ["nameSpace", "name", "version", "steps"],
+  "properties": {
+    "nameSpace": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9]*$",
+      "description": "CamelCase namespace for the workflow (e.g., 'myCompany', 'projectName')"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+      "description": "Unique name for the workflow within the namespace"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (e.g., '1.0.0')"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the workflow"
+    },
+    "author": {
+      "type": "string",
+      "description": "Workflow author information"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for categorizing and searching workflows"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata for the workflow",
+      "properties": {
+        "timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Global workflow timeout in milliseconds"
+        },
+        "retryPolicy": {
+          "$ref": "#/definitions/RetryPolicy"
+        },
+        "security": {
+          "$ref": "#/definitions/SecuritySettings"
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Input parameter definitions",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9_]*$": {
+          "$ref": "#/definitions/InputParameter"
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "description": "Output parameter definitions",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9_]*$": {
+          "$ref": "#/definitions/OutputParameter"
+        }
+      }
+    },
+    "variables": {
+      "type": "object",
+      "description": "Workflow-scoped variables",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9_]*$": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "null" },
+            { "type": "object" },
+            { "type": "array" }
+          ]
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Array of workflow steps",
+      "items": {
+        "$ref": "#/definitions/WorkflowStep"
+      }
+    }
+  },
+  "definitions": {
+    "WorkflowStep": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+          "description": "Unique identifier for the step"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name for the step"
+        },
+        "description": {
+          "type": "string",
+          "description": "Step description"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "log",
+            "delay",
+            "validation",
+            "dataTransformation",
+            "apiCall",
+            "cliCommand",
+            "fileOperation",
+            "conditional",
+            "parallel",
+            "forEach",
+            "while",
+            "custom"
+          ],
+          "description": "Type of step to execute"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether this step is enabled"
+        },
+        "continueOnError": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to continue workflow execution if this step fails"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Step timeout in milliseconds"
+        },
+        "retryPolicy": {
+          "$ref": "#/definitions/RetryPolicy"
+        },
+        "inputs": {
+          "type": "object",
+          "description": "Step input parameters",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_]*$": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" },
+                { "type": "null" },
+                { "type": "object" },
+                { "type": "array" }
+              ]
+            }
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "description": "Step output mapping",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_]*$": {
+              "type": "string",
+              "description": "Output variable assignment"
+            }
+          }
+        },
+        "condition": {
+          "type": "string",
+          "description": "Conditional expression for step execution"
+        },
+        "dependsOn": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          ],
+          "description": "Step dependencies"
+        },
+        "config": {
+          "$ref": "#/definitions/StepConfig"
+        },
+        "steps": {
+          "type": "array",
+          "description": "Nested steps for control flow types",
+          "items": {
+            "$ref": "#/definitions/WorkflowStep"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "log" } } },
+          "then": { "$ref": "#/definitions/LogStepConfig" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "delay" } } },
+          "then": { "$ref": "#/definitions/DelayStepConfig" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "validation" } } },
+          "then": { "$ref": "#/definitions/ValidationStepConfig" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "dataTransformation" } } },
+          "then": { "$ref": "#/definitions/DataTransformationStepConfig" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "apiCall" } } },
+          "then": { "$ref": "#/definitions/ApiCallStepConfig" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "cliCommand" } } },
+          "then": { "$ref": "#/definitions/CliCommandStepConfig" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "fileOperation" } } },
+          "then": { "$ref": "#/definitions/FileOperationStepConfig" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "conditional" } } },
+          "then": { "$ref": "#/definitions/ConditionalStepConfig" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "parallel" } } },
+          "then": { "$ref": "#/definitions/ParallelStepConfig" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "forEach" } } },
+          "then": { "$ref": "#/definitions/ForEachStepConfig" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "while" } } },
+          "then": { "$ref": "#/definitions/WhileStepConfig" }
+        }
+      ]
+    },
+    "StepConfig": {
+      "type": "object",
+      "description": "Base configuration for all step types"
+    },
+    "LogStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": ["message"],
+          "properties": {
+            "message": {
+              "type": "string",
+              "description": "Message to log (supports parameter substitution)"
+            },
+            "level": {
+              "type": "string",
+              "enum": ["debug", "info", "warn", "error"],
+              "default": "info",
+              "description": "Log level"
+            },
+            "data": {
+              "type": "object",
+              "description": "Additional data to include in log"
+            }
+          }
+        }
+      }
+    },
+    "DelayStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": ["duration"],
+          "properties": {
+            "duration": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Delay duration in milliseconds"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Reason for the delay"
+            }
+          }
+        }
+      }
+    },
+    "ValidationStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": ["rules"],
+          "properties": {
+            "rules": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ValidationRule"
+              },
+              "description": "Validation rules to apply"
+            },
+            "stopOnFirstError": {
+              "type": "boolean",
+              "default": false,
+              "description": "Stop validation on first error"
+            }
+          }
+        }
+      }
+    },
+    "DataTransformationStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": ["transformations"],
+          "properties": {
+            "transformations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DataTransformation"
+              },
+              "description": "Data transformation operations"
+            }
+          }
+        }
+      }
+    },
+    "ApiCallStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": ["url", "method"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "API endpoint URL"
+            },
+            "method": {
+              "type": "string",
+              "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+              "description": "HTTP method"
+            },
+            "headers": {
+              "type": "object",
+              "patternProperties": {
+                "^.+$": { "type": "string" }
+              },
+              "description": "HTTP headers"
+            },
+            "body": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "object" }
+              ],
+              "description": "Request body"
+            },
+            "authentication": {
+              "$ref": "#/definitions/Authentication"
+            },
+            "expectedStatusCodes": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 599
+              },
+              "default": [200],
+              "description": "Expected successful HTTP status codes"
+            }
+          }
+        }
+      }
+    },
+    "CliCommandStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": ["command"],
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Command to execute"
+            },
+            "arguments": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Command arguments"
+            },
+            "workingDirectory": {
+              "type": "string",
+              "description": "Working directory for command execution"
+            },
+            "environment": {
+              "type": "object",
+              "patternProperties": {
+                "^.+$": { "type": "string" }
+              },
+              "description": "Environment variables"
+            },
+            "expectedExitCodes": {
+              "type": "array",
+              "items": { "type": "integer" },
+              "default": [0],
+              "description": "Expected successful exit codes"
+            }
+          }
+        }
+      }
+    },
+    "FileOperationStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": ["operation"],
+          "properties": {
+            "operation": {
+              "type": "string",
+              "enum": ["read", "write", "copy", "move", "delete", "exists", "mkdir"],
+              "description": "File operation type"
+            },
+            "source": {
+              "type": "string",
+              "description": "Source file/directory path"
+            },
+            "destination": {
+              "type": "string",
+              "description": "Destination file/directory path"
+            },
+            "content": {
+              "type": "string",
+              "description": "Content for write operations"
+            },
+            "encoding": {
+              "type": "string",
+              "default": "utf8",
+              "description": "File encoding"
+            },
+            "overwrite": {
+              "type": "boolean",
+              "default": false,
+              "description": "Whether to overwrite existing files"
+            }
+          }
+        }
+      }
+    },
+    "ConditionalStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": ["condition"],
+          "properties": {
+            "condition": {
+              "type": "string",
+              "description": "Conditional expression to evaluate"
+            },
+            "thenSteps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/WorkflowStep"
+              },
+              "description": "Steps to execute if condition is true"
+            },
+            "elseSteps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/WorkflowStep"
+              },
+              "description": "Steps to execute if condition is false"
+            }
+          }
+        }
+      }
+    },
+    "ParallelStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "properties": {
+            "maxConcurrency": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Maximum number of concurrent executions"
+            },
+            "failFast": {
+              "type": "boolean",
+              "default": false,
+              "description": "Stop all parallel executions on first failure"
+            },
+            "branches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "steps"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Branch name"
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/WorkflowStep"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ForEachStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": ["items", "steps"],
+          "properties": {
+            "items": {
+              "type": "string",
+              "description": "Expression that resolves to an array"
+            },
+            "itemVariable": {
+              "type": "string",
+              "default": "item",
+              "description": "Variable name for current item"
+            },
+            "indexVariable": {
+              "type": "string",
+              "default": "index",
+              "description": "Variable name for current index"
+            },
+            "maxConcurrency": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Maximum concurrent iterations"
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/WorkflowStep"
+              }
+            }
+          }
+        }
+      }
+    },
+    "WhileStepConfig": {
+      "properties": {
+        "config": {
+          "type": "object",
+          "required": ["condition", "steps"],
+          "properties": {
+            "condition": {
+              "type": "string",
+              "description": "Loop condition expression"
+            },
+            "maxIterations": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Maximum number of iterations"
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/WorkflowStep"
+              }
+            }
+          }
+        }
+      }
+    },
+    "InputParameter": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "object", "array"],
+          "description": "Parameter type"
+        },
+        "description": {
+          "type": "string",
+          "description": "Parameter description"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether parameter is required"
+        },
+        "default": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "null" },
+            { "type": "object" },
+            { "type": "array" }
+          ],
+          "description": "Default value"
+        },
+        "validation": {
+          "$ref": "#/definitions/ParameterValidation"
+        }
+      }
+    },
+    "OutputParameter": {
+      "type": "object",
+      "required": ["type", "source"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "object", "array"],
+          "description": "Output type"
+        },
+        "description": {
+          "type": "string",
+          "description": "Output description"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source expression for output value"
+        }
+      }
+    },
+    "ParameterValidation": {
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Regular expression pattern"
+        },
+        "minLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "enum": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "number" }
+            ]
+          }
+        }
+      }
+    },
+    "ValidationRule": {
+      "type": "object",
+      "required": ["field", "type"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "Field to validate"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["required", "type", "pattern", "range", "custom"],
+          "description": "Validation type"
+        },
+        "value": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "object" }
+          ],
+          "description": "Validation value/configuration"
+        },
+        "message": {
+          "type": "string",
+          "description": "Custom error message"
+        }
+      }
+    },
+    "DataTransformation": {
+      "type": "object",
+      "required": ["operation"],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": ["map", "filter", "reduce", "sort", "group", "merge", "extract", "custom"],
+          "description": "Transformation operation"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source data expression"
+        },
+        "target": {
+          "type": "string",
+          "description": "Target variable name"
+        },
+        "config": {
+          "type": "object",
+          "description": "Operation-specific configuration"
+        }
+      }
+    },
+    "Authentication": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["none", "basic", "bearer", "apiKey", "oauth2"],
+          "description": "Authentication type"
+        },
+        "config": {
+          "type": "object",
+          "description": "Authentication configuration"
+        }
+      }
+    },
+    "RetryPolicy": {
+      "type": "object",
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 3,
+          "description": "Maximum retry attempts"
+        },
+        "backoffStrategy": {
+          "type": "string",
+          "enum": ["fixed", "exponential", "linear"],
+          "default": "exponential",
+          "description": "Backoff strategy"
+        },
+        "initialDelay": {
+          "type": "integer",
+          "minimum": 100,
+          "default": 1000,
+          "description": "Initial delay in milliseconds"
+        },
+        "maxDelay": {
+          "type": "integer",
+          "minimum": 1000,
+          "default": 30000,
+          "description": "Maximum delay in milliseconds"
+        },
+        "retryOnErrors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Error types to retry on"
+        }
+      }
+    },
+    "SecuritySettings": {
+      "type": "object",
+      "properties": {
+        "requiresAuthentication": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether workflow requires authentication"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Required permissions"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Required roles"
+        }
+      }
+    }
+  }
+}

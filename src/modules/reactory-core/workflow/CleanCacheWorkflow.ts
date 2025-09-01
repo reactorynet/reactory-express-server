@@ -25,18 +25,9 @@ class AfterCacheClean extends StepBody {
   }
 }
 
-class CleanCacheWorkflow implements Reactory.Workflow.IWorkflow {
-  id: string = "core.CleanCacheWorkflow@1.0.0";
-  nameSpace: string = "core";
-  name: string = "CleanCacheWorkflow";
-  component: CleanCacheWorkflow = this;
-  category: string = "cache";
-  autoStart?: boolean = true;
-  props?: unknown = {
-    interval: 1000 * 30,
-    enabled: true,
-  };
-  version: string = "1.0.0";
+class CleanCacheWorkflow implements WorkflowBase<{interval: number, enabled: boolean}> {
+  id: string = "core.CleanCacheWorkflow@1.0.0"
+  version: number = 1;
 
   build(builder: any) {
     builder

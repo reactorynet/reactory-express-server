@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "title": "WorkflowLifecycleStats",
+  "description": "Statistics about workflow lifecycle management",
+  "properties": {
+    "activeInstances": {
+      "type": "integer",
+      "title": "Active Instances",
+      "description": "Number of currently active workflow instances"
+    },
+    "completedInstances": {
+      "type": "integer",
+      "title": "Completed Instances",
+      "description": "Number of completed workflow instances"
+    },
+    "failedInstances": {
+      "type": "integer",
+      "title": "Failed Instances",
+      "description": "Number of failed workflow instances"
+    },
+    "pausedInstances": {
+      "type": "integer",
+      "title": "Paused Instances",
+      "description": "Number of paused workflow instances"
+    },
+    "totalInstances": {
+      "type": "integer",
+      "title": "Total Instances",
+      "description": "Total number of workflow instances ever created"
+    },
+    "averageExecutionTime": {
+      "type": "number",
+      "title": "Average Execution Time",
+      "description": "Average execution time in milliseconds"
+    },
+    "lastCleanupTime": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Cleanup Time",
+      "description": "When the last cleanup operation was performed"
+    }
+  }
+}

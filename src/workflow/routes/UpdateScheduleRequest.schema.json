@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "title": "UpdateScheduleRequest",
+  "description": "Request body for updating an existing workflow schedule",
+  "properties": {
+    "cronExpression": {
+      "type": "string",
+      "title": "Cron Expression",
+      "description": "New cron expression (optional)"
+    },
+    "timezone": {
+      "type": "string",
+      "title": "Timezone",
+      "description": "New timezone (optional)"
+    },
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the schedule should be enabled (optional)"
+    },
+    "startDate": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Start Date",
+      "description": "New start date (optional)"
+    },
+    "endDate": {
+      "type": "string",
+      "format": "date-time",
+      "title": "End Date",
+      "description": "New end date (optional)"
+    },
+    "maxExecutions": {
+      "type": "integer",
+      "title": "Max Executions",
+      "description": "New maximum number of executions (optional)"
+    },
+    "input": {
+      "type": "object",
+      "title": "Input Data",
+      "description": "New default input data (optional)",
+      "additionalProperties": true
+    },
+    "tags": {
+      "type": "array",
+      "title": "Tags",
+      "description": "New tags (optional)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "New description (optional)"
+    }
+  }
+}

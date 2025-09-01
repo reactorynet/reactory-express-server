@@ -1,0 +1,135 @@
+{
+  "type": "object",
+  "title": "WorkflowInstance",
+  "description": "Information about a workflow instance",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "Instance ID",
+      "description": "Unique identifier for the workflow instance"
+    },
+    "workflowName": {
+      "type": "string",
+      "title": "Workflow Name",
+      "description": "Name of the workflow this instance belongs to"
+    },
+    "namespace": {
+      "type": "string",
+      "title": "Namespace",
+      "description": "Namespace of the workflow"
+    },
+    "version": {
+      "type": "string",
+      "title": "Version",
+      "description": "Version of the workflow"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "completed", "failed", "paused", "cancelled"],
+      "title": "Status",
+      "description": "Current status of the workflow instance"
+    },
+    "progress": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "title": "Progress",
+      "description": "Completion progress as percentage"
+    },
+    "startTime": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Start Time",
+      "description": "When the instance started execution"
+    },
+    "endTime": {
+      "type": "string",
+      "format": "date-time",
+      "title": "End Time",
+      "description": "When the instance finished execution"
+    },
+    "duration": {
+      "type": "integer",
+      "title": "Duration",
+      "description": "Execution duration in milliseconds"
+    },
+    "input": {
+      "type": "object",
+      "title": "Input Data",
+      "description": "Input data provided to the workflow",
+      "additionalProperties": true
+    },
+    "output": {
+      "type": "object",
+      "title": "Output Data",
+      "description": "Output data produced by the workflow",
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "object",
+      "title": "Error Information",
+      "description": "Error information if the instance failed",
+      "properties": {
+        "message": {
+          "type": "string",
+          "title": "Error Message"
+        },
+        "code": {
+          "type": "string",
+          "title": "Error Code"
+        },
+        "stack": {
+          "type": "string",
+          "title": "Stack Trace"
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "title": "Execution Steps",
+      "description": "Individual steps in the workflow execution",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stepId": {
+            "type": "string",
+            "title": "Step ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Step Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "running", "completed", "failed", "skipped"]
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "duration": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "createdBy": {
+      "type": "string",
+      "title": "Created By",
+      "description": "User who created this instance"
+    },
+    "tags": {
+      "type": "array",
+      "title": "Tags",
+      "description": "Tags associated with this instance",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["id", "workflowName", "namespace", "version", "status"]
+}

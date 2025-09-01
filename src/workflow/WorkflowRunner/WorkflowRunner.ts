@@ -114,8 +114,18 @@ export class WorkflowRunner {
   private lifecycleManager: WorkflowLifecycleManager;
   private configurationManager: ConfigurationManager;
   private securityManager: SecurityManager;
+  private instance: WorkflowRunner | null = null;
 
   constructor(props: IWorkflowRunnerProps) {
+
+    // ensure singleton pattern
+    if (!this.instance) {
+      this.instance = this;
+    } else {
+      // return the instance
+      return this.instance;
+    }
+
     this.props = props;
     this.state = {
       workflows: props.workflows || DefaultWorkflows,
@@ -150,6 +160,7 @@ export class WorkflowRunner {
     this.onStateChanged = this.onStateChanged.bind(this);
     this.setState = this.setState.bind(this);
     this.stop = this.stop.bind(this);
+
   }
 
   /**
@@ -177,6 +188,7 @@ export class WorkflowRunner {
       // Initialize scheduler
       this.scheduler = new WorkflowScheduler(this);
       await this.scheduler.initialize();
+      
 
       // Initialize lifecycle manager
       await this.lifecycleManager.initialize();
@@ -431,6 +443,19 @@ export class WorkflowRunner {
       metadata: { data },
     };
 
+    let versionNumber = 1;
+    if (version && typeof version === 'string') {
+      try {
+        if (version.includes('.')) {
+          versionNumber = parseInt(version.split('.')[0]);
+        } else {
+          versionNumber = parseInt(version);
+        }
+      } catch (error) {
+        logger.warn(`Invalid version number ${version}, using default 1`, error);
+      }
+    }
+
     try {
       if (!this.state.host) {
         throw new Error('Workflow host not initialized');
@@ -438,8 +463,8 @@ export class WorkflowRunner {
 
       return await this.errorHandler.executeWithRetry(
         async () => {
-          const startResult = await this.state.host!.startWorkflow(id, version, data);
-          logger.debug(`Workflow ${id}@${version} started successfully`, startResult);
+          const startResult = await this.state.host!.startWorkflow(id, versionNumber, data);
+          logger.debug(`Workflow ${id}@${versionNumber} started successfully`, startResult);
           return startResult;
         },
         context
@@ -478,6 +503,66 @@ export class WorkflowRunner {
     if (this.scheduler) {
       await this.scheduler.reloadSchedules();
     }
+  }
+
+  /**
+   * Get all registered workflows
+   */
+  public getRegisteredWorkflows(): IWorkflow[] {
+    return [...this.state.workflows];
+  }
+
+  /**
+   * Get registered workflow by namespace and name
+   */
+  public getWorkflowByName(nameSpace: string, name: string, version?: string): IWorkflow | undefined {
+    return this.state.workflows.find(workflow => 
+      workflow.nameSpace === nameSpace && 
+      workflow.name === name && 
+      (version ? workflow.version === version : true)
+    );
+  }
+
+  /**
+   * Get workflows by namespace
+   */
+  public getWorkflowsByNamespace(nameSpace: string): IWorkflow[] {
+    return this.state.workflows.filter(workflow => workflow.nameSpace === nameSpace);
+  }
+
+  /**
+   * Get workflow statistics
+   */
+  public getWorkflowStats(): {
+    totalWorkflows: number;
+    workflowsByNamespace: Record<string, number>;
+    workflowsByCategory: Record<string, number>;
+    autoStartWorkflows: number;
+  } {
+    const workflows = this.state.workflows;
+    const workflowsByNamespace: Record<string, number> = {};
+    const workflowsByCategory: Record<string, number> = {};
+    let autoStartWorkflows = 0;
+
+    workflows.forEach(workflow => {
+      // Count by namespace
+      workflowsByNamespace[workflow.nameSpace] = (workflowsByNamespace[workflow.nameSpace] || 0) + 1;
+      
+      // Count by category
+      workflowsByCategory[workflow.category] = (workflowsByCategory[workflow.category] || 0) + 1;
+      
+      // Count auto-start workflows
+      if (workflow.autoStart) {
+        autoStartWorkflows++;
+      }
+    });
+
+    return {
+      totalWorkflows: workflows.length,
+      workflowsByNamespace,
+      workflowsByCategory,
+      autoStartWorkflows
+    };
   }
 
   /**

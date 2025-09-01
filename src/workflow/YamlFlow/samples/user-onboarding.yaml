@@ -1,0 +1,287 @@
+# Sample YAML Workflow Definition
+# This demonstrates the declarative workflow format for Reactory
+
+nameSpace: sampleWorkflows
+name: userOnboardingWorkflow
+version: 1.0.0
+description: Complete user onboarding process with validation and notifications
+author: Reactory Development Team
+tags:
+  - onboarding
+  - user-management
+  - validation
+
+# Global workflow metadata
+metadata:
+  timeout: 300000  # 5 minutes
+  retryPolicy:
+    maxAttempts: 3
+    backoffStrategy: exponential
+    initialDelay: 1000
+    maxDelay: 10000
+  security:
+    requiresAuthentication: true
+    permissions:
+      - user.create
+      - notification.send
+
+# Input parameters
+inputs:
+  userData:
+    type: object
+    required: true
+    description: User data for onboarding
+    validation:
+      pattern: ".*"
+  notificationPreferences:
+    type: object
+    required: false
+    default:
+      email: true
+      sms: false
+
+# Output parameters
+outputs:
+  userId:
+    type: string
+    source: step.createUser.userId
+    description: Created user ID
+  onboardingStatus:
+    type: string
+    source: step.finalStatus.status
+    description: Final onboarding status
+
+# Workflow variables
+variables:
+  currentTimestamp: "${workflow.startTime}"
+  processingStage: "initialization"
+  onboardingTasks:
+    - title: "Complete Profile"
+      description: "Fill out your complete user profile"
+      priority: "high"
+      dueDate: "2025-09-07"
+    - title: "Setup Preferences"
+      description: "Configure your notification and privacy preferences"
+      priority: "medium"
+      dueDate: "2025-09-14"
+    - title: "First Project"
+      description: "Create your first project or join an existing one"
+      priority: "medium"
+      dueDate: "2025-09-21"
+
+# Workflow steps
+steps:
+  # Step 1: Log workflow start
+  - id: logStart
+    name: Log Workflow Start
+    type: log
+    config:
+      message: "Starting onboarding for user: ${input.userData.email}"
+      level: info
+      data:
+        workflowId: "${workflow.id}"
+        instanceId: "${workflow.instanceId}"
+        timestamp: "${variables.currentTimestamp}"
+
+  # Step 2: Validate user data
+  - id: validateUserData
+    name: Validate User Input
+    type: validation
+    dependsOn: logStart
+    config:
+      rules:
+        - field: "${input.userData.email}"
+          type: pattern
+          value: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$"
+          message: "Invalid email format"
+        - field: "${input.userData.firstName}"
+          type: required
+          message: "First name is required"
+        - field: "${input.userData.lastName}"
+          type: required
+          message: "Last name is required"
+      stopOnFirstError: false
+    outputs:
+      validationResult: "validationPassed"
+
+  # Step 3: Check for existing user
+  - id: checkExistingUser
+    name: Check Existing User
+    type: apiCall
+    dependsOn: validateUserData
+    condition: "${step.validateUserData.validationResult} === 'validationPassed'"
+    config:
+      url: "${env.API_BASE_URL}/users/check-exists"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+        Authorization: "Bearer ${env.API_TOKEN}"
+      body:
+        email: "${input.userData.email}"
+      expectedStatusCodes: [200, 404]
+    outputs:
+      userExists: "response.exists"
+
+  # Step 4: Conditional user creation
+  - id: conditionalUserCreation
+    name: Create User If Not Exists
+    type: conditional
+    dependsOn: checkExistingUser
+    config:
+      condition: "${step.checkExistingUser.userExists} !== true"
+      thenSteps:
+        # Create new user
+        - id: createUser
+          name: Create New User
+          type: apiCall
+          config:
+            url: "${env.API_BASE_URL}/users"
+            method: POST
+            headers:
+              Content-Type: "application/json"
+              Authorization: "Bearer ${env.API_TOKEN}"
+            body:
+              firstName: "${input.userData.firstName}"
+              lastName: "${input.userData.lastName}"
+              email: "${input.userData.email}"
+              onboardingDate: "${variables.currentTimestamp}"
+            expectedStatusCodes: [201]
+          outputs:
+            userId: "response.id"
+            userStatus: "created"
+            
+        # Set up user permissions
+        - id: setupPermissions
+          name: Setup User Permissions
+          type: apiCall
+          dependsOn: createUser
+          config:
+            url: "${env.API_BASE_URL}/users/${step.createUser.userId}/permissions"
+            method: POST
+            headers:
+              Content-Type: "application/json"
+              Authorization: "Bearer ${env.API_TOKEN}"
+            body:
+              permissions:
+                - user.read
+                - user.update
+            expectedStatusCodes: [200]
+          outputs:
+            permissionsSet: "true"
+            
+      elseSteps:
+        # User already exists
+        - id: logExistingUser
+          name: Log Existing User
+          type: log
+          config:
+            message: "User already exists: ${input.userData.email}"
+            level: warn
+          outputs:
+            userStatus: "exists"
+
+  # Step 5: Send welcome notifications in parallel
+  - id: sendNotifications
+    name: Send Welcome Notifications
+    type: parallel
+    dependsOn: conditionalUserCreation
+    config:
+      maxConcurrency: 2
+      failFast: false
+      branches:
+        - name: emailNotification
+          steps:
+            - id: sendWelcomeEmail
+              name: Send Welcome Email
+              type: apiCall
+              condition: "${input.notificationPreferences.email} === true"
+              config:
+                url: "${env.NOTIFICATION_API_URL}/email/send"
+                method: POST
+                headers:
+                  Content-Type: "application/json"
+                  Authorization: "Bearer ${env.NOTIFICATION_TOKEN}"
+                body:
+                  to: "${input.userData.email}"
+                  template: "welcome"
+                  variables:
+                    firstName: "${input.userData.firstName}"
+                    userId: "${step.createUser.userId}"
+                expectedStatusCodes: [200, 202]
+              outputs:
+                emailSent: "true"
+                
+        - name: smsNotification
+          steps:
+            - id: sendWelcomeSMS
+              name: Send Welcome SMS
+              type: apiCall
+              condition: "${input.notificationPreferences.sms} === true && ${input.userData.phone} !== ''"
+              config:
+                url: "${env.NOTIFICATION_API_URL}/sms/send"
+                method: POST
+                headers:
+                  Content-Type: "application/json"
+                  Authorization: "Bearer ${env.NOTIFICATION_TOKEN}"
+                body:
+                  to: "${input.userData.phone}"
+                  message: "Welcome ${input.userData.firstName}! Your account has been created."
+                expectedStatusCodes: [200, 202]
+              outputs:
+                smsSent: "true"
+
+  # Step 6: Create onboarding tasks
+  - id: createOnboardingTasks
+    name: Create Onboarding Tasks
+    type: forEach
+    dependsOn: sendNotifications
+    config:
+      items: "${variables.onboardingTasks}"
+      itemVariable: "task"
+      indexVariable: "taskIndex"
+      maxConcurrency: 3
+      steps:
+        - id: createTask
+          name: Create Individual Task
+          type: apiCall
+          config:
+            url: "${env.API_BASE_URL}/tasks"
+            method: POST
+            headers:
+              Content-Type: "application/json"
+              Authorization: "Bearer ${env.API_TOKEN}"
+            body:
+              userId: "${step.createUser.userId}"
+              title: "${task.title}"
+              description: "${task.description}"
+              priority: "${task.priority}"
+              dueDate: "${task.dueDate}"
+            expectedStatusCodes: [201]
+          outputs:
+            taskId: "response.id"
+
+  # Step 7: Wait for initial setup completion
+  - id: waitForSetup
+    name: Wait for Setup Completion
+    type: delay
+    dependsOn: createOnboardingTasks
+    config:
+      duration: 5000
+      reason: "Allow time for background processes to complete"
+
+  # Step 8: Final status check and logging
+  - id: finalStatus
+    name: Final Status Check
+    type: log
+    dependsOn: waitForSetup
+    config:
+      message: "Onboarding completed for user ${input.userData.email}"
+      level: info
+      data:
+        userId: "${step.createUser.userId}"
+        userStatus: "${step.createUser.userStatus}"
+        emailSent: "${step.sendWelcomeEmail.emailSent}"
+        smsSent: "${step.sendWelcomeSMS.smsSent}"
+        completedAt: "${variables.currentTimestamp}"
+    outputs:
+      status: "completed"

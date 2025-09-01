@@ -7,6 +7,9 @@ import logger from '../../logging';
 import { WorkflowRunner } from '../WorkflowRunner/WorkflowRunner';
 import { IWorkflow } from '../WorkflowRunner/WorkflowRunner';
 
+// Import cron-parser using require to avoid TypeScript import issues
+const CronParser = require('cron-parser');
+
 export interface IScheduleConfig {
   id: string;
   name: string;
@@ -62,7 +65,7 @@ export class WorkflowScheduler {
 
   constructor(workflowRunner: WorkflowRunner) {
     this.workflowRunner = workflowRunner;
-    this.scheduleDirectory = path.join(process.env.APP_DATA_ROOT || './data', 'workflows');
+    this.scheduleDirectory = path.join(process.env.APP_DATA_ROOT || './data', 'workflows', 'schedules');
   }
 
   /**
@@ -384,14 +387,26 @@ export class WorkflowScheduler {
    */
   private getNextRun(cronExpression: string, timezone?: string): Date {
     try {
-      // For now, return current time + 1 hour as a fallback
-      // In a real implementation, you'd use a proper cron parser
-      const nextRun = new Date();
-      nextRun.setHours(nextRun.getHours() + 1);
+      // Parse the cron expression
+      const interval = CronParser.default.parse(cronExpression, {
+        tz: timezone || 'UTC'
+      });
+      
+      // Get the next run time
+      const nextRun = interval.next().toDate();
+      
+      logger.debug(`Calculated next run for cron '${cronExpression}' (${timezone || 'UTC'}): ${nextRun.toISOString()}`);
+      
       return nextRun;
     } catch (error) {
       logger.error(`Failed to calculate next run time for cron: ${cronExpression}`, error);
-      return new Date();
+      
+      // Fallback: return current time + 1 hour as a safe default
+      const fallbackTime = new Date();
+      fallbackTime.setHours(fallbackTime.getHours() + 1);
+      
+      logger.warn(`Using fallback time for cron '${cronExpression}': ${fallbackTime.toISOString()}`);
+      return fallbackTime;
     }
   }
 

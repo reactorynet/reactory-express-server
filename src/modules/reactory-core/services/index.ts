@@ -8,7 +8,7 @@ import GoogleMapsService from "./location/GoogleMapsService";
 import Processors from './ETL/Processors';
 import ReactoryPackageManager from './ETL/ReactoryPackageManager';
 import UserService from './UserService';
-import WorkflowService from './ReactoryWorkflowService';
+import WorkflowService from './Workflow/ReactoryWorkflowService';
 import FetchService from './FetchService';
 import PdfService from './PdfService';
 import ReactorySupportService from "./SupportService";
@@ -23,6 +23,7 @@ import ReactorySearchService from "./ReactorySearchService";
 import { RedisService } from "./RedisService";
 //custom services to be expressed here
 import GeneratorServices from './generators';
+
 
 const services = [
   GoogleMapsService,

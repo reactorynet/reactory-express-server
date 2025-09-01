@@ -40,7 +40,7 @@ graph TB
     subgraph "Integration Layer"
         MODULES[Reactory Modules<br/>Workflow Definitions]
         EXTERNAL[External Services<br/>APIs & Databases]
-        PLUGINS[Plugin System<br/>Extensions)]
+        PLUGINS[Plugin System<br/>Extensions]
     end
     
     API --> WR

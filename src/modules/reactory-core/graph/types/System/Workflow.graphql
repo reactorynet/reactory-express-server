@@ -1,17 +1,512 @@
+# Core workflow types
+type WorkflowLifecycleStats {
+  activeInstances: Int
+  completedInstances: Int
+  failedInstances: Int
+  pausedInstances: Int
+  totalInstances: Int
+  averageExecutionTime: Float
+  lastCleanupTime: DateTime
+}
+
+type WorkflowErrorStats {
+  errorType: String!
+  count: Int!
+  lastOccurrence: DateTime!
+  workflowName: String
+  message: String
+  stack: String
+}
+
+type ConfigurationStats {
+  totalConfigurations: Int
+  activeConfigurations: Int
+  validationErrors: Int
+  lastValidated: DateTime
+  defaultSettings: JSON
+  customSettings: JSON
+}
+
+type SecurityStats {
+  authenticatedRequests: Int
+  unauthorizedAttempts: Int
+  permissionDenials: Int
+  activePermissions: [String!]
+  securityEvents: [SecurityEvent!]
+}
+
+type SecurityEvent {
+  event: String!
+  timestamp: DateTime!
+  userId: String
+  severity: SecuritySeverity!
+}
+
+enum SecuritySeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+type SystemStatus {
+  system: SystemInfo!
+  lifecycle: WorkflowLifecycleStats
+  errors: [WorkflowErrorStats!]
+  configuration: ConfigurationStats
+  security: SecurityStats
+}
+
+type SystemInfo {
+  initialized: Boolean!
+  status: SystemStatusType!
+  timestamp: DateTime!
+}
+
+enum SystemStatusType {
+  HEALTHY
+  INITIALIZING
+  ERROR
+}
+
+# Workflow Registry Types
+type WorkflowDependency {
+  name: String!
+  type: DependencyType!
+  version: String
+  optional: Boolean
+  description: String
+}
+
+enum DependencyType {
+  WORKFLOW
+  SERVICE
+  DATA
+  EXTERNAL
+}
+
+type RegisteredWorkflow {
+  name: String!
+  namespace: String!
+  version: String!
+  description: String
+  tags: [String!]
+  author: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  dependencies: [WorkflowDependency!]
+}
+
+type WorkflowRegistryStats {
+  totalWorkflows: Int
+  activeWorkflows: Int
+  inactiveWorkflows: Int
+  namespaces: [String!]
+  versions: JSON
+  lastRegistered: DateTime
+  registrationErrors: Int
+}
+
+type WorkflowRegistryResponse {
+  workflows: [RegisteredWorkflow!]!
+  stats: WorkflowRegistryStats
+}
+
+# Workflow Configuration Types
+type WorkflowConfig {
+  timeout: Int
+  maxRetries: Int
+  retryDelay: Int
+  priority: Int
+  parallelism: Int
+  environment: JSON
+  resources: ResourceRequirements
+  notifications: NotificationSettings
+}
+
+type ResourceRequirements {
+  cpu: String
+  memory: String
+  storage: String
+}
+
+type NotificationSettings {
+  onSuccess: Boolean
+  onFailure: Boolean
+  channels: [String!]
+}
+
+# Workflow Instance Types
+type WorkflowInstance {
+  id: String!
+  workflowName: String!
+  namespace: String!
+  version: String!
+  status: WorkflowInstanceStatus!
+  progress: Float
+  startTime: DateTime
+  endTime: DateTime
+  duration: Int
+  input: JSON
+  output: JSON
+  error: WorkflowError
+  steps: [WorkflowStep!]
+  createdBy: String
+  tags: [String!]
+}
+
+enum WorkflowInstanceStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  PAUSED
+  CANCELLED
+}
+
+type WorkflowError {
+  message: String
+  code: String
+  stack: String
+}
+
+type WorkflowStep {
+  stepId: String!
+  name: String!
+  status: WorkflowStepStatus!
+  startTime: DateTime
+  endTime: DateTime
+  duration: Int
+}
+
+enum WorkflowStepStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+type WorkflowDetails {
+  name: String!
+  namespace: String!
+  version: String!
+  description: String
+  configuration: WorkflowConfig
+  dependencies: [WorkflowDependency!]
+  schedule: WorkflowSchedule
+  instances: [WorkflowInstance!]
+  statistics: WorkflowStatistics
+  tags: [String!]
+  author: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type WorkflowStatistics {
+  totalExecutions: Int
+  successfulExecutions: Int
+  failedExecutions: Int
+  averageExecutionTime: Float
+}
+
+# Workflow Schedule Types
+type WorkflowSchedule {
+  id: String!
+  workflowName: String!
+  namespace: String!
+  cronExpression: String!
+  timezone: String
+  enabled: Boolean!
+  startDate: DateTime
+  endDate: DateTime
+  maxExecutions: Int
+  executionCount: Int
+  lastExecution: DateTime
+  nextExecution: DateTime
+  input: JSON
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdBy: String
+}
+
+type SchedulerStats {
+  activeSchedules: Int
+  inactiveSchedules: Int
+  totalSchedules: Int
+  scheduledExecutions: Int
+  executionsToday: Int
+  missedExecutions: Int
+  nextExecution: DateTime
+  lastExecution: DateTime
+  averageExecutionDelay: Float
+}
+
+# Audit Log Types
+type AuditLogEntry {
+  id: String!
+  timestamp: DateTime!
+  event: String!
+  workflowName: String
+  workflowNamespace: String
+  instanceId: String
+  userId: String
+  action: AuditAction!
+  resource: AuditResource!
+  details: JSON
+  success: Boolean!
+  error: WorkflowError
+  ipAddress: String
+  userAgent: String
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  EXECUTE
+  PAUSE
+  RESUME
+  CANCEL
+}
+
+enum AuditResource {
+  WORKFLOW
+  INSTANCE
+  SCHEDULE
+  CONFIGURATION
+}
+
+# Input Types
+input WorkflowExecutionInput {
+  input: JSON
+  tags: [String!]
+  priority: Int
+  timeout: Int
+}
+
+input ScheduleConfigInput {
+  workflowName: String!
+  namespace: String!
+  cronExpression: String!
+  timezone: String
+  enabled: Boolean
+  startDate: DateTime
+  endDate: DateTime
+  maxExecutions: Int
+  input: JSON
+  tags: [String!]
+  description: String
+}
+
+input UpdateScheduleInput {
+  cronExpression: String
+  timezone: String
+  enabled: Boolean
+  startDate: DateTime
+  endDate: DateTime
+  maxExecutions: Int
+  input: JSON
+  tags: [String!]
+  description: String
+}
+
+input WorkflowFilterInput {
+  namespace: String
+  tags: [String!]
+  status: WorkflowInstanceStatus
+  author: String
+  isActive: Boolean
+}
+
+input InstanceFilterInput {
+  workflowName: String
+  namespace: String
+  status: WorkflowInstanceStatus
+  createdBy: String
+  startTimeFrom: DateTime
+  startTimeTo: DateTime
+}
+
+input AuditFilterInput {
+  workflowName: String
+  namespace: String
+  action: AuditAction
+  resource: AuditResource
+  userId: String
+  success: Boolean
+  timestampFrom: DateTime
+  timestampTo: DateTime
+}
+
+# Pagination
+input PaginationInput {
+  page: Int = 1
+  limit: Int = 10
+  sort: String
+  order: SortOrder = ASC
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+type PaginationInfo {
+  page: Int!
+  pages: Int!
+  limit: Int!
+  total: Int!
+}
+
+# Paginated Response Types
+type PaginatedWorkflows {
+  workflows: [RegisteredWorkflow!]!
+  pagination: PaginationInfo!
+}
+
+type PaginatedInstances {
+  instances: [WorkflowInstance!]!
+  pagination: PaginationInfo!
+}
+
+type PaginatedSchedules {
+  schedules: [WorkflowSchedule!]!
+  pagination: PaginationInfo!
+}
+
+type PaginatedAuditLogs {
+  entries: [AuditLogEntry!]!
+  pagination: PaginationInfo!
+}
+
+# Response Types
+type WorkflowOperationResult {
+  success: Boolean!
+  message: String
+  data: JSON
+}
+
+type MetricsResponse {
+  lifecycle: WorkflowLifecycleStats
+  scheduler: SchedulerStats
+  errors: [WorkflowErrorStats!]
+  configuration: ConfigurationStats
+  security: SecurityStats
+}
+
+type ConfigurationResponse {
+  configurations: JSON!
+  validation: ValidationResult!
+}
+
+type ValidationResult {
+  isValid: Boolean!
+  errors: [ValidationError!]
+  warnings: [ValidationWarning!]
+}
+
+type ValidationError {
+  field: String!
+  message: String!
+  code: String
+}
+
+type ValidationWarning {
+  field: String!
+  message: String!
+  code: String
+}
+
+# Legacy compatibility types
 type WorkflowResult {
   name: String
-  result: Any
+  result: JSON
 }
 
 input WorkflowInput {
   name: String
-  input: Any
+  input: JSON
 }
 
+# Queries
 extend type Query {
+  # System Status
+  workflowSystemStatus: SystemStatus
+
+  # Workflow Registry
+  workflows(
+    filter: WorkflowFilterInput
+    pagination: PaginationInput
+  ): PaginatedWorkflows
+
+  workflowRegistry: WorkflowRegistryResponse
+
+  workflow(
+    namespace: String!
+    name: String!
+  ): WorkflowDetails
+
+  # Workflow Instances
+  workflowInstances(
+    filter: InstanceFilterInput
+    pagination: PaginationInput
+  ): PaginatedInstances
+
+  workflowInstance(id: String!): WorkflowInstance
+
+  # Workflow Schedules
+  workflowSchedules(
+    pagination: PaginationInput
+  ): PaginatedSchedules
+
+  workflowSchedule(id: String!): WorkflowSchedule
+
+  # Audit and Monitoring
+  workflowAuditLog(
+    filter: AuditFilterInput
+    pagination: PaginationInput
+  ): PaginatedAuditLogs
+
+  workflowMetrics: MetricsResponse
+
+  # Configuration
+  workflowConfigurations: ConfigurationResponse
+
+  # Legacy compatibility
   workflowStatus(name: String!): WorkflowResult
 }
 
+# Mutations
 extend type Mutation {
-  startWorkflow(name: String!, data: WorkflowInput): Boolean
+  # Workflow Execution
+  startWorkflow(
+    workflowId: String!
+    input: WorkflowExecutionInput
+  ): WorkflowInstance
+
+  # Instance Management
+  pauseWorkflowInstance(instanceId: String!): WorkflowOperationResult
+  resumeWorkflowInstance(instanceId: String!): WorkflowOperationResult
+  cancelWorkflowInstance(instanceId: String!): WorkflowOperationResult
+
+  # Schedule Management
+  createWorkflowSchedule(
+    config: ScheduleConfigInput!
+  ): WorkflowSchedule
+
+  updateWorkflowSchedule(
+    scheduleId: String!
+    updates: UpdateScheduleInput!
+  ): WorkflowSchedule
+
+  deleteWorkflowSchedule(scheduleId: String!): WorkflowOperationResult
+
+  startSchedule(scheduleId: String!): WorkflowOperationResult
+  stopSchedule(scheduleId: String!): WorkflowOperationResult
+  reloadSchedules: WorkflowOperationResult
+
+  # Legacy compatibility
+  startWorkflowLegacy(name: String!, data: WorkflowInput): Boolean
 }

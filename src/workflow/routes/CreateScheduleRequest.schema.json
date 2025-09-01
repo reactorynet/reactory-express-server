@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "title": "CreateScheduleRequest",
+  "description": "Request body for creating a new workflow schedule",
+  "allOf": [
+    {
+      "$ref": "#components/schemas/ScheduleConfig"
+    }
+  ]
+}

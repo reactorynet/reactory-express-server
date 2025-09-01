@@ -1,0 +1,92 @@
+{
+  "type": "object",
+  "title": "AuditLogEntry",
+  "description": "Entry in the workflow audit log",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "Entry ID",
+      "description": "Unique identifier for the audit log entry"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Timestamp",
+      "description": "When the event occurred"
+    },
+    "event": {
+      "type": "string",
+      "title": "Event Type",
+      "description": "Type of event that was logged"
+    },
+    "workflowName": {
+      "type": "string",
+      "title": "Workflow Name",
+      "description": "Name of the workflow involved (if applicable)"
+    },
+    "workflowNamespace": {
+      "type": "string",
+      "title": "Workflow Namespace",
+      "description": "Namespace of the workflow involved (if applicable)"
+    },
+    "instanceId": {
+      "type": "string",
+      "title": "Instance ID",
+      "description": "ID of the workflow instance involved (if applicable)"
+    },
+    "userId": {
+      "type": "string",
+      "title": "User ID",
+      "description": "ID of the user who performed the action"
+    },
+    "action": {
+      "type": "string",
+      "enum": ["create", "update", "delete", "execute", "pause", "resume", "cancel"],
+      "title": "Action",
+      "description": "Action that was performed"
+    },
+    "resource": {
+      "type": "string",
+      "enum": ["workflow", "instance", "schedule", "configuration"],
+      "title": "Resource",
+      "description": "Type of resource that was affected"
+    },
+    "details": {
+      "type": "object",
+      "title": "Event Details",
+      "description": "Additional details about the event",
+      "additionalProperties": true
+    },
+    "success": {
+      "type": "boolean",
+      "title": "Success",
+      "description": "Whether the action was successful"
+    },
+    "error": {
+      "type": "object",
+      "title": "Error Information",
+      "description": "Error information if the action failed",
+      "properties": {
+        "message": {
+          "type": "string",
+          "title": "Error Message"
+        },
+        "code": {
+          "type": "string",
+          "title": "Error Code"
+        }
+      }
+    },
+    "ipAddress": {
+      "type": "string",
+      "title": "IP Address",
+      "description": "IP address of the client that performed the action"
+    },
+    "userAgent": {
+      "type": "string",
+      "title": "User Agent",
+      "description": "User agent string of the client"
+    }
+  },
+  "required": ["id", "timestamp", "event", "action", "resource", "success"]
+}

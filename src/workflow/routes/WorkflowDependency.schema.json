@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "title": "WorkflowDependency",
+  "description": "Dependency required by a workflow",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Dependency Name",
+      "description": "Name of the dependency"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["workflow", "service", "data", "external"],
+      "title": "Dependency Type",
+      "description": "Type of dependency"
+    },
+    "version": {
+      "type": "string",
+      "title": "Version",
+      "description": "Required version of the dependency"
+    },
+    "optional": {
+      "type": "boolean",
+      "title": "Optional",
+      "description": "Whether this dependency is optional"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "Description of the dependency"
+    }
+  },
+  "required": ["name", "type"]
+}

@@ -1,0 +1,88 @@
+{
+  "type": "object",
+  "title": "WorkflowConfig",
+  "description": "Configuration settings for a workflow",
+  "properties": {
+    "timeout": {
+      "type": "integer",
+      "title": "Timeout",
+      "description": "Workflow timeout in milliseconds"
+    },
+    "maxRetries": {
+      "type": "integer",
+      "title": "Max Retries",
+      "description": "Maximum number of retry attempts"
+    },
+    "retryDelay": {
+      "type": "integer",
+      "title": "Retry Delay",
+      "description": "Delay between retries in milliseconds"
+    },
+    "priority": {
+      "type": "integer",
+      "enum": [1, 2, 3, 4, 5],
+      "title": "Priority",
+      "description": "Execution priority (1=lowest, 5=highest)"
+    },
+    "parallelism": {
+      "type": "integer",
+      "title": "Parallelism",
+      "description": "Maximum parallel executions allowed"
+    },
+    "environment": {
+      "type": "object",
+      "title": "Environment Variables",
+      "description": "Environment variables for workflow execution",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "resources": {
+      "type": "object",
+      "title": "Resource Requirements",
+      "description": "Resource requirements for workflow execution",
+      "properties": {
+        "cpu": {
+          "type": "string",
+          "title": "CPU",
+          "description": "CPU requirements (e.g., '500m', '1')"
+        },
+        "memory": {
+          "type": "string",
+          "title": "Memory",
+          "description": "Memory requirements (e.g., '512Mi', '1Gi')"
+        },
+        "storage": {
+          "type": "string",
+          "title": "Storage",
+          "description": "Storage requirements (e.g., '1Gi', '10Gi')"
+        }
+      }
+    },
+    "notifications": {
+      "type": "object",
+      "title": "Notification Settings",
+      "description": "Notification configuration",
+      "properties": {
+        "onSuccess": {
+          "type": "boolean",
+          "title": "Notify on Success",
+          "description": "Send notification on successful completion"
+        },
+        "onFailure": {
+          "type": "boolean",
+          "title": "Notify on Failure",
+          "description": "Send notification on failure"
+        },
+        "channels": {
+          "type": "array",
+          "title": "Notification Channels",
+          "description": "Channels to send notifications to",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

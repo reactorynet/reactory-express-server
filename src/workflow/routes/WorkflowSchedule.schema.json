@@ -1,0 +1,95 @@
+{
+  "type": "object",
+  "title": "WorkflowSchedule",
+  "description": "Schedule configuration for a workflow",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "Schedule ID",
+      "description": "Unique identifier for the schedule"
+    },
+    "workflowName": {
+      "type": "string",
+      "title": "Workflow Name",
+      "description": "Name of the workflow to schedule"
+    },
+    "namespace": {
+      "type": "string",
+      "title": "Namespace",
+      "description": "Namespace of the workflow"
+    },
+    "cronExpression": {
+      "type": "string",
+      "title": "Cron Expression",
+      "description": "Cron expression defining the schedule"
+    },
+    "timezone": {
+      "type": "string",
+      "title": "Timezone",
+      "description": "Timezone for the schedule (e.g., 'UTC', 'America/New_York')"
+    },
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the schedule is currently enabled"
+    },
+    "startDate": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Start Date",
+      "description": "When the schedule should start"
+    },
+    "endDate": {
+      "type": "string",
+      "format": "date-time",
+      "title": "End Date",
+      "description": "When the schedule should end"
+    },
+    "maxExecutions": {
+      "type": "integer",
+      "title": "Max Executions",
+      "description": "Maximum number of executions (-1 for unlimited)"
+    },
+    "executionCount": {
+      "type": "integer",
+      "title": "Execution Count",
+      "description": "Number of times this schedule has been executed"
+    },
+    "lastExecution": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Execution",
+      "description": "When the schedule was last executed"
+    },
+    "nextExecution": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Next Execution",
+      "description": "When the schedule will next be executed"
+    },
+    "input": {
+      "type": "object",
+      "title": "Input Data",
+      "description": "Default input data for scheduled executions",
+      "additionalProperties": true
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At",
+      "description": "When the schedule was created"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Updated At",
+      "description": "When the schedule was last updated"
+    },
+    "createdBy": {
+      "type": "string",
+      "title": "Created By",
+      "description": "User who created the schedule"
+    }
+  },
+  "required": ["id", "workflowName", "namespace", "cronExpression", "enabled"]
+}

@@ -31,7 +31,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   id: string;
   user: Reactory.Models.IUserDocument;
   partner: Reactory.Models.IReactoryClientDocument;
-  colors: unknown;
+  colors: any;
   lang: string;
   languages: string[];
   theme: Reactory.UX.IReactoryTheme;
@@ -140,9 +140,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     this.log(message, meta, "info", clazz);
   }
 
-  getService<TService>(id: string, props: any = undefined, lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE): TService {
-    this.log(`Getting service ${id} [${lifeCycle || "instance"}]`);
-    
+  getService<TService>(id: string, props: any = undefined, lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE): TService {    
     return this.serviceManager.getService(
       id,
       props,

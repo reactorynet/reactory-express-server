@@ -3,6 +3,8 @@ scalar ObjID
 scalar Date
 scalar Any
 scalar Upload
+scalar JSON
+scalar DateTime
 
 """
 Meta data is a general purpose type that 

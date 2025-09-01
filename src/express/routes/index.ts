@@ -4,7 +4,7 @@ import resourcesRouter from '@reactory/server-core/resources'
 import userAccountRouter from '@reactory/server-core/useraccount';;
 import workflowRouter from '@reactory/server-core/workflow';
 import express from 'express';
-import flash from 'connect-flash';
+//import flash from 'connect-flash';
 import modules from '@reactory/server-core/modules';
 import CDNRouter from './CDNRouter';
 import logger from '@reactory/server-core/logging';
@@ -20,7 +20,7 @@ const ConfigureRoutes = (app: express.Application) => {
     '/cdn': CDNRouter
   };
 
-  app.use(flash());
+  // app.use(flash());
   
   modules.enabled.forEach((module) => { 
     if(module.routes && Object.keys(module.routes).length > 0) {

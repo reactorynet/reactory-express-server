@@ -1,4 +1,4 @@
-import { SecurityManager, IUser, IWorkflowPermission, IInputValidationResult } from '../../SecurityManager/SecurityManager';
+import { SecurityManager, IUser, IWorkflowPermission, IInputValidationResult } from '../SecurityManager';
 
 // Mock logging
 jest.mock('../../../logging', () => ({

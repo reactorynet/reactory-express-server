@@ -36,3 +36,5 @@ export {
   type IWorkflowLifecycleConfig,
   type IWorkflowLifecycleStats
 } from '../LifecycleManager/LifecycleManager'; 
+
+export default WorkflowRunner;
