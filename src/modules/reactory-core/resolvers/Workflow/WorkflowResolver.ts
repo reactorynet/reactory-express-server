@@ -12,36 +12,37 @@ import {
   IPaginationInput
 } from '../../services/Workflow/types';
 
+
+const getWorkflowService = (context: Reactory.Server.IReactoryContext): IReactoryWorkflowService => {
+  return context.getService("core.ReactoryWorkflowService@1.0.0") as IReactoryWorkflowService;
+}
+
 // @ts-ignore - this has to be called without the () as this throws an error in the decorator
 @resolver
 class WorkflowResolver {
 
   resolver: any;
 
-  // Helper method to get workflow service
-  private getWorkflowService(context: Reactory.Server.IReactoryContext): IReactoryWorkflowService {
-    return context.getService("core.ReactoryWorkflowService@1.0.0") as IReactoryWorkflowService;
-  }
 
   // System Status & Health Queries
   @roles(["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
   @query("workflowSystemStatus")
   async getSystemStatus(obj: any, params: any, context: Reactory.Server.IReactoryContext) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getSystemStatus();
   }
 
   @roles(["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
   @query("workflowMetrics") 
   async getWorkflowMetrics(obj: any, params: any, context: Reactory.Server.IReactoryContext) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowMetrics();
   }
 
   @roles(["ADMIN", "WORKFLOW_ADMIN"], 'args.context')
   @query("workflowConfigurations")
   async getWorkflowConfigurations(obj: any, params: any, context: Reactory.Server.IReactoryContext) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowConfigurations();
   }
 
@@ -56,14 +57,14 @@ class WorkflowResolver {
     },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflows(params.filter, params.pagination);
   }
 
   @roles(["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
   @query("workflowRegistry")
   async getWorkflowRegistry(obj: any, params: any, context: Reactory.Server.IReactoryContext) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowRegistry();
   }
 
@@ -77,7 +78,7 @@ class WorkflowResolver {
     },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflow(params.namespace, params.name);
   }
 
@@ -92,7 +93,7 @@ class WorkflowResolver {
     },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowInstances(params.filter, params.pagination);
   }
 
@@ -103,7 +104,7 @@ class WorkflowResolver {
     params: { id: string },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowInstance(params.id);
   }
 
@@ -117,7 +118,7 @@ class WorkflowResolver {
     },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowSchedules(params.pagination);
   }
 
@@ -128,7 +129,7 @@ class WorkflowResolver {
     params: { id: string },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowSchedule(params.id);
   }
 
@@ -143,7 +144,7 @@ class WorkflowResolver {
     },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowAuditLog(params.filter, params.pagination);
   }
 
@@ -155,7 +156,7 @@ class WorkflowResolver {
     params: { name: string },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowStatus(params.name);
   }
 
@@ -172,7 +173,7 @@ class WorkflowResolver {
     },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.startWorkflow(params.workflowId, params.input);
     } catch (error) {
@@ -189,7 +190,7 @@ class WorkflowResolver {
     params: { instanceId: string },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.pauseWorkflowInstance(params.instanceId);
     } catch (error) {
@@ -208,7 +209,7 @@ class WorkflowResolver {
     params: { instanceId: string },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.resumeWorkflowInstance(params.instanceId);
     } catch (error) {
@@ -227,7 +228,7 @@ class WorkflowResolver {
     params: { instanceId: string },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.cancelWorkflowInstance(params.instanceId);
     } catch (error) {
@@ -247,7 +248,7 @@ class WorkflowResolver {
     params: { config: IScheduleConfigInput },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.createWorkflowSchedule(params.config);
     } catch (error) {
@@ -266,7 +267,7 @@ class WorkflowResolver {
     },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.updateWorkflowSchedule(params.scheduleId, params.updates);
     } catch (error) {
@@ -282,7 +283,7 @@ class WorkflowResolver {
     params: { scheduleId: string },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.deleteWorkflowSchedule(params.scheduleId);
     } catch (error) {
@@ -301,7 +302,7 @@ class WorkflowResolver {
     params: { scheduleId: string },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.startSchedule(params.scheduleId);
     } catch (error) {
@@ -320,7 +321,7 @@ class WorkflowResolver {
     params: { scheduleId: string },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.stopSchedule(params.scheduleId);
     } catch (error) {
@@ -339,7 +340,7 @@ class WorkflowResolver {
     params: any,
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.reloadSchedules();
     } catch (error) {
@@ -362,7 +363,7 @@ class WorkflowResolver {
     },
     context: Reactory.Server.IReactoryContext
   ) {
-    const workflowService = this.getWorkflowService(context);
+    const workflowService = getWorkflowService(context);
     try {
       return await workflowService.startWorkflowLegacy(params.name, params.data);
     } catch (error) {

@@ -199,7 +199,7 @@ class ApiStatus {
             let loginRoute = routes.find((r: Reactory.Routing.IReactoryRoute) => r.path === '/login');
             $routes.push({ 
               path: route.path,
-              args: route.args,
+              args: loginRoute.args,
               roles: ["ANON"],
               components: loginRoute.components,
               exact: route.exact,

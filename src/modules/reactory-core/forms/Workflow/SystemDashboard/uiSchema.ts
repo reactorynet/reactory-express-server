@@ -27,46 +27,132 @@ const uiSchema: any = {
       }
     ],
     system: {
-      'ui:widget': 'StatusCard',
+      'ui:widget': 'CardWidget',
       'ui:options': {
         title: 'System Status',
-        statusField: 'status',
-        timestampField: 'timestamp',
-        variant: 'system'
+        description: '${formData?.status?.status || "Unknown"}',
+        displayValue: true,
+        mapping: {
+          'formData.status': 'value',
+          'formData.timestamp': 'description'
+        },
+        headerOptions: {
+          sx: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start'
+          }
+        },
+        actions: [
+          {
+            label: 'View Details',
+            icon: 'info',
+            onClick: 'event:system:viewDetails'
+          }
+        ]
       }
     },
     lifecycle: {
-      'ui:widget': 'MetricsCard',
+      'ui:widget': 'CardWidget',
       'ui:options': {
         title: 'Workflow Lifecycle',
-        metrics: [
-          { field: 'activeInstances', label: 'Active', color: 'primary' },
-          { field: 'completedInstances', label: 'Completed', color: 'success' },
-          { field: 'failedInstances', label: 'Failed', color: 'error' },
-          { field: 'pausedInstances', label: 'Paused', color: 'warning' }
-        ],
-        primaryMetric: 'totalInstances'
+        description: 'Instance status overview',
+        displayValue: false,
+        headerOptions: {
+          sx: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start'
+          }
+        },
+        actions: [
+          {
+            label: 'Active: ${formData?.activeInstances || 0}',
+            icon: 'play_circle',
+            onClick: 'event:lifecycle:viewActive'
+          },
+          {
+            label: 'Completed: ${formData?.completedInstances || 0}',
+            icon: 'check_circle',
+            onClick: 'event:lifecycle:viewCompleted'
+          },
+          {
+            label: 'Failed: ${formData?.failedInstances || 0}',
+            icon: 'error',
+            onClick: 'event:lifecycle:viewFailed'
+          },
+          {
+            label: 'Paused: ${formData?.pausedInstances || 0}',
+            icon: 'pause_circle',
+            onClick: 'event:lifecycle:viewPaused'
+          }
+        ]
       }
     },
     configuration: {
-      'ui:widget': 'MetricsCard',
+      'ui:widget': 'CardWidget',
       'ui:options': {
         title: 'Configuration Status',
-        metrics: [
-          { field: 'totalConfigurations', label: 'Total', color: 'info' },
-          { field: 'activeConfigurations', label: 'Active', color: 'success' },
-          { field: 'validationErrors', label: 'Errors', color: 'error' }
+        description: 'System configuration overview',
+        displayValue: false,
+        headerOptions: {
+          sx: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start'
+          }
+        },
+        actions: [
+          {
+            label: 'Total: ${formData?.totalConfigurations || 0}',
+            icon: 'settings',
+            onClick: 'event:config:viewAll'
+          },
+          {
+            label: 'Active: ${formData?.activeConfigurations || 0}',
+            icon: 'check_circle',
+            onClick: 'event:config:viewActive'
+          },
+          {
+            label: 'Errors: ${formData?.validationErrors || 0}',
+            icon: 'error',
+            onClick: 'event:config:viewErrors',
+            visible: '${formData?.validationErrors > 0}'
+          }
         ]
       }
     },
     security: {
-      'ui:widget': 'MetricsCard',
+      'ui:widget': 'CardWidget',
       'ui:options': {
         title: 'Security Overview',
-        metrics: [
-          { field: 'authenticatedRequests', label: 'Auth Requests', color: 'success' },
-          { field: 'unauthorizedAttempts', label: 'Unauthorized', color: 'error' },
-          { field: 'permissionDenials', label: 'Permission Denials', color: 'warning' }
+        description: 'Authentication and authorization metrics',
+        displayValue: false,
+        headerOptions: {
+          sx: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start'
+          }
+        },
+        actions: [
+          {
+            label: 'Auth Requests: ${formData?.authenticatedRequests || 0}',
+            icon: 'security',
+            onClick: 'event:security:viewAuth'
+          },
+          {
+            label: 'Unauthorized: ${formData?.unauthorizedAttempts || 0}',
+            icon: 'block',
+            onClick: 'event:security:viewUnauthorized',
+            visible: '${formData?.unauthorizedAttempts > 0}'
+          },
+          {
+            label: 'Permission Denials: ${formData?.permissionDenials || 0}',
+            icon: 'warning',
+            onClick: 'event:security:viewDenials',
+            visible: '${formData?.permissionDenials > 0}'
+          }
         ]
       }
     }
@@ -135,30 +221,38 @@ const uiSchema: any = {
     }
   },
   quickActions: {
-    'ui:widget': 'ActionsCard',
+    'ui:widget': 'CardWidget',
     'ui:options': {
       title: 'System Controls',
+      description: 'Manage workflow system operations',
+      displayValue: false,
+      headerOptions: {
+        sx: {
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center'
+        }
+      },
       actions: [
         {
           label: 'Pause System',
           icon: 'pause',
-          variant: 'outlined',
-          color: 'warning',
-          mutation: 'pauseWorkflowSystem'
+          onClick: 'mutation:pauseWorkflowSystem',
+          disabled: false
         },
         {
           label: 'Resume System',
           icon: 'play_arrow',
-          variant: 'outlined',
-          color: 'success',
-          mutation: 'resumeWorkflowSystem'
+          onClick: 'mutation:resumeWorkflowSystem',
+          disabled: false
         },
         {
           label: 'Reload Config',
           icon: 'refresh',
-          variant: 'outlined',
-          color: 'primary',
-          mutation: 'reloadWorkflowConfigurations'
+          onClick: 'mutation:reloadWorkflowConfigurations',
+          disabled: false
         }
       ]
     }

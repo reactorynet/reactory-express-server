@@ -1,20 +1,7 @@
 import express from 'express';
-import { WorkflowRunner, DefaultWorkflows } from '@reactory/server-core/workflow/WorkflowRunner';
-import { WorkflowPriority, WorkflowStatus } from '@reactory/server-core/workflow/LifecycleManager/LifecycleManager';
+import { workflowRunner } from 'modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
+import { WorkflowStatus } from 'modules/reactory-core/workflow/LifecycleManager/LifecycleManager';
 import logger from '@reactory/server-core/logging';
-
-const workflowRunner = new WorkflowRunner({
-  workflows: DefaultWorkflows
-});
-
-// Initialize the workflow runner
-workflowRunner.initialize()
-.then(() => {
-  logger.info('WorkflowRunner initialized successfully');
-})
-.catch((error) => {
-  logger.error('Failed to initialize WorkflowRunner', error);
-});
 
 const router = express.Router();
 

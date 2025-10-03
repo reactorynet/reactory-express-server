@@ -7,7 +7,7 @@ import express, { Application } from 'express';
 import mongooseConnection from '@reactory/server-core/models/mongoose';
 import configureMiddleWare from '@reactory/server-core/express/middleware';
 import { ConfigureAuthentication } from '@reactory/server-core/authentication';
-import { workflowRunner, WorkFlowRunner } from '@reactory/server-core/workflow';
+import { workflowRunner, WorkflowRunner } from '@reactory/server-modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
 import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
 import logger from '@reactory/server-core/logging';

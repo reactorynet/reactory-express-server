@@ -25,19 +25,45 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
   ],
   'ui:options': {},
   greeting: greetingUISchema,
-  applications: {  
+  applications: {      
     'ui:options': {
       allowAdd: false,
       allowDelete: false,
       allowReorder: false,
       showLabel: false,
-      container: 'div',
-      containerProps: {}
+      showToolbar: false,
+      container: 'Grid',
+      containerProps: {
+        size: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
+        spacing: 2,
+        rowSpacing: 2,
+        columnSpacing: 2,
+        sx: {
+          alignItems: 'stretch',
+          justifyContent: 'flex-start',          
+        },
+        // wrap: 'wrap',
+      },
+      itemsContainer: 'Grid',
+      itemsContainerProps: {
+        size: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
+        spacing: 2,
+        rowSpacing: 2,
+        columnSpacing: 2,
+        sx: {
+          alignItems: 'stretch',
+          justifyContent: 'flex-start', 
+          display: 'flex',
+          flexDirection: 'row',                 
+        },
+        // wrap: 'wrap',  
+      }
     },    
     items: {
       'ui:widget': 'core.ApplicationCard@1.0.0',
       'ui:options': {
-        size: { xs: 12, sm: 12, md: 6, lg: 4, xl: 3 },
+        size: { xs: 12, sm: 12, md: 6, lg: 4, xl: 4 },
+        sx: { padding: 1, margin: 1 }, 
         moreRoute: "/applications/${id}"
       }
     }

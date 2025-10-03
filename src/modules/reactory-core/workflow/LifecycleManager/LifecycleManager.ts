@@ -1,4 +1,4 @@
-import logger from '../../logging';
+import logger from '../../../../logging';
 import { EventEmitter } from 'events';
 
 export enum WorkflowStatus {
@@ -70,6 +70,7 @@ export interface IWorkflowLifecycleStats {
   failedWorkflows: number;
   cancelledWorkflows: number;
   averageExecutionTime: number; // milliseconds
+  lastCleanupTime?: Date;
   resourceUtilization: {
     memory: number;
     cpu: number;
@@ -430,6 +431,7 @@ export class WorkflowLifecycleManager extends EventEmitter {
       cancelledWorkflows: workflows.filter(w => w.status === WorkflowStatus.CANCELLED).length,
       averageExecutionTime,
       resourceUtilization,
+      lastCleanupTime: new Date(),
     };
   }
 

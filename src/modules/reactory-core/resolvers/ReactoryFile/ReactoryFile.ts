@@ -8,7 +8,7 @@ import {
 import { ObjectId } from "mongodb";
 import path from "path";
 import fs from "fs";
-import ApiError from "exceptions";
+import ApiError from "@reactory/server-core/exceptions";
 
 export type ReactoryUserFileLoadOptions = {
   __typename?: "ReactoryUserFileLoadOptions";
@@ -43,6 +43,80 @@ export type ReactoryUserFilesErrorResponse = {
 export type ReactoryUserFileResults =
   | ReactoryUserFiles
   | ReactoryUserFilesErrorResponse;
+
+// Server file types for administrative operations
+export type ReactoryServerFilePermissions = {
+  __typename?: "ReactoryServerFilePermissions";
+  read: boolean;
+  write: boolean;
+  delete: boolean;
+  execute?: boolean;
+};
+
+export type ReactoryServerFolder = {
+  __typename?: "ReactoryServerFolder";
+  name: string;
+  path: string;
+  fullPath: string;
+  created?: Date;
+  modified?: Date;
+  size?: number;
+  fileCount?: number;
+  permissions?: ReactoryServerFilePermissions;
+};
+
+export type ReactoryServerFile = {
+  __typename?: "ReactoryServerFile";
+  id: string;
+  name: string;
+  mimetype: string;
+  extension: string;
+  size: number;
+  path: string;
+  fullPath: string;
+  created: Date;
+  modified: Date;
+  accessed?: Date;
+  checksum?: string;
+  isSystemFile: boolean;
+  isHidden: boolean;
+  permissions?: ReactoryServerFilePermissions;
+  metadata?: string; // JSON string for additional metadata
+};
+
+export type ReactoryServerFilesLoadOptions = {
+  __typename?: "ReactoryServerFilesLoadOptions";
+  limit?: number;
+  offset?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  search?: string;
+  includeFolders?: boolean;
+  includeHidden?: boolean;
+  includeSystemFiles?: boolean;
+  fileTypes?: string[];
+};
+
+export type ReactoryServerFiles = {
+  __typename?: "ReactoryServerFiles";
+  serverPath: string;
+  loadOptions?: ReactoryServerFilesLoadOptions;
+  folders: ReactoryServerFolder[];
+  files: ReactoryServerFile[];
+  totalCount?: number;
+  hasMore?: boolean;
+};
+
+export type ReactoryServerFilesErrorResponse = {
+  __typename?: "ReactoryServerFilesErrorResponse";
+  error: string;
+  message: string;
+  serverPath?: string;
+};
+
+export type ReactoryServerFileResults =
+  | ReactoryServerFiles
+  | ReactoryServerFilesErrorResponse;
 
 // Success types
 export type ReactoryFileUpdateSuccess = {
@@ -233,6 +307,106 @@ class ReactoryFile {
       files: userFiles.files,
       folders: userFiles.folders,
     };
+  }
+
+  @query("ReactoryServerFiles")
+  async getServerFiles(
+    obj: any,
+    params: {
+      serverPath?: string;
+      loadOptions?: {
+        limit?: number;
+        offset?: number;
+        sortBy?: string;
+        sortOrder?: "asc" | "desc";
+        search?: string;
+        includeFolders?: boolean;
+        includeHidden?: boolean;
+        includeSystemFiles?: boolean;
+        fileTypes?: string[];
+      };
+    },
+    context: Reactory.Server.IReactoryContext
+  ): Promise<ReactoryServerFileResults> {
+    context.log(
+      "ReactoryFile.getServerFiles",
+      params,
+      "debug",
+      "ReactoryFile.ts"
+    );
+
+    // Check if user has admin or developer role
+    if (!context.hasRole("ADMIN") && !context.hasRole("DEVELOPER")) {
+      return {
+        __typename: "ReactoryServerFilesErrorResponse",
+        error: "Unauthorized",
+        message: "Access denied. Admin or Developer role required for server file access.",
+        serverPath: params.serverPath,
+      };
+    }
+
+    if (!context.user?._id) {
+      return {
+        __typename: "ReactoryServerFilesErrorResponse",
+        error: "Unauthorized",
+        message: "You must be logged in to access server files.",
+        serverPath: params.serverPath,
+      };
+    }
+
+    const fileService = context.getService(
+      "core.ReactoryFileService@1.0.0"
+    ) as Reactory.Service.IReactoryFileService;
+
+    // Default to APP_DATA_ROOT if no serverPath provided
+    const serverPath = params.serverPath || "${APP_DATA_ROOT}";
+    
+    const loadOptions = params.loadOptions || {
+      limit: 50,
+      offset: 0,
+      sortBy: "name",
+      sortOrder: "asc",
+      search: "",
+      includeFolders: true,
+      includeHidden: false,
+      includeSystemFiles: true,
+      fileTypes: [],
+    };
+
+    try {
+      // Call the service method - we need to cast to any to access the new method
+      const serverFiles = await (fileService as any).getServerFiles(
+        serverPath,
+        loadOptions
+      );
+
+      if (!serverFiles) {
+        return {
+          __typename: "ReactoryServerFilesErrorResponse",
+          error: "No files found",
+          message: "No files found at the specified server path.",
+          serverPath: serverPath,
+        };
+      }
+
+      return {
+        __typename: "ReactoryServerFiles",
+        serverPath: serverPath,
+        loadOptions: loadOptions,
+        files: serverFiles.files,
+        folders: serverFiles.folders,
+        totalCount: serverFiles.totalCount || (serverFiles.files.length + serverFiles.folders.length),
+        hasMore: serverFiles.hasMore || false,
+      };
+    } catch (error) {
+      context.error("Error fetching server files:", error);
+      return {
+        __typename: "ReactoryServerFilesErrorResponse",
+        error: "Server Error",
+        message: error.message || "An error occurred while fetching server files.",
+        serverPath: serverPath,
+      };
+    }
   }
 
   @property("ReactoryFile", "id")
@@ -543,11 +717,11 @@ class ReactoryFile {
       const folderPath = `${params.path}/${params.name}`.replace(/\/+/g, "/");
 
       let target = path.join(
-        process.env.APP_DATA_ROOT, 
+        process.env.APP_DATA_ROOT || "", 
         "profiles", 
         context.user._id.toString(),
          "files", 
-         context.partner._id.toString(), 
+         context.partner?._id?.toString() || "default", 
          "home",
          folderPath);
 

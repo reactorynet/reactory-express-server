@@ -21,7 +21,10 @@ const OperationsDashboard: Reactory.Forms.IReactoryForm = {
   uiSupport: ['material'],
   graphql,
   roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR', 'USER'],
-  description: 'Real-time operational dashboard for workflow monitoring and metrics'
+  description: 'Real-time operational dashboard for workflow monitoring and metrics',
+  helpTopics: [
+    'workflow-operations-dashboard-help'
+  ]
 };
 
 export default OperationsDashboard;

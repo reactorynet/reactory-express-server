@@ -3,7 +3,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import cron from 'node-cron';
 import moment from 'moment';
-import logger from '../../logging';
+import logger from '../../../../logging';
 import { WorkflowRunner } from '../WorkflowRunner/WorkflowRunner';
 import { IWorkflow } from '../WorkflowRunner/WorkflowRunner';
 

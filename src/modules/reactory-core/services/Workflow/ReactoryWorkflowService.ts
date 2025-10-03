@@ -1,6 +1,9 @@
 import Reactory from '@reactory/reactory-core';
 import { service } from '@reactory/server-core/application/decorators';
 import { 
+  WorkflowRunner,  
+} from 'modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
+import { 
   IReactoryWorkflowService,
   IWorkflowSystemStatus,
   IWorkflowExecutionInput,
@@ -10,8 +13,12 @@ import {
   IInstanceFilterInput,
   IAuditFilterInput,
   IPaginationInput,
-  IWorkflowOperationResult
+  IWorkflowOperationResult,  
+  IWorkflowErrorStats
 } from './types';
+import { IWorkflowLifecycleStats } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager';
+import { IConfigurationStats } from '@reactory/server-modules/reactory-core/workflow/ConfigurationManager/ConfigurationManager';
+import { ISecurityStats } from '@reactory/server-modules/reactory-core/workflow/SecurityManager/SecurityManager';
 
 @service({
   name: "ReactoryWorkflowService",
@@ -30,14 +37,18 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   context: Reactory.Server.IReactoryContext;
   props: any;
+  workflowRunner: WorkflowRunner;
 
   constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.props = props;
-    this.context = context;
+    this.context = context;    
   }
 
-  onStartup(): Promise<any> {    
+  async onStartup(): Promise<any> {    
+    this.workflowRunner = new WorkflowRunner({});
+    await this.workflowRunner.initialize();
     this.context.log(`Workflow service startup ${this.context.colors.green('STARTUP OKAY')} ✅`);
+
     return Promise.resolve(true);
   }
 
@@ -51,45 +62,49 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   }
 
   // Helper method to get WorkflowRunner instance
-  private getWorkflowRunner(): any {
-    // TODO: Implement singleton access pattern for WorkflowRunner
-    // This should return the singleton instance of WorkflowRunner
-    return this.context.getService('workflow.WorkflowRunner@1.0.0');
+  private async getWorkflowRunner(): Promise<WorkflowRunner> {
+    if (!this.workflowRunner) {
+      this.workflowRunner = new WorkflowRunner({});
+      if (this.workflowRunner.isInitialized()) {
+        return this.workflowRunner;
+      }
+      await this.workflowRunner.initialize();
+    }
+    return this.workflowRunner;
   }
 
   // System Status & Health
   async getSystemStatus(): Promise<IWorkflowSystemStatus> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       
       // Get data from WorkflowRunner singleton
-      const lifecycleStats = await workflowRunner?.getLifecycleManager()?.getStats() || {
-        activeInstances: 0,
-        completedInstances: 0,
-        failedInstances: 0,
-        pausedInstances: 0,
-        totalInstances: 0,
-        averageExecutionTime: 0
+      const lifecycleStats: IWorkflowLifecycleStats = await workflowRunner
+        ?.getLifecycleManager()
+        ?.getStats() || {
+          pausedWorkflows: 0,
+          runningWorkflows: 0,
+          completedWorkflows: 0,
+          failedWorkflows: 0,
+          cancelledWorkflows: 0,
+          totalWorkflows: 0,
+          averageExecutionTime: 0,
+          lastCleanupTime: new Date(),
+          resourceUtilization: {
+            memory: 0,
+            cpu: 0,
+            disk: 0
+          }
       };
 
-      const errorStats = await workflowRunner?.getErrorHandler()?.getErrorStats() || [];
-      const configStats = await workflowRunner?.getConfigurationManager()?.getStats() || {
-        totalConfigurations: 0,
-        activeConfigurations: 0,
-        validationErrors: 0
-      };
-      const securityStats = await workflowRunner?.getSecurityManager()?.getStats() || {
-        authenticatedRequests: 0,
-        unauthorizedAttempts: 0,
-        permissionDenials: 0,
-        activePermissions: [],
-        securityEvents: []
-      };
+      const errorStats: Map<string, IWorkflowErrorStats> =  workflowRunner.getAllErrorStats();
+      const configStats: IConfigurationStats = workflowRunner.getConfigurationStats();
+      const securityStats: ISecurityStats = workflowRunner.getSecurityStats();
 
       return {
         system: {
           initialized: workflowRunner?.isInitialized() || false,
-          status: workflowRunner?.getStatus() || 'INITIALIZING',
+          status: workflowRunner?.isInitialized() ? 'HEALTHY' : 'INITIALIZING',
           timestamp: new Date()
         },
         lifecycle: lifecycleStats,
@@ -105,10 +120,10 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async getWorkflowMetrics(): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const systemStatus = await this.getSystemStatus();
       
-      const schedulerStats = await workflowRunner?.getScheduler()?.getStats() || {
+      const schedulerStats: any = await workflowRunner?.getScheduler()?.getStats() || {
         activeSchedules: 0,
         inactiveSchedules: 0,
         totalSchedules: 0,
@@ -135,7 +150,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async getWorkflowConfigurations(): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const configManager = workflowRunner?.getConfigurationManager();
       
       const configurations = await configManager?.getAllConfigurations() || {};
@@ -158,7 +173,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   // Workflow Registry
   async getWorkflows(filter?: IWorkflowFilterInput, pagination?: IPaginationInput): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       
       // Get registered workflows from WorkflowRunner
       const allWorkflows = await workflowRunner?.getRegisteredWorkflows() || [];
@@ -202,7 +217,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async getWorkflowRegistry(): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const allWorkflows = await workflowRunner?.getRegisteredWorkflows() || [];
       
       const stats = {
@@ -261,7 +276,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   // Workflow Instances
   async getWorkflowInstances(filter?: IInstanceFilterInput, pagination?: IPaginationInput): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const lifecycleManager = workflowRunner?.getLifecycleManager();
       
       // Get instances from LifecycleManager and MongoDB
@@ -307,7 +322,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async getWorkflowInstance(instanceId: string): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const instance = await workflowRunner?.getWorkflowInstance(instanceId);
       
       if (!instance) {
@@ -323,7 +338,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async startWorkflow(workflowId: string, input?: IWorkflowExecutionInput): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const [namespace, nameVersion] = workflowId.split('.');
       const [name, version] = nameVersion.split('@');
       
@@ -343,7 +358,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async pauseWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       await workflowRunner?.pauseWorkflow(instanceId);
       
       return {
@@ -361,7 +376,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async resumeWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       await workflowRunner?.resumeWorkflow(instanceId);
       
       return {
@@ -379,7 +394,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async cancelWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       await workflowRunner?.cancelWorkflow(instanceId);
       
       return {
@@ -398,7 +413,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   // Workflow Schedules
   async getWorkflowSchedules(pagination?: IPaginationInput): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
       const schedules = await scheduler?.getSchedules() || [];
       
@@ -429,7 +444,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async getWorkflowSchedule(scheduleId: string): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
       const schedule = await scheduler?.getSchedule(scheduleId);
       
@@ -464,7 +479,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async updateWorkflowSchedule(scheduleId: string, updates: IUpdateScheduleInput): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
       
       const schedule = await scheduler?.updateSchedule(scheduleId, {
@@ -481,7 +496,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async deleteWorkflowSchedule(scheduleId: string): Promise<IWorkflowOperationResult> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
       await scheduler?.removeSchedule(scheduleId);
       
@@ -500,7 +515,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async startSchedule(scheduleId: string): Promise<IWorkflowOperationResult> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
       await scheduler?.resumeSchedule(scheduleId);
       
@@ -519,7 +534,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async stopSchedule(scheduleId: string): Promise<IWorkflowOperationResult> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
       await scheduler?.pauseSchedule(scheduleId);
       
@@ -538,7 +553,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async reloadSchedules(): Promise<IWorkflowOperationResult> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
       await scheduler?.reloadSchedules();
       
@@ -582,7 +597,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   // Legacy Support
   async getWorkflowStatus(name: string): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       const status = await workflowRunner?.getWorkflowStatus(name);
       
       return {
@@ -597,7 +612,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   async startWorkflowLegacy(name: string, data: any): Promise<boolean> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
+      const workflowRunner = await this.getWorkflowRunner();
       await workflowRunner?.startWorkflow(name, '1.0.0', data.input || {});
       return true;
     } catch (error) {

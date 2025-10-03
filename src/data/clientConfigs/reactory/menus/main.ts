@@ -13,12 +13,12 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
       roles: ['USER', 'ADMIN'],
     },
     {
-      ordinal: 2, 
-      title: "reactory:reactory.menu.about-reactory", 
-      link: '/about/', 
-      icon: 'article', 
-      roles: ['ANON', 'USER'],
-    },
+      ordinal: 2,
+      title: 'reactory:reactory.menu.reactor',
+      link: '/reactor/chat',
+      icon: 'chat',
+      roles: ['DEVELOPER', 'ADMIN', 'USER'],          
+    },           
     {
       ordinal: 3, 
       title: 'reactory:reactory.menu.documentation', 
@@ -62,6 +62,29 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
       link: '/forms/', 
       icon: 'pages', 
       roles: ['USER'],
+      items: [
+        {
+          ordinal: 1,
+          title: 'reactory:reactory.menu.forms',
+          link: '/forms/list',
+          icon: 'pages',
+          roles: ['USER'],
+        },
+        {
+          ordinal: 1,
+          title: 'reactory:reactory.menu.forms-favourites',
+          link: '/forms/favourites',
+          icon: 'build',
+          roles: ['USER'],
+        },
+        {
+          ordinal: 2,
+          title: 'reactory:reactory.menu.form-editor',
+          link: '/forms/editor',
+          icon: 'edit',
+          roles: ['DEVELOPER'],
+        }
+      ]
     },
     {
       ordinal: 5, 
@@ -90,14 +113,7 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
           link: '/graphiql/', 
           icon: 'offline_bolt', 
           roles: ['DEVELOPER', 'ADMIN'],
-        },
-        {
-          ordinal: 2,
-          title: 'reactory:reactory.menu.reactor',
-          link: '/reactor/chat',
-          icon: 'chat',
-          roles: ['DEVELOPER', 'ADMIN', 'USER'],          
-        },       
+        },        
       ]
     },
     {
@@ -116,6 +132,50 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
         },
       ],
     },
+    {
+      ordinal: 96,
+      title: 'reactory:reactory.menu.workflows',
+      link: '/workflows/',
+      icon: 'workflows',
+      roles: ['USER'],
+      items: [
+        {
+          ordinal: 1,
+          title: 'reactory:reactory.menu.workflows-editor',
+          link: '/workflows/editor',
+          icon: 'edit_document',
+          roles: ['USER'],
+        },
+        {
+          ordinal: 2,
+          title: 'reactory:reactory.menu.workflows-system-dashboard',
+          link: '/workflows/system-dashboard',
+          icon: 'dashboard',
+          roles: ['ADMIN'],
+        },
+        {
+          ordinal: 3,
+          title: 'reactory:reactory.menu.workflows-operations-dashboard',
+          link: '/workflows/operation-dashboard',
+          icon: 'rocket_launch',
+          roles: ['USER'],
+        },
+        {
+          ordinal: 4,
+          title: 'reactory:reactory.menu.workflows-instances-management',
+          link: '/workflows/instances-management',
+          icon: 'zoom_in_map',
+          roles: ['USER'],
+        }        
+      ],
+    },
+    {
+      ordinal: 97,
+      title: 'reactory:reactory.menu.about-reactory',
+      link: '/about/',
+      icon: 'article',
+      roles: ['ANON', 'USER'],
+    }
   ],
 }
 

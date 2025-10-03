@@ -2,7 +2,7 @@ import coreClis from './cli';
 import coreResolvers from './resolvers';
 import coreTypes from './graph/types';
 import directives from './graph/directives';
-import coreWorkflows from './workflow';
+import coreWorkflows from './workflows';
 import coreForms from './forms';
 import models from './models';
 import coreServices from './services';

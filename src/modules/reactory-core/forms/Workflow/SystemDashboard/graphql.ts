@@ -1,9 +1,8 @@
 import Reactory from '@reactory/reactory-core';
 
 const graphql: Reactory.Forms.IFormGraphDefinition = {
-  queries: {
-    workflowSystemStatus: {
-      name: 'WorkflowSystemDashboard',
+  query: {
+    name: 'workflowSystemStatus',
       text: `query WorkflowSystemDashboard {
         workflowSystemStatus {
           system {
@@ -40,8 +39,57 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
       }`,
       resultType: 'object',
       resultMap: {
-        'systemStatus': 'data.systemStatus',
-        'errors': 'data.recentErrors'
+        'system': 'systemStatus.system',
+        'lifecycle': 'systemStatus.lifecycle',
+        'configuration': 'systemStatus.configuration',
+        'security': 'systemStatus.security',        
+        'errors': 'recentErrors'
+      }
+  },
+  queries: {
+    workflowSystemStatus: {
+      name: 'workflowSystemStatus',
+      text: `query WorkflowSystemDashboard {
+        workflowSystemStatus {
+          system {
+            initialized
+            status
+            timestamp
+          }
+          lifecycle {
+            activeInstances
+            completedInstances
+            failedInstances
+            pausedInstances
+            totalInstances
+            averageExecutionTime
+          }
+          configuration {
+            totalConfigurations
+            activeConfigurations
+            validationErrors
+          }
+          security {
+            authenticatedRequests
+            unauthorizedAttempts
+            permissionDenials
+          }
+          errors {
+            errorType
+            count
+            lastOccurrence
+            workflowName
+            message
+          }
+        }
+      }`,
+      resultType: 'object',
+      resultMap: {
+        'system': 'systemStatus.system',
+        'lifecycle': 'systemStatus.lifecycle',
+        'configuration': 'systemStatus.configuration',
+        'security': 'systemStatus.security',        
+        'errors': 'recentErrors'
       }
     }
   },

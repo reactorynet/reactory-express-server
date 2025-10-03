@@ -1,3 +1,5 @@
+import { IWorkflowLifecycleStats } from "@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager";
+import { ISecurityStats } from "@reactory/server-modules/reactory-core/workflow/SecurityManager/SecurityManager";
 
 // Workflow Service Types
 export interface IWorkflowSystemStatus {
@@ -7,19 +9,9 @@ export interface IWorkflowSystemStatus {
     timestamp: Date;
   };
   lifecycle: IWorkflowLifecycleStats;
-  errors: IWorkflowErrorStats[];
+  errors: Map<string, IWorkflowErrorStats>;
   configuration: IConfigurationStats;
   security: ISecurityStats;
-}
-
-export interface IWorkflowLifecycleStats {
-  activeInstances: number;
-  completedInstances: number;
-  failedInstances: number;
-  pausedInstances: number;
-  totalInstances: number;
-  averageExecutionTime: number;
-  lastCleanupTime?: Date;
 }
 
 export interface IWorkflowErrorStats {
@@ -38,21 +30,6 @@ export interface IConfigurationStats {
   lastValidated?: Date;
   defaultSettings?: any;
   customSettings?: any;
-}
-
-export interface ISecurityStats {
-  authenticatedRequests: number;
-  unauthorizedAttempts: number;
-  permissionDenials: number;
-  activePermissions: string[];
-  securityEvents: ISecurityEvent[];
-}
-
-export interface ISecurityEvent {
-  event: string;
-  timestamp: Date;
-  userId?: string;
-  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 }
 
 export interface IWorkflowExecutionInput {

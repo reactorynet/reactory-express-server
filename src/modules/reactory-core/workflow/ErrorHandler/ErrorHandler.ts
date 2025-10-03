@@ -1,4 +1,4 @@
-import logger from '../../logging';
+import logger from '../../../../logging';
 
 export enum ErrorCategory {
   NETWORK = 'network',
@@ -48,6 +48,15 @@ export interface ITimeoutConfig {
   defaultTimeout: number; // in milliseconds
   maxTimeout: number; // in milliseconds
   timeoutMultiplier: number;
+}
+
+export interface IWorkflowErrorStats {
+  errorType: string;
+  count: number;
+  lastOccurrence: Date;
+  workflowName?: string;
+  message?: string;
+  stack?: string;
 }
 
 export class CircuitBreaker {
@@ -109,7 +118,7 @@ export class CircuitBreaker {
 
 export class ErrorHandler {
   private circuitBreakers: Map<string, CircuitBreaker> = new Map();
-  private errorStats: Map<string, { count: number; lastError: Date }> = new Map();
+  private errorStats: Map<string, IWorkflowErrorStats> = new Map();    
 
   constructor(
     private retryConfig: IRetryConfig = {
@@ -195,14 +204,8 @@ export class ErrorHandler {
   private async handleError(error: Error, context: IErrorContext): Promise<void> {
     const categorizedError = this.categorizeError(error);
     const severity = this.determineSeverity(categorizedError, context);
-
-    // Update error statistics
     this.updateErrorStats(context.workflowId);
-
-    // Log error with context
     this.logError(error, context, categorizedError, severity);
-
-    // Implement graceful degradation if needed
     await this.implementGracefulDegradation(context, categorizedError, severity);
   }
 
@@ -311,10 +314,17 @@ export class ErrorHandler {
   /**
    * Update error statistics
    */
-  private updateErrorStats(workflowId: string): void {
-    const stats = this.errorStats.get(workflowId) || { count: 0, lastError: new Date() };
+  private updateErrorStats(workflowId: string, category: ErrorCategory, error: Error): void {
+    const stats = this.errorStats.get(workflowId) || { 
+      count: 0, 
+      lastOccurrence: new Date(),
+      errorType: category,
+      workflowName: workflowId,
+      message: error.message,
+      stack: error.stack
+    };
     stats.count++;
-    stats.lastError = new Date();
+    stats.lastOccurrence = new Date();
     this.errorStats.set(workflowId, stats);
   }
 
@@ -390,7 +400,7 @@ export class ErrorHandler {
   /**
    * Get error statistics for a workflow
    */
-  public getErrorStats(workflowId: string): { count: number; lastError: Date } | undefined {
+  public getErrorStats(workflowId: string): IWorkflowErrorStats | undefined {
     return this.errorStats.get(workflowId);
   }
 
@@ -413,7 +423,7 @@ export class ErrorHandler {
   /**
    * Get all error statistics
    */
-  public getAllErrorStats(): Map<string, { count: number; lastError: Date }> {
+  public getAllErrorStats(): Map<string, IWorkflowErrorStats> {
     return new Map(this.errorStats);
   }
 

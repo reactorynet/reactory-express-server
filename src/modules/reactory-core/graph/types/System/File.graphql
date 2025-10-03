@@ -43,6 +43,33 @@ input ReactoryUserFilesLoadOptionsInput {
 }
 
 """
+Load options for server files with additional administrative controls
+"""
+type ReactoryServerFilesLoadOptions {
+  limit: Int
+  offset: Int
+  sortBy: String
+  sortOrder: String
+  search: String
+  includeFolders: Boolean
+  includeHidden: Boolean
+  includeSystemFiles: Boolean
+  fileTypes: [String] # Filter by file extensions or MIME types
+}
+
+input ReactoryServerFilesLoadOptionsInput {
+  limit: Int
+  offset: Int
+  sortBy: String
+  sortOrder: String
+  search: String
+  includeFolders: Boolean
+  includeHidden: Boolean
+  includeSystemFiles: Boolean
+  fileTypes: [String]
+}
+
+"""
 File delete input type allows for delete either by ID or path.
 If both are provided, the ID takes precedence.
 If the id is not found or the path does not exist, an error will be returned.
@@ -55,6 +82,51 @@ input ReactoryFileDeleteInput {
 type ReactoryFolder {  
   name: String
   path: String
+}
+
+"""
+Server file permissions for administrative operations
+"""
+type ReactoryServerFilePermissions {
+  read: Boolean!
+  write: Boolean!
+  delete: Boolean!
+  execute: Boolean
+}
+
+"""
+Server folder type with administrative metadata and permissions
+"""
+type ReactoryServerFolder {
+  name: String!
+  path: String!
+  fullPath: String!
+  created: Date
+  modified: Date
+  size: Int
+  fileCount: Int
+  permissions: ReactoryServerFilePermissions
+}
+
+"""
+Server file type with detailed metadata for administrative operations
+"""
+type ReactoryServerFile {
+  id: String!
+  name: String!
+  mimetype: String!
+  extension: String!
+  size: Int!
+  path: String!
+  fullPath: String!
+  created: Date!
+  modified: Date!
+  accessed: Date
+  checksum: String
+  isSystemFile: Boolean!
+  isHidden: Boolean!
+  permissions: ReactoryServerFilePermissions
+  metadata: String # JSON string for additional metadata
 }
 
 type ReactoryFile {
@@ -130,6 +202,24 @@ type ReactoryUserFilesErrorResponse {
   message: String
 }
 
+"""
+Server files response for administrative operations
+"""
+type ReactoryServerFiles {
+  serverPath: String!
+  loadOptions: ReactoryServerFilesLoadOptions
+  folders: [ReactoryServerFolder!]!
+  files: [ReactoryServerFile!]!
+  totalCount: Int
+  hasMore: Boolean
+}
+
+type ReactoryServerFilesErrorResponse {
+  error: String!
+  message: String!
+  serverPath: String
+}
+
 type ReactoryFolderCreateSuccess {
   success: Boolean
   folder: ReactoryFolder
@@ -169,6 +259,7 @@ union ReactoryFolderCreateResult = ReactoryFolderCreateSuccess | ReactoryFolderC
 union ReactoryFolderDeleteResult = ReactoryFolderDeleteSuccess | ReactoryFolderDeleteError
 union ReactoryItemMoveResult = ReactoryItemMoveSuccess | ReactoryItemMoveError
 union ReactoryUserFileResults = ReactoryUserFiles | ReactoryUserFilesErrorResponse
+union ReactoryServerFileResults = ReactoryServerFiles | ReactoryServerFilesErrorResponse
 
 type Query {
   """
@@ -179,6 +270,15 @@ type Query {
   If loadOptions is not provided, it defaults to loading the first 20 files.
   """
   ReactoryUserFiles(path: String, loadOptions: ReactoryUserFilesLoadOptionsInput): ReactoryUserFileResults
+
+  """
+  Fetches server files from administrative server paths. This query is restricted to ADMIN and DEVELOPER roles.
+  The serverPath can use template variables like ${APP_DATA_ROOT}/workflows for dynamic path resolution.
+  If no serverPath is provided, it defaults to ${APP_DATA_ROOT}.
+  The loadOptions provide advanced filtering, pagination, and sorting capabilities.
+  Access to system files and hidden files is controlled through loadOptions.
+  """
+  ReactoryServerFiles(serverPath: String, loadOptions: ReactoryServerFilesLoadOptionsInput): ReactoryServerFileResults
 }
 
 type Mutation {

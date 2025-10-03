@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-import logger from '../../logging';
+import logger from '../../../../logging';
 
 export interface IWorkflowConfig {
   id: string;
@@ -66,6 +66,15 @@ export interface IConfigurationChangeEvent {
   };
   timestamp: Date;
   user?: string;
+}
+
+export interface IConfigurationStats {
+  totalConfigurations: number;
+  activeConfigurations: number;
+  validationErrors: number;
+  lastValidated?: Date;
+  defaultSettings?: any;
+  customSettings?: any;
 }
 
 export class ConfigurationManager extends EventEmitter {
@@ -493,26 +502,16 @@ export class ConfigurationManager extends EventEmitter {
   /**
    * Get configuration statistics
    */
-  public getConfigurationStats(): {
-    totalConfigs: number;
-    enabledConfigs: number;
-    disabledConfigs: number;
-    environments: string[];
-    priorities: Record<string, number>;
-  } {
-    const configs = Array.from(this.configs.values());
-    const environments = [...new Set(configs.map(c => c.properties?.environment).filter(Boolean))];
-    const priorities = configs.reduce((acc, config) => {
-      acc[config.priority] = (acc[config.priority] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
+  public getConfigurationStats(): IConfigurationStats {
+    const configs = Array.from(this.configs.values());    
+    const validationErrors = configs.filter(c => !this.validateConfiguration(c).isValid);
     return {
-      totalConfigs: configs.length,
-      enabledConfigs: configs.filter(c => c.enabled).length,
-      disabledConfigs: configs.filter(c => !c.enabled).length,
-      environments,
-      priorities
+      totalConfigurations: configs.length,
+      activeConfigurations: configs.filter(c => c.enabled).length,
+      validationErrors: validationErrors.length,            
+      lastValidated: new Date(),
+      defaultSettings: {},
+      customSettings: {}
     };
   }
 

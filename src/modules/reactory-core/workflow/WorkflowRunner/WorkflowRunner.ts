@@ -8,12 +8,12 @@ import {
 import { MongoDBPersistence } from 'workflow-es-mongodb';
 import { isArray } from 'lodash';
 import moment from 'moment';
-import amq from '../../amq';
-import reactoryModules from '../../modules';
-import logger from '../../logging';
+import amq from '../../../../amq';
+import reactoryModules from '../../..';
+import logger from '../../../../logging';
 import mongoose from 'mongoose';
 import { WorkflowScheduler } from '../Scheduler/Scheduler';
-import { ErrorHandler, IErrorContext, ErrorCategory, ErrorSeverity } from '../ErrorHandler/ErrorHandler';
+import { ErrorHandler, IErrorContext, ErrorCategory, ErrorSeverity, IWorkflowErrorStats } from '../ErrorHandler/ErrorHandler';
 import {
   WorkflowLifecycleManager,
   WorkflowStatus,
@@ -22,8 +22,8 @@ import {
   type IWorkflowDependency,
   type IWorkflowLifecycleStats
 } from '../LifecycleManager/LifecycleManager';
-import { ConfigurationManager, type IWorkflowConfig } from '../ConfigurationManager/ConfigurationManager';
-import { SecurityManager, type IInputValidationResult } from '../SecurityManager/SecurityManager';
+import { ConfigurationManager, IConfigurationStats, type IWorkflowConfig } from '../ConfigurationManager/ConfigurationManager';
+import { ISecurityStats, SecurityManager, type IInputValidationResult } from '../SecurityManager/SecurityManager';
 
 const {
   MONGOOSE,
@@ -65,24 +65,6 @@ export interface IWorkflowStartData {
   props?: any;
 }
 
-const availableworkflows: IWorkflow[] = [];
-reactoryModules.enabled.forEach((reactoryModule) => {
-  if (isArray(reactoryModule.workflows)) {    
-    reactoryModule.workflows.forEach((workflow: any) => {
-      if (typeof workflow === 'object' && workflow.category === 'workflow') {
-        logger.debug(`🔀 Loading workflow for module ${reactoryModule.name}`, workflow);        
-        availableworkflows.push(workflow);
-      } else {
-        logger.warn(`Did not load workflow item - bad shape, expecting object with category "workflow" found ${typeof workflow}`, workflow);
-      }
-    });
-  }
-});
-
-export const DefaultWorkflows: IWorkflow[] = [  
-  ...availableworkflows,
-];
-
 const safeCallback = (cb: ((params: any) => void) | undefined, params: any): void => {
   if (typeof cb === 'function') cb(params);
 };
@@ -99,6 +81,26 @@ class Logger implements ILogger {
   } 
 }
 
+const getDefaultWorkflows = (): IWorkflow[] => {
+
+  const availableworkflows: IWorkflow[] = [];
+  reactoryModules.enabled.forEach((reactoryModule) => {
+    if (isArray(reactoryModule.workflows)) {    
+      reactoryModule.workflows.forEach((workflow: any) => {
+        if (typeof workflow === 'object' && workflow.category === 'workflow') {
+          logger.debug(`🔀 Loading workflow for module ${reactoryModule.name}`, workflow);        
+          availableworkflows.push(workflow);
+        } else {
+          logger.warn(`Did not load workflow item - bad shape, expecting object with category "workflow" found ${typeof workflow}`, workflow);
+        }
+      });
+    }
+  });
+  return availableworkflows;
+}
+
+let instance: WorkflowRunner | null = null;
+
 /**
  * Workflow runner is a singleton class that manages the workflow engine and the workflow host.
  */
@@ -113,22 +115,21 @@ export class WorkflowRunner {
   private errorHandler: ErrorHandler;
   private lifecycleManager: WorkflowLifecycleManager;
   private configurationManager: ConfigurationManager;
-  private securityManager: SecurityManager;
-  private instance: WorkflowRunner | null = null;
+  private securityManager: SecurityManager;  
 
   constructor(props: IWorkflowRunnerProps) {
 
     // ensure singleton pattern
-    if (!this.instance) {
-      this.instance = this;
+    if (!instance) {
+      instance = this;
     } else {
       // return the instance
-      return this.instance;
+      return instance;
     }
 
     this.props = props;
     this.state = {
-      workflows: props.workflows || DefaultWorkflows,
+      workflows: props.workflows || getDefaultWorkflows(),
       host: null,
     };
     this.errorHandler = new ErrorHandler();
@@ -161,6 +162,8 @@ export class WorkflowRunner {
     this.setState = this.setState.bind(this);
     this.stop = this.stop.bind(this);
 
+    instance = this;
+    return instance;
   }
 
   /**
@@ -279,7 +282,9 @@ export class WorkflowRunner {
    * Handle state changes
    */
   private onStateChanged(oldState: IWorkflowState, newState: IWorkflowState): void {
-    logger.debug('Workflow State Changed', { oldState, newState });
+    // determine the changes
+    const changes = Object.keys(newState).filter(key => newState[key as keyof IWorkflowState] !== oldState[key as keyof IWorkflowState]);
+    logger.debug('Workflow State Changed', { changes });
   }
 
   /**
@@ -338,7 +343,7 @@ export class WorkflowRunner {
       if (MONGOOSE) {
         logger.debug('Using Mongoose for Workflow Persistence');
         const mongoPersistence = new MongoDBPersistence(MONGOOSE);      
-        await mongoPersistence.connect();
+        //await mongoPersistence.connect();
         return mongoPersistence;
       }
       logger.debug('Using In Memory for Workflow Persistence');
@@ -568,7 +573,7 @@ export class WorkflowRunner {
   /**
    * Get error statistics for a workflow
    */
-  public getErrorStats(workflowId: string): { count: number; lastError: Date } | undefined {
+  public getErrorStats(workflowId: string): IWorkflowErrorStats | undefined {
     return this.errorHandler.getErrorStats(workflowId);
   }
 
@@ -589,7 +594,7 @@ export class WorkflowRunner {
   /**
    * Get all error statistics
    */
-  public getAllErrorStats(): Map<string, { count: number; lastError: Date }> {
+  public getAllErrorStats(): Map<string, IWorkflowErrorStats> {
     return this.errorHandler.getAllErrorStats();
   }
 
@@ -740,7 +745,7 @@ export class WorkflowRunner {
     return this.configurationManager.removeConfiguration(workflowId, version, user);
   }
 
-  public getConfigurationStats() {
+  public getConfigurationStats(): IConfigurationStats {
     return this.configurationManager.getConfigurationStats();
   }
 
@@ -790,7 +795,7 @@ export class WorkflowRunner {
     return this.securityManager.getSecurityEvents(filter);
   }
 
-  public getSecurityStats() {
+  public getSecurityStats(): ISecurityStats {
     return this.securityManager.getSecurityStats();
   }
 
@@ -806,4 +811,4 @@ export class WorkflowRunner {
   public getSecurityManager(): SecurityManager {
     return this.securityManager;
   }
-} 
+}

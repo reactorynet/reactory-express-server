@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import * as crypto from 'crypto';
-import logger from '../../logging';
+import logger from '../../../../logging';
 
 export interface IUser {
   id: string;
@@ -10,6 +10,14 @@ export interface IUser {
   permissions: string[];
   active: boolean;
   lastLogin?: Date;
+}
+
+export interface ISecurityStats {
+  authenticatedRequests: number;
+  unauthorizedAttempts: number;
+  permissionDenials: number;
+  activePermissions: string[];
+  securityEvents: ISecurityEvent[];
 }
 
 export interface IWorkflowPermission {
@@ -524,21 +532,13 @@ export class SecurityManager extends EventEmitter {
   /**
    * Get security statistics
    */
-  public getSecurityStats(): {
-    totalUsers: number;
-    activeUsers: number;
-    totalWorkflowPermissions: number;
-    auditLogEntries: number;
-    securityEvents: number;
-    unresolvedSecurityEvents: number;
-  } {
+  public getSecurityStats(): ISecurityStats {   
     return {
-      totalUsers: this.users.size,
-      activeUsers: Array.from(this.users.values()).filter(u => u.active).length,
-      totalWorkflowPermissions: this.workflowPermissions.size,
-      auditLogEntries: this.auditLog.length,
-      securityEvents: this.securityEvents.length,
-      unresolvedSecurityEvents: this.securityEvents.filter(e => !e.resolved).length
+      authenticatedRequests: this.auditLog.filter(log => log.success).length,
+      unauthorizedAttempts: this.auditLog.filter(log => !log.success).length,
+      permissionDenials: this.auditLog.filter(log => log.details.result === 'denied').length,
+      activePermissions: Array.from(this.workflowPermissions.values()).flatMap(p => p.permissions),
+      securityEvents: this.securityEvents,     
     };
   }
 

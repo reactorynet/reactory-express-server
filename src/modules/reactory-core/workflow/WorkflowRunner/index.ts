@@ -1,6 +1,5 @@
 export { 
-  WorkflowRunner, 
-  DefaultWorkflows,
+  WorkflowRunner,   
   type IWorkflow,
   type IWorkflowState,
   type IWorkflowRunnerProps,

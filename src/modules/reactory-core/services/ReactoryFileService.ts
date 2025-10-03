@@ -77,12 +77,23 @@ export class ReactoryFileService
       this.context.partner._id.toString(),
       "home"
     );
-    if (rootPath) {
-      rootFolder = path.join(rootFolder, rootPath);
+
+    let _rootPath = rootPath;
+    if (rootPath.indexOf("${") && this.context.hasRole("DEVELOPER") || this.context.hasRole("ADMIN")) {
+      // check if the root path is a template
+      _rootPath = template(rootPath)({
+        user_id: userId,
+        partner_id: this.context.partner._id,
+        APP_DATA_ROOT,    
+      });
+    }
+
+    if (_rootPath) {
+      rootFolder = path.join(rootFolder, _rootPath);
     }
 
     if (fs.existsSync(rootFolder) === false) {
-      return { path: rootPath, files: [], folders: [] };
+      return { path: _rootPath, files: [], folders: [] };
     }
 
     let files: Reactory.Models.IReactoryFile[] = [];
@@ -92,7 +103,7 @@ export class ReactoryFileService
       if (dirent.isDirectory()) {
         folders.push({
           name: dirent.name,
-          path: path.join(rootPath, dirent.name),
+          path: path.join(_rootPath, dirent.name),
         });
       } else if (dirent.isFile()) {
         const filePath = path.join(rootFolder, dirent.name);
@@ -129,6 +140,257 @@ export class ReactoryFileService
       files,
       folders,
     };
+  }
+
+  /**
+   * Retrieves server files for administrative operations.
+   * This method is restricted to ADMIN and DEVELOPER roles.
+   * @param serverPath - Server path with template variable support (e.g., ${APP_DATA_ROOT}/workflows)
+   * @param options - Load options including filtering and pagination
+   */
+  getServerFiles(
+    serverPath: string = "${APP_DATA_ROOT}",
+    options?: {
+      limit?: number;
+      offset?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+      search?: string;
+      includeFolders?: boolean;
+      includeHidden?: boolean;
+      includeSystemFiles?: boolean;
+      fileTypes?: string[];
+    }
+  ): {
+    serverPath: string;
+    files: any[];
+    folders: any[];
+    totalCount?: number;
+    hasMore?: boolean;
+  } {
+    // Check permissions - only ADMIN and DEVELOPER roles can access server files
+    if (!this.context.hasRole("ADMIN") && !this.context.hasRole("DEVELOPER")) {
+      throw new ApiError("Access denied. Admin or Developer role required for server file access.");
+    }
+
+    let resolvedPath = serverPath;
+    
+    // Resolve template variables in server path
+    if (serverPath.indexOf("${") >= 0) {
+      try {
+        resolvedPath = template(serverPath)({
+          APP_DATA_ROOT,
+          user_id: this.context.user._id,
+          partner_id: this.context.partner._id,
+        });
+      } catch (templateError) {
+        logger.error("Failed to resolve server path template:", templateError);
+        throw new ApiError(`Invalid server path template: ${serverPath}`);
+      }
+    }
+
+    if (!fs.existsSync(resolvedPath)) {
+      return { 
+        serverPath: resolvedPath, 
+        files: [], 
+        folders: [],
+        totalCount: 0,
+        hasMore: false
+      };
+    }
+
+    const defaultOptions = {
+      limit: 50,
+      offset: 0,
+      sortBy: "name",
+      sortOrder: "asc" as const,
+      search: "",
+      includeFolders: true,
+      includeHidden: false,
+      includeSystemFiles: true,
+      fileTypes: [],
+      ...options
+    };
+
+    let files: any[] = [];
+    let folders: any[] = [];
+
+    // Helper function to determine file permissions (simplified for now)
+    const getFilePermissions = (filePath: string, stats: fs.Stats) => ({
+      read: true, // For now, assume admin has read access
+      write: !stats.isDirectory(), // Can write to files but not folders by default
+      delete: true, // Admin can delete
+      execute: stats.mode & parseInt('0111', 8) ? true : false
+    });
+
+    // Helper function to check if file should be included
+    const shouldIncludeFile = (name: string, isHidden: boolean, stats: fs.Stats) => {
+      // Check hidden files
+      if (isHidden && !defaultOptions.includeHidden) {
+        return false;
+      }
+
+      // Check system files (simplified - files in system directories)
+      const isSystemFile = resolvedPath.includes("system") || name.startsWith(".");
+      if (isSystemFile && !defaultOptions.includeSystemFiles) {
+        return false;
+      }
+
+      // Check file types
+      if (defaultOptions.fileTypes && defaultOptions.fileTypes.length > 0) {
+        const extension = path.extname(name).toLowerCase();
+        const hasMatchingType = defaultOptions.fileTypes.some(type => 
+          name.toLowerCase().includes(type.toLowerCase()) || 
+          extension === type.toLowerCase()
+        );
+        if (!hasMatchingType) {
+          return false;
+        }
+      }
+
+      // Check search query
+      if (defaultOptions.search && !name.toLowerCase().includes(defaultOptions.search.toLowerCase())) {
+        return false;
+      }
+
+      return true;
+    };
+
+    // Read directory contents
+    try {
+      const dirents = fs.readdirSync(resolvedPath, { withFileTypes: true });
+      
+      dirents.forEach((dirent) => {
+        const isHidden = dirent.name.startsWith(".");
+        const fullPath = path.join(resolvedPath, dirent.name);
+        const stats = fs.statSync(fullPath);
+
+        if (!shouldIncludeFile(dirent.name, isHidden, stats)) {
+          return;
+        }
+
+        if (dirent.isDirectory() && defaultOptions.includeFolders) {
+          // Count files in directory (for fileCount)
+          let fileCount = 0;
+          try {
+            const subItems = fs.readdirSync(fullPath, { withFileTypes: true });
+            fileCount = subItems.filter(item => item.isFile()).length;
+          } catch (error) {
+            fileCount = 0; // Can't access subdirectory
+          }
+
+          folders.push({
+            name: dirent.name,
+            path: dirent.name, // Relative path
+            fullPath: fullPath,
+            created: stats.birthtime,
+            modified: stats.mtime,
+            size: 0, // Directories don't have size
+            fileCount: fileCount,
+            permissions: getFilePermissions(fullPath, stats)
+          });
+        } else if (dirent.isFile()) {
+          const extension = path.extname(dirent.name).toLowerCase().replace(".", "");
+          const isSystemFile = resolvedPath.includes("system") || dirent.name.startsWith(".");
+
+          files.push({
+            id: Hash(fullPath).toString(), // Use hash as ID
+            name: dirent.name,
+            mimetype: this.getMimeType(extension),
+            extension: extension,
+            size: stats.size,
+            path: dirent.name, // Relative path
+            fullPath: fullPath,
+            created: stats.birthtime,
+            modified: stats.mtime,
+            accessed: stats.atime,
+            checksum: Hash(fullPath).toString(),
+            isSystemFile: isSystemFile,
+            isHidden: isHidden,
+            permissions: getFilePermissions(fullPath, stats),
+            metadata: JSON.stringify({
+              mode: stats.mode.toString(8),
+              uid: stats.uid,
+              gid: stats.gid,
+              nlink: stats.nlink
+            })
+          });
+        }
+      });
+    } catch (error) {
+      logger.error(`Error reading server directory ${resolvedPath}:`, error);
+      throw new ApiError(`Failed to read server directory: ${resolvedPath}`);
+    }
+
+    // Sort results
+    const sortKey = defaultOptions.sortBy;
+    const sortOrder = defaultOptions.sortOrder;
+    const sortFn = (a: any, b: any) => {
+      let aVal = a[sortKey] || a.name || "";
+      let bVal = b[sortKey] || b.name || "";
+      
+      if (sortKey === "modified" || sortKey === "created") {
+        aVal = new Date(aVal).getTime();
+        bVal = new Date(bVal).getTime();
+      } else if (sortKey === "size") {
+        aVal = a.size || 0;
+        bVal = b.size || 0;
+      } else {
+        aVal = aVal.toString().toLowerCase();
+        bVal = bVal.toString().toLowerCase();
+      }
+      
+      const result = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return sortOrder === "desc" ? -result : result;
+    };
+
+    folders.sort(sortFn);
+    files.sort(sortFn);
+
+    // Apply pagination
+    const allItems = [...folders, ...files];
+    const totalCount = allItems.length;
+    const startIndex = defaultOptions.offset || 0;
+    const endIndex = startIndex + (defaultOptions.limit || 50);
+    
+    // Separate paginated results back into folders and files
+    const paginatedItems = allItems.slice(startIndex, endIndex);
+    const paginatedFolders = paginatedItems.filter(item => !item.id); // Folders don't have id
+    const paginatedFiles = paginatedItems.filter(item => item.id); // Files have id
+
+    return {
+      serverPath: resolvedPath,
+      files: paginatedFiles,
+      folders: paginatedFolders,
+      totalCount: totalCount,
+      hasMore: endIndex < totalCount
+    };
+  }
+
+  /**
+   * Get MIME type for file extension (simplified implementation)
+   */
+  private getMimeType(extension: string): string {
+    const mimeTypes: { [key: string]: string } = {
+      'json': 'application/json',
+      'js': 'application/javascript',
+      'ts': 'application/typescript',
+      'txt': 'text/plain',
+      'md': 'text/markdown',
+      'html': 'text/html',
+      'css': 'text/css',
+      'xml': 'application/xml',
+      'yaml': 'application/yaml',
+      'yml': 'application/yaml',
+      'png': 'image/png',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'gif': 'image/gif',
+      'pdf': 'application/pdf',
+      'zip': 'application/zip',
+    };
+    
+    return mimeTypes[extension] || 'application/octet-stream';
   }
 
   async getUserFileByPath(

@@ -52,7 +52,7 @@ src/feature/__tests__/
 - **Collaboration**: If uncertain about test changes, consult with team members
 - **Plan Validation**: Verify the TDD plan has been updated with test results
 
-# Running Tests
+# Running Tests For Server
 ```bash
 # reactory configuration environment
 $REACTORY_SERVER/bin/jest.sh reactory local

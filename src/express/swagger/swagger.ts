@@ -114,10 +114,6 @@ ReactoryModules.enabled.forEach((module) => {
   }
 });
 
-// Add the workflow router folder directly because
-// it is not a separate reactory module
-const workflowPath = path.resolve(`./${process.env.APPLICATION_ROOT || 'src'}/workflow/routes/`);
-apis.push(...getFiles(workflowPath));
 
 // Define Swagger options
 export const swaggerOptions: swaggerJSDoc.Options = {
