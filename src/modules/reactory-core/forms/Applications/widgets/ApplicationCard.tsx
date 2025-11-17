@@ -116,30 +116,25 @@ const ApplicationCard = (props: IApplicationCardProps) => {
   };
 
   return (
-    <Grid2 
-      id={`application_card_grid_${idSchema.$id}_${formData.id}`}
-      key={`application_card_grid_${idSchema.$id}_${formData.id}`}
-      item>
-      <Card 
-        id={`application_card_${idSchema.$id}_${formData.id}`} 
-        key={formData.id}>
-        <CardHeader {...headerProps} />
-        <CardMedia 
-          component="img" 
-          height={240}
-          width="100%"
-          image={logo}
-          alt={title}
-        />
-        <CardContent>        
-          <StaticContent slug={`reactory-application-intro-${reactory.utils.slugify(title)}`} defaultValue={<p>{default_intro}</p>} />
-        </CardContent>      
-        <CardActions>
-          <Button size="small" onClick={onLaunchApp}>{launchText}</Button>
-          <Button size="small" onClick={onViewMoreApp}>{moreText}</Button>
-        </CardActions>                            
-      </Card>
-    </Grid2>
+    <Card 
+      id={`application_card_${idSchema.$id}_${formData.id}`} 
+      key={formData.id}>
+      <CardHeader {...headerProps} />
+      <CardMedia 
+        component="img" 
+        height={240}
+        width="100%"
+        image={logo}
+        alt={title}
+      />
+      <CardContent>        
+        <StaticContent slug={`reactory-application-intro-${reactory.utils.slugify(title)}`} defaultValue={<p>{default_intro}</p>} />
+      </CardContent>      
+      <CardActions>
+        <Button size="small" onClick={onLaunchApp}>{launchText}</Button>
+        <Button size="small" onClick={onViewMoreApp}>{moreText}</Button>
+      </CardActions>                            
+    </Card>
   );
 }
 

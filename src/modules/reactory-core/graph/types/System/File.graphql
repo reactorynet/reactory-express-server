@@ -152,6 +152,7 @@ type ReactoryFile {
   tags: [String]
   remotes: [ReactoryFileRemoteEntry]
   timeline: [Timeline]
+  content: String
 }
 
 type ReactoryFileUpdateSuccess {
@@ -260,6 +261,7 @@ union ReactoryFolderDeleteResult = ReactoryFolderDeleteSuccess | ReactoryFolderD
 union ReactoryItemMoveResult = ReactoryItemMoveSuccess | ReactoryItemMoveError
 union ReactoryUserFileResults = ReactoryUserFiles | ReactoryUserFilesErrorResponse
 union ReactoryServerFileResults = ReactoryServerFiles | ReactoryServerFilesErrorResponse
+union ReactoryServerFileReadResult = ReactoryServerFile | ReactoryServerFilesErrorResponse
 
 type Query {
   """
@@ -279,6 +281,13 @@ type Query {
   Access to system files and hidden files is controlled through loadOptions.
   """
   ReactoryServerFiles(serverPath: String, loadOptions: ReactoryServerFilesLoadOptionsInput): ReactoryServerFileResults
+
+  """
+  Reads the content of a server file for administrative purposes. This query is restricted to ADMIN and DEVELOPER roles.
+  The path must be an absolute path or a path relative to the server's APP_DATA_ROOT.
+  Returns detailed metadata about the file along with its content as a string.
+  """
+  ReactoryReadServerFile(path: String!): ReactoryServerFileReadResult
 }
 
 type Mutation {

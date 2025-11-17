@@ -19,10 +19,11 @@ export const inlineEditor: Reactory.Schema.IFormUISchema = {
     showHelp: false,
   },
   content: {
-    'ui:widget': 'FroalaWidget',
+    'ui:widget': 'RichEditorWidget',
+    'ui:title': null,
     'ui:options': {
       showLabel: false,
-      froalaOptions: inlineFroalaOptions,
+      options: inlineFroalaOptions,
     },
   },
   title: {

@@ -13,8 +13,6 @@ import logger from '@reactory/server-core/logging';
 import { trim } from 'lodash';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { service } from '@reactory/server-core/application/decorators/service';
-import { businessUnitUISchema } from 'build/server/reactory/minikube/data/plugins/reactory-client-core/src/components/User/Forms/MyPersonalDemographics/uiSchema';
-
 
 @service({
   id: 'core.OrganizationService@1.0.0',
@@ -382,7 +380,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
   
   async findWithName(name: string): Promise<Reactory.Models.IOrganizationDocument> {
-    this.context.log(`Seaching for organization by name: ${name}`, {}, 'debug', 'OrganizationService')    
+    this.context.log(`Searching for organization by name: ${name}`, {}, 'debug', 'OrganizationService')    
     return await Organization.findOne(
       { name: { $regex: `^${name}$`, $options: 'i' } },
       { 

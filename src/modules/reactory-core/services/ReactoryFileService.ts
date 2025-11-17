@@ -168,12 +168,17 @@ export class ReactoryFileService
     totalCount?: number;
     hasMore?: boolean;
   } {
+    let rewriteServerPath = false;
     // Check permissions - only ADMIN and DEVELOPER roles can access server files
     if (!this.context.hasRole("ADMIN") && !this.context.hasRole("DEVELOPER")) {
       throw new ApiError("Access denied. Admin or Developer role required for server file access.");
     }
 
     let resolvedPath = serverPath;
+
+    if(resolvedPath.endsWith('/')) { 
+      resolvedPath = resolvedPath.substring(0, resolvedPath.length - 1);
+    }
     
     // Resolve template variables in server path
     if (serverPath.indexOf("${") >= 0) {
@@ -183,6 +188,7 @@ export class ReactoryFileService
           user_id: this.context.user._id,
           partner_id: this.context.partner._id,
         });
+        rewriteServerPath = true;
       } catch (templateError) {
         logger.error("Failed to resolve server path template:", templateError);
         throw new ApiError(`Invalid server path template: ${serverPath}`);
@@ -191,7 +197,7 @@ export class ReactoryFileService
 
     if (!fs.existsSync(resolvedPath)) {
       return { 
-        serverPath: resolvedPath, 
+        serverPath, 
         files: [], 
         folders: [],
         totalCount: 0,
@@ -199,7 +205,7 @@ export class ReactoryFileService
       };
     }
 
-    const defaultOptions = {
+    const defaultOptions: any = {
       limit: 50,
       offset: 0,
       sortBy: "name",
@@ -279,10 +285,12 @@ export class ReactoryFileService
             fileCount = 0; // Can't access subdirectory
           }
 
+
+
           folders.push({
             name: dirent.name,
             path: dirent.name, // Relative path
-            fullPath: fullPath,
+            fullPath: rewriteServerPath ? path.join(serverPath, dirent.name) : fullPath,
             created: stats.birthtime,
             modified: stats.mtime,
             size: 0, // Directories don't have size
@@ -300,7 +308,7 @@ export class ReactoryFileService
             extension: extension,
             size: stats.size,
             path: dirent.name, // Relative path
-            fullPath: fullPath,
+            fullPath: rewriteServerPath ? path.join(serverPath, dirent.name) : fullPath,
             created: stats.birthtime,
             modified: stats.mtime,
             accessed: stats.atime,
@@ -359,7 +367,7 @@ export class ReactoryFileService
     const paginatedFiles = paginatedItems.filter(item => item.id); // Files have id
 
     return {
-      serverPath: resolvedPath,
+      serverPath,
       files: paginatedFiles,
       folders: paginatedFolders,
       totalCount: totalCount,

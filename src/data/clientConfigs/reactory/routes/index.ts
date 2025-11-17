@@ -207,8 +207,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     path: '/profile',
     public: false,
     roles: ['USER'],
-
-    componentFqn: 'core.UserProfile@1.0.0',
+    componentFqn: 'core.UserProfile@1.0.1',
     componentProps: {
       withPeers: true,
       withMemberships: true,
@@ -217,7 +216,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       ]
     }
   },
-
   {
     key: 'forms_with_mode_and_id',
     title: 'Form with mode and id',
@@ -233,7 +231,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     }],
     exact: false,    
   },
-
   {
     key: 'forms_with_mode',
     title: 'Form with mode',
@@ -248,7 +245,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       }
     }],
   },
-
   {
     key: 'forms_with_id',
     title: 'Form',

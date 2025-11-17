@@ -66,6 +66,12 @@ class UserResolver {
     return user.mobileNumber || 'Not Set';
   }
 
+  @property('User', 'authProvider')
+  authProvider(user: { authProvider: any }) {
+    return user.authProvider || 'LOCAL';
+  }
+  
+
   // --- Query Resolvers ---
   @query('allUsers')
   async allUsers(obj: any, args: any, context: Reactory.Server.IReactoryContext) {

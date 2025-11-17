@@ -49,7 +49,8 @@ export const fullEditor: Reactory.Schema.IFormUISchema = {
     'ui:options': datePickerProps
   },
   content: {
-    'ui:widget': 'FroalaWidget',
+    'ui:widget': 'RichEditorWidget',
+    'ui:title': null,
     'ui:options': {
       froalaOptions: minmalExtendedOptions,
     },
