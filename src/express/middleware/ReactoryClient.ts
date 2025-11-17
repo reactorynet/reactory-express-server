@@ -52,8 +52,7 @@ const validatedClients: {
  */
 const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: Function) => {
 
-  const { headers, query, context } = req;
-  context.debug(`ReactoryClientAuthenticationMiddleware:: executing`)
+  const { headers, query, context, path } = req;  
   let bypass: boolean = false;
   if (req.originalUrl) {
     bypass = bypassUri.some(uri => req.originalUrl.includes(uri));

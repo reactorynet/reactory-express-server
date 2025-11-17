@@ -68,7 +68,13 @@ export default class Helpers {
 
   static jwtMake = (payload: any) => { return jwt.encode(payload, jwtSecret); };
 
-  static jwtTokenForUser = (user: Reactory.Models.IUserDocument, options = {}) => {
+  static jwtTokenForUser = (user: Reactory.Models.IUserDocument, options: {
+    exp?: number,
+    iat?: number,
+    iss?: string,
+    sub?: string,
+    aud?: string,
+  } = {}) => {
     if (isNil(user)) throw new UserValidationError('User object cannot be null', { context: 'jwtTokenForUser' });
 
     const {
@@ -97,6 +103,16 @@ export default class Helpers {
       refresh: uuid(),
       name: `${user.firstName} ${user.lastName}`,
     };
+  }
+
+  static getJwtTokenForUser = (user: Reactory.Models.IUserDocument, options: {
+    exp?: number,
+    iat?: number,
+    iss?: string,
+    sub?: string,
+    aud?: string,
+  } = {}) => {  
+    return Helpers.jwtMake(Helpers.jwtTokenForUser(user, options));
   }
 
   static addSession = async (user: Reactory.Models.IUserDocument, token: any, ip = '-', clientId = 'not-set') => {

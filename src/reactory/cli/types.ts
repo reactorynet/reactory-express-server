@@ -22,6 +22,7 @@ export interface ServiceJob {
   params?: any[];
   paramsMap?: Reactory.ObjectMap
   state?: any;
+  async?: boolean;
 }
 
 export interface WorkflowJob {

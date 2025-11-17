@@ -22,7 +22,7 @@ export default [
     componentFqn: 'core.PostgresConnectionForm@1.0.0',
     data: {
       host: REACTORY_POSTGRES_HOST,
-      port: 5432,
+      port: parseInt(REACTORY_POSTGRES_PORT),
       username: REACTORY_POSTGRES_USER,
       password: REACTORY_POSTGRES_PASSWORD,
       database: REACTORY_POSTGRES_DB,

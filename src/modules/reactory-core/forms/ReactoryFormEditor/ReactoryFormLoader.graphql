@@ -1,7 +1,0 @@
-query ReactoryGetContentList {
-  ReactoryGetContentList {
-    id
-    slug
-    updatedAt
-  }
-}

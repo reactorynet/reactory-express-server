@@ -1,0 +1,62 @@
+{
+  "type": "object",
+  "title": "SecurityStats",
+  "description": "Statistics about workflow security",
+  "properties": {
+    "authenticatedRequests": {
+      "type": "integer",
+      "title": "Authenticated Requests",
+      "description": "Number of authenticated requests"
+    },
+    "unauthorizedAttempts": {
+      "type": "integer",
+      "title": "Unauthorized Attempts",
+      "description": "Number of unauthorized access attempts"
+    },
+    "permissionDenials": {
+      "type": "integer",
+      "title": "Permission Denials",
+      "description": "Number of permission denials"
+    },
+    "activePermissions": {
+      "type": "array",
+      "title": "Active Permissions",
+      "description": "List of active permission types",
+      "items": {
+        "type": "string"
+      }
+    },
+    "securityEvents": {
+      "type": "array",
+      "title": "Security Events",
+      "description": "Recent security events",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "title": "Event Type",
+            "description": "Type of security event"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "When the event occurred"
+          },
+          "userId": {
+            "type": "string",
+            "title": "User ID",
+            "description": "ID of the user involved"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"],
+            "title": "Severity",
+            "description": "Severity level of the event"
+          }
+        }
+      }
+    }
+  }
+}

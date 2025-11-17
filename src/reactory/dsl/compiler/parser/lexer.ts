@@ -51,6 +51,8 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
     [/^\/\*/, 'COMMENT'],
     [/^\*\//, 'COMMENT'],
 
+    [/^-->/, 'ARROW_CHAIN'],
+    [/^-=>/, 'ARROW_BRANCH'],
     [/^\+/, 'ARITHMETIC_OPERATOR'],
     [/^-/, 'ARITHMETIC_OPERATOR'],
     [/^\*/, 'ARITHMETIC_OPERATOR'],
@@ -65,15 +67,14 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
     [/^\{/, 'CURLY_OPEN'],
     [/^\}/, 'CURLY_CLOSE'],
     [/^,/, 'COMMA'],
-    [/^;/, 'SEMICOLON'],    
-    [/^-->/, 'ARROW_CHAIN'],
-    [/^-=>/, 'ARROW_BRANCH'],
+    [/^;/, 'SEMICOLON'],
     [/^\$[a-zA-Z_]\w*((\.\w+)|(\?\.\w+))*/, 'VARIABLE'],
     //[/^\$[a-zA-Z_]\w*/, 'VARIABLE'],
     [/^"[^"\\]*(\\.[^"\\]*)*"/, 'STRING_LITERAL'], // String literals with escape characters
     [/^\d+(\.\d+)?/, 'NUMBER_LITERAL'],
     [/^(?:&&|\|\|)/, 'LOGICAL_OPERATOR'],
-    [/^(?:==|===|!=|<=|>=|<|>|<==>]|>==<|>==\||\|==<)/, 'COMPARISON_OPERATOR'],
+    [/^(?:==|===|!=|<|>)/, 'COMPARISON_OPERATOR'],
+    [/^(?:<=|>=)/, 'COMPARISON_OPERATOR'],
     [/^=/, 'ASSIGNMENT'],
     [/^const\b/, 'CONST'],
     [/^let\b/, 'LET'],
@@ -199,10 +200,15 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
               // we can do this by looking for the first occurence of '\n'
               // we can then slice the text from the start of the comment to the end of the comment
               const endOfCommentIndex = workingInput.indexOf('\n');
-              commentBlock = workingInput.slice(0, endOfCommentIndex);
+              if (endOfCommentIndex === -1) {
+                // No newline found, take the rest of the input
+                commentBlock = workingInput;
+              } else {
+                commentBlock = workingInput.slice(0, endOfCommentIndex);
+              }
             }
             text = commentBlock;
-            offset = workingInput.startsWith('\n') ? 1 : 0;
+            offset = 0; // No offset needed since we're not including the newline in the comment
             if (ignoreComments === false) {
               tokens.push({ type, value: commentBlock, position: { ...position } });
             }
@@ -221,6 +227,32 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
 
     if (!matched) {
       throw new Error(`Unexpected token at line ${position.line}, column ${position.column}: "${workingInput.split('\n')[0]}"`);
+    }
+  }
+
+  // Only remove trailing newlines if they come after the last meaningful token
+  // and there are multiple consecutive newlines at the end
+  let trailingNewlines = 0;
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    if (tokens[i].type === 'NEWLINE') {
+      trailingNewlines++;
+    } else {
+      break;
+    }
+  }
+  
+  // If we have more than one trailing newline, remove the extra ones
+  if (trailingNewlines > 1) {
+    tokens.splice(tokens.length - trailingNewlines + 1);
+  }
+
+  // Reset position to the last valid token's position
+  if (tokens.length > 0) {
+    const lastToken = tokens[tokens.length - 1];
+    position = { ...lastToken.position };
+    // Advance position to the end of the last token
+    if (lastToken.value) {
+      position.column += lastToken.value.length;
     }
   }
 

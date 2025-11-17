@@ -50,9 +50,33 @@ input BusinessUnitInput {
   avatar: String
 }
 
+type ReactoryPagedBusinessUnits {
+  businessUnits: [BusinessUnit]
+  paging: PagingResult
+}
+
+type ReactoryBusinessUnitsQueryFailed {
+  message: String
+  code: String
+}
+
+input ReactoryBusinessUnitFilter {
+  name: String  
+  organizationId: String  
+}
+
+input ReactoryPagedBusinessUnitsQueryInput {
+  paging: PagingRequest
+  filter: ReactoryBusinessUnitFilter
+}
+
+
+union ReactoryBusinessUnitsQueryResult = ReactoryPagedBusinessUnits | ReactoryBusinessUnitsQueryFailed
+
 extend type Query { 
   businessUnitsForOrganization(id: String!, searchString: String): [BusinessUnit],
   businessUnitWithId(id: String!): BusinessUnit,
+  ReactoryBusinessUnits(query: ReactoryPagedBusinessUnitsQueryInput!): ReactoryBusinessUnitsQueryResult
 }
 
 extend type Mutation {

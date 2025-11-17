@@ -29,25 +29,33 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
   }
 
   @roles(['USER', 'ANON'])
-  async getContentBySlug(slug: string): Promise<Reactory.Models.IReactoryContent> {
+  async getContentBySlug(slug: string, basePath: string = "content/static-content"): Promise<Reactory.Models.IReactoryContent> {
     const result = await Content.findOne({ slug }).then();
     if (!result) {
       const { APP_DATA_ROOT } = process.env;
       //check if slug is a file with default value.
-      if(pathExistsSync(path.join(APP_DATA_ROOT, "content/static-content"))) {
+      if(pathExistsSync(path.join(APP_DATA_ROOT, basePath))) {
         const lang = this.context.i18n.language;
-        let file = path.join(APP_DATA_ROOT, "content/static-content",`${slug}.${lang.toLowerCase()}.html`);
-        if(!existsSync(file))
-          file = path.join(APP_DATA_ROOT, "content/static-content", `${slug}.html`);
+        let file = path.join(APP_DATA_ROOT, basePath,`${slug}.${lang.toLowerCase()}.html`);
+        if(!existsSync(file)) {
+          file = path.join(APP_DATA_ROOT, basePath, `${slug}.html`);
+        }
+
+        if(!existsSync(file)) {
+          file = path.join(APP_DATA_ROOT, basePath, `${slug}.${lang.toLowerCase()}.md`);
+          if(!existsSync(file)) {
+            file = path.join(APP_DATA_ROOT, basePath, `${slug}.md`);
+          }
+        }
 
         if(existsSync(file)){
           const content = Buffer.from(readFileSync(file)).toString();
           let props: Partial<Reactory.Models.IReactoryContent> = {};
-          if(existsSync(path.join(APP_DATA_ROOT, "content/static-content",`${slug}.${lang.toLowerCase()}.props.json`))){
-            props = JSON.parse(readFileSync(path.join(APP_DATA_ROOT, "content/static-content", `${slug}.${lang.toLowerCase()}.props.json`)).toString());
+          if(existsSync(path.join(APP_DATA_ROOT, basePath,`${slug}.${lang.toLowerCase()}.props.json`))){
+            props = JSON.parse(readFileSync(path.join(APP_DATA_ROOT, basePath, `${slug}.${lang.toLowerCase()}.props.json`)).toString());
           }
-          else if(existsSync(path.join(APP_DATA_ROOT, "content/static-content", `${slug}.props.json`))){
-            props = JSON.parse(readFileSync(path.join(APP_DATA_ROOT, "content/static-content", `${slug}.props.json`)).toString());
+          else if(existsSync(path.join(APP_DATA_ROOT, basePath, `${slug}.props.json`))){
+            props = JSON.parse(readFileSync(path.join(APP_DATA_ROOT, basePath, `${slug}.props.json`)).toString());
           }
 
           let systemUser = await this.userService.findUserWithEmail(this.context.partner.email)
@@ -62,15 +70,15 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
             content,            
             title: slug,          
             createdAt: new Date(),
-            createdBy: systemUser,
+            createdBy: systemUser || this.context.user,
             updatedAt: new Date(),
-            updatedBy: systemUser,
+            updatedBy: systemUser || this.context.user,
             published: true,            
             ...props
           }
         }
       }
-    } else return result;
+    } else return result.toObject() as Reactory.Models.IReactoryContent;
 
     return null;
   }
@@ -186,13 +194,11 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
     return result;
   }
   
-  async onStartup(): Promise<any> {
-    // throw new Error('Method not implemented.');
+  async onStartup(): Promise<any> {    
     return Promise.resolve(true)
   }
 
   getExecutionContext(): Reactory.Server.IReactoryContext {
-    // throw new Error('Method not implemented.');
     return this.context;
   }
   setExecutionContext(context: Reactory.Server.IReactoryContext): boolean {

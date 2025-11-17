@@ -25,7 +25,9 @@ export default {
   request: {},
   description: {
     'ui:widget': 'FroalaWidget',
+    'ui:title': null,
     'ui:options': {
+      showLabel: false,
       froalaOptions,
     },
   },  

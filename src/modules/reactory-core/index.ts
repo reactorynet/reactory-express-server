@@ -2,7 +2,7 @@ import coreClis from './cli';
 import coreResolvers from './resolvers';
 import coreTypes from './graph/types';
 import directives from './graph/directives';
-import coreWorkflows from './workflow';
+import coreWorkflows from './workflows';
 import coreForms from './forms';
 import models from './models';
 import coreServices from './services';
@@ -33,7 +33,7 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
   serverPlugins: [],
   //@ts-ignore
   cli: [...coreClis],
-  description: 'Reactory Core Module',
+  description: 'Reactory Core Module. The core module for the Reactory Server, providing essential services, models, and workflows.',
   grpc: null,
   passportProviders: [],
   pdfs: [],

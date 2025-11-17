@@ -9,17 +9,17 @@ class ReactoryContentResolver {
 
   @roles(["USER", "ANON"], 'args.context')
   @query("ReactoryGetContentBySlug")
-  async getContentBySlug(parent: unknown, args: { slug: string }, context: Reactory.Server.IReactoryContext) {
-    const { slug } = args;
-    const contentService: Reactory.Service.IReactoryContentService = context.getService("core.ReactoryContentService@1.0.0") as Reactory.Service.IReactoryContentService;
-    return contentService.getContentBySlug(slug);
+  async getContentBySlug(parent: unknown, args: { slug: string, options?: { basePath: string } }, context: Reactory.Server.IReactoryContext) {
+    const { slug, options } = args;
+    const contentService: Reactory.Service.IReactoryContentService = context.getService<Reactory.Service.IReactoryContentService>("core.ReactoryContentService@1.0.0");
+    return contentService.getContentBySlug(slug, options?.basePath || "content/static-content");
   }
 
   @roles(["USER"], 'args.context')
   @query("ReactoryGetContentById")
   async getContentById(parent: unknown, args: { id: string }, context: Reactory.Server.IReactoryContext) {
     const { id } = args;
-    const contentService: Reactory.Service.IReactoryContentService = context.getService("core.ReactoryContentService@1.0.0") as Reactory.Service.IReactoryContentService;
+    const contentService = context.getService<Reactory.Service.IReactoryContentService>("core.ReactoryContentService@1.0.0");
     return contentService.getContentById(id);
   }
 
@@ -27,7 +27,7 @@ class ReactoryContentResolver {
   @query("ReactoryGetContentByTags")
   async getContentByTags(parent: unknown, args: { tags: string[], paging: Reactory.Data.PagingRequest }, context: Reactory.Server.IReactoryContext) {
     const { tags, paging } = args;
-    const contentService: Reactory.Service.IReactoryContentService = context.getService("core.ReactoryContentService@1.0.0") as Reactory.Service.IReactoryContentService;
+    const contentService = context.getService<Reactory.Service.IReactoryContentService>("core.ReactoryContentService@1.0.0");
     return contentService.getContentByTags(tags, paging);
   }
 
@@ -35,14 +35,14 @@ class ReactoryContentResolver {
   @query("ReactoryGetContentList")
   async getContentList(parent: unknown, args: { search: any, paging: Reactory.Data.PagingRequest }, context: Reactory.Server.IReactoryContext) {
     const { paging, search } = args;
-    const contentService: Reactory.Service.IReactoryContentService = context.getService("core.ReactoryContentService@1.0.0") as Reactory.Service.IReactoryContentService;
+    const contentService = context.getService<Reactory.Service.IReactoryContentService>("core.ReactoryContentService@1.0.0");
     return contentService.listContent(search, paging);
   }
 
   @roles(["USER"], 'args.context')
   @mutation("ReactoryCreateContent")
   async createContent(parent: unknown, args: { createInput: Reactory.Service.ReactoryContentInput }, context: Reactory.Server.IReactoryContext) {    
-    const contentService: Reactory.Service.IReactoryContentService = context.getService("core.ReactoryContentService@1.0.0") as Reactory.Service.IReactoryContentService;
+    const contentService = context.getService<Reactory.Service.IReactoryContentService>("core.ReactoryContentService@1.0.0");
     return contentService.createContent(args.createInput);
   }
 
@@ -50,7 +50,7 @@ class ReactoryContentResolver {
   @mutation("ReactorySaveImageData")
   async saveImageData(parent: unknown, args: { image: Reactory.Service.IReactorySvgToImageArgs }, context: Reactory.Server.IReactoryContext) {
     const { image } = args;
-    const contentService: Reactory.Service.IReactoryContentService = context.getService("core.ReactoryContentService@1.0.0") as Reactory.Service.IReactoryContentService;
+    const contentService = context.getService<Reactory.Service.IReactoryContentService>("core.ReactoryContentService@1.0.0");
     return contentService.saveImageData(image);
   }
 

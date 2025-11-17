@@ -86,6 +86,10 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
   settings: [
     {
       name: String,
+      settingType: String,
+      variant: String,
+      title: String,
+      description: String,
       componentFqn: String,
       formSchema: {},
       data: {},

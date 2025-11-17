@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "title": "WorkflowRegistryStats",
+  "description": "Statistics about the workflow registry",
+  "properties": {
+    "totalWorkflows": {
+      "type": "integer",
+      "title": "Total Workflows",
+      "description": "Total number of registered workflows"
+    },
+    "activeWorkflows": {
+      "type": "integer",
+      "title": "Active Workflows",
+      "description": "Number of active workflows"
+    },
+    "inactiveWorkflows": {
+      "type": "integer",
+      "title": "Inactive Workflows",
+      "description": "Number of inactive workflows"
+    },
+    "namespaces": {
+      "type": "array",
+      "title": "Namespaces",
+      "description": "List of workflow namespaces",
+      "items": {
+        "type": "string"
+      }
+    },
+    "versions": {
+      "type": "object",
+      "title": "Version Distribution",
+      "description": "Distribution of workflow versions",
+      "additionalProperties": {
+        "type": "integer"
+      }
+    },
+    "lastRegistered": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Registered",
+      "description": "When a workflow was last registered"
+    },
+    "registrationErrors": {
+      "type": "integer",
+      "title": "Registration Errors",
+      "description": "Number of workflow registration errors"
+    }
+  }
+}

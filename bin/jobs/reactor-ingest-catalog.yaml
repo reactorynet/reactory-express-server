@@ -1,0 +1,27 @@
+# reactory-cli configuration version: 1.0.0
+version: 1.0.0
+
+# specify the reactory client and user
+# for the cli
+partner: zepz-engineer
+user: werner.weber@gmail.com
+password: Password123!
+
+jobs:
+  - command: Csv2Json
+    args:
+     - --source=/Users/wweber/Source/reactory/reactory-express-server/src/modules/reactory-reactor/data/reactor-project-catalog/domains.csv
+     - --output=/Users/wweber/Source/reactory/reactory-express-server/src/modules/reactory-reactor/data/reactor-project-catalog/domains.json
+     - --map=/Users/wweber/Source/reactory/reactory-express-server/src/modules/reactory-reactor/data/reactor-project-catalog/domains.map.js
+  - command: Csv2Json
+    args:
+     - --source=${env.ZEPZ_ENGINEERING_SERVICE_OWNERS_CSV}
+     - --output=${env.ZEPZ_ENGINEERING_SERVICE_OWNERS_JSON}
+  - command: GraphManagerCli
+    args: 
+     - --catalog=${env.ZEPZ_ENGINEERING_SOURCE}
+     - --patchfile=${env.ZEPZ_ENGINEERING_SERVICE_OWNERS_JSON}
+     - --sid=${env.ZEPZ_ENGINEERING_SID}
+     - --gid=${env.ZEPZ_ENGINEERING_GID}
+     - --organization=${env.ZEPZ_ENGINEERING_ORGANIZATION}
+     

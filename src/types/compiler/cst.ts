@@ -42,6 +42,7 @@ export type CSTNodeType =
   | 'CatchBlock'
   | 'FinallyBlock'
   | 'WhileLoop'
+  | 'ForLoop'
   | 'Literal'
   | 'Identifier'
   | 'Operator'

@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "title": "WorkflowErrorStats",
+  "description": "Statistics about workflow errors",
+  "properties": {
+    "errorType": {
+      "type": "string",
+      "title": "Error Type",
+      "description": "Type of error (e.g., 'ValidationError', 'ExecutionError', 'TimeoutError')"
+    },
+    "count": {
+      "type": "integer",
+      "title": "Error Count",
+      "description": "Number of times this error has occurred"
+    },
+    "lastOccurrence": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Occurrence",
+      "description": "When this error last occurred"
+    },
+    "workflowName": {
+      "type": "string",
+      "title": "Workflow Name",
+      "description": "Name of the workflow that generated this error"
+    },
+    "message": {
+      "type": "string",
+      "title": "Error Message",
+      "description": "The error message"
+    },
+    "stack": {
+      "type": "string",
+      "title": "Stack Trace",
+      "description": "Stack trace if available"
+    }
+  },
+  "required": ["errorType", "count", "lastOccurrence"]
+}

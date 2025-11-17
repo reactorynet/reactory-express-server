@@ -1,5 +1,6 @@
 import logger from "@reactory/server-core/logging";
 import Reactory from "@reactory/reactory-core"
+import { ClassDeclaration, ClassExpression } from "typescript";
 
 
 type ReactoryResolverFunc = () => Reactory.Graph.IGraphShape;
@@ -25,8 +26,12 @@ function isResolverClass(resolver: ReactoryResolver): resolver is Reactory.Graph
   return false;
 }
 
+export type ResolverType = ReactoryResolverFunc | 
+  Reactory.Graph.IGraphShape | 
+  Reactory.Graph.IReactoryResolver |
+  any;
 
-const MergeGraphResolvers = (resolvers: ReactoryResolver[] = []): Reactory.Graph.IGraphShape => {
+const MergeGraphResolvers = (resolvers: ResolverType[] = []): Reactory.Graph.IGraphShape => {
 
   let rootResolver: Reactory.Graph.IGraphShape = {
     Query: {},

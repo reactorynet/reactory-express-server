@@ -83,8 +83,8 @@ type User {
   salt: String,
   password: String
   avatar: String
-  authProvider: AuthProvider!
-  providerId: String!
+  authProvider: AuthProvider
+  providerId: String
   lastLogin: Date
   """
   Current active membership

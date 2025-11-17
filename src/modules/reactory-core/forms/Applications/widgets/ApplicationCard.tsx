@@ -47,7 +47,7 @@ const ApplicationCard = (props: IApplicationCardProps) => {
 
   const { 
     Paper,
-    Grid,
+    Grid2,
     Avatar,
     Card,
     CardMedia,
@@ -83,7 +83,7 @@ const ApplicationCard = (props: IApplicationCardProps) => {
 
 
   let options = {
-    sizes: { xs: 12, sm: 12, md: 6, lg: 4, xl: 3 },
+    sizes: { xs: 12, sm: 12, md: 6, lg: 4, xl: 4 },
     moreRoute: "/application/${id}/details" 
   }
 
@@ -116,11 +116,14 @@ const ApplicationCard = (props: IApplicationCardProps) => {
   };
 
   return (
-    <Card id={`application_card_${idSchema.$id}_${formData.id}`} key={formData.id}>
+    <Card 
+      id={`application_card_${idSchema.$id}_${formData.id}`} 
+      key={formData.id}>
       <CardHeader {...headerProps} />
       <CardMedia 
         component="img" 
         height={240}
+        width="100%"
         image={logo}
         alt={title}
       />

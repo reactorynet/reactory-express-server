@@ -10,6 +10,8 @@ import modules from "@reactory/server-core/modules";
 import i18next, { t } from "i18next";
 import Reactory, { React } from "@reactory/reactory-core";
 import Cache from "@reactory/server-modules/reactory-core/models/CoreCache";
+import ReactoryClientModel from "@reactory/server-modules/reactory-core/models/ReactoryClient";
+import UserModel from "@reactory/server-modules/reactory-core/models/User";
 import { Container } from "inversify";
 
 colors.setTheme({
@@ -29,7 +31,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   id: string;
   user: Reactory.Models.IUserDocument;
   partner: Reactory.Models.IReactoryClientDocument;
-  colors: unknown;
+  colors: any;
   lang: string;
   languages: string[];
   theme: Reactory.UX.IReactoryTheme;
@@ -97,7 +99,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 
   log(message: string, meta: any = null, type: Reactory.Service.LOG_TYPE = "debug", clazz: string = '') {
-    const logMessage = `[${Hash(this.id)}]${message}`;
+    const logMessage = `[${Hash(this.id)}]${message} @ ${clazz ? clazz : this.constructor.name}`;
     switch (type) {
       case "e":
       case "err":
@@ -138,9 +140,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     this.log(message, meta, "info", clazz);
   }
 
-  getService<TService>(id: string, props: any = undefined, lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE): TService {
-    this.log(`Getting service ${id} [${lifeCycle || "instance"}]`);
-    
+  getService<TService>(id: string, props: any = undefined, lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE): TService {    
     return this.serviceManager.getService(
       id,
       props,
@@ -210,6 +210,14 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
 
   async runAsSystem<TResult>(target: Promise<TResult>): Promise<TResult> { 
     return this.runAs(await this.getSystemUser(), target);
+  }
+
+  async forPartner(partnerId: string): Promise<void> {
+    this.partner = await ReactoryClientModel.findOne({ key: partnerId }).exec() as Reactory.Models.IReactoryClientDocument;
+  }
+
+  async forUser(email: string): Promise<void> {
+    this.user = await UserModel.findOne({ email }).exec() as Reactory.Models.IUserDocument;
   }
 }
 

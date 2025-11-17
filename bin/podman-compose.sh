@@ -25,7 +25,7 @@ ENV_FILE=$(get_env_file_path)
 export BUILD_VERSION=$(node -p "require('./package.json').version")
 echo "🛠️ Loading Environment $ENV_FILE"
 # Provide a warning if the environment is not set to podman
-if [ $REACTORY_ENV_ID != "podman" ]; then
+if [[ $REACTORY_ENV_ID != podman* ]]; then
   echo "⚠️ Environment is not set to podman are you sure you want to proceed?"
   echo "Podman configurations are specific to the podman environment and you need"
   echo "ensure the configuration is correct before proceeding"
@@ -35,12 +35,25 @@ fi
 # source the env file
 source $ENV_FILE
 
+# Check if PODMAN_COMPOSE_PROJECT_NAME is set
+if [ -z "$PODMAN_COMPOSE_PROJECT_NAME" ]; then
+  echo "❗ PODMAN_COMPOSE_PROJECT_NAME is not set in the environment file $ENV_FILE"
+  echo "Please set the PODMAN_COMPOSE_PROJECT_NAME variable to a unique name for your project"
+  exit 1
+fi
+
+
+
+# Check if we need to clear existing containers
 if [ $PODMAN_CLEAR_CONTAINERS = "true" ]; then
   echo "🧹 Clearing containers for project ${PODMAN_COMPOSE_PROJECT_NAME:-reactory}"
   podman rm -f $(podman ps -aq --filter "label=io.podman.compose.project=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
   # remove the container / project pod as well
   podman pod rm -f $(podman pod ls -q --filter "name=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
+  # remove all volumes attached to the project
+  echo "🧹 Removing volumes for project ${PODMAN_COMPOSE_PROJECT_NAME:-reactory}"
+  podman volume rm -f $(podman volume ls -q --filter "name=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
 fi
 
 echo "🚀 Launching podman for ${1:-reactory} ${2:-podman} configuration"
-podman-compose -f $(pwd)/config/${1:-reactory}/docker-compose.yaml --env-file ./config/${1:-reactory}/.env.${2:-local} ${3:-up} -d
+podman-compose -f $(pwd)/config/${1:-reactory}/${DOCKER_COMPOSE_FILENAME:-docker-compose.yaml} --env-file ./config/${1:-reactory}/.env.${2:-local} ${3:-up} -d

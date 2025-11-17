@@ -38,7 +38,7 @@ export type ASTNodeType =
   | 'StringInterpolation'
   | 'NumberLiteral'
   | 'BooleanLiteral'
-  | 'HexLiteral'
+  | 'HexadecimalLiteral'
   | 'Variable'
   | 'BinaryExpression'
   | 'UnaryExpression'
@@ -99,7 +99,7 @@ export interface NumberLiteralNode extends ExpressionNode {
 }
 
 export interface HexLiteralNode extends ExpressionNode {
-  typoe: 'HexLiteral';
+  type: 'HexadecimalLiteral';
   value: string;
 }
 

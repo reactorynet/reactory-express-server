@@ -207,8 +207,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     path: '/profile',
     public: false,
     roles: ['USER'],
-
-    componentFqn: 'core.UserProfile@1.0.0',
+    componentFqn: 'core.UserProfile@1.0.1',
     componentProps: {
       withPeers: true,
       withMemberships: true,
@@ -217,7 +216,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       ]
     }
   },
-
   {
     key: 'forms_with_mode_and_id',
     title: 'Form with mode and id',
@@ -233,7 +231,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     }],
     exact: false,    
   },
-
   {
     key: 'forms_with_mode',
     title: 'Form with mode',
@@ -248,7 +245,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       }
     }],
   },
-
   {
     key: 'forms_with_id',
     title: 'Form',
@@ -338,13 +334,12 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   {
     key: 'reactor',
     title: 'Reactory Reactor',
-    path: '/reactor/*',
-    exact: true,
-    public: true,
-    roles: ['ADMIN'],
-    componentFqn: 'reactory.ReactorChat@1.0.0',
-  },
-
+    path: '/reactor/chat/*',
+    exact: false,
+    public: false,
+    roles: ['USER'],
+    componentFqn: 'reactor.ReactorChat@1.0.0',
+  }, 
   {
     key: 'organizations',
     title: 'Organizations List',
@@ -389,6 +384,48 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
         }
       }
     ]
+  },  
+
+  {
+    key: 'workflows-operations-dashboard',
+    title: 'Workflows Operations Dashboard',
+    path: '/workflows/operation-dashboard',
+    exact: true,
+    public: false,
+    roles: ['ADMIN'],
+    componentFqn: 'core.WorkflowOperationsDashboard@1.0.0',
+  },
+
+  {
+    key: 'workflows-instances-management',
+    title: 'Workflows Instances Management',
+    path: '/workflows/instances-management',
+    exact: true,
+    public: false,
+    roles: ['ADMIN'],
+    componentFqn: 'core.WorkflowInstanceManagement@1.0.0',
+  },
+
+  {
+    key: "admin-workflow-editor",
+    title: "Admin Workflow",
+    path: "/workflows/editor",
+    exact: true,
+    public: false,
+    roles: ["ADMIN"],
+    componentFqn: "core.WorkflowDesigner@1.0.0",
+    componentProps: {
+      workflowId: "${route.workflowId}",
+    },
+  },
+  {
+    key: "admin-workflow-system-dashboard",
+    title: "Admin Workflow",
+    path: "/workflows/system-dashboard",
+    exact: true,
+    public: false,
+    roles: ["ADMIN"],
+    componentFqn: "core.WorkflowSystemDashboard@1.0.0",    
   },
 ]
 

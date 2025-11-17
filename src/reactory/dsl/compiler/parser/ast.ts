@@ -3,13 +3,20 @@ import {
   ASTNode, 
   BooleanLiteralNode, 
   CST2ASTContext, 
+  ConditionalExpressionNode,
   ExpressionNode, 
   HexLiteralNode, 
   LiteralNode, 
+  LoopNode,
   MacroInvocationNode, 
+  MacroChainNode,
+  MacroBranchNode,
+  MacroGroupNode,
   NumberLiteralNode, 
   ProgramNode, 
   StringLiteralNode, 
+  SwitchCaseNode,
+  TryCatchStatementNode,
   VariableNode 
 } from '@reactory/server-core/types/compiler/ast';
 
@@ -97,7 +104,7 @@ export const createAST = (cst: CSTProgramNode): ProgramNode => {
   const parseNumberLiteral = (node: CSTNode): NumberLiteralNode => { 
     const numberLiteralNode: NumberLiteralNode = {
       type: 'NumberLiteral',
-      value: node.value,
+      value: parseFloat(node.value),
     };
 
     return numberLiteralNode;
@@ -106,7 +113,7 @@ export const createAST = (cst: CSTProgramNode): ProgramNode => {
   const parseBooleanLiteral = (node: CSTNode): BooleanLiteralNode => { 
     const booleanLiteralNode: BooleanLiteralNode = {
       type: 'BooleanLiteral',
-      value: node.value,
+      value: node.value === 'true',
     };
 
     return booleanLiteralNode;
@@ -114,8 +121,8 @@ export const createAST = (cst: CSTProgramNode): ProgramNode => {
 
   const parseHexadecimalLiteral = (node: CSTNode): HexLiteralNode => {
     const hexNode: HexLiteralNode = {
-      type: 'HexLiteral',
-      value: node.value,
+      type: 'HexadecimalLiteral',
+      value: node.value,      
     };
 
     return hexNode;
@@ -255,6 +262,187 @@ export const createAST = (cst: CSTProgramNode): ProgramNode => {
     return null;
   }
 
+  const parseChaining = (node: CSTNode): MacroChainNode => {
+    const macroChainNode: MacroChainNode = {
+      type: 'MacroChain',
+      source: null,
+      destination: null,
+    };
+
+    // Extract source and destination from children
+    if (node.children.length >= 2) {
+      const sourceNode = parseNode(node.children[0]);
+      const destinationNode = parseNode(node.children[1]);
+      
+      if (sourceNode.type === 'MacroInvocation') {
+        macroChainNode.source = sourceNode as MacroInvocationNode;
+      }
+      
+      if (destinationNode.type === 'MacroInvocation') {
+        macroChainNode.destination = destinationNode as MacroInvocationNode;
+      }
+    }
+
+    return macroChainNode;
+  }
+
+  const parseGrouping = (node: CSTNode): MacroGroupNode => {
+    const macroGroupNode: MacroGroupNode = {
+      type: 'MacroGroup',
+      body: [],
+    };
+
+    // Parse all children as macro invocations
+    for (const child of node.children) {
+      const parsedNode = parseNode(child);
+      if (parsedNode) {
+        macroGroupNode.body.push(parsedNode);
+      }
+    }
+
+    return macroGroupNode;
+  }
+
+  const parseStringInterpolation = (node: CSTNode): StringLiteralNode => {
+    let result = '';
+    
+    // Process all children (string literals and variables)
+    for (const child of node.children) {
+      if (child.type === 'StringLiteral') {
+        result += child.value;
+      } else if (child.type === 'VariableIdentifier') {
+        // For now, we'll just add the variable name as a placeholder
+        // In a full implementation, this would be resolved at runtime
+        result += `\${${child.value}}`;
+      }
+    }
+    
+    return {
+      type: 'StringLiteral',
+      value: result,
+    };
+  }
+
+  const parseIfControl = (node: CSTNode): ConditionalExpressionNode => {
+    const conditionalNode: ConditionalExpressionNode = {
+      type: 'ConditionalExpression',
+      test: null,
+      consequent: null,
+      alternate: null,
+    };
+
+    // Extract condition and branches from CST node
+    if (node.children && node.children.length > 0) {
+      // The first child should be the condition
+      conditionalNode.test = parseNode(node.children[0]);
+      
+      // The second child should be the then branch
+      if (node.children.length > 1) {
+        conditionalNode.consequent = parseNode(node.children[1]);
+      }
+      
+      // Additional children could be else branches
+      if (node.children.length > 2) {
+        conditionalNode.alternate = parseNode(node.children[2]);
+      }
+    }
+
+    return conditionalNode;
+  }
+
+  const parseSwitchControl = (node: CSTNode): SwitchCaseNode => {
+    const switchNode: SwitchCaseNode = {
+      type: 'SwitchCase',
+      discriminant: null,
+      cases: [],
+    };
+
+    // Extract discriminant and cases from CST node
+    if (node.children && node.children.length > 0) {
+      // The first child should be the discriminant
+      switchNode.discriminant = parseNode(node.children[0]);
+      
+      // Additional children are the cases
+      for (let i = 1; i < node.children.length; i++) {
+        const caseNode = parseNode(node.children[i]);
+        if (caseNode.type === 'SwitchCase') {
+          switchNode.cases.push(caseNode as SwitchCaseNode);
+        }
+      }
+    }
+
+    return switchNode;
+  }
+
+  const parseTryCatch = (node: CSTNode): TryCatchStatementNode => {
+    const tryCatchNode: TryCatchStatementNode = {
+      type: 'TryCatchStatement',
+      tryBlock: null,
+      catchBlock: null,
+    };
+
+    // Extract try and catch blocks from CST node
+    if (node.children && node.children.length > 0) {
+      // The first child should be the try block
+      tryCatchNode.tryBlock = parseNode(node.children[0]);
+      
+      // The second child should be the catch block
+      if (node.children.length > 1) {
+        tryCatchNode.catchBlock = parseNode(node.children[1]);
+      }
+    }
+
+    return tryCatchNode;
+  }
+
+  const parseWhileLoop = (node: CSTNode): LoopNode => {
+    const loopNode: LoopNode = {
+      type: 'Loop',
+      test: null,
+      body: [],
+    };
+
+    // Extract condition and body from CST node
+    if (node.children && node.children.length > 0) {
+      // The first child should be the condition
+      loopNode.test = parseNode(node.children[0]);
+      
+      // Additional children are the body
+      for (let i = 1; i < node.children.length; i++) {
+        const bodyNode = parseNode(node.children[i]);
+        loopNode.body.push(bodyNode);
+      }
+    }
+
+    return loopNode;
+  }
+
+  const parseBranching = (node: CSTNode): MacroBranchNode => {
+    const macroBranchNode: MacroBranchNode = {
+      type: 'MacroBranch',
+      condition: null,
+      successBranch: null,
+      failureBranch: null,
+    };
+
+    // Extract condition and branches from children
+    if (node.children.length >= 2) {
+      const conditionNode = parseNode(node.children[0]);
+      const branchesNode = parseNode(node.children[1]);
+      
+      if (conditionNode.type === 'MacroInvocation') {
+        macroBranchNode.condition = conditionNode as MacroInvocationNode;
+      }
+      
+      if (branchesNode.type === 'MacroGroup' && branchesNode.body.length >= 2) {
+        macroBranchNode.successBranch = branchesNode.body[0];
+        macroBranchNode.failureBranch = branchesNode.body[1];
+      }
+    }
+
+    return macroBranchNode;
+  }
+
   /**
    * Whitespace is removed from the program as it has no semantic meaning
    * @param node 
@@ -336,29 +524,29 @@ export const createAST = (cst: CSTProgramNode): ProgramNode => {
       //   return parseMacroArguments(node);
       // case "MacroArgument":
       //   return parseMacroArgument(node);
-      // case "StringInterpolation":
-      //   return parseStringInterpolation(node);
+      case "StringInterpolation":
+        return parseStringInterpolation(node);
       case "NumberLiteral":
       case "BooleanLiteral":
       case "HexadecimalLiteral":
       case "StringLiteral":
         return parseLiteral(node);        
-      // case "Grouping":
-      //   return parseGrouping(node);
-      // case "Chaining":
-      //   return parseChaining(node);
-      // case "Branching":
-      //   return parseBranching(node);
+      case "Grouping":
+        return parseGrouping(node);
+      case "Chaining":
+        return parseChaining(node);
+      case "Branching":
+        return parseBranching(node);
       // case "Nesting":
       //   return parseNesting(node);
-      // case "IfControl":
-      //   return parseIfControl(node);
-      // case "SwitchControl":
-      //   return parseSwitchControl(node);
-      // case "TryCatch":
-      //   return parseTryCatch(node);
-      // case "WhileLoop":
-      //   return parseWhileLoop(node);              
+      case "IfControl":
+        return parseIfControl(node);
+      case "SwitchControl":
+        return parseSwitchControl(node);
+      case "TryCatch":
+        return parseTryCatch(node);
+      case "WhileLoop":
+        return parseWhileLoop(node);              
       // case "Identifier":
       //   return parseIdentifier(node);
       case "Operator":

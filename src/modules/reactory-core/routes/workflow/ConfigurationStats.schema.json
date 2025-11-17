@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "title": "ConfigurationStats",
+  "description": "Statistics about workflow configuration",
+  "properties": {
+    "totalConfigurations": {
+      "type": "integer",
+      "title": "Total Configurations",
+      "description": "Total number of workflow configurations"
+    },
+    "activeConfigurations": {
+      "type": "integer",
+      "title": "Active Configurations",
+      "description": "Number of active workflow configurations"
+    },
+    "validationErrors": {
+      "type": "integer",
+      "title": "Validation Errors",
+      "description": "Number of configuration validation errors"
+    },
+    "lastValidated": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Validated",
+      "description": "When configurations were last validated"
+    },
+    "defaultSettings": {
+      "type": "object",
+      "title": "Default Settings",
+      "description": "Default configuration settings",
+      "additionalProperties": true
+    },
+    "customSettings": {
+      "type": "object",
+      "title": "Custom Settings",
+      "description": "Custom configuration overrides",
+      "additionalProperties": true
+    }
+  }
+}

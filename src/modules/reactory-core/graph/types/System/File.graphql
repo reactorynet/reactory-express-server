@@ -24,6 +24,111 @@ type Timeline {
   message: String
 }
 
+type ReactoryUserFilesLoadOptions {
+  limit: Int
+  offset: Int
+  sortBy: String
+  sortOrder: String
+  search: String
+  includeFolders: Boolean
+}
+
+input ReactoryUserFilesLoadOptionsInput {
+  limit: Int
+  offset: Int
+  sortBy: String
+  sortOrder: String
+  search: String
+  includeFolders: Boolean
+}
+
+"""
+Load options for server files with additional administrative controls
+"""
+type ReactoryServerFilesLoadOptions {
+  limit: Int
+  offset: Int
+  sortBy: String
+  sortOrder: String
+  search: String
+  includeFolders: Boolean
+  includeHidden: Boolean
+  includeSystemFiles: Boolean
+  fileTypes: [String] # Filter by file extensions or MIME types
+}
+
+input ReactoryServerFilesLoadOptionsInput {
+  limit: Int
+  offset: Int
+  sortBy: String
+  sortOrder: String
+  search: String
+  includeFolders: Boolean
+  includeHidden: Boolean
+  includeSystemFiles: Boolean
+  fileTypes: [String]
+}
+
+"""
+File delete input type allows for delete either by ID or path.
+If both are provided, the ID takes precedence.
+If the id is not found or the path does not exist, an error will be returned.
+"""
+input ReactoryFileDeleteInput {
+  id: String
+  path: String
+}
+
+type ReactoryFolder {  
+  name: String
+  path: String
+}
+
+"""
+Server file permissions for administrative operations
+"""
+type ReactoryServerFilePermissions {
+  read: Boolean!
+  write: Boolean!
+  delete: Boolean!
+  execute: Boolean
+}
+
+"""
+Server folder type with administrative metadata and permissions
+"""
+type ReactoryServerFolder {
+  name: String!
+  path: String!
+  fullPath: String!
+  created: Date
+  modified: Date
+  size: Int
+  fileCount: Int
+  permissions: ReactoryServerFilePermissions
+}
+
+"""
+Server file type with detailed metadata for administrative operations
+"""
+type ReactoryServerFile {
+  id: String!
+  name: String!
+  mimetype: String!
+  extension: String!
+  size: Int!
+  path: String!
+  fullPath: String!
+  created: Date!
+  modified: Date!
+  accessed: Date
+  checksum: String
+  isSystemFile: Boolean!
+  isHidden: Boolean!
+  permissions: ReactoryServerFilePermissions
+  metadata: String # JSON string for additional metadata
+}
+
 type ReactoryFile {
   id: String
   hash: Int
@@ -32,6 +137,7 @@ type ReactoryFile {
   path: String
   alias: String
   filename: String
+  description: String
   alt: [String]
   link: String
   mimetype: String
@@ -46,4 +152,150 @@ type ReactoryFile {
   tags: [String]
   remotes: [ReactoryFileRemoteEntry]
   timeline: [Timeline]
+  content: String
+}
+
+type ReactoryFileUpdateSuccess {
+  success: Boolean
+  file: ReactoryFile
+}
+
+type ReactoryFileDeleteSuccess {
+  success: Boolean
+  id: String
+}
+
+type ReactoryFileUploadSuccess {
+  success: Boolean
+  file: ReactoryFile
+}
+
+type ReactoryFileUpdateError {
+  error: String
+  message: String
+}
+
+type ReactoryFileUploadError {
+  error: String
+  message: String
+}
+
+type ReactoryFileDeleteError {
+  error: String
+  message: String
+}
+
+type ReactoryRemoteSyncError {
+  error: String
+  message: String
+  remoteId: String
+}
+
+type ReactoryUserFiles {
+  path: String
+  loadOptions: ReactoryUserFilesLoadOptions
+  folders: [ReactoryFolder]
+  files: [ReactoryFile]
+}
+
+type ReactoryUserFilesErrorResponse {
+  error: String
+  message: String
+}
+
+"""
+Server files response for administrative operations
+"""
+type ReactoryServerFiles {
+  serverPath: String!
+  loadOptions: ReactoryServerFilesLoadOptions
+  folders: [ReactoryServerFolder!]!
+  files: [ReactoryServerFile!]!
+  totalCount: Int
+  hasMore: Boolean
+}
+
+type ReactoryServerFilesErrorResponse {
+  error: String!
+  message: String!
+  serverPath: String
+}
+
+type ReactoryFolderCreateSuccess {
+  success: Boolean
+  folder: ReactoryFolder
+}
+
+type ReactoryFolderCreateError {
+  error: String
+  message: String
+}
+
+type ReactoryFolderDeleteSuccess {
+  success: Boolean
+  path: String
+}
+
+type ReactoryFolderDeleteError {
+  error: String
+  message: String
+}
+
+type ReactoryItemMoveSuccess {
+  success: Boolean
+  newPath: String
+  itemType: String
+}
+
+type ReactoryItemMoveError {
+  error: String
+  message: String
+}
+
+union ReactoryFileRemoteSyncResult = ReactoryFileRemoteEntry | ReactoryRemoteSyncError
+union ReactoryFileUploadResult = ReactoryFileUploadSuccess | ReactoryFileUploadError
+union ReactoryFileUpdateResult = ReactoryFileUpdateSuccess | ReactoryFileUpdateError
+union ReactoryFileDeleteResult = ReactoryFileDeleteSuccess | ReactoryFileDeleteError
+union ReactoryFolderCreateResult = ReactoryFolderCreateSuccess | ReactoryFolderCreateError
+union ReactoryFolderDeleteResult = ReactoryFolderDeleteSuccess | ReactoryFolderDeleteError
+union ReactoryItemMoveResult = ReactoryItemMoveSuccess | ReactoryItemMoveError
+union ReactoryUserFileResults = ReactoryUserFiles | ReactoryUserFilesErrorResponse
+union ReactoryServerFileResults = ReactoryServerFiles | ReactoryServerFilesErrorResponse
+union ReactoryServerFileReadResult = ReactoryServerFile | ReactoryServerFilesErrorResponse
+
+type Query {
+  """
+  Fetches files for the current logged in user from their user home folder on the reactory server.
+  The path can be specified to fetch files from a specific folder.
+  If no path is provided, it defaults to the user's home folder.
+  The loadOptions can be used to control pagination, sorting, and searching of files.
+  If loadOptions is not provided, it defaults to loading the first 20 files.
+  """
+  ReactoryUserFiles(path: String, loadOptions: ReactoryUserFilesLoadOptionsInput): ReactoryUserFileResults
+
+  """
+  Fetches server files from administrative server paths. This query is restricted to ADMIN and DEVELOPER roles.
+  The serverPath can use template variables like ${APP_DATA_ROOT}/workflows for dynamic path resolution.
+  If no serverPath is provided, it defaults to ${APP_DATA_ROOT}.
+  The loadOptions provide advanced filtering, pagination, and sorting capabilities.
+  Access to system files and hidden files is controlled through loadOptions.
+  """
+  ReactoryServerFiles(serverPath: String, loadOptions: ReactoryServerFilesLoadOptionsInput): ReactoryServerFileResults
+
+  """
+  Reads the content of a server file for administrative purposes. This query is restricted to ADMIN and DEVELOPER roles.
+  The path must be an absolute path or a path relative to the server's APP_DATA_ROOT.
+  Returns detailed metadata about the file along with its content as a string.
+  """
+  ReactoryReadServerFile(path: String!): ReactoryServerFileReadResult
+}
+
+type Mutation {
+  ReactoryUploadFile(file: Upload!, alias: String, path: String, uploadContext: String): ReactoryFileUploadResult
+  ReactoryUpdateFile(id: String!, alias: String, path: String, filename: String, mimetype: String, size: Int): ReactoryFileUpdateResult
+  ReactoryDeleteFile(input: ReactoryFileDeleteInput!): ReactoryFileDeleteResult
+  ReactorySyncFileToRemote(id: String!, remoteId: String!): ReactoryFileRemoteSyncResult
+  ReactoryCreateFolder(name: String!, path: String!): ReactoryFolderCreateResult
+  ReactoryDeleteFolder(path: String!): ReactoryFolderDeleteResult
+  ReactoryMoveItem(itemPath: String!, newPath: String!, itemType: String!): ReactoryItemMoveResult
 }

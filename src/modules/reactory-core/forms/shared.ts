@@ -1,15 +1,9 @@
-"use strcit"
 import Reactory from "@reactory/reactory-core";
 import { defaultFormProps } from '@reactory/server-core/data/forms/defs';
-import { FormBuilder } from '@reactory/server-modules/reactory-core/forms/ReactoryFormEditor/FormBuilder';
 import { HelpFormEdit, HelpListForm } from '@reactory/server-modules/reactory-core/forms/ReactoryContentCapture/HelpEditor';
-import { TemplateEditor } from '@reactory/server-modules/reactory-core/forms/EmailTemplate/TemplateEditor/TemplateEditor';
-
-import PageEditorForm from '@reactory/server-modules/reactory-core/forms/ReactoryFormEditor/pageEditorForm';
-import PageTemplateConfig from '@reactory/server-modules/reactory-core/forms/ReactoryFormEditor/pageTemplateConfig';
+import { TemplateEditor } from '@reactory/server-modules/reactory-core/forms/EmailTemplate/TemplateEditor/TemplateEditor'
 import { ReactoryApplicationsForm, ReactoryDashboard, ReactoryClientAdminPage } from './ReactoryAdmin/dashboard';
 import UserForms from '@reactory/server-modules/reactory-core/forms/User';
-
 import OrganizationForms from '@reactory/server-modules/reactory-core/forms/Organization';
 import MicrosoftOpenIDAuthenticationForm from '@reactory/server-modules/reactory-core/forms/Security/microsoft_auth';
 
@@ -143,43 +137,7 @@ const msTeamsResources = [
   },
 ];
 
-const MSTeamsConfigurationTab: Reactory.Forms.IReactoryForm = {
-  id: 'ms-teams-config-tab',
-  name: 'MicrosoftTeamsConfigurationPage',
-  nameSpace: 'microsoft-teams',
-  version: '1.0.0',
-  uiFramework: 'ms-teams',
-  uiSupport: ['material', 'bootstrap', 'ms-teams'],
-  uiResources: msTeamsResources,
-  registerAsComponent: false,
-  title: 'Age Of Teams',
-  tags: ['forgot password', 'user account'],
-  components: ['ms-teams-config-page'],
-  schema: {
-    title: 'Age Of Teams - Setup',
-    description: 'Welcome to Age of Teams',
-    type: 'object',
-    required: [
-      'tabChoice',
-    ],
-    properties: {
-      tabChoice: {
-        type: 'string',
-        title: 'Select Tab',
-        enum: [
-          'Tasks',
-          'Kudos',
-        ],
-      },
-    },
-  },
-  uiSchema: {
-    tabChoice: {
-      'ui:autofocus': true,
-      'ui:emptyValue': '',
-    },
-  },
-};
+
 
 const ResetPasswordForm: Reactory.Forms.IReactoryForm = {
   id: 'ResetPasswordForm',
@@ -722,12 +680,9 @@ const CommentForm: Reactory.Forms.IReactoryForm = {
 };
 
 export default [
-  FormBuilder,
   HelpListForm,
   HelpFormEdit,
-  TemplateEditor,
-  PageEditorForm,
-  PageTemplateConfig,
+  TemplateEditor,  
   ReactoryApplicationsForm,
   ReactoryDashboard,
   ReactoryClientAdminPage,
@@ -735,7 +690,6 @@ export default [
   ...OrganizationForms,
   ForgotPasswordForm,
   MessageForm,
-  MSTeamsConfigurationTab,
   MicrosoftOpenIDAuthenticationForm,
   ResetPasswordForm,
   SearchUserForm,

@@ -143,7 +143,9 @@ const getActiveTheme = (_: Reactory.Models.IApiStatus, args: { theme: string, mo
   if (activeTheme.modes) {
     let modeOptions = activeTheme.modes.find((mode) => { return mode.mode === $thememode });
     if (modeOptions) {
-      activeTheme.options = { ...modeOptions.options }
+      activeTheme.options = { 
+        ...modeOptions.options,        
+      }
     }
   }
 
@@ -197,7 +199,7 @@ class ApiStatus {
             let loginRoute = routes.find((r: Reactory.Routing.IReactoryRoute) => r.path === '/login');
             $routes.push({ 
               path: route.path,
-              args: route.args,
+              args: loginRoute.args,
               roles: ["ANON"],
               components: loginRoute.components,
               exact: route.exact,

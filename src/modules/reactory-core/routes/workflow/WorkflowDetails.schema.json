@@ -1,0 +1,94 @@
+{
+  "type": "object",
+  "title": "WorkflowDetails",
+  "description": "Detailed information about a specific workflow",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Workflow Name",
+      "description": "Unique name of the workflow"
+    },
+    "namespace": {
+      "type": "string",
+      "title": "Namespace",
+      "description": "Namespace the workflow belongs to"
+    },
+    "version": {
+      "type": "string",
+      "title": "Version",
+      "description": "Version of the workflow"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "Detailed description of the workflow"
+    },
+    "configuration": {
+      "$ref": "#components/schemas/WorkflowConfig"
+    },
+    "dependencies": {
+      "type": "array",
+      "title": "Dependencies",
+      "description": "Workflow dependencies",
+      "items": {
+        "$ref": "#components/schemas/WorkflowDependency"
+      }
+    },
+    "schedule": {
+      "$ref": "#components/schemas/WorkflowSchedule"
+    },
+    "instances": {
+      "type": "array",
+      "title": "Recent Instances",
+      "description": "Recent workflow instances",
+      "items": {
+        "$ref": "#components/schemas/WorkflowInstance"
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "title": "Statistics",
+      "description": "Workflow execution statistics",
+      "properties": {
+        "totalExecutions": {
+          "type": "integer"
+        },
+        "successfulExecutions": {
+          "type": "integer"
+        },
+        "failedExecutions": {
+          "type": "integer"
+        },
+        "averageExecutionTime": {
+          "type": "number"
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "title": "Tags",
+      "description": "Tags associated with the workflow",
+      "items": {
+        "type": "string"
+      }
+    },
+    "author": {
+      "type": "string",
+      "title": "Author",
+      "description": "Author of the workflow"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At",
+      "description": "When the workflow was created"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Updated At",
+      "description": "When the workflow was last updated"
+    }
+  },
+  "required": ["name", "namespace", "version"]
+}

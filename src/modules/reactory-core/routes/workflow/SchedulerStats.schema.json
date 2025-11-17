@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "title": "SchedulerStats",
+  "description": "Statistics about the workflow scheduler",
+  "properties": {
+    "activeSchedules": {
+      "type": "integer",
+      "title": "Active Schedules",
+      "description": "Number of currently active schedules"
+    },
+    "inactiveSchedules": {
+      "type": "integer",
+      "title": "Inactive Schedules",
+      "description": "Number of inactive schedules"
+    },
+    "totalSchedules": {
+      "type": "integer",
+      "title": "Total Schedules",
+      "description": "Total number of schedules"
+    },
+    "scheduledExecutions": {
+      "type": "integer",
+      "title": "Scheduled Executions",
+      "description": "Number of executions scheduled for the future"
+    },
+    "executionsToday": {
+      "type": "integer",
+      "title": "Executions Today",
+      "description": "Number of executions that have run today"
+    },
+    "missedExecutions": {
+      "type": "integer",
+      "title": "Missed Executions",
+      "description": "Number of missed executions"
+    },
+    "nextExecution": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Next Execution",
+      "description": "When the next execution is scheduled"
+    },
+    "lastExecution": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Execution",
+      "description": "When the last execution occurred"
+    },
+    "averageExecutionDelay": {
+      "type": "number",
+      "title": "Average Execution Delay",
+      "description": "Average delay between scheduled and actual execution time in milliseconds"
+    }
+  }
+}

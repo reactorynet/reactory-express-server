@@ -17,18 +17,48 @@ type Team {
 
 input TeamInput {
   title: String
+  name: String
   description: String
-  avatar: String  
+  avatar: String
+  organization: String
 }
 
+input ReactoryTeamFilter { 
+  search: String
+  organization: String
+  owner: String
+  member: String
+  createdBefore: Date
+  createdAfter: Date
+  updatedBefore: Date
+  updatedAfter: Date
+}
+
+type ReactoryTeamPagedResults { 
+  teams: [Team]
+  paging: PagingResult
+}
+
+type ReactoryTeamsQueryFailed {
+  message: String
+  code: String
+}
+
+union ReactoryTeamsQueryResult = ReactoryTeamPagedResults | ReactoryTeamsQueryFailed
+
 extend type Query {
+  ReactoryTeam(id: String!): Team
+  ReactoryTeams(paging: PagingRequest, filter: ReactoryTeamFilter): ReactoryTeamsQueryResult
   team(id: String!): Team
   teamsForOrganization(id: String!): [Team]
 }
 
+
+
 extend type Mutation {
   createTeam(input: TeamInput): Team
-  updateTeam(input: TeamInput): Team
-  addMemberToTeam(id: String, memberId: String): Boolean
-  removeMemberFromTeam(id: String, memberId: String): Boolean
+  updateTeam(id: String!, input: TeamInput): Team
+  addMemberToTeam(id: String!, memberId: String!): Boolean
+  removeMemberFromTeam(id: String!, memberId: String!): Boolean
+  deleteTeam(id: String!): Boolean
 }

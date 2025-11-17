@@ -10,6 +10,10 @@ const TeamSchema = new mongoose.Schema<Reactory.Models.ITeam>({
       return this.title
     }
   },
+  owner: {
+    type: ObjectId,
+    ref: 'User',
+  },
   organization: {
     type: ObjectId,
     ref: 'Organization',

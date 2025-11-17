@@ -1,0 +1,1438 @@
+paths:
+  /workflow/status:
+    get:
+      summary: "Get workflow system status"
+      description: "Retrieve comprehensive status information about the workflow system including lifecycle, error, configuration, and security statistics."
+      tags: ['Workflow System']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+      responses:
+        "200":
+          description: "System status information"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  system:
+                    type: object
+                    properties:
+                      initialized:
+                        type: boolean
+                      status:
+                        type: string
+                        enum: ["healthy", "initializing", "error"]
+                      timestamp:
+                        type: string
+                        format: date-time
+                  lifecycle:
+                    $ref: "#/components/schemas/WorkflowLifecycleStats"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WorkflowErrorStats"
+                  configuration:
+                    $ref: "#/components/schemas/ConfigurationStats"
+                  security:
+                    $ref: "#/components/schemas/SecurityStats"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/workflows:
+    get:
+      summary: "List registered workflows"
+      description: "Retrieve a list of all workflows registered in the system with optional filtering by namespace, category, or search term."
+      tags: ['Workflow Registry']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: query
+          name: nameSpace
+          schema:
+            type: string
+          description: "Filter workflows by namespace"
+        - in: query
+          name: category
+          schema:
+            type: string
+          description: "Filter workflows by category"
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: "Search workflows by name or namespace"
+      responses:
+        "200":
+          description: "List of registered workflows"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workflows:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RegisteredWorkflow"
+                  stats:
+                    $ref: "#/components/schemas/WorkflowRegistryStats"
+                  filters:
+                    type: object
+                    properties:
+                      nameSpace:
+                        type: string
+                        nullable: true
+                      category:
+                        type: string
+                        nullable: true
+                      search:
+                        type: string
+                        nullable: true
+                  timestamp:
+                    type: string
+                    format: date-time
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/workflows/{nameSpace}/{name}:
+    get:
+      summary: "Get specific workflow details"
+      description: "Retrieve detailed information about a specific workflow by namespace and name."
+      tags: ['Workflow Registry']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: nameSpace
+          required: true
+          schema:
+            type: string
+          description: "The workflow namespace"
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+          description: "The workflow name"
+        - in: query
+          name: version
+          schema:
+            type: string
+          description: "Specific version to retrieve (optional)"
+      responses:
+        "200":
+          description: "Workflow details"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowDetails"
+        "404":
+          description: "Workflow not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request - validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/start/{workflowId}:
+    post:
+      summary: "Start a workflow"
+      description: "Start a new workflow instance with the specified ID and version."
+      tags: ['Workflow Execution']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+          description: "The workflow ID to start"
+        - in: query
+          name: version
+          schema:
+            type: string
+            default: "1"
+          description: "The workflow version to start"
+      requestBody:
+        description: "Workflow input data and parameters"
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          description: "Workflow started successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instanceId:
+                    type: string
+                  workflowId:
+                    type: string
+                  version:
+                    type: string
+                  status:
+                    type: string
+                    enum: ["started"]
+                  timestamp:
+                    type: string
+                    format: date-time
+        "400":
+          description: "Bad request - validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/instance/{instanceId}:
+    get:
+      summary: "Get workflow instance status"
+      description: "Retrieve the current status and details of a specific workflow instance."
+      tags: ['Workflow Instance Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: instanceId
+          required: true
+          schema:
+            type: string
+          description: "The workflow instance ID"
+      responses:
+        "200":
+          description: "Workflow instance details"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowInstance"
+        "404":
+          description: "Workflow instance not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request - validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: "Cancel workflow instance"
+      description: "Cancel a running or paused workflow instance."
+      tags: ['Workflow Instance Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: instanceId
+          required: true
+          schema:
+            type: string
+          description: "The workflow instance ID"
+      requestBody:
+        description: "Cancellation reason"
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: "Reason for cancellation"
+      responses:
+        "200":
+          description: "Workflow instance cancelled"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instanceId:
+                    type: string
+                  status:
+                    type: string
+                    enum: ["cancelled"]
+                  reason:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        "404":
+          description: "Workflow instance not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request - validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/instance/{instanceId}/pause:
+    post:
+      summary: "Pause workflow instance"
+      description: "Pause a running workflow instance."
+      tags: ['Workflow Instance Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: instanceId
+          required: true
+          schema:
+            type: string
+          description: "The workflow instance ID"
+      responses:
+        "200":
+          description: "Workflow instance paused"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instanceId:
+                    type: string
+                  status:
+                    type: string
+                    enum: ["paused"]
+                  timestamp:
+                    type: string
+                    format: date-time
+        "404":
+          description: "Workflow instance not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request - invalid state or validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/instance/{instanceId}/resume:
+    post:
+      summary: "Resume workflow instance"
+      description: "Resume a paused workflow instance."
+      tags: ['Workflow Instance Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: instanceId
+          required: true
+          schema:
+            type: string
+          description: "The workflow instance ID"
+      responses:
+        "200":
+          description: "Workflow instance resumed"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instanceId:
+                    type: string
+                  status:
+                    type: string
+                    enum: ["resumed"]
+                  timestamp:
+                    type: string
+                    format: date-time
+        "404":
+          description: "Workflow instance not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request - invalid state or validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/schedules:
+    get:
+      summary: "List all workflow schedules"
+      description: "Retrieve a list of all workflow schedules with their current status and statistics."
+      tags: ['Schedule Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+      responses:
+        "200":
+          description: "List of workflow schedules"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schedules:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WorkflowSchedule"
+                  stats:
+                    $ref: "#/components/schemas/SchedulerStats"
+                  timestamp:
+                    type: string
+                    format: date-time
+        "503":
+          description: "Service unavailable - scheduler not initialized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      summary: "Create a new workflow schedule"
+      description: "Create a new cron-based schedule for workflow execution. Note: This endpoint currently returns 501 as schedule creation requires file system access."
+      tags: ['Schedule Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateScheduleRequest"
+      responses:
+        "501":
+          description: "Not implemented - schedule creation via API not supported"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+                  scheduleFormat:
+                    $ref: "#/components/schemas/ScheduleConfig"
+        "400":
+          description: "Bad request - validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: "Conflict - schedule already exists"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: "Service unavailable - scheduler not initialized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/schedules/{scheduleId}:
+    get:
+      summary: "Get workflow schedule details"
+      description: "Retrieve detailed information about a specific workflow schedule."
+      tags: ['Schedule Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: scheduleId
+          required: true
+          schema:
+            type: string
+          description: "The schedule ID"
+      responses:
+        "200":
+          description: "Schedule details"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowSchedule"
+        "404":
+          description: "Schedule not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request - validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: "Service unavailable - scheduler not initialized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: "Update workflow schedule"
+      description: "Update an existing workflow schedule. Note: This endpoint currently returns 501 as schedule updates require file system access."
+      tags: ['Schedule Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: scheduleId
+          required: true
+          schema:
+            type: string
+          description: "The schedule ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateScheduleRequest"
+      responses:
+        "501":
+          description: "Not implemented - schedule updates via API not supported"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+                  currentSchedule:
+                    $ref: "#/components/schemas/WorkflowSchedule"
+        "404":
+          description: "Schedule not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request - validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: "Service unavailable - scheduler not initialized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: "Delete workflow schedule"
+      description: "Stop and remove a workflow schedule. This only stops the schedule; to permanently delete, the configuration file must be removed."
+      tags: ['Schedule Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: scheduleId
+          required: true
+          schema:
+            type: string
+          description: "The schedule ID"
+      responses:
+        "200":
+          description: "Schedule stopped"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scheduleId:
+                    type: string
+                  status:
+                    type: string
+                    enum: ["stopped"]
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        "404":
+          description: "Schedule not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request - validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: "Service unavailable - scheduler not initialized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/schedules/{scheduleId}/start:
+    post:
+      summary: "Start workflow schedule"
+      description: "Start a stopped workflow schedule."
+      tags: ['Schedule Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: scheduleId
+          required: true
+          schema:
+            type: string
+          description: "The schedule ID"
+      responses:
+        "200":
+          description: "Schedule started"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scheduleId:
+                    type: string
+                  status:
+                    type: string
+                    enum: ["started"]
+                  timestamp:
+                    type: string
+                    format: date-time
+        "404":
+          description: "Schedule not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request - validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: "Service unavailable - scheduler not initialized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/schedules/{scheduleId}/stop:
+    post:
+      summary: "Stop workflow schedule"
+      description: "Stop a running workflow schedule."
+      tags: ['Schedule Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: path
+          name: scheduleId
+          required: true
+          schema:
+            type: string
+          description: "The schedule ID"
+      responses:
+        "200":
+          description: "Schedule stopped"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scheduleId:
+                    type: string
+                  status:
+                    type: string
+                    enum: ["stopped"]
+                  timestamp:
+                    type: string
+                    format: date-time
+        "404":
+          description: "Schedule not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request - validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: "Service unavailable - scheduler not initialized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/schedules/reload:
+    post:
+      summary: "Reload workflow schedules"
+      description: "Reload all workflow schedules from configuration files."
+      tags: ['Schedule Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+      responses:
+        "200":
+          description: "Schedules reloaded"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ["reloaded"]
+                  stats:
+                    $ref: "#/components/schemas/SchedulerStats"
+                  timestamp:
+                    type: string
+                    format: date-time
+        "503":
+          description: "Service unavailable - scheduler not initialized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/audit:
+    get:
+      summary: "Get workflow audit logs"
+      description: "Retrieve paginated audit logs for workflow operations with optional filtering."
+      tags: ['Audit and Monitoring']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: query
+          name: userId
+          schema:
+            type: string
+          description: "Filter by user ID"
+        - in: query
+          name: action
+          schema:
+            type: string
+          description: "Filter by action type"
+        - in: query
+          name: resource
+          schema:
+            type: string
+          description: "Filter by resource type"
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+          description: "Filter by start date"
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date-time
+          description: "Filter by end date"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: "Page number"
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+          description: "Number of records per page"
+      responses:
+        "200":
+          description: "Audit logs"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditLogEntry"
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      pages:
+                        type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/metrics:
+    get:
+      summary: "Get workflow system metrics"
+      description: "Retrieve comprehensive system metrics including performance, error rates, and usage statistics."
+      tags: ['Audit and Monitoring']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+      responses:
+        "200":
+          description: "System metrics"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  system:
+                    type: object
+                    properties:
+                      initialized:
+                        type: boolean
+                      uptime:
+                        type: number
+                      timestamp:
+                        type: string
+                        format: date-time
+                  workflows:
+                    type: object
+                    properties:
+                      lifecycle:
+                        $ref: "#/components/schemas/WorkflowLifecycleStats"
+                      errors:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/WorkflowErrorStats"
+                      scheduler:
+                        $ref: "#/components/schemas/SchedulerStats"
+                  configuration:
+                    $ref: "#/components/schemas/ConfigurationStats"
+                  security:
+                    $ref: "#/components/schemas/SecurityStats"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflow/configs:
+    get:
+      summary: "Get workflow configurations"
+      description: "Retrieve workflow configurations. Can get a specific configuration or export all configurations in JSON or YAML format."
+      tags: ['Configuration Management']
+      security:
+        - bearer: []
+      parameters:
+        - $ref: "#/components/parameters/x-client-key"
+        - $ref: "#/components/parameters/x-client-pwd"
+        - in: query
+          name: workflowId
+          schema:
+            type: string
+          description: "Get configuration for specific workflow ID"
+        - in: query
+          name: version
+          schema:
+            type: string
+          description: "Get configuration for specific workflow version"
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum: ["json", "yaml"]
+            default: "json"
+          description: "Export format for all configurations"
+      responses:
+        "200":
+          description: "Workflow configurations"
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/WorkflowConfig"
+                  - type: object
+                    properties:
+                      configurations:
+                        type: object
+                      stats:
+                        $ref: "#/components/schemas/ConfigurationStats"
+                      timestamp:
+                        type: string
+                        format: date-time
+            text/yaml:
+              schema:
+                type: string
+        "404":
+          description: "Configuration not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    WorkflowInstance:
+      type: object
+      properties:
+        id:
+          type: string
+        workflowId:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          enum: ["PENDING", "RUNNING", "PAUSED", "COMPLETED", "FAILED", "CANCELLED", "CLEANING_UP"]
+        priority:
+          type: string
+          enum: ["LOW", "NORMAL", "HIGH", "CRITICAL"]
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        dependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowDependency"
+        metadata:
+          type: object
+          additionalProperties: true
+
+    WorkflowDependency:
+      type: object
+      properties:
+        workflowId:
+          type: string
+        condition:
+          type: string
+          enum: ["completed", "failed", "any"]
+        timeout:
+          type: number
+
+    WorkflowLifecycleStats:
+      type: object
+      properties:
+        totalInstances:
+          type: integer
+        runningInstances:
+          type: integer
+        completedInstances:
+          type: integer
+        failedInstances:
+          type: integer
+        averageExecutionTime:
+          type: number
+
+    WorkflowErrorStats:
+      type: object
+      properties:
+        workflowId:
+          type: string
+        errorCount:
+          type: integer
+        lastError:
+          type: string
+          format: date-time
+
+    SchedulerStats:
+      type: object
+      properties:
+        totalSchedules:
+          type: integer
+        activeSchedules:
+          type: integer
+        totalRuns:
+          type: integer
+        totalErrors:
+          type: integer
+        lastRun:
+          type: string
+          format: date-time
+
+    ConfigurationStats:
+      type: object
+      properties:
+        totalConfigurations:
+          type: integer
+        lastModified:
+          type: string
+          format: date-time
+
+    SecurityStats:
+      type: object
+      properties:
+        totalAuditEntries:
+          type: integer
+        securityEvents:
+          type: integer
+        lastAuditEntry:
+          type: string
+          format: date-time
+
+    WorkflowSchedule:
+      type: object
+      properties:
+        id:
+          type: string
+        config:
+          $ref: "#/components/schemas/ScheduleConfig"
+        lastRun:
+          type: string
+          format: date-time
+        nextRun:
+          type: string
+          format: date-time
+        runCount:
+          type: integer
+        errorCount:
+          type: integer
+        isRunning:
+          type: boolean
+
+    ScheduleConfig:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        workflow:
+          type: object
+          properties:
+            id:
+              type: string
+            version:
+              type: string
+            nameSpace:
+              type: string
+        schedule:
+          type: object
+          properties:
+            cron:
+              type: string
+            timezone:
+              type: string
+            enabled:
+              type: boolean
+        properties:
+          type: object
+          additionalProperties: true
+        retry:
+          type: object
+          properties:
+            attempts:
+              type: integer
+            delay:
+              type: integer
+        timeout:
+          type: integer
+        maxConcurrent:
+          type: integer
+
+    CreateScheduleRequest:
+      type: object
+      required:
+        - id
+        - name
+        - workflowId
+        - cron
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        workflowId:
+          type: string
+        version:
+          type: string
+          default: "1"
+        nameSpace:
+          type: string
+        cron:
+          type: string
+        timezone:
+          type: string
+          default: "UTC"
+        enabled:
+          type: boolean
+          default: true
+        properties:
+          type: object
+          additionalProperties: true
+        retry:
+          type: object
+          properties:
+            attempts:
+              type: integer
+            delay:
+              type: integer
+        timeout:
+          type: integer
+        maxConcurrent:
+          type: integer
+          default: 1
+
+    UpdateScheduleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        workflowId:
+          type: string
+        version:
+          type: string
+        nameSpace:
+          type: string
+        cron:
+          type: string
+        timezone:
+          type: string
+        enabled:
+          type: boolean
+        properties:
+          type: object
+          additionalProperties: true
+        retry:
+          type: object
+          properties:
+            attempts:
+              type: integer
+            delay:
+              type: integer
+        timeout:
+          type: integer
+        maxConcurrent:
+          type: integer
+
+    WorkflowConfig:
+      type: object
+      properties:
+        id:
+          type: string
+        nameSpace:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        enabled:
+          type: boolean
+        maxRetries:
+          type: integer
+        timeout:
+          type: integer
+        priority:
+          type: string
+        concurrency:
+          type: integer
+        dependencies:
+          type: array
+          items:
+            type: string
+        properties:
+          type: object
+          additionalProperties: true
+        security:
+          type: object
+          properties:
+            permissions:
+              type: array
+              items:
+                type: string
+            requireAuth:
+              type: boolean
+            allowedRoles:
+              type: array
+              items:
+                type: string
+        monitoring:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            metrics:
+              type: array
+              items:
+                type: string
+            alerts:
+              type: array
+              items:
+                type: string
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        action:
+          type: string
+        resource:
+          type: string
+        resourceId:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+
+    RegisteredWorkflow:
+      type: object
+      properties:
+        nameSpace:
+          type: string
+          description: "Workflow namespace"
+        name:
+          type: string
+          description: "Workflow name"
+        version:
+          type: string
+          description: "Workflow version"
+        category:
+          type: string
+          description: "Workflow category"
+        autoStart:
+          type: boolean
+          description: "Whether the workflow starts automatically"
+        hasProps:
+          type: boolean
+          description: "Whether the workflow has properties configured"
+        propsKeys:
+          type: array
+          items:
+            type: string
+          description: "Keys of the workflow properties"
+
+    WorkflowDetails:
+      type: object
+      properties:
+        nameSpace:
+          type: string
+          description: "Workflow namespace"
+        name:
+          type: string
+          description: "Workflow name"
+        version:
+          type: string
+          description: "Workflow version"
+        category:
+          type: string
+          description: "Workflow category"
+        autoStart:
+          type: boolean
+          description: "Whether the workflow starts automatically"
+        hasProps:
+          type: boolean
+          description: "Whether the workflow has properties configured"
+        props:
+          type: object
+          additionalProperties: true
+          description: "Workflow properties"
+        fullId:
+          type: string
+          description: "Full workflow identifier in format namespace.name@version"
+
+    WorkflowRegistryStats:
+      type: object
+      properties:
+        totalWorkflows:
+          type: integer
+          description: "Total number of registered workflows"
+        workflowsByNamespace:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "Count of workflows grouped by namespace"
+        workflowsByCategory:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "Count of workflows grouped by category"
+        autoStartWorkflows:
+          type: integer
+          description: "Number of workflows configured to auto-start"

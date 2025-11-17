@@ -10,9 +10,7 @@ function dependency(id: string) {
 
     // Create an entry in the dependencies array
     const dependency = { id, alias: fieldName };
-    if (!target.constructor.reactory.dependencies) {
-      target.constructor.reactory.dependencies = [];
-    }
+    target.constructor.reactory.dependencies ??= [];
     target.constructor.reactory.dependencies.push(dependency);
 
     // Create a function on the target class called setFieldName

@@ -1,14 +1,14 @@
 import moment from "moment";
 import EmailService from './EmailService'
 import TemplateService from './TemplateService'
-import FileService from './FileService';
+import FileService from './ReactoryFileService';
 import { ReactoryExcelWriterServiceDefinition } from '@reactory/server-core/excel/ExcelWriter';
 import OrganizationServiceDefinition from '@reactory/server-modules/reactory-core/services/OrganizationService';
 import GoogleMapsService from "./location/GoogleMapsService";
 import Processors from './ETL/Processors';
 import ReactoryPackageManager from './ETL/ReactoryPackageManager';
 import UserService from './UserService';
-import WorkflowService from './ReactoryWorkflowService';
+import WorkflowService from './Workflow/ReactoryWorkflowService';
 import FetchService from './FetchService';
 import PdfService from './PdfService';
 import ReactorySupportService from "./SupportService";
@@ -20,8 +20,10 @@ import ReactoryContentService from './ReactoryContentService';
 import ReactoryNLPService from './ReactoryNLPService';
 import ReactoryModelRegistry from "./ReactoryModelRegistryService";
 import ReactorySearchService from "./ReactorySearchService";
+import { RedisService } from "./RedisService";
 //custom services to be expressed here
 import GeneratorServices from './generators';
+
 
 const services = [
   GoogleMapsService,
@@ -33,7 +35,7 @@ const services = [
   OrganizationServiceDefinition,
   ReactoryPackageManager.reactory,
   UserService.reactory,
-  WorkflowService.definition,
+  WorkflowService,
   FetchService.reactory,
   PdfService.reactory,
   ReactorySupportService.reactory,
@@ -45,6 +47,7 @@ const services = [
   ReactoryNLPService,
   ReactoryModelRegistry,
   ReactorySearchService,
+  RedisService,
   ...GeneratorServices
 ]
 

@@ -18,7 +18,7 @@ const ContentSchema = new mongoose.Schema<Reactory.Models.IReactoryContent>({
     type: ObjectId,
     ref: 'BusinessUnit'
   },
-  flags: [{ 
+  flags: [{
     id: ObjectId,
     user: {
       type: ObjectId,
@@ -27,9 +27,17 @@ const ContentSchema = new mongoose.Schema<Reactory.Models.IReactoryContent>({
     flagTypes: [ String ],
     reason: String,
   }],
+  flagged: Boolean,
   topics: [ String ],
   title: String,
   roles: [ String ],
+  translations: [{
+    lang: String,
+    title: String,
+    description: String,
+    content: String,
+    tags: [ String ],
+  }],
   content: String,
   template: Boolean,
   engine: String,
@@ -49,7 +57,7 @@ const ContentSchema = new mongoose.Schema<Reactory.Models.IReactoryContent>({
   published: Boolean,
   commentsAllowed: Boolean,
   commentRoles: [ String ],
-  comments: [ ObjectId ]
+  comments: [{ ref: 'Comment', type: ObjectId }]
 });
 
 const ContentModel = mongoose.model<Reactory.Models.IReactoryContentDocument>('Content', ContentSchema, 'reactory_content');
