@@ -4,6 +4,7 @@ import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn } from 
 @Index(['user', 'action', 'createdAt'])
 @Index(['source', 'createdAt'])
 @Index(['resourceType', 'resourceId'])
+@Index(['moduleName', 'moduleVersion'])
 export default class AuditModel {
 
   @PrimaryGeneratedColumn()
@@ -52,6 +53,7 @@ export default class AuditModel {
 
   // Enhanced fields for compliance tracking
   @Column({
+    type: 'varchar',
     length: 100,
     nullable: true,
     name: 'actor_type'
@@ -59,6 +61,7 @@ export default class AuditModel {
   actorType: string // 'user', 'system', 'service', 'admin'
 
   @Column({
+    type: 'varchar',
     length: 255,
     nullable: true,
     name: 'actor_id'
@@ -66,6 +69,7 @@ export default class AuditModel {
   actorId: string
 
   @Column({
+    type: 'varchar',
     length: 100,
     nullable: true,
     name: 'resource_type'
@@ -73,13 +77,15 @@ export default class AuditModel {
   resourceType: string // e.g., 'kyc_verification', 'document', 'user'
 
   @Column({
+    type: 'varchar',
     length: 255,
     nullable: true,
     name: 'resource_id'
   })
   resourceId: string
 
-  @Column({
+  @Column({ 
+    type: 'varchar',
     length: 100,
     nullable: true,
     name: 'event_type'
@@ -93,6 +99,7 @@ export default class AuditModel {
   metadata: string // JSON string for additional contextual data
 
   @Column({
+    type: 'varchar',
     length: 100,
     nullable: true,
     name: 'ip_address'
@@ -100,6 +107,7 @@ export default class AuditModel {
   ipAddress: string
 
   @Column({
+    type: 'varchar',
     length: 500,
     nullable: true,
     name: 'user_agent'
@@ -107,6 +115,7 @@ export default class AuditModel {
   userAgent: string
 
   @Column({
+    type: 'varchar',
     length: 255,
     nullable: true,
     name: 'session_id'
@@ -128,11 +137,28 @@ export default class AuditModel {
   errorMessage: string
 
   @Column({
+    type: 'varchar',
     length: 255,
     nullable: true,
     name: 'organization_id'
   })
   organizationId: string
+
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'module_name'
+  })
+  moduleName: string // e.g., 'reactory-core', 'reactory-kyc', 'reactory-auth', 'reactory-user', 'reactory-organization', 'reactory-document', 'reactory-document-chunk', 'reactory-document-chunk-embedding', 'reactory-document-chunk-embedding-similarity', 'reactory-document-chunk-embedding-similarity-search', 'reactory-document-chunk-embedding-similarity-search-result'
+
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'module_version'
+  })
+  moduleVersion: string // e.g., '1.0.0', '1.1.0', '1.2.0'
 
   @CreateDateColumn({
     type: 'timestamp',

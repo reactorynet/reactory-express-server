@@ -13,6 +13,8 @@ type AuditLog {
   resourceType: String
   resourceId: String
   eventType: String
+  moduleName: String
+  moduleVersion: String
   metadata: JSON
   ipAddress: String
   userAgent: String
@@ -77,6 +79,8 @@ input AuditQueryFilter {
   resourceType: [String!]
   resourceId: String
   eventType: [String!]
+  moduleName: [String!]
+  moduleVersion: [String!]
   startDate: DateTime
   endDate: DateTime
   success: Boolean

@@ -1,5 +1,5 @@
 import Reactory from '@reactory/reactory-core';
-import { resolver, query, mutation } from '@reactory/server-core/models/decorators';
+import { resolver, query, mutation } from "@reactory/server-core/models/graphql/decorators/resolver";
 import { IAuditQueryFilter, IComplianceReportParams } from '../services/ReactoryAuditService';
 
 /**

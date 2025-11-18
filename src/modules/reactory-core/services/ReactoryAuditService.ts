@@ -1,10 +1,9 @@
 import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 import AuditModel from '@reactory/server-modules/reactory-core/models/Audit';
-import PostgresDataSource from '@reactory/server-modules/reactory-core/models/PostgresDataSource';
+import { PostgresDataSource } from '@reactory/server-modules/reactory-core/models';
 import { Repository, Between, LessThanOrEqual, MoreThanOrEqual, In } from 'typeorm';
 import Hash from '@reactory/server-core/utils/hash';
-import encoder from '@reactory/server-core/utils/encoder';
 
 /**
  * Interface for audit log entry parameters
@@ -27,6 +26,8 @@ export interface IAuditLogParams {
   success?: boolean;
   errorMessage?: string;
   organizationId?: string;
+  moduleName?: string;
+  moduleVersion?: string;
 }
 
 /**
@@ -39,6 +40,8 @@ export interface IAuditQueryFilter {
   resourceType?: string | string[];
   resourceId?: string;
   eventType?: string | string[];
+  moduleName?: string | string[];
+  moduleVersion?: string | string[];
   startDate?: Date;
   endDate?: Date;
   success?: boolean;
@@ -84,6 +87,11 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
     this.repository = PostgresDataSource.getRepository(AuditModel);
   }
 
+  onStartup(): Promise<void> {
+    this.context.log(`ReactoryAuditService ${this.context.colors.green('STARTUP OKAY')}`)
+    return Promise.resolve();
+  }
+
   /**
    * Log an audit event
    * 
@@ -109,7 +117,9 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
         sessionId,
         success = true,
         errorMessage,
-        organizationId
+        organizationId,
+        moduleName,
+        moduleVersion
       } = params;
 
       // Serialize before/after for storage
@@ -124,9 +134,11 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
         user: user || this.context.user?._id || 'system',
         resourceType,
         resourceId,
+        moduleName,
+        moduleVersion,
         timestamp: new Date().toISOString()
       };
-      const signature = Hash(encoder.encodeState(signatureData)).toString();
+      const signature = Hash(JSON.stringify(signatureData)).toString();
 
       // Create audit entry
       const auditEntry = this.repository.create({
@@ -147,12 +159,14 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
         sessionId: sessionId || this.context.sessionId,
         success,
         errorMessage,
-        organizationId: organizationId || this.context.partner?._id?.toString()
+        organizationId: organizationId || this.context.partner?._id?.toString(),
+        moduleName,
+        moduleVersion
       });
 
       const saved = await this.repository.save(auditEntry);
       
-      logger.debug(`Audit event logged: ${action} on ${resourceType}/${resourceId} by ${auditEntry.actorId}`);
+      logger.debug(`Audit event logged: ${action} on ${resourceType}/${resourceId} by ${auditEntry.actorId} [${moduleName}@${moduleVersion}]`);
       
       return saved;
     } catch (error) {
@@ -181,6 +195,8 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
         resourceType,
         resourceId,
         eventType,
+        moduleName,
+        moduleVersion,
         startDate,
         endDate,
         success,
@@ -231,6 +247,22 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
           query.andWhere('audit.eventType IN (:...eventTypes)', { eventTypes: eventType });
         } else {
           query.andWhere('audit.eventType = :eventType', { eventType });
+        }
+      }
+
+      if (moduleName) {
+        if (Array.isArray(moduleName)) {
+          query.andWhere('audit.moduleName IN (:...moduleNames)', { moduleNames: moduleName });
+        } else {
+          query.andWhere('audit.moduleName = :moduleName', { moduleName });
+        }
+      }
+
+      if (moduleVersion) {
+        if (Array.isArray(moduleVersion)) {
+          query.andWhere('audit.moduleVersion IN (:...moduleVersions)', { moduleVersions: moduleVersion });
+        } else {
+          query.andWhere('audit.moduleVersion = :moduleVersion', { moduleVersion });
         }
       }
 
@@ -305,6 +337,8 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
         byAction: this.groupBy(logs, 'action'),
         byEventType: this.groupBy(logs, 'eventType'),
         byResourceType: this.groupBy(logs, 'resourceType'),
+        byModule: this.groupBy(logs, 'moduleName'),
+        byModuleVersion: this.groupBy(logs, 'moduleVersion'),
         successRate: this.calculateSuccessRate(logs),
         uniqueUsers: new Set(logs.map(l => l.user)).size,
         uniqueActors: new Set(logs.map(l => l.actorId)).size
@@ -462,6 +496,8 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
       resourceType: log.resourceType,
       resourceId: log.resourceId,
       eventType: log.eventType,
+      moduleName: log.moduleName,
+      moduleVersion: log.moduleVersion,
       success: log.success,
       ipAddress: log.ipAddress,
       organizationId: log.organizationId
@@ -477,6 +513,7 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
     const headers = [
       'ID', 'Timestamp', 'User', 'Action', 'Source',
       'Actor Type', 'Resource Type', 'Resource ID', 'Event Type',
+      'Module Name', 'Module Version',
       'Success', 'IP Address', 'Organization ID'
     ];
 
@@ -490,6 +527,8 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
       log.resourceType || '',
       log.resourceId || '',
       log.eventType || '',
+      log.moduleName || '',
+      log.moduleVersion || '',
       log.success,
       log.ipAddress || '',
       log.organizationId || ''
@@ -525,7 +564,9 @@ export const ReactoryAuditServiceDefinition: Reactory.Service.IReactoryServiceDe
   nameSpace: 'core',
   version: '1.0.0',
   description: 'Service for audit logging and compliance tracking',
-  service: ReactoryAuditService,
+  service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
+    return new ReactoryAuditService(props, context);
+  },  
   serviceType: 'data',
   dependencies: [],
   tags: ['audit', 'compliance', 'logging', 'security'],
