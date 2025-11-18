@@ -24,7 +24,7 @@ import ReactoryForm from './ReactoryForm';
 import ReactoryMenuResolver from './Menu/MenuResolver';
 import NaturalResolver from './System/NaturalResolver';
 import WorkflowResolver from './Workflow/WorkflowResolver';
-import AuditResolver from './AuditResolver';
+import AuditResolver from './System/AuditResolver';
 
 import { mergeGraphResolver } from '@reactory/server-core/utils';
 

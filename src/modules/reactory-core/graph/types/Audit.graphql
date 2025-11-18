@@ -97,6 +97,8 @@ input ComplianceReportInput {
   resourceType: String
   organizationId: String
   format: String
+  moduleName: [String!]
+  moduleVersion: [String!]
 }
 
 extend type Query {
