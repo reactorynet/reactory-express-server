@@ -204,7 +204,7 @@ export class ErrorHandler {
   private async handleError(error: Error, context: IErrorContext): Promise<void> {
     const categorizedError = this.categorizeError(error);
     const severity = this.determineSeverity(categorizedError, context);
-    this.updateErrorStats(context.workflowId);
+    this.updateErrorStats(context.workflowId, categorizedError, error);
     this.logError(error, context, categorizedError, severity);
     await this.implementGracefulDegradation(context, categorizedError, severity);
   }
@@ -213,6 +213,10 @@ export class ErrorHandler {
    * Categorize error based on error type and message
    */
   private categorizeError(error: Error): ErrorCategory {
+    if (!error || !error.message) {
+      return ErrorCategory.UNKNOWN;
+    }
+
     const message = error.message.toLowerCase();
     const name = error.name.toLowerCase();
 
