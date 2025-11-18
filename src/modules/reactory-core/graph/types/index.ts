@@ -34,6 +34,7 @@ const CoreTypeDefinitions = loadGraphQLTypeDefinitions([
   'Communications/Notification',
   'SQL/ReactorySQL',
   'Finance/Payments',
+  'Audit',
 ], __dirname, 'CORE');
 
 export default CoreTypeDefinitions;

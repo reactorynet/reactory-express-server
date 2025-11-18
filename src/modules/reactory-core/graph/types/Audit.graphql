@@ -1,0 +1,121 @@
+# Audit Log GraphQL Schema
+
+type AuditLog {
+  id: Int!
+  user: String!
+  action: String!
+  source: String!
+  signature: String!
+  before: String
+  after: String
+  actorType: String
+  actorId: String
+  resourceType: String
+  resourceId: String
+  eventType: String
+  metadata: JSON
+  ipAddress: String
+  userAgent: String
+  sessionId: String
+  success: Boolean!
+  errorMessage: String
+  organizationId: String
+  createdAt: DateTime!
+}
+
+type AuditLogConnection {
+  logs: [AuditLog!]!
+  total: Int!
+  offset: Int!
+  limit: Int!
+}
+
+type ComplianceReport {
+  generatedAt: DateTime!
+  generatedBy: String!
+  parameters: JSON!
+  statistics: ComplianceStatistics!
+  events: [AuditLog!]!
+}
+
+type ComplianceStatistics {
+  totalEvents: Int!
+  period: DatePeriod!
+  byAction: JSON!
+  byEventType: JSON!
+  byResourceType: JSON!
+  successRate: Float!
+  uniqueUsers: Int!
+  uniqueActors: Int!
+}
+
+type DatePeriod {
+  startDate: DateTime!
+  endDate: DateTime!
+}
+
+enum AuditEventType {
+  create
+  update
+  delete
+  access
+  approve
+  reject
+}
+
+enum AuditActorType {
+  user
+  system
+  service
+  admin
+}
+
+input AuditQueryFilter {
+  userId: String
+  action: [String!]
+  source: [String!]
+  resourceType: [String!]
+  resourceId: String
+  eventType: [String!]
+  startDate: DateTime
+  endDate: DateTime
+  success: Boolean
+  organizationId: String
+  limit: Int
+  offset: Int
+  sortBy: String
+  sortOrder: String
+}
+
+input ComplianceReportInput {
+  startDate: DateTime!
+  endDate: DateTime!
+  resourceType: String
+  organizationId: String
+  format: String
+}
+
+extend type Query {
+  """
+  Query audit logs with filtering and pagination
+  """
+  auditLogs(filter: AuditQueryFilter): AuditLogConnection!
+
+  """
+  Get audit trail for a specific resource
+  """
+  resourceAuditTrail(resourceType: String!, resourceId: String!): [AuditLog!]!
+
+  """
+  Generate a compliance report
+  """
+  complianceReport(params: ComplianceReportInput!): ComplianceReport!
+}
+
+extend type Mutation {
+  """
+  Manually trigger audit log purge (admin only)
+  """
+  purgeOldAuditLogs(retentionDays: Int!): Int!
+}
+
