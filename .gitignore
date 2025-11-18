@@ -3,6 +3,7 @@ dist/
 bin/server
 /*-audit.json
 package-lock.json
+yarn.lock
 build/*
 lib/*
 !lib/readme.md
