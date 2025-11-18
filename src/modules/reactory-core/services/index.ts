@@ -21,6 +21,7 @@ import ReactoryNLPService from './ReactoryNLPService';
 import ReactoryModelRegistry from "./ReactoryModelRegistryService";
 import ReactorySearchService from "./ReactorySearchService";
 import { RedisService } from "./RedisService";
+import { ReactoryAuditServiceDefinition } from './ReactoryAuditService';
 //custom services to be expressed here
 import GeneratorServices from './generators';
 
@@ -48,6 +49,7 @@ const services = [
   ReactoryModelRegistry,
   ReactorySearchService,
   RedisService,
+  ReactoryAuditServiceDefinition,
   ...GeneratorServices
 ]
 
