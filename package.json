@@ -117,6 +117,7 @@
     "mongodb-extjson": "^1.0.4",
     "mongoose": "7.1.1",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "mssql": "^11.0.1",
     "mysql": "^2.18.1",
     "mysql2": "^3.10.2",
