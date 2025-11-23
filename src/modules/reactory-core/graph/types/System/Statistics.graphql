@@ -1,21 +1,118 @@
 """
-  Statistic - statistic
-  @param id - id of the statistic
-  @param key - key of the statistic
-  @param when - when was the statistic generated
-  @param createdAt - creation date of the statistic within the system
-  @param updatedAt - update date of the statistic within the system
-  @param stat - statistic value
+  OTelMetricType - OpenTelemetry metric type
+"""
+enum OTelMetricType {
+  GAUGE
+  COUNTER
+  HISTOGRAM
+  SUMMARY
+  UPDOWNCOUNTER
+}
+
+"""
+  HistogramBucket - Histogram bucket data
+"""
+type HistogramBucket {
+  upperBound: Float!
+  count: Int!
+  exemplars: [Any]
+}
+
+"""
+  HistogramData - Histogram distribution data
+"""
+type HistogramData {
+  count: Int!
+  sum: Float!
+  min: Float
+  max: Float
+  buckets: [HistogramBucket!]!
+}
+
+"""
+  SummaryQuantile - Summary quantile data
+"""
+type SummaryQuantile {
+  quantile: Float!
+  value: Float!
+}
+
+"""
+  SummaryData - Summary statistics data
+"""
+type SummaryData {
+  count: Int!
+  sum: Float!
+  quantiles: [SummaryQuantile!]!
+}
+
+"""
+  TraceContext - Distributed tracing context
+"""
+type TraceContext {
+  traceId: String
+  spanId: String
+  traceFlags: Int
+}
+
+"""
+  MetricResource - Resource attributes identifying the metric source
+"""
+type MetricResource {
+  serviceName: String
+  serviceVersion: String
+  serviceInstanceId: String
+  deploymentEnvironment: String
+  hostName: String
+  attributes: Any
+}
+
+"""
+  InstrumentationScope - Instrumentation library information
+"""
+type InstrumentationScope {
+  name: String!
+  version: String
+  schemaUrl: String
+}
+
+"""
+  Statistic - OpenTelemetry-compatible metric/statistic
+  Follows OpenTelemetry Metrics API specification and is compatible with
+  Prometheus and Jaeger exporters.
+  
+  @param id - Unique identifier for the metric
+  @param name - Metric name (snake_case, e.g., http_requests_total)
+  @param description - Human-readable description of the metric
+  @param unit - Unit of measurement (e.g., ms, bytes, requests)
+  @param type - Metric type (counter, gauge, histogram, summary, updowncounter)
+  @param value - Current metric value (for counter/gauge/updowncounter)
+  @param histogramData - Histogram distribution data (when type is HISTOGRAM)
+  @param summaryData - Summary statistics data (when type is SUMMARY)
+  @param attributes - Metric attributes/labels for dimensional data
+  @param timestamp - When the metric was recorded
+  @param traceContext - Optional distributed trace correlation
+  @param resource - Resource attributes identifying the metric source
+  @param scope - Instrumentation scope information
+  @param createdAt - When the metric was stored in the system
+  @param updatedAt - When the metric was last updated
 """
 type Statistic {
   id: String!
-  key: String!
-  title: String
+  name: String!
   description: String
-  when: Date!
+  unit: String
+  type: OTelMetricType!
+  value: Float
+  histogramData: HistogramData
+  summaryData: SummaryData
+  attributes: Any
+  timestamp: Date
+  traceContext: TraceContext
+  resource: MetricResource
+  scope: InstrumentationScope
   createdAt: Date!
   updatedAt: Date
-  stat: Any!
 }
 
 """
@@ -53,73 +150,163 @@ type StatisticsReceipt {
 }
 
 """
-  StatisticsFilter - filter for retrieving statistics
-  @param keys - keys of the statistics
-  @param users - users of the statistics
-  @param references - references of the statistics
-  @param from - from date of the statistics
-  @param till - till date of the statistics
+  StatisticsFilter - Filter for retrieving statistics/metrics
+  @param names - Metric names to filter by
+  @param types - Metric types to filter by
+  @param attributes - Attribute filters (key-value pairs)
+  @param serviceName - Filter by service name
+  @param from - From date/time
+  @param till - Till date/time
+  @param references - Package references (for backward compatibility)
 """
 input StatisticsFilter {
-  keys: [String],
-  users: [String],
-  references: [String],
-  from: Date,
+  names: [String]
+  types: [OTelMetricType]
+  attributes: Any
+  serviceName: String
+  from: Date
   till: Date
+  references: [String]
 }
 
 """
-  StatisticsInput - input for statistic entry
-  @param key - key of the statistic, this is a required field
-  @param stat - statistic value, this is a required field
-  @param processor - processor of the statistic entry. This is an optional field
-  @param ttl - time to live of the statistic. This is an optional field and is in seconds.   
-  If this field is not set, the statistic will be stored forever.
-  @param title - title of the statistic. This is an optional field.
-  @param description - description of the statistic. This is an optional field.
-  @param roles - roles of the statistic. This is an optional field. If this field is set, the statistic
-  will only be accessible for users with the specified roles. This cannot be set once the 
-  statistic record is created.
+  HistogramBucketInput - Input for histogram bucket
+"""
+input HistogramBucketInput {
+  upperBound: Float!
+  count: Int!
+  exemplars: [Any]
+}
+
+"""
+  HistogramDataInput - Input for histogram data
+"""
+input HistogramDataInput {
+  count: Int!
+  sum: Float!
+  min: Float
+  max: Float
+  buckets: [HistogramBucketInput!]!
+}
+
+"""
+  SummaryQuantileInput - Input for summary quantile
+"""
+input SummaryQuantileInput {
+  quantile: Float!
+  value: Float!
+}
+
+"""
+  SummaryDataInput - Input for summary data
+"""
+input SummaryDataInput {
+  count: Int!
+  sum: Float!
+  quantiles: [SummaryQuantileInput!]!
+}
+
+"""
+  TraceContextInput - Input for trace context
+"""
+input TraceContextInput {
+  traceId: String
+  spanId: String
+  traceFlags: Int
+}
+
+"""
+  MetricResourceInput - Input for metric resource attributes
+"""
+input MetricResourceInput {
+  serviceName: String
+  serviceVersion: String
+  serviceInstanceId: String
+  deploymentEnvironment: String
+  hostName: String
+  attributes: Any
+}
+
+"""
+  InstrumentationScopeInput - Input for instrumentation scope
+"""
+input InstrumentationScopeInput {
+  name: String!
+  version: String
+  schemaUrl: String
+}
+
+"""
+  StatisticsInput - Input for creating/updating OpenTelemetry-compatible metrics
   
-  A stat can be any data structure, simpler data structures are recommended
-  however more complex data structures can be used as well.
+  @param name - Metric name (required, use snake_case)
+  @param description - Human-readable description
+  @param unit - Unit of measurement (e.g., ms, bytes, requests)
+  @param type - Metric type (counter, gauge, histogram, summary, updowncounter)
+  @param value - Current value (for counter/gauge/updowncounter types)
+  @param histogramData - Histogram distribution (when type is HISTOGRAM)
+  @param summaryData - Summary statistics (when type is SUMMARY)
+  @param attributes - Dimensional data as key-value pairs (labels/tags)
+  @param timestamp - When the metric was recorded
+  @param traceContext - Optional trace correlation information
+  @param resource - Resource attributes identifying the source
+  @param scope - Instrumentation scope information
+  @param ttl - Time to live in seconds (optional, for automatic cleanup)
   
-  e.g.:
+  Examples:
+  
+  Counter:
   {
-    "key": "form.someid.graphtime",
-    "stat": {
-      "execution_time": 100,
-    }
+    "name": "http_requests_total",
+    "type": "COUNTER",
+    "value": 42,
+    "attributes": { "method": "GET", "status": "200" },
+    "unit": "1"
   }
-
-  or 
-
+  
+  Histogram:
   {
-    "key": "form.someid.graphdata",
-    "stat": {
-      "data": {
-        "x": [1,2,3,4,5],
-        "y": [1,2,3,4,5]
-      }
-    }
+    "name": "http_request_duration_ms",
+    "type": "HISTOGRAM",
+    "histogramData": {
+      "count": 100,
+      "sum": 5000,
+      "buckets": [
+        { "upperBound": 10, "count": 20 },
+        { "upperBound": 50, "count": 60 }
+      ]
+    },
+    "attributes": { "endpoint": "/api/users" },
+    "unit": "ms"
   }
 """
 input StatisticsInput {
-  key: String!    
-  stat: Any!
-  processor: String
-  ttl: Int
-  title: String
+  name: String!
   description: String
-  roles: [String]
+  unit: String
+  type: OTelMetricType!
+  value: Float
+  histogramData: HistogramDataInput
+  summaryData: SummaryDataInput
+  attributes: Any
+  timestamp: Date
+  traceContext: TraceContextInput
+  resource: MetricResourceInput
+  scope: InstrumentationScopeInput
+  ttl: Int
 }
 
-input StatisticUpdateInpt {
+"""
+  StatisticUpdateInput - Input for updating an existing statistic
+"""
+input StatisticUpdateInput {
   id: ObjID!
-  processor: String
-  ttl: Int
-  title: String
   description: String
+  value: Float
+  histogramData: HistogramDataInput
+  summaryData: SummaryDataInput
+  attributes: Any
+  ttl: Int
 }
 
 """
@@ -180,7 +367,7 @@ extend type Mutation {
     CoreUpdateStatistic - update statistic
     @param input - input for updating statistic
   """
-  CoreUpdateStatistic(input: StatisticUpdateInpt!): Statistic
+  CoreUpdateStatistic(input: StatisticUpdateInput!): Statistic
 
   """
     CoreUpdateStatisticsPackage - update statistics package

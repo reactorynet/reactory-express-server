@@ -22,6 +22,7 @@ import ReactoryModelRegistry from "./ReactoryModelRegistryService";
 import ReactorySearchService from "./ReactorySearchService";
 import { RedisService } from "./RedisService";
 import { ReactoryAuditServiceDefinition } from './ReactoryAuditService';
+import ReactoryStatisticsService from './Statistics/StatisticsService';
 //custom services to be expressed here
 import GeneratorServices from './generators';
 
@@ -50,6 +51,14 @@ const services = [
   ReactorySearchService,
   RedisService,
   ReactoryAuditServiceDefinition,
+  {
+    nameSpace: 'core',
+    name: 'ReactoryStatisticsService',
+    version: '1.0.0',
+    service: ReactoryStatisticsService,
+    serviceType: 'data',
+    description: 'OpenTelemetry-compatible statistics and metrics management service',
+  },
   ...GeneratorServices
 ]
 

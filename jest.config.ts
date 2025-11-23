@@ -95,6 +95,31 @@ export default async (): Promise<JestConfigWithTsJest> => {
       '^test/(.*)$': '<rootDir>/test/$1',
     },
     setupFilesAfterEnv: ['<rootDir>/test/setup/init.ts'],
+    // Coverage configuration
+    collectCoverage: false, // Enable with --coverage flag
+    collectCoverageFrom: [
+      'src/**/*.{ts,tsx}',
+      '!src/**/*.d.ts',
+      '!src/**/__tests__/**',
+      '!src/**/node_modules/**',
+    ],
+    coverageDirectory: 'coverage',
+    coverageReporters: ['text', 'lcov', 'html', 'json'],
+    coverageThreshold: {
+      global: {
+        branches: 70,
+        functions: 70,
+        lines: 70,
+        statements: 70,
+      },
+      // Authentication module specific thresholds
+      './src/authentication/**/*.ts': {
+        branches: 80,
+        functions: 80,
+        lines: 80,
+        statements: 80,
+      },
+    },
   };
 
   return config;
