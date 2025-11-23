@@ -251,7 +251,7 @@ FACEBOOK_APP_SECRET=your-app-secret
 FACEBOOK_APP_CALLBACK_URL=http://localhost:4000/auth/facebook/callback
 ```
 
-**See:** Strategy-specific documentation (coming soon)
+**See:** [Facebook Strategy Documentation](./strategies/facebook/readme.md)
 
 ---
 
@@ -266,13 +266,13 @@ GITHUB_CLIENT_SECRET=your-client-secret
 GITHUB_CLIENT_CALLBACK_URL=http://localhost:4000/auth/github/callback
 ```
 
-**See:** Strategy-specific documentation (coming soon)
+**See:** [GitHub Strategy Documentation](./strategies/github/readme.md)
 
 ---
 
 ### LinkedIn OAuth2
 
-Professional network login with LinkedIn.
+Professional network login with LinkedIn (API v2).
 
 **Configuration:**
 ```bash
@@ -281,13 +281,13 @@ LINKEDIN_CLIENT_SECRET=your-client-secret
 LINKEDIN_CALLBACK_URL=http://localhost:4000/auth/linkedin/callback
 ```
 
-**See:** Strategy-specific documentation (coming soon)
+**See:** [LinkedIn Strategy Documentation](./strategies/linkedin/readme.md)
 
 ---
 
 ### Microsoft OAuth (Azure AD)
 
-Enterprise login with Microsoft/Azure AD accounts.
+Enterprise login with Microsoft/Azure AD accounts using OIDC.
 
 **Configuration:**
 ```bash
@@ -297,13 +297,13 @@ MICROSOFT_TENANT_ID=your-tenant-id
 OAUTH_REDIRECT_URI=http://localhost:4000/auth/microsoft/openid/complete/
 ```
 
-**See:** Strategy-specific documentation (coming soon)
+**See:** [Microsoft Strategy Documentation](./strategies/microsoft/readme.md)
 
 ---
 
 ### Okta SSO
 
-Enterprise single sign-on with Okta.
+Enterprise single sign-on with Okta using OIDC.
 
 **Configuration:**
 ```bash
@@ -311,9 +311,10 @@ OKTA_DOMAIN=dev-123456.okta.com
 OKTA_CLIENT_ID=your-client-id
 OKTA_CLIENT_SECRET=your-client-secret
 OKTA_CALLBACK_URL=http://localhost:4000/auth/okta/callback
+OKTA_ISSUER=https://dev-123456.okta.com/oauth2/default  # Optional
 ```
 
-**See:** Strategy-specific documentation (coming soon)
+**See:** [Okta Strategy Documentation](./strategies/okta/readme.md)
 
 ---
 
@@ -552,7 +553,8 @@ Create `strategies/myprovider/readme.md` following the Google strategy documenta
 ```
 authentication/
 ├── README.md ........................ This file
-├── SECURITY_AUDIT.md ................ Security Audit
+├── SECURITY_AUDIT.md ................ Security audit report
+├── env.example.md ................... Environment variables documentation
 ├── configure.ts ..................... Main configuration
 ├── decorators.ts .................... Role-based access control
 ├── index.ts ......................... Module exports
@@ -561,20 +563,34 @@ authentication/
     │   ├── utils.ts ................. Test utilities
     │   └── integration.spec.ts ...... Integration tests
     ├── helpers.ts ................... Shared helper functions
+    ├── security.ts .................. Security utilities
+    ├── types.ts ..................... TypeScript type definitions
     ├── index.ts ..................... Strategy registration
     ├── AnonStrategy.ts .............. Anonymous strategy
     ├── JWTStrategy.ts ............... JWT strategy
     ├── LocalStrategy.ts ............. Local strategy
-    ├── FacebookStrategy.ts .......... Facebook OAuth
-    ├── GithubStrategy.ts ............ GitHub OAuth
-    ├── LinkedInStrategy.ts .......... LinkedIn OAuth
-    ├── MicrosoftStrategy.ts ......... Microsoft/Azure AD
+    ├── facebook/
+    │   ├── FacebookStrategy.ts ...... Facebook OAuth
+    │   ├── FacebookStrategy.spec.ts . Facebook tests
+    │   └── readme.md ................ Facebook docs
+    ├── github/
+    │   ├── GithubStrategy.ts ........ GitHub OAuth
+    │   ├── GithubStrategy.spec.ts ... GitHub tests
+    │   └── readme.md ................ GitHub docs
     ├── google/
     │   ├── GoogleStrategy.ts ........ Google OAuth
     │   ├── GoogleStrategy.spec.ts ... Google tests
     │   └── readme.md ................ Google docs
+    ├── linkedin/
+    │   ├── LinkedInStrategy.ts ...... LinkedIn OAuth (API v2)
+    │   ├── LinkedInStrategy.spec.ts . LinkedIn tests
+    │   └── readme.md ................ LinkedIn docs
+    ├── microsoft/
+    │   ├── MicrosoftStrategy.ts ..... Microsoft/Azure AD OIDC
+    │   ├── MicrosoftStrategy.spec.ts  Microsoft tests
+    │   └── readme.md ................ Microsoft docs
     └── okta/
-        ├── OktaStrategy.ts .......... Okta SSO
+        ├── OktaStrategy.ts .......... Okta SSO OIDC
         ├── OktaStrategy.spec.ts ..... Okta tests
         └── readme.md ................ Okta docs
 ```
@@ -755,7 +771,21 @@ For issues, questions, or contributions:
 
 ## Changelog
 
-### Version 1.1.0
+### Version 2.0.0 (November 22, 2025)
+- ✅ **All 9 authentication strategies fully implemented**
+- ✅ Facebook OAuth2 strategy complete with full user management
+- ✅ GitHub OAuth2 strategy complete with full user management
+- ✅ LinkedIn OAuth2 strategy complete (API v2 migration)
+- ✅ Microsoft Azure AD OIDC strategy complete
+- ✅ Okta SSO OIDC strategy complete
+- ✅ Comprehensive security utilities (StateManager, ErrorSanitizer, AuthAuditLogger)
+- ✅ TypeScript type definitions for all OAuth profiles
+- ✅ Complete test coverage for all strategies (>80%)
+- ✅ Individual strategy documentation (6 strategies with readme.md)
+- ✅ Security audit completed (OWASP Top 10 compliant)
+- ✅ Production-ready implementation
+
+### Version 1.1.0 (November 21, 2025)
 - Added comprehensive test utilities
 - Added integration test suite
 - Updated Jest configuration with coverage thresholds
@@ -772,6 +802,6 @@ For issues, questions, or contributions:
 
 ---
 
-**Last Updated:** November 21, 2025  
-**Module Version:** 1.1.0
+**Last Updated:** November 22, 2025  
+**Module Version:** 2.0.0
 
