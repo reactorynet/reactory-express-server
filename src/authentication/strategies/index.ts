@@ -5,13 +5,14 @@ import {
 } from './LocalStrategy';
 import { default as JwtStrategy } from './JWTStrategy';
 import { default as GoogleStrategy, useGoogleRoutes } from './google/GoogleStrategy';
-import { default as FacebookStrategy } from './FacebookStrategy';
-import { default as GithubStrategy } from './GithubStrategy';
-import { default as LinkedInStrategy } from './LinkedInStrategy';
+import { default as FacebookStrategy, useFacebookRoutes } from './facebook/FacebookStrategy';
+import { default as GithubStrategy, useGithubRoutes } from './github/GithubStrategy';
+import { default as LinkedInStrategy, useLinkedInRoutes } from './linkedin/LinkedInStrategy';
 import { 
   default as MicrosoftStrategy,
   useMicrosoftRoutes,
-} from './MicrosoftStrategy';
+} from './microsoft/MicrosoftStrategy';
+import { default as OktaStrategy, useOktaRoutes } from './okta/OktaStrategy';
 
 const PassportProviders: Reactory.Server.ReactoryPassportProviders = [
   {
@@ -35,19 +36,27 @@ const PassportProviders: Reactory.Server.ReactoryPassportProviders = [
   {
     name: 'facebook',
     strategy: FacebookStrategy,
+    configure: useFacebookRoutes,
   },
   {
     name: 'github',
     strategy: GithubStrategy,
+    configure: useGithubRoutes,
   },
   {
     name: 'linkedin',
     strategy: LinkedInStrategy,
+    configure: useLinkedInRoutes,
   },
   {
     name: 'microsoft',
     strategy: MicrosoftStrategy,
     configure: useMicrosoftRoutes,
+  },
+  {
+    name: 'okta',
+    strategy: OktaStrategy,
+    configure: useOktaRoutes,
   }
 ];
 

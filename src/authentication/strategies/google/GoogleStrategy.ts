@@ -9,6 +9,7 @@ import { Application, Response } from 'express';
 import passport from 'passport';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
+import AuthTelemetry from '../telemetry';
 
 const { 
   GOOGLE_CLIENT_ID = 'GOOGLE_CLIENT_ID',
@@ -29,82 +30,118 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
     refreshToken: any, 
     profile: any, 
     done: OnDoneCallback) => {
-  // This callback function is called when the user has successfully authenticated with Google.
-  // The `profile` object contains information about the authenticated user.
-      
-  // const googleProfile = await getGoogleProfile(authority);
-  logger.info('Google Profile', { profile })
-  const { context, session } = req;
-  const userService  = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
-
-  const email = profile.emails && profile.emails[0].value;
-  const googleId = profile.id;
-  const { name, displayName } = profile;
+  const startTime = Date.now();
+  let clientKey = 'api';
   
-  if (!context.user) {
-    // log in the system user.
-    context.user = await userService.findUserWithEmail(process.env.REACTORY_APPLICATION_EMAIL);
-  }
+  try {
+    // This callback function is called when the user has successfully authenticated with Google.
+    // The `profile` object contains information about the authenticated user.
+        
+    // const googleProfile = await getGoogleProfile(authority);
+    logger.info('Google Profile', { profile })
+    const { context, session } = req;
+    
+    // Record OAuth callback received
+    AuthTelemetry.recordOAuthCallback('google', clientKey);
+    
+    const userService  = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
+
+    const email = profile.emails && profile.emails[0].value;
+    const googleId = profile.id;
+    const { name, displayName } = profile;
   
-  if(!context.partner) {
-    // check if we have oauthState in the session
-    // @ts-ignore
-    if(!session.authState) {
-      return done(new Error('Invalid state'), false);
+    if (!context.user) {
+      // log in the system user.
+      context.user = await userService.findUserWithEmail(process.env.REACTORY_APPLICATION_EMAIL);
     }
-    // @ts-ignore
-    const state = encoder.decodeState(session.oauthState as string);
-    if(!state) {
-      return done(new Error('Invalid state'), false);
+    
+    if(!context.partner) {
+      // check if we have oauthState in the session
+      // @ts-ignore
+      if(!session.authState) {
+        const duration = (Date.now() - startTime) / 1000;
+        AuthTelemetry.recordFailure('google', clientKey, 'missing_state', duration);
+        return done(new Error('Invalid state'), false);
+      }
+      // @ts-ignore
+      const state = encoder.decodeState(session.oauthState as string);
+      if(!state) {
+        const duration = (Date.now() - startTime) / 1000;
+        AuthTelemetry.recordFailure('google', clientKey, 'invalid_state', duration);
+        AuthTelemetry.recordCSRFValidation('google', false);
+        return done(new Error('Invalid state'), false);
+      }
+
+      // Validate CSRF state
+      AuthTelemetry.recordCSRFValidation('google', true);
+
+      clientKey = state['x-client-key'];    
+
+      const partner: Reactory.Models.IReactoryClientDocument = await ReactoryClient.findOne({ 
+        key: clientKey 
+      }).exec() as Reactory.Models.IReactoryClientDocument;
+
+      if(!partner) {
+        const duration = (Date.now() - startTime) / 1000;
+        AuthTelemetry.recordFailure('google', clientKey, 'client_not_found', duration);
+        return done(new Error('Client not found'), false);
+      }
+
+      context.partner = partner;
+    } else {
+      clientKey = context.partner.key;
     }
-
-    const clientKey = state['x-client-key'];    
-
-    const partner: Reactory.Models.IReactoryClientDocument = await ReactoryClient.findOne({ 
-      key: clientKey 
-    }).exec() as Reactory.Models.IReactoryClientDocument;
-
-    if(!partner) {
-      return done(new Error('Client not found'), false);
-    }
-
-    context.partner = partner;
-  }
+    
+    // Track attempt with actual client key
+    AuthTelemetry.recordAttempt('google', clientKey);
   
-  const authProps = {
-    googleId,
-    displayName,
-    accessToken,
-  }
+    const authProps = {
+      googleId,
+      displayName,
+      accessToken,
+    }
 
-  let user = await userService.findUserWithEmail(email);
-  if(!user) {
+    let user = await userService.findUserWithEmail(email);
+    if(!user) {
+      user = await userService.createUser({
+        email,
+        firstName: name.givenName,
+        lastName: name.familyName,
+      });
+    }
+    user.avatar = profile.photos && profile.photos[0].value;
+    user.avatarProvider = 'google';
+    const googleAuth = user.authentications.find(auth => auth.provider === 'google');
+    if(!googleAuth) {
+      user.authentications.push({ 
+        provider: 'google',
+        lastLogin: new Date(),
+        props: authProps
+      });
+    } else {
+      googleAuth.lastLogin = new Date();
+      googleAuth.props = authProps;
+    }
 
-    user = await userService.createUser({
-      email,
-      firstName: name.givenName,
-      lastName: name.familyName,
+    await user.save();
+    
+    Helpers.generateLoginToken(user).then((loginToken) => { 
+      const duration = (Date.now() - startTime) / 1000;
+      AuthTelemetry.recordSuccess('google', clientKey, duration, user._id.toString());
+      return done(null, loginToken);
+    }).catch((error) => {
+      const duration = (Date.now() - startTime) / 1000;
+      AuthTelemetry.recordFailure('google', clientKey, 'token_generation_failed', duration);
+      logger.error('Failed to generate login token for Google auth', error);
+      return done(error, false);
     });
-  }
-  user.avatar = profile.photos && profile.photos[0].value;
-  user.avatarProvider = 'google';
-  const googleAuth = user.authentications.find(auth => auth.provider === 'google');
-  if(!googleAuth) {
-    user.authentications.push({ 
-      provider: 'google',
-      lastLogin: new Date(),
-      props: authProps
-    });
-  } else {
-    googleAuth.lastLogin = new Date();
-    googleAuth.props = authProps;
-  }
 
-  await user.save();
-  Helpers.generateLoginToken(user).then((loginToken) => { 
-    return done(null, loginToken);
-  });
-
+  } catch (error) {
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordFailure('google', clientKey, 'authentication_error', duration);
+    logger.error('Google authentication error', error);
+    return done(error as Error, false);
+  }
 });
 
 export const useGoogleRoutes = (app: Application) => { 

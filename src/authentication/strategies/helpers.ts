@@ -7,6 +7,7 @@ import { UserValidationError } from '@reactory/server-core/exceptions';
 import { User } from '@reactory/server-modules/reactory-core/models';
 import logger from '@reactory/server-core/logging';
 import amq from '@reactory/server-core/amq';
+import AuthTelemetry from './telemetry';
 
 const jwtSecret = process.env.SECRET_SAUCE;
 
@@ -140,14 +141,31 @@ export default class Helpers {
     token: string,
   }> => {
     logger.info(`generating Login token for user ${user.firstName} ${user.lastName}`);
-    user.lastLogin = moment().valueOf(); // eslint-disable-line
-    const jwtPayload = Helpers.jwtTokenForUser(user);
-    await Helpers.addSession(user, jwtPayload, ip);
-    return {
-      id: user?._id?.toHexString(),
-      firstName: user.firstName,
-      lastName: user.lastName,
-      token: Helpers.jwtMake(jwtPayload),
-    };
+    
+    try {
+      user.lastLogin = moment().valueOf(); // eslint-disable-line
+      const jwtPayload = Helpers.jwtTokenForUser(user);
+      await Helpers.addSession(user, jwtPayload, ip);
+      
+      const token = Helpers.jwtMake(jwtPayload);
+      
+      // Record JWT token generation in telemetry
+      try {
+        AuthTelemetry.recordTokenGeneration(user._id.toString(), 'system');
+      } catch (telemetryError) {
+        logger.error('Failed to record token generation metric', telemetryError);
+        // Continue - don't fail auth due to telemetry error
+      }
+      
+      return {
+        id: user?._id?.toHexString(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        token,
+      };
+    } catch (error) {
+      logger.error('Error generating login token', error);
+      throw error;
+    }
   }; 
 }
