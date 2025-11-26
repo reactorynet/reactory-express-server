@@ -99,8 +99,8 @@ class StatisticsResolver {
     params: { entries: Partial<Reactory.Models.IStatistic>[] },
     context: Reactory.Server.IReactoryContext
   ) {
-    const statisticsService = getStatisticsService(context);
     try {
+      const statisticsService = getStatisticsService(context);
       const result = await statisticsService.publishStatistics(params.entries, {
         reference: `stats_${Date.now()}`,
         title: 'Statistics Package',

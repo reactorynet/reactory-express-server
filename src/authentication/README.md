@@ -12,6 +12,7 @@ The Reactory authentication module provides a comprehensive, extensible authenti
 - 👤 **Local Authentication** - Traditional username/password
 - 🚫 **Anonymous Access** - Guest user support
 - 🔒 **Security First** - State management, CSRF protection, secure defaults
+- 📊 **Telemetry** - OpenTelemetry metrics for monitoring and observability
 - 📝 **Comprehensive Logging** - Structured logging for all auth events
 - 🧪 **Well Tested** - High test coverage with utilities for testing
 - 📚 **Well Documented** - Complete documentation for each strategy
@@ -370,6 +371,64 @@ describe('MyStrategy', () => {
 
 ---
 
+## Telemetry & Monitoring
+
+### OpenTelemetry Integration
+
+The authentication module includes comprehensive OpenTelemetry metrics that integrate with the existing `reactory-telemetry` module.
+
+**Metrics Exported:**
+
+- `auth_attempts_total` - Total authentication attempts
+- `auth_success_total` - Successful authentications
+- `auth_failure_total` - Failed authentications (with reason)
+- `auth_duration_seconds` - Authentication latency histogram
+- `auth_active_sessions` - Active authenticated sessions gauge
+- `auth_oauth_callbacks_total` - OAuth callbacks received
+- `auth_csrf_validations_total` - CSRF validations (valid/invalid)
+- `auth_jwt_tokens_generated_total` - JWT tokens created
+- `auth_user_creation_total` - New users registered
+
+**Quick Integration:**
+
+```typescript
+import AuthTelemetry from '@reactory/server-core/authentication/strategies/telemetry';
+
+// Track authentication flow
+const authFlow = AuthTelemetry.startAuthFlow('google', clientKey);
+
+try {
+  const user = await authenticateUser();
+  authFlow.success(user._id.toString());
+} catch (error) {
+  authFlow.failure(error.message);
+}
+```
+
+**Documentation:**
+- [Complete Integration Reference](./TELEMETRY_INTEGRATION_COMPLETE.md) - Comprehensive guide with examples and queries
+- [Developer Integration Guide](./strategies/TELEMETRY_INTEGRATION.md) - How to add telemetry to strategies
+
+### Grafana Dashboards
+
+Example Prometheus queries for Grafana:
+
+```promql
+# Authentication success rate
+rate(auth_success_total[5m]) / rate(auth_attempts_total[5m])
+
+# Failed authentications by provider
+sum(rate(auth_failure_total[5m])) by (provider, reason)
+
+# 95th percentile auth duration
+histogram_quantile(0.95, rate(auth_duration_seconds_bucket[5m]))
+
+# CSRF validation failures
+sum(rate(auth_csrf_validations_total{result="invalid"}[5m]))
+```
+
+---
+
 ## Security
 
 ### Best Practices
@@ -564,6 +623,7 @@ authentication/
     │   └── integration.spec.ts ...... Integration tests
     ├── helpers.ts ................... Shared helper functions
     ├── security.ts .................. Security utilities
+    ├── telemetry.ts ................. OpenTelemetry metrics
     ├── types.ts ..................... TypeScript type definitions
     ├── index.ts ..................... Strategy registration
     ├── AnonStrategy.ts .............. Anonymous strategy

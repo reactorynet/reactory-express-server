@@ -13,6 +13,7 @@ import passport from 'passport';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 import { StateManager, ErrorSanitizer, AuthAuditLogger } from '../security';
+import AuthTelemetry from '../telemetry';
 
 const {
   GITHUB_CLIENT_ID = 'GITHUB_CLIENT_ID',
@@ -38,6 +39,9 @@ const GitHubOAuthStrategy: passport.Strategy = new GitHubStrategy({
   profile: any,
   done: OnDoneCallback
 ) => {
+  const startTime = Date.now();
+  let clientKey = 'api';
+  
   try {
     // Log authentication attempt
     logger.info('GitHub authentication attempt', {
@@ -47,6 +51,10 @@ const GitHubOAuthStrategy: passport.Strategy = new GitHubStrategy({
     });
 
     const { context, session } = req;
+    
+    // Record OAuth callback received
+    AuthTelemetry.recordOAuthCallback('github', clientKey);
+    
     const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
 
     // Extract user information from GitHub profile
@@ -56,11 +64,13 @@ const GitHubOAuthStrategy: passport.Strategy = new GitHubStrategy({
     const avatarUrl = profile.photos && profile.photos[0]?.value;
 
     if (!email) {
+      const duration = (Date.now() - startTime) / 1000;
       logger.warn('GitHub profile missing email', { 
         profileId: profile.id,
         username: profile.username,
       });
       AuthAuditLogger.logFailure(profile.username || profile.id, 'github', 'No email in profile');
+      AuthTelemetry.recordFailure('github', clientKey, 'no_email', duration);
       return done(new Error('GitHub profile does not include email. Please ensure your GitHub email is public or grant email access.'), false);
     }
 
@@ -73,29 +83,44 @@ const GitHubOAuthStrategy: passport.Strategy = new GitHubStrategy({
     if (!context.partner) {
       // @ts-ignore
       if (!session.authState) {
+        const duration = (Date.now() - startTime) / 1000;
         logger.error('Missing auth state in session');
+        AuthTelemetry.recordFailure('github', clientKey, 'missing_state', duration);
         return done(new Error('Invalid state'), false);
       }
 
       // @ts-ignore
       const stateData = StateManager.validateState(session.authState);
       if (!stateData) {
+        const duration = (Date.now() - startTime) / 1000;
         logger.error('Invalid or expired state');
+        AuthTelemetry.recordFailure('github', clientKey, 'invalid_state', duration);
+        AuthTelemetry.recordCSRFValidation('github', false);
         return done(new Error('Invalid state'), false);
       }
+      
+      // Validate CSRF state
+      AuthTelemetry.recordCSRFValidation('github', true);
 
-      const clientKey = stateData['x-client-key'];
+      clientKey = stateData['x-client-key'];
       const partner: Reactory.Models.IReactoryClientDocument = await ReactoryClient.findOne({
         key: clientKey
       }).exec() as Reactory.Models.IReactoryClientDocument;
 
       if (!partner) {
+        const duration = (Date.now() - startTime) / 1000;
         logger.error('Client not found', { clientKey });
+        AuthTelemetry.recordFailure('github', clientKey, 'client_not_found', duration);
         return done(new Error('Client not found'), false);
       }
 
       context.partner = partner;
+    } else {
+      clientKey = context.partner.key;
     }
+    
+    // Track attempt with actual client key
+    AuthTelemetry.recordAttempt('github', clientKey);
 
     // Build authentication properties
     const authProps = {
@@ -164,6 +189,9 @@ const GitHubOAuthStrategy: passport.Strategy = new GitHubStrategy({
     // Generate login token
     const loginToken = await Helpers.generateLoginToken(user);
     
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordSuccess('github', clientKey, duration, user._id.toString());
+    
     logger.info('GitHub authentication successful', {
       userId: user._id,
       email: user.email,
@@ -173,6 +201,8 @@ const GitHubOAuthStrategy: passport.Strategy = new GitHubStrategy({
     return done(null, loginToken);
 
   } catch (error) {
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordFailure('github', clientKey, 'authentication_error', duration);
     logger.error('GitHub authentication error', { error });
     AuthAuditLogger.logFailure(
       profile?.username || profile?.id || 'unknown',

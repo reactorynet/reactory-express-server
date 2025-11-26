@@ -12,6 +12,7 @@ import Helpers, { OnDoneCallback } from '../helpers';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 import { StateManager, ErrorSanitizer, AuthAuditLogger } from '../security';
+import AuthTelemetry from '../telemetry';
 
 const {
   MICROSOFT_CLIENT_ID = 'MICROSOFT_CLIENT_ID',
@@ -46,6 +47,9 @@ const MicrosoftOIDCStrategy = new OIDCStrategy({
   params: any,
   done: OnDoneCallback
 ) => {
+  const startTime = Date.now();
+  let clientKey = 'api';
+  
   try {
     logger.info('Microsoft authentication attempt', {
       oid: profile.oid,
@@ -54,6 +58,10 @@ const MicrosoftOIDCStrategy = new OIDCStrategy({
     });
 
     const { context } = req;
+    
+    // Record OAuth callback received
+    AuthTelemetry.recordOAuthCallback('microsoft', clientKey);
+    
     const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
 
     // Extract email from profile or claims
@@ -66,8 +74,10 @@ const MicrosoftOIDCStrategy = new OIDCStrategy({
     const displayName = profile.displayName || profile._json?.name;
 
     if (!email) {
+      const duration = (Date.now() - startTime) / 1000;
       logger.warn('Microsoft profile missing email', { oid: profile.oid });
       AuthAuditLogger.logFailure(profile.oid, 'microsoft', 'No email in profile');
+      AuthTelemetry.recordFailure('microsoft', clientKey, 'no_email', duration);
       return done(new Error('Microsoft profile does not include email'), false);
     }
 
@@ -78,9 +88,16 @@ const MicrosoftOIDCStrategy = new OIDCStrategy({
 
     // Partner should be set from route param
     if (!context.partner) {
+      const duration = (Date.now() - startTime) / 1000;
       logger.error('Missing partner in context');
+      AuthTelemetry.recordFailure('microsoft', clientKey, 'client_not_found', duration);
       return done(new Error('Client not found'), false);
     }
+    
+    clientKey = context.partner.key;
+    
+    // Track attempt with actual client key
+    AuthTelemetry.recordAttempt('microsoft', clientKey);
 
     // Build authentication properties
     const authProps = {
@@ -145,6 +162,9 @@ const MicrosoftOIDCStrategy = new OIDCStrategy({
     // Generate login token
     const loginToken = await Helpers.generateLoginToken(user);
     
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordSuccess('microsoft', clientKey, duration, user._id.toString());
+    
     logger.info('Microsoft authentication successful', {
       userId: user._id,
       email: user.email,
@@ -154,6 +174,8 @@ const MicrosoftOIDCStrategy = new OIDCStrategy({
     return done(null, loginToken);
 
   } catch (error) {
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordFailure('microsoft', clientKey, 'authentication_error', duration);
     logger.error('Microsoft authentication error', { error });
     AuthAuditLogger.logFailure(
       profile?.oid || 'unknown',

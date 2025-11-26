@@ -1,7 +1,7 @@
 import { ApolloServer, ApolloServerOptions } from "@apollo/server";
 import { expressMiddleware, ExpressContextFunctionArgument } from "@apollo/server/express4"
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
-import { GraphQLSchema } from "graphql";
+import { GraphQLSchema, validateSchema } from "graphql";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import passport from 'passport';
 import bodyParser from 'body-parser';
@@ -194,6 +194,7 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
       });
     } catch (schemaError) { 
       logger.error(`Error compiling the schema: ${schemaError.message}`, schemaError);
+      throw schemaError;
     }
     
     directiveProviders.forEach((provider) => {

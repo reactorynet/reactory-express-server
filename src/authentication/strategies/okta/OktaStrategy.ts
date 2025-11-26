@@ -12,6 +12,7 @@ import Helpers, { OnDoneCallback } from '../helpers';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 import { StateManager, ErrorSanitizer, AuthAuditLogger } from '../security';
+import AuthTelemetry from '../telemetry';
 
 const {
   OKTA_CLIENT_ID = 'OKTA_CLIENT_ID',
@@ -51,6 +52,9 @@ const OktaStrategy = new OpenIDStrategy({
   params: any,
   done: OnDoneCallback
 ) => {
+  const startTime = Date.now();
+  let clientKey = 'api';
+  
   try {
     logger.info('Okta authentication attempt', {
       sub: profile.id,
@@ -59,6 +63,10 @@ const OktaStrategy = new OpenIDStrategy({
     });
 
     const { context } = req;
+    
+    // Record OAuth callback received
+    AuthTelemetry.recordOAuthCallback('okta', clientKey);
+    
     const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
 
     // Extract email from profile
@@ -70,8 +78,10 @@ const OktaStrategy = new OpenIDStrategy({
     const displayName = profile.displayName || profile._json?.name;
 
     if (!email) {
+      const duration = (Date.now() - startTime) / 1000;
       logger.warn('Okta profile missing email', { sub: profile.id });
       AuthAuditLogger.logFailure(profile.id, 'okta', 'No email in profile');
+      AuthTelemetry.recordFailure('okta', clientKey, 'no_email', duration);
       return done(new Error('Okta profile does not include email'), false);
     }
 
@@ -82,9 +92,16 @@ const OktaStrategy = new OpenIDStrategy({
 
     // Partner should be set from route param
     if (!context.partner) {
+      const duration = (Date.now() - startTime) / 1000;
       logger.error('Missing partner in context');
+      AuthTelemetry.recordFailure('okta', clientKey, 'client_not_found', duration);
       return done(new Error('Client not found'), false);
     }
+    
+    clientKey = context.partner.key;
+    
+    // Track attempt with actual client key
+    AuthTelemetry.recordAttempt('okta', clientKey);
 
     // Build authentication properties
     const authProps = {
@@ -158,6 +175,9 @@ const OktaStrategy = new OpenIDStrategy({
     // Generate login token
     const loginToken = await Helpers.generateLoginToken(user);
     
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordSuccess('okta', clientKey, duration, user._id.toString());
+    
     logger.info('Okta authentication successful', {
       userId: user._id,
       email: user.email,
@@ -167,6 +187,8 @@ const OktaStrategy = new OpenIDStrategy({
     return done(null, loginToken);
 
   } catch (error) {
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordFailure('okta', clientKey, 'authentication_error', duration);
     logger.error('Okta authentication error', { error });
     AuthAuditLogger.logFailure(
       profile?.id || 'unknown',

@@ -13,6 +13,7 @@ import passport from 'passport';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 import { StateManager, ErrorSanitizer, AuthAuditLogger } from '../security';
+import AuthTelemetry from '../telemetry';
 
 const {
   FACEBOOK_APP_ID = 'FACEBOOK_APP_ID',
@@ -39,6 +40,9 @@ const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
   profile: any,
   done: OnDoneCallback
 ) => {
+  const startTime = Date.now();
+  let clientKey = 'api';
+  
   try {
     // Log authentication attempt
     logger.info('Facebook authentication attempt', {
@@ -47,6 +51,10 @@ const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
     });
 
     const { context, session } = req;
+    
+    // Record OAuth callback received
+    AuthTelemetry.recordOAuthCallback('facebook', clientKey);
+    
     const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
 
     // Extract user information from Facebook profile
@@ -56,8 +64,10 @@ const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
     const avatarUrl = profile.photos && profile.photos[0]?.value;
 
     if (!email) {
+      const duration = (Date.now() - startTime) / 1000;
       logger.warn('Facebook profile missing email', { profileId: profile.id });
       AuthAuditLogger.logFailure(profile.id, 'facebook', 'No email in profile');
+      AuthTelemetry.recordFailure('facebook', clientKey, 'no_email', duration);
       return done(new Error('Facebook profile does not include email'), false);
     }
 
@@ -70,29 +80,44 @@ const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
     if (!context.partner) {
       // @ts-ignore
       if (!session.authState) {
+        const duration = (Date.now() - startTime) / 1000;
         logger.error('Missing auth state in session');
+        AuthTelemetry.recordFailure('facebook', clientKey, 'missing_state', duration);
         return done(new Error('Invalid state'), false);
       }
 
       // @ts-ignore
       const stateData = StateManager.validateState(session.authState);
       if (!stateData) {
+        const duration = (Date.now() - startTime) / 1000;
         logger.error('Invalid or expired state');
+        AuthTelemetry.recordFailure('facebook', clientKey, 'invalid_state', duration);
+        AuthTelemetry.recordCSRFValidation('facebook', false);
         return done(new Error('Invalid state'), false);
       }
+      
+      // Validate CSRF state
+      AuthTelemetry.recordCSRFValidation('facebook', true);
 
-      const clientKey = stateData['x-client-key'];
+      clientKey = stateData['x-client-key'];
       const partner: Reactory.Models.IReactoryClientDocument = await ReactoryClient.findOne({
         key: clientKey
       }).exec() as Reactory.Models.IReactoryClientDocument;
 
       if (!partner) {
+        const duration = (Date.now() - startTime) / 1000;
         logger.error('Client not found', { clientKey });
+        AuthTelemetry.recordFailure('facebook', clientKey, 'client_not_found', duration);
         return done(new Error('Client not found'), false);
       }
 
       context.partner = partner;
+    } else {
+      clientKey = context.partner.key;
     }
+    
+    // Track attempt with actual client key
+    AuthTelemetry.recordAttempt('facebook', clientKey);
 
     // Build authentication properties
     const authProps = {
@@ -145,6 +170,9 @@ const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
     // Generate login token
     const loginToken = await Helpers.generateLoginToken(user);
     
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordSuccess('facebook', clientKey, duration, user._id.toString());
+    
     logger.info('Facebook authentication successful', {
       userId: user._id,
       email: user.email,
@@ -153,6 +181,8 @@ const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
     return done(null, loginToken);
 
   } catch (error) {
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordFailure('facebook', clientKey, 'authentication_error', duration);
     logger.error('Facebook authentication error', { error });
     AuthAuditLogger.logFailure(
       profile?.id || 'unknown',

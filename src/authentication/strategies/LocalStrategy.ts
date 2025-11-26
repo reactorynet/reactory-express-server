@@ -5,28 +5,50 @@ import Helpers, { OnDoneCallback } from './helpers';
 import { Application } from 'express';
 import passport from 'passport';
 import Reactory from '@reactory/reactory-core';
+import AuthTelemetry from './telemetry';
 
 
 const authenticate: BasicVerifyFunctionWithRequest = async (req: Reactory.Server.ReactoryExpressRequest, username: string, password: string, done: OnDoneCallback) => {
+  const startTime = Date.now();
   const { context } = req;
+  const clientKey = context?.partner?.key || 'api';
+  
+  // Track attempt
+  AuthTelemetry.recordAttempt('local', clientKey);
+  
   context.debug(`Authenticating with local strategy`)
   
-  // @ts-ignore
-  const user: Reactory.Models.IUserDocument = await User.findOne({ email : username }).exec();
+  try {
+    // @ts-ignore
+    const user: Reactory.Models.IUserDocument = await User.findOne({ email : username }).exec();
 
-  if (!user) {
-    done(null, false, { message: 'Incorrect Credentials Supplied' });
-    return;
-  }
+    if (!user) {
+      const duration = (Date.now() - startTime) / 1000;
+      AuthTelemetry.recordFailure('local', clientKey, 'user_not_found', duration);
+      done(null, false, { message: 'Incorrect Credentials Supplied' });
+      return;
+    }
 
-// @ts-ignore
-if (user.validatePassword(password) === true) {
-    const loginToken = await Helpers.generateLoginToken(user);
-    req.user = user;
-    req.context.user = user;
-    done(null, loginToken);
-  } else {
-    done(null, false, { message: 'Incorrect Credentials Supplied, If you have forgotten your password, use the forgot password link' });
+    // @ts-ignore
+    if (user.validatePassword(password) === true) {
+      const loginToken = await Helpers.generateLoginToken(user);
+      req.user = user;
+      req.context.user = user;
+      
+      const duration = (Date.now() - startTime) / 1000;
+      AuthTelemetry.recordSuccess('local', clientKey, duration, user._id.toString());
+      
+      done(null, loginToken);
+    } else {
+      const duration = (Date.now() - startTime) / 1000;
+      AuthTelemetry.recordFailure('local', clientKey, 'invalid_password', duration);
+      done(null, false, { message: 'Incorrect Credentials Supplied, If you have forgotten your password, use the forgot password link' });
+    }
+  } catch (error) {
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordFailure('local', clientKey, 'authentication_error', duration);
+    logger.error('Local authentication error', error);
+    done(error, false);
   }
 }
 

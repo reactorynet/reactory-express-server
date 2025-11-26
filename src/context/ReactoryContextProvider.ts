@@ -12,6 +12,7 @@ import Reactory, { React } from "@reactory/reactory-core";
 import Cache from "@reactory/server-modules/reactory-core/models/CoreCache";
 import ReactoryClientModel from "@reactory/server-modules/reactory-core/models/ReactoryClient";
 import UserModel from "@reactory/server-modules/reactory-core/models/User";
+import { ReactoryTelemetry } from '@reactory/server-modules/reactory-telemetry/ReactoryTelemetry';
 import { Container } from "inversify";
 
 colors.setTheme({
@@ -52,6 +53,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   modules: Reactory.Server.IReactoryModule[];
   container: Container;
   host: string | "cli" | "express"; 
+  telemetry: ReactoryTelemetry;
   [key: string]: unknown;
   
   private serviceManager: ServiceManager;
@@ -91,6 +93,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     this.serviceManager = ServiceManager.getInstance(this as unknown as Reactory.Server.IReactoryContext);
     this.services = this.serviceManager.getServices();
     this.host = currentContext?.host || "express";
+    this.telemetry = new ReactoryTelemetry(this as unknown as Reactory.Server.IReactoryContext);
   }
   
 

@@ -51,14 +51,7 @@ const services = [
   ReactorySearchService,
   RedisService,
   ReactoryAuditServiceDefinition,
-  {
-    nameSpace: 'core',
-    name: 'ReactoryStatisticsService',
-    version: '1.0.0',
-    service: ReactoryStatisticsService,
-    serviceType: 'data',
-    description: 'OpenTelemetry-compatible statistics and metrics management service',
-  },
+  ReactoryStatisticsService,
   ...GeneratorServices
 ]
 

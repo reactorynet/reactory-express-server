@@ -2,11 +2,11 @@
   OTelMetricType - OpenTelemetry metric type
 """
 enum OTelMetricType {
-  GAUGE
-  COUNTER
-  HISTOGRAM
-  SUMMARY
-  UPDOWNCOUNTER
+  gauge
+  counter
+  histogram
+  summary
+  updowncounter
 }
 
 """
