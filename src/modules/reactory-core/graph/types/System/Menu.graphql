@@ -1,21 +1,72 @@
-
+"""
+MenuItem for the menu
+"""
 type MenuItem {
+  """
+  The id for the menu item
+  """
   id: ObjID
+  """
+  The ordinal for the menu item
+  """
   ordinal: Int
+  """
+  The title for the menu item
+  """
   title: String
+  """
+  The link for the menu item
+  """
   link: String
+  """
+  The external flag for the menu item
+  """
   external: Boolean
+  """
+  The icon for the menu item
+  """
   icon: String
+  """
+  The roles for the menu item
+  """
   roles: [String]
+  """
+  The items for the menu item
+  """
   items: [ MenuItem ]
 }
 
 
+"""
+Menu for the client application
+"""
 type Menu {
+  """
+  The id for the menu
+  """
   id: ObjID
+  """
+  The name of the menu
+  """
   name: String
+  """
+  The key for the menu
+  """
   key: String
+
+  """
+  The target for the menu.
+  The target is usually a key / id of the target area for the menu.
+  It is is up to the client application to define the target area and how to render the menu.
+  """
   target: String
+  
+  """
+  The roles for the menu
+  """
   roles: [String]
+  """
+  The entries for the menu
+  """
   entries: [MenuItem]
 }

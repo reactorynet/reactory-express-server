@@ -106,6 +106,17 @@ type ClientRoute {
   The id for the route
   """
   id: String
+
+  """
+  The key for the route
+  """
+  key: String
+
+  """
+  The title for the route
+  """
+  title: String
+
   """
   The path for the route. examples would be
   /dashboard/
@@ -172,6 +183,44 @@ type KeyPair {
 }
 
 """
+A setting for the client application
+"""
+type ReactoryClientSetting {
+  """
+  The name of the setting
+  """
+  name: String
+  """
+  The type of the setting
+  """
+  settingType: String
+  """
+  The variant of the setting
+  """
+  variant: String
+  """
+  The title of the setting
+  """
+  title: String
+  """
+  The description of the setting
+  """
+  description: String
+  """
+  The component fqn of the setting
+  """
+  componentFqn: String
+  """
+  The form schema of the setting
+  """
+  formSchema: Any  
+  """
+  The data of the setting
+  """
+  data: Any
+}
+
+"""
 Reactory Client type
 """
 type ReactoryClient {
@@ -183,6 +232,19 @@ type ReactoryClient {
   The name of the reactory client 
   """
   name: String
+
+  """
+  A short description slug for the application - use the 
+  slug with the ReactoryContent query to fetch the description
+  """
+  descriptionSlug: String
+
+  """
+  The description for the application. This will be resolved using
+  the slug for the application which is auto generated.
+  """
+  description: String
+
   """
   The client key, the client key 
   """
@@ -226,6 +288,11 @@ type ReactoryClient {
   plugins: [ApplicationPlugin]
 
   """
+  A list of settings for the client application
+  """
+  settings: [ReactoryClientSetting]
+
+  """
   Date and time the client record was first created
   """
   createdAt: Date
@@ -233,6 +300,22 @@ type ReactoryClient {
   Date and time the client record last updated
   """
   updatedAt: Date
+
+  """
+  The current version of the client application
+  """
+  version: String
+
+  """
+  The default active theme for the client application
+  This is a reference to the theme id in the ReactoryTheme query
+  """  
+  theme: String
+
+  """
+  The list of themes available for the client application
+  """
+  themes: [ApplicationTheme]
 }
 
 
@@ -316,26 +399,50 @@ type ReactoryServer {
   clients: [ReactoryClient]
 }
 
+type ReactoryClientCreated {
+  message: String
+  client: ReactoryClient
+}
+type ReactoryClientCreateError {
+  message: String
+  error: String
+}
+
+union ReactoryClientCreateResult = ReactoryClientCreated | ReactoryClientCreateError
+
 extend type Query {
   """
-  WILL BE DEPRECATED - use ReactoryClientWithKey instead
+  Restricted to ADMIN roles. Fetches a ReactoryClient item with a given ID
   """
-  clientWithId(id: String): ReactoryClient
+  ReactoryClientWithId(id: String!): ReactoryClient
 
   """
-  Fetches a ReactoryClient item with a given Key
+  Restricted to ADMIN roles. Fetches a ReactoryClient item with a given Key
   """
-  ReactoryClientWithKey(key: String): ReactoryClient
+  ReactoryClientWithKey(key: String!): ReactoryClient
+}
+
+"""
+The enum tells the system what to do with the client configuration.
+By default the data is saved to the database only, but can be saved to a user's
+home directory as a YAML, JSON or TypeScript file.
+"""
+enum ReactoryClientSaveAs {
+  YAML
+  JSON
+  TYPESCRIPT
+  DB_ONLY
 }
 
 input CreateReactoryClient {
-  name: String
-  clientKey: String
-  username: String
-  email: String
-  password: String 
+  name: String!
+  clientKey: String!
+  username: String!
+  email: String!
+  password: String!
+  savesAs: ReactoryClientSaveAs! = DB_ONLY
 }
 
 extend type Mutation {
-  registerNewClient(input: CreateReactoryClient!): ReactoryClient  
+  ReactoryClientCreate(input: CreateReactoryClient!): ReactoryClientCreateResult!  
 }

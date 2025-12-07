@@ -193,13 +193,25 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     componentFqn: 'reactory.ServerModules@1.0.0',
   },
   {
-    key: 'myapplications',
+    key: 'application_detail',
     title: 'Application',
-    path: '/application/*',
+    path: '/applications/:applicationId',
     public: false,
-    exact: true,
+    exact: false,
     roles: ['USER'],
     componentFqn: 'reactory.Application@1.0.0',
+    componentProps: {
+      applicationId: '${route.applicationId}',
+    },
+    args: [
+      {
+        key: "mode",
+        value: {
+          type: "string",
+          mode: "view",
+        },
+      },
+    ]
   },
   {
     key: 'profile',

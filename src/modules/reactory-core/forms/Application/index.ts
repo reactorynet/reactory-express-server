@@ -1,107 +1,91 @@
 /**
  * @module reactory-core/forms/Application
  * @description Defines an Application dashboard form. A dashboard for an application will display 
- * vital statistics and information about the application. 
+ * vital statistics and information about the application using a tabbed layout.
  * @version 1.0.0
  * @see {@link rectory-core/forms/Application/readme.md|Application Readme} for more information.
  */
 
-/**
- * Step 1: Define the schema for the Application dashboard form. The schema follows standard JSON schema
- * format. The structure of the form is defined by the schema. The schema can be thought of the UI View Model.
- * @see {@link https://json-schema.org/|JSON Schema} for more information.
- * @typedef {Object} Reactory.Schema.IObjectSchema
- */
-const schema: Reactory.Schema.IObjectSchema = {
-  type: "object",
-  properties: {
-    name: {
-      type: "string",
-      title: "Name",
-    },
-    description: {
-      type: "string",
-      title: "Description",
-    },
-    version: {
-      type: "string",
-      title: "Version",
-    },
-    status: {
-      type: "string",
-      title: "Status",
-    },
-    createdAt: {
-      type: "string",
-      title: "Created At",
-    },
-    updatedAt: {
-      type: "string",
-      title: "Updated At",
-    },
-    createdBy: {
-      type: "string",
-      title: "Created By",
-    },
-    updatedBy: {
-      type: "string",
-      title: "Updated By",
-    },
-    totalUsers: {
-      type: "number",
-      title: "Total Users",
-    },
-    totalRoles: {
-      type: "number",
-      title: "Total Roles",
-    },
-    totalOrganisations: {
-      type: "number",
-      title: "Total Organisations",
-    },
-  },
-};
-
-/**
- * Step 2: Define the UI Schema for the Application dashboard form. The UI Schema defines how the form
- * will be displayed to the user. The UI Schema can be thought of as the UI View. The UI Schema is used
- * to render the form in the UI.
- * @see {@link https://react-jsonschema-form.readthedocs.io/en/latest/ |React JSON Schema Form} for more information.
- * @typedef {Object} Reactory.Schema.IFormUISchema
- */
-const uiSchema: Reactory.Schema.IFormUISchema = {};
-/**
- * Step 3: Define the GraphQL definition for the Application dashboard form. The GraphQL definition
- * is used to define the queries and mutations that will be used to fetch and update data for the form.
- */
-const graphql: Reactory.Forms.IFormGraphDefinition = { };
-/**
- * Step 4: Define the modules for the Application dashboard form. Modules are used to extend the functionality
- * of the form. Modules can be used to add custom logic, validation, and other features to the form.
- * 
- * These modules are resolved at runtime and can be used to add custom functionality to the form.
- */
-const modules: Reactory.Forms.IReactoryFormModule[] = [];
+import schema from './schema';
+import uiSchema from './uiSchema';
+import graphql from './graphql';
+import modules from './modules';
 
 /**
  * Defines an Application dashboard form. A dashboard for an application will display 
- * vital statistics and information about the application.
+ * vital statistics and information about the application using tabs to organize
+ * different aspects like overview, settings, users, organizations, roles, themes, and statistics.
+ * 
+ * This form requires an applicationId to be passed as a prop to load the specific
+ * application data via GraphQL.
  */
 const Application: Reactory.Forms.IReactoryForm = {
-  id: `reactory-applications`,
+  id: `reactory-application`,
   nameSpace: 'reactory',
   name: 'Application',
   uiFramework: "material",
   uiSupport: ["material"],  
-  title: "Reactory Application Dashboard",
+  title: "Application Dashboard",
   registerAsComponent: true,
   version: "1.0.0",
-  roles: ['USER'],
+  roles: ['USER', 'ADMIN'],
+  description: `A comprehensive dashboard for viewing and managing a Reactory application. This form uses a tabbed layout to organize information about the application including overview, settings, users, organizations, roles, themes, and statistics. Requires an applicationId to be passed as a prop.`,
+  argsSchema: {
+    type: 'object',
+    properties: {
+      applicationId: {
+        type: 'string',
+        title: 'Application ID',
+        description: 'The ID of the Reactory application to load. This is required to load the application data.',
+      },
+    },
+    required: ['applicationId'],
+  },
   helpTopics: [
-    "reactory-applications", 
-    "application-management"],  
+    "reactory-application-dashboard", 
+    "application-management",
+    "application-settings"],  
+  widgetMap: [
+    {
+      componentFqn: 'reactory.ApplicationOverviewPanel@1.0.0',
+      widget: 'ApplicationOverviewPanel',
+    },
+    {
+      componentFqn: 'reactory.ApplicationSettingsPanel@1.0.0',
+      widget: 'ApplicationSettingsPanel',
+    },
+    {
+      componentFqn: 'reactory.ApplicationUsersPanel@1.0.0',
+      widget: 'ApplicationUsersPanel',
+    },
+    {
+      componentFqn: 'reactory.ApplicationOrganizationsPanel@1.0.0',
+      widget: 'ApplicationOrganizationsPanel',
+    },
+    {
+      componentFqn: 'reactory.ApplicationRolesPanel@1.0.0',
+      widget: 'ApplicationRolesPanel',
+    },
+    {
+      componentFqn: 'reactory.ApplicationThemesPanel@1.0.0',
+      widget: 'ApplicationThemesPanel',
+    },
+    {
+      componentFqn: 'reactory.ApplicationStatisticsPanel@1.0.0',
+      widget: 'ApplicationStatisticsPanel',
+    },
+    {
+      componentFqn: 'reactory.ApplicationRoutesPanel@1.0.0',
+      widget: 'ApplicationRoutesPanel',
+    },
+    {
+      componentFqn: 'reactory.ApplicationMenusPanel@1.0.0',
+      widget: 'ApplicationMenusPanel',
+    },
+  ],
   schema,
   uiSchema,
+  graphql,
   modules
 };
 

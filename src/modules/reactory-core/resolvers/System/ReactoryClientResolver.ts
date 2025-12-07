@@ -23,9 +23,11 @@ export class ReactoryClientResolver {
     return null;
   }
   
-  @query("clientWithId")
+  @roles(["ADMIN"])
+  @query("ReactoryClientWithId")
   async clientWithId(obj: any, arg: any, context: Reactory.Server.IReactoryContext) {
-      return getReactoryClientWithKey(arg.key);
+      const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+      return systemService.getReactoryClient(arg.id);
   }
 }
 

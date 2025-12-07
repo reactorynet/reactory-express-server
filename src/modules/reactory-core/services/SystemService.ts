@@ -155,9 +155,19 @@ class SystemService implements Reactory.Service.IReactorySystemService {
       if(component.prototype?.COMPONENT_DEFINITION) {
         definition = component.prototype.COMPONENT_DEFINITION;
       }
+       let componentFqn: string;
+       let componentId: number;
+      try {
+        componentFqn = ComponentFQN(definition);
+        componentId = FQN2ID(componentFqn);
+      } catch (ex) {
+        context.error(`Error converting component ${componentFqn} to search model: ${ex.message}`);
+        return null;
+      }
+
       let searchModel: any = {
         ...component,
-        id: FQN2ID(ComponentFQN(definition)),
+        id: componentId,
       }
 
       delete searchModel.component;

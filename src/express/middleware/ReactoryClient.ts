@@ -6,6 +6,9 @@ import {
 import logger from '@reactory/server-core/logging';
 import { Request, Response, Application } from 'express';
 
+
+const { NODE_ENV  } = process.env
+
 // Reconsider the use of this approach. 
 // We want to ensure that the server bypass is not used
 // and that client id and secret are used for authentication
@@ -20,10 +23,14 @@ const bypassUri = [
   '/cdn/organization/',
   '/cdn/themes/',
   '/cdn/ui/',
-  '/favicon.ico',
-  '/swagger',
+  '/favicon.ico',  
 ];
 
+if (NODE_ENV === 'development' || NODE_ENV === 'local' || NODE_ENV === 'test') {
+  bypassUri.push('/swagger');
+  bypassUri.push('/telemetry/metrics');
+  bypassUri.push('/telemetry/health');
+}
 
 /**
  * A list of validated clients

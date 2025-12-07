@@ -59,11 +59,11 @@ type TraceContext {
   MetricResource - Resource attributes identifying the metric source
 """
 type MetricResource {
-  serviceName: String
-  serviceVersion: String
-  serviceInstanceId: String
-  deploymentEnvironment: String
-  hostName: String
+  service_name: String
+  service_version: String
+  service_instance_id: String
+  deployment_environment: String
+  host_name: String
   attributes: Any
 }
 
@@ -219,11 +219,11 @@ input TraceContextInput {
   MetricResourceInput - Input for metric resource attributes
 """
 input MetricResourceInput {
-  serviceName: String
-  serviceVersion: String
-  serviceInstanceId: String
-  deploymentEnvironment: String
-  hostName: String
+  service_name: String
+  service_version: String
+  service_instance_id: String
+  deployment_environment: String
+  host_name: String
   attributes: Any
 }
 
