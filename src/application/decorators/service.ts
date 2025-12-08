@@ -1,14 +1,15 @@
 import Reactory from '@reactory/reactory-core';
 
+
 /**
  * Service decorator function, used to decorate a class as a Reactory service.
  * The system will use this decorator to register the service with the system.
  * @param options 
  * @returns 
  */
-function service(options: Partial<Reactory.Service.IReactoryServiceDefinition<any>>) {
+function service<S extends Reactory.Service.IReactoryService>(options: Partial<Reactory.Service.IReactoryServiceDefinition<T>>) {
   return function <T extends { new(...args: any[]): {} }>(constructor: T) {
-    const reactory: Reactory.Service.IReactoryServiceDefinition<T> = {
+    const reactory: Reactory.Service.IReactoryServiceDefinition<any> = {
       id: options.id,
       nameSpace: options.nameSpace,
       name: options.name,
@@ -17,9 +18,15 @@ function service(options: Partial<Reactory.Service.IReactoryServiceDefinition<an
       service: (
         props: Reactory.Service.IReactoryServiceProps,
         context: Reactory.Server.IReactoryContext
-      ): T => {
+      ): S => {
         try {
-          const instance: T = new constructor(props, context) as T;
+          const instance: S = new constructor(props, context) as S;
+          instance.name = options.name;
+          instance.nameSpace = options.nameSpace;
+          instance.version = options.version;
+          
+          
+          
           return instance;
         } catch (err) {
           context.error(`Could not instanciate service ${options.id} ${err.message}`);

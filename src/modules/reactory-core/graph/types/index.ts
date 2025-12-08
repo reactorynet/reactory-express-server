@@ -12,6 +12,7 @@ const CoreTypeDefinitions = loadGraphQLTypeDefinitions([
   'System/ReactoryClient/ApplicationTheme',
   'System/ReactoryClient/ReactoryClientEnums',
   'System/ReactoryClient/ReactoryClient',
+  'System/ReactoryCalendar',
   'System/Workflow',
   'System/Cache',
   'System/File',

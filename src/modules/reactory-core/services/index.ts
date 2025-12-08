@@ -23,6 +23,9 @@ import ReactorySearchService from "./ReactorySearchService";
 import { RedisService } from "./RedisService";
 import { ReactoryAuditServiceDefinition } from './ReactoryAuditService';
 import ReactoryStatisticsService from './Statistics/StatisticsService';
+import { ReactoryCalendarService } from './ReactoryCalendarService';
+import { ReactoryCalendarEntryService } from './ReactoryCalendarEntryService';
+import { ReactoryCalendarIntegrationService } from './ReactoryCalendarIntegrationService';
 //custom services to be expressed here
 import GeneratorServices from './generators';
 
@@ -52,6 +55,9 @@ const services = [
   RedisService,
   ReactoryAuditServiceDefinition,
   ReactoryStatisticsService,
+  ReactoryCalendarService,
+  ReactoryCalendarEntryService,
+  ReactoryCalendarIntegrationService,
   ...GeneratorServices
 ]
 
