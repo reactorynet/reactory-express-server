@@ -13,13 +13,13 @@ export class ReactoryCalendar extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   name: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ length: 7, nullable: true }) // hex color code
+  @Column({ type: 'varchar', length: 7, nullable: true }) // hex color code
   color: string;
 
   @Column({
@@ -52,13 +52,13 @@ export class ReactoryCalendar extends BaseEntity {
   @Column({ name: 'allowed_team_ids', type: 'json', nullable: true })
   allowedTeamIds: string[];
 
-  @Column({ name: 'is_default', default: false })
+  @Column({ type: 'boolean', name: 'is_default', default: false })
   isDefault: boolean;
 
-  @Column({ name: 'is_active', default: true })
+  @Column({ type: 'boolean', name: 'is_active', default: true })
   isActive: boolean;
 
-  @Column({ length: 50, default: 'UTC' })
+  @Column({ type: 'varchar', length: 50, default: 'UTC' })
   timeZone: string;
 
   @Column({ type: 'json', nullable: true })
@@ -67,16 +67,16 @@ export class ReactoryCalendar extends BaseEntity {
   @Column({ type: 'json', nullable: true })
   settings: Reactory.Models.ReactoryCalendarSettings;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
   updatedAt: Date;
 
-  @Column({ name: 'created_by', type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', name: 'created_by', nullable: false })
   createdBy: string;
 
-  @Column({ name: 'updated_by', type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', name: 'updated_by', nullable: false })
   updatedBy: string;
 
   // Virtual properties populated by service layer

@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn, UpdateDateColumn, BaseEntity } from "typeorm";
 import { Brackets } from "typeorm";
-
+import { Models } from '@reactory/reactory-core'
 
 @Entity({ name: 'reactory_calendar_entry' })
 // Critical indexes for calendar performance
@@ -17,13 +17,13 @@ export class ReactoryCalendarEntry extends BaseEntity {
   @Index()
   calendarId: number;
 
-  @Column({ length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   title: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ length: 500, nullable: true })
+  @Column({ type: 'varchar', length: 500, nullable: true })
   location: string;
 
   @Column({ name: 'start_date', type: 'timestamptz', nullable: false })
@@ -34,10 +34,10 @@ export class ReactoryCalendarEntry extends BaseEntity {
   @Index()
   endDate: Date;
 
-  @Column({ length: 50, nullable: false })
+  @Column({ type: 'varchar', length: 50, nullable: false })
   timeZone: string;
 
-  @Column({ name: 'is_all_day', default: false })
+  @Column({ name: 'is_all_day', type: 'boolean', default: false })
   isAllDay: boolean;
 
   // Store recurrence as JSON for flexibility
@@ -63,7 +63,7 @@ export class ReactoryCalendarEntry extends BaseEntity {
   })
   priority: Reactory.Models.ReactoryCalendarEntryPriority;
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   category: string;
 
   @Column({ type: 'json', nullable: true })
@@ -82,16 +82,16 @@ export class ReactoryCalendarEntry extends BaseEntity {
   @Column({ type: 'json', nullable: true })
   metadata: Record<string, any>;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
   updatedAt: Date;
 
-  @Column({ name: 'created_by', type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', name: 'created_by', nullable: false })
   createdBy: string;
 
-  @Column({ name: 'updated_by', type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', name: 'updated_by', nullable: false })
   updatedBy: string;
 
   // Virtual properties populated by service layer
@@ -104,7 +104,7 @@ export class ReactoryCalendarEntry extends BaseEntity {
   static findInDateRange(calendarIds: number[], startDate: Date, endDate: Date, status?: Reactory.Models.ReactoryCalendarEntryStatus[]) {
     const query = this.createQueryBuilder('entry')
       .where('entry.calendar_id IN (:...calendarIds)', { calendarIds })
-      .andWhere('entry.status != :cancelled', { cancelled: Reactory.Models.ReactoryCalendarEntryStatus.CANCELLED })
+      .andWhere('entry.status != :cancelled', { cancelled: Models.ReactoryCalendarEntryStatus.CANCELLED })
       .andWhere(
         new Brackets(qb => {
           qb.where('entry.start_date <= :endDate', { endDate })
@@ -124,7 +124,7 @@ export class ReactoryCalendarEntry extends BaseEntity {
     const query = this.createQueryBuilder('entry')
       .innerJoin('reactory_calendar_participant', 'participant',
         'participant.entry_id = entry.id AND participant.user_id = :userId', { userId })
-      .where('entry.status != :cancelled', { cancelled: Reactory.Models.ReactoryCalendarEntryStatus.CANCELLED })
+      .where('entry.status != :cancelled', { cancelled: Models.ReactoryCalendarEntryStatus.CANCELLED })
       .andWhere('entry.start_date <= :endDate', { endDate })
       .andWhere('entry.end_date >= :startDate', { startDate })
       .orderBy('entry.start_date', 'ASC');
@@ -173,7 +173,7 @@ export class ReactoryCalendarEntry extends BaseEntity {
   static findConflictingEvents(calendarIds: number[], startDate: Date, endDate: Date, excludeEntryId?: number) {
     const query = this.createQueryBuilder('entry')
       .where('entry.calendar_id IN (:...calendarIds)', { calendarIds })
-      .andWhere('entry.status = :confirmed', { confirmed: Reactory.Models.ReactoryCalendarEntryStatus.CONFIRMED })
+      .andWhere('entry.status = :confirmed', { confirmed: Models.ReactoryCalendarEntryStatus.CONFIRMED })
       .andWhere(
         new Brackets(qb => {
           qb.where('entry.start_date < :endDate', { endDate })
