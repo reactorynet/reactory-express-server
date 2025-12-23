@@ -23,6 +23,8 @@ const bypassUri = [
   '/cdn/organization/',
   '/cdn/themes/',
   '/cdn/ui/',
+  '/cdn/forms/images/',
+  '/cdn/forms/icons/',
   '/favicon.ico',  
 ];
 

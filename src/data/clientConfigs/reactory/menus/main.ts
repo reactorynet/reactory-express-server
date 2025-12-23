@@ -166,7 +166,14 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
           link: '/workflows/instances-management',
           icon: 'zoom_in_map',
           roles: ['USER'],
-        }        
+        },
+        {
+          ordinal: 5,
+          title: 'reactory:reactory.menu.workflows-launch-workflow',
+          link: '/workflows/launch',
+          icon: 'view_list',
+          roles: ['USER'],
+        }
       ],
     },
     {

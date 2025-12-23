@@ -439,6 +439,18 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     roles: ["ADMIN"],
     componentFqn: "core.WorkflowSystemDashboard@1.0.0",    
   },
+  {
+    key: "workflows-launch-workflow",
+    title: "Launch Workflow",
+    path: "/workflows/launch",
+    exact: false,
+    public: false,
+    roles: ["ADMIN"],
+    componentFqn: "core.WorkflowLauncher@1.0.0",
+    componentProps: {
+      mode: 'new'
+    },
+  }
 ]
 
 

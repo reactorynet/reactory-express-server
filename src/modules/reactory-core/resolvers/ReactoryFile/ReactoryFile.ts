@@ -451,7 +451,11 @@ class ReactoryFile {
     },
     context: Reactory.Server.IReactoryContext
   ): Promise<ReactoryFileUploadResult> {
-    context.log("ReactoryFile.uploadFile", params, "debug", "ReactoryFile.ts");
+    context.log("ReactoryFile.uploadFile", { 
+      alias: params.alias,
+      path: params.path,
+      uploadContext: params.uploadContext 
+    }, "debug", "ReactoryFile.ts");
     if (!context.user?._id) {
       return {
         __typename: "ReactoryFileUploadError",
@@ -465,14 +469,39 @@ class ReactoryFile {
         "core.ReactoryFileService@1.0.0"
       ) as Reactory.Service.IReactoryFileService;
 
+      // check if the path has any template variables and replace them
+      let resolvedPath = params.path || '';
+      let isUserSpecific = true;
+      if (resolvedPath.includes('${')) {
+        // Simple template variable replacement, e.g. ${userId}
+        context.log("Resolving template variables in path", resolvedPath, "debug", "ReactoryFile.ts")
+        resolvedPath = resolvedPath.replace(/\$\{userId\}/g, context.user._id.toString());
+        resolvedPath = resolvedPath.replace(/\$\{partnerId\}/g, context.partner?._id?.toString() || 'default');
+        resolvedPath = resolvedPath.replace(/\$\{date:([^\}]+)\}/g, (_, format) => {
+          const date = new Date();
+          // Simple date formatting - extend as needed
+          if (format === 'YYYY-MM-DD') {
+            return date.toISOString().split('T')[0];
+          }
+          return date.toISOString();
+        });
+        if (resolvedPath.includes('${APP_DATA_ROOT}')) {
+          isUserSpecific = false;
+        }
+        resolvedPath = resolvedPath.replace(/\$\{APP_DATA_ROOT\}/g, '');
+        resolvedPath = path.normalize(resolvedPath);
+        context.log("Resolved path", resolvedPath, "debug", "ReactoryFile.ts")
+        
+      }
+
       let fileModel = await fileService.uploadFile({
         file: params.file,
         filename: params.file.filename,
         uploadContext: `user_file::${params.uploadContext || 'no-context' }`,
-        isUserSpecific: true,
+        isUserSpecific,
         rename: false,
         catalog: true,
-        virtualPath: params.path || '/'
+        virtualPath: resolvedPath,
       });
 
      

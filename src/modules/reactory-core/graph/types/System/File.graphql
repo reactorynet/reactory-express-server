@@ -119,6 +119,7 @@ type ReactoryServerFile {
   size: Int!
   path: String!
   fullPath: String!
+  url: String
   created: Date!
   modified: Date!
   accessed: Date

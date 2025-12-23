@@ -188,8 +188,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
             return false;
           }
         }
-
-        debugger
+        
         // PATCH ALL ELEMENTS IN TEMPLATE
         await Promise.all(existingTemplate.elements.map(patchContent)).then();
 

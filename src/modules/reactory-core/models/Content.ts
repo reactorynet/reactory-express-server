@@ -31,6 +31,7 @@ const ContentSchema = new mongoose.Schema<Reactory.Models.IReactoryContent>({
   topics: [ String ],
   title: String,
   roles: [ String ],
+  metadata: {},
   translations: [{
     lang: String,
     title: String,

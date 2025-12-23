@@ -102,7 +102,7 @@ type ReactoryCalendarEntry {
   priority: ReactoryCalendarEntryPriority!
   category: String
   tags: [String!]!
-  attachments: [Attachment!]!
+  attachments: [ReactoryFile!]!
   workflowTrigger: ReactoryCalendarWorkflowTrigger
   serviceTrigger: ReactoryCalendarServiceTrigger
   metadata: Any
