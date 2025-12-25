@@ -24,6 +24,10 @@ type ReactorySupportTicket {
   """
   status: String
   """
+  Priority level of the ticket
+  """
+  priority: String
+  """
   Request reference
   """
   reference: String
@@ -59,6 +63,18 @@ type ReactorySupportTicket {
   The form id from where the request originated. Optional
   """
   formId: String
+  """
+  Tags associated with the ticket
+  """
+  tags: [String]
+  """
+  SLA deadline
+  """
+  slaDeadline: Date
+  """
+  Whether the ticket is overdue
+  """
+  isOverdue: Boolean
 }
 
 """
@@ -118,6 +134,10 @@ input ReactorySupportTicketFilter {
   """
   status: [String]
   """
+  Filter by priority levels
+  """
+  priority: [String]
+  """
   Ticket refernce number
   """
   reference: [String]
@@ -140,7 +160,19 @@ input ReactorySupportTicketFilter {
   """
   Include a form id to keep the results to a specific form
   """
-  formId: String 
+  formId: String
+  """
+  Filter by tags
+  """
+  tags: [String]
+  """
+  Show only overdue tickets
+  """
+  showOverdueOnly: Boolean
+  """
+  Filter by request types
+  """
+  requestType: [String]
 }
 
 input ReactorySupportTicketDeleteInput {

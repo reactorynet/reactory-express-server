@@ -80,10 +80,13 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
           tickets {
             id
             request
+            description
             reference
             status
             requestType
+            priority
             createdDate
+            updatedDate
             createdBy {
               id
               firstName
@@ -98,6 +101,15 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
               avatar
               email
             }
+            comments {
+              id
+            }
+            documents {
+              id
+            }
+            tags
+            slaDeadline
+            isOverdue
           }
         }
       }`,
