@@ -182,7 +182,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       let filteredWorkflows = allWorkflows;
       if (filter) {
         filteredWorkflows = allWorkflows.filter((workflow: any) => {
-          if (filter.namespace && workflow.namespace !== filter.namespace) return false;
+          if (filter.nameSpace && workflow.nameSpace !== filter.nameSpace) return false;
           if (filter.isActive !== undefined && workflow.isActive !== filter.isActive) return false;
           if (filter.tags && !filter.tags.some(tag => workflow.tags?.includes(tag))) return false;
           if (filter.author && workflow.author !== filter.author) return false;
@@ -224,10 +224,10 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
         totalWorkflows: allWorkflows.length,
         activeWorkflows: allWorkflows.filter((w: any) => w.isActive).length,
         inactiveWorkflows: allWorkflows.filter((w: any) => !w.isActive).length,
-        namespaces: [...new Set(allWorkflows.map((w: any) => w.namespace))],
+        nameSpaces: [...new Set(allWorkflows.map((w: any) => w.nameSpace))],
         versions: allWorkflows.reduce((acc: any, w: any) => {
-          if (!acc[`${w.namespace}.${w.name}`]) acc[`${w.namespace}.${w.name}`] = [];
-          acc[`${w.namespace}.${w.name}`].push(w.version);
+          if (!acc[`${w.nameSpace}.${w.name}`]) acc[`${w.nameSpace}.${w.name}`] = [];
+          acc[`${w.nameSpace}.${w.name}`].push(w.version);
           return acc;
         }, {}),
         lastRegistered: new Date(),
@@ -244,17 +244,17 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     }
   }
 
-  async getWorkflow(namespace: string, name: string): Promise<any> {
+  async getWorkflow(nameSpace: string, name: string): Promise<any> {
     try {
       const workflowRunner = this.getWorkflowRunner();
-      const workflow = await workflowRunner?.getWorkflow(namespace, name);
+      const workflow = await workflowRunner?.getWorkflow(nameSpace, name);
       
       if (!workflow) {
-        throw new Error(`Workflow ${namespace}.${name} not found`);
+        throw new Error(`Workflow ${nameSpace}.${name} not found`);
       }
 
       // Get additional details
-      const instances = await this.getWorkflowInstances({ workflowName: name, namespace });
+      const instances = await this.getWorkflowInstances({ workflowName: name, nameSpace });
       const stats = {
         totalExecutions: instances.instances?.length || 0,
         successfulExecutions: instances.instances?.filter((i: any) => i.status === 'COMPLETED')?.length || 0,
@@ -286,7 +286,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       if (filter) {
         instances = instances.filter((instance: any) => {
           if (filter.workflowName && instance.workflowName !== filter.workflowName) return false;
-          if (filter.namespace && instance.namespace !== filter.namespace) return false;
+          if (filter.nameSpace && instance.nameSpace !== filter.nameSpace) return false;
           if (filter.status && instance.status !== filter.status) return false;
           if (filter.createdBy && instance.createdBy !== filter.createdBy) return false;
           if (filter.startTimeFrom && new Date(instance.startTime) < new Date(filter.startTimeFrom)) return false;
@@ -339,7 +339,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   async startWorkflow(workflowId: string, input?: IWorkflowExecutionInput): Promise<any> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
-      const [namespace, nameVersion] = workflowId.split('.');
+      const [nameSpace, nameVersion] = workflowId.split('.');
       const [name, version] = nameVersion.split('@');
       
       const instance = await workflowRunner?.startWorkflow(name, version || '1.0.0', input?.input || {}, {

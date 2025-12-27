@@ -4,7 +4,7 @@ const schema: Reactory.Schema.ISchema = {
   type: 'object',
   title: 'Workflow Instance Management',
   properties: {
-    filterMessage: {
+    message: {
       type: 'string'
     },
     instances: {

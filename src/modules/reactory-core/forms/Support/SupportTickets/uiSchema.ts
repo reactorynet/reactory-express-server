@@ -506,7 +506,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
     }
   ],
   componentMap: {
-    DetailsPanel: "core.SupportTicketInfoPanel@1.0.0"
+    DetailsPanel: "core.SupportTicketDetailPanel@1.0.0"
   },
   detailPanelProps: {
     useCase: 'grid'

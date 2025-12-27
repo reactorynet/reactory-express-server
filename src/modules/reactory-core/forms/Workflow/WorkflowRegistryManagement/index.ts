@@ -5,10 +5,10 @@ import { GridUISchema, ListUiSchema } from './uiSchema';
 import graphql from './graphql';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
-const name = "WorkflowInstanceManagement";
+const name = "WorkflowRegistryManagement";
 const nameSpace = "core";
 
-const InstanceManagement: Reactory.Forms.IReactoryForm = {
+const WorkflowRegistryManagement: Reactory.Forms.IReactoryForm = {
   id: `${nameSpace}.${name}@${version}`,
   nameSpace,
   name,
@@ -36,12 +36,12 @@ const InstanceManagement: Reactory.Forms.IReactoryForm = {
   uiFramework: 'material',
   avatar: `${ENVIRONMENT.CDN_ROOT}themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase(),
   registerAsComponent: true,
-  title: 'Workflow Instance Management',
-  description: 'Monitor and manage workflow instance execution, status, and lifecycle',
+  title: 'Workflow Registry',
+  description: 'Browse and manage registered workflows in the system',
   backButton: true,
   uiSupport: ['material'],
   graphql,
   roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR']
-};
+}
 
-export default InstanceManagement;
+export default WorkflowRegistryManagement;

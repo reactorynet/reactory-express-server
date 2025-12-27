@@ -396,7 +396,17 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
         }
       }
     ]
-  },  
+  }, 
+  
+  {
+    key: 'workflows-registry-management',
+    title: 'Workflows Registry Management',
+    path: '/workflows/registry',
+    exact: true,
+    public: false,
+    roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR'],
+    componentFqn: 'core.WorkflowRegistryManagement@1.0.0',
+  },
 
   {
     key: 'workflows-operations-dashboard',
@@ -404,7 +414,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     path: '/workflows/operation-dashboard',
     exact: true,
     public: false,
-    roles: ['ADMIN'],
+    roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR'],
     componentFqn: 'core.WorkflowOperationsDashboard@1.0.0',
   },
 
@@ -414,7 +424,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     path: '/workflows/instances-management',
     exact: true,
     public: false,
-    roles: ['ADMIN'],
+    roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR'],
     componentFqn: 'core.WorkflowInstanceManagement@1.0.0',
   },
 
@@ -424,7 +434,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     path: "/workflows/editor",
     exact: true,
     public: false,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"],
     componentFqn: "core.WorkflowDesigner@1.0.0",
     componentProps: {
       workflowId: "${route.workflowId}",
@@ -436,7 +446,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     path: "/workflows/system-dashboard",
     exact: true,
     public: false,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"],
     componentFqn: "core.WorkflowSystemDashboard@1.0.0",    
   },
   {
@@ -445,7 +455,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     path: "/workflows/launch",
     exact: false,
     public: false,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"],
     componentFqn: "core.WorkflowLauncher@1.0.0",
     componentProps: {
       mode: 'new'

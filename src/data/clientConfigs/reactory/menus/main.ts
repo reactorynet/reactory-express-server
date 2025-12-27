@@ -135,7 +135,7 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
     {
       ordinal: 96,
       title: 'reactory:reactory.menu.workflows',
-      link: '/workflows/',
+      link: '/workflows/registry',
       icon: 'workflows',
       roles: ['USER'],
       items: [
