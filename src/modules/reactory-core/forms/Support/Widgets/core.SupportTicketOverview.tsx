@@ -96,8 +96,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
           <Paper 
             variant="outlined" 
             sx={{ 
-              p: 2, 
-              bgcolor: '#fafafa',
+              p: 2,               
               mb: 3,
               '& pre': {
                 whiteSpace: 'pre-wrap',

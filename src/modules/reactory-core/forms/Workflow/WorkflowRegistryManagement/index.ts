@@ -3,6 +3,7 @@ import version from './version';
 import schema from './schema';
 import { GridUISchema, ListUiSchema } from './uiSchema';
 import graphql from './graphql';
+import modules from './modules';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
 const name = "WorkflowRegistryManagement";
@@ -40,6 +41,7 @@ const WorkflowRegistryManagement: Reactory.Forms.IReactoryForm = {
   description: 'Browse and manage registered workflows in the system',
   backButton: true,
   uiSupport: ['material'],
+  modules,
   graphql,
   roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR']
 }

@@ -8,6 +8,10 @@ interface DetailPanelDependencies {
   RelativeTime: any,
   CountBadge: any,
   SupportTicketOverview: any,
+  SupportTicketComments: any,
+  SupportTicketAttachments: any,
+  SupportTicketActivity: any,
+  SupportTicketRelated: any,
 }
 
 interface DetailPanelProps {
@@ -51,6 +55,10 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
     RelativeTime,
     CountBadge,
     SupportTicketOverview,
+    SupportTicketComments,
+    SupportTicketAttachments,
+    SupportTicketActivity,
+    SupportTicketRelated,
   } = reactory.getComponents<DetailPanelDependencies>([
     'react.React',
     'material-ui.Material',
@@ -59,6 +67,10 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
     'core.RelativeTime',
     'core.CountBadge',
     'core.SupportTicketOverview',
+    'core.SupportTicketComments',
+    'core.SupportTicketAttachments',
+    'core.SupportTicketActivity',
+    'core.SupportTicketRelated',
   ]);
 
   const { MaterialCore } = Material;
@@ -87,33 +99,35 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
       label: 'Overview',
       icon: 'info',
       component: SupportTicketOverview,
+      badge: 0,
     },
     {
       id: 'comments',
       label: 'Comments',
       icon: 'comment',
       badge: ticket.comments?.length || 0,
-      component: () => <Box p={3}><Typography>Comments tab - Coming in Phase 3</Typography></Box>,
+      component: SupportTicketComments,
     },
     {
       id: 'attachments',
       label: 'Attachments',
       icon: 'attach_file',
       badge: ticket.documents?.length || 0,
-      component: () => <Box p={3}><Typography>Attachments tab - Coming in Phase 3</Typography></Box>,
+      component: SupportTicketAttachments,
     },
     {
       id: 'activity',
       label: 'Activity',
       icon: 'timeline',
-      component: () => <Box p={3}><Typography>Activity tab - Coming in Phase 3</Typography></Box>,
+      badge: 0,
+      component: SupportTicketActivity,
     },
     {
       id: 'related',
       label: 'Related',
       icon: 'link',
       badge: ticket.relatedTickets?.length || 0,
-      component: () => <Box p={3}><Typography>Related tickets tab - Coming in Phase 3</Typography></Box>,
+      component: SupportTicketRelated,
     },
   ];
 

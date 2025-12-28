@@ -33,6 +33,34 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
   },
   {
     compilerOptions: {},
+    id: 'core.SupportTicketComments@1.0.0',
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.SupportTicketComments.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.SupportTicketAttachments@1.0.0',
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.SupportTicketAttachments.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.SupportTicketActivity@1.0.0',
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.SupportTicketActivity.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.SupportTicketRelated@1.0.0',
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.SupportTicketRelated.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
     id: 'core.SupportTicketWorkflow@1.0.0',
     src: fileAsString(require.resolve('../../Widgets/core.SupportTicketWorkflow.ts')),
     compiler: 'rollup',
