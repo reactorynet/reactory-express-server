@@ -31,7 +31,7 @@ export default [
     roles: ['ADMIN'],
   },
   {
-    name: 'reactory.prometheus.default',
+    name: 'reactory.prometheus.connection',
     componentFqn: 'reactory-telemetry.PrometheusConnectionForm@1.0.0',
     data: {
       host: process.env.REACTORY_PROMETHEUS_HOST || 'localhost',
@@ -42,7 +42,7 @@ export default [
   },
   {
     name: 'reactory.redis.connection',
-    componentFqn: 'reactory-telemetry.RedisConnectionForm@1.0.0',
+    componentFqn: 'reactory-cache.RedisConnectionForm@1.0.0',
     data: {
       host: process.env.REACTORY_REDIS_HOST || 'localhost',
       port: parseInt(process.env.REACTORY_REDIS_PORT || '6379'),
@@ -60,4 +60,14 @@ export default [
     },  
     roles: ['ADMIN'],
   },
+  {
+    name: 'reactory.jaeger.connection',
+    componentFqn: 'reactory-telemetry.JaegerConnectionForm@1.0.0',
+    data: {
+      host: process.env.REACTORY_JAEGER_HOST || 'localhost',
+      port: parseInt(process.env.REACTORY_JAEGER_PORT || '6831'),
+      protocol: process.env.REACTORY_JAEGER_PROTOCOL || 'http',
+    },  
+    roles: ['ADMIN'],
+  }
 ];

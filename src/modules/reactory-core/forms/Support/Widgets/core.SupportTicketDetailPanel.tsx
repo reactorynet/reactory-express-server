@@ -143,8 +143,7 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
           alignItems: 'center', 
           justifyContent: 'space-between',
           borderBottom: 1,
-          borderColor: 'divider',
-          backgroundColor: '#fafafa'
+          borderColor: 'divider',        
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

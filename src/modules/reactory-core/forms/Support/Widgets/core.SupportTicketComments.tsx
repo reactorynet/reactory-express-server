@@ -189,10 +189,9 @@ const SupportTicketComments = (props: CommentsProps) => {
         {RichEditorWidget ? (
           <Box sx={{ mb: 2 }}>
             <RichEditorWidget
-              value={commentText}
-              onChange={(value: string) => setCommentText(value)}
-              placeholder="Write your comment here... Supports markdown and HTML"
-              minHeight={120}
+              reactory={reactory}
+              formData={commentText}              
+              onChange={(value: string) => setCommentText(value)}              
             />
           </Box>
         ) : (

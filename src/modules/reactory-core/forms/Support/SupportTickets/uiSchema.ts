@@ -69,7 +69,7 @@ const BaseUISchema: Reactory.Schema.IFormUISchema = {
     toolbarStyle: {
       display: 'flex',
       justifyContent: 'flex-end'
-    },
+    },  
     showSchemaSelectorInToolbar: true,
     schemaSelector: {
       //buttonTitle: 'VIEW STYLE',
@@ -77,7 +77,12 @@ const BaseUISchema: Reactory.Schema.IFormUISchema = {
       variant: 'icon-button',
     }
   },
-  'ui:title': null,  
+  // @ts-ignore
+  'ui:title': {
+   jss: {
+    paddingLeft: '24px',
+   }
+  },  
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
@@ -95,7 +100,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
   showLabel: false,
   allowAdd: true,
   allowDelete: true,
-  search: true,
+  search: false, // We'll use our custom toolbar search instead
   addButtonProps: {
     icon: 'add',
     tooltip: 'reactory:support-ticket.ticket-grid.add-ticket-button.tooltip',
@@ -105,7 +110,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
     icon: 'delete',
     tooltip: 'reactory:support-ticket.ticket-grid.delete-ticket-button.tooltip',
     onClick: 'core.SupportTicketWorkflow@1.0.0/deleteTicket'
-  },
+  },  
   columns: [
     // Reference Number - Copyable
     {
@@ -506,7 +511,8 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
     }
   ],
   componentMap: {
-    DetailsPanel: "core.SupportTicketDetailPanel@1.0.0"
+    DetailsPanel: "core.SupportTicketDetailPanel@1.0.0",
+    Toolbar: "core.SupportTicketsToolbar@1.0.0"
   },
   detailPanelProps: {
     useCase: 'grid'

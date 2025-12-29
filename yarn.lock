@@ -6079,9 +6079,9 @@
   resolved "https://registry.npmjs.org/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
 
-"@reactory/reactory-core@file:./lib/reactory-reactory-core-1.1.0-RC1-7a4588.tgz":
-  version "1.1.0-RC1-7a4588"
-  resolved "file:./lib/reactory-reactory-core-1.1.0-RC1-7a4588.tgz#78dfa72828141538c21b6dc27a08bba02b455fde"
+"@reactory/reactory-core@file:./lib/reactory-reactory-core-1.1.0-RC1-1fdc92.tgz":
+  version "1.1.0-RC1-1fdc92"
+  resolved "file:./lib/reactory-reactory-core-1.1.0-RC1-1fdc92.tgz#8765977f91d204a6a39db4be27a3678f9640c856"
   dependencies:
     reflect-annotations "4.0.0-beta.1"
     reflect-args "2.0.0"
