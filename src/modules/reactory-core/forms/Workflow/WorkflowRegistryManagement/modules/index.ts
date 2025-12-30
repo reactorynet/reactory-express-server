@@ -58,6 +58,13 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
     src: fileAsString(require.resolve('../../Widgets/core.WorkflowManager.ts')),
     compiler: 'rollup',
     fileType: 'ts'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.WorkflowRegistryToolbar@1.0.0',
+    src: fileAsString(path.resolve(__dirname, `../components/WorkflowRegistryToolbar.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
   }
 ];
 

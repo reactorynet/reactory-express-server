@@ -68,6 +68,41 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
   },
   {
     compilerOptions: {},
+    id: 'core.BulkStatusChangeAction@1.0.0',
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkStatusChangeAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.BulkAssignAction@1.0.0',
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkAssignAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.BulkTagAction@1.0.0',
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkTagAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.BulkDeleteAction@1.0.0',
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkDeleteAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.ExportAction@1.0.0',
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.ExportAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
     id: 'core.SupportTicketWorkflow@1.0.0',
     src: fileAsString(require.resolve('../../Widgets/core.SupportTicketWorkflow.ts')),
     compiler: 'rollup',

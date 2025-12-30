@@ -15,7 +15,12 @@ const BaseUISchema: Reactory.Schema.IFormUISchema = {
       variant: 'icon-button',
     }
   },
-  'ui:title': null,  
+  // @ts-ignore
+  'ui:title': {
+   jss: {
+    paddingLeft: '24px',
+   }
+  },  
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
@@ -28,7 +33,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
   showLabel: false,
   allowAdd: false,
   allowDelete: false,
-  search: true,
+  search: false,
   columns: [
     // Workflow Full ID - Copyable
     {
@@ -468,7 +473,8 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
   ],
   
   componentMap: {
-    DetailsPanel: "core.WorkflowDetailsPanel@1.0.0"
+    DetailsPanel: "core.WorkflowDetailsPanel@1.0.0",
+    Toolbar: 'core.WorkflowRegistryToolbar@1.0.0'
   },
   
   detailPanelProps: {

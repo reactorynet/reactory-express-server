@@ -33,6 +33,11 @@ interface SupportTicketsToolbarDependencies {
   QuickFilters: any;
   SearchBar: any;
   AdvancedFilterPanel: any;
+  BulkStatusChangeAction: any;
+  BulkAssignAction: any;
+  BulkTagAction: any;
+  BulkDeleteAction: any;
+  ExportAction: any;
 }
 
 interface SupportTicketsToolbarProps {
@@ -87,21 +92,31 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
     QuickFilters,
     SearchBar,
     AdvancedFilterPanel,
+    BulkStatusChangeAction,
+    BulkAssignAction,
+    BulkTagAction,
+    BulkDeleteAction,
+    ExportAction,
   } = reactory.getComponents<SupportTicketsToolbarDependencies>([
     'react.React',
     'material-ui.Material',
     'core.QuickFilters',
     'core.SearchBar',
     'core.AdvancedFilterPanel',
+    'core.BulkStatusChangeAction',
+    'core.BulkAssignAction',
+    'core.BulkTagAction',
+    'core.BulkDeleteAction',
+    'core.ExportAction',
   ]);
 
   const { MaterialCore } = Material;
-  const { Box, Button, Icon, Toolbar } = MaterialCore;
+  const { Box, Button, Icon, Toolbar, Badge, Divider, ButtonGroup, Tooltip } = MaterialCore;
 
   // If components aren't loaded, show loading state
   if (!QuickFilters || !SearchBar || !AdvancedFilterPanel) {
     return (
-      <Toolbar sx={{ p: 2, bgcolor: 'background.paper' }}>
+      <Toolbar sx={{ p: 2 }}>
         <Box>Loading filters...</Box>
       </Toolbar>
     );
@@ -109,9 +124,14 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
 
   const [advancedPanelOpen, setAdvancedPanelOpen] = React.useState(false);
   const [originalData] = React.useState(data);
+  const [activeBulkAction, setActiveBulkAction] = React.useState<'status' | 'assign' | 'tag' | 'delete' | 'export' | null>(null);
 
   const currentUser = reactory.getUser();
   const userId = currentUser?.loggedIn?.user?.id;
+
+  // Get selected tickets
+  const selectedTickets = data.selected || [];
+  const hasSelection = selectedTickets.length > 0;
 
   // Count tickets for badges
   const counts = React.useMemo(() => {
@@ -379,6 +399,24 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
     onDataChange(filtered);
   }, [originalData, onDataChange]);
 
+  // Bulk action handlers
+  const handleBulkActionComplete = (actionType: string) => {
+    setActiveBulkAction(null);
+    // Refresh data (would typically refetch from server)
+    if (onDataChange) {
+      // For now, just close the dialog
+      // In production, you'd refetch the data here
+    }
+  };
+
+  const handleBulkActionCancel = () => {
+    setActiveBulkAction(null);
+  };
+
+  const handleExport = () => {
+    setActiveBulkAction('export');
+  };
+
   return (
     <>
       <Toolbar
@@ -390,7 +428,7 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
           p: 2,          
         }}
       >
-        {/* Search Bar */}
+        {/* Search Bar and Actions Row */}
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <SearchBar
             placeholder="Search tickets by reference, title, or assignee..."
@@ -401,23 +439,86 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
             helpText='Search in reference, title, description, and assignee names'
             fullWidth
           />
-          <Button
-            variant="outlined"
-            startIcon={<Icon>filter_list</Icon>}
-            onClick={() => setAdvancedPanelOpen(true)}
-            sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
-          >
-            Advanced Filters
-          </Button>
+          <Tooltip title="Advanced Filters">
+            <Button
+              variant="outlined"
+              startIcon={<Icon>filter_list</Icon>}
+              onClick={() => setAdvancedPanelOpen(true)}
+              sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
+            >
+              Filters
+            </Button>
+          </Tooltip>
+          <Tooltip title="Export Data">
+            <Button
+              variant="outlined"
+              startIcon={<Icon>file_download</Icon>}
+              onClick={handleExport}
+              sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
+            >
+              Export
+            </Button>
+          </Tooltip>
         </Box>
 
-        {/* Quick Filters */}
+        {/* Quick Filters Row */}
         <QuickFilters
           filters={quickFilters}
           onFilterChange={handleQuickFilterChange}
           variant="buttons"
           multiSelect={false}
         />
+
+        {/* Bulk Actions Row (shown when items are selected) */}
+        {hasSelection && (
+          <>
+            <Divider />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Badge badgeContent={selectedTickets.length} color="primary" max={999}>
+                <Icon>check_box</Icon>
+              </Badge>
+              <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                {selectedTickets.length} ticket{selectedTickets.length > 1 ? 's' : ''} selected
+              </Box>
+              <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+              <ButtonGroup variant="outlined" size="small">
+                <Tooltip title="Change Status">
+                  <Button
+                    startIcon={<Icon>edit</Icon>}
+                    onClick={() => setActiveBulkAction('status')}
+                  >
+                    Status
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Assign to User">
+                  <Button
+                    startIcon={<Icon>person_add</Icon>}
+                    onClick={() => setActiveBulkAction('assign')}
+                  >
+                    Assign
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Manage Tags">
+                  <Button
+                    startIcon={<Icon>label</Icon>}
+                    onClick={() => setActiveBulkAction('tag')}
+                  >
+                    Tags
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Delete Selected">
+                  <Button
+                    startIcon={<Icon>delete</Icon>}
+                    onClick={() => setActiveBulkAction('delete')}
+                    color="error"
+                  >
+                    Delete
+                  </Button>
+                </Tooltip>
+              </ButtonGroup>
+            </Box>
+          </>
+        )}
       </Toolbar>
 
       {/* Advanced Filter Panel */}
@@ -428,6 +529,52 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
         onFilterChange={handleAdvancedFilterChange}
         showPresets
       />
+
+      {/* Bulk Action Modals */}
+      {activeBulkAction === 'status' && BulkStatusChangeAction && (
+        <BulkStatusChangeAction
+          reactory={reactory}
+          selectedTickets={selectedTickets}
+          onComplete={() => handleBulkActionComplete('status')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
+
+      {activeBulkAction === 'assign' && BulkAssignAction && (
+        <BulkAssignAction
+          reactory={reactory}
+          selectedTickets={selectedTickets}
+          onComplete={() => handleBulkActionComplete('assign')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
+
+      {activeBulkAction === 'tag' && BulkTagAction && (
+        <BulkTagAction
+          reactory={reactory}
+          selectedTickets={selectedTickets}
+          onComplete={() => handleBulkActionComplete('tag')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
+
+      {activeBulkAction === 'delete' && BulkDeleteAction && (
+        <BulkDeleteAction
+          reactory={reactory}
+          selectedTickets={selectedTickets}
+          onComplete={() => handleBulkActionComplete('delete')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
+
+      {activeBulkAction === 'export' && ExportAction && (
+        <ExportAction
+          reactory={reactory}
+          tickets={data?.data || []}
+          onComplete={() => handleBulkActionComplete('export')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
     </>
   );
 };
