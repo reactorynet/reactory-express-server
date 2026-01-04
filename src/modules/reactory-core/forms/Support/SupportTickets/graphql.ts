@@ -103,6 +103,15 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             }
             comments {
               id
+              text
+              when
+              who {
+                id
+                firstName
+                lastName
+                avatar
+                email
+              }
             }
             documents {
               id

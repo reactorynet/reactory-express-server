@@ -104,7 +104,7 @@ input ReactorySupportTicketUpdate {
   """
   Comment
   """
-  comment: String
+  comment: String  
 }
 
 """
@@ -197,6 +197,64 @@ type ReactorySupportTicketDeleteError {
 
 union ReactorySupportTicketDeleteResult = ReactorySupportTicketDeleteSuccess | ReactorySupportTicketDeleteError
 
+"""
+Input for adding a comment to a support ticket
+"""
+input ReactorySupportTicketCommentInput {
+  """
+  The ticket ID to add the comment to
+  """
+  ticketId: String!
+  """
+  The comment text (supports HTML/Markdown)
+  """
+  comment: String!
+  """
+  Parent comment ID for threaded replies
+  """
+  parentId: String
+  """
+  Attachments for the comment
+  """
+  attachmentIds: [String]
+}
+
+"""
+Input for attaching files to a support ticket
+"""
+input ReactorySupportTicketAttachmentInput {
+  """
+  The ticket ID to attach files to
+  """
+  ticketId: String!
+  """
+  Array of file IDs (already uploaded via ReactoryUploadFile)
+  """
+  fileIds: [String!]!
+}
+
+"""
+Success result for file attachment
+"""
+type ReactorySupportTicketAttachmentSuccess {
+  success: Boolean!
+  ticket: ReactorySupportTicket!
+  attachedFiles: [ReactoryFile!]!
+}
+
+"""
+Error result for file attachment
+"""
+type ReactorySupportTicketAttachmentError {
+  error: String!
+  message: String
+}
+
+"""
+Union result for file attachment
+"""
+union ReactorySupportTicketAttachmentResult = ReactorySupportTicketAttachmentSuccess | ReactorySupportTicketAttachmentError
+
 extend type Query {
   """
   Returns paged tickets that were created by the logged in user
@@ -222,4 +280,14 @@ extend type Mutation {
   Deletes a / multiple support tickets
   """
   ReactoryDeleteSupportTicket(deleteInput: ReactorySupportTicketDeleteInput!): ReactorySupportTicketDeleteResult
+  
+  """
+  Adds a comment to a support ticket
+  """
+  ReactoryAddSupportTicketComment(input: ReactorySupportTicketCommentInput!): Comment
+  
+  """
+  Attaches files to a support ticket
+  """
+  ReactoryAttachFilesToTicket(input: ReactorySupportTicketAttachmentInput!): ReactorySupportTicketAttachmentResult
 }

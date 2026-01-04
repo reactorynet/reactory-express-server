@@ -342,12 +342,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       const [nameSpace, nameVersion] = workflowId.split('.');
       const [name, version] = nameVersion.split('@');
       
-      const instance = await workflowRunner?.startWorkflow(name, version || '1.0.0', input?.input || {}, {
-        tags: input?.tags,
-        priority: input?.priority,
-        timeout: input?.timeout,
-        createdBy: this.context.user?.id
-      });
+      const instance = await workflowRunner?.startWorkflow(name, version || '1.0.0', input);
 
       return instance;
     } catch (error) {

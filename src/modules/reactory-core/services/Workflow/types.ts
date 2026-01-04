@@ -36,7 +36,7 @@ export interface IWorkflowExecutionInput {
   input: any;
   tags?: string[];
   priority?: number;
-  timeout?: number;
+  timeout?: number;  
 }
 
 export interface IScheduleConfigInput {

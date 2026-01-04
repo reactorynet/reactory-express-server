@@ -53,6 +53,7 @@ const CommentSchema = new mongoose.Schema<Reactory.Models.IReactoryComment>({
       return new Date()
     }
   },
+  parent: { type: ObjectId, ref: 'Comment' },
   replies: [{ type: ObjectId, ref: 'Comment' }],
 });
 

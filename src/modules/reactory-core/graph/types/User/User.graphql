@@ -113,22 +113,6 @@ type PagedUserResults {
   users: [User]
 }
 
-type Comment {
-  id: ObjID
-  who: User
-  text: String
-  when: Date
-  upvoted: [User]
-  upvotes: Int
-  downvote: [User]
-  downvotes: Int
-  favorite: [User]
-  favorites: Int
-  flagged: Boolean
-  removed: Boolean
-  published: Boolean
-}
-
 type ProfileRefreshResult {
   user: User,
   messages: [ ReactoryUXMessage ]

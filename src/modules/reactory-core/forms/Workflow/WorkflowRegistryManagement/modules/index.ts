@@ -65,6 +65,41 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
     src: fileAsString(path.resolve(__dirname, `../components/WorkflowRegistryToolbar.tsx`)),
     compiler: 'rollup',
     fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.BulkActivateAction@1.0.0',
+    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkActivateAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.BulkDeactivateAction@1.0.0',
+    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkDeactivateAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.BulkExecuteAction@1.0.0',
+    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkExecuteAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.BulkTagAction@1.0.0',
+    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkTagAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.BulkDeleteAction@1.0.0',
+    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkDeleteAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
   }
 ];
 

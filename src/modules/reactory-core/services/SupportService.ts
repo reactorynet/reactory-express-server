@@ -4,6 +4,7 @@ import { roles } from '@reactory/server-core/authentication/decorators';
 import moment from 'moment';
 import { QueryWithHelpers } from 'mongoose';
 import ReactorySupportTicketModel from '../models/ReactorySupportTicket';
+import ReactoryCommentModel from '../models/Comment';
 import { InsufficientPermissions } from '@reactory/server-core/exceptions';
 import { ObjectId } from 'mongodb';
 
@@ -16,6 +17,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   props: Reactory.Service.IReactoryServiceProps;
   context: Reactory.Server.IReactoryContext
 
+  fileService: Reactory.Service.IReactoryFileService;  
   constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
@@ -23,10 +25,113 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   
 
   async updateTicket(ticket_id: string, updates: Reactory.Models.IReactorySupportTicketUpdate): Promise<Reactory.Models.IReactorySupportTicket | Reactory.Models.IReactorySupportTicketDocument> {
-    throw new Error('Method not implemented.');
+    
+    const ticket: Reactory.Models.ReactorySupportDocument = await ReactorySupportTicketModel.findById(ticket_id).exec() as Reactory.Models.ReactorySupportDocument;
+    
+    if (!ticket) {
+      throw new Error('Ticket not found');
+    }
+
+    // Check permissions
+    const canUpdate = this.isAdminUser(this.context) || 
+                     ticket.createdBy.toString() === this.context.user._id.toString() ||
+                     (ticket.assignedTo && ticket.assignedTo.toString() === this.context.user._id.toString());
+
+    if (!canUpdate) {
+      throw new InsufficientPermissions('User does not have permission to update this ticket');
+    }
+
+    // Apply updates
+    if (updates.request) ticket.request = updates.request;
+    if (updates.description) ticket.description = updates.description;
+    if (updates.status) ticket.status = updates.status;
+    if (updates.requestType) ticket.requestType = updates.requestType;
+    if (updates.assignTo) ticket.assignedTo = new ObjectId(updates.assignTo) as any;
+    
+    ticket.updatedDate = new Date();
+    ticket.updatedBy = this.context.user as any;
+
+    // Add comment if provided
+    if (updates.comment) {
+      const comment = await this.addComment(ticket._id.toString(), updates.comment);
+      ticket.comments?.push(comment._id);
+    }
+
+    await ticket.save();
+    await ticket.populate('createdBy assignedTo comments');
+
+    return ticket;
   }
-  async attachDocument(ticket_id: string, file: File, name: string): Promise<Reactory.Models.IReactorySupportTicket | Reactory.Models.IReactorySupportTicketDocument> {
-    throw new Error('Method not implemented.');
+
+  async addComment(ticketId: string, commentText: string, parentId?: string, attachmentIds?: string[]): Promise<Reactory.Models.ICommentDocument> {
+    const ticket = await ReactorySupportTicketModel.findById(ticketId).exec();
+    
+    if (!ticket) {
+      throw new Error('Ticket not found');
+    }
+
+    // Check permissions
+    const canComment = this.isAdminUser(this.context) || 
+                      ticket.createdBy.toString() === this.context.user._id.toString() ||
+                      (ticket.assignedTo && ticket.assignedTo.toString() === this.context.user._id.toString());
+
+    if (!canComment) {
+      throw new InsufficientPermissions('User does not have permission to comment on this ticket');
+    }
+
+    // Create comment
+    const CommentModel = ReactoryCommentModel;
+    const comment = new CommentModel({
+      text: commentText,
+      user: this.context.user._id,
+      context: 'ReactorySupportTicket',
+      contextId: ticket._id,
+      createdAt: new Date(),
+      parentId: parentId ? new ObjectId(parentId) : undefined,      
+    });
+
+    await comment.save();
+
+    // Add to ticket
+    ticket.comments.push(comment._id);
+    ticket.updatedDate = new Date();
+    await ticket.save();
+
+    await comment.populate('user');
+
+    return comment;
+  }
+
+  async attachDocument(ticket_id: string, fileIds: string[]): Promise<Reactory.Models.IReactorySupportTicket | Reactory.Models.IReactorySupportTicketDocument> {
+    const ticket = await ReactorySupportTicketModel.findById(ticket_id).exec();
+    
+    if (!ticket) {
+      throw new Error('Ticket not found');
+    }
+
+    // Check permissions
+    const canAttach = this.isAdminUser(this.context) || 
+                     ticket.createdBy.toString() === this.context.user._id.toString() ||
+                     (ticket.assignedTo && ticket.assignedTo.toString() === this.context.user._id.toString());
+
+    if (!canAttach) {
+      throw new InsufficientPermissions('User does not have permission to attach files to this ticket');
+    }
+
+    // Add files to ticket
+    const ReactoryFileModel = this.context.models.ReactoryFile;
+    for (const fileId of fileIds) {
+      const file = await ReactoryFileModel.findById(fileId).exec();
+      if (file && !ticket.documents.some((d: any) => d.toString() === fileId)) {
+        ticket.documents.push(new ObjectId(fileId) as any);
+      }
+    }
+
+    ticket.updatedDate = new Date();
+    await ticket.save();
+    await ticket.populate('documents');
+
+    return ticket;
   }
 
   isAdminUser = (context: Reactory.Server.IReactoryContext): boolean => { 
@@ -168,6 +273,14 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     this.context = context
     return true;
   }
+
+  setFileService(fileService: Reactory.Service.IReactoryFileService): void {
+    this.fileService = fileService;    
+  }
+
+  setCommentService(commentService: Reactory.Service.ICommentService): void {
+    this.commentService = commentService;    
+  }
   
   static reactory: Reactory.Service.IReactoryServiceDefinition<ReactorySupportService> = {  
     id: "core.ReactorySupportService@1.0.0",
@@ -180,7 +293,10 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       context: Reactory.Server.IReactoryContext): ReactorySupportService => {
         return new ReactorySupportService(props, context);
     },
-    dependencies: [],
+    dependencies: [
+      { id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' },
+      { id: 'core.CommentService@1.0.0', alias: 'commentService' },
+    ],
     serviceType: 'workflow',
   };
 

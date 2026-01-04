@@ -3,6 +3,7 @@ import Reactory from '@reactory/reactory-core';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
 import { error } from 'console';
+import CommentModel from '@reactory/server-modules/reactory-core/models/Comment';
 
 type DeleteArgs = { 
   ids: string[]
@@ -68,13 +69,76 @@ class SupportResolver {
   }
 
   @property("ReactorySupportTicket", "comments")
-  async comments(obj: Reactory.Models.IReactorySupportTicketDocument) {
-    if (obj.populated("comments") === undefined) {
-      obj.populate("comments");
-      //await obj.execPopulate();
+  async comments(obj: Reactory.Models.IReactorySupportTicketDocument, args: any, context: Reactory.Server.IReactoryContext) {
+    // Check if comments are already populated (array of objects vs array of IDs)
+    if (obj.comments && obj.comments.length > 0) {
+      const firstComment = obj.comments[0];
+      // If it's already an object with properties, it's populated
+      if (typeof firstComment === 'object' && firstComment.text !== undefined) {
+        return obj.comments;
+      }
     }
 
-    return obj.comments;
+    // Comments are not populated, fetch them from the database    
+    if (!CommentModel) {
+      context.log('Comment model not found', {}, 'warning');
+      return [];
+    }
+
+    try {
+      const commentIds = obj.comments || [];
+      if (commentIds.length === 0) {
+        return [];
+      }
+
+      // Fetch and populate comments
+      const populatedComments = await CommentModel
+        .find({ _id: { $in: commentIds } })
+        .populate('user')
+        .sort({ createdAt: -1 })
+        .exec();
+
+      return populatedComments;
+    } catch (error) {
+      context.log('Error populating comments', { error }, 'error');
+      return [];
+    }
+  }
+
+  @property("ReactorySupportTicket", "documents")
+  async documents(obj: Reactory.Models.IReactorySupportTicketDocument, args: any, context: Reactory.Server.IReactoryContext) {
+    // Check if documents are already populated
+    if (obj.documents && obj.documents.length > 0) {
+      const firstDoc = obj.documents[0];
+      // If it's already an object with properties, it's populated
+      if (typeof firstDoc === 'object' && firstDoc.filename !== undefined) {
+        return obj.documents;
+      }
+    }
+
+    // Documents are not populated, fetch them from the database
+    const ReactoryFileModel = context.models.ReactoryFile;
+    if (!ReactoryFileModel) {
+      context.log('ReactoryFile model not found', {}, 'warning');
+      return [];
+    }
+
+    try {
+      const documentIds = obj.documents || [];
+      if (documentIds.length === 0) {
+        return [];
+      }
+
+      // Fetch documents
+      const populatedDocuments = await ReactoryFileModel
+        .find({ _id: { $in: documentIds } })
+        .exec();
+
+      return populatedDocuments;
+    } catch (error) {
+      context.log('Error populating documents', { error }, 'error');
+      return [];
+    }
   }
   
   @roles(["ADMIN", "SUPPORT_ADMIN", "SUPPORT"], 'args.context')
@@ -103,7 +167,7 @@ class SupportResolver {
       return supportService.pagedRequest(args.filter, args.paging);
   }
   
-  @roles(["ADMIN", "SUPPORT_ADMIN"], 'args.context')
+  @roles(["USER"], 'args.context')
   @mutation("ReactoryDeleteSupportTicket")
   async deleteTickets(
     _: any, 
@@ -128,7 +192,65 @@ class SupportResolver {
         })
       }
     }
+  }
+
+  @roles(["USER"], 'args.context')
+  @mutation("ReactoryAddSupportTicketComment")
+  async addComment(
+    obj: any,
+    args: {
+      input: {
+        ticketId: string;
+        comment: string;
+        parentId?: string;
+        attachmentIds?: string[];
+      }
+    },
+    context: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IReactoryCommentDocument> {
+    const { ticketId, comment, parentId, attachmentIds } = args.input;
+    const supportService: Reactory.Service.TReactorySupportService = context.getService("core.ReactorySupportService@1.0.0") as Reactory.Service.TReactorySupportService;
+    return supportService.addComment(ticketId, comment, parentId, attachmentIds);
+  }
+
+  @roles(["USER"], 'args.context')
+  @mutation("ReactoryAttachFilesToTicket")
+  async attachFiles(
+    obj: any,
+    args: {
+      input: {
+        ticketId: string;
+        fileIds: string[];
+      }
+    },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const { ticketId, fileIds } = args.input;
+    const supportService: Reactory.Service.TReactorySupportService = context.getService("core.ReactorySupportService@1.0.0") as Reactory.Service.TReactorySupportService;
     
+    try {
+      const ticket = await supportService.attachDocument(ticketId, fileIds);
+      
+      // Get the attached files
+      const ReactoryFileModel = context.models.ReactoryFile;
+      const attachedFiles = await ReactoryFileModel.find({
+        _id: { $in: fileIds }
+      }).exec();
+
+      return {
+        __typename: 'ReactorySupportTicketAttachmentSuccess',
+        success: true,
+        ticket,
+        attachedFiles,
+      };
+    } catch (attachError) {
+      context.log('Error attaching files to ticket', { attachError }, 'error', 'core.ReactorySupportService');
+      return {
+        __typename: 'ReactorySupportTicketAttachmentError',
+        error: 'Failed to attach files',
+        message: attachError.message,
+      };
+    }
   }
         
 }

@@ -230,7 +230,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
       const serviceName = this.partner.getSetting<string>("context-provider")
       if (serviceName.data) {
         const service = this.getService<Reactory.Server.IExecutionContextProvider>(serviceName.data);
-        return await service.getContext(this) as TResult;      
+        return await service.getContext(this as unknown as Reactory.Server.IReactoryContext) as TResult;      
       }
     }
     return this as unknown as TResult;
@@ -253,7 +253,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 
   async forPartner(partnerId: string): Promise<void> {
-    this.partner = await ReactoryClientModel.findOne({ key: partnerId }).exec() as Reactory.Models.IReactoryClientDocument;
+    this.partner = await ReactoryClientModel.findOne({ key: partnerId }).exec() as unknown as Reactory.Models.IReactoryClientDocument;
   }
 
   async forUser(email: string): Promise<void> {

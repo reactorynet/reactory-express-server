@@ -115,7 +115,7 @@ class StatisticsResolver {
         createdAt: new Date(),
       };
     } catch (error) {
-      context.log('Error publishing statistics', { error, entriesCount: params.entries.length }, 'error', 'StatisticsResolver');
+      context.warn('Error publishing statistics', { error, entriesCount: params.entries.length }, 'error', 'StatisticsResolver');
       throw error;
     }
   }

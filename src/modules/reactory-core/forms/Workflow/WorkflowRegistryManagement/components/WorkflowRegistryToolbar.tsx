@@ -33,6 +33,12 @@ interface WorkflowRegistryToolbarDependencies {
   QuickFilters: any;
   SearchBar: any;
   AdvancedFilterPanel: any;
+  BulkActivateAction: any;
+  BulkDeactivateAction: any;
+  BulkExecuteAction: any;
+  BulkTagAction: any;
+  BulkDeleteAction: any;
+  ExportAction: any;
 }
 
 interface WorkflowRegistryToolbarProps {
@@ -69,7 +75,7 @@ interface WorkflowRegistryToolbarProps {
 }
 
 /**
- * Custom toolbar for Workflow Registry with Quick Filters, Search, and Advanced Filters
+ * Custom toolbar for Workflow Registry with Quick Filters, Search, Advanced Filters, and Bulk Actions
  */
 const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
   const {
@@ -87,21 +93,33 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     QuickFilters,
     SearchBar,
     AdvancedFilterPanel,
+    BulkActivateAction,
+    BulkDeactivateAction,
+    BulkExecuteAction,
+    BulkTagAction,
+    BulkDeleteAction,
+    ExportAction,
   } = reactory.getComponents<WorkflowRegistryToolbarDependencies>([
     'react.React',
     'material-ui.Material',
     'core.QuickFilters',
     'core.SearchBar',
     'core.AdvancedFilterPanel',
+    'core.BulkActivateAction',
+    'core.BulkDeactivateAction',
+    'core.BulkExecuteAction',
+    'core.BulkTagAction',
+    'core.BulkDeleteAction',
+    'core.ExportAction',
   ]);
 
   const { MaterialCore } = Material;
-  const { Box, Button, Icon, Toolbar } = MaterialCore;
+  const { Box, Button, Icon, Toolbar, Badge, Divider, ButtonGroup, Tooltip } = MaterialCore;
 
   // If components aren't loaded, show loading state
   if (!QuickFilters || !SearchBar || !AdvancedFilterPanel) {
     return (
-      <Toolbar sx={{ p: 2, bgcolor: 'background.paper' }}>
+      <Toolbar sx={{ p: 2 }}>
         <Box>Loading filters...</Box>
       </Toolbar>
     );
@@ -109,6 +127,11 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
 
   const [advancedPanelOpen, setAdvancedPanelOpen] = React.useState(false);
   const [originalData] = React.useState(data);
+  const [activeBulkAction, setActiveBulkAction] = React.useState<'activate' | 'deactivate' | 'execute' | 'tag' | 'delete' | 'export' | null>(null);
+
+  // Get selected workflows
+  const selectedWorkflows = data.selected || [];
+  const hasSelection = selectedWorkflows.length > 0;
 
   // Count workflows for badges
   const counts = React.useMemo(() => {
@@ -387,6 +410,26 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     onDataChange?.(filtered);
   }, [originalData, onDataChange]);
 
+  // Bulk action handlers
+  const handleBulkActionComplete = (actionType: string) => {
+    setActiveBulkAction(null);
+    // Refresh data (would typically refetch from server)
+    if (onDataChange) {
+      // For now, just close the dialog
+      // In production, you'd refetch the data here
+    }
+    // Emit refresh event
+    reactory.emit('core.WorkflowUpdatedEvent', { actionType });
+  };
+
+  const handleBulkActionCancel = () => {
+    setActiveBulkAction(null);
+  };
+
+  const handleExport = () => {
+    setActiveBulkAction('export');
+  };
+
   return (
     <>
       <Toolbar
@@ -398,7 +441,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
           p: 2,          
         }}
       >
-        {/* Search Bar */}
+        {/* Search Bar and Actions Row */}
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <SearchBar
             placeholder="Search workflows by name, namespace, description, author, or tags..."
@@ -409,23 +452,96 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
             helpText='Search in name, namespace, description, author, version, and tags'
             fullWidth
           />
-          <Button
-            variant="outlined"
-            startIcon={<Icon>filter_list</Icon>}
-            onClick={() => setAdvancedPanelOpen(true)}
-            sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
-          >
-            Advanced Filters
-          </Button>
+          <Tooltip title="Advanced Filters">
+            <Button
+              variant="outlined"
+              startIcon={<Icon>filter_list</Icon>}
+              onClick={() => setAdvancedPanelOpen(true)}
+              sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
+            >
+              Filters
+            </Button>
+          </Tooltip>
+          <Tooltip title="Export Data">
+            <Button
+              variant="outlined"
+              startIcon={<Icon>file_download</Icon>}
+              onClick={handleExport}
+              sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
+            >
+              Export
+            </Button>
+          </Tooltip>
         </Box>
 
-        {/* Quick Filters */}
+        {/* Quick Filters Row */}
         <QuickFilters
           filters={quickFilters}
           onFilterChange={handleQuickFilterChange}
           variant="buttons"
           multiSelect={false}
         />
+
+        {/* Bulk Actions Row (shown when items are selected) */}
+        {hasSelection && (
+          <>
+            <Divider />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Badge badgeContent={selectedWorkflows.length} color="primary" max={999}>
+                <Icon>check_box</Icon>
+              </Badge>
+              <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                {selectedWorkflows.length} workflow{selectedWorkflows.length > 1 ? 's' : ''} selected
+              </Box>
+              <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+              <ButtonGroup variant="outlined" size="small">
+                <Tooltip title="Activate Selected">
+                  <Button
+                    startIcon={<Icon>check_circle</Icon>}
+                    onClick={() => setActiveBulkAction('activate')}
+                    color="success"
+                  >
+                    Activate
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Deactivate Selected">
+                  <Button
+                    startIcon={<Icon>cancel</Icon>}
+                    onClick={() => setActiveBulkAction('deactivate')}
+                  >
+                    Deactivate
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Execute Selected">
+                  <Button
+                    startIcon={<Icon>play_arrow</Icon>}
+                    onClick={() => setActiveBulkAction('execute')}
+                    color="primary"
+                  >
+                    Run
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Manage Tags">
+                  <Button
+                    startIcon={<Icon>label</Icon>}
+                    onClick={() => setActiveBulkAction('tag')}
+                  >
+                    Tags
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Delete Selected">
+                  <Button
+                    startIcon={<Icon>delete</Icon>}
+                    onClick={() => setActiveBulkAction('delete')}
+                    color="error"
+                  >
+                    Delete
+                  </Button>
+                </Tooltip>
+              </ButtonGroup>
+            </Box>
+          </>
+        )}
       </Toolbar>
 
       {/* Advanced Filter Panel */}
@@ -436,6 +552,61 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
         onFilterChange={handleAdvancedFilterChange}
         showPresets
       />
+
+      {/* Bulk Action Modals */}
+      {activeBulkAction === 'activate' && BulkActivateAction && (
+        <BulkActivateAction
+          reactory={reactory}
+          selectedWorkflows={selectedWorkflows}
+          onComplete={() => handleBulkActionComplete('activate')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
+
+      {activeBulkAction === 'deactivate' && BulkDeactivateAction && (
+        <BulkDeactivateAction
+          reactory={reactory}
+          selectedWorkflows={selectedWorkflows}
+          onComplete={() => handleBulkActionComplete('deactivate')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
+
+      {activeBulkAction === 'execute' && BulkExecuteAction && (
+        <BulkExecuteAction
+          reactory={reactory}
+          selectedWorkflows={selectedWorkflows}
+          onComplete={() => handleBulkActionComplete('execute')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
+
+      {activeBulkAction === 'tag' && BulkTagAction && (
+        <BulkTagAction
+          reactory={reactory}
+          selectedWorkflows={selectedWorkflows}
+          onComplete={() => handleBulkActionComplete('tag')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
+
+      {activeBulkAction === 'delete' && BulkDeleteAction && (
+        <BulkDeleteAction
+          reactory={reactory}
+          selectedWorkflows={selectedWorkflows}
+          onComplete={() => handleBulkActionComplete('delete')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
+
+      {activeBulkAction === 'export' && ExportAction && (
+        <ExportAction
+          reactory={reactory}
+          workflows={data?.data || []}
+          onComplete={() => handleBulkActionComplete('export')}
+          onCancel={handleBulkActionCancel}
+        />
+      )}
     </>
   );
 };
@@ -470,3 +641,5 @@ if (window?.reactory?.api) {
 }
 
 export default WorkflowRegistryToolbar;
+
+

@@ -97,44 +97,57 @@ const SupportTicketComments = (props: CommentsProps) => {
 
   const handleSubmitComment = async () => {
     if (!commentText.trim()) {
-      reactory.createNotification('Comment cannot be empty', { type: 'warning' });
+      reactory.createNotification('Comment cannot be empty', { 
+        title: 'Comment cannot be empty',
+        options: { body: 'Please enter a comment before submitting' }
+      });
       return;
     }
 
     try {
       // Call mutation to add comment
       const result = await reactory.graphqlMutation(`
-        mutation AddSupportTicketComment($ticketId: String!, $comment: String!) {
-          ReactorySupportTicketComment(ticketId: $ticketId, comment: $comment) {
+        mutation AddSupportTicketComment($input: ReactorySupportTicketCommentInput!) {
+          ReactoryAddSupportTicketComment(input: $input) {
             id
-            comments {
+            text
+            when
+            who {
               id
-              text
-              who {
-                id
-                firstName
-                lastName
-                avatar
-                email
-              }
-              when
+              firstName
+              lastName
+              avatar
+              email
             }
           }
         }
       `, {
-        ticketId: ticket.id,
-        comment: commentText
+        input: {
+          ticketId: ticket.id,
+          comment: commentText,
+          parentId: replyingToId,
+        }
       });
 
-      if (result.data) {
-        reactory.createNotification('Comment added successfully', { type: 'success' });
+      if (result.data?.ReactoryAddSupportTicketComment) {
+        reactory.createNotification('Comment added successfully', { 
+          title: 'Comment Added',
+          options: { body: 'Your comment has been added to the ticket' }
+        });
         setCommentText('');
-        // Refresh the ticket data
-        reactory.emit('core.SupportTicketUpdatedEvent', { ticket: result.data.ReactorySupportTicketComment });
+        setReplyingToId(null);
+        // Emit event to refresh ticket data
+        reactory.emit('core.SupportTicketUpdated', { 
+          ticketId: ticket.id,
+          comment: result.data.ReactoryAddSupportTicketComment 
+        });
       }
     } catch (error) {
       reactory.log('Error adding comment', { error }, 'error');
-      reactory.createNotification('Failed to add comment', { type: 'error' });
+      reactory.createNotification('Failed to add comment', { 
+        title: 'Error',
+        options: { body: error.message || 'An error occurred while adding the comment' }
+      });
     }
   };
 

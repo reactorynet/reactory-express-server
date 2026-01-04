@@ -87,25 +87,111 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
     setUploadProgress(0);
 
     try {
-      // TODO: Implement file upload mutation
-      // This would typically upload to a file service and attach to ticket
-      
+      const uploadedFileIds: string[] = [];
+
+      // Upload each file using ReactoryUploadFile mutation
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        setUploadProgress(((i + 1) / files.length) * 100);
         
-        // Simulate upload
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const uploadResult = await reactory.graphqlMutation(`
+          mutation ReactoryUploadFile($file: Upload!, $alias: String, $path: String, $uploadContext: String) {
+            ReactoryUploadFile(file: $file, alias: $alias, path: $path, uploadContext: $uploadContext) {
+              ... on ReactoryFileUploadSuccess {
+                success
+                file {
+                  id
+                  filename
+                  mimetype
+                  size
+                  alias
+                  path
+                  created
+                  link
+                  uploadContext
+                }
+              }
+              ... on ReactoryFileUploadError {
+                error
+                message
+              }
+            }
+          }
+        `, {
+          file,
+          alias: file.name,
+          path: `support-tickets/${ticket.id}`,
+          uploadContext: 'support-ticket-attachment',
+        });
+
+        if (uploadResult.data?.ReactoryUploadFile?.__typename === 'ReactoryFileUploadSuccess') {
+          uploadedFileIds.push(uploadResult.data.ReactoryUploadFile.file.id);
+        } else {
+          throw new Error(uploadResult.data?.ReactoryUploadFile?.message || 'Upload failed');
+        }
+
+        setUploadProgress(((i + 1) / files.length) * 100);
       }
 
-      reactory.createNotification('Files uploaded successfully', { type: 'success' });
-      
-      // Refresh ticket data
-      reactory.emit('core.SupportTicketUpdatedEvent', { ticketId: ticket.id });
-      
+      // Attach uploaded files to ticket
+      if (uploadedFileIds.length > 0) {
+        const attachResult = await reactory.graphqlMutation(`
+          mutation AttachFilesToTicket($input: ReactorySupportTicketAttachmentInput!) {
+            ReactoryAttachFilesToTicket(input: $input) {
+              ... on ReactorySupportTicketAttachmentSuccess {
+                success
+                ticket {
+                  id
+                  documents {
+                    id
+                    filename
+                    mimetype
+                    size
+                    link
+                    created
+                  }
+                }
+                attachedFiles {
+                  id
+                  filename
+                  mimetype
+                  size
+                  link
+                }
+              }
+              ... on ReactorySupportTicketAttachmentError {
+                error
+                message
+              }
+            }
+          }
+        `, {
+          input: {
+            ticketId: ticket.id,
+            fileIds: uploadedFileIds,
+          }
+        });
+
+        if (attachResult.data?.ReactoryAttachFilesToTicket?.__typename === 'ReactorySupportTicketAttachmentSuccess') {
+          reactory.createNotification('Files uploaded successfully', { 
+            title: 'Files Attached',
+            options: { body: `${uploadedFileIds.length} file(s) attached to ticket` }
+          });
+
+          // Emit event to refresh ticket data
+          reactory.emit('core.SupportTicketUpdated', { 
+            ticketId: ticket.id,
+            documents: attachResult.data.ReactoryAttachFilesToTicket.attachedFiles 
+          });
+        } else {
+          throw new Error(attachResult.data?.ReactoryAttachFilesToTicket?.message || 'Failed to attach files');
+        }
+      }
     } catch (error) {
       reactory.log('Error uploading files', { error }, 'error');
-      reactory.createNotification('Failed to upload files', { type: 'error' });
+      reactory.createNotification('Failed to upload files', {
+        title: 'Upload Error',
+        options: { body: error.message || 'An error occurred during file upload' }
+      });
     } finally {
       setUploading(false);
       setUploadProgress(0);
