@@ -87,7 +87,7 @@ enum DependencyType {
 
 type RegisteredWorkflow {
   name: String!
-  namespace: String!
+  nameSpace: String!
   version: String!
   description: String
   tags: [String!]
@@ -102,7 +102,7 @@ type WorkflowRegistryStats {
   totalWorkflows: Int
   activeWorkflows: Int
   inactiveWorkflows: Int
-  namespaces: [String!]
+  nameSpaces: [String!]
   versions: JSON
   lastRegistered: DateTime
   registrationErrors: Int
@@ -141,7 +141,7 @@ type NotificationSettings {
 type WorkflowInstance {
   id: String!
   workflowName: String!
-  namespace: String!
+  nameSpace: String!
   version: String!
   status: WorkflowInstanceStatus!
   progress: Float
@@ -190,7 +190,7 @@ enum WorkflowStepStatus {
 
 type WorkflowDetails {
   name: String!
-  namespace: String!
+  nameSpace: String!
   version: String!
   description: String
   configuration: WorkflowConfig
@@ -215,7 +215,7 @@ type WorkflowStatistics {
 type WorkflowSchedule {
   id: String!
   workflowName: String!
-  namespace: String!
+  nameSpace: String!
   cronExpression: String!
   timezone: String
   enabled: Boolean!
@@ -288,7 +288,7 @@ input WorkflowExecutionInput {
 
 input ScheduleConfigInput {
   workflowName: String!
-  namespace: String!
+  nameSpace: String!
   cronExpression: String!
   timezone: String
   enabled: Boolean
@@ -313,7 +313,8 @@ input UpdateScheduleInput {
 }
 
 input WorkflowFilterInput {
-  namespace: String
+  searchString: String
+  nameSpace: String
   tags: [String!]
   status: WorkflowInstanceStatus
   author: String
@@ -322,7 +323,7 @@ input WorkflowFilterInput {
 
 input InstanceFilterInput {
   workflowName: String
-  namespace: String
+  nameSpace: String
   status: WorkflowInstanceStatus
   createdBy: String
   startTimeFrom: DateTime
@@ -331,7 +332,7 @@ input InstanceFilterInput {
 
 input AuditFilterInput {
   workflowName: String
-  namespace: String
+  nameSpace: String
   action: AuditAction
   resource: AuditResource
   userId: String
@@ -444,7 +445,7 @@ extend type Query {
   workflowRegistry: WorkflowRegistryResponse
 
   workflow(
-    namespace: String!
+    nameSpace: String!
     name: String!
   ): WorkflowDetails
 

@@ -1,0 +1,98 @@
+"""
+A comment that can be attached to various contexts in the system.
+Comments support threading, reactions (upvotes/downvotes), and favorites.
+"""
+type Comment {
+  """
+  The unique identifier for the comment
+  """
+  id: ObjID
+  
+  """
+  The user who created the comment
+  """
+  who: User
+  
+  """
+  The text content of the comment
+  """
+  text: String
+  
+  """
+  The date/time when the comment was created
+  """
+  when: Date
+  
+  """
+  Users who upvoted this comment
+  """
+  upvoted: [User]
+  
+  """
+  Total number of upvotes
+  """
+  upvotes: Int
+  
+  """
+  Users who downvoted this comment
+  """
+  downvote: [User]
+  
+  """
+  Total number of downvotes
+  """
+  downvotes: Int
+  
+  """
+  Users who favorited this comment
+  """
+  favorite: [User]
+  
+  """
+  Total number of favorites
+  """
+  favorites: Int
+  
+  """
+  Whether the comment has been flagged for moderation
+  """
+  flagged: Boolean
+  
+  """
+  Whether the comment has been removed/deleted
+  """
+  removed: Boolean
+  
+  """
+  Whether the comment is published/visible
+  """
+  published: Boolean
+  
+  """
+  File attachments for the comment
+  """
+  attachments: [ReactoryFile]
+  
+  """
+  The context of the comment - this is a string that identifies the context of the comment.
+  For example, if the comment is on a support ticket, the context could be "support-ticket" 
+  and the contextId could be the id of the support ticket.
+  """
+  context: String
+  
+  """
+  The id of the context of the comment. This is a string that identifies the context of the comment.
+  For example, if the comment is on a support ticket, the contextId could be the id of the support ticket.
+  """
+  contextId: String
+  
+  """
+  The id of the parent comment for threaded replies
+  """
+  parentId: ObjID
+  
+  """
+  The replies to this comment (threaded comments)
+  """
+  replies: [Comment]
+}

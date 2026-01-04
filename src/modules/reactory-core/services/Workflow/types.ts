@@ -36,12 +36,12 @@ export interface IWorkflowExecutionInput {
   input: any;
   tags?: string[];
   priority?: number;
-  timeout?: number;
+  timeout?: number;  
 }
 
 export interface IScheduleConfigInput {
   workflowName: string;
-  namespace: string;
+  nameSpace: string;
   cronExpression: string;
   timezone?: string;
   enabled?: boolean;
@@ -66,7 +66,7 @@ export interface IUpdateScheduleInput {
 }
 
 export interface IWorkflowFilterInput {
-  namespace?: string;
+  nameSpace?: string;
   tags?: string[];
   status?: string;
   author?: string;
@@ -75,7 +75,7 @@ export interface IWorkflowFilterInput {
 
 export interface IInstanceFilterInput {
   workflowName?: string;
-  namespace?: string;
+  nameSpace?: string;
   status?: string;
   createdBy?: string;
   startTimeFrom?: Date;
@@ -84,7 +84,7 @@ export interface IInstanceFilterInput {
 
 export interface IAuditFilterInput {
   workflowName?: string;
-  namespace?: string;
+  nameSpace?: string;
   action?: string;
   resource?: string;
   userId?: string;
@@ -115,7 +115,7 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
   // Workflow Registry
   getWorkflows(filter?: IWorkflowFilterInput, pagination?: IPaginationInput): Promise<any>;
   getWorkflowRegistry(): Promise<any>;
-  getWorkflow(namespace: string, name: string): Promise<any>;
+  getWorkflow(nameSpace: string, name: string): Promise<any>;
   
   // Workflow Instances
   getWorkflowInstances(filter?: IInstanceFilterInput, pagination?: IPaginationInput): Promise<any>;

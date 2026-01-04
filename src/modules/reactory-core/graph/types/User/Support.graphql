@@ -24,6 +24,10 @@ type ReactorySupportTicket {
   """
   status: String
   """
+  Priority level of the ticket
+  """
+  priority: String
+  """
   Request reference
   """
   reference: String
@@ -59,6 +63,18 @@ type ReactorySupportTicket {
   The form id from where the request originated. Optional
   """
   formId: String
+  """
+  Tags associated with the ticket
+  """
+  tags: [String]
+  """
+  SLA deadline
+  """
+  slaDeadline: Date
+  """
+  Whether the ticket is overdue
+  """
+  isOverdue: Boolean
 }
 
 """
@@ -88,7 +104,7 @@ input ReactorySupportTicketUpdate {
   """
   Comment
   """
-  comment: String
+  comment: String  
 }
 
 """
@@ -118,6 +134,10 @@ input ReactorySupportTicketFilter {
   """
   status: [String]
   """
+  Filter by priority levels
+  """
+  priority: [String]
+  """
   Ticket refernce number
   """
   reference: [String]
@@ -140,7 +160,19 @@ input ReactorySupportTicketFilter {
   """
   Include a form id to keep the results to a specific form
   """
-  formId: String 
+  formId: String
+  """
+  Filter by tags
+  """
+  tags: [String]
+  """
+  Show only overdue tickets
+  """
+  showOverdueOnly: Boolean
+  """
+  Filter by request types
+  """
+  requestType: [String]
 }
 
 input ReactorySupportTicketDeleteInput {
@@ -164,6 +196,64 @@ type ReactorySupportTicketDeleteError {
 }
 
 union ReactorySupportTicketDeleteResult = ReactorySupportTicketDeleteSuccess | ReactorySupportTicketDeleteError
+
+"""
+Input for adding a comment to a support ticket
+"""
+input ReactorySupportTicketCommentInput {
+  """
+  The ticket ID to add the comment to
+  """
+  ticketId: String!
+  """
+  The comment text (supports HTML/Markdown)
+  """
+  comment: String!
+  """
+  Parent comment ID for threaded replies
+  """
+  parentId: String
+  """
+  Attachments for the comment
+  """
+  attachmentIds: [String]
+}
+
+"""
+Input for attaching files to a support ticket
+"""
+input ReactorySupportTicketAttachmentInput {
+  """
+  The ticket ID to attach files to
+  """
+  ticketId: String!
+  """
+  Array of file IDs (already uploaded via ReactoryUploadFile)
+  """
+  fileIds: [String!]!
+}
+
+"""
+Success result for file attachment
+"""
+type ReactorySupportTicketAttachmentSuccess {
+  success: Boolean!
+  ticket: ReactorySupportTicket!
+  attachedFiles: [ReactoryFile!]!
+}
+
+"""
+Error result for file attachment
+"""
+type ReactorySupportTicketAttachmentError {
+  error: String!
+  message: String
+}
+
+"""
+Union result for file attachment
+"""
+union ReactorySupportTicketAttachmentResult = ReactorySupportTicketAttachmentSuccess | ReactorySupportTicketAttachmentError
 
 extend type Query {
   """
@@ -190,4 +280,14 @@ extend type Mutation {
   Deletes a / multiple support tickets
   """
   ReactoryDeleteSupportTicket(deleteInput: ReactorySupportTicketDeleteInput!): ReactorySupportTicketDeleteResult
+  
+  """
+  Adds a comment to a support ticket
+  """
+  ReactoryAddSupportTicketComment(input: ReactorySupportTicketCommentInput!): Comment
+  
+  """
+  Attaches files to a support ticket
+  """
+  ReactoryAttachFilesToTicket(input: ReactorySupportTicketAttachmentInput!): ReactorySupportTicketAttachmentResult
 }

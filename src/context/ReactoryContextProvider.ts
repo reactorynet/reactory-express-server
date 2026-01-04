@@ -14,6 +14,7 @@ import ReactoryClientModel from "@reactory/server-modules/reactory-core/models/R
 import UserModel from "@reactory/server-modules/reactory-core/models/User";
 import { ReactoryTelemetry } from '@reactory/server-modules/reactory-telemetry/ReactoryTelemetry';
 import { Container } from "inversify";
+import RedisService from "@reactory/server-modules/reactory-core/services/RedisService";
 
 colors.setTheme({
   silly: "rainbow",
@@ -27,6 +28,10 @@ colors.setTheme({
   debug: "blue",
   error: "red",
 });
+
+const {
+  USE_REDIS_CACHE = 'false',
+} = process.env;
 
 export class ReactoryContext implements Reactory.Server.IReactoryContext {
   id: string;
@@ -54,6 +59,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   container: Container;
   host: string | "cli" | "express"; 
   telemetry: ReactoryTelemetry;
+  redis: RedisService
   [key: string]: unknown;
   
   private serviceManager: ServiceManager;
@@ -94,6 +100,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     this.services = this.serviceManager.getServices();
     this.host = currentContext?.host || "express";
     this.telemetry = new ReactoryTelemetry(this as unknown as Reactory.Server.IReactoryContext);
+    this.redis = this.getService<RedisService>('core.RedisService@1.0.0');
   }
   
 
@@ -174,18 +181,48 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 
   getValue<T>(key: string, defaultValue?: Promise<T>): Promise<T> {
-    //@ts-ignore
-    return Cache.getItem(key, false, this.partner) as Promise<T>;
+    if (USE_REDIS_CACHE === 'true') {
+      const { _id } = this.partner;
+      const partnerKey = _id ? _id.toString() : 'global';
+      const redisKey = `partner:${partnerKey}:context:${key}`;
+      return this.redis.getJSON<T>(redisKey).then((value) => {
+        if (value === null || value === undefined) {
+          return defaultValue as Promise<T>;
+        }
+        return value;
+      });
+    } else {
+      //@ts-ignore    
+      return Cache.getItem(key, false, this.partner) as Promise<T>;
+    }
   }
 
-  setValue<T>(key: string, value: T, ttl?: number): Promise<void> {
-    //@ts-ignore
-    return Cache.setItem(key, value, ttl, this.partner);
+  async setValue<T>(key: string, value: T, ttl?: number): Promise<void> {
+    if (USE_REDIS_CACHE === 'true') {
+      const { _id } = this.partner;
+      const partnerKey = _id ? _id.toString() : 'global';
+      const redisKey = `partner:${partnerKey}:context:${key}`;
+      const OK = await this.redis.setJSON(redisKey, value, ttl);
+
+      return Promise.resolve();
+    } else {
+      //@ts-ignore
+      return Cache.setItem(key, value, ttl, this.partner);
+    }
   }
 
-  removeValue(key: string): Promise<void> {
-    Cache.deleteOne({ key, partner: this.partner._id }).exec();
-    return Promise.resolve();
+  async removeValue(key: string): Promise<void> {
+    if (USE_REDIS_CACHE === 'true') {
+      const { _id } = this.partner;
+      const partnerKey = _id ? _id.toString() : 'global';
+      const redisKey = `partner:${partnerKey}:context:${key}`;
+      const count = this.redis.del(redisKey);
+      return Promise.resolve();
+    } else {
+      //@ts-ignore
+      Cache.deleteOne({ key, partner: this.partner._id }).exec();
+      return Promise.resolve();
+    }
   }
 
   async extend<TResult extends Reactory.Server.IReactoryContext>(): Promise<TResult> { 
@@ -193,7 +230,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
       const serviceName = this.partner.getSetting<string>("context-provider")
       if (serviceName.data) {
         const service = this.getService<Reactory.Server.IExecutionContextProvider>(serviceName.data);
-        return await service.getContext(this) as TResult;      
+        return await service.getContext(this as unknown as Reactory.Server.IReactoryContext) as TResult;      
       }
     }
     return this as unknown as TResult;
@@ -216,7 +253,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 
   async forPartner(partnerId: string): Promise<void> {
-    this.partner = await ReactoryClientModel.findOne({ key: partnerId }).exec() as Reactory.Models.IReactoryClientDocument;
+    this.partner = await ReactoryClientModel.findOne({ key: partnerId }).exec() as unknown as Reactory.Models.IReactoryClientDocument;
   }
 
   async forUser(email: string): Promise<void> {

@@ -7,7 +7,8 @@ interface StatusWidgetDependencies {
   FullScreenModal: Reactory.Client.Components.FullScreenModal,
   SupportTicket: Reactory.Client.Components.SupportTicket,
   ReactoryForm: Reactory.Forms.IReactoryFormComponent,
-  SupportTicketWorkflow: any
+  SupportTicketWorkflow: any,
+  StatusBadge: any
 };
 
 interface StatusWidgetProps {
@@ -29,7 +30,7 @@ const StatusWidget = (props: StatusWidgetProps) => {
   const { reactory, form, status = 'new', useCase = 'grid', ticket, style = {} } = props;
   reactory.log('StatusWidget', { ticket }, 'info');
 
-  const { React, Material, DropDownMenu, FullScreenModal, SupportTicket, ReactoryForm, SupportTicketWorkflow } = reactory.getComponents<StatusWidgetDependencies>([
+  const { React, Material, DropDownMenu, FullScreenModal, SupportTicket, ReactoryForm, SupportTicketWorkflow, StatusBadge } = reactory.getComponents<StatusWidgetDependencies>([
     "react.React",
     "material-ui.Material",
     "core.DropDownMenu",
@@ -37,6 +38,7 @@ const StatusWidget = (props: StatusWidgetProps) => {
     "core.SupportTicket",
     "core.ReactoryForm",
     "core.SupportTicketWorkflow",
+    "core.StatusBadge",
   ]);
 
   const { MaterialCore, MaterialStyles } = Material;
@@ -114,8 +116,38 @@ const StatusWidget = (props: StatusWidgetProps) => {
 
   return (
     <>
-      <span style={{ display: 'flex', ...style }}>
-        {useCase === 'grid' && <Typography variant="body2">
+      <span style={{ display: 'flex', alignItems: 'center', gap: '8px', ...style }}>
+        {useCase === 'grid' && StatusBadge && (
+          <StatusBadge 
+            value={status}
+            uiSchema={{
+              'ui:options': {
+                variant: 'filled',
+                size: 'small',
+                colorMap: {
+                  'new': '#9c27b0',
+                  'open': '#2196f3',
+                  'in-progress': '#ff9800',
+                  'pending': '#fbc02d',
+                  'resolved': '#4caf50',
+                  'closed': '#757575',
+                  'on-hold': '#fbc02d'
+                },
+                iconMap: {
+                  'new': 'fiber_new',
+                  'open': 'folder_open',
+                  'in-progress': 'pending',
+                  'pending': 'schedule',
+                  'resolved': 'check_circle',
+                  'closed': 'check_circle_outline',
+                  'on-hold': 'pause_circle'
+                },
+                labelFormat: '${value.toUpperCase()}'
+              }
+            }}
+          />
+        )}
+        {useCase !== 'grid' && <Typography variant="body2">
           {status.toUpperCase()}
         </Typography>}
         <DropDownMenu menus={menus} onSelect={onMenuSelect} />

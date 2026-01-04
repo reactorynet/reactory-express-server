@@ -88,12 +88,13 @@ class ServiceManager {
     return name;
   }
 
-  getService(
+  getService<T extends Reactory.Service.IReactoryService>(
     id: string,
-    props: any = {},
+    props: unknown = undefined,
     context: Reactory.Server.IReactoryContext,
     lifeCycle: Reactory.Service.SERVICE_LIFECYCLE = "instance"
-  ): any {
+  ):  Reactory.Service.AutowiredService<T> {        
+
     const { serviceRegister, services, getAlias, getService, instances } = this;
     const serviceId = id;
     if (serviceRegister[serviceId]) {
@@ -150,7 +151,7 @@ class ServiceManager {
           `Found Service Instance matching key ${request_key}`,
           "debug"
         );
-        return context.state[request_key];
+        return context.state[request_key] as Reactory.Service.AutowiredService<T>;
       }
 
       /**
@@ -163,12 +164,25 @@ class ServiceManager {
         return instances[singleton_key];
       }
 
-      const svc: Reactory.Service.IReactoryService = serviceRegister[
+      let svcProps = {};
+      if (props && typeof props === "object") {
+        svcProps = props;
+      } else {
+        if (props !== undefined && props !== null) {
+          context.warn(
+            `Service props for ${id} is not an object, defaulting to empty object.`,
+            { service_id: id, props },
+            "Reactory.ServiceManager"
+          );
+        }
+      }
+
+      const svc: Reactory.Service.AutowiredService<T> = serviceRegister[
         id
       ].service(
-        { ...props, $services: serviceRegister, $dependencies: $deps },
+        { ...svcProps, $services: serviceRegister, $dependencies: $deps },
         context
-      );
+      ) as Reactory.Service.AutowiredService<T>; 
       //try to auto bind services with property setter binders.
       Object.keys($deps).forEach((dependcyAlias: string) => {
         let isSet = false;
@@ -212,7 +226,7 @@ class ServiceManager {
         lifeCycle === "request"
       ) {
         context.log(
-          ` 🔥🔥 Setting Request service key ${request_key} 🔥🔥`,
+          `Setting Request service key ${request_key}`,
           { svc: svc },
           "debug"
         );
@@ -230,6 +244,46 @@ class ServiceManager {
       svc.name = svcDef.name;
       svc.nameSpace = svcDef.nameSpace;
       svc.version = svcDef.version;
+
+      //check if the context has been set
+      // @ts-ignore
+      if (!svc.context || typeof svc.context !== "object") {    
+            
+        svc.context = context;
+      }
+
+      const svcFQN = `${svc.nameSpace}.${svc.name}@${svc.version}`;
+      // add a logger to the service if it doesn't have one
+      if (!svc.logger || typeof svc.logger !== "object") {
+        svc.logger = {
+          log: (message: string, meta: Reactory.Service.LoggingMeta = null, type: Reactory.Service.LOG_TYPE = "debug") => {
+            const logMessage = `${message}`;
+            context.log(logMessage, meta, type, svcFQN);
+          },
+          debug: (message: string, meta: Reactory.Service.LoggingMeta = null) => {
+            const logMessage = ` ${message}`;
+            context.debug(logMessage, meta, svcFQN);
+          },
+          info: (message: string, meta: Reactory.Service.LoggingMeta = null) => {
+            const logMessage = `${message}`;
+            context.info(logMessage, meta, svcFQN);
+          },
+          warn: (message: string, meta: Reactory.Service.LoggingMeta = null) => {
+            const logMessage = `${message}`;
+            context.warn(logMessage, meta, svcFQN);
+          },
+          error: (message: string, error?: Error,  meta: Reactory.Service.LoggingMeta = {}) => {
+            const logMessage = `${message}`;
+            context.error(logMessage, { error: error, ...meta }, svcFQN);
+          }
+        }
+      }
+
+      // add telemetry shortcut to the service
+      if (!svc.telemetry || typeof svc.telemetry !== "object") {
+        svc.telemetry = context.telemetry;
+      }
+
       return svc;
     } else {
       throw new ApiError(`Service ${id} not found in service registry.`);
@@ -244,7 +298,7 @@ class ServiceManager {
     try {
       let promises = [];
       for (const service of services) {
-        const instance = getService(service.id, props, context);
+        const instance = getService<Reactory.Service.IReactoryDefaultService>(service.id, props, context);
         if (instance.onStartup && typeof instance.onStartup === "function") {
           await instance.onStartup(context);
         }
@@ -267,7 +321,7 @@ class ServiceManager {
 
       services.forEach(
         (service: Reactory.Service.IReactoryServiceDefinition<any>) => {
-          const instance = getService(service.id, props, context);
+          const instance = getService<Reactory.Service.IReactoryShutdownAwareService>(service.id, props, context);
 
           if (instance.onShutdown) {
             startup_promises.push(

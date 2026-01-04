@@ -1,0 +1,423 @@
+# Reactory Calendar GraphQL Schema
+
+# Enums
+enum ReactoryCalendarVisibility {
+  PRIVATE
+  SHARED
+  APPLICATION
+  ORGANIZATION
+  PUBLIC
+}
+
+enum ReactoryCalendarEntryStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum ReactoryCalendarEntryPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ReactoryCalendarParticipantRole {
+  ORGANIZER
+  REQUIRED
+  OPTIONAL
+  RESOURCE
+}
+
+enum ReactoryCalendarRSVPStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  TENTATIVE
+}
+
+enum ReactoryCalendarRecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum ReactoryCalendarWorkflowTriggerType {
+  ON_CREATE
+  ON_UPDATE
+  ON_DELETE
+  TIME_BASED
+  PARTICIPANT_RESPONSE
+}
+
+enum ReactoryCalendarServiceTriggerType {
+  ON_CREATE
+  ON_UPDATE
+  ON_DELETE
+  TIME_BASED
+  PARTICIPANT_RESPONSE
+}
+
+# Types
+type ReactoryCalendar {
+  id: ID!
+  name: String!
+  description: String
+  color: String
+  visibility: ReactoryCalendarVisibility!
+  owner: User!
+  client: ReactoryClient
+  organization: Organization
+  businessUnit: BusinessUnit
+  allowedUsers: [User!]!
+  allowedTeams: [Team!]!
+  isDefault: Boolean
+  isActive: Boolean!
+  timeZone: String!
+  workingHours: ReactoryCalendarWorkingHours
+  settings: ReactoryCalendarSettings
+  entries(filter: ReactoryCalendarEntryFilter): [ReactoryCalendarEntry!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  createdBy: User!
+  updatedBy: User!
+}
+
+type ReactoryCalendarEntry {
+  id: ID!
+  calendar: ReactoryCalendar!
+  title: String!
+  description: String
+  location: String
+  startDate: DateTime!
+  endDate: DateTime!
+  timeZone: String!
+  isAllDay: Boolean!
+  recurrence: ReactoryCalendarRecurrencePattern
+  participants: [ReactoryCalendarParticipant!]!
+  organizer: User!
+  status: ReactoryCalendarEntryStatus!
+  priority: ReactoryCalendarEntryPriority!
+  category: String
+  tags: [String!]!
+  attachments: [ReactoryFile!]!
+  workflowTrigger: ReactoryCalendarWorkflowTrigger
+  serviceTrigger: ReactoryCalendarServiceTrigger
+  metadata: Any
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  createdBy: User!
+  updatedBy: User!
+}
+
+type ReactoryCalendarParticipant {
+  id: ID!
+  entry: ReactoryCalendarEntry!
+  user: User!
+  role: ReactoryCalendarParticipantRole!
+  status: ReactoryCalendarRSVPStatus!
+  invitedAt: DateTime!
+  respondedAt: DateTime
+  notes: String
+}
+
+type ReactoryCalendarRecurrencePattern {
+  id: ID!
+  frequency: ReactoryCalendarRecurrenceFrequency!
+  interval: Int!
+  endDate: DateTime
+  count: Int
+  byDay: [String!]
+  byMonth: [Int!]
+  byMonthDay: [Int!]
+  exceptions: [DateTime!]
+}
+
+type ReactoryCalendarWorkflowTrigger {
+  id: ID!
+  workflowId: String!
+  workflowVersion: String!
+  triggerType: ReactoryCalendarWorkflowTriggerType!
+  triggerOffset: Int
+  parameters: Any
+}
+
+type ReactoryCalendarServiceTrigger {
+  id: ID!
+  serviceId: String!
+  serviceVersion: String!
+  method: String!
+  triggerType: ReactoryCalendarServiceTriggerType!
+  triggerOffset: Int
+  parameters: Any
+}
+
+type ReactoryCalendarWorkingHours {
+  monday: ReactoryCalendarTimeRange
+  tuesday: ReactoryCalendarTimeRange
+  wednesday: ReactoryCalendarTimeRange
+  thursday: ReactoryCalendarTimeRange
+  friday: ReactoryCalendarTimeRange
+  saturday: ReactoryCalendarTimeRange
+  sunday: ReactoryCalendarTimeRange
+  timeZone: String!
+}
+
+type ReactoryCalendarTimeRange {
+  start: String!
+  end: String!
+}
+
+type ReactoryCalendarSettings {
+  defaultEntryDuration: Int
+  defaultReminderTime: Int
+  allowOverlaps: Boolean
+  defaultVisibility: ReactoryCalendarVisibility
+  colorScheme: String
+  notifications: ReactoryCalendarNotificationSettings
+}
+
+type ReactoryCalendarNotificationSettings {
+  emailEnabled: Boolean!
+  pushEnabled: Boolean!
+  reminderTimes: [Int!]!
+}
+
+type ReactoryCalendarTimeSlot {
+  startDate: DateTime!
+  endDate: DateTime!
+  available: Boolean!
+  calendarId: ID
+  conflictingEntries: [ID!]!
+}
+
+# Input Types
+input ReactoryCalendarFilter {
+  visibility: [ReactoryCalendarVisibility!]
+  ownerId: ID
+  organizationId: ID
+  clientId: ID
+  isActive: Boolean
+  search: String
+  limit: Int
+  offset: Int
+}
+
+input ReactoryCalendarEntryFilter {
+  calendarIds: [ID!]
+  status: [ReactoryCalendarEntryStatus!]
+  priority: [ReactoryCalendarEntryPriority!]
+  startDate: DateTime
+  endDate: DateTime
+  category: String
+  tags: [String!]
+  organizerId: ID
+  participantId: ID
+  search: String
+  limit: Int
+  offset: Int
+}
+
+input CreateReactoryCalendarInput {
+  name: String!
+  description: String
+  color: String
+  visibility: ReactoryCalendarVisibility!
+  clientId: ID
+  organizationId: ID
+  businessUnitId: ID
+  timeZone: String
+  workingHours: ReactoryCalendarWorkingHoursInput
+  settings: ReactoryCalendarSettingsInput
+}
+
+input UpdateReactoryCalendarInput {
+  name: String
+  description: String
+  color: String
+  visibility: ReactoryCalendarVisibility
+  timeZone: String
+  workingHours: ReactoryCalendarWorkingHoursInput
+  settings: ReactoryCalendarSettingsInput
+  isActive: Boolean
+}
+
+input ReactoryCalendarPermissionsInput {
+  userPermissions: [ReactoryCalendarUserPermissionInput!]
+  teamPermissions: [ReactoryCalendarTeamPermissionInput!]
+}
+
+input ReactoryCalendarUserPermissionInput {
+  userId: ID!
+  role: String!
+}
+
+input ReactoryCalendarTeamPermissionInput {
+  teamId: ID!
+  role: String!
+}
+
+input ReactoryCalendarWorkingHoursInput {
+  monday: ReactoryCalendarTimeRangeInput
+  tuesday: ReactoryCalendarTimeRangeInput
+  wednesday: ReactoryCalendarTimeRangeInput
+  thursday: ReactoryCalendarTimeRangeInput
+  friday: ReactoryCalendarTimeRangeInput
+  saturday: ReactoryCalendarTimeRangeInput
+  sunday: ReactoryCalendarTimeRangeInput
+  timeZone: String!
+}
+
+input ReactoryCalendarTimeRangeInput {
+  start: String!
+  end: String!
+}
+
+input ReactoryCalendarSettingsInput {
+  defaultEntryDuration: Int
+  defaultReminderTime: Int
+  allowOverlaps: Boolean
+  defaultVisibility: ReactoryCalendarVisibility
+  colorScheme: String
+  notifications: ReactoryCalendarNotificationSettingsInput
+}
+
+input ReactoryCalendarNotificationSettingsInput {
+  emailEnabled: Boolean!
+  pushEnabled: Boolean!
+  reminderTimes: [Int!]!
+}
+
+input CreateReactoryCalendarEntryInput {
+  calendarId: ID!
+  title: String!
+  description: String
+  location: String
+  startDate: DateTime!
+  endDate: DateTime!
+  timeZone: String
+  isAllDay: Boolean
+  recurrence: ReactoryCalendarRecurrencePatternInput
+  status: ReactoryCalendarEntryStatus
+  priority: ReactoryCalendarEntryPriority
+  category: String
+  tags: [String!]
+  workflowTrigger: ReactoryCalendarWorkflowTriggerInput
+  serviceTrigger: ReactoryCalendarServiceTriggerInput
+  metadata: Any
+}
+
+input UpdateReactoryCalendarEntryInput {
+  title: String
+  description: String
+  location: String
+  startDate: DateTime
+  endDate: DateTime
+  timeZone: String
+  isAllDay: Boolean
+  recurrence: ReactoryCalendarRecurrencePatternInput
+  status: ReactoryCalendarEntryStatus
+  priority: ReactoryCalendarEntryPriority
+  category: String
+  tags: [String!]
+  workflowTrigger: ReactoryCalendarWorkflowTriggerInput
+  serviceTrigger: ReactoryCalendarServiceTriggerInput
+  metadata: Any
+}
+
+input DuplicateReactoryCalendarEntryInput {
+  title: String
+  startDate: DateTime
+  endDate: DateTime
+}
+
+input ReactoryCalendarRecurrencePatternInput {
+  frequency: ReactoryCalendarRecurrenceFrequency!
+  interval: Int!
+  endDate: DateTime
+  count: Int
+  byDay: [String!]
+  byMonth: [Int!]
+  byMonthDay: [Int!]
+  exceptions: [DateTime!]
+}
+
+input ReactoryCalendarWorkflowTriggerInput {
+  workflowId: String!
+  workflowVersion: String!
+  triggerType: ReactoryCalendarWorkflowTriggerType!
+  triggerOffset: Int
+  parameters: Any
+}
+
+input ReactoryCalendarServiceTriggerInput {
+  serviceId: String!
+  serviceVersion: String!
+  method: String!
+  triggerType: ReactoryCalendarServiceTriggerType!
+  triggerOffset: Int
+  parameters: Any
+}
+
+input ReactoryCalendarParticipantInput {
+  userId: ID!
+  role: ReactoryCalendarParticipantRole!
+  notes: String
+}
+
+input BulkReactoryCalendarEntryUpdate {
+  id: ID!
+  updates: UpdateReactoryCalendarEntryInput!
+}
+
+# Queries
+type Query {
+  # Calendar queries
+  ReactoryCalendar(id: ID!): ReactoryCalendar
+  ReactoryCalendars(filter: ReactoryCalendarFilter): [ReactoryCalendar!]!
+  MyReactoryCalendars: [ReactoryCalendar!]!
+  UserReactoryCalendars(userId: ID!): [ReactoryCalendar!]!
+  OrganizationReactoryCalendars(organizationId: ID!): [ReactoryCalendar!]!
+  ClientReactoryCalendars(clientId: ID!): [ReactoryCalendar!]!
+
+  # Calendar entry queries
+  ReactoryCalendarEntry(id: ID!): ReactoryCalendarEntry
+  ReactoryCalendarEntries(calendarId: ID!, filter: ReactoryCalendarEntryFilter): [ReactoryCalendarEntry!]!
+  MyReactoryCalendarEntries(filter: ReactoryCalendarEntryFilter): [ReactoryCalendarEntry!]!
+  UserReactoryCalendarEntries(userId: ID!, filter: ReactoryCalendarEntryFilter): [ReactoryCalendarEntry!]!
+
+  # Availability queries
+  ReactoryUserAvailability(userId: ID!, startDate: DateTime!, endDate: DateTime!, timeZone: String): [ReactoryCalendarTimeSlot!]!
+  ReactoryCalendarAvailability(calendarId: ID!, startDate: DateTime!, endDate: DateTime!): [ReactoryCalendarTimeSlot!]!
+
+  # Recurrence queries
+  ReactoryCalendarEntryRecurrences(entryId: ID!, startDate: DateTime!, endDate: DateTime!): [ReactoryCalendarEntry!]!
+}
+
+# Mutations
+type Mutation {
+  # Calendar mutations
+  CreateReactoryCalendar(input: CreateReactoryCalendarInput!): ReactoryCalendar!
+  UpdateReactoryCalendar(id: ID!, input: UpdateReactoryCalendarInput!): ReactoryCalendar!
+  DeleteReactoryCalendar(id: ID!): Boolean!
+  ShareReactoryCalendar(id: ID!, permissions: ReactoryCalendarPermissionsInput!): ReactoryCalendar!
+  SetDefaultReactoryCalendar(calendarId: ID!): ReactoryCalendar!
+
+  # Calendar entry mutations
+  CreateReactoryCalendarEntry(input: CreateReactoryCalendarEntryInput!): ReactoryCalendarEntry!
+  UpdateReactoryCalendarEntry(id: ID!, input: UpdateReactoryCalendarEntryInput!): ReactoryCalendarEntry!
+  DeleteReactoryCalendarEntry(id: ID!): Boolean!
+  DuplicateReactoryCalendarEntry(id: ID!, input: DuplicateReactoryCalendarEntryInput): ReactoryCalendarEntry!
+
+  # Participant mutations
+  InviteReactoryCalendarEntryParticipants(entryId: ID!, participants: [ReactoryCalendarParticipantInput!]!): ReactoryCalendarEntry!
+  UpdateReactoryCalendarEntryParticipantStatus(entryId: ID!, status: ReactoryCalendarRSVPStatus!): Boolean!
+  RemoveReactoryCalendarEntryParticipant(entryId: ID!, userId: ID!): Boolean!
+
+  # Bulk operations
+  BulkReactoryCalendarEntryCreateEntries(input: [CreateReactoryCalendarEntryInput!]!): [ReactoryCalendarEntry!]!
+  BulkReactoryCalendarEntryUpdateEntries(updates: [BulkReactoryCalendarEntryUpdate!]!): [ReactoryCalendarEntry!]!
+  BulkReactoryCalendarEntryDeleteEntries(ids: [ID!]!): Boolean!
+}

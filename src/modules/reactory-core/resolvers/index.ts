@@ -16,6 +16,7 @@ import ReactorySQLResolver from './SQL/ReactorySQLResolver';
 import ReactoryCacheResolver from './Cache/CacheResolver';
 import ReactoryFileResolver from './ReactoryFile/ReactoryFile';
 import SupportResolver from './Support/SupportResolver';
+import CommentResolver from './Comment/Comment';
 import Resources from './System/Resources';
 import Statistics from './System/Statistics';
 import { ReactoryClientResolver, ClientComponentResolver, ClientRouteResolver } from './System/ReactoryClientResolver';
@@ -49,6 +50,7 @@ export default mergeGraphResolver([
   ReactoryFileResolver,
   TemplateResolver,
   SupportResolver,
+  CommentResolver,
   ReactoryForm,
   Organization,
   ReactoryTranslationResolver,

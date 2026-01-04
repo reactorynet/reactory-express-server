@@ -43,3 +43,5 @@ certificates/*.key
 certificates/*.csr
 certificates/*.crt
 !certificates/readme.md
+
+coverage/*

@@ -26,6 +26,11 @@ const schema: Reactory.Schema.ISchema = {
             type: 'string',
             title: 'Status',
           },
+          priority: {
+            type: 'string',
+            title: 'Priority',
+            enum: ['low', 'medium', 'high', 'critical']
+          },
           reference: {
             type: 'string',
             title: 'Reference No',
@@ -45,6 +50,10 @@ const schema: Reactory.Schema.ISchema = {
             type: 'string',
             title: 'Date Logged'
           },
+          updatedDate: {
+            type: 'string',
+            title: 'Last Updated'
+          },
           assignedTo: {
             type: 'object',
             title: 'Assigned To',
@@ -56,6 +65,33 @@ const schema: Reactory.Schema.ISchema = {
               avatar: { type: 'string', title: 'Avatar' }
             }
           },
+          comments: {
+            type: 'array',
+            title: 'Comments',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' }
+              }
+            }
+          },
+          documents: {
+            type: 'array',
+            title: 'Documents',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' }
+              }
+            }
+          },
+          tags: {
+            type: 'array',
+            title: 'Tags',
+            items: {
+              type: 'string'
+            }
+          }
         }
       }
     }

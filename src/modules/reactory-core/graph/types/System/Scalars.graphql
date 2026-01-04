@@ -1,9 +1,19 @@
 #Base scalar type ObjID for MongoDB
 scalar ObjID
 scalar Date
+# Any should be used where the value
+# can be any value, i.e number, string, boolean, null etc.
 scalar Any
-scalar Upload
+# Should be used when the data is a JSON Object that represent
+# a structured object 
 scalar JSON
+# Should be used when represententing JSON but that is excaped
+# as a string. This is a convenience shortcut to indidate data
+# type.
+scalar JSONString
+# Indicates that the data is YAML content.
+scalar YAML
+scalar Upload
 scalar DateTime
 
 """

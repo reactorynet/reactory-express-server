@@ -1,17 +1,12 @@
 import mongoose, { Schema } from 'mongoose';
 import Reactory from '@reactory/reactory-core';
-import { ObjectId } from 'mongodb';
 import { MetaSchema } from './shared'
-export interface IReactorySupportTicketDocumentStatics {
-  new(): ReactorySupportTicket
-}
 
-export type ReactorySupportTicket = Reactory.Models.IReactorySupportTicketDocument & IReactorySupportTicketDocumentStatics;
+export type ReactorySupportTicketDocument = Reactory.Models.IReactorySupportTicketDocument;
 
-const SupportTicketSchema: Schema<ReactorySupportTicket> = new Schema<ReactorySupportTicket>({
-  id: ObjectId,
+const SupportTicketSchema = new Schema<Reactory.Models.IReactorySupportTicket>({
   partner: {
-    type: ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'ReactoryClient',
   },
   request: {
@@ -23,49 +18,79 @@ const SupportTicketSchema: Schema<ReactorySupportTicket> = new Schema<ReactorySu
     type: String
   },
   formId: String,
-  requestType: String,
+  requestType: {
+    type: String,
+    default: 'general'
+  },
   status: {
     type: String,
     required: true,
     default: 'open',
   },
+  priority: {
+    type: String,
+    default: 'medium'
+  },
   reference: String,
   createdBy: {
-    type: ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User',
   },
+  reportedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  reportedDate: {
+    type: Date,
+    default: () => new Date()
+  },
   assignedTo: {
-    type: ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User',
   },
   createdDate: {
     type: Date,
-    default: () => { return new Date() }    
+    default: () => new Date()
   },
   updatedDate: {
     type: Date,
-    default: () => { return new Date() }
+    default: () => new Date()
   },
   updatedBy: {
-    type: ObjectId, 
+    type: Schema.Types.ObjectId, 
     ref: 'User'
   },
   meta: MetaSchema,
   comments: [{
-    type: ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Comment',
   }],
-  documents: [
-    {
-      tite: String,
-      file: {
-        type: ObjectId,
-        ref: 'ReactoryFile',
-      }
-    }
-  ]
+  tags: {
+    type: [String],
+    default: []
+  },
+  slaDeadline: Date,
+  documents: [{
+    type: Schema.Types.ObjectId,
+    ref: 'ReactoryFile',
+  }]
+}, {
+  timestamps: {
+    createdAt: 'createdDate',
+    updatedAt: 'updatedDate'
+  }
 });
 
-const ReactorySupportTicketModel = mongoose.model<Schema<ReactorySupportTicket>>('ReactorySupportTicket', SupportTicketSchema, 'reactory_support_tickets');
+// Virtual field for computed isOverdue property
+SupportTicketSchema.virtual('isOverdue').get(function(this: Reactory.Models.IReactorySupportTicket) {
+  if (!this.slaDeadline) return false;
+  return new Date() > new Date(this.slaDeadline);
+});
+
+// Ensure virtuals are included when converting to JSON/Object
+SupportTicketSchema.set('toJSON', { virtuals: true });
+SupportTicketSchema.set('toObject', { virtuals: true });
+
+const ReactorySupportTicketModel = mongoose.model<Reactory.Models.IReactorySupportTicket>('ReactorySupportTicket', SupportTicketSchema, 'reactory_support_tickets');
 
 export default ReactorySupportTicketModel;

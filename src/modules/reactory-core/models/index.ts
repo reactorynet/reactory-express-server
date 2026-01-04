@@ -17,6 +17,14 @@ import Organization from "./Organization";
 import PersonalDemographic from "./PersonalDemographic";
 import Project from "./Project";
 import ProjectBoard from "./ProjectBoard";
+import { 
+  ReactoryCalendar, 
+  ReactoryCalendarEntry, 
+  ReactoryCalendarParticipant, 
+  ReactoryCalendarRecurrencePattern, 
+  ReactoryCalendarWorkflowTrigger, 
+  ReactoryCalendarServiceTrigger 
+} from "./ReactoryCalendar";
 import ReactoryClient from "./ReactoryClient";
 import ReactoryModelMeta from "./ReactoryModelMeta";
 import ReactoryFileImportPackage from "./ReactoryFileImportPackage";
@@ -36,6 +44,7 @@ import logger from "@reactory/server-core/logging";
 import { encoder, strongRandom } from "@reactory/server-core/utils";
 import Hash from "@reactory/server-core/utils/hash";
 
+
 export const PostgresDataSource = new DataSource({
   type: "postgres",
   host: process.env.REACTORY_POSTGRES_HOST || "localhost",
@@ -44,7 +53,15 @@ export const PostgresDataSource = new DataSource({
   password: process.env.REACTORY_POSTGRES_PASSWORD || "reactory",
   database: process.env.REACTORY_POSTGRES_DB || "reactory",
   synchronize: true,
-  entities: [Audit],
+  entities: [
+    Audit, 
+    ReactoryCalendar, 
+    ReactoryCalendarEntry, 
+    ReactoryCalendarParticipant, 
+    ReactoryCalendarRecurrencePattern, 
+    ReactoryCalendarWorkflowTrigger, 
+    ReactoryCalendarServiceTrigger,    
+  ],
 });
 
 export type CoreModelTypes =
@@ -74,6 +91,12 @@ export type CoreModelTypes =
   | typeof ReactoryClient
   | typeof ReactoryResource
   | typeof ReactoryTranslation
+  | typeof ReactoryCalendar
+  | typeof ReactoryCalendarEntry
+  | typeof ReactoryCalendarParticipant
+  | typeof ReactoryCalendarRecurrencePattern
+  | typeof ReactoryCalendarWorkflowTrigger
+  | typeof ReactoryCalendarServiceTrigger
   | typeof Region
   | typeof Statistic
   | typeof StatisticPackage
@@ -116,6 +139,14 @@ export { default as Team } from './Team';
 export { default as Template } from './Template';
 export { default as Theme } from './Theme';
 export { default as UserDemographic } from './UserDemographics';
+export { 
+  ReactoryCalendar, 
+  ReactoryCalendarEntry, 
+  ReactoryCalendarParticipant, 
+  ReactoryCalendarRecurrencePattern, 
+  ReactoryCalendarWorkflowTrigger, 
+  ReactoryCalendarServiceTrigger 
+} from './ReactoryCalendar';
 
 export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTypes>[] =
   [
@@ -164,9 +195,7 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
         audit.createdAt = new Date();
         audit.signature = Hash(encoder.encodeState(audit)).toString();
         repo.save(audit);
-
-        context.debug("Postgres Data Source Synchronized");
-        context.state.postgres = PostgresDataSource;
+        context.debug("Postgres Data Source Synchronized");        
       },
     },
     {
@@ -621,6 +650,84 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       overwrite: true,
       roles: [],
       features: [],
+    },
+    {
+      nameSpace: "core",
+      name: "ReactoryCalendar",
+      version: "1.0.0",
+      component: ReactoryCalendar,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+      description: "Provides a calendar model for the server",
+      stem: "reactory-calendar",
+      tags: ["reactory-calendar", "reactory", "system"],
+    },
+    {
+      nameSpace: "core",
+      name: "ReactoryCalendarEntry",
+      version: "1.0.0",
+      component: ReactoryCalendarEntry,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+      description: "Provides a calendar entry model for the server",
+      stem: "reactory-calendar-entry",
+      tags: ["reactory-calendar-entry", "reactory", "system"],
+    },
+    {
+      nameSpace: "core",
+      name: "ReactoryCalendarParticipant",
+      version: "1.0.0",
+      component: ReactoryCalendarParticipant,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+      description: "Provides a calendar participant model for the server",
+      stem: "reactory-calendar-participant",
+      tags: ["reactory-calendar-participant", "reactory", "system"],
+    },
+    {
+      nameSpace: "core",
+      name: "ReactoryCalendarRecurrencePattern",
+      version: "1.0.0",
+      component: ReactoryCalendarRecurrencePattern,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+      description: "Provides a calendar recurrence pattern model for the server",
+      stem: "reactory-calendar-recurrence-pattern",
+      tags: ["reactory-calendar-recurrence-pattern", "reactory", "system"],
+    },
+    {
+      nameSpace: "core",
+      name: "ReactoryCalendarWorkflowTrigger",
+      version: "1.0.0",
+      component: ReactoryCalendarWorkflowTrigger,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+      description: "Provides a calendar workflow trigger model for the server",
+      stem: "reactory-calendar-workflow-trigger",
+      tags: ["reactory-calendar-workflow-trigger", "reactory", "system"],
+    },
+    {
+      nameSpace: "core",
+      name: "ReactoryCalendarServiceTrigger",
+      version: "1.0.0",
+      component: ReactoryCalendarServiceTrigger,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+      description: "Provides a calendar service trigger model for the server",
+      stem: "reactory-calendar-service-trigger",
+      tags: ["reactory-calendar-service-trigger", "reactory", "system"],
     },
   ];
 

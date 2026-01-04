@@ -84,7 +84,7 @@ const ApplicationCard = (props: IApplicationCardProps) => {
 
   let options = {
     sizes: { xs: 12, sm: 12, md: 6, lg: 4, xl: 4 },
-    moreRoute: "/application/${id}/details" 
+    moreRoute: "/application/${id}?tab=overview" 
   }
 
   if(uiSchema && uiSchema["ui:options"]) {

@@ -16,6 +16,7 @@ export default [
       description: 'The default user role to assign to a new user',
     },
     data: ['USER'],
+    roles: ['ADMIN'],
   },
   {
     name: 'reactory.postgres.connection',
@@ -27,5 +28,46 @@ export default [
       password: REACTORY_POSTGRES_PASSWORD,
       database: REACTORY_POSTGRES_DB,
     },
+    roles: ['ADMIN'],
+  },
+  {
+    name: 'reactory.prometheus.connection',
+    componentFqn: 'reactory-telemetry.PrometheusConnectionForm@1.0.0',
+    data: {
+      host: process.env.REACTORY_PROMETHEUS_HOST || 'localhost',
+      port: parseInt(process.env.REACTORY_PROMETHEUS_PORT || '9090'),
+      protocol: process.env.REACTORY_PROMETHEUS_PROTOCOL || 'http',
+    },
+    roles: ['ADMIN'],
+  },
+  {
+    name: 'reactory.redis.connection',
+    componentFqn: 'reactory-cache.RedisConnectionForm@1.0.0',
+    data: {
+      host: process.env.REACTORY_REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REACTORY_REDIS_PORT || '6379'),
+      password: process.env.REACTORY_REDIS_PASSWORD || '',
+    },
+    roles: ['ADMIN'],
+  },
+  {
+    name: 'reactory.loki.connection',
+    componentFqn: 'reactory-telemetry.LokiConnectionForm@1.0.0',
+    data: {
+      host: process.env.REACTORY_LOKI_HOST || 'localhost',
+      port: parseInt(process.env.REACTORY_LOKI_PORT || '3100'),
+      protocol: process.env.REACTORY_LOKI_PROTOCOL || 'http',
+    },  
+    roles: ['ADMIN'],
+  },
+  {
+    name: 'reactory.jaeger.connection',
+    componentFqn: 'reactory-telemetry.JaegerConnectionForm@1.0.0',
+    data: {
+      host: process.env.REACTORY_JAEGER_HOST || 'localhost',
+      port: parseInt(process.env.REACTORY_JAEGER_PORT || '6831'),
+      protocol: process.env.REACTORY_JAEGER_PROTOCOL || 'http',
+    },  
+    roles: ['ADMIN'],
   }
 ];
