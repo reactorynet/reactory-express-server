@@ -93,10 +93,13 @@ class SupportResolver {
 
       // Fetch and populate comments
       const populatedComments = await CommentModel
-        .find({ _id: { $in: commentIds } })
+        .find({ 
+          _id: { $in: commentIds }, 
+          removed: { $ne: true },
+          parent: { $exists: false }
+        })
         .populate('user')
-        .sort({ createdAt: -1 })
-        .exec();
+        .sort({ createdAt: -1 });
 
       return populatedComments;
     } catch (error) {

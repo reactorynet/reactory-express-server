@@ -90,9 +90,189 @@ type Comment {
   The id of the parent comment for threaded replies
   """
   parentId: ObjID
+
+  """   
+  The parent comment for threaded replies
+  """
+  parent: Comment
   
   """
   The replies to this comment (threaded comments)
   """
   replies: [Comment]
+}
+
+"""
+Input for editing a comment
+"""
+input EditCommentInput {
+  """
+  The comment ID to edit
+  """
+  commentId: ObjID!
+  
+  """
+  The new text for the comment
+  """
+  text: String!
+}
+
+"""
+Input for deleting a comment
+"""
+input DeleteCommentInput {
+  """
+  The comment ID to delete
+  """
+  commentId: ObjID!
+  
+  """
+  Whether to soft delete (mark as removed) or hard delete
+  """
+  softDelete: Boolean
+}
+
+"""
+Success result for comment deletion
+"""
+type DeleteCommentSuccess {
+  success: Boolean
+  commentId: ObjID
+  message: String
+}
+
+"""
+Error result for comment deletion
+"""
+type DeleteCommentError {
+  error: String
+  message: String
+  commentId: ObjID
+}
+
+"""
+Union result for comment deletion
+"""
+union DeleteCommentResult = DeleteCommentSuccess | DeleteCommentError
+
+"""
+Input for toggling comment reactions
+"""
+input ToggleCommentReactionInput {
+  """
+  The comment ID
+  """
+  commentId: ObjID!
+  
+  """
+  The type of reaction (upvote, downvote, favorite)
+  """
+  reactionType: CommentReactionType!
+}
+
+"""
+Types of reactions that can be applied to a comment
+"""
+enum CommentReactionType {
+  UPVOTE
+  DOWNVOTE
+  FAVORITE
+}
+
+"""
+Input for fetching comments with optional filtering
+"""
+input CommentFilterInput {
+  """
+  Filter by context (e.g., 'ReactorySupportTicket')
+  """
+  context: String
+  
+  """
+  Filter by context ID (e.g., ticket ID)
+  """
+  contextId: String
+  
+  """
+  Filter by parent comment ID (null for root comments)
+  """
+  parentId: ObjID
+  
+  """
+  Include removed comments (default: false)
+  """
+  includeRemoved: Boolean
+}
+
+"""
+Paged comments result
+"""
+type PagedComments {
+  comments: [Comment]
+  paging: PagingResult
+}
+
+extend type Query {
+  """
+  Get a single comment by ID with populated fields
+  """
+  getComment(commentId: ObjID!): Comment
+  
+  """
+  Get comments for a context (e.g., support ticket)
+  Returns root-level comments only (no parent)
+  """
+  getCommentsByContext(
+    context: String!
+    contextId: String!
+    includeRemoved: Boolean
+    paging: PagingRequest
+  ): PagedComments
+  
+  """
+  Get replies for a specific comment
+  Use this for loading nested replies recursively
+  """
+  getCommentReplies(
+    commentId: ObjID!
+    includeRemoved: Boolean
+    paging: PagingRequest
+  ): PagedComments
+}
+
+extend type Mutation {
+  """
+  Edit an existing comment (user must be the comment author)
+  """
+  editComment(input: EditCommentInput!): Comment
+  
+  """
+  Delete a comment (user must be the comment author or admin)
+  """
+  deleteComment(input: DeleteCommentInput!): DeleteCommentResult
+  
+  """
+  Toggle upvote on a comment
+  """
+  upvoteComment(commentId: ObjID!): Comment
+  
+  """
+  Toggle downvote on a comment
+  """
+  downvoteComment(commentId: ObjID!): Comment
+  
+  """
+  Toggle favorite on a comment
+  """
+  favoriteComment(commentId: ObjID!): Comment
+  
+  """
+  Generic toggle for any comment reaction type
+  """
+  toggleCommentReaction(input: ToggleCommentReactionInput!): Comment
+  
+  """
+  Flag a comment for moderation
+  """
+  flagComment(commentId: ObjID!, reason: String): Comment
 }
