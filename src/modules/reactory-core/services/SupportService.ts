@@ -87,7 +87,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       context: 'ReactorySupportTicket',
       contextId: ticket._id,
       createdAt: new Date(),
-      parentId: parentId ? new ObjectId(parentId) : undefined,      
+      parent: parentId ? new ObjectId(parentId) : undefined,      
     });
 
     await comment.save();
