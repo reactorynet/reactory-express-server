@@ -299,7 +299,10 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
             size: 'small',
             showEmail: true,
             unassignedText: 'Unassigned',
-            unassignedIcon: 'person_add_disabled'
+            unassignedIcon: 'person_add_disabled',
+            editable: true,            
+            dialogTitle: 'Assign Ticket To',
+            showFilters: true,            
           }
         }
       }
