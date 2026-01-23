@@ -24,7 +24,7 @@ jest.mock('fs', () => ({
   readFileSync: jest.fn(),
 }));
 
-jest.mock('../../../logging', () => ({
+jest.mock('../../../../../logging', () => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
@@ -204,6 +204,302 @@ describe('WorkflowScheduler', () => {
       expect(stats).toHaveProperty('activeSchedules');
       expect(stats).toHaveProperty('totalRuns');
       expect(stats).toHaveProperty('totalErrors');
+    });
+  });
+
+  describe('getSchedulesForWorkflow', () => {
+    beforeEach(async () => {
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      await scheduler.initialize();
+    });
+
+    it('should return all schedules for a specific workflow ID', async () => {
+      const mockSchedules = [
+        'schedule1-schedule.yaml',
+        'schedule2-schedule.yaml',
+        'schedule3-schedule.yaml',
+      ];
+      (fs.readdirSync as jest.Mock).mockReturnValue(mockSchedules);
+      (fs.readFileSync as jest.Mock).mockReturnValue('yaml content');
+      
+      const { load } = require('js-yaml');
+      load
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule1',
+          workflow: { id: 'core.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule2',
+          workflow: { id: 'core.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule3',
+          workflow: { id: 'core.CleanCacheWorkflow@2.0.0', version: '2.0.0', nameSpace: 'core' },
+        });
+      
+      await scheduler.reloadSchedules();
+      
+      const schedules = scheduler.getSchedulesForWorkflow('core.CleanCacheWorkflow@1.0.0');
+      
+      expect(schedules).toHaveLength(2);
+      expect(schedules.every(s => s.config.workflow.id === 'core.CleanCacheWorkflow@1.0.0')).toBe(true);
+    });
+
+    it('should return empty array when no schedules match', async () => {
+      (fs.readdirSync as jest.Mock).mockReturnValue([]);
+      await scheduler.reloadSchedules();
+      
+      const schedules = scheduler.getSchedulesForWorkflow('core.NonExistentWorkflow@1.0.0');
+      
+      expect(schedules).toHaveLength(0);
+    });
+
+    it('should distinguish between different versions of the same workflow', async () => {
+      const mockSchedules = [
+        'schedule1-schedule.yaml',
+        'schedule2-schedule.yaml',
+      ];
+      (fs.readdirSync as jest.Mock).mockReturnValue(mockSchedules);
+      (fs.readFileSync as jest.Mock).mockReturnValue('yaml content');
+      
+      const { load } = require('js-yaml');
+      load
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule1',
+          workflow: { id: 'core.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule2',
+          workflow: { id: 'core.CleanCacheWorkflow@2.0.0', version: '2.0.0', nameSpace: 'core' },
+        });
+      
+      await scheduler.reloadSchedules();
+      
+      const v1Schedules = scheduler.getSchedulesForWorkflow('core.CleanCacheWorkflow@1.0.0');
+      const v2Schedules = scheduler.getSchedulesForWorkflow('core.CleanCacheWorkflow@2.0.0');
+      
+      expect(v1Schedules).toHaveLength(1);
+      expect(v2Schedules).toHaveLength(1);
+      expect(v1Schedules[0].config.id).toBe('schedule1');
+      expect(v2Schedules[0].config.id).toBe('schedule2');
+    });
+  });
+
+  describe('filterSchedulesByWorkflowProperties', () => {
+    beforeEach(async () => {
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      await scheduler.initialize();
+    });
+
+    it('should filter schedules by namespace only', async () => {
+      const mockSchedules = [
+        'schedule1-schedule.yaml',
+        'schedule2-schedule.yaml',
+        'schedule3-schedule.yaml',
+      ];
+      (fs.readdirSync as jest.Mock).mockReturnValue(mockSchedules);
+      (fs.readFileSync as jest.Mock).mockReturnValue('yaml content');
+      
+      const { load } = require('js-yaml');
+      load
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule1',
+          workflow: { id: 'core.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule2',
+          workflow: { id: 'core.BackupWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule3',
+          workflow: { id: 'admin.UserCleanupWorkflow@1.0.0', version: '1.0.0', nameSpace: 'admin' },
+        });
+      
+      await scheduler.reloadSchedules();
+      
+      const schedules = scheduler.filterSchedulesByWorkflowProperties('core');
+      
+      expect(schedules).toHaveLength(2);
+      expect(schedules.every(s => s.config.workflow.id.startsWith('core.'))).toBe(true);
+    });
+
+    it('should filter schedules by workflow name only', async () => {
+      const mockSchedules = [
+        'schedule1-schedule.yaml',
+        'schedule2-schedule.yaml',
+      ];
+      (fs.readdirSync as jest.Mock).mockReturnValue(mockSchedules);
+      (fs.readFileSync as jest.Mock).mockReturnValue('yaml content');
+      
+      const { load } = require('js-yaml');
+      load
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule1',
+          workflow: { id: 'core.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule2',
+          workflow: { id: 'core.CleanCacheWorkflow@2.0.0', version: '2.0.0', nameSpace: 'core' },
+        });
+      
+      await scheduler.reloadSchedules();
+      
+      const schedules = scheduler.filterSchedulesByWorkflowProperties(undefined, 'CleanCacheWorkflow');
+      
+      expect(schedules).toHaveLength(2);
+    });
+
+    it('should filter schedules by version only', async () => {
+      const mockSchedules = [
+        'schedule1-schedule.yaml',
+        'schedule2-schedule.yaml',
+        'schedule3-schedule.yaml',
+      ];
+      (fs.readdirSync as jest.Mock).mockReturnValue(mockSchedules);
+      (fs.readFileSync as jest.Mock).mockReturnValue('yaml content');
+      
+      const { load } = require('js-yaml');
+      load
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule1',
+          workflow: { id: 'core.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule2',
+          workflow: { id: 'core.BackupWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule3',
+          workflow: { id: 'core.CleanCacheWorkflow@2.0.0', version: '2.0.0', nameSpace: 'core' },
+        });
+      
+      await scheduler.reloadSchedules();
+      
+      const schedules = scheduler.filterSchedulesByWorkflowProperties(undefined, undefined, '1.0.0');
+      
+      expect(schedules).toHaveLength(2);
+      expect(schedules.every(s => s.config.workflow.id.endsWith('@1.0.0'))).toBe(true);
+    });
+
+    it('should filter schedules by namespace and name', async () => {
+      const mockSchedules = [
+        'schedule1-schedule.yaml',
+        'schedule2-schedule.yaml',
+        'schedule3-schedule.yaml',
+      ];
+      (fs.readdirSync as jest.Mock).mockReturnValue(mockSchedules);
+      (fs.readFileSync as jest.Mock).mockReturnValue('yaml content');
+      
+      const { load } = require('js-yaml');
+      load
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule1',
+          workflow: { id: 'core.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule2',
+          workflow: { id: 'core.CleanCacheWorkflow@2.0.0', version: '2.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule3',
+          workflow: { id: 'admin.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'admin' },
+        });
+      
+      await scheduler.reloadSchedules();
+      
+      const schedules = scheduler.filterSchedulesByWorkflowProperties('core', 'CleanCacheWorkflow');
+      
+      expect(schedules).toHaveLength(2);
+      expect(schedules.every(s => s.config.workflow.id.startsWith('core.CleanCacheWorkflow@'))).toBe(true);
+    });
+
+    it('should filter schedules by all three properties', async () => {
+      const mockSchedules = [
+        'schedule1-schedule.yaml',
+        'schedule2-schedule.yaml',
+        'schedule3-schedule.yaml',
+      ];
+      (fs.readdirSync as jest.Mock).mockReturnValue(mockSchedules);
+      (fs.readFileSync as jest.Mock).mockReturnValue('yaml content');
+      
+      const { load } = require('js-yaml');
+      load
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule1',
+          workflow: { id: 'core.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule2',
+          workflow: { id: 'core.CleanCacheWorkflow@2.0.0', version: '2.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule3',
+          workflow: { id: 'admin.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'admin' },
+        });
+      
+      await scheduler.reloadSchedules();
+      
+      const schedules = scheduler.filterSchedulesByWorkflowProperties('core', 'CleanCacheWorkflow', '1.0.0');
+      
+      expect(schedules).toHaveLength(1);
+      expect(schedules[0].config.id).toBe('schedule1');
+      expect(schedules[0].config.workflow.id).toBe('core.CleanCacheWorkflow@1.0.0');
+    });
+
+    it('should return empty array when no schedules match the filter', async () => {
+      (fs.readdirSync as jest.Mock).mockReturnValue([]);
+      await scheduler.reloadSchedules();
+      
+      const schedules = scheduler.filterSchedulesByWorkflowProperties('nonexistent');
+      
+      expect(schedules).toHaveLength(0);
+    });
+
+    it('should return all schedules when no filters are provided', async () => {
+      const mockSchedules = [
+        'schedule1-schedule.yaml',
+        'schedule2-schedule.yaml',
+      ];
+      (fs.readdirSync as jest.Mock).mockReturnValue(mockSchedules);
+      (fs.readFileSync as jest.Mock).mockReturnValue('yaml content');
+      
+      const { load } = require('js-yaml');
+      load
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule1',
+          workflow: { id: 'core.CleanCacheWorkflow@1.0.0', version: '1.0.0', nameSpace: 'core' },
+        })
+        .mockReturnValueOnce({
+          ...mockScheduleConfig,
+          id: 'schedule2',
+          workflow: { id: 'admin.BackupWorkflow@2.0.0', version: '2.0.0', nameSpace: 'admin' },
+        });
+      
+      await scheduler.reloadSchedules();
+      
+      const schedules = scheduler.filterSchedulesByWorkflowProperties();
+      
+      expect(schedules).toHaveLength(2);
     });
   });
 

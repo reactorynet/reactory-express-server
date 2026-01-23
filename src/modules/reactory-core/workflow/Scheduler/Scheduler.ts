@@ -462,6 +462,111 @@ export class WorkflowScheduler {
   }
 
   /**
+   * Get all schedules for a specific workflow by ID
+   * Workflow IDs follow the pattern: "namespace.WorkflowName@version" (e.g., "core.CleanCacheWorkflow@1.0.0")
+   * @param workflowId - The complete workflow ID to filter by
+   * @returns Array of scheduled workflows matching the workflow ID
+   */
+  public getSchedulesForWorkflow(workflowId: string): IScheduledWorkflow[] {
+    const matchingSchedules: IScheduledWorkflow[] = [];
+
+    for (const [, scheduledWorkflow] of this.schedules) {
+      const { workflow } = scheduledWorkflow.config;
+      
+      // Check workflow ID match
+      if (workflow.id === workflowId) {
+        matchingSchedules.push(scheduledWorkflow);
+      }
+    }
+
+    logger.debug(`Found ${matchingSchedules.length} schedules for workflow ${workflowId}`);
+
+    return matchingSchedules;
+  }
+
+  /**
+   * Filter schedules by workflow properties (namespace, name, version)
+   * This method parses workflow IDs and matches against the provided criteria.
+   * Workflow IDs follow the pattern: "namespace.WorkflowName@version" (e.g., "core.CleanCacheWorkflow@1.0.0")
+   * @param nameSpace - Optional namespace to filter by (e.g., "core")
+   * @param name - Optional workflow name to filter by (e.g., "CleanCacheWorkflow")
+   * @param version - Optional version to filter by (e.g., "1.0.0")
+   * @returns Array of scheduled workflows matching the criteria
+   */
+  public filterSchedulesByWorkflowProperties(
+    nameSpace?: string,
+    name?: string,
+    version?: string
+  ): IScheduledWorkflow[] {
+    const matchingSchedules: IScheduledWorkflow[] = [];
+
+    for (const [, scheduledWorkflow] of this.schedules) {
+      const { workflow } = scheduledWorkflow.config;
+      
+      // Parse workflow ID: "namespace.WorkflowName@version"
+      const workflowIdParts = this.parseWorkflowId(workflow.id);
+      
+      // Check namespace match if specified
+      if (nameSpace && workflowIdParts.nameSpace !== nameSpace) {
+        continue;
+      }
+      
+      // Check name match if specified
+      if (name && workflowIdParts.name !== name) {
+        continue;
+      }
+      
+      // Check version match if specified
+      if (version && workflowIdParts.version !== version) {
+        continue;
+      }
+      
+      matchingSchedules.push(scheduledWorkflow);
+    }
+
+    logger.debug(
+      `Found ${matchingSchedules.length} schedules matching criteria` +
+      (nameSpace ? ` (namespace: ${nameSpace})` : '') +
+      (name ? ` (name: ${name})` : '') +
+      (version ? ` (version: ${version})` : '')
+    );
+
+    return matchingSchedules;
+  }
+
+  /**
+   * Parse a workflow ID into its component parts
+   * @param workflowId - The workflow ID to parse (e.g., "core.CleanCacheWorkflow@1.0.0")
+   * @returns Object containing namespace, name, and version
+   */
+  private parseWorkflowId(workflowId: string): { nameSpace: string; name: string; version: string } {
+    // Default values
+    let nameSpace = '';
+    let name = workflowId;
+    let version = '';
+
+    try {
+      // Split by @ to separate version
+      const atIndex = workflowId.lastIndexOf('@');
+      if (atIndex !== -1) {
+        version = workflowId.substring(atIndex + 1);
+        name = workflowId.substring(0, atIndex);
+      }
+
+      // Split by . to separate namespace and name
+      const dotIndex = name.lastIndexOf('.');
+      if (dotIndex !== -1) {
+        nameSpace = name.substring(0, dotIndex);
+        name = name.substring(dotIndex + 1);
+      }
+    } catch (error) {
+      logger.warn(`Failed to parse workflow ID: ${workflowId}`, error);
+    }
+
+    return { nameSpace, name, version };
+  }
+
+  /**
    * Stop the scheduler
    */
   public async stop(): Promise<void> {
