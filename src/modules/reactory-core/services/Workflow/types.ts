@@ -1,5 +1,7 @@
-import { IWorkflowLifecycleStats } from "@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager";
+import { IWorkflowInstance, IWorkflowDependency, IWorkflowLifecycleStats } from "@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager";
 import { ISecurityStats } from "@reactory/server-modules/reactory-core/workflow/SecurityManager/SecurityManager";
+import { IWorkflowConfig } from "@reactory/server-modules/reactory-core/workflow/ConfigurationManager/ConfigurationManager";
+import { IScheduleConfig, IScheduledWorkflow, ISchedulerStats } from "@reactory/server-modules/reactory-core/workflow/Scheduler/Scheduler";
 
 // Workflow Service Types
 export interface IWorkflowSystemStatus {
@@ -74,8 +76,10 @@ export interface IWorkflowFilterInput {
 }
 
 export interface IInstanceFilterInput {
-  workflowName?: string;
+  id?: string;
   nameSpace?: string;
+  name?: string;
+  version?: string;
   status?: string;
   createdBy?: string;
   startTimeFrom?: Date;
@@ -100,45 +104,168 @@ export interface IPaginationInput {
   order?: 'ASC' | 'DESC';
 }
 
+export interface IPaginationInfo {
+  page: number;
+  pages: number;
+  limit: number;
+  total: number;
+}
+
 export interface IWorkflowOperationResult {
   success: boolean;
   message?: string;
   data?: any;
 }
 
+export interface IWorkflowStatistics {
+  totalExecutions: number;
+  successfulExecutions: number;
+  failedExecutions: number;
+  averageExecutionTime: number;
+}
+
+export interface RegisteredWorkflow {
+  id: string;
+  name: string;
+  nameSpace: string;
+  version: string;
+  description: string;
+  tags: string[];
+  author: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+  status: 'INACTIVE' | 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'COMPLETED' | 'FAILED';
+  configuration: IWorkflowConfig;
+  instances: IWorkflowInstance[];
+  dependencies: IWorkflowDependency[];
+  schedule: IScheduleConfig;
+  schedules: IScheduleConfig[];
+  statistics: IWorkflowStatistics;
+  errors: IWorkflowErrorStats[];
+}
+
+export interface IWorkflowMetrics {
+  lifecycle: IWorkflowLifecycleStats;
+  scheduler: ISchedulerStats;
+  errors: Map<string, IWorkflowErrorStats>;
+  configuration: IConfigurationStats;
+  security: ISecurityStats;
+}
+
+export interface IWorkflowConfigurationResponse {
+  configurations: Record<string, IWorkflowConfig>;
+  validation: {
+    isValid: boolean;
+    errors: any[];
+    warnings: any[];
+  };
+}
+
+export interface IPaginatedWorkflows {
+  workflows: RegisteredWorkflow[];
+  pagination: IPaginationInfo;
+}
+
+export interface IWorkflowRegistryStats {
+  totalWorkflows: number;
+  activeWorkflows: number;
+  inactiveWorkflows: number;
+  nameSpaces: string[];
+  versions: Record<string, string[]>;
+  lastRegistered: Date;
+  registrationErrors: number;
+}
+
+export interface IWorkflowRegistryResponse {
+  workflows: RegisteredWorkflow[];
+  stats: IWorkflowRegistryStats;
+}
+
+export interface IPaginatedInstances {
+  instances: IWorkflowInstance[];
+  pagination: IPaginationInfo;
+}
+
+export interface IPaginatedSchedules {
+  schedules: IScheduledWorkflow[];
+  pagination: IPaginationInfo;
+}
+
+export interface IFilteredSchedulesResponse {
+  schedules: IScheduledWorkflow[];
+  filter: {
+    nameSpace?: string;
+    name?: string;
+    version?: string;
+  };
+  pagination: IPaginationInfo;
+}
+
+export interface IAuditLogEntry {
+  // Define properties based on usage or expectation
+  id?: string;
+  timestamp?: Date;
+  [key: string]: any; 
+}
+
+export interface IPaginatedAuditLogs {
+  entries: IAuditLogEntry[];
+  pagination: IPaginationInfo;
+}
+
+export interface IWorkflowStatusResponse {
+  status: 'ACTIVE' | 'INACTIVE' | 'PAUSED' | 'CANCELLED' | 'COMPLETED' | 'FAILED';
+  errors?: IWorkflowErrorStats[];
+  statistics?: IWorkflowStatistics;
+  configuration?: IWorkflowConfig;
+  instances?: IWorkflowInstance[];
+  dependencies?: IWorkflowDependency[];
+  schedule?: IScheduleConfig;
+  schedules?: IScheduleConfig[];  
+}
+
 export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefaultService {
   // System Status & Health
   getSystemStatus(): Promise<IWorkflowSystemStatus>;
-  getWorkflowMetrics(): Promise<any>;
-  getWorkflowConfigurations(): Promise<any>;
+  getWorkflowMetrics(): Promise<IWorkflowMetrics>;
+  getWorkflowConfigurations(): Promise<IWorkflowConfigurationResponse>;
   
   // Workflow Registry
-  getWorkflows(filter?: IWorkflowFilterInput, pagination?: IPaginationInput): Promise<any>;
-  getWorkflowRegistry(): Promise<any>;
-  getWorkflow(nameSpace: string, name: string): Promise<any>;
+  getWorkflows(filter?: IWorkflowFilterInput, pagination?: IPaginationInput): Promise<IPaginatedWorkflows>;
+  getWorkflowRegistry(): Promise<IWorkflowRegistryResponse>;
+  getWorkflow(nameSpace: string, name: string): Promise<RegisteredWorkflow>;
+  getWorkflowWithId(id: string): Promise<RegisteredWorkflow>;
   
   // Workflow Instances
-  getWorkflowInstances(filter?: IInstanceFilterInput, pagination?: IPaginationInput): Promise<any>;
-  getWorkflowInstance(instanceId: string): Promise<any>;
-  startWorkflow(workflowId: string, input?: IWorkflowExecutionInput): Promise<any>;
+  getWorkflowInstances(filter?: IInstanceFilterInput, pagination?: IPaginationInput): Promise<IPaginatedInstances>;
+  getWorkflowInstance(instanceId: string): Promise<IWorkflowInstance>;
+  startWorkflow(workflowId: string, input?: IWorkflowExecutionInput): Promise<IWorkflowInstance>;
   pauseWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
   resumeWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
   cancelWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
   
   // Workflow Schedules
-  getWorkflowSchedules(pagination?: IPaginationInput): Promise<any>;
-  getWorkflowSchedule(scheduleId: string): Promise<any>;
-  createWorkflowSchedule(config: IScheduleConfigInput): Promise<any>;
-  updateWorkflowSchedule(scheduleId: string, updates: IUpdateScheduleInput): Promise<any>;
+  getWorkflowSchedules(pagination?: IPaginationInput): Promise<IPaginatedSchedules>;
+  getWorkflowSchedule(scheduleId: string): Promise<IScheduledWorkflow>;
+  getWorkflowSchedulesForWorkflowId(workflowId: string): Promise<IScheduleConfig[]>; 
+  createWorkflowSchedule(config: IScheduleConfigInput): Promise<IScheduledWorkflow>;
+  updateWorkflowSchedule(scheduleId: string, updates: IUpdateScheduleInput): Promise<IScheduledWorkflow>;
   deleteWorkflowSchedule(scheduleId: string): Promise<IWorkflowOperationResult>;
   startSchedule(scheduleId: string): Promise<IWorkflowOperationResult>;
   stopSchedule(scheduleId: string): Promise<IWorkflowOperationResult>;
   reloadSchedules(): Promise<IWorkflowOperationResult>;
+  filterSchedulesByWorkflowProperties(
+    nameSpace?: string,
+    name?: string,
+    version?: string,
+    pagination?: IPaginationInput
+  ): Promise<IFilteredSchedulesResponse>;
   
   // Audit and Monitoring
-  getWorkflowAuditLog(filter?: IAuditFilterInput, pagination?: IPaginationInput): Promise<any>;
+  getWorkflowAuditLog(filter?: IAuditFilterInput, pagination?: IPaginationInput): Promise<IPaginatedAuditLogs>;
   
   // Legacy Support
-  getWorkflowStatus(name: string): Promise<any>;
+  getWorkflowStatus(name: string): Promise<IWorkflowStatusResponse>;
   startWorkflowLegacy(name: string, data: any): Promise<boolean>;
 }
