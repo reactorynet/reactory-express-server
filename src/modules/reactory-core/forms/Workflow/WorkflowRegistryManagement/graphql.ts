@@ -53,7 +53,7 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             author
             createdAt
             updatedAt
-            isActive
+            status
             dependencies {
               name
               type

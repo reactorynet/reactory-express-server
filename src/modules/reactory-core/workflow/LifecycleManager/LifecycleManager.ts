@@ -1,5 +1,17 @@
 import logger from '../../../../logging';
 import { EventEmitter } from 'events';
+import {
+  WorkflowInstanceModel,
+  WorkflowESStatus,
+  ExecutionPointerStatus,
+  getStatusLabel,
+  getExecutionPointerStatusLabel,
+  type IWorkflowInstanceDocument,
+  type IWorkflowInstanceFilter,
+  type IWorkflowInstancePagination,
+  type IPaginatedWorkflowInstances,
+  type IExecutionPointer,
+} from './models';
 
 export enum WorkflowStatus {
   PENDING = 'pending',
@@ -78,6 +90,98 @@ export interface IWorkflowLifecycleStats {
   };
 }
 
+/**
+ * Interface for workflow history filter (for querying persisted data)
+ */
+export interface IWorkflowHistoryFilter {
+  workflowDefinitionId?: string;
+  status?: WorkflowESStatus | WorkflowESStatus[];
+  createdAfter?: Date;
+  createdBefore?: Date;
+  completedAfter?: Date;
+  completedBefore?: Date;
+  searchTerm?: string;
+}
+
+/**
+ * Interface for workflow history pagination
+ */
+export interface IWorkflowHistoryPagination {
+  page?: number;
+  limit?: number;
+  sortField?: 'createTime' | 'completeTime' | 'workflowDefinitionId' | 'status';
+  sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Interface for paginated workflow history results
+ */
+export interface IPaginatedWorkflowHistory {
+  instances: IWorkflowHistoryItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+/**
+ * Interface for a workflow history item (transformed from MongoDB document)
+ */
+export interface IWorkflowHistoryItem {
+  id: string;
+  workflowDefinitionId: string;
+  version: number;
+  status: WorkflowESStatus;
+  statusLabel: string;
+  description?: string | null;
+  createTime: Date;
+  completeTime?: Date | null;
+  duration?: number | null; // milliseconds
+  data: Record<string, any>;
+  executionPointers: IExecutionPointerSummary[];
+  stepCount: number;
+  completedStepCount: number;
+  failedStepCount: number;
+}
+
+/**
+ * Interface for execution pointer summary
+ */
+export interface IExecutionPointerSummary {
+  id: string;
+  stepId: number;
+  status: ExecutionPointerStatus;
+  statusLabel: string;
+  startTime?: Date | null;
+  endTime?: Date | null;
+  duration?: number | null;
+  retryCount: number;
+  active: boolean;
+}
+
+/**
+ * Interface for workflow execution statistics from persisted data
+ */
+export interface IWorkflowExecutionStats {
+  total: number;
+  pending: number;
+  runnable: number;
+  complete: number;
+  terminated: number;
+  suspended: number;
+  averageCompletionTime?: number;
+  byWorkflowDefinition: {
+    workflowDefinitionId: string;
+    total: number;
+    complete: number;
+    terminated: number;
+  }[];
+}
+
 export class WorkflowLifecycleManager extends EventEmitter {
   private workflows: Map<string, IWorkflowInstance> = new Map();
   private dependencies: Map<string, IWorkflowDependency[]> = new Map();
@@ -132,6 +236,445 @@ export class WorkflowLifecycleManager extends EventEmitter {
       throw error;
     }
   }
+
+  // ============================================
+  // MongoDB Persistence Methods (New)
+  // ============================================
+
+  /**
+   * Get paginated workflow history from MongoDB
+   * @param filter - Filter options
+   * @param pagination - Pagination options
+   * @returns Paginated workflow history
+   */
+  public async getWorkflowHistory(
+    filter?: IWorkflowHistoryFilter,
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory> {
+    try {
+      const mongoFilter: IWorkflowInstanceFilter = {};
+      
+      if (filter?.workflowDefinitionId) {
+        mongoFilter.workflowDefinitionId = filter.workflowDefinitionId;
+      }
+      if (filter?.status !== undefined) {
+        mongoFilter.status = filter.status;
+      }
+      if (filter?.createdAfter) {
+        mongoFilter.createdAfter = filter.createdAfter;
+      }
+      if (filter?.createdBefore) {
+        mongoFilter.createdBefore = filter.createdBefore;
+      }
+      if (filter?.completedAfter) {
+        mongoFilter.completedAfter = filter.completedAfter;
+      }
+      if (filter?.completedBefore) {
+        mongoFilter.completedBefore = filter.completedBefore;
+      }
+      if (filter?.searchTerm) {
+        mongoFilter.searchTerm = filter.searchTerm;
+      }
+
+      const mongoPagination: IWorkflowInstancePagination = {
+        page: pagination?.page || 1,
+        limit: pagination?.limit || 10,
+        sortField: pagination?.sortField || 'createTime',
+        sortOrder: pagination?.sortOrder || 'desc',
+      };
+
+      const result = await WorkflowInstanceModel.findPaginated(mongoFilter, mongoPagination);
+
+      // Transform the MongoDB documents to workflow history items
+      const instances = result.instances.map((doc: IWorkflowInstanceDocument) => this.transformToHistoryItem(doc));
+
+      return {
+        instances,
+        pagination: result.pagination,
+      };
+    } catch (error) {
+      logger.error('Failed to get workflow history', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a single workflow instance by ID from MongoDB
+   * @param instanceId - The workflow instance ID
+   * @returns The workflow history item or null if not found
+   */
+  public async getWorkflowHistoryById(instanceId: string): Promise<IWorkflowHistoryItem | null> {
+    try {
+      const doc = await WorkflowInstanceModel.findOne({ id: instanceId }).exec();
+      
+      if (!doc) {
+        return null;
+      }
+
+      return this.transformToHistoryItem(doc);
+    } catch (error) {
+      logger.error('Failed to get workflow history by ID', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get workflow instances by workflow definition ID from MongoDB
+   * @param workflowDefinitionId - The workflow definition ID (e.g., 'core.CleanCacheWorkflow@1.0.0')
+   * @param pagination - Pagination options
+   * @returns Paginated workflow history
+   */
+  public async getWorkflowHistoryByDefinitionId(
+    workflowDefinitionId: string,
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory> {
+    return this.getWorkflowHistory({ workflowDefinitionId }, pagination);
+  }
+
+  /**
+   * Get workflow instances by status from MongoDB
+   * @param status - The status or array of statuses to filter by
+   * @param pagination - Pagination options
+   * @returns Paginated workflow history
+   */
+  public async getWorkflowHistoryByStatus(
+    status: WorkflowESStatus | WorkflowESStatus[],
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory> {
+    return this.getWorkflowHistory({ status }, pagination);
+  }
+
+  /**
+   * Get workflow execution statistics from MongoDB
+   * @returns Workflow execution statistics
+   */
+  public async getWorkflowExecutionStats(): Promise<IWorkflowExecutionStats> {
+    try {
+      const basicStats = await WorkflowInstanceModel.getWorkflowStats();
+
+      // Get average completion time for completed workflows
+      const completionTimeStats = await WorkflowInstanceModel.aggregate([
+        {
+          $match: {
+            status: WorkflowESStatus.COMPLETE,
+            completeTime: { $ne: null },
+          },
+        },
+        {
+          $project: {
+            duration: {
+              $subtract: ['$completeTime', '$createTime'],
+            },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            averageCompletionTime: { $avg: '$duration' },
+          },
+        },
+      ]).exec();
+
+      // Get stats by workflow definition
+      const byWorkflowDefinition = await WorkflowInstanceModel.aggregate([
+        {
+          $group: {
+            _id: '$workflowDefinitionId',
+            total: { $sum: 1 },
+            complete: {
+              $sum: {
+                $cond: [{ $eq: ['$status', WorkflowESStatus.COMPLETE] }, 1, 0],
+              },
+            },
+            terminated: {
+              $sum: {
+                $cond: [{ $eq: ['$status', WorkflowESStatus.TERMINATED] }, 1, 0],
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            workflowDefinitionId: '$_id',
+            total: 1,
+            complete: 1,
+            terminated: 1,
+          },
+        },
+        {
+          $sort: { total: -1 },
+        },
+        {
+          $limit: 20, // Top 20 workflow definitions
+        },
+      ]).exec();
+
+      return {
+        ...basicStats,
+        averageCompletionTime: completionTimeStats[0]?.averageCompletionTime || undefined,
+        byWorkflowDefinition,
+      };
+    } catch (error) {
+      logger.error('Failed to get workflow execution stats', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search workflow history with text search
+   * @param searchTerm - The search term
+   * @param pagination - Pagination options
+   * @returns Paginated workflow history
+   */
+  public async searchWorkflowHistory(
+    searchTerm: string,
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory> {
+    return this.getWorkflowHistory({ searchTerm }, pagination);
+  }
+
+  /**
+   * Get recent workflow executions
+   * @param limit - Maximum number of results
+   * @returns Array of recent workflow history items
+   */
+  public async getRecentWorkflowExecutions(limit: number = 10): Promise<IWorkflowHistoryItem[]> {
+    try {
+      const docs = await WorkflowInstanceModel
+        .find()
+        .sort({ createTime: -1 })
+        .limit(limit)
+        .exec();
+
+      return docs.map((doc: IWorkflowInstanceDocument) => this.transformToHistoryItem(doc));
+    } catch (error) {
+      logger.error('Failed to get recent workflow executions', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get workflow execution count by date range
+   * @param startDate - Start date
+   * @param endDate - End date
+   * @param groupBy - Group by 'day' | 'hour' | 'week'
+   * @returns Array of execution counts grouped by time
+   */
+  public async getWorkflowExecutionCountByDate(
+    startDate: Date,
+    endDate: Date,
+    groupBy: 'day' | 'hour' | 'week' = 'day'
+  ): Promise<{ date: Date; count: number; complete: number; terminated: number }[]> {
+    try {
+      let dateFormat: string;
+      switch (groupBy) {
+        case 'hour':
+          dateFormat = '%Y-%m-%dT%H:00:00.000Z';
+          break;
+        case 'week':
+          dateFormat = '%Y-W%V';
+          break;
+        case 'day':
+        default:
+          dateFormat = '%Y-%m-%d';
+      }
+
+      const results = await WorkflowInstanceModel.aggregate([
+        {
+          $match: {
+            createTime: {
+              $gte: startDate,
+              $lte: endDate,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: dateFormat,
+                date: '$createTime',
+              },
+            },
+            count: { $sum: 1 },
+            complete: {
+              $sum: {
+                $cond: [{ $eq: ['$status', WorkflowESStatus.COMPLETE] }, 1, 0],
+              },
+            },
+            terminated: {
+              $sum: {
+                $cond: [{ $eq: ['$status', WorkflowESStatus.TERMINATED] }, 1, 0],
+              },
+            },
+          },
+        },
+        {
+          $sort: { _id: 1 },
+        },
+      ]).exec();
+
+      return results.map((r: { _id: string; count: number; complete: number; terminated: number }) => ({
+        date: new Date(r._id),
+        count: r.count,
+        complete: r.complete,
+        terminated: r.terminated,
+      }));
+    } catch (error) {
+      logger.error('Failed to get workflow execution count by date', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a single workflow execution history item by instance ID
+   * @param instanceId - The workflow instance ID to delete
+   * @returns Object indicating success and number of deleted items
+   */
+  public async deleteWorkflowHistory(instanceId: string): Promise<{ success: boolean; deletedCount: number; message?: string }> {
+    try {
+      const result = await WorkflowInstanceModel.deleteOne({ id: instanceId }).exec();
+      
+      const deletedCount = result.deletedCount || 0;
+      
+      if (deletedCount === 0) {
+        return {
+          success: false,
+          deletedCount: 0,
+          message: `Workflow instance ${instanceId} not found`
+        };
+      }
+
+      logger.info(`Deleted workflow execution history: ${instanceId}`);
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully deleted workflow instance ${instanceId}`
+      };
+    } catch (error) {
+      logger.error('Failed to delete workflow execution history', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete multiple workflow execution history items by instance IDs
+   * @param instanceIds - Array of workflow instance IDs to delete
+   * @returns Object indicating success and number of deleted items
+   */
+  public async deleteWorkflowHistoryBatch(instanceIds: string[]): Promise<{ success: boolean; deletedCount: number; message?: string }> {
+    try {
+      if (!instanceIds || instanceIds.length === 0) {
+        return {
+          success: false,
+          deletedCount: 0,
+          message: 'No instance IDs provided'
+        };
+      }
+
+      const result = await WorkflowInstanceModel.deleteMany({ id: { $in: instanceIds } }).exec();
+      
+      const deletedCount = result.deletedCount || 0;
+
+      logger.info(`Deleted ${deletedCount} workflow execution history items`);
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully deleted ${deletedCount} workflow instances`
+      };
+    } catch (error) {
+      logger.error('Failed to delete workflow execution history batch', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clear all workflow execution history for a specific workflow definition
+   * @param workflowDefinitionId - The workflow definition ID (e.g., 'core.CleanCacheWorkflow@1.0.0')
+   * @returns Object indicating success and number of deleted items
+   */
+  public async clearWorkflowHistory(workflowDefinitionId: string): Promise<{ success: boolean; deletedCount: number; message?: string }> {
+    try {
+      if (!workflowDefinitionId) {
+        return {
+          success: false,
+          deletedCount: 0,
+          message: 'Workflow definition ID is required'
+        };
+      }
+
+      const result = await WorkflowInstanceModel.deleteMany({ workflowDefinitionId }).exec();
+      
+      const deletedCount = result.deletedCount || 0;
+
+      logger.info(`Cleared ${deletedCount} workflow execution history items for ${workflowDefinitionId}`);
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully cleared ${deletedCount} workflow instances for ${workflowDefinitionId}`
+      };
+    } catch (error) {
+      logger.error('Failed to clear workflow execution history', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Transform a MongoDB document to a workflow history item
+   */
+  private transformToHistoryItem(doc: IWorkflowInstanceDocument): IWorkflowHistoryItem {
+    const duration = doc.completeTime && doc.createTime
+      ? doc.completeTime.getTime() - doc.createTime.getTime()
+      : null;
+
+    const executionPointers: IExecutionPointerSummary[] = (doc.executionPointers || []).map(pointer => {
+      const pointerDuration = pointer.endTime && pointer.startTime
+        ? pointer.endTime.getTime() - pointer.startTime.getTime()
+        : null;
+
+      return {
+        id: pointer.id,
+        stepId: pointer.stepId,
+        status: pointer.status,
+        statusLabel: getExecutionPointerStatusLabel(pointer.status),
+        startTime: pointer.startTime,
+        endTime: pointer.endTime,
+        duration: pointerDuration,
+        retryCount: pointer.retryCount,
+        active: pointer.active,
+      };
+    });
+
+    const completedStepCount = executionPointers.filter(
+      p => p.status === ExecutionPointerStatus.COMPLETE
+    ).length;
+
+    const failedStepCount = executionPointers.filter(
+      p => p.status === ExecutionPointerStatus.FAILED
+    ).length;
+
+    return {
+      id: doc.id,
+      workflowDefinitionId: doc.workflowDefinitionId,
+      version: doc.version,
+      status: doc.status,
+      statusLabel: getStatusLabel(doc.status),
+      description: doc.description,
+      createTime: doc.createTime,
+      completeTime: doc.completeTime,
+      duration,
+      data: doc.data,
+      executionPointers,
+      stepCount: executionPointers.length,
+      completedStepCount,
+      failedStepCount,
+    };
+  }
+
+  // ============================================
+  // In-Memory Workflow Management (Existing)
+  // ============================================
 
   /**
    * Create a new workflow instance
@@ -310,28 +853,37 @@ export class WorkflowLifecycleManager extends EventEmitter {
   }
 
   /**
-   * Get workflow instance by ID
+   * Get workflow instance by ID (in-memory)
    */
   public getWorkflowInstance(instanceId: string): IWorkflowInstance | undefined {
     return this.workflows.get(instanceId);
   }
 
   /**
-   * Get all workflow instances
+   * Get all workflow instances (in-memory)
    */
   public getAllWorkflowInstances(): IWorkflowInstance[] {
     return Array.from(this.workflows.values());
   }
 
   /**
-   * Get workflows by status
+   * Get all instances for a specific workflow ID (in-memory)
+   * @param workflowId The workflow ID (e.g., 'core.TestWorkflow@1.0.0')
+   * @returns Array of workflow instances matching the workflow ID
+   */
+  public getInstancesByWorkflowId(workflowId: string): IWorkflowInstance[] {
+    return Array.from(this.workflows.values()).filter(w => w.workflowId === workflowId);
+  }
+
+  /**
+   * Get workflows by status (in-memory)
    */
   public getWorkflowsByStatus(status: WorkflowStatus): IWorkflowInstance[] {
     return Array.from(this.workflows.values()).filter(w => w.status === status);
   }
 
   /**
-   * Get workflows by priority
+   * Get workflows by priority (in-memory)
    */
   public getWorkflowsByPriority(priority: WorkflowPriority): IWorkflowInstance[] {
     return Array.from(this.workflows.values()).filter(w => w.priority === priority);
@@ -407,7 +959,7 @@ export class WorkflowLifecycleManager extends EventEmitter {
   }
 
   /**
-   * Get workflow statistics
+   * Get workflow statistics (in-memory)
    */
   public getStats(): IWorkflowLifecycleStats {
     const workflows = Array.from(this.workflows.values());
@@ -436,7 +988,7 @@ export class WorkflowLifecycleManager extends EventEmitter {
   }
 
   /**
-   * Clean up completed/failed workflows
+   * Clean up completed/failed workflows (in-memory)
    */
   public async cleanup(): Promise<void> {
     logger.info('Starting workflow cleanup');
@@ -652,4 +1204,18 @@ export class WorkflowLifecycleManager extends EventEmitter {
     };
     workflow.updatedAt = new Date();
   }
-} 
+}
+
+// Re-export types and helpers from models
+export {
+  WorkflowESStatus,
+  ExecutionPointerStatus,
+  getStatusLabel,
+  getExecutionPointerStatusLabel,
+  WorkflowInstanceModel,
+  type IWorkflowInstanceDocument,
+  type IWorkflowInstanceFilter,
+  type IWorkflowInstancePagination,
+  type IPaginatedWorkflowInstances,
+  type IExecutionPointer,
+};

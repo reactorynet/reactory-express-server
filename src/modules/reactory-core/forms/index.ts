@@ -1,4 +1,5 @@
 import Application from './Application';
+import ApplicationUsers from './Application/ApplicationUsers';
 import Applications from './Applications';
 import ReactoryContentCapture from './ReactoryContentCapture';
 import ReactoryContentList from './ReactoryContentList';
@@ -14,6 +15,7 @@ import WorkflowForms from './Workflow'
 
 export default [
   Application,
+  ApplicationUsers,
   Applications,
   ReactoryContentCapture,
   ReactoryContentList,

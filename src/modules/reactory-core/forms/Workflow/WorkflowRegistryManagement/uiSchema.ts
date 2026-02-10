@@ -47,7 +47,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
             variant: 'body2',
             format: '${rowData.nameSpace}.${rowData.name}@${rowData.version}',
             copyToClipboard: true,
-            style: {
+            style: {            
               fontFamily: 'monospace',
               fontWeight: 600,
               color: '#1976d2'
@@ -63,11 +63,11 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
     // Active Status Badge
     {
       title: 'Status',
-      field: 'isActive',
+      field: 'status',
       width: 120,
       component: 'StatusBadgeWidget',
       propsMap: {
-        'rowData.isActive': 'value'
+        'rowData.status': 'value'
       },
       props: {
         uiSchema: {
@@ -75,115 +75,35 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
             variant: 'filled',
             size: 'small',
             valueMap: {
-              'true': 'ACTIVE',
-              'false': 'INACTIVE'
+              'ACTIVE': 'ACTIVE',
+              'INACTIVE': 'INACTIVE',
+              'PAUSED': 'PAUSED',
+              'CANCELLED': 'CANCELLED',
+              'COMPLETED': 'COMPLETED',
+              'FAILED': 'FAILED'
             },
             colorMap: {
-              'true': '#4caf50',
-              'false': '#757575'
+              'ACTIVE': '#4caf50',
+              'INACTIVE': '#757575',
+              'PAUSED': '#ff9800',
+              'CANCELLED': '#757575',
+              'COMPLETED': '#4caf50',
+              'FAILED': '#f44336'
             },
             iconMap: {
-              'true': 'check_circle',
-              'false': 'cancel'
+              'ACTIVE': 'check_circle',
+              'INACTIVE': 'cancel',
+              'PAUSED': 'pause_circle',
+              'CANCELLED': 'cancel',
+              'COMPLETED': 'check_circle',
+              'FAILED': 'error'
             }
           }
         }
       },
       defaultSort: 'desc'
     },
-    
-    // Workflow Name
-    {
-      title: 'Name',
-      field: 'name',
-      width: 200,
-      component: 'core.LabelComponent@1.0.0',
-      props: {
-        uiSchema: {
-          'ui:options': {
-            variant: 'subtitle1',
-            format: '${rowData.name}',
-            style: {
-              fontWeight: 600
-            }
-          }
-        }
-      }
-    },
-    
-    // Namespace Badge
-    {
-      title: 'Namespace',
-      field: 'nameSpace',
-      width: 150,
-      component: 'StatusBadgeWidget',
-      propsMap: {
-        'rowData.nameSpace': 'value'
-      },
-      props: {
-        uiSchema: {
-          'ui:options': {
-            variant: 'outlined',
-            size: 'small',
-            colorMap: {
-              'core': '#1976d2',
-              'reactory': '#9c27b0',
-              'custom': '#f57c00',
-              'system': '#4caf50'
-            },
-            iconMap: {
-              'core': 'settings',
-              'reactory': 'bolt',
-              'custom': 'extension',
-              'system': 'security'
-            }
-          }
-        }
-      }
-    },
-    
-    // Version
-    {
-      title: 'Version',
-      field: 'version',
-      width: 100,
-      component: 'core.LabelComponent@1.0.0',
-      props: {
-        uiSchema: {
-          'ui:options': {
-            variant: 'body2',
-            format: '${rowData.version}',
-            style: {
-              fontFamily: 'monospace',
-              backgroundColor: '#f5f5f5',
-              padding: '4px 8px',
-              borderRadius: '4px'
-            }
-          }
-        }
-      }
-    },
-    
-    // Description
-    {
-      title: 'Description',
-      field: 'description',
-      width: 300,
-      component: 'core.LabelComponent@1.0.0',
-      props: {
-        uiSchema: {
-          'ui:options': {
-            variant: 'body2',
-            format: '${rowData.description || "No description"}',
-            style: {
-              fontStyle: 'italic',
-              color: '#666'
-            }
-          }
-        }
-      }
-    },
-    
+       
     // Tags as Chips
     {
       title: 'Tags',
@@ -204,47 +124,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
         }
       }
     },
-    
-    // Author
-    {
-      title: 'Author',
-      field: 'author',
-      width: 150,
-      component: 'core.LabelComponent@1.0.0',
-      props: {
-        uiSchema: {
-          'ui:options': {
-            variant: 'body2',
-            format: '${rowData.author || "Unknown"}',
-            icon: 'person'
-          }
-        }
-      }
-    },
-    
-    // Dependencies Count Badge
-    {
-      title: 'Dependencies',
-      field: 'dependencies',
-      width: 120,
-      align: 'center',
-      component: 'CountBadgeWidget',
-      propsMap: {
-        'rowData.dependencies': 'formData'
-      },
-      props: {
-        uiSchema: {
-          'ui:options': {
-            icon: 'link',
-            showZero: true,
-            color: 'default',
-            singularLabel: 'dependency',
-            pluralLabel: 'dependencies'
-          }
-        }
-      }
-    },
-    
+        
     // Total Executions
     {
       title: 'Executions',
@@ -252,6 +132,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
       width: 120,
       align: 'right',
       component: 'core.LabelComponent@1.0.0',
+      breakpoint: 'md',
       props: {
         uiSchema: {
           'ui:options': {
@@ -276,6 +157,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
       propsMap: {
         'rowData.statistics': 'statistics'
       },
+      breakpoint: 'md',
       props: {
         uiSchema: {
           'ui:options': {
@@ -394,10 +276,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
   
   // Header styling
   headerStyle: {
-    backgroundColor: '#f5f5f5',
-    fontWeight: 600,
-    fontSize: '0.875rem',
-    borderBottom: '2px solid #e0e0e0'
+    backgroundColor: 'inherit',    
   },
   
   refreshEvents: [

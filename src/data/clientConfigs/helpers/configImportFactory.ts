@@ -39,27 +39,35 @@ const configImportFactory = () => {
  * */
 "use strict";`;
 
-  let client_configuration_names = '';
-  enabled.forEach((client_name: string, cidx: number) => {
-    logger.debug(`Enabling Reactory Client with KEY 🔑 [${client_name}] `);
-    // eslint-disable-next-line global-require
+  const validImports: string[] = [];
 
-    let import_name = getImportName(client_name);
+  enabled.forEach((client_name: string) => {
+    // Check if typescript/javascript configuration exists
+    const configPath = `./src/data/clientConfigs/${client_name}`;
+    const hasCodeConfig = fs.existsSync(`${configPath}/index.ts`) || fs.existsSync(`${configPath}/index.js`);
 
-    file_contents = `${file_contents}
+    if (hasCodeConfig) {
+      logger.debug(`Enabling Reactory Client with KEY 🔑 [${client_name}] (Code based)`);
+      // eslint-disable-next-line global-require
+      let import_name = getImportName(client_name);
+
+      file_contents = `${file_contents}
 
 /**
  * Generated import for client configuration ${client_name}
  * */ 
 import ${import_name} from '@reactory/server-core/data/clientConfigs/${client_name}/index';`;
-    client_configuration_names = cidx === 0 ? `\t${import_name}` : `${client_configuration_names},\n\t${import_name}`;
+      validImports.push(import_name);
+    } else {
+      logger.debug(`Skipping import generation for client [${client_name}] - assuming YAML configuration.`);
+    }
   });
 
 
   file_contents = `${file_contents}
   
 export default [
-${client_configuration_names}
+  ${validImports.join(',\n  ')}
 ];
 
 `;

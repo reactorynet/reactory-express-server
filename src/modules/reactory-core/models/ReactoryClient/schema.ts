@@ -37,7 +37,11 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
   password: String,
   avatar: String,
   theme: String, 
-  mode: String,  
+  mode: String,
+  owner: {
+    type: ObjectId,
+    ref: 'User',
+  }, 
   themes: [{
   }],
   applicationRoles: [String], 

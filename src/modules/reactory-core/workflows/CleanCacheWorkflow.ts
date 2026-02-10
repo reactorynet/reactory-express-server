@@ -13,7 +13,7 @@ class CleanCache extends StepBody {
   run(context: any) {
     Cache.clean();
     logger.debug(
-      `WF: Cleaning Cache ${moment(this.when).format("YYYY-MM-DD HH:mm:ss")}`
+      `WF: Cleaning Cache ${moment().format("YYYY-MM-DD HH:mm:ss")}`
     );
     return ExecutionResult.next();
   }
@@ -40,8 +40,7 @@ class CleanCacheWorkflow implements WorkflowBase<{interval: number, enabled: boo
       )
       .then(CleanCache)
       .input((step: { when: number; props: any }, data: { props: any }) => {
-        step.when = moment().valueOf();
-        Cache.clean();
+        step.when = moment().valueOf();       
         step.props = data.props;
       })
       .then(AfterCacheClean)
@@ -55,17 +54,17 @@ class CleanCacheWorkflow implements WorkflowBase<{interval: number, enabled: boo
 }
 
 CleanCacheWorkflow.meta = {
+  id: "core.CleanCacheWorkflow@1.0.0",
   nameSpace: "core",
   name: "CleanCacheWorkflow",
   version: "1.0.0",
   component: CleanCacheWorkflow,
   category: "workflow",
-  autoStart: true,
+  autoStart: false,
   props: {
     interval: 1000 * 30,
     enabled: true,
   },
-  id: "core.CleanCacheWorkflow@1.0.0",
 } as Reactory.Workflow.IWorkflow;
 
 export default CleanCacheWorkflow;

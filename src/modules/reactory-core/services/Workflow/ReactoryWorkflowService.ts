@@ -25,6 +25,12 @@ import {
   IFilteredSchedulesResponse,
   IPaginatedAuditLogs,
   IWorkflowStatusResponse,
+  IWorkflowHistoryFilter,
+  IWorkflowHistoryPagination,
+  IPaginatedWorkflowHistory,
+  IWorkflowHistoryItem,
+  IWorkflowExecutionStats,
+  WorkflowESStatus,
 } from './types';
 import { IScheduleConfig } from '@reactory/server-modules/reactory-core/workflow/Scheduler/Scheduler';
 import { IWorkflowInstance, IWorkflowLifecycleStats } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager';
@@ -137,18 +143,11 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       const workflowRunner = await this.getWorkflowRunner();
       const systemStatus = await this.getSystemStatus();
       
-      const schedulerStats: ISchedulerStats = await workflowRunner?.getScheduler()?.getStats() || {
+      const schedulerStats: ISchedulerStats = workflowRunner?.getScheduler()?.getStats() || {
         activeSchedules: 0,
-        inactiveSchedules: 0,
         totalSchedules: 0,
-        scheduledExecutions: 0,
-        executionsToday: 0,
-        missedExecutions: 0,
-        nextExecution: undefined,
-        lastExecution: undefined,
         totalRuns: 0,
         totalErrors: 0,
-        // averageExecutionDelay: 0 // Removed as it is not in ISchedulerStats
       };
 
       return {
@@ -169,16 +168,33 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       const workflowRunner = await this.getWorkflowRunner();
       const configManager = workflowRunner?.getConfigurationManager();
       
-      const configurations = await configManager?.getAllConfigurations() || {};
-      const validation = await configManager?.validateAllConfigurations() || {
-        isValid: true,
-        errors: [],
-        warnings: []
-      };
+      const configurations = configManager?.getAllConfigurations() || {};
+      
+      // Validate all configurations
+      const errors: any[] = [];
+      const warnings: any[] = [];
+      let isValid = true;
+      
+      for (const [key, config] of Object.entries(configurations)) {
+        const validation = configManager?.validateConfiguration(config as any);
+        if (validation && !validation.isValid) {
+          isValid = false;
+          if (validation.errors) {
+            errors.push(...validation.errors.map((e: any) => ({ ...e, configKey: key })));
+          }
+        }
+        if (validation?.warnings) {
+          warnings.push(...validation.warnings.map((w: any) => ({ ...w, configKey: key })));
+        }
+      }
 
       return {
         configurations,
-        validation
+        validation: {
+          isValid,
+          errors,
+          warnings
+        }
       };
     } catch (error) {
       this.context.log('Error getting workflow configurations', { error }, 'error');
@@ -389,9 +405,9 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     try {
       const workflowRunner = await this.getWorkflowRunner();
       const [nameSpace, nameVersion] = workflowId.split('.');
-      const [name, version] = nameVersion.split('@');
+      const [name, version] = nameVersion?.split('@') || [workflowId, '1.0.0'];
       
-      const instance = await workflowRunner?.startWorkflow(name, version || '1.0.0', input);
+      const instance = await workflowRunner?.startWorkflow(name, version || '1.0.0', input, this.context);
 
       return instance;
     } catch (error) {
@@ -450,6 +466,226 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       return {
         success: false,
         message: `Failed to cancel workflow instance: ${error.message}`
+      };
+    }
+  }
+
+  // ============================================
+  // Workflow History (MongoDB Persistence)
+  // ============================================
+
+  /**
+   * Get paginated workflow history from MongoDB
+   * @param filter - Filter options for querying workflow history
+   * @param pagination - Pagination options
+   * @returns Paginated workflow history
+   */
+  async getWorkflowHistory(
+    filter?: IWorkflowHistoryFilter,
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      
+      return await lifecycleManager.getWorkflowHistory(filter, pagination);
+    } catch (error) {
+      this.context.log('Error getting workflow history', { error, filter, pagination }, 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Get a single workflow history item by instance ID
+   * @param instanceId - The workflow instance ID
+   * @returns The workflow history item or null if not found
+   */
+  async getWorkflowHistoryById(instanceId: string): Promise<IWorkflowHistoryItem | null> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      
+      return await lifecycleManager.getWorkflowHistoryById(instanceId);
+    } catch (error) {
+      this.context.log('Error getting workflow history by ID', { error, instanceId }, 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Get workflow history by workflow definition ID
+   * @param workflowDefinitionId - The workflow definition ID (e.g., 'core.CleanCacheWorkflow@1.0.0')
+   * @param pagination - Pagination options
+   * @returns Paginated workflow history
+   */
+  async getWorkflowHistoryByDefinitionId(
+    workflowDefinitionId: string,
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      
+      return await lifecycleManager.getWorkflowHistoryByDefinitionId(workflowDefinitionId, pagination);
+    } catch (error) {
+      this.context.log('Error getting workflow history by definition ID', { error, workflowDefinitionId }, 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Get workflow history by status
+   * @param status - The status or array of statuses to filter by
+   * @param pagination - Pagination options
+   * @returns Paginated workflow history
+   */
+  async getWorkflowHistoryByStatus(
+    status: WorkflowESStatus | WorkflowESStatus[],
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      
+      return await lifecycleManager.getWorkflowHistoryByStatus(status, pagination);
+    } catch (error) {
+      this.context.log('Error getting workflow history by status', { error, status }, 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Get workflow execution statistics from MongoDB
+   * @returns Workflow execution statistics including counts by status and by workflow definition
+   */
+  async getWorkflowExecutionStats(): Promise<IWorkflowExecutionStats> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      
+      return await lifecycleManager.getWorkflowExecutionStats();
+    } catch (error) {
+      this.context.log('Error getting workflow execution stats', { error }, 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Search workflow history with text search
+   * @param searchTerm - The search term to match against workflow definition ID, description, or instance ID
+   * @param pagination - Pagination options
+   * @returns Paginated workflow history
+   */
+  async searchWorkflowHistory(
+    searchTerm: string,
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      
+      return await lifecycleManager.searchWorkflowHistory(searchTerm, pagination);
+    } catch (error) {
+      this.context.log('Error searching workflow history', { error, searchTerm }, 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Get recent workflow executions
+   * @param limit - Maximum number of results (default: 10)
+   * @returns Array of recent workflow history items
+   */
+  async getRecentWorkflowExecutions(limit: number = 10): Promise<IWorkflowHistoryItem[]> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      
+      return await lifecycleManager.getRecentWorkflowExecutions(limit);
+    } catch (error) {
+      this.context.log('Error getting recent workflow executions', { error, limit }, 'error');
+      throw error;
+    }
+  }
+
+  // ============================================
+  // Workflow History Management
+  // ============================================
+
+  /**
+   * Delete a single workflow execution history item
+   * @param instanceId - The workflow instance ID to delete
+   * @returns Operation result
+   */
+  async deleteWorkflowHistory(instanceId: string): Promise<IWorkflowOperationResult> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      
+      const result = await lifecycleManager.deleteWorkflowHistory(instanceId);
+      
+      return {
+        success: result.success,
+        message: result.message,
+        data: { deletedCount: result.deletedCount }
+      };
+    } catch (error) {
+      this.context.log('Error deleting workflow history', { error, instanceId }, 'error');
+      return {
+        success: false,
+        message: `Failed to delete workflow history: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Delete multiple workflow execution history items
+   * @param instanceIds - Array of workflow instance IDs to delete
+   * @returns Operation result
+   */
+  async deleteWorkflowHistoryBatch(instanceIds: string[]): Promise<IWorkflowOperationResult> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      
+      const result = await lifecycleManager.deleteWorkflowHistoryBatch(instanceIds);
+      
+      return {
+        success: result.success,
+        message: result.message,
+        data: { deletedCount: result.deletedCount }
+      };
+    } catch (error) {
+      this.context.log('Error deleting workflow history batch', { error, instanceIds }, 'error');
+      return {
+        success: false,
+        message: `Failed to delete workflow history batch: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Clear all workflow execution history for a specific workflow definition
+   * @param workflowDefinitionId - The workflow definition ID
+   * @returns Operation result
+   */
+  async clearWorkflowHistory(workflowDefinitionId: string): Promise<IWorkflowOperationResult> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      
+      const result = await lifecycleManager.clearWorkflowHistory(workflowDefinitionId);
+      
+      return {
+        success: result.success,
+        message: result.message,
+        data: { deletedCount: result.deletedCount }
+      };
+    } catch (error) {
+      this.context.log('Error clearing workflow history', { error, workflowDefinitionId }, 'error');
+      return {
+        success: false,
+        message: `Failed to clear workflow history: ${error.message}`
       };
     }
   }
@@ -786,7 +1022,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   async startWorkflowLegacy(name: string, data: any): Promise<boolean> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
-      await workflowRunner?.startWorkflow(name, '1.0.0', data.input || {});
+      await workflowRunner?.startWorkflow(name, '1.0.0', data.input || {}, this.context);
       return true;
     } catch (error) {
       this.context.log('Error starting workflow (legacy)', { error, name, data }, 'error');

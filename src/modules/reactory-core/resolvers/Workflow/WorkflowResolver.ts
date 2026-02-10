@@ -9,8 +9,13 @@ import {
   IWorkflowFilterInput,
   IInstanceFilterInput,
   IAuditFilterInput,
-  IPaginationInput
+  IPaginationInput,
+  IWorkflowHistoryFilter,
+  IWorkflowHistoryPagination,
+  WorkflowESStatus,
 } from '../../services/Workflow/types';
+// IScheduleConfig imported for future use in schedule-related resolvers
+// import { IScheduleConfig } from 'modules/reactory-core/workflow/Scheduler/Scheduler';
 
 
 const getWorkflowService = (context: Reactory.Server.IReactoryContext): IReactoryWorkflowService => {
@@ -82,6 +87,19 @@ class WorkflowResolver {
     return workflowService.getWorkflow(params.namespace, params.name);
   }
 
+  @roles(["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
+  @query("workflowWithId")
+  async getWorkflowWithId(
+    obj: any,
+    params: {
+      id: string
+    },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    return workflowService.getWorkflowWithId(params.id);
+  }
+
   // Workflow Instance Queries
   @roles(["USER"], 'args.context')
   @query("workflowInstances")
@@ -108,12 +126,148 @@ class WorkflowResolver {
     return workflowService.getWorkflowInstance(params.id);
   }
 
+  // Workflow Execution History Queries (MongoDB persistence)
+  @roles(["USER"], 'args.context')
+  @query("workflowExecutionHistory")
+  async getWorkflowExecutionHistory(
+    obj: any,
+    params: {
+      filter?: {
+        workflowDefinitionId?: string;
+        status?: number[];
+        createdAfter?: Date;
+        createdBefore?: Date;
+        completedAfter?: Date;
+        completedBefore?: Date;
+        searchTerm?: string;
+      };
+      pagination?: {
+        page?: number;
+        limit?: number;
+        sortField?: 'createTime' | 'completeTime' | 'workflowDefinitionId' | 'status';
+        sortOrder?: 'ASC' | 'DESC';
+      };
+    },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    
+    // Map GraphQL filter to service filter
+    const filter: IWorkflowHistoryFilter | undefined = params.filter ? {
+      workflowDefinitionId: params.filter.workflowDefinitionId,
+      status: params.filter.status?.map(s => s as WorkflowESStatus),
+      createdAfter: params.filter.createdAfter,
+      createdBefore: params.filter.createdBefore,
+      completedAfter: params.filter.completedAfter,
+      completedBefore: params.filter.completedBefore,
+      searchTerm: params.filter.searchTerm,
+    } : undefined;
+
+    // Map GraphQL pagination to service pagination
+    const pagination: IWorkflowHistoryPagination | undefined = params.pagination ? {
+      page: params.pagination.page,
+      limit: params.pagination.limit,
+      sortField: params.pagination.sortField,
+      sortOrder: params.pagination.sortOrder?.toLowerCase() as 'asc' | 'desc',
+    } : undefined;
+
+    return workflowService.getWorkflowHistory(filter, pagination);
+  }
+
+  @roles(["USER"], 'args.context')
+  @query("workflowExecutionHistoryById")
+  async getWorkflowExecutionHistoryById(
+    obj: any,
+    params: { instanceId: string },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    return workflowService.getWorkflowHistoryById(params.instanceId);
+  }
+
+  @roles(["USER"], 'args.context')
+  @query("workflowExecutionHistoryByDefinitionId")
+  async getWorkflowExecutionHistoryByDefinitionId(
+    obj: any,
+    params: {
+      workflowDefinitionId: string;
+      pagination?: {
+        page?: number;
+        limit?: number;
+        sortField?: 'createTime' | 'completeTime' | 'workflowDefinitionId' | 'status';
+        sortOrder?: 'ASC' | 'DESC';
+      };
+    },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    
+    const pagination: IWorkflowHistoryPagination | undefined = params.pagination ? {
+      page: params.pagination.page,
+      limit: params.pagination.limit,
+      sortField: params.pagination.sortField,
+      sortOrder: params.pagination.sortOrder?.toLowerCase() as 'asc' | 'desc',
+    } : undefined;
+
+    return workflowService.getWorkflowHistoryByDefinitionId(params.workflowDefinitionId, pagination);
+  }
+
+  @roles(["USER"], 'args.context')
+  @query("searchWorkflowExecutionHistory")
+  async searchWorkflowExecutionHistory(
+    obj: any,
+    params: {
+      searchTerm: string;
+      pagination?: {
+        page?: number;
+        limit?: number;
+        sortField?: 'createTime' | 'completeTime' | 'workflowDefinitionId' | 'status';
+        sortOrder?: 'ASC' | 'DESC';
+      };
+    },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    
+    const pagination: IWorkflowHistoryPagination | undefined = params.pagination ? {
+      page: params.pagination.page,
+      limit: params.pagination.limit,
+      sortField: params.pagination.sortField,
+      sortOrder: params.pagination.sortOrder?.toLowerCase() as 'asc' | 'desc',
+    } : undefined;
+
+    return workflowService.searchWorkflowHistory(params.searchTerm, pagination);
+  }
+
+  @roles(["USER"], 'args.context')
+  @query("recentWorkflowExecutions")
+  async getRecentWorkflowExecutions(
+    obj: any,
+    params: { limit?: number },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    return workflowService.getRecentWorkflowExecutions(params.limit || 10);
+  }
+
+  @roles(["USER"], 'args.context')
+  @query("workflowExecutionStats")
+  async getWorkflowExecutionStats(
+    obj: any,
+    params: any,
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    return workflowService.getWorkflowExecutionStats();
+  }
+
   // Workflow Schedule Queries
   @roles(["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
   @query("workflowSchedules")
   async getWorkflowSchedules(
     obj: any,
     params: {
+      filter?: IWorkflowFilterInput,
       pagination?: IPaginationInput
     },
     context: Reactory.Server.IReactoryContext
@@ -130,7 +284,7 @@ class WorkflowResolver {
     context: Reactory.Server.IReactoryContext
   ) {
     const workflowService = getWorkflowService(context);
-    return workflowService.getWorkflowSchedule(params.id);
+    return workflowService.getWorkflowSchedulesForWorkflowId(params.id);
   }
 
   // Audit and Monitoring Queries
@@ -352,6 +506,64 @@ class WorkflowResolver {
     }
   }
 
+  // Workflow Execution History Management Mutations
+  @roles(["ADMIN", "WORKFLOW_ADMIN"], 'args.context')
+  @mutation("deleteWorkflowExecutionHistory")
+  async deleteWorkflowExecutionHistory(
+    obj: any,
+    params: { instanceId: string },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      return await workflowService.deleteWorkflowHistory(params.instanceId);
+    } catch (error) {
+      context.log('Error deleting workflow execution history', { error, params }, 'error', 'WorkflowResolver');
+      return {
+        success: false,
+        message: `Failed to delete workflow execution history: ${error.message}`
+      };
+    }
+  }
+
+  @roles(["ADMIN", "WORKFLOW_ADMIN"], 'args.context')
+  @mutation("deleteWorkflowExecutionHistoryBatch")
+  async deleteWorkflowExecutionHistoryBatch(
+    obj: any,
+    params: { instanceIds: string[] },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      return await workflowService.deleteWorkflowHistoryBatch(params.instanceIds);
+    } catch (error) {
+      context.log('Error deleting workflow execution history batch', { error, params }, 'error', 'WorkflowResolver');
+      return {
+        success: false,
+        message: `Failed to delete workflow execution history batch: ${error.message}`
+      };
+    }
+  }
+
+  @roles(["ADMIN", "WORKFLOW_ADMIN"], 'args.context')
+  @mutation("clearWorkflowExecutionHistory")
+  async clearWorkflowExecutionHistory(
+    obj: any,
+    params: { workflowDefinitionId: string },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      return await workflowService.clearWorkflowHistory(params.workflowDefinitionId);
+    } catch (error) {
+      context.log('Error clearing workflow execution history', { error, params }, 'error', 'WorkflowResolver');
+      return {
+        success: false,
+        message: `Failed to clear workflow execution history: ${error.message}`
+      };
+    }
+  }
+
   // Legacy Mutation
   @roles(["USER"], 'args.context')
   @mutation("startWorkflowLegacy")
@@ -411,9 +623,9 @@ class WorkflowResolver {
     }
     
     // Fetch user by ID if needed
-    const userService = context.getService('core.UserService@1.0.0');
+    const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
     if (userService && obj.createdBy) {
-      return userService.getUserById(obj.createdBy);
+      return userService.findUserById(obj.createdBy);
     }
     
     return null;
@@ -425,9 +637,64 @@ class WorkflowResolver {
     return obj.dependencies || [];
   }
 
-  @property("AuditLogEntry", "id")
-  auditLogId(obj: any) {
-    return obj._id || obj.id;
+  @property("RegisteredWorkflow", "schedules")
+  async workflowSchedules(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
+    const workflowService = getWorkflowService(context);
+    
+    // Build the workflow ID from the object properties
+    const workflowId = obj.id || `${obj.nameSpace}.${obj.name}@${obj.version}`;
+    
+    try {
+      const result = await workflowService.getWorkflowSchedulesForWorkflowId(workflowId);
+      return result;
+    } catch (error) {
+      context.log('Error fetching schedules for workflow', { error, workflowId }, 'error', 'WorkflowResolver');
+      return [];
+    }
+  }
+
+  @property("RegisteredWorkflow", "instances")
+  async workflowInstances(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
+    const { id } = obj;
+    try {
+      const workflowService = getWorkflowService(context);
+      const pagedInstances = await workflowService.getWorkflowInstances({ id });
+      return pagedInstances.instances || [];
+    } catch (error) {
+      context.log('Error fetching instances for workflow', { error, id }, 'error', 'WorkflowResolver');
+      return [];
+    }
+  }
+
+  @property("RegisteredWorkflow", "status")
+  async workflowStatus(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
+    if(obj.status) {
+      return obj.status;
+    }
+
+    const workflowService = getWorkflowService(context);
+    const status = await workflowService.getWorkflowStatus(obj._id || obj.id);
+    return status.status;
+  }
+
+  @property("RegisteredWorkflow", "executionHistory")
+  async workflowExecutionHistory(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
+    const workflowService = getWorkflowService(context);
+    
+    // Build the workflow definition ID from the object properties
+    const workflowDefinitionId = obj.id || `${obj.nameSpace}.${obj.name}@${obj.version}`;
+    
+    try {
+      const result = await workflowService.getWorkflowHistoryByDefinitionId(workflowDefinitionId, {
+        page: 1,
+        limit: 10,
+        sortOrder: 'desc'
+      });
+      return result.instances || [];
+    } catch (error) {
+      context.log('Error fetching execution history for workflow', { error, workflowDefinitionId }, 'error', 'WorkflowResolver');
+      return [];
+    }
   }
 }
 

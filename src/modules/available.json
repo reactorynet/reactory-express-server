@@ -4,7 +4,109 @@
     "name": "ReactoryServer",
     "key": "reactory-core",
     "fqn": "core.ReactoryServer@1.0.0",
-    "moduleEntry": "core/index.js",
-    "license": "MIT"  
+    "moduleEntry": "reactory-core/index.ts",
+    "license": "Apache-2.0",
+    "git": "git@github.com:reactorynet/reactory-express-server.git",
+    "shop": "https://reactory.net/shop/modules/reactory"
+  },
+  {
+    "id": "reactory-telemetry",
+    "name": "Reactory Telemetry",
+    "key": "reactory-telemetry",
+    "fqn": "reactory.ReactoryTelemetry@1.0.0",
+    "moduleEntry": "reactory-telemetry/index.ts",
+    "license": "private",
+    "git": "git@github.com:reactorynet/reactory-express-server-telemetry.git",
+    "shop": "https://reactory.net/shop/modules/reactory-telemetry"
+  },
+  {
+    "id": "reactory-azure",
+    "name": "Reactory Azure",
+    "key": "reactory-azure",
+    "fqn": "core.ReactoryAzure@1.0.0",
+    "moduleEntry": "reactory-azure/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/reactory-azure"
+  },
+  {
+    "id": "reactory-reactor",
+    "name": "Reactory Reactor",
+    "key": "reactory-reactor",
+    "fqn": "reactory.Reactor@1.0.0",
+    "moduleEntry": "reactory-reactor/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/reactory-reactor"
+  },
+  {
+    "id": "reactory-queue",
+    "name": "Reactory Queue",
+    "key": "reactory-queue",
+    "fqn": "reactory.Queue@1.0.0",
+    "moduleEntry": "reactory-queue/index.ts",
+    "license": "private",
+    "shop": "https://reactory.net/shop/modules/reactory-queue"
+  },
+  {
+    "id": "reactory-slack",
+    "name": "Reactory Slack",
+    "key": "reactory-slack",
+    "fqn": "reactory.SlackModule@1.0.0",
+    "moduleEntry": "reactory-slack/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/reactory-slack"
+  },
+  {
+    "id": "reactory-kyc",
+    "name": "Reactory KYC",
+    "key": "reactory-kyc",
+    "fqn": "reactory.KYC@1.0.0",
+    "moduleEntry": "reactory-kyc/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/reactory-kyc"
+  },
+  {
+    "id": "zepz-engineer",
+    "name": "ZEPZ Engineer",
+    "key": "zepz-engineer",
+    "fqn": "zepz.EngineerModule@1.0.0",
+    "moduleEntry": "zepz-engineer/index.ts",
+    "license": "private",
+    "shop": "https://reactory.net/shop/modules/zepz-engineer"
+  },
+  {
+    "id": "zepz-customer",
+    "name": "ZEPZ Customer",
+    "key": "zepz-customer",
+    "fqn": "zepz.CustomerModule@1.0.0",
+    "moduleEntry": "zepz-customer/index.ts",
+    "license": "private",
+    "shop": "https://reactory.net/shop/modules/zepz-customer"
+  },
+  {
+    "id": "reactory-communicator",
+    "name": "Reactory Communicator",
+    "key": "reactory-communicator",
+    "fqn": "reactory.CommunicatorModule@1.0.0",
+    "moduleEntry": "reactory-communicator/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/reactory-communicator"
+  },  
+  {
+    "id": "reactory-kb",
+    "name": "Reactory KB",
+    "key": "reactory-kb",
+    "fqn": "reactory.KB@1.0.0",
+    "moduleEntry": "reactory-kb/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/reactory-kb"
+  },
+  {
+    "id": "reactory-classroom",
+    "name": "Reactory Classroom",
+    "key": "reactory-classroom",
+    "fqn": "classroom.ReactoryClassroom@1.0.0",
+    "moduleEntry": "reactory-classroom/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/reactory-classroom"
   }
 ]

@@ -6,6 +6,7 @@ import moment from 'moment';
 import logger from '../../../../logging';
 import { WorkflowRunner } from '../WorkflowRunner/WorkflowRunner';
 import { IWorkflow } from '../WorkflowRunner/WorkflowRunner';
+import { ReactoryAuditService } from '@reactory/server-modules/reactory-core/services/ReactoryAuditService';
 
 // Import cron-parser using require to avoid TypeScript import issues
 const CronParser = require('cron-parser');
@@ -31,6 +32,10 @@ export interface IScheduleConfig {
   };
   timeout?: number; // in seconds
   maxConcurrent?: number;
+  monitoring?: { 
+    enabled: boolean;
+    metrics: string[];
+  }
 }
 
 export interface IScheduledWorkflow {
@@ -62,10 +67,14 @@ export class WorkflowScheduler {
   };
   private _isInitialized: boolean = false;
   private scheduleDirectory: string;
+  private watcher: fs.FSWatcher | null = null;
+  private reloadDebounceTimer: NodeJS.Timeout | null = null;
+  private auditService: ReactoryAuditService;
 
   constructor(workflowRunner: WorkflowRunner) {
     this.workflowRunner = workflowRunner;
     this.scheduleDirectory = path.join(process.env.APP_DATA_ROOT || './data', 'workflows', 'schedules');
+    this.auditService = new ReactoryAuditService({}, workflowRunner.context);
   }
 
   /**
@@ -82,6 +91,9 @@ export class WorkflowScheduler {
       
       // Ensure the schedule directory exists
       await this.ensureScheduleDirectory();
+      
+      // Setup the schedule directory watcher
+      this.setupScheduleDirectoryWatcher();
       
       // Load all schedule configurations
       await this.loadSchedules();
@@ -109,9 +121,42 @@ export class WorkflowScheduler {
     } catch (error) {
       logger.error(`Failed to create schedule directory: ${this.scheduleDirectory}`, error);
       throw error;
+    }    
+  }
+
+  private setupScheduleDirectoryWatcher(): void {
+    if (this.watcher) {
+      this.watcher.close();
+      this.watcher = null;
+    }
+
+    try {
+      // add a watch on the schedule directory for new files or file changes
+      this.watcher = fs.watch(this.scheduleDirectory, (eventType, filename) => {
+        if (filename && (filename.endsWith('.yaml') || filename.endsWith('.yml'))) {
+          logger.info(`Schedule file event: ${eventType} on ${filename}`);
+          this.debouncedReload();
+        }
+      });
+
+      this.watcher.on('error', (error) => {
+        logger.error('Schedule directory watcher error', error);
+      });
+      
+    } catch (error) {
+      logger.error('Failed to setup schedule directory watcher', error);
     }
   }
 
+  private debouncedReload(): void {
+    if (this.reloadDebounceTimer) {
+      clearTimeout(this.reloadDebounceTimer);
+    }
+
+    this.reloadDebounceTimer = setTimeout(() => {
+      this.reloadSchedules().catch(err => logger.error('Error reloading schedules from watcher', err));
+    }, 1000); // 1 second debounce
+  }
   /**
    * Load all schedule configurations from YAML files
    */
@@ -187,8 +232,7 @@ export class WorkflowScheduler {
       config.id &&
       config.name &&
       config.workflow &&
-      config.workflow.id &&
-      config.workflow.version &&
+      config.workflow.id &&      
       config.schedule &&
       config.schedule.cron
     );
@@ -572,6 +616,16 @@ export class WorkflowScheduler {
   public async stop(): Promise<void> {
     try {
       logger.info('Stopping WorkflowScheduler');
+
+      if (this.watcher) {
+        this.watcher.close();
+        this.watcher = null;
+      }
+
+      if (this.reloadDebounceTimer) {
+        clearTimeout(this.reloadDebounceTimer);
+        this.reloadDebounceTimer = null;
+      }
       
       // Stop all schedules
       for (const [id] of this.schedules) {

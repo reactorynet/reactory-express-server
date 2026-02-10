@@ -1,0 +1,267 @@
+<%# 
+  Template for generating gRPC service wrapper
+  This template creates a Reactory service that wraps protoc-generated gRPC client code
+%>
+import Reactory from '@reactory/reactory-core';
+import { service } from '@reactory/server-core/application/decorators';
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import path from 'path';
+<%_ if (grpc && grpc.packageName) { _%>
+// Import generated types from protoc
+import * as <%= helpers.camelCase(name) %>Proto from './generated/<%= helpers.kebabCase(name) %>_pb';
+import { <%= serviceName %>Client } from './generated/<%= helpers.kebabCase(name) %>_grpc_pb';
+<%_ } _%>
+
+type <%= name %>Context = Reactory.Server.IReactoryContext;
+type <%= name %>Props = Reactory.Service.IReactoryServiceProps;
+
+/**
+ * <%= description %>
+ * 
+ * This service is a Reactory wrapper around the gRPC client generated from <%= grpc.protoPath %>.
+ * The protoc-generated files are located in ./generated/
+ * 
+ * Generated: <%= generatedDate %>
+ * Source: <%= sourceFile || 'service.yaml' %>
+ */
+@service({
+  id: '<%= id %>',
+  nameSpace: '<%= nameSpace %>',
+  name: '<%= name %>',
+  version: '<%= version %>',
+  description: '<%= description %>',
+  serviceType: 'grpc',
+<%_ if (tags && tags.length > 0) { _%>
+  tags: <%= JSON.stringify(tags) %>,
+<%_ } _%>
+<%_ if (dependencies && dependencies.length > 0) { _%>
+  dependencies: <%= JSON.stringify(dependencies) %>,
+<%_ } _%>
+})
+class <%= name %> implements Reactory.Service.IReactoryService {
+  name: string = '<%= name %>';
+  nameSpace: string = '<%= nameSpace %>';
+  version: string = '<%= version %>';
+
+  private context: <%= name %>Context;
+  private readonly props: <%= name %>Props;
+<%_ if (dependencies && dependencies.length > 0) { _%>
+  // Service dependencies
+<%_ dependencies.forEach(function(dep) { _%>
+  private readonly <%= dep.alias %>: any;
+<%_ }); _%>
+<%_ } _%>
+  
+  // gRPC client and connection
+  private client: any;
+  private channel: grpc.Channel | null = null;
+  private readonly grpcConfig: {
+    host: string;
+    port: number;
+    credentials: grpc.ChannelCredentials;
+    options?: grpc.ChannelOptions;
+  };
+
+  constructor(props: <%= name %>Props, context: <%= name %>Context) {
+    this.props = props;
+    this.context = context;
+
+<%_ if (dependencies && dependencies.length > 0) { _%>
+    // Inject dependencies
+<%_ dependencies.forEach(function(dep) { _%>
+    this.<%= dep.alias %> = (props.dependencies as any)?.<%= dep.alias %>;
+<%_ }); _%>
+<%_ } _%>
+
+    // Configure gRPC connection
+    const grpcHost = process.env.GRPC_<%= helpers.upperSnakeCase(name) %>_HOST || 'localhost';
+    const grpcPort = parseInt(process.env.GRPC_<%= helpers.upperSnakeCase(name) %>_PORT || '50051');
+    const useTLS = process.env.GRPC_<%= helpers.upperSnakeCase(name) %>_TLS === 'true';
+
+    this.grpcConfig = {
+      host: grpcHost,
+      port: grpcPort,
+      credentials: useTLS 
+        ? grpc.credentials.createSsl()
+        : grpc.credentials.createInsecure(),
+      options: {
+        'grpc.max_receive_message_length': 1024 * 1024 * 100, // 100MB
+        'grpc.max_send_message_length': 1024 * 1024 * 100,
+      },
+    };
+  }
+
+  /**
+   * Initialize service and gRPC client connection
+   */
+  async onStart(): Promise<void> {
+    this.context.log(`<%= name %> starting...`);
+    
+    try {
+      // Load proto file and create client
+      const protoPath = path.resolve(__dirname, '<%= grpc.protoPath %>');
+      const packageDefinition = await protoLoader.load(protoPath, {
+        keepCase: true,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true,
+      });
+
+      const grpcObject = grpc.loadPackageDefinition(packageDefinition);
+      
+      <%_ if (grpc.packageName) { _%>
+      // Access service through package
+      const servicePackage = <%= grpc.packageName.split('.').map(p => `grpcObject.${p}`).join('.') %>;
+      const ServiceClient = servicePackage.<%= serviceName %>;
+      <%_ } else { _%>
+      const ServiceClient = grpcObject.<%= serviceName %>;
+      <%_ } _%>
+
+      // Create client instance
+      const address = `${this.grpcConfig.host}:${this.grpcConfig.port}`;
+      this.client = new ServiceClient(address, this.grpcConfig.credentials, this.grpcConfig.options);
+      
+      this.context.log(`<%= name %> connected to gRPC server at ${address}`);
+    } catch (error) {
+      this.context.error(`Failed to initialize <%= name %>:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cleanup and close gRPC connections
+   */
+  async onShutdown(): Promise<void> {
+    this.context.log(`<%= name %> shutting down...`);
+    
+    if (this.client && this.client.close) {
+      this.client.close();
+    }
+    
+    if (this.channel) {
+      this.channel.close();
+      this.channel = null;
+    }
+  }
+
+<%_ if (grpc && grpc.endpoints && grpc.endpoints.length > 0) { _%>
+  // ===========================================
+  // gRPC Method Wrappers
+  // ===========================================
+<%_ grpc.endpoints.forEach(function(endpoint) { _%>
+
+  /**
+   * <%= endpoint.description || endpoint.rpc %>
+<%_ if (endpoint.streaming) { _%>
+   * Streaming mode: <%= endpoint.streaming %>
+<%_ } _%>
+   */
+  async <%= endpoint.handler %>(request: any): Promise<any> {
+    const context = this.context;
+    const methodName = '<%= endpoint.rpc %>';
+    
+    return new Promise((resolve, reject) => {
+      try {
+<%_ if (endpoint.streaming === 'none' || !endpoint.streaming) { _%>
+        // Unary call
+        this.client[methodName](request, (error: grpc.ServiceError | null, response: any) => {
+          if (error) {
+            context.error(`gRPC call <%= endpoint.rpc %> failed:`, error);
+            reject(error);
+          } else {
+            resolve(response);
+          }
+        });
+<%_ } else if (endpoint.streaming === 'server') { _%>
+        // Server streaming
+        const call = this.client[methodName](request);
+        const results: any[] = [];
+        
+        call.on('data', (chunk: any) => {
+          results.push(chunk);
+        });
+        
+        call.on('end', () => {
+          resolve(results);
+        });
+        
+        call.on('error', (error: grpc.ServiceError) => {
+          context.error(`gRPC streaming call <%= endpoint.rpc %> failed:`, error);
+          reject(error);
+        });
+<%_ } else if (endpoint.streaming === 'client') { _%>
+        // Client streaming
+        const call = this.client[methodName]((error: grpc.ServiceError | null, response: any) => {
+          if (error) {
+            context.error(`gRPC client streaming <%= endpoint.rpc %> failed:`, error);
+            reject(error);
+          } else {
+            resolve(response);
+          }
+        });
+        
+        // Request should be an array of messages
+        if (Array.isArray(request)) {
+          request.forEach((msg: any) => call.write(msg));
+          call.end();
+        } else {
+          call.write(request);
+          call.end();
+        }
+<%_ } else if (endpoint.streaming === 'bidirectional') { _%>
+        // Bidirectional streaming
+        const call = this.client[methodName]();
+        const results: any[] = [];
+        
+        call.on('data', (chunk: any) => {
+          results.push(chunk);
+        });
+        
+        call.on('end', () => {
+          resolve(results);
+        });
+        
+        call.on('error', (error: grpc.ServiceError) => {
+          context.error(`gRPC bidirectional streaming <%= endpoint.rpc %> failed:`, error);
+          reject(error);
+        });
+        
+        // Request should be an array of messages
+        if (Array.isArray(request)) {
+          request.forEach((msg: any) => call.write(msg));
+          call.end();
+        } else {
+          call.write(request);
+          call.end();
+        }
+<%_ } _%>
+      } catch (error) {
+        context.error(`Error in <%= endpoint.handler %>:`, error);
+        reject(error);
+      }
+    });
+  }
+<%_ }); _%>
+<%_ } _%>
+
+  /**
+   * Health check for the gRPC service
+   */
+  async healthCheck(): Promise<{ healthy: boolean; message: string }> {
+    try {
+      // Simple connectivity check
+      if (!this.client) {
+        return { healthy: false, message: 'Client not initialized' };
+      }
+      
+      // You can add a health check RPC call here if your service supports it
+      return { healthy: true, message: 'Connected' };
+    } catch (error) {
+      return { healthy: false, message: error.message };
+    }
+  }
+}
+
+export default <%= name %>;

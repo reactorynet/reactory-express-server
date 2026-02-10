@@ -5,6 +5,9 @@
   "description": "Reactory Core Server",
   "main": "server.js",
   "module": "reactory-api",
+  "bin": {
+    "reactory": "./bin/reactory"
+  },
   "private": true,
   "type": "commonjs",
   "author": {
@@ -47,7 +50,7 @@
     "@mui/material": "5.6.1",
     "@mui/styles": "5.6.1",
     "@opendocsg/pdf2md": "0.2.1",
-    "@reactory/reactory-core": "file:./lib/reactory-reactory-core-1.1.0-RC1-d745ce.tgz",
+    "@reactory/reactory-core": "file:./lib/reactory-reactory-core-1.1.0-RC1-ffc57f.tgz",
     "@sendgrid/client": "8.1.3",
     "@sendgrid/mail": "8.1.3",
     "@types/ioredis": "^5.0.0",

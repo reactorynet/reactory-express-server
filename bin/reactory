@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+
+#
+# Reactory CLI Executable
+# This script provides a unified command-line interface for Reactory operations
+#
+
+# Default values
+CONFIG_NAME="${REACTORY_CONFIG_NAME:-reactory}"
+CONFIG_ENV="${REACTORY_CONFIG_ENV:-local}"
+DEBUG_MODE=false
+WATCH_MODE=false
+VERBOSE=false
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Parse command line arguments
+COMMAND=""
+KWARGS=""
+
+show_help() {
+  cat << EOF
+Reactory CLI - Unified command-line interface for Reactory
+
+Usage: reactory <command> [options]
+
+Commands:
+  service-gen             Generate TypeScript services from YAML definitions
+  module-gen              Generate a new Reactory module structure
+  workflow                Execute workflow-related commands
+  help                    Show this help message
+  list [module]           List available commands for a module
+  modules                 List all available modules
+
+Options:
+  --cname=<name>          Configuration name (default: reactory)
+  --cenv=<env>            Configuration environment (default: local)
+  --debug                 Enable debug mode
+  --watch                 Enable watch mode
+  --verbose               Enable verbose output
+  -h, --help              Show help message
+
+Environment Variables:
+  REACTORY_CONFIG_NAME    Default configuration name
+  REACTORY_CONFIG_ENV     Default configuration environment
+
+Examples:
+  # Generate service from YAML
+  reactory service-gen -c ./service.yaml -o ./generated
+
+  # List all available commands
+  reactory list
+
+  # List commands for a specific module
+  reactory list reactory-core
+
+  # Generate a new module
+  reactory module-gen --name MyModule --namespace myapp
+
+EOF
+}
+
+# Command name mapping (hyphenated to PascalCase)
+declare -A COMMAND_MAP=(
+  ["service-gen"]="ServiceGen"
+  ["module-gen"]="ModuleGen"
+  ["schema-gen"]="SchemaGen"
+  ["csv2json"]="Csv2Json"
+  ["init-system"]="InitializeSystemUser"
+)
+
+# Parse arguments
+SHOW_REACTORY_HELP=false
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    help)
+      # If help is a command by itself
+      if [ -z "$COMMAND" ]; then
+        SHOW_REACTORY_HELP=true
+      fi
+      shift
+      ;;
+    --cname=*)
+      CONFIG_NAME="${1#*=}"
+      shift
+      ;;
+    --cenv=*)
+      CONFIG_ENV="${1#*=}"
+      shift
+      ;;
+    --debug)
+      DEBUG_MODE=true
+      shift
+      ;;
+    --watch)
+      WATCH_MODE=true
+      shift
+      ;;
+    --verbose)
+      VERBOSE=true
+      shift
+      ;;
+    *)
+      # If we haven't captured a command yet, this is it
+      if [ -z "$COMMAND" ]; then
+        RAW_COMMAND="$1"
+        # Check if this command needs mapping
+        if [ -n "${COMMAND_MAP[$1]}" ]; then
+          COMMAND="${COMMAND_MAP[$1]}"
+        else
+          COMMAND="$1"
+        fi
+        shift
+      else
+        # Everything else goes to KWARGS
+        KWARGS="$KWARGS $1"
+        shift
+      fi
+      ;;
+  esac
+done
+
+# Show help if requested and no command specified
+if [ "$SHOW_REACTORY_HELP" = true ] || { [ -z "$COMMAND" ] && [ -z "$KWARGS" ]; }; then
+  show_help
+  exit 0
+fi
+
+# Set the environment file based on the selected parameters
+ENV_FILE="$PROJECT_ROOT/config/$CONFIG_NAME/.env.$CONFIG_ENV"
+
+# Check if environment file exists
+if [ ! -f "$ENV_FILE" ]; then
+  echo "Error: Environment file not found: $ENV_FILE"
+  echo "Please ensure the configuration exists or set REACTORY_CONFIG_NAME and REACTORY_CONFIG_ENV"
+  exit 1
+fi
+
+# Verify that node_modules exist
+if [ ! -d "$PROJECT_ROOT/node_modules" ]; then
+  echo "Error: node_modules directory not found in $PROJECT_ROOT"
+  echo "Please run 'yarn install' or 'npm install' first"
+  exit 1
+fi
+
+# Determine the CLI script path
+CLI_SCRIPT="$PROJECT_ROOT/src/reactory/cli/index.ts"
+
+if [ ! -f "$CLI_SCRIPT" ]; then
+  echo "Error: CLI script not found: $CLI_SCRIPT"
+  exit 1
+fi
+
+# Build Node options
+NODE_OPTIONS="--max_old_space_size=2000000"
+if [ "$DEBUG_MODE" = true ]; then
+  NODE_OPTIONS="$NODE_OPTIONS --inspect"
+fi
+
+# Prepare the command
+if [ "$VERBOSE" = true ]; then
+  echo "Configuration: $CONFIG_NAME"
+  echo "Environment: $CONFIG_ENV"
+  echo "ENV File: $ENV_FILE"
+  echo "Command: $COMMAND"
+  echo "Arguments: $KWARGS"
+  echo "Project Root: $PROJECT_ROOT"
+fi
+
+# Execute the CLI
+cd "$PROJECT_ROOT" || exit 1
+
+if [ "$WATCH_MODE" = true ]; then
+  NODE_PATH=./src env-cmd -f "$ENV_FILE" npx nodemon \
+    -e js,ts,tsx,graphql \
+    --exec npx babel-node "$CLI_SCRIPT" \
+    --presets @babel/env \
+    --extensions ".js,.ts" \
+    $NODE_OPTIONS \
+    -- $COMMAND $KWARGS
+else
+  NODE_PATH=./src env-cmd -f "$ENV_FILE" npx babel-node "$CLI_SCRIPT" \
+    --presets @babel/env \
+    --extensions ".js,.ts" \
+    $NODE_OPTIONS \
+    -- $COMMAND $KWARGS
+fi
+
+# Capture exit code
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -eq 0 ]; then
+  [ "$VERBOSE" = true ] && echo "Command completed successfully"
+  exit 0
+else
+  echo "Error: Command failed with exit code $EXIT_CODE"
+  exit $EXIT_CODE
+fi

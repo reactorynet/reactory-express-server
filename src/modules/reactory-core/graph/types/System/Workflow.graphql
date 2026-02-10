@@ -86,6 +86,7 @@ enum DependencyType {
 }
 
 type RegisteredWorkflow {
+  id: String!
   name: String!
   nameSpace: String!
   version: String!
@@ -95,7 +96,16 @@ type RegisteredWorkflow {
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean
+  status: String
+  configuration: WorkflowConfig
+  instances: [WorkflowInstance!]
   dependencies: [WorkflowDependency!]
+  schedule: WorkflowSchedule
+  schedules: [WorkflowSchedule!]
+  statistics: WorkflowStatistics
+  errors: [WorkflowError!]
+  """Execution history from MongoDB persistence (last 10 executions)"""
+  executionHistory: [WorkflowExecutionHistory!]
 }
 
 type WorkflowRegistryStats {
@@ -188,22 +198,6 @@ enum WorkflowStepStatus {
   SKIPPED
 }
 
-type WorkflowDetails {
-  name: String!
-  nameSpace: String!
-  version: String!
-  description: String
-  configuration: WorkflowConfig
-  dependencies: [WorkflowDependency!]
-  schedule: WorkflowSchedule
-  instances: [WorkflowInstance!]
-  statistics: WorkflowStatistics
-  tags: [String!]
-  author: String
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
 type WorkflowStatistics {
   totalExecutions: Int
   successfulExecutions: Int
@@ -214,21 +208,44 @@ type WorkflowStatistics {
 # Workflow Schedule Types
 type WorkflowSchedule {
   id: String!
-  workflowName: String!
+  name: String!
+  description: String
+  workflow: WorkflowReference!
+  schedule: ScheduleSettings!
+  properties: JSON
+  retry: RetrySettings
+  timeout: Int
+  maxConcurrent: Int
+  monitoring: MonitoringSettings
+  lastRun: DateTime
+  nextRun: DateTime
+  runCount: Int
+  errorCount: Int
+  isRunning: Boolean
+  enabled: Boolean
+}
+
+type WorkflowReference {
+  id: String!
   nameSpace: String!
-  cronExpression: String!
+  name: String!
+  version: String!
+}
+
+type ScheduleSettings {
+  cron: String!
   timezone: String
+  enabled: Boolean
+}
+
+type RetrySettings {
+  attempts: Int!
+  delay: Int!
+}
+
+type MonitoringSettings {
   enabled: Boolean!
-  startDate: DateTime
-  endDate: DateTime
-  maxExecutions: Int
-  executionCount: Int
-  lastExecution: DateTime
-  nextExecution: DateTime
-  input: JSON
-  createdAt: DateTime
-  updatedAt: DateTime
-  createdBy: String
+  metrics: [String!]!
 }
 
 type SchedulerStats {
@@ -312,21 +329,79 @@ input UpdateScheduleInput {
   description: String
 }
 
+"""
+Filters for querying workflows. Filters are applied using logical AND.
+If a filter is not provided, it will not be applied.
+If a filter is provided, it will be applied to the query.
+"""
 input WorkflowFilterInput {
+  """
+  Search string to filter workflows by name, namespace, version, or tags
+  """
   searchString: String
+  """
+  Filter workflows by namespace
+  """
   nameSpace: String
+  """
+  Filter workflows by name
+  """
+  name: String
+  """
+  Filter workflows by version
+  """
+  version: String
+  """
+  Filter workflows by ids
+  """
+  ids: [String!]
+  """
+  Filter workflows by tags
+  """
   tags: [String!]
+  """
+  Filter workflows by status
+  """
   status: WorkflowInstanceStatus
+  """
+  Filter workflows by author
+  """
   author: String
+  """
+  Filter workflows by active status
+  """
   isActive: Boolean
 }
 
+"""
+Filters for querying workflow instances. Filters are applied using logical AND.
+If a filter is not provided, it will not be applied.
+If a filter is provided, it will be applied to the query.
+"""
 input InstanceFilterInput {
+  """
+  Filter workflow instances by workflow name
+  """
   workflowName: String
+  """
+  Filter workflow instances by namespace
+  """
   nameSpace: String
+  """
+  Filter workflow instances by status
+  """
   status: WorkflowInstanceStatus
+  """
+  Filter workflow instances by created by
+  """
   createdBy: String
+  """
+  Filter workflow instances by start time from
+  """
   startTimeFrom: DateTime
+  """
+  Filter workflow instances by start time to
+  """
   startTimeTo: DateTime
 }
 
@@ -380,6 +455,156 @@ type PaginatedSchedules {
 type PaginatedAuditLogs {
   entries: [AuditLogEntry!]!
   pagination: PaginationInfo!
+}
+
+# Workflow Execution History Types (from MongoDB persistence)
+"""
+Represents a workflow execution history item from the MongoDB persistence layer.
+This contains the complete execution history of a workflow instance.
+"""
+type WorkflowExecutionHistory {
+  """Unique identifier for the workflow instance"""
+  id: String!
+  """The workflow definition ID (e.g., 'core.CleanCacheWorkflow@1.0.0')"""
+  workflowDefinitionId: String!
+  """Version of the workflow definition"""
+  version: Int!
+  """Current status of the workflow (0=Pending, 1=Running, 2=Complete, 3=Terminated, 4=Suspended)"""
+  status: Int!
+  """Human-readable status label"""
+  statusLabel: String!
+  """Optional description"""
+  description: String
+  """When the workflow was created"""
+  createTime: DateTime!
+  """When the workflow completed (if completed)"""
+  completeTime: DateTime
+  """Duration in milliseconds"""
+  duration: Int
+  """Input data for the workflow"""
+  data: JSON
+  """Execution pointers (step details)"""
+  executionPointers: [ExecutionPointerSummary!]!
+  """Total number of steps"""
+  stepCount: Int!
+  """Number of completed steps"""
+  completedStepCount: Int!
+  """Number of failed steps"""
+  failedStepCount: Int!
+}
+
+"""
+Summary of an execution pointer (workflow step)
+"""
+type ExecutionPointerSummary {
+  """Unique identifier for the step execution"""
+  id: String!
+  """Step identifier within the workflow definition"""
+  stepId: Int!
+  """Status of the step"""
+  status: Int!
+  """Human-readable status label"""
+  statusLabel: String!
+  """When the step started"""
+  startTime: DateTime
+  """When the step ended"""
+  endTime: DateTime
+  """Duration in milliseconds"""
+  duration: Int
+  """Number of retry attempts"""
+  retryCount: Int!
+  """Whether the step is currently active"""
+  active: Boolean!
+}
+
+"""
+Workflow execution statistics aggregated from MongoDB
+"""
+type WorkflowExecutionStats {
+  """Total number of workflow instances"""
+  total: Int!
+  """Number of pending instances"""
+  pending: Int!
+  """Number of runnable (running) instances"""
+  runnable: Int!
+  """Number of completed instances"""
+  complete: Int!
+  """Number of terminated instances"""
+  terminated: Int!
+  """Number of suspended instances"""
+  suspended: Int!
+  """Average completion time in milliseconds"""
+  averageCompletionTime: Float
+  """Statistics grouped by workflow definition"""
+  byWorkflowDefinition: [WorkflowDefinitionStats!]!
+}
+
+"""
+Statistics for a specific workflow definition
+"""
+type WorkflowDefinitionStats {
+  """The workflow definition ID"""
+  workflowDefinitionId: String!
+  """Total executions"""
+  total: Int!
+  """Completed executions"""
+  complete: Int!
+  """Terminated executions"""
+  terminated: Int!
+}
+
+"""
+Paginated response for workflow execution history
+"""
+type PaginatedWorkflowHistory {
+  """List of workflow execution history items"""
+  instances: [WorkflowExecutionHistory!]!
+  """Pagination info"""
+  pagination: PaginationInfo!
+}
+
+"""
+Filter input for workflow execution history queries
+"""
+input WorkflowHistoryFilterInput {
+  """Filter by workflow definition ID (supports wildcards with *)"""
+  workflowDefinitionId: String
+  """Filter by status (0=Pending, 1=Running, 2=Complete, 3=Terminated, 4=Suspended)"""
+  status: [Int!]
+  """Filter by creation time (after this date)"""
+  createdAfter: DateTime
+  """Filter by creation time (before this date)"""
+  createdBefore: DateTime
+  """Filter by completion time (after this date)"""
+  completedAfter: DateTime
+  """Filter by completion time (before this date)"""
+  completedBefore: DateTime
+  """Search term to match against workflow definition ID, description, or instance ID"""
+  searchTerm: String
+}
+
+"""
+Pagination input for workflow history queries
+"""
+input WorkflowHistoryPaginationInput {
+  """Page number (1-based)"""
+  page: Int = 1
+  """Number of items per page"""
+  limit: Int = 10
+  """Field to sort by"""
+  sortField: WorkflowHistorySortField = createTime
+  """Sort order"""
+  sortOrder: SortOrder = DESC
+}
+
+"""
+Fields available for sorting workflow history
+"""
+enum WorkflowHistorySortField {
+  createTime
+  completeTime
+  workflowDefinitionId
+  status
 }
 
 # Response Types
@@ -447,9 +672,14 @@ extend type Query {
   workflow(
     nameSpace: String!
     name: String!
-  ): WorkflowDetails
+    version: String
+  ): [RegisteredWorkflow]
 
-  # Workflow Instances
+  workflowWithId(
+    id: String!
+  ): RegisteredWorkflow
+
+  # Workflow Instances (in-memory)
   workflowInstances(
     filter: InstanceFilterInput
     pagination: PaginationInput
@@ -457,12 +687,58 @@ extend type Query {
 
   workflowInstance(id: String!): WorkflowInstance
 
+  # Workflow Execution History (MongoDB persistence)
+  """
+  Get paginated workflow execution history from MongoDB.
+  Supports filtering by workflow definition, status, and date ranges.
+  """
+  workflowExecutionHistory(
+    filter: WorkflowHistoryFilterInput
+    pagination: WorkflowHistoryPaginationInput
+  ): PaginatedWorkflowHistory
+
+  """
+  Get a single workflow execution history item by instance ID.
+  """
+  workflowExecutionHistoryById(
+    instanceId: String!
+  ): WorkflowExecutionHistory
+
+  """
+  Get workflow execution history for a specific workflow definition.
+  """
+  workflowExecutionHistoryByDefinitionId(
+    workflowDefinitionId: String!
+    pagination: WorkflowHistoryPaginationInput
+  ): PaginatedWorkflowHistory
+
+  """
+  Search workflow execution history with text matching.
+  """
+  searchWorkflowExecutionHistory(
+    searchTerm: String!
+    pagination: WorkflowHistoryPaginationInput
+  ): PaginatedWorkflowHistory
+
+  """
+  Get recent workflow executions (most recent first).
+  """
+  recentWorkflowExecutions(
+    limit: Int = 10
+  ): [WorkflowExecutionHistory!]!
+
+  """
+  Get aggregated workflow execution statistics.
+  """
+  workflowExecutionStats: WorkflowExecutionStats
+
   # Workflow Schedules
   workflowSchedules(
+    filter: WorkflowFilterInput
     pagination: PaginationInput
   ): PaginatedSchedules
 
-  workflowSchedule(id: String!): WorkflowSchedule
+  workflowSchedule(id: String!): [WorkflowSchedule]
 
   # Audit and Monitoring
   workflowAuditLog(
@@ -507,6 +783,23 @@ extend type Mutation {
   startSchedule(scheduleId: String!): WorkflowOperationResult
   stopSchedule(scheduleId: String!): WorkflowOperationResult
   reloadSchedules: WorkflowOperationResult
+
+  # Workflow Execution History Management
+  """
+  Delete a single workflow execution history item by instance ID.
+  """
+  deleteWorkflowExecutionHistory(instanceId: String!): WorkflowOperationResult
+
+  """
+  Delete multiple workflow execution history items by instance IDs.
+  """
+  deleteWorkflowExecutionHistoryBatch(instanceIds: [String!]!): WorkflowOperationResult
+
+  """
+  Clear all workflow execution history for a specific workflow definition.
+  Use with caution - this operation cannot be undone.
+  """
+  clearWorkflowExecutionHistory(workflowDefinitionId: String!): WorkflowOperationResult
 
   # Legacy compatibility
   startWorkflowLegacy(name: String!, data: WorkflowInput): Boolean

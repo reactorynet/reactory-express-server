@@ -1,4 +1,5 @@
 import fs from "fs";
+import crypto from "crypto";
 import path from "path";
 import { cwd } from "process";
 import Reactory from "@reactory/reactory-core";
@@ -6,6 +7,61 @@ import { ENVIRONMENT } from "@reactory/server-core/types/constants";
 
 const util = require("util");
 const exec = util.promisify(require("child_process").exec);
+
+/**
+ * Compute a SHA-1 checksum directly from a string buffer.
+ * This avoids any file I/O race conditions by hashing in-memory data.
+ */
+const checksumFromString = (content: string, algo: string = "sha1"): string => {
+  return crypto.createHash(algo).update(content, "utf8").digest("hex");
+};
+
+/**
+ * Write a file durably using open/write/fsync/close to guarantee the data
+ * is flushed to the filesystem before returning. Also ensures the parent
+ * directory exists.
+ */
+const durableWriteFile = (filePath: string, content: string): void => {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  const fd = fs.openSync(filePath, "w");
+  try {
+    fs.writeSync(fd, content, 0, "utf8");
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+};
+
+/**
+ * Safely delete a file if it exists. Handles concurrent deletion gracefully.
+ */
+const safeUnlink = (filePath: string): void => {
+  try {
+    fs.unlinkSync(filePath);
+  } catch (err: any) {
+    // ENOENT means the file is already gone -- that's fine
+    if (err?.code !== "ENOENT") {
+      throw err;
+    }
+  }
+};
+
+/**
+ * Simple per-key async mutex to prevent concurrent compilations of the
+ * same module. Each module id gets its own lock chain.
+ */
+const compileLocks = new Map<string, Promise<void>>();
+const acquireCompileLock = (moduleId: string): { release: () => void; ready: Promise<void> } => {
+  // Wait for any previous compilation of this module to finish
+  const previous = compileLocks.get(moduleId) ?? Promise.resolve();
+  let release: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  compileLocks.set(moduleId, previous.then(() => gate));
+  return { release: release!, ready: previous };
+};
 
 /**
  * Service class that provides access to forms for the logged in user
@@ -119,140 +175,114 @@ class ReactoryModuleCompilerService
   ): Promise<Reactory.Forms.IReactoryFormResource> {
     const that = this;
 
-    const sourceFile: string = path.join(
-      process.env.APP_DATA_ROOT,
-      "plugins",
-      "__runtime__",
-      `src/source_${module.id}.${module.fileType}`
-    );
-    const compiledFile: string = path.join(
-      process.env.APP_DATA_ROOT,
-      "plugins",
-      "__runtime__",
-      `lib/${module.id}.min.js`
-    );
-    const newSource: string = path.join(
-      process.env.APP_DATA_ROOT,
-      "plugins",
-      "__runtime__",
-      `src/tmp_${module.id}.${module.fileType}`
-    );
-    let doCompile: boolean = false;
-    let checksum: string = "";
+    const runtimeBase = path.join(process.env.APP_DATA_ROOT, "plugins", "__runtime__");
+    const sourceFile = path.join(runtimeBase, `src/source_${module.id}.${module.fileType}`);
+    const compiledFile = path.join(runtimeBase, `lib/${module.id}.min.js`);
 
-    const { NODE_ENV } = ENVIRONMENT;
-    const isDevelopment = NODE_ENV === "development";
-    
-    fs.writeFileSync(newSource, module.src);
+    // ---------------------------------------------------------------
+    // Acquire a per-module lock so concurrent requests for the same
+    // module are serialised.  This prevents one call's cleanup from
+    // deleting files another call is still reading.
+    // ---------------------------------------------------------------
+    const lock = acquireCompileLock(module.id);
+    await lock.ready;
 
-    if (
-      fs.existsSync(sourceFile) === false ||
-      fs.existsSync(compiledFile) === false
-    ) {
+    try {
+      return await this.doCompileModule(module, sourceFile, compiledFile, runtimeBase);
+    } catch (fatalError) {
+      this.context.log(
+        `Fatal error compiling module ${module.id}`,
+        { fatalError },
+        "error",
+        ReactoryModuleCompilerService.reactory.id
+      );
+      return this.createFailureResource(module, compiledFile, "Unexpected compilation error");
+    } finally {
+      lock.release();
+    }
+  }
+
+  /**
+   * Internal compilation logic, called under the per-module lock.
+   */
+  private async doCompileModule(
+    module: Reactory.Forms.IReactoryFormModule,
+    sourceFile: string,
+    compiledFile: string,
+    runtimeBase: string,
+  ): Promise<Reactory.Forms.IReactoryFormResource> {
+    const that = this;
+
+    let doCompile = false;
+    let checksum = "";
+
+    // ---------------------------------------------------------------
+    // Compute the incoming source checksum in-memory -- no temp file
+    // needed and no ReadStream race condition possible.
+    // ---------------------------------------------------------------
+    const newChecksum = checksumFromString(module.src, "sha1");
+
+    if (!fs.existsSync(sourceFile) || !fs.existsSync(compiledFile)) {
       doCompile = true;
     } else {
-      checksum = await this.fileService
-        .generateFileChecksum(sourceFile, "sha1")
-        .then();
-      let newChecksum = await this.fileService
-        .generateFileChecksum(newSource, "sha1")
-        .then();
+      // The existing source file IS on disk, so use the fileService
+      // ReadStream-based checksum -- but wrap it with a .catch so an
+      // unhandled error event cannot crash the process.
+      try {
+        checksum = await this.fileService
+          .generateFileChecksum(sourceFile, "sha1");
+      } catch (checksumErr) {
+        this.context.log(
+          `Could not checksum existing source ${sourceFile}, will recompile`,
+          { checksumErr },
+          "warning",
+          ReactoryModuleCompilerService.reactory.id
+        );
+        checksum = "";
+      }
+
       if (newChecksum !== checksum) {
         doCompile = true;
-        checksum = newChecksum;
       }
     }
 
-    const compileWithRollup = async (): Promise<{
-      success: boolean;
-      messages: string[];
-    }> => {
-      const results: any = {
-        messages: [],
-        success: false,
-      };
+    // ---------------------------------------------------------------
+    // Compile with rollup if the source has changed
+    // ---------------------------------------------------------------
+    if (doCompile) {
+      const result = await this.compileWithRollup(module, sourceFile, compiledFile, runtimeBase);
 
-      fs.writeFileSync(sourceFile, module.src);
-      // create a bundle
-      const $config = DefaultRollupOptions({
-        enviroment: process.env.NODE_ENV || "development",
-        inputFile: sourceFile,
-        outputFile: compiledFile,
-        moduleName: `reactory-plugin-${module.id
-          .replace(".", "-")
-          .replace("@", "-")}`,
-      });
-
-      const rollupConfigFile: string = path.join(
-        process.env.APP_DATA_ROOT,
-        "plugins",
-        "__runtime__",
-        `rollup.${module.id}.js`
-      );
-      fs.writeFileSync(rollupConfigFile, $config);
-      try {
-        const { stdout, stderr, error } = await exec(
-          `npx rollup --config rollup.${module.id}.js`,
-          {
-            cwd: path.join(
-              process.env.APP_DATA_ROOT,
-              "plugins",
-              "__runtime__"
-            ),
-            encoding: "utf8",
-          }
-        );
-        that.context.log(
-          `Compiled resource ${module.id}`,
-          { stdout, stderr, error },
-          "debug",
-          ReactoryModuleCompilerService.reactory.id
-        ); // This prints all deferred warnings
-        if (fs.existsSync(compiledFile) === true) {
-          results.success = true;
-        }
-      } catch (err) {
-        that.context.log("Error executing shell command", { err }, "error");
-      }
-      return results;
-    };
-
-    if (doCompile === true) {
-      const result = await compileWithRollup().then();
-      if (result.success === false) {
-        let notifications = [];
-        notifications.push(
-          `$reactory.createNotification("Compilation error on module ${module.id}, see console log for details", { type: 'warning' });`
-        );
-        let compilerErrors: string[] = [];
-        result.messages.forEach((message) => {
-          // `$reactory.log("${message}", { compilationError: true }, "error");`
-          that.context.log("Error compiling module", { message }, "error");
-          compilerErrors.push(message);
+      if (!result.success) {
+        const notification = `$reactory.createNotification("Compilation error on module ${module.id}, see console log for details", { type: 'warning' });`;
+        const errorLogs = result.messages.map((msg) => {
+          that.context.log("Error compiling module", { message: msg }, "error");
+          return `$reactory.log("Compilation Failure for ${module.id} --> [${msg}]", { module: ${JSON.stringify(module)} }, 'error');`;
         });
 
-        let failureScript = ` 
-        if(window && window.reactory) {
-          var $reactory = window.reactory.api;
-          ${notifications.map((n) => `${n};\n`)}
-          ${compilerErrors.map(
-            (compilerResult) =>
-              `$reactory.log("Compilation Failure for ${
-                module.id
-              } --> [${compilerResult}]", { module: ${JSON.stringify(
-                module
-              )} }, 'error');\n`
-          )}            
+        const failureScript = `
+          if(window && window.reactory) {
+            var $reactory = window.reactory.api;
+            ${notification}
+            ${errorLogs.join("\n")}
+          }
+        `;
+
+        try {
+          durableWriteFile(compiledFile, failureScript);
+        } catch (writeErr) {
+          that.context.log(
+            `Failed to write failure script for module ${module.id}`,
+            { writeErr },
+            "error",
+            ReactoryModuleCompilerService.reactory.id
+          );
         }
-      `;
-        fs.writeFileSync(compiledFile, failureScript);
       }
+
+      checksum = newChecksum;
     }
-    
-    /**
-     * The module compiler MUST return a valid compiled resource
-     */
-    const resource: Reactory.Forms.IReactoryFormResource = {
+
+    return {
       name: module.id,
       type: "script",
       uri: `${process.env.CDN_ROOT}plugins/__runtime__/lib/${module.id}.min.js?cs=${checksum}`,
@@ -265,11 +295,106 @@ class ReactoryModuleCompilerService
       required: true,
       cacheProvider: "CDN",
     };
+  }
 
-    //always remove the temp file
-    fs.unlinkSync(newSource);
+  /**
+   * Run rollup to bundle a module.
+   * Uses durableWriteFile to guarantee the source and config are fully
+   * flushed to disk before rollup is spawned.
+   */
+  private async compileWithRollup(
+    module: Reactory.Forms.IReactoryFormModule,
+    sourceFile: string,
+    compiledFile: string,
+    runtimeBase: string,
+  ): Promise<{ success: boolean; messages: string[] }> {
+    const result = { success: false, messages: [] as string[] };
 
-    return resource;
+    // Write the source file durably (open → write → fsync → close)
+    durableWriteFile(sourceFile, module.src);
+
+    const $config = DefaultRollupOptions({
+      enviroment: process.env.NODE_ENV || "development",
+      inputFile: sourceFile,
+      outputFile: compiledFile,
+      moduleName: `reactory-plugin-${module.id
+        .replace(".", "-")
+        .replace("@", "-")}`,
+    });
+
+    const rollupConfigFile = path.join(runtimeBase, `rollup.${module.id}.js`);
+    durableWriteFile(rollupConfigFile, $config);
+
+    try {
+      const { stdout, stderr, error } = await exec(
+        `npx rollup --config rollup.${module.id}.js`,
+        { cwd: runtimeBase, encoding: "utf8" },
+      );
+
+      this.context.log(
+        `Compiled resource ${module.id}`,
+        { stdout, stderr, error },
+        "debug",
+        ReactoryModuleCompilerService.reactory.id,
+      );
+
+      if (fs.existsSync(compiledFile)) {
+        result.success = true;
+      }
+    } catch (execErr) {
+      this.context.log(
+        `Error executing rollup for module ${module.id}`,
+        { execErr },
+        "error",
+        ReactoryModuleCompilerService.reactory.id,
+      );
+    }
+
+    return result;
+  }
+
+  /**
+   * Creates a failure resource when compilation fails.
+   * Returns a valid resource object that displays an error notification
+   * in the browser, ensuring the service always returns a response.
+   */
+  private createFailureResource(
+    module: Reactory.Forms.IReactoryFormModule,
+    compiledFile: string,
+    errorMessage: string,
+  ): Reactory.Forms.IReactoryFormResource {
+    const failureScript = `
+      if(window && window.reactory) {
+        var $reactory = window.reactory.api;
+        $reactory.createNotification("Compilation error on module ${module.id}: ${errorMessage}", { type: 'error' });
+        $reactory.log("Compilation Failure for ${module.id} --> [${errorMessage}]", { module: "${module.id}" }, 'error');
+      }
+    `;
+
+    try {
+      durableWriteFile(compiledFile, failureScript);
+    } catch (writeErr) {
+      this.context.log(
+        `Could not write failure script for module ${module.id}`,
+        { writeErr, compiledFile },
+        "error",
+        ReactoryModuleCompilerService.reactory.id,
+      );
+    }
+
+    return {
+      name: module.id,
+      type: "script",
+      uri: `${process.env.CDN_ROOT}plugins/__runtime__/lib/${module.id}.min.js?error=true`,
+      id: module.id,
+      signature: "",
+      signatureMethod: "sha1",
+      crossOrigin: false,
+      signed: false,
+      expr: "",
+      required: true,
+      cacheProvider: "CDN",
+    };
   }
 
   async onStartup(): Promise<any> {
@@ -342,7 +467,7 @@ class ReactoryModuleCompilerService
         "debug",
         ReactoryModuleCompilerService.reactory.id
       );
-      const { stdout, stderr } = await exec("npm install", {
+      const { stdout, stderr } = await exec("yarn install", {
         cwd: runtimePath,
       });
 

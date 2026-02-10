@@ -38,6 +38,11 @@ const schema: Reactory.Schema.ISchema = {
             type: 'boolean',
             title: 'Active'
           },
+          status: {
+            type: 'string',
+            title: 'Status',
+            enum: ['INACTIVE', 'ACTIVE', 'PAUSED', 'CANCELLED', 'COMPLETED', 'FAILED']
+          },
           tags: {
             type: 'array',
             title: 'Tags',

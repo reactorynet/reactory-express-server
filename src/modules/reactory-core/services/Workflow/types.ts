@@ -1,7 +1,27 @@
-import { IWorkflowInstance, IWorkflowDependency, IWorkflowLifecycleStats } from "@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager";
+import { 
+  IWorkflowInstance, 
+  IWorkflowDependency, 
+  IWorkflowLifecycleStats,
+  IWorkflowHistoryFilter,
+  IWorkflowHistoryPagination,
+  IPaginatedWorkflowHistory,
+  IWorkflowHistoryItem,
+  IWorkflowExecutionStats,
+  WorkflowESStatus,
+} from "@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager";
 import { ISecurityStats } from "@reactory/server-modules/reactory-core/workflow/SecurityManager/SecurityManager";
 import { IWorkflowConfig } from "@reactory/server-modules/reactory-core/workflow/ConfigurationManager/ConfigurationManager";
 import { IScheduleConfig, IScheduledWorkflow, ISchedulerStats } from "@reactory/server-modules/reactory-core/workflow/Scheduler/Scheduler";
+
+// Re-export types from LifecycleManager for convenience
+export {
+  IWorkflowHistoryFilter,
+  IWorkflowHistoryPagination,
+  IPaginatedWorkflowHistory,
+  IWorkflowHistoryItem,
+  IWorkflowExecutionStats,
+  WorkflowESStatus,
+};
 
 // Workflow Service Types
 export interface IWorkflowSystemStatus {
@@ -237,13 +257,39 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
   getWorkflow(nameSpace: string, name: string): Promise<RegisteredWorkflow>;
   getWorkflowWithId(id: string): Promise<RegisteredWorkflow>;
   
-  // Workflow Instances
+  // Workflow Instances (in-memory)
   getWorkflowInstances(filter?: IInstanceFilterInput, pagination?: IPaginationInput): Promise<IPaginatedInstances>;
   getWorkflowInstance(instanceId: string): Promise<IWorkflowInstance>;
   startWorkflow(workflowId: string, input?: IWorkflowExecutionInput): Promise<IWorkflowInstance>;
   pauseWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
   resumeWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
   cancelWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
+  
+  // Workflow History (MongoDB persistence)
+  getWorkflowHistory(
+    filter?: IWorkflowHistoryFilter,
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory>;
+  getWorkflowHistoryById(instanceId: string): Promise<IWorkflowHistoryItem | null>;
+  getWorkflowHistoryByDefinitionId(
+    workflowDefinitionId: string,
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory>;
+  getWorkflowHistoryByStatus(
+    status: WorkflowESStatus | WorkflowESStatus[],
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory>;
+  getWorkflowExecutionStats(): Promise<IWorkflowExecutionStats>;
+  searchWorkflowHistory(
+    searchTerm: string,
+    pagination?: IWorkflowHistoryPagination
+  ): Promise<IPaginatedWorkflowHistory>;
+  getRecentWorkflowExecutions(limit?: number): Promise<IWorkflowHistoryItem[]>;
+  
+  // Workflow History Management
+  deleteWorkflowHistory(instanceId: string): Promise<IWorkflowOperationResult>;
+  deleteWorkflowHistoryBatch(instanceIds: string[]): Promise<IWorkflowOperationResult>;
+  clearWorkflowHistory(workflowDefinitionId: string): Promise<IWorkflowOperationResult>;
   
   // Workflow Schedules
   getWorkflowSchedules(pagination?: IPaginationInput): Promise<IPaginatedSchedules>;

@@ -1,134 +1,637 @@
+"""
+Enumeration of peer relationship types.
+Used to define the hierarchical or functional relationship between users.
+"""
 enum PeerType {
+  """
+  A colleague or equal in hierarchy.
+  """
   peer
+  
+  """
+  A direct manager or supervisor.
+  """
   manager
+  
+  """
+  A direct report or subordinate.
+  """
   report
+  
+  """
+  An external vendor or supplier.
+  """
   vendor
+  
+  """
+  A client or customer.
+  """
   client
+  
+  """
+  A strategic partner or external collaborator.
+  """
   partner  
 }
 
+"""
+Represents a user's active or past session.
+Used for tracking login activity and security.
+"""
 type UserSession {
+  """
+  Unique identifier for the session.
+  """
   id: ObjID
+  
+  """
+  The host name or IP address from where the session originated.
+  """
   host: String
+  
+  """
+  The client application identifier (e.g., 'reactory-pwa', 'mobile-app').
+  """
   client: String
+  
+  """
+  Date and time when the session started.
+  """
   started: Date
+  
+  """
+  Date and time when the session expires.
+  """
   expires: Date
+  
+  """
+  RefreshToken used to renew this session.
+  """
   refresh: String
 }
 
+"""
+Represents a single peer relationship for a user.
+"""
 type Peer {
+  """
+  The user who is the peer.
+  """
   user: User
+  
+  """
+  The type of relationship (e.g., manager, peer, report).
+  """
   relationship: PeerType
+  
+  """
+  Indicates if the peer is internal to the organization.
+  """
   isInternal: Boolean
+  
+  """
+  Whether an invitation has been sent to this peer.
+  """
   inviteSent: Boolean
+  
+  """
+  Whether the peer relationship has been confirmed.
+  """
   confirmed: Boolean
+  
+  """
+  Date when the relationship was confirmed.
+  """
   confirmedAt: Date
 }
 
+"""
+Container for a user's peer relationships within a specific organization.
+"""
 type UserPeers {
   id: ObjID
+  
+  """
+  The organization context for these peers.
+  """
   organization: Organization
+  
+  """
+  The subject user.
+  """
   user: User
+  
+  """
+  Whether the user is allowed to edit these relationships.
+  """
   allowEdit: Boolean
+  
+  """
+  List of peer relationships.
+  """
   peers: [Peer]
+  
+  """
+  When the peer list was confirmed.
+  """
   confirmedAt: Date
+  
+  """
+  Record creation timestamp.
+  """
   createdAt: Date
+  
+  """
+  Record update timestamp.
+  """
   updatedAt: Date
 }
 
+"""
+Represents a user's membership within a client, organization, and business unit structure.
+This defines their access scope and roles.
+"""
 type UserMembership {
   id: String
+  
+  """
+  The Reactory Client (Tenant) this membership belongs to.
+  """
   client: ReactoryClient
+  
+  """
+  The Organization this membership attaches to.
+  """
   organization: Organization
+  
+  """
+  The specific Business Unit within the organization.
+  """
   businessUnit: BusinessUnit
+  
+  """
+  List of security roles assigned in this context.
+  """
   roles: [String]
+  
+  """
+  Whether this membership is currently active/enabled.
+  """
   enabled: Boolean
+  
+  """
+  Date membership was created.
+  """
   created: Date
+  
+  """
+  Last time this membership context was used/logged into.
+  """
   lastLogin: Date 
 }
 
+"""
+Stores authentication details for external providers or API keys.
+"""
 type UserAuthentication {
   id: ObjID
+  
+  """
+  The provider identifier (e.g. 'google', 'facebook', 'local', 'api-key').
+  """
   provider: String
+  
+  """
+  Provider specific properties (tokens, keys, secrets). Serialized and encrypted at rest.
+  Requires elevated permissions to read.
+  """
   props: Any
+  
+  """
+  Last time this authentication method was used.
+  """
   lastLogin: Date
 }
 
+"""
+System metadata for the user record.
+"""
 type UserMeta {
   id: ObjID
+  
+  """
+  Last synchronization timestamp (for external directory sync).
+  """
   lastSync: Date
+  
+  """
+  Next scheduled synchronization.
+  """
   nextSync: Date
+  
+  """
+  Flag to force synchronization.
+  """
   mustSync: Boolean
+  
+  """
+  External reference ID (e.g. Employee ID, external system ID).
+  """
   reference: String
+  
+  """
+  Owner of the record (system or user).
+  """
   owner: String
+  
+  """
+  Source of the user record (e.g. 'active-directory', 'registration').
+  """
   source: Any
 }
 
 """
 # User
-The core reactory user object
+The core Reactory user entity. Represents a person or system account in the platform.
 """
 type User {
-  id: ObjID!
-  username: String
-  firstName: String
-  fullName: String
-  fullNameWithEmail: String
-  lastName: String
-  dateOfBirth: Date
-  email: String
-  mobileNumber: String
-  deleted: Boolean
-  peers: UserPeers,
-  salt: String,
-  password: String
-  avatar: String
-  authProvider: AuthProvider
-  providerId: String
-  lastLogin: Date
   """
-  Current active membership
+  Unique system identifier for the user.
+  """
+  id: ObjID!
+  
+  """
+  Username (often email or unique handle).
+  """
+  username: String
+  
+  """
+  User's first name.
+  """
+  firstName: String
+  
+  """
+  User's full name (usually concatenated first and last).
+  """
+  fullName: String
+  
+  """
+  Full name including email address.
+  """
+  fullNameWithEmail: String
+  
+  """
+  User's last name.
+  """
+  lastName: String
+  
+  """
+  Date of birth.
+  """
+  dateOfBirth: Date
+  
+  """
+  Primary email address.
+  """
+  email: String
+  
+  """
+  Mobile contact number.
+  """
+  mobileNumber: String
+  
+  """
+  Soft delete flag.
+  """
+  deleted: Boolean
+  
+  """
+  Peers associated with this user.
+  """
+  peers: UserPeers,
+  
+  """
+  Password salt (internal use).
+  """
+  salt: String,
+  
+  """
+  Hashed password (never returned in plain text).
+  """
+  password: String
+  
+  """
+  URL or path to user's avatar image.
+  """
+  avatar: String
+  
+  """
+  Primary authentication provider.
+  """
+  authProvider: AuthProvider
+  
+  """
+  ID specific to the auth provider.
+  """
+  providerId: String
+  
+  """
+  Timestamp of last successful login.
+  """
+  lastLogin: Date
+  
+  """
+  Organization of the currently active membership.
   """
   organization: Organization
+  
   """
-  Business for the active membership
+  Business Unit of the currently active membership.
   """
   businessUnit: BusinessUnit
   
-  roles: [String]
   """
-  The current active membership for the user.
+  Roles assigned in the current active context.
+  """
+  roles: [String]
+  
+  """
+  The fully detailed active membership object.
   """
   activeMembership: UserMembership
+  
+  """
+  All memberships held by this user.
+  """
   memberships: [UserMembership]
+  
+  """
+  History of user sessions.
+  """
   sessionInfo: [UserSession]
+  
+  """
+  List of authentication methods/tokens linked to this user.
+  """
   authentications: [UserAuthentication]
+  
+  """
+  Creation timestamp.
+  """
   createdAt: Float!
+  
+  """
+  Last update timestamp.
+  """
   updatedAt: Float!
+  
+  """
+  Additional system metadata.
+  """
   meta: UserMeta
 }
 
+"""
+Result type for paginated user queries.
+"""
 type PagedUserResults {
+  """
+  Pagination metadata (page, pageSize, total, etc.).
+  """
   paging: PagingResult
+  
+  """
+  List of users for the current page.
+  """
   users: [User]
 }
 
+"""
+Simple user list with pagination metadata.
+Used for returning users with memberships for a specific client.
+"""
+type UserList {
+  """
+  Pagination metadata.
+  """
+  paging: PagingResult
+  
+  """
+  List of users.
+  """
+  users: [User]
+  
+  """
+  Total count of users (ignoring pagination).
+  """
+  totalUsers: Int
+}
+
+"""
+Result of a profile refresh operation.
+"""
 type ProfileRefreshResult {
+  """
+  The updated user object.
+  """
   user: User,
+  
+  """
+  Messages/Warnings generated during the refresh.
+  """
   messages: [ ReactoryUXMessage ]
 }
 
-extend type Query {
-  allUsers: [User],
-  userWithId(id: String!): User!
-  userPeers(id: String!, organizationId: String): UserPeers
-  refreshProfileData(id: String, skipImage: Boolean): ProfileRefreshResult
-  authenticatedUser: User,
-  userInbox(id: String, sort: String, via: String): [Email]
-  searchUser(searchString: String!, sort: String): [User]
-  getUserCredentials(provider: String!): UserAuthentication
+"""
+Standard failure response for user queries.
+"""
+type ReactoryUserQueryFailed {
+  """
+  Error message describing the failure.
+  """
+  message: String
+  
+  """
+  Error code.
+  """
+  code: String  
 }
 
+"""
+Union returning either a successful paged result or a failure.
+"""
+union ReactoryUserQueryResult = ReactoryUserQueryFailed | PagedUserResults
+
+"""
+Input filters for querying users via `ReactoryUsers`.
+"""
+input ReactoryUserFilterInput {
+  """
+  Organization ID to filter users by.
+  """
+  organizationId: String
+
+  """
+  Business unit ID to filter users by.
+  """
+  businessUnitId: String
+
+  """
+  General search string (matches specific fields like name/email).
+  """
+  searchString: String
+
+  """
+  Array of role names. Users must have at least one of these roles (OR logic usually, depends on impl).
+  """
+  roles: [String]
+
+  """
+  Whether to include deleted users in results. Default is false.
+  """
+  includeDeleted: Boolean
+
+  """
+  Filter users created after this date.
+  """
+  createdAfter: Date
+
+  """
+  Filter users created before this date.
+  """
+  createdBefore: Date
+
+  """
+  Filter users who logged in after this date.
+  """
+  lastLoginAfter: Date
+
+  """
+  Filter users who logged in before this date.
+  """
+  lastLoginBefore: Date
+
+  """
+  Case-insensitive partial match on first name.
+  """
+  firstName: String
+
+  """
+  Case-insensitive partial match on last name.
+  """
+  lastName: String
+
+  """
+  Case-insensitive partial match on email.
+  """
+  email: String
+
+  """
+  Arbitrary dictionary for custom implementation-specific filters.
+  """
+  customFilters: Any
+}
+
+extend type Query {
+  """
+  [DEPRECATED] Retrieve all users. Use `ReactoryUsers` instead for better performance and filtering.
+  """
+  allUsers: [User]@deprecated(reason: "Use ReactoryUsers instead"),
+  
+  """
+  Fetch a single user by their ID.
+  """
+  userWithId(id: String!): User!
+  
+  """
+  Get peers for a specific user and organization.
+  """
+  userPeers(id: String!, organizationId: String): UserPeers
+  
+  """
+  Refreshes user profile data (e.g. from external sources) and returns the result.
+  """
+  refreshProfileData(
+    """
+    ID of the user to refresh.
+    """
+    id: String, 
+    
+    """
+    If true, avatar/image fetching is skipped.
+    """
+    skipImage: Boolean
+  ): ProfileRefreshResult
+  
+  """
+  Returns the currently authenticated user based on the request context.
+  """
+  authenticatedUser: User,
+  
+  """
+  Retrieves inbox items (emails) for a user.
+  """
+  userInbox(
+    """
+    User ID to fetch inbox for.
+    """
+    id: String, 
+    
+    """
+    Sort description.
+    """
+    sort: String, 
+    
+    """
+    Source/Provider to fetch from.
+    """
+    via: String
+  ): [Email]
+  
+  """
+  Simple search for users based on a string.
+  """
+  searchUser(
+    """
+    String to match against user fields.
+    """
+    searchString: String!, 
+    
+    """
+    Sort order.
+    """
+    sort: String
+  ): [User]
+  
+  """
+  Extracts specific credentials/tokens for the current user and provider.
+  """
+  getUserCredentials(
+    """
+    Provider key (e.g. 'google', 'msgraph').
+    """
+    provider: String!
+  ): UserAuthentication
+
+  """
+  Comprehensive query for listing/searching users with advanced filtering and pagination.
+  """
+  ReactoryUsers(
+    """
+    Filtering criteria.
+    """
+    filter: ReactoryUserFilterInput, 
+    
+    """
+    Pagination parameters.
+    """
+    paging: PagingRequest
+  ): ReactoryUserQueryResult
+}
+
+"""
+Input payload for creating a new user.
+"""
 input CreateUserInput {
   email: String!
   firstName: String!
@@ -140,10 +643,16 @@ input CreateUserInput {
   providerId: String
 }
 
+"""
+Input for inviting a peer.
+"""
 input InvitePeer {
   email: String
 }
 
+"""
+Input payload for updating basic user information.
+"""
 input UpdateUserInput {
   id: String
   email: String
@@ -158,30 +667,99 @@ input UpdateUserInput {
   deleted: Boolean
 }
 
+"""
+Input payload for password change operations.
+"""
 input UpdatePasswordInput {
+  """
+  New password.
+  """
   password: String
+  
+  """
+  Confirmation of new password.
+  """
   confirmPassword: String
+  
+  """
+  Authentication token (reset token) if applicable.
+  """
   authToken: String
 }
 
+"""
+Input for defining a peer relationship.
+"""
 input PeerInput {
+  """
+  ID of the peer user.
+  """
   user: String
+  
+  """
+  Type of relationship.
+  """
   relationship: PeerType
+  
+  """
+  Is this an internal peer?
+  """
   isInternal: Boolean
 }
 
+"""
+Structure for sending emails via GraphQL.
+"""
 input SendMailInput {
+  """
+  User ID sending the mail (or context).
+  """
   id: String!
+  
+  """
+  Transport/Provider (e.g. 'smtp', 'sendgrid').
+  """
   via: String!
+  
+  """
+  Email subject.
+  """
   subject: String!
+  
+  """
+  MIME type of body (e.g., 'text/html', 'text/plain').
+  """
   contentType: String
+  
+  """
+  Email body content.
+  """
   content: String!
+  
+  """
+  List of recipient email addresses.
+  """
   recipients: [String!]!
+  
+  """
+  CC recipients.
+  """
   ccRecipients: [String]
+  
+  """
+  BCC recipients.
+  """
   bcc: [String]
+  
+  """
+  Whether to archive in sent items.
+  """
   saveToSentItems: Boolean
 }
 
+"""
+Input for creating a basic task.
+"""
 input CreateTaskInput {
   id: String!
   via: String!
@@ -191,126 +769,208 @@ input CreateTaskInput {
   timeZone: String
 }
 
+"""
+Input for deleting a task.
+"""
 input DeleteTaskInput {
   via: String!
   taskId: String!
 }
 
+"""
+Result of an email sending operation.
+"""
 type SendMailResult {
+  """
+  True if sent successfully.
+  """
   Successful: Boolean!
+  
+  """
+  Status message or error.
+  """
   Message: String!
+  
+  """
+  ID of the task created for tracking this email.
+  """
   TaskId: String
 }
 
 extend type Mutation {
   """
-  Default Create User Mutation - OrganizationId is currently required, but this will be dropped
-  as a requirement in future versions. 
+  Creates a new user in the system.
+  Note: OrganizationId requirement may be relaxed in future versions.
   """
-  createUser(input: CreateUserInput!, organizationId: String!, password: String): User
+  createUser(
+    input: CreateUserInput!, 
+    organizationId: String!, 
+    password: String
+  ): User
+  
   """
-  Default Update User Mutation - Used to update a user's data.
+  Updates an existing user's profile data.
   """
-  updateUser(id: String!, profileData: UpdateUserInput!): User
+  updateUser(
+    id: String!, 
+    profileData: UpdateUserInput!
+  ): User
+  
   """
-  Deletes a user with a given id
+  Soft-deletes a user (sets deleted flag).
   """
   deleteUser(id: String!): Boolean
+  
   """
-  Sets an organization for a user with a particular id.
+  Assigns a user to an organization explicitly.
   """
-  setOrganizationForUser(id: String!, organizationId: String) : Boolean
+  setOrganizationForUser(
+    id: String!, 
+    organizationId: String
+  ) : Boolean
+  
   """
-  Sets the list of peers for a user.
+  Sets the entire list of peers for a user in their active context.
   """
-  setPeersForUser(id: String!, peers: [PeerInput], sendConfirmations: Boolean): UserPeers
+  setPeersForUser(
+    id: String!, 
+    peers: [PeerInput], 
+    sendConfirmations: Boolean
+  ): UserPeers
+  
   """
-  Sets the relationship type for a peer
+  Updates specific relationship type for a single peer.
   """
-  setPeerRelationShip(id: String!, peer: String!, organization: String!, relationship: PeerType): UserPeers
+  setPeerRelationShip(
+    id: String!, 
+    peer: String!, 
+    organization: String!, 
+    relationship: PeerType
+  ): UserPeers
+  
   """
-  Removes a peer from the relationship
+  Removes a specific peer relationship.
   """
-  removePeer(id: String!, peer: String!, organization: String!): UserPeers
+  removePeer(
+    id: String!, 
+    peer: String!, 
+    organization: String!
+  ): UserPeers
+  
   """
-  Removes user
+  Hard remove a user (use cautiously). 
   """
   removeUser(id: String!): Boolean
+  
   """
-  Used when updating a user's password.
+  Updates the user's password.
   """
   setPassword(input: UpdatePasswordInput!): User
+  
   """
-  Confirms the peers for the user id and organization id
+  Confirms the peer list for a user, finalizing a review or setup step.
   """
-  confirmPeers(id: String!, organization: String!, surveyId: String): UserPeers
+  confirmPeers(
+    id: String!, 
+    organization: String!, 
+    surveyId: String
+  ): UserPeers
+  
   """
-  Add a user role for a user
+  Add a specific role to a user's membership in an organization/client.
+  If membership doesn't exist, it may be created.
   """
-  addUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]
+  addUserRole(
+    id: String, 
+    email: String, 
+    organization: String, 
+    role: String!, 
+    clientId: String
+  ): [UserMembership]
+  
   """
-  Remove a user role for a user
+  Remove a specific role from a user's membership.
   """
-  removeUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]
+  removeUserRole(
+    id: String, 
+    email: String, 
+    organization: String, 
+    role: String!, 
+    clientId: String
+  ): [UserMembership]
+  
   """
-  # Add User Credentials
-  Use this mutation to add authentication properties for the logged in user.
-
-  Accepts two parameters a unique provider key, and an Any props parameter.
-  This allows for the persisting of any shape of credentials, keys or tokens
-  to be persisted for a given user.  This will be accessible to modules that know
-  how to interpret the authentication.
-
-  example of provider keys could be "local", "api.remote.system".  It is recommended 
-  to stick to a uri format.
-
-  The system does not automatically remove any of these keys and it should be managed
-  by the workflow of the relevant module that uses the authentication. 
+  Adds custom authentication credentials/tokens for the user.
+  Useful for storing API keys for third-party integrations (e.g. 'google', 'slack').
   """
-  addUserCredentials(provider: String!, props: Any): Boolean
+  addUserCredentials(
+    """
+    Unique key for the provider (e.g. 'google').
+    """
+    provider: String!, 
+    
+    """
+    The credential data object.
+    """
+    props: Any
+  ): Boolean
+  
   """
-  # Remove User Credentials
-  Use this mutation to remove a authentication provider. This will delete the entry
-  on the user document.   
+  Removes stored credentials for a provider.
   """
-  removeUserCredentials(provider: String!): Boolean
+  removeUserCredentials(
+    provider: String!
+  ): Boolean
+  
   """
-  Send mail message
+  Sets an explicit list of roles for a specific membership ID.
+  Replaces existing roles.
   """
-  sendMail(message: SendMailInput!): SendMailResult
+  ReactoryCoreSetRolesForMembership(
+    user_id: String!, 
+    id: String!, 
+    roles: [String]!
+  ): CoreSimpleResponse
+  
   """
-  NOTE - This mutation definition must be moved to the reactory AZURE module
+  Creates a new membership record for a user.
   """
-  createOutlookTask(task: CreateTaskInput!): SendMailResult
+  ReactoryCoreCreateUserMembership(
+    user_id: String!, 
+    organization: String, 
+    businessUnit: String, 
+    roles: [String]
+  ): UserMembership
+  
   """
-  NOTE - This mutation definition must be moved to the reactory AZURE module
+  Switches the user's active context to a specific membership.
   """
-  deleteOutlookTask(task: DeleteTaskInput!): SendMailResult
+  ReactoryCoreSetActiveMembership(
+    membership_id: String!
+  ): UserMembership
+  
   """
-  Used to update a user permission set
+  Removes a membership record entirely.
   """
-  ReactoryCoreSetRolesForMembership(user_id: String!, id: String!, roles: [String]!): CoreSimpleResponse
-  """
-  Used to create a new user permission
-  """
-  ReactoryCoreCreateUserMembership(user_id: String!, organization: String, businessUnit: String, roles: [String]): UserMembership
-  """
-  # Set Active Membership
-  Used when it is required to use the system within a specific membership.
-
-  This may be to provide context specific to a membership.
-  """
-  ReactoryCoreSetActiveMembership(membership_id: String!): UserMembership
-  """
-  # Remove User Membership
-  Used this mutation to remove a user membership.
-  Returns a CoreSimpleResponse type.
-  """
-  ReactoryCoreRemoveUserMembership(user_id: String!, id: String!): CoreSimpleResponse
+  ReactoryCoreRemoveUserMembership(
+    user_id: String!, 
+    id: String!
+  ): CoreSimpleResponse
 }
 
 extend type Subscription {
+  """
+  Triggered when a new user is created.
+  """
   userCreated: User
+  
+  """
+  Triggered when a user is updated.
+  """
   userUpdated: User
+  
+  """
+  Triggered when a user is removed (returns ID).
+  """
   userRemoved: ObjID
 }

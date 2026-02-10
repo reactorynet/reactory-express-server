@@ -12,7 +12,7 @@ import amq from '../../../../amq';
 import reactoryModules from '../../..';
 import logger from '../../../../logging';
 import mongoose from 'mongoose';
-import { WorkflowScheduler } from '../Scheduler/Scheduler';
+import { IScheduleConfig, WorkflowScheduler } from '../Scheduler/Scheduler';
 import { ErrorHandler, IErrorContext, ErrorCategory, ErrorSeverity, IWorkflowErrorStats } from '../ErrorHandler/ErrorHandler';
 import {
   WorkflowLifecycleManager,
@@ -37,6 +37,14 @@ export interface IWorkflow {
   category: string;
   autoStart?: boolean;
   props?: any;
+  isActive?: boolean;
+  schedules?: IScheduleConfig[];
+  intances?: IWorkflowInstance[];
+  errors?: IWorkflowErrorStats[];
+  status?: 'INACTIVE' | 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'COMPLETED' | 'FAILED';
+  configuration?: IWorkflowConfig;
+  instances?: IWorkflowInstance[];
+  dependencies?: IWorkflowDependency[];        
 }
 
 export interface IWorkflowState {
@@ -104,34 +112,24 @@ let instance: WorkflowRunner | null = null;
 /**
  * Workflow runner is a singleton class that manages the workflow engine and the workflow host.
  */
-export class WorkflowRunner {
-  private connection: mongoose.Connection | null = null;
+export class WorkflowRunner {  
   private persistence: IPersistenceProvider | null = null;
-  private state: IWorkflowState;
-  private props: IWorkflowRunnerProps;
-  private _isInitialized: boolean = false;
-  private isStarting: boolean = false;
+  private state: IWorkflowState;  
+  private _isInitialized: boolean = false;  
+  private _isStarting: boolean = false;
   private scheduler: WorkflowScheduler | null = null;
-  private errorHandler: ErrorHandler;
-  private lifecycleManager: WorkflowLifecycleManager;
-  private configurationManager: ConfigurationManager;
-  private securityManager: SecurityManager;  
+  private readonly errorHandler: ErrorHandler;
+  private readonly lifecycleManager: WorkflowLifecycleManager;
+  private readonly configurationManager: ConfigurationManager;
+  private readonly securityManager: SecurityManager;   
+  private readonly context: Reactory.Server.IReactoryContext;
 
-  constructor(props: IWorkflowRunnerProps) {
-
-    // ensure singleton pattern
-    if (!instance) {
-      instance = this;
-    } else {
-      // return the instance
-      return instance;
-    }
-
-    this.props = props;
+  constructor(props: IWorkflowRunnerProps, context: Reactory.Server.IReactoryContext) {
     this.state = {
-      workflows: props.workflows || getDefaultWorkflows(),
+      workflows: props?.workflows || getDefaultWorkflows(),
       host: null,
     };
+    this.context = context;
     this.errorHandler = new ErrorHandler();
     this.lifecycleManager = new WorkflowLifecycleManager();
     this.configurationManager = new ConfigurationManager({
@@ -160,10 +158,21 @@ export class WorkflowRunner {
     this.validateWorkflow = this.validateWorkflow.bind(this);
     this.onStateChanged = this.onStateChanged.bind(this);
     this.setState = this.setState.bind(this);
-    this.stop = this.stop.bind(this);
+    this.stop = this.stop.bind(this);    
+  }
 
-    instance = this;
+  public static getInstance(props: IWorkflowRunnerProps, context: Reactory.Server.IReactoryContext): WorkflowRunner {
+    if (!instance) {
+      instance = new WorkflowRunner(props, context);            
+    } 
     return instance;
+  }
+
+  public static shutdown(): void {
+    if (instance) {
+      void instance.stop();
+      instance = null;
+    }
   }
 
   /**
@@ -176,11 +185,11 @@ export class WorkflowRunner {
     }
 
     try {
-      this.isStarting = true;
+      this._isStarting = true;
       const { host, autoStart } = await this.start();
       this.setState({ host });
       this._isInitialized = true;
-      this.isStarting = false;
+      this._isStarting = false;
 
       // Set up AMQ event handlers
       await this.setupAmqEventHandlers();
@@ -204,7 +213,7 @@ export class WorkflowRunner {
 
       logger.info('WorkflowRunner initialized successfully');
     } catch (error) {
-      this.isStarting = false;
+      this._isStarting = false;
       logger.error('Failed to initialize WorkflowRunner', error);
       throw error;
     }
@@ -435,8 +444,8 @@ export class WorkflowRunner {
   /**
    * Start a specific workflow with enhanced error handling
    */
-  public async startWorkflow(id: string, version: string, data: any): Promise<any> {
-    const context: IErrorContext = {
+  public async startWorkflow(id: string, version: string, data: any, context: Reactory.Server.IReactoryContext): Promise<any> {
+    const errorContext: IErrorContext = {
       workflowId: id,
       version,
       attempt: 1,
@@ -457,7 +466,7 @@ export class WorkflowRunner {
           versionNumber = parseInt(version);
         }
       } catch (error) {
-        logger.warn(`Invalid version number ${version}, using default 1`, error);
+        logger.warn(`Invalid version number ${version} for workflow ${id}, using default 1`, error);
       }
     }
 
@@ -472,7 +481,7 @@ export class WorkflowRunner {
           logger.debug(`Workflow ${id}@${versionNumber} started successfully`, startResult);
           return startResult;
         },
-        context
+        errorContext
       );
     } catch (error) {
       logger.error(`Failed to start workflow ${id}@${version}`, error);
@@ -536,8 +545,32 @@ export class WorkflowRunner {
   }
 
   /**
-   * Get workflow statistics
+   * Get workflow by ID
    */
+  public getWorkflowWithId(id: string): IWorkflow | undefined {
+    let workflow: IWorkflow | undefined = this.state.workflows.find(workflow => {
+      const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
+      return workflowId === id;
+    });
+    if(!workflow) {
+      return undefined;
+    }
+    
+    return {
+      ...workflow,
+      status: 'ACTIVE',
+      errors: [],
+      statistics: {
+        
+        successfulExecutions: 0,
+        failedExecutions: 0,
+        averageExecutionTime: 0
+      },
+    }
+  }
+  /**
+   * Get workflow statistics
+   **/
   public getWorkflowStats(): {
     totalWorkflows: number;
     workflowsByNamespace: Record<string, number>;

@@ -1,6 +1,6 @@
 import moment from "moment";
 import EmailService from './EmailService'
-import TemplateService from './TemplateService'
+import { TemplateService } from './TemplateService'
 import FileService from './ReactoryFileService';
 import { ReactoryExcelWriterServiceDefinition } from '@reactory/server-core/excel/ExcelWriter';
 import OrganizationServiceDefinition from '@reactory/server-modules/reactory-core/services/OrganizationService';
@@ -39,7 +39,7 @@ const services = [
   ReactoryExcelWriterServiceDefinition,
   OrganizationServiceDefinition,
   ReactoryPackageManager.reactory,
-  UserService.reactory,
+  UserService,
   WorkflowService,
   FetchService.reactory,
   PdfService.reactory,

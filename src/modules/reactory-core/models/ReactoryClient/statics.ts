@@ -321,6 +321,12 @@ const upsertFromConfig = async (
           updatedAt: new Date(),
         });
 
+        // Explicitly mark complex/mixed fields as modified to ensure Mongoose saves them
+        if (input.themes) reactoryClient.markModified('themes');
+        if (input.auth_config) reactoryClient.markModified('auth_config');
+        if (input.settings) reactoryClient.markModified('settings');
+        if (input.whitelist) reactoryClient.markModified('whitelist');
+
         // Validate before saving
         const validationResult = reactoryClient.validateSync();
         if (validationResult && validationResult.errors) {

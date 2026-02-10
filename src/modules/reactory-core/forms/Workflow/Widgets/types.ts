@@ -15,6 +15,11 @@ export interface WorkflowOverviewProps {
 export interface WorkflowInstanceHistoryProps {
   reactory: Reactory.Client.IReactoryApi;
   workflow: any;
+  /**
+   * Optional key to trigger a refresh of the data.
+   * Change this value to force a re-fetch of instances and history.
+   */
+  refreshKey?: string | number;
 }
 
 export interface WorkflowErrorsProps {

@@ -1,6 +1,22 @@
 import Reactory from '@reactory/reactory-core';
 import { WorkflowScheduleProps } from './types';
 
+interface WorkflowScheduleQueryResult {  
+    workflowWithId: {
+      id: string;
+      name: string;
+      nameSpace: string;
+      version: string;
+      schedules: any[];
+    }  
+}
+
+type WorkflowScheduleQueryData = WorkflowScheduleQueryResult | null;
+
+interface WorkflowScheduleQueryVariables {
+    id: string;
+}
+
 /**
  * WorkflowSchedule Component
  * 
@@ -27,41 +43,61 @@ const WorkflowSchedule = (props: WorkflowScheduleProps) => {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const fetchSchedules = async () => {
+    const fetchWorkflowSchedules = async () => {
       setLoading(true);
       try {
-        const result = await reactory.graphqlQuery(`
-          query WorkflowSchedules($pagination: PaginationInput) {
-            workflowSchedules(pagination: $pagination) {
+        // Construct the workflow ID from the workflow object
+        const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
+        
+        const result = await reactory.graphqlQuery<WorkflowScheduleQueryData, WorkflowScheduleQueryVariables>(`
+          query GetWorkflowSchedules($id: String!) {
+            workflowWithId(id: $id) {
+              id
+              name
+              nameSpace
+              version
               schedules {
                 id
-                workflowName
-                nameSpace
-                cronExpression
+                name
+                description
+                schedule {
+                  cron
+                  timezone
+                  enabled
+                }
                 enabled
-                nextExecution
-                lastExecution
+                workflow {
+                  id
+                  version
+                  nameSpace
+                }
+                lastRun
+                nextRun
+                runCount
+                errorCount
+                isRunning
               }
             }
           }
         `, {
-          pagination: { page: 1, limit: 100 }
+          id: workflowId
         });
 
-        const allSchedules = result.data?.workflowSchedules?.schedules || [];
-        const filtered = allSchedules.filter((s: any) => 
-          s.workflowName === workflow.name && s.nameSpace === workflow.nameSpace
-        );
-        setSchedules(filtered);
+        const workflowSchedules = result.data?.workflowWithId?.schedules || [];
+        setSchedules(workflowSchedules);
       } catch (err) {
-        reactory.log('Error fetching schedules', err, 'error');
+        reactory.log('Error fetching workflow schedules', err, 'error');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSchedules();
-  }, [workflow.name, workflow.nameSpace]);
+    if (workflow?.name && workflow?.nameSpace && workflow?.version) {
+      fetchWorkflowSchedules();
+    } else {
+      setLoading(false);
+    }
+  }, [workflow.name, workflow.nameSpace, workflow.version]);
 
   const createSchedule = () => {
     reactory.navigation('/workflows/schedules/new', {
@@ -121,18 +157,52 @@ const WorkflowSchedule = (props: WorkflowScheduleProps) => {
       {schedules.map((schedule: any) => (
         <Box key={schedule.id} sx={{ mb: 2, p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
-              {schedule.cronExpression}
-            </Typography>
-            <Typography variant="caption" color={schedule.enabled ? 'success.main' : 'text.secondary'}>
-              {schedule.enabled ? 'ENABLED' : 'DISABLED'}
-            </Typography>
+            <Box>
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                {schedule.name}
+              </Typography>
+              <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                {schedule.schedule?.cron}
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography variant="caption" color={schedule.schedule?.enabled ? 'success.main' : 'text.secondary'} sx={{ display: 'block' }}>
+                {schedule.schedule?.enabled ? 'ENABLED' : 'DISABLED'}
+              </Typography>
+              {schedule.isRunning && (
+                <Typography variant="caption" color="primary.main" sx={{ display: 'block' }}>
+                  RUNNING
+                </Typography>
+              )}
+            </Box>
           </Box>
-          {schedule.nextExecution && (
-            <Typography variant="caption" color="text.secondary">
-              Next run: {new Date(schedule.nextExecution).toLocaleString()}
+          {schedule.description && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+              {schedule.description}
             </Typography>
           )}
+          <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+            {schedule.nextRun && (
+              <Typography variant="caption" color="text.secondary">
+                Next: {new Date(schedule.nextRun).toLocaleString()}
+              </Typography>
+            )}
+            {schedule.lastRun && (
+              <Typography variant="caption" color="text.secondary">
+                Last: {new Date(schedule.lastRun).toLocaleString()}
+              </Typography>
+            )}
+            {schedule.runCount > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                Runs: {schedule.runCount}
+              </Typography>
+            )}
+            {schedule.errorCount > 0 && (
+              <Typography variant="caption" color="error.main">
+                Errors: {schedule.errorCount}
+              </Typography>
+            )}
+          </Box>
         </Box>
       ))}
     </Box>

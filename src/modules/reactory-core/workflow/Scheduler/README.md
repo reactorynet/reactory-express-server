@@ -284,6 +284,56 @@ const history = await scheduler.getExecutionHistory('daily-report', {
   fromDate: new Date('2023-01-01'),
   toDate: new Date('2023-12-31')
 });
+
+// Get all schedules for a specific workflow by complete ID
+// Workflow IDs follow the pattern: "namespace.WorkflowName@version"
+const workflowSchedules = scheduler.getSchedulesForWorkflow('core.DatabaseBackup@1.0.0');
+console.log(`Found ${workflowSchedules.length} schedules for workflow`);
+
+// Get schedules for different versions
+const v1Schedules = scheduler.getSchedulesForWorkflow('core.DatabaseBackup@1.0.0');
+const v2Schedules = scheduler.getSchedulesForWorkflow('core.DatabaseBackup@2.0.0');
+console.log(`Version 1.0 schedules: ${v1Schedules.length}`);
+console.log(`Version 2.0 schedules: ${v2Schedules.length}`);
+
+// Filter schedules by workflow properties (namespace, name, version)
+// This allows filtering across multiple workflow versions/namespaces
+
+// Filter by namespace only (all workflows in 'core' namespace)
+const coreSchedules = scheduler.filterSchedulesByWorkflowProperties('core');
+console.log(`Core namespace schedules: ${coreSchedules.length}`);
+
+// Filter by workflow name only (all versions, all namespaces)
+const backupSchedules = scheduler.filterSchedulesByWorkflowProperties(undefined, 'DatabaseBackup');
+console.log(`DatabaseBackup schedules: ${backupSchedules.length}`);
+
+// Filter by version only (all workflows with version 1.0.0)
+const v1AllSchedules = scheduler.filterSchedulesByWorkflowProperties(undefined, undefined, '1.0.0');
+console.log(`Version 1.0.0 schedules: ${v1AllSchedules.length}`);
+
+// Filter by namespace and name
+const coreBackupSchedules = scheduler.filterSchedulesByWorkflowProperties('core', 'DatabaseBackup');
+console.log(`Core DatabaseBackup schedules: ${coreBackupSchedules.length}`);
+
+// Filter by all three properties
+const specificSchedules = scheduler.filterSchedulesByWorkflowProperties(
+  'core', 
+  'DatabaseBackup', 
+  '2.0.0'
+);
+console.log(`Core DatabaseBackup v2.0.0 schedules: ${specificSchedules.length}`);
+
+// Iterate through workflow schedules
+workflowSchedules.forEach(scheduledWorkflow => {
+  console.log(`Schedule: ${scheduledWorkflow.config.name}`);
+  console.log(`  ID: ${scheduledWorkflow.config.id}`);
+  console.log(`  Workflow ID: ${scheduledWorkflow.config.workflow.id}`);
+  console.log(`  Cron: ${scheduledWorkflow.config.schedule.cron}`);
+  console.log(`  Next run: ${scheduledWorkflow.nextRun}`);
+  console.log(`  Run count: ${scheduledWorkflow.runCount}`);
+  console.log(`  Error count: ${scheduledWorkflow.errorCount}`);
+  console.log(`  Is running: ${scheduledWorkflow.isRunning}`);
+});
 ```
 
 ## Execution Flow

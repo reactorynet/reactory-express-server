@@ -4,17 +4,84 @@ import {
   WorkflowPriority,
   type IWorkflowInstance,
   type IWorkflowDependency,
-  type IWorkflowLifecycleConfig,
-  type IWorkflowLifecycleStats
+  type IWorkflowLifecycleConfig
 } from '../LifecycleManager';
 
 // Mock dependencies
-jest.mock('../../../logging', () => ({
+jest.mock('../../../../../logging', () => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
 }));
+
+// Mock WorkflowInstanceModel for MongoDB operations
+jest.mock('../models/WorkflowInstanceModel', () => {
+  const mockDeleteOne = jest.fn();
+  const mockDeleteMany = jest.fn();
+  const mockFind = jest.fn();
+  const mockFindOne = jest.fn();
+  const mockCountDocuments = jest.fn();
+  const mockAggregate = jest.fn();
+  
+  return {
+    __esModule: true,
+    default: {
+      deleteOne: mockDeleteOne,
+      deleteMany: mockDeleteMany,
+      find: mockFind,
+      findOne: mockFindOne,
+      countDocuments: mockCountDocuments,
+      aggregate: mockAggregate,
+      findPaginated: jest.fn(),
+      findByWorkflowDefinitionId: jest.fn(),
+      findByStatus: jest.fn(),
+      getWorkflowStats: jest.fn(),
+    },
+    WorkflowESStatus: {
+      PENDING: 0,
+      RUNNABLE: 1,
+      COMPLETE: 2,
+      TERMINATED: 3,
+      SUSPENDED: 4,
+    },
+    ExecutionPointerStatus: {
+      LEGACY: 0,
+      PENDING: 1,
+      RUNNING: 2,
+      COMPLETE: 3,
+      SLEEPING: 4,
+      WAITING_FOR_EVENT: 5,
+      FAILED: 6,
+      COMPENSATED: 7,
+      CANCELLED: 8,
+    },
+    getStatusLabel: jest.fn((status: number) => {
+      const labels: Record<number, string> = {
+        0: 'Pending',
+        1: 'Running',
+        2: 'Complete',
+        3: 'Terminated',
+        4: 'Suspended',
+      };
+      return labels[status] || 'Unknown';
+    }),
+    getExecutionPointerStatusLabel: jest.fn((status: number) => {
+      const labels: Record<number, string> = {
+        0: 'Legacy',
+        1: 'Pending',
+        2: 'Running',
+        3: 'Complete',
+        4: 'Sleeping',
+        5: 'Waiting for Event',
+        6: 'Failed',
+        7: 'Compensated',
+        8: 'Cancelled',
+      };
+      return labels[status] || 'Unknown';
+    }),
+  };
+});
 
 describe('WorkflowLifecycleManager', () => {
   let lifecycleManager: WorkflowLifecycleManager;
@@ -280,9 +347,9 @@ describe('WorkflowLifecycleManager', () => {
     beforeEach(async () => {
       await lifecycleManager.initialize();
       
-      instance1 = lifecycleManager.createWorkflowInstance('workflow1', '1.0.0', WorkflowPriority.LOW);
-      instance2 = lifecycleManager.createWorkflowInstance('workflow2', '1.0.0', WorkflowPriority.HIGH);
-      instance3 = lifecycleManager.createWorkflowInstance('workflow3', '1.0.0', WorkflowPriority.NORMAL);
+      instance1 = lifecycleManager.createWorkflowInstance('test-workflow-1', '1.0.0', WorkflowPriority.LOW);
+      instance2 = lifecycleManager.createWorkflowInstance('test-workflow-2', '1.0.0', WorkflowPriority.HIGH);
+      instance3 = lifecycleManager.createWorkflowInstance('test-workflow-3', '1.0.0', WorkflowPriority.NORMAL);
     });
 
     describe('getWorkflowInstance', () => {
@@ -305,6 +372,53 @@ describe('WorkflowLifecycleManager', () => {
         expect(instances.map(i => i.id)).toContain(instance1.id);
         expect(instances.map(i => i.id)).toContain(instance2.id);
         expect(instances.map(i => i.id)).toContain(instance3.id);
+      });
+    });
+
+    describe('getInstancesByWorkflowId', () => {
+      it('should return instances for a specific workflow ID', () => {
+        const instances = lifecycleManager.getInstancesByWorkflowId('test-workflow-1');
+        expect(instances).toHaveLength(1);
+        expect(instances[0].id).toBe(instance1.id);
+        expect(instances[0].workflowId).toBe('test-workflow-1');
+      });
+
+      it('should return multiple instances for the same workflow ID', () => {
+        // Create another instance with the same workflow ID
+        const instance4 = lifecycleManager.createWorkflowInstance(
+          'test-workflow-1',
+          '1.0.0',
+          WorkflowPriority.NORMAL
+        );
+
+        const instances = lifecycleManager.getInstancesByWorkflowId('test-workflow-1');
+        expect(instances).toHaveLength(2);
+        expect(instances.map(i => i.id)).toContain(instance1.id);
+        expect(instances.map(i => i.id)).toContain(instance4.id);
+      });
+
+      it('should return empty array for non-existent workflow ID', () => {
+        const instances = lifecycleManager.getInstancesByWorkflowId('non-existent-workflow');
+        expect(instances).toHaveLength(0);
+        expect(instances).toEqual([]);
+      });
+
+      it('should return instances with different statuses', async () => {
+        // Create multiple instances with same workflow ID
+        const instance4 = lifecycleManager.createWorkflowInstance(
+          'test-workflow-1',
+          '1.0.0',
+          WorkflowPriority.NORMAL
+        );
+        
+        await lifecycleManager.startWorkflow(instance1.id);
+        lifecycleManager.completeWorkflow(instance1.id);
+        await lifecycleManager.startWorkflow(instance4.id);
+
+        const instances = lifecycleManager.getInstancesByWorkflowId('test-workflow-1');
+        expect(instances).toHaveLength(2);
+        expect(instances.find(i => i.id === instance1.id)?.status).toBe(WorkflowStatus.COMPLETED);
+        expect(instances.find(i => i.id === instance4.id)?.status).toBe(WorkflowStatus.RUNNING);
       });
     });
 
@@ -500,6 +614,143 @@ describe('WorkflowLifecycleManager', () => {
         id: instance.id,
         status: WorkflowStatus.RUNNING,
       }));
+    });
+  });
+
+  describe('workflow history deletion (MongoDB)', () => {
+    // Get the mocked WorkflowInstanceModel
+    const MockedWorkflowInstanceModel = require('../models/WorkflowInstanceModel').default;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    describe('deleteWorkflowHistory', () => {
+      it('should delete a single workflow history item successfully', async () => {
+        MockedWorkflowInstanceModel.deleteOne.mockReturnValue({
+          exec: jest.fn().mockResolvedValue({ deletedCount: 1 })
+        });
+
+        const result = await lifecycleManager.deleteWorkflowHistory('test-instance-123');
+
+        expect(result.success).toBe(true);
+        expect(result.deletedCount).toBe(1);
+        expect(result.message).toContain('Successfully deleted');
+        expect(MockedWorkflowInstanceModel.deleteOne).toHaveBeenCalledWith({ id: 'test-instance-123' });
+      });
+
+      it('should return failure when instance not found', async () => {
+        MockedWorkflowInstanceModel.deleteOne.mockReturnValue({
+          exec: jest.fn().mockResolvedValue({ deletedCount: 0 })
+        });
+
+        const result = await lifecycleManager.deleteWorkflowHistory('non-existent');
+
+        expect(result.success).toBe(false);
+        expect(result.deletedCount).toBe(0);
+        expect(result.message).toContain('not found');
+      });
+
+      it('should handle database errors', async () => {
+        MockedWorkflowInstanceModel.deleteOne.mockReturnValue({
+          exec: jest.fn().mockRejectedValue(new Error('Database error'))
+        });
+
+        await expect(lifecycleManager.deleteWorkflowHistory('test-instance'))
+          .rejects.toThrow('Database error');
+      });
+    });
+
+    describe('deleteWorkflowHistoryBatch', () => {
+      it('should delete multiple workflow history items successfully', async () => {
+        MockedWorkflowInstanceModel.deleteMany.mockReturnValue({
+          exec: jest.fn().mockResolvedValue({ deletedCount: 3 })
+        });
+
+        const instanceIds = ['id-1', 'id-2', 'id-3'];
+        const result = await lifecycleManager.deleteWorkflowHistoryBatch(instanceIds);
+
+        expect(result.success).toBe(true);
+        expect(result.deletedCount).toBe(3);
+        expect(result.message).toContain('Successfully deleted 3');
+        expect(MockedWorkflowInstanceModel.deleteMany).toHaveBeenCalledWith({ 
+          id: { $in: instanceIds } 
+        });
+      });
+
+      it('should return failure when no IDs provided', async () => {
+        const result = await lifecycleManager.deleteWorkflowHistoryBatch([]);
+
+        expect(result.success).toBe(false);
+        expect(result.deletedCount).toBe(0);
+        expect(result.message).toContain('No instance IDs provided');
+      });
+
+      it('should handle partial deletions', async () => {
+        MockedWorkflowInstanceModel.deleteMany.mockReturnValue({
+          exec: jest.fn().mockResolvedValue({ deletedCount: 2 })
+        });
+
+        const instanceIds = ['id-1', 'id-2', 'id-3'];
+        const result = await lifecycleManager.deleteWorkflowHistoryBatch(instanceIds);
+
+        expect(result.success).toBe(true);
+        expect(result.deletedCount).toBe(2);
+      });
+
+      it('should handle database errors', async () => {
+        MockedWorkflowInstanceModel.deleteMany.mockReturnValue({
+          exec: jest.fn().mockRejectedValue(new Error('Connection failed'))
+        });
+
+        await expect(lifecycleManager.deleteWorkflowHistoryBatch(['id-1', 'id-2']))
+          .rejects.toThrow('Connection failed');
+      });
+    });
+
+    describe('clearWorkflowHistory', () => {
+      it('should clear all history for a workflow definition', async () => {
+        MockedWorkflowInstanceModel.deleteMany.mockReturnValue({
+          exec: jest.fn().mockResolvedValue({ deletedCount: 100 })
+        });
+
+        const result = await lifecycleManager.clearWorkflowHistory('core.CleanCacheWorkflow@1.0.0');
+
+        expect(result.success).toBe(true);
+        expect(result.deletedCount).toBe(100);
+        expect(result.message).toContain('Successfully cleared 100');
+        expect(MockedWorkflowInstanceModel.deleteMany).toHaveBeenCalledWith({ 
+          workflowDefinitionId: 'core.CleanCacheWorkflow@1.0.0' 
+        });
+      });
+
+      it('should return failure when workflowDefinitionId is not provided', async () => {
+        const result = await lifecycleManager.clearWorkflowHistory('');
+
+        expect(result.success).toBe(false);
+        expect(result.deletedCount).toBe(0);
+        expect(result.message).toContain('Workflow definition ID is required');
+      });
+
+      it('should handle case when no history exists', async () => {
+        MockedWorkflowInstanceModel.deleteMany.mockReturnValue({
+          exec: jest.fn().mockResolvedValue({ deletedCount: 0 })
+        });
+
+        const result = await lifecycleManager.clearWorkflowHistory('core.NonExistent@1.0.0');
+
+        expect(result.success).toBe(true);
+        expect(result.deletedCount).toBe(0);
+      });
+
+      it('should handle database errors', async () => {
+        MockedWorkflowInstanceModel.deleteMany.mockReturnValue({
+          exec: jest.fn().mockRejectedValue(new Error('Permission denied'))
+        });
+
+        await expect(lifecycleManager.clearWorkflowHistory('core.TestWorkflow@1.0.0'))
+          .rejects.toThrow('Permission denied');
+      });
     });
   });
 }); 

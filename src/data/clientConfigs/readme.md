@@ -1,14 +1,9 @@
 # Client Configuration
-This folder contains all the client configuration you want to make available to your applications that consume the API.  The client configuration can be seen as a configuration for a tenant / white labelled version of the platform.
 
-## Source Control
-Please note, no client configuration must be checked in except for the base reactory client configuration. All other client configurations must be managed under their own source control and checked out into the client configuration as a submodule.
+Documentation has been moved to [./docs/README.md](docs/README.md).
 
-e.g. from the server src/ folder run: 
+## Quick Links
 
-`git checkout your@repo.git data/clientConfigs/your-tennant`
-
-## Configuration Files
-The configuration files can be written in js, or ts files.
-
-The __index.ts will be automatically generated at start based on the enabled clients json file.
+- [Configuration Structure](docs/config-structure.md)
+- [Client Configs](docs/clients/)
+- [Configuration Elements](docs/elements/)

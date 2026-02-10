@@ -22,12 +22,27 @@ export class ReactoryClientResolver {
     if(obj.id) return obj.id
     return null;
   }
+
+  @property("ReactoryClient", "users")
+  async users(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
+    const userService = context.getService<Reactory.Service.IReactoryUserService>("core.UserService@1.0.0");
+    const clientId = obj._id || obj.id;
+    return userService.getUsersByClientMembership(clientId, args.paging);
+  }
   
   @roles(["ADMIN"])
   @query("ReactoryClientWithId")
   async clientWithId(obj: any, arg: any, context: Reactory.Server.IReactoryContext) {
       const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
       return systemService.getReactoryClient(arg.id);
+  }
+
+  @roles(["ADMIN"])
+  @query("ReactoryClientApplicationUsers")
+  async clientApplicationUsers(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
+    const { clientId, filter, paging } = args;
+    const userService = context.getService<Reactory.Service.IReactoryUserService>("core.UserService@1.0.0");
+    return userService.getUsersByClientMembership(clientId, paging);
   }
 }
 

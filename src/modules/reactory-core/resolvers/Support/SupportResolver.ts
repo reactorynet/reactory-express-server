@@ -4,6 +4,7 @@ import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
 import { error } from 'console';
 import CommentModel from '@reactory/server-modules/reactory-core/models/Comment';
+import { CoreFile as ReactoryFileModel } from '@reactory/server-modules/reactory-core/models';
 
 type DeleteArgs = { 
   ids: string[]
@@ -119,8 +120,7 @@ class SupportResolver {
       }
     }
 
-    // Documents are not populated, fetch them from the database
-    const ReactoryFileModel = context.models.ReactoryFile;
+    // Documents are not populated, fetch them from the database    
     if (!ReactoryFileModel) {
       context.log('ReactoryFile model not found', {}, 'warning');
       return [];

@@ -302,7 +302,8 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
             unassignedIcon: 'person_add_disabled',
             editable: true,            
             dialogTitle: 'Assign Ticket To',
-            showFilters: true,            
+            showFilters: true,
+            userListQuery: 'users',
           }
         }
       }
@@ -463,11 +464,9 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
   },
   
   // Header styling
-  headerStyle: {
-    backgroundColor: '#f5f5f5',
+  headerStyle: {    
     fontWeight: 600,
-    fontSize: '0.875rem',
-    borderBottom: '2px solid #e0e0e0'
+    fontSize: '0.875rem',    
   },
   refreshEvents: [{ name: "core.SupportTicketDeletedEvent" }],
   actions: [

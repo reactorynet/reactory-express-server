@@ -53,6 +53,22 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             componentFqn
             componentProps
           }
+          users {
+            paging {
+              page
+              pageSize
+              total
+              hasNext
+            }
+            users {
+              id
+              firstName
+              lastName
+              email
+              avatar
+            }
+            totalUsers
+          }
           createdAt
           updatedAt
         }
@@ -76,6 +92,9 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
       'menus': 'menus.menus',
       'themes': 'themes.themes',
       'routes': 'routes.routes',
+      'users.users': 'users.users',
+      'users.totalUsers': 'users.totalUsers',
+      'users.paging': 'users.paging',
       'createdAt': 'overview.createdAt',
       'updatedAt': 'overview.updatedAt',
     },

@@ -22,6 +22,7 @@ jest.mock('fs', () => ({
   mkdirSync: jest.fn(),
   readdirSync: jest.fn(),
   readFileSync: jest.fn(),
+  watch: jest.fn(),
 }));
 
 jest.mock('../../../../../logging', () => ({
@@ -105,6 +106,95 @@ describe('WorkflowScheduler', () => {
       await scheduler.initialize();
       
       expect(fs.mkdirSync).toHaveBeenCalled();
+    });
+  });
+
+  describe('setupScheduleDirectoryWatcher', () => {
+    let mockWatcher: any;
+    let watchCallback: (eventType: string, filename: string) => void;
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      mockWatcher = {
+        close: jest.fn(),
+        on: jest.fn(),
+      };
+      (fs.watch as jest.Mock).mockImplementation((path, callback) => {
+        watchCallback = callback;
+        return mockWatcher;
+      });
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      (fs.readdirSync as jest.Mock).mockReturnValue([]);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should setup watcher on initialize', async () => {
+      await scheduler.initialize();
+      expect(fs.watch).toHaveBeenCalled();
+    });
+
+    it('should reload schedules on file change with debounce', async () => {
+      await scheduler.initialize();
+      
+      // Spy on reloadSchedules (private method, accessed via any)
+      const reloadSpy = jest.spyOn(scheduler as any, 'reloadSchedules');
+      
+      // Trigger file change
+      watchCallback('change', 'test-schedule.yaml');
+      
+      // Should not be called immediately
+      expect(reloadSpy).not.toHaveBeenCalled();
+      
+      // Fast forward time
+      jest.advanceTimersByTime(1000);
+      
+      expect(reloadSpy).toHaveBeenCalled();
+    });
+
+    it('should debounce multiple file changes', async () => {
+      await scheduler.initialize();
+      const reloadSpy = jest.spyOn(scheduler as any, 'reloadSchedules');
+      
+      // Trigger multiple changes rapidly
+      watchCallback('change', 'test-schedule.yaml');
+      jest.advanceTimersByTime(500);
+      watchCallback('change', 'test-schedule.yaml');
+      jest.advanceTimersByTime(500);
+      
+      // Should not be called yet (timer reset)
+      expect(reloadSpy).not.toHaveBeenCalled();
+      
+      // Advance enough time
+      jest.advanceTimersByTime(500);
+      
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should ignore non-yaml files', async () => {
+      await scheduler.initialize();
+      const reloadSpy = jest.spyOn(scheduler as any, 'reloadSchedules');
+      
+      watchCallback('change', 'test.txt');
+      jest.advanceTimersByTime(1000);
+      
+      expect(reloadSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle watcher errors', async () => {
+      await scheduler.initialize();
+      
+      // Get the error handler
+      const errorHandler = mockWatcher.on.mock.calls.find((call: any) => call[0] === 'error')[1];
+      
+      // Trigger error
+      errorHandler(new Error('Watcher error'));
+      
+      // Verify error logging (mocked)
+      const logger = require('../../../../../logging');
+      expect(logger.error).toHaveBeenCalledWith('Schedule directory watcher error', expect.any(Error));
     });
   });
 
@@ -504,16 +594,24 @@ describe('WorkflowScheduler', () => {
   });
 
   describe('stop', () => {
+    let mockWatcher: any;
+
     beforeEach(async () => {
+      mockWatcher = {
+        close: jest.fn(),
+        on: jest.fn(),
+      };
+      (fs.watch as jest.Mock).mockReturnValue(mockWatcher);
       (fs.existsSync as jest.Mock).mockReturnValue(true);
       (fs.readdirSync as jest.Mock).mockReturnValue([]);
       await scheduler.initialize();
     });
 
-    it('should stop the scheduler', async () => {
+    it('should stop the scheduler and cleanup resources', async () => {
       await scheduler.stop();
       
       expect(scheduler.isInitialized()).toBe(false);
+      expect(mockWatcher.close).toHaveBeenCalled();
     });
   });
 

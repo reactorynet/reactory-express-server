@@ -11,6 +11,7 @@ import Team from '@reactory/server-modules/reactory-core/models/Team';
 import { trim, union, isNil, find } from "lodash";
 import crypto from "crypto";
 import { roles } from "@reactory/server-core/authentication/decorators";
+import { service } from "@reactory/server-core/application/decorators/service";
 import logger from "@reactory/server-core/logging";
 import { strongRandom } from "@reactory/server-core/utils";
 import { 
@@ -35,6 +36,19 @@ export interface CreateUserResult {
   errors: any[];
 }
 
+
+@service({
+  id: 'core.UserService@1.0.0',
+  nameSpace: 'core',
+  name: 'UserService',
+  version: '1.0.0',
+  description: 'Service for managing Reactory users',
+  dependencies: [
+    { alias: 'searchService', id: 'core.ReactorySearchService@1.0.0' },
+    { alias: 'modelRegistry', id: 'core.ReactoryModelRegistry@1.0.0' }
+  ],
+  serviceType: 'user'  
+})
 class UserService implements Reactory.Service.IReactoryUserService {
   name: string = "UserService";
   nameSpace: string = "core";
@@ -46,6 +60,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
   isFetchingDocument: PeersFetchingState;
   
   modelRegistry: Reactory.Service.TReactoryModelRegistryService
+  searchService: Reactory.Service.ISearchService;
 
   constructor(
     props: Reactory.Service.IReactoryServiceProps,
@@ -785,11 +800,153 @@ class UserService implements Reactory.Service.IReactoryUserService {
     return (await User.find({}).exec()) as unknown as Reactory.Models.IUserDocument[];
   }
 
+  /**
+   * Get users by client membership
+   * Returns users who have an active membership for the specified ReactoryClient
+   * @param clientId - The ReactoryClient ID to filter users by
+   * @param paging - Optional paging parameters
+   * @returns UserList with paging info and users array
+   */
+  async getUsersByClientMembership(
+    clientId: string,
+    paging?: { page?: number; pageSize?: number }
+  ): Promise<{
+    paging: Reactory.Models.IPagingResult;
+    users: Reactory.Models.IUserDocument[];
+    totalUsers: number;
+  }> {
+    try {
+      const { ObjectId } = require('mongodb');
+      const page = paging?.page || 1;
+      const pageSize = paging?.pageSize || 10;
+      const skip = (page - 1) * pageSize;
+
+      // Convert clientId to ObjectId if it's a string
+      const clientObjectId = typeof clientId === 'string' ? new ObjectId(clientId) : clientId;
+
+      // Find users who have this client in their memberships array
+      const query = {
+        'memberships.clientId': clientObjectId,
+        deleted: { $ne: true }
+      };
+
+      // Get total count for paging
+      const totalUsers = await User.countDocuments(query);
+
+      // Get paginated users
+      const users = await User.find(query)
+        .limit(pageSize)
+        .skip(skip)
+        .sort({ lastName: 1, firstName: 1 })
+        .exec() as unknown as Reactory.Models.IUserDocument[];
+
+      // Calculate paging metadata
+      const totalPages = Math.ceil(totalUsers / pageSize);
+      const hasNext = page < totalPages;
+
+      return {
+        paging: {
+          page,
+          pageSize,
+          total: totalUsers,
+          hasNext,
+        },
+        users,
+        totalUsers,
+      };
+    } catch (error) {
+      this.context.error(`Error fetching users by client membership: ${error.message}`, { clientId, error }, 'error');
+      throw new ApiError(`Error fetching users by client membership: ${error.message}`, error);
+    }
+  }
+
   // Search users by email (regex) and sort
-  async searchUser(searchString: string, sort: string = 'email'): Promise<Reactory.Models.IUserDocument[]> {
-    return (await User.find({ email: { $regex: searchString, $options: 'i' } })
+  async searchUser(search: string, sort: string = 'email', limit?: number, offset?: number): Promise<Reactory.Models.IUserDocument[]> {
+    return (await User.find({ email: { $regex: search, $options: 'i' } })
       .sort(`-${sort}`)
+      .limit(limit || 10)
+      .skip(offset || 0)
       .exec()) as unknown as Reactory.Models.IUserDocument[];
+  }
+
+
+  async searchMongo(request: Reactory.Service.UserSearchRequest): Promise<Reactory.Service.UserSearchResults> {
+    
+    try {
+      const { search, sortBy, sortOrder, limit, offset, fields } = request || {};
+      const users = await User.find({ email: { $regex: search, $options: 'i' } })
+        .sort(`-${sortBy}`)
+        .limit(limit || 10)
+        .skip(offset || 0)
+        .exec();
+  
+      return {
+        total: users.length,
+        users: users as unknown as Reactory.Models.IUserDocument[],
+        limit: limit || 10,
+        offset: offset || 0,
+        sortBy: sortBy || 'lastName, firstName',
+        sortOrder: sortOrder || 'asc',
+        fields: fields || ['firstName', 'lastName', 'email'],
+        provider: 'mongo',
+        providerOptions: {},
+      };
+
+    } catch (error) {
+      this.context.error(`Error searching users: ${error.message}`, {}, 'error');
+      throw new ApiError(`Error searching users: ${error.message}`, error);
+    }
+  }
+
+  async searchFullText(request: Reactory.Service.UserSearchRequest): Promise<Reactory.Service.UserSearchResults> {
+    
+    try {
+      const searchResults: Reactory.Service.ISearchResults<Partial<Reactory.Models.IUserDocument>> = await this.searchService.search<Partial<Reactory.Models.IUserDocument>>('users', request.search, request.fields, request.limit, request.offset);
+      return {
+          total: searchResults.total,
+          users: searchResults.results as unknown as Reactory.Models.IUserDocument[],
+          limit: searchResults.limit,
+          offset: searchResults.offset,
+          sortBy: request.sortBy || 'lastName, firstName',
+          sortOrder: request.sortOrder || 'asc',
+          fields: request.fields || ['firstName', 'lastName', 'email'],
+          provider: 'fulltext',
+          providerOptions: request.providerOptions || {},
+        };
+    } catch (error) {
+      this.context.error(`Error searching users: ${error.message}`, {}, 'error');
+      throw new ApiError(`Error searching users: ${error.message}`, error);
+    }
+  }
+
+  async search(request: Reactory.Service.UserSearchRequest): Promise<Reactory.Service.UserSearchResults> {
+
+    const {       
+      provider = 'mongo',     
+    } = request || {};
+
+    let result: Reactory.Service.UserSearchResults = {
+      total: 0,
+      users: [],
+      limit: request.limit || 10,
+      offset: request.offset || 0,
+      sortBy: request.sortBy || 'lastName, firstName',
+      sortOrder: request.sortOrder || 'asc',
+      fields: request.fields || ['firstName', 'lastName', 'email'],
+      provider: provider,
+      providerOptions: request.providerOptions || {},
+    };
+
+    switch (provider) {
+      case 'fulltext':
+        result = await this.searchFullText(request);
+        break;      
+      case 'mongo':
+      default:
+        result = await this.searchMongo(request);
+    }
+
+    return result;
   }
 
   // Find organization by ID
@@ -821,23 +978,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
     user.deleted = true;
     await user.save();
     return true;
-  }
-
-  static reactory: Reactory.Service.IReactoryServiceDefinition<UserService> = {
-    id: "core.UserService@1.0.0",
-    nameSpace: "core",
-    name: "UserService",
-    version: "1.0.0",
-    description: "The core default user service",
-    service: (props, context) => {
-      return new UserService(props, context);
-    },
-    dependencies: [{
-      id: "core.ReactoryModelRegistry@1.0.0",
-      alias: "modelRegistry"
-    }],
-    serviceType: "user",
-  };
+  }  
 }
 
 export default UserService;

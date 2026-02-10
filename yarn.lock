@@ -6516,9 +6516,9 @@
   resolved "https://registry.npmjs.org/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
 
-"@reactory/reactory-core@file:./lib/reactory-reactory-core-1.1.0-RC1-d745ce.tgz":
-  version "1.1.0-RC1-d745ce"
-  resolved "file:./lib/reactory-reactory-core-1.1.0-RC1-d745ce.tgz#c2db0b996fd7ee8916aa4da044696ad9a7b6e357"
+"@reactory/reactory-core@file:./lib/reactory-reactory-core-1.1.0-RC1-ffc57f.tgz":
+  version "1.1.0-RC1-ffc57f"
+  resolved "file:./lib/reactory-reactory-core-1.1.0-RC1-ffc57f.tgz#45b4ea6b94479b35e0be818d1ebc446c3517059b"
   dependencies:
     reflect-annotations "4.0.0-beta.1"
     reflect-args "2.0.0"
@@ -13363,6 +13363,13 @@ express-jwt@^6.1.1:
     jsonwebtoken "^8.1.0"
     lodash "^4.17.21"
 
+express-rate-limit@8.2.1:
+  version "8.2.1"
+  resolved "https://registry.npmjs.org/express-rate-limit/-/express-rate-limit-8.2.1.tgz#ec75fdfe280ecddd762b8da8784c61bae47d7f7f"
+  integrity sha512-PCZEIEIxqwhzw4KF0n7QF4QqruVTcF73O5kFKUnGOyjbCCgizBBiFaYpd/fnBLUMPw/BWw9OsiN7GgrNYr7j6g==
+  dependencies:
+    ip-address "10.0.1"
+
 express-rate-limit@^7.5.0:
   version "7.5.1"
   resolved "https://registry.npmjs.org/express-rate-limit/-/express-rate-limit-7.5.1.tgz#8c3a42f69209a3a1c969890070ece9e20a879dec"
@@ -15361,7 +15368,7 @@ ioredis@*, ioredis@^5.4.1, ioredis@^5.6.1:
     redis-parser "^3.0.0"
     standard-as-callback "^2.1.0"
 
-ip-address@^10.0.1:
+ip-address@10.0.1, ip-address@^10.0.1:
   version "10.0.1"
   resolved "https://registry.npmjs.org/ip-address/-/ip-address-10.0.1.tgz#a8180b783ce7788777d796286d61bce4276818ed"
   integrity sha512-NWv9YLW4PoW2B7xtzaS3NCot75m6nK7Icdv0o3lfMceJVRfSoQwqD4wEH5rLwoKJwUiZ/rfpiVBhnaF0FK4HoA==
@@ -20334,6 +20341,11 @@ range-parser@^1.2.1, range-parser@~1.2.0, range-parser@~1.2.1:
   version "1.2.1"
   resolved "https://registry.npmjs.org/range-parser/-/range-parser-1.2.1.tgz#3cf37023d199e1c24d1a55b84800c2f3e6468031"
   integrity sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==
+
+rate-limit-redis@4.3.1:
+  version "4.3.1"
+  resolved "https://registry.npmjs.org/rate-limit-redis/-/rate-limit-redis-4.3.1.tgz#77274184fe89ce4a8834395306821f854857178e"
+  integrity sha512-+a1zU8+D7L8siDK9jb14refQXz60vq427VuiplgnaLk9B2LnvGe/APLTfhwb4uNIL7eWVknh8GnRp/unCj+lMA==
 
 raw-body@2.5.2:
   version "2.5.2"

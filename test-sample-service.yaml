@@ -1,0 +1,115 @@
+id: test.SampleApiService@1.0.0
+name: SampleApiService
+nameSpace: test
+version: 1.0.0
+description: Sample API service for testing the service generator
+serviceType: rest
+
+tags:
+  - api
+  - test
+  - sample
+
+dependencies:
+  - id: core.FetchService@1.0.0
+    alias: fetchService
+
+authentication:
+  type: bearer
+  tokenProvider: core.AuthService@1.0.0
+
+caching:
+  enabled: true
+  ttl: 300
+  store: memory
+
+retry:
+  enabled: true
+  maxAttempts: 3
+  backoff: exponential
+  initialDelay: 1000
+  maxDelay: 10000
+
+timeout: 30000
+
+spec:
+  rest:
+    baseUrl: https://jsonplaceholder.typicode.com
+    headers:
+      Accept: application/json
+      User-Agent: Reactory-Generated-Service/1.0.0
+    endpoints:
+      - path: /users
+        method: GET
+        handler: listUsers
+        description: Retrieve a list of users
+        query:
+          - name: page
+            type: number
+            description: Page number
+          - name: limit
+            type: number
+            description: Items per page
+        cache: true
+        timeout: 15000
+
+      - path: /users/{id}
+        method: GET
+        handler: getUser
+        description: Get a specific user by ID
+        params:
+          - name: id
+            type: string
+            required: true
+            description: User ID
+        response:
+          type: object
+          properties:
+            id: number
+            name: string
+            email: string
+        cache: true
+
+      - path: /users
+        method: POST
+        handler: createUser
+        description: Create a new user
+        body:
+          type: object
+          required: true
+          properties:
+            name: string
+            email: string
+            username: string
+        response:
+          type: object
+          properties:
+            id: number
+            name: string
+            email: string
+        authentication: true
+
+      - path: /users/{id}
+        method: PUT
+        handler: updateUser
+        description: Update an existing user
+        params:
+          - name: id
+            type: string
+            required: true
+        body:
+          type: object
+          properties:
+            name: string
+            email: string
+        authentication: true
+
+      - path: /users/{id}
+        method: DELETE
+        handler: deleteUser
+        description: Delete a user
+        params:
+          - name: id
+            type: string
+            required: true
+        authentication: true

@@ -4,6 +4,7 @@ import Reactory from '@reactory/reactory-core';
 import { ObjectId } from 'mongodb';
 import lodash from 'lodash';
 import crypto from 'crypto';
+import { PagedUserResults, ReactoryUserFilterInput, ReactoryUserQueryFailed, ReactoryUserQueryResult } from './types';
 
 //@ts-ignore
 @resolver
@@ -99,6 +100,22 @@ class UserResolver {
     return context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0').searchUser(searchString, sort);
   }
 
+  @property('UserAuthentication', 'props')  
+  userAuthProps(auth: { props: any }, context: Reactory.Server.IReactoryContext) {        
+    if (auth.props) {
+      const filteredProps: any = {};
+      // we don't send any sensitive information back unless the user has elevated permissions
+      const allowedKeys = ['lastLogin', 'loginCount', 'failedLoginAttempts', 'lockoutExpiry', 'twoFactorEnabled'];
+      Object.keys(auth.props).forEach((key) => {
+        if (allowedKeys.includes(key)) {
+          filteredProps[key] = auth.props[key];
+        }
+      });
+      return filteredProps;
+    }
+    return null;
+  }
+
   // --- Mutation Resolvers ---
   @mutation('createUser')
   async createUser(
@@ -140,7 +157,62 @@ class UserResolver {
     return context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0').deleteUser(id);
   }
 
-  // Add more mutations/queries as needed, following the above pattern.
+   @query('ReactoryUsers')
+    async ReactoryUsers(parent: any, { filter, paging }: {
+      filter?: ReactoryUserFilterInput;
+      paging?: Reactory.Data.PagingRequest;      
+    }, context: Reactory.Server.IReactoryContext): Promise<ReactoryUserQueryResult> {
+      const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
+      const {
+        organizationId,
+        businessUnitId,
+        searchString,
+        roles,
+        includeDeleted,
+        createdAfter,
+        createdBefore,
+        lastLoginAfter,
+        lastLoginBefore,
+        firstName,
+        lastName,
+        email,
+        customFilters
+      } = filter || {};
+
+      const { 
+        page,
+        pageSize
+      } = paging || {};
+
+      try {
+        const result = await userService.search({
+          search: searchString,
+          limit: pageSize || 25,
+          offset: page && pageSize ? (page - 1) * pageSize : 0,
+          sortBy: 'lastName',
+          sortOrder: 'asc',
+          fields: ['firstName', 'lastName', 'email'],
+        });
+
+        return {
+          __typename: 'PagedUserResults',
+          paging: {
+            hasNext: result.total > (page && pageSize ? (page - 1) * pageSize : 0) + (pageSize || 25),
+            page: page || 1,
+            pageSize: pageSize || 25,
+            total: result.total,            
+          },
+          users: result.users as Partial<Reactory.Models.IUserDocument>[],
+        } as PagedUserResults;
+      } catch (error) {
+        context.log('Error searching users', { error, filter, paging }, 'error');
+        return {
+          __typename: 'ReactoryUserQueryFailed',
+          message: error.message,
+          code: error.code || 'USER_SEARCH_ERROR'
+        } as ReactoryUserQueryFailed;
+      }            
+    }
 }
 
 export default UserResolver;

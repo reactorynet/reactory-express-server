@@ -1,0 +1,30 @@
+id: examples.GreeterService@1.0.0
+name: GreeterService
+nameSpace: examples
+version: 1.0.0
+description: Example gRPC Greeter service
+serviceType: grpc
+
+dependencies:
+  - id: core.LoggingService@1.0.0
+    alias: loggingService
+    required: false
+
+spec:
+  grpc:
+    protoPath: ./greeter.proto
+    serviceName: Greeter
+    packageName: greeter
+    endpoints:
+      - rpc: SayHello
+        handler: sayHello
+        description: Send a greeting to a user
+      
+      - rpc: SayHelloAgain
+        handler: sayHelloAgain
+        description: Send another greeting
+      
+      - rpc: SayHelloStream
+        handler: sayHelloStream
+        description: Stream multiple greetings
+        streaming: server

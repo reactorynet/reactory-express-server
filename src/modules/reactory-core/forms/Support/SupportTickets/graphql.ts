@@ -127,6 +127,40 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
         'paging': 'paging',
         'tickets': 'data'
       }
+    },
+    users: {
+      name: 'ReactoryUsers',
+      text: `query ReactoryUsers($filter: ReactoryUserFilterInput, $paging: PagingRequest) {
+        ReactoryUsers(filter: $filter, paging: $paging) {
+          ... on PagedUserResults {
+            paging {
+              page
+              pageSize
+              hasNext
+              total
+            }
+            users {
+              id
+              firstName
+              lastName
+              email
+              avatar
+              roles
+              createdAt
+              updatedAt
+            }
+          }
+          ... on ReactoryUserQueryFailed {
+            message
+            code
+          }
+        }
+      }`,
+      resultType: 'object',
+      resultMap: {
+        'paging': 'paging',
+        'users': 'data'
+      }
     }
   }
 }

@@ -316,6 +316,11 @@ type ReactoryClient {
   The list of themes available for the client application
   """
   themes: [ApplicationTheme]
+
+  """
+  The users who have memberships for this client application
+  """
+  users(paging: PagingRequest): UserList
 }
 
 
@@ -420,6 +425,15 @@ extend type Query {
   Restricted to ADMIN roles. Fetches a ReactoryClient item with a given Key
   """
   ReactoryClientWithKey(key: String!): ReactoryClient
+
+  """
+  Restricted to ADMIN roles. Fetches users for a specific ReactoryClient with filtering and pagination
+  """
+  ReactoryClientApplicationUsers(
+    clientId: String!
+    filter: ReactoryUserFilterInput
+    paging: PagingRequest
+  ): UserList
 }
 
 """

@@ -3,77 +3,53 @@
 interface IComponentsImport {
   React: Reactory.React;
   Material: Reactory.Client.Web.IMaterialModule;
+  ApplicationUsers: Reactory.Client.AnyValidComponent;
 }
 
 interface ApplicationUsersPanelProps {
   reactory: Reactory.Client.IReactoryApi;
-  formData?: any;
-  applicationId?: string;
+  formData?: Partial<Reactory.Models.IReactoryClient>;
   mode?: 'view' | 'edit';
+  applicationId?: string;
 }
 
 const ApplicationUsersPanel = (props: ApplicationUsersPanelProps) => {
-  const { reactory, formData, applicationId, mode = 'view' } = props;
+  const { reactory, formData, mode = 'view', applicationId } = props;
 
-  const { React, Material } = reactory.getComponents<IComponentsImport>([
+  const { React, Material, ApplicationUsers } = reactory.getComponents<IComponentsImport>([
     'react.React',
     'material-ui.Material',
+    'core.ApplicationUsers@1.0.0',
   ]);
 
-  const {
-    Card,
-    CardContent,
-    CardHeader,
-    Box,
-    Typography,
-    Divider,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemAvatar,
-    Avatar,
-  } = Material.MaterialCore;
-
-  const {
-    People: PeopleIcon,
-    Email: EmailIcon,
-  } = Material.MaterialIcons;
-
-  const users = formData?.users || [];
-  const totalUsers = formData?.totalUsers || 0;
-
-  return (
-    <Box sx={{ p: 2 }}>
-      <Card>
-        <CardHeader avatar={<PeopleIcon />} title="Application Users" subheader={`Total: ${totalUsers}`} />
-        <Divider />
-        <CardContent>
-          {users.length > 0 ? (
-            <List>
-              {users.map((user: any) => (
-                <ListItem key={user.id}>
-                  <ListItemAvatar>
-                    <Avatar src={user.avatar} alt={`${user.firstName} ${user.lastName}`} />
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={`${user.firstName} ${user.lastName}`}
-                    secondary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        <EmailIcon fontSize="small" />
-                        <Typography variant="caption">{user.email}</Typography>
-                      </Box>
-                    }
-                  />
-                </ListItem>
-              ))}
-            </List>
-          ) : (
+  const { Box } = Material.MaterialCore;
+  
+  // If no client ID is available, show a message
+  if (!applicationId) {
+    const { Typography, Card, CardContent } = Material.MaterialCore;
+    const { Warning: WarningIcon } = Material.MaterialIcons;
+    
+    return (
+      <Box sx={{ p: 2 }}>
+        <Card>
+          <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <WarningIcon color="warning" />
             <Typography variant="body2" color="text.secondary">
-              No users found. User data will be populated here when available.
+              No application ID provided. Please provide an applicationId to view users.
             </Typography>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Render the ApplicationUsers form component
+  return (
+    <Box sx={{ width: '100%', height: '100%' }}>
+      <ApplicationUsers
+        applicationId={applicationId}        
+        mode={mode}        
+      />
     </Box>
   );
 };

@@ -1,0 +1,13 @@
+warn: Client config folder not found: /var/folders/y4/sfgsqh3d5nn2lls3k5qk3ty00000gp/T/reactory-client-configs-UZumko/missing-client {"timestamp":"2026-02-05T06:10:39.304Z"}
+PASS reactory-server src/data/clientConfigs/helpers/__tests__/configLoader.test.ts (6.31 s)
+  Client Config YAML Loader
+    ✓ loads base config.yaml and interpolates environment variables (5 ms)
+    ✓ overrides base fields with element-level YAML files (2 ms)
+    ✓ loads enabled client list and skips missing configs (6 ms)
+    ✓ interpolates nested values in arrays and objects (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        6.372 s, estimated 7 s
+Ran all test suites matching /src\/data\/clientConfigs\/helpers\/__tests__\/configLoader.test.ts/i.
