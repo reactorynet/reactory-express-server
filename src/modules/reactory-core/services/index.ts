@@ -11,7 +11,7 @@ import UserService from './UserService';
 import WorkflowService from './Workflow/ReactoryWorkflowService';
 import FetchService from './FetchService';
 import PdfService from './PdfService';
-import ReactorySupportService from "./SupportService";
+import ReactorySupportService from "./ReactorySupportService";
 import SystemService from './SystemService';
 import ReactoryFormService from './FormService';
 import ReactoryModuleCompilerService from './ReactoryModuleCompilerService';
@@ -43,7 +43,7 @@ const services = [
   WorkflowService,
   FetchService.reactory,
   PdfService.reactory,
-  ReactorySupportService.reactory,
+  ReactorySupportService,
   SystemService.reactory,
   ReactoryFormService.reactory,
   ReactoryModuleCompilerService.reactory,

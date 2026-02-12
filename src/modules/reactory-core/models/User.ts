@@ -573,6 +573,6 @@ UserSchema.statics.onStartup = async (context: Reactory.Server.IReactoryContext)
 };
 
 export const ReactoryUserSchema = UserSchema;
-
-const ReactoryUserModel: mongoose.Model<Reactory.Models.IUserDocument> = mongoose.model<Reactory.Models.IUserDocument>('User', UserSchema, 'reactory_users');
+export type ReactoryUserDocument = mongoose.Document & Reactory.Models.IUserDocument;
+const ReactoryUserModel: mongoose.Model<ReactoryUserDocument> = mongoose.model<ReactoryUserDocument>('User', UserSchema, 'reactory_users');
 export default ReactoryUserModel;

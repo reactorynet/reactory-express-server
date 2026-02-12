@@ -131,17 +131,17 @@ const ApplicationUsersToolbar = (props: ApplicationUsersToolbarProps) => {
 
   // Export functionality
   const handleExport = useCallback(() => {
-    reactory.utils.showNotification('Export functionality coming soon', { variant: 'info' });
+    reactory.createNotification('Export functionality coming soon', { showInAppNotification: true, type: 'info' });
     handleMenuClose();
   }, [reactory]);
 
   // Add user functionality
   const handleAddUser = useCallback(() => {
-    reactory.utils.showNotification('Add user functionality coming soon', { variant: 'info' });
+    reactory.createNotification('Add user functionality coming soon', { showInAppNotification: true, type: 'info' });
     handleMenuClose();
   }, [reactory]);
 
-  const totalUsers = data?.totalUsers || 0;
+  const totalUsers = data?.paging.total || 0;
   const selectedCount = selectedRows.length;
 
   return (

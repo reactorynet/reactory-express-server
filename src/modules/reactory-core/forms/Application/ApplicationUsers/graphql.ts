@@ -35,6 +35,9 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
       }`,
       variables: {
         'formContext.props.applicationId': 'clientId',
+        'query.search': 'filter.searchString',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize'
       },
       resultType: 'object',
       resultMap: {

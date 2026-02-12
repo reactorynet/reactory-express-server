@@ -42,7 +42,7 @@ export class ReactoryClientResolver {
   async clientApplicationUsers(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
     const { clientId, filter, paging } = args;
     const userService = context.getService<Reactory.Service.IReactoryUserService>("core.UserService@1.0.0");
-    return userService.getUsersByClientMembership(clientId, paging);
+    return userService.getUsersByClientMembership(clientId, paging, filter);
   }
 }
 

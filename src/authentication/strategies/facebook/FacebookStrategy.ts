@@ -167,6 +167,17 @@ const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
       facebookId,
     });
 
+    // Update membership lastLogin if partner exists
+    if (context.partner) {
+      const membership = user.memberships.find(m => 
+        m.clientId.toString() === context.partner._id.toString()
+      );
+      if (membership) {
+        membership.lastLogin = new Date();
+        await user.save(); // Save again after updating membership
+      }
+    }
+
     // Generate login token
     const loginToken = await Helpers.generateLoginToken(user);
     

@@ -49,6 +49,12 @@ class UserResolver {
 
   @property('User', 'memberships')
   memberships(usr: { memberships: Reactory.Models.IMembership[] }, args: any, context: Reactory.Server.IReactoryContext) {
+    // For admin users or when memberships are requested in admin contexts,
+    // return all memberships. Otherwise filter by current partner for security.
+    if (context?.user?.hasRole && context.user.hasRole(context.partner._id, 'ADMIN')) {
+      return usr.memberships || [];
+    }
+    
     if (Array.isArray(usr.memberships)) {
       return lodash.filter(usr.memberships, {
         clientId: context.partner._id,

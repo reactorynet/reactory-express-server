@@ -234,8 +234,7 @@ class SupportResolver {
     try {
       const ticket = await supportService.attachDocument(ticketId, fileIds);
       
-      // Get the attached files
-      const ReactoryFileModel = context.models.ReactoryFile;
+      // Get the attached files      
       const attachedFiles = await ReactoryFileModel.find({
         _id: { $in: fileIds }
       }).exec();

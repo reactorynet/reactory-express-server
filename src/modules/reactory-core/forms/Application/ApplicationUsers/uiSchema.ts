@@ -18,9 +18,9 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
   },
   variables: {
     'formContext.props.applicationId': 'clientId',
-    'filter.searchString': 'filter.searchString',
-    'paging.page': 'paging.page',
-    'paging.pageSize': 'paging.pageSize'
+    'query.search': 'filter.searchString',
+    'query.page': 'paging.page',
+    'query.pageSize': 'paging.pageSize'
   },
   componentMap: {
     Toolbar: 'core.ApplicationUsersToolbar@1.0.0'
@@ -94,35 +94,24 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
     // Roles
     {
       title: 'Roles',
-      field: 'memberships',
+      field: 'memberships.0.roles',
       width: 200,
-      component: 'core.TagListComponent@1.0.0',
-      propsMap: {
-        'rowData.memberships': 'memberships'
-      },
+      component: 'core.ChipLabel@1.0.0',
       props: {
         uiSchema: {
           'ui:options': {
-            format: '${memberships && memberships[0] ? memberships[0].roles.join(", ") : "No roles"}',
-            variant: 'chip',
+            variant: 'outlined',
             size: 'small',
-            color: 'primary'
+            color: 'primary'            
           }
         }
-      },
-      render: (rowData: any) => {
-        const membership = rowData?.memberships?.[0];
-        if (!membership?.roles || membership.roles.length === 0) {
-          return 'No roles';
-        }
-        return membership.roles.join(', ');
       }
     },
 
     // Status (Enabled/Disabled)
     {
       title: 'Status',
-      field: 'enabled',
+      field: 'memberships[0].enabled',
       width: 120,
       component: 'StatusBadgeWidget',
       propsMap: {
@@ -133,21 +122,17 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
           'ui:options': {
             variant: 'filled',
             size: 'small',
-            format: '${memberships && memberships[0] && memberships[0].enabled ? "Active" : "Inactive"}',
+            labelFormat: '${formData === true ? "Active" : "Inactive"}',
             colorMap: {
-              'Active': '#4caf50',
-              'Inactive': '#f44336'
+              'true': '#4caf50',
+              'false': '#f44336'
             },
             iconMap: {
-              'Active': 'check_circle',
-              'Inactive': 'cancel'
+              'true': 'check_circle',
+              'false': 'cancel'
             }
           }
         }
-      },
-      render: (rowData: any) => {
-        const membership = rowData?.memberships?.[0];
-        return membership?.enabled ? 'Active' : 'Inactive';
       }
     },
 
@@ -156,21 +141,20 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
       title: 'Last Login',
       field: 'lastLogin',
       width: 180,
-      component: 'core.DateTimeComponent@1.0.0',
+      component: 'RelativeTimeWidget',
       propsMap: {
-        'rowData.lastLogin': 'value'
+        'rowData.memberships': 'memberships'
       },
       props: {
         uiSchema: {
           'ui:options': {
-            format: 'relative', // e.g., "2 days ago"
+            format: 'relative',
             fallback: 'Never',
-            variant: 'body2'
+            tooltip: true,
+            tooltipFormat: 'YYYY-MM-DD HH:mm:ss'
           }
         }
-      },
-      type: 'datetime',
-      defaultSort: 'desc'
+      }
     },
 
     // Created Date
@@ -178,15 +162,17 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
       title: 'Created',
       field: 'createdAt',
       width: 180,
-      component: 'core.DateTimeComponent@1.0.0',
+      component: 'RelativeTimeWidget',
       propsMap: {
-        'rowData.createdAt': 'value'
+        'rowData.memberships': 'memberships'
       },
       props: {
         uiSchema: {
           'ui:options': {
-            format: 'date', // e.g., "Jan 15, 2024"
-            variant: 'body2'
+            format: 'date',
+            fallback: 'Unknown',
+            tooltip: true,
+            tooltipFormat: 'YYYY-MM-DD HH:mm:ss'
           }
         }
       },
@@ -217,34 +203,10 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
 
   actions: [
     {
+      key: 'edit',
       icon: 'edit',
-      tooltip: 'Edit User',
-      onClick: (event: any, rowData: any) => {
-        console.log('Edit user:', rowData);
-      }
-    },
-    {
-      icon: 'person_off',
-      tooltip: 'Disable User',
-      onClick: (event: any, rowData: any) => {
-        console.log('Disable user:', rowData);
-      },
-      hidden: (rowData: any) => {
-        const membership = rowData?.memberships?.[0];
-        return !membership?.enabled;
-      }
-    },
-    {
-      icon: 'person',
-      tooltip: 'Enable User',
-      onClick: (event: any, rowData: any) => {
-        console.log('Enable user:', rowData);
-      },
-      hidden: (rowData: any) => {
-        const membership = rowData?.memberships?.[0];
-        return membership?.enabled !== false;
-      }
-    }
+      tooltip: 'Edit User'      
+    },    
   ],
 
   options: {
@@ -279,7 +241,7 @@ const BaseUISchema: Reactory.Schema.IFormUISchema = {
     toolbarPosition: 'none', // We're using the custom toolbar in MaterialTable
     style: {
       padding: 0
-    }
+    },
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -290,6 +252,7 @@ const BaseUISchema: Reactory.Schema.IFormUISchema = {
 };
 
 export const GridUISchema: Reactory.Schema.IUISchema = {
+  'ui:title': null,
   ...BaseUISchema,
   data: usersTableUISchema
 };

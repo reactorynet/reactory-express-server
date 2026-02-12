@@ -805,11 +805,17 @@ class UserService implements Reactory.Service.IReactoryUserService {
    * Returns users who have an active membership for the specified ReactoryClient
    * @param clientId - The ReactoryClient ID to filter users by
    * @param paging - Optional paging parameters
+   * @param filter - Optional filter parameters (searchString, roles, includeDeleted, etc.)
    * @returns UserList with paging info and users array
    */
   async getUsersByClientMembership(
     clientId: string,
-    paging?: { page?: number; pageSize?: number }
+    paging?: { page?: number; pageSize?: number },
+    filter?: {
+      searchString?: string;
+      roles?: string[];
+      includeDeleted?: boolean;
+    }
   ): Promise<{
     paging: Reactory.Models.IPagingResult;
     users: Reactory.Models.IUserDocument[];
@@ -824,11 +830,30 @@ class UserService implements Reactory.Service.IReactoryUserService {
       // Convert clientId to ObjectId if it's a string
       const clientObjectId = typeof clientId === 'string' ? new ObjectId(clientId) : clientId;
 
-      // Find users who have this client in their memberships array
-      const query = {
+      // Build the base query - users with membership to the specified client
+      const query: Record<string, any> = {
         'memberships.clientId': clientObjectId,
-        deleted: { $ne: true }
       };
+
+      // Apply deleted filter (default: exclude deleted users)
+      if (filter?.includeDeleted !== true) {
+        query.deleted = { $ne: true };
+      }
+
+      // Apply search string filter (matches firstName, lastName, or email)
+      if (filter?.searchString && filter.searchString.trim().length > 0) {
+        const searchRegex = { $regex: filter.searchString.trim(), $options: 'i' };
+        query.$or = [
+          { firstName: searchRegex },
+          { lastName: searchRegex },
+          { email: searchRegex },
+        ];
+      }
+
+      // Apply roles filter
+      if (filter?.roles && filter.roles.length > 0) {
+        query['memberships.roles'] = { $in: filter.roles };
+      }
 
       // Get total count for paging
       const totalUsers = await User.countDocuments(query);
@@ -839,6 +864,15 @@ class UserService implements Reactory.Service.IReactoryUserService {
         .skip(skip)
         .sort({ lastName: 1, firstName: 1 })
         .exec() as unknown as Reactory.Models.IUserDocument[];
+
+      // Filter memberships to only include those for the requested client
+      users.forEach(user => {
+        if (user.memberships) {
+          user.memberships = user.memberships.filter(membership => 
+            membership.clientId.toString() === clientObjectId.toString()
+          );
+        }
+      });
 
       // Calculate paging metadata
       const totalPages = Math.ceil(totalUsers / pageSize);
