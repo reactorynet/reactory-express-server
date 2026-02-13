@@ -3,6 +3,8 @@ import Reactory from '@reactory/reactory-core';
 interface ApplicationUsersToolbarDependencies {
   React: Reactory.React;
   Material: Reactory.Client.Web.IMaterialModule;
+  FullScreenModal: Reactory.Client.Components.FullScreenModal;
+  ReactoryForm: Reactory.Forms.IReactoryFormComponent;
 }
 
 interface ApplicationUsersToolbarProps {
@@ -29,12 +31,14 @@ interface ApplicationUsersToolbarProps {
 const ApplicationUsersToolbar = (props: ApplicationUsersToolbarProps) => {
   const { reactory, data, queryVariables, onQueryChange, onRefresh, selectedRows = [] } = props;
 
-  const { React, Material } = reactory.getComponents<ApplicationUsersToolbarDependencies>([
+  const { React, Material, FullScreenModal, ReactoryForm } = reactory.getComponents<ApplicationUsersToolbarDependencies>([
     'react.React',
-    'material-ui.Material'
+    'material-ui.Material',
+    'core.FullScreenModal',
+    'core.ReactoryForm'
   ]);
 
-  const { useState, useCallback } = React;
+  const { useState, useCallback, useEffect } = React;
 
   const {
     Box,
@@ -64,6 +68,20 @@ const ApplicationUsersToolbar = (props: ApplicationUsersToolbarProps) => {
   const [searchText, setSearchText] = useState(queryVariables?.filter?.searchString || '');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
+  const [addUserOpen, setAddUserOpen] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState<Reactory.Forms.IReactoryForm>(null);
+
+  // Load the CreateUserForApplication form definition
+  useEffect(() => {
+    const formResult = reactory.form('core.CreateUserForApplication@1.0.0', (form, error) => {
+      if (!error) {
+        setCreateUserForm(form);
+      }
+    });
+    if (formResult) {
+      setCreateUserForm(formResult);
+    }
+  }, []);
 
   // Handle search input
   const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,9 +155,20 @@ const ApplicationUsersToolbar = (props: ApplicationUsersToolbarProps) => {
 
   // Add user functionality
   const handleAddUser = useCallback(() => {
-    reactory.createNotification('Add user functionality coming soon', { showInAppNotification: true, type: 'info' });
     handleMenuClose();
-  }, [reactory]);
+    setAddUserOpen(true);
+  }, []);
+
+  const handleAddUserClose = useCallback(() => {
+    setAddUserOpen(false);
+  }, []);
+
+  const handleAddUserSubmit = useCallback(() => {
+    setAddUserOpen(false);
+    if (onRefresh) {
+      onRefresh();
+    }
+  }, [onRefresh]);
 
   const totalUsers = data?.paging.total || 0;
   const selectedCount = selectedRows.length;
@@ -284,6 +313,25 @@ const ApplicationUsersToolbar = (props: ApplicationUsersToolbarProps) => {
           Clear Filters
         </MenuItem>
       </Menu>
+
+      {/* Add User Dialog */}
+      {FullScreenModal && (
+        <FullScreenModal
+          title="Create User for Application"
+          open={addUserOpen}
+          onClose={handleAddUserClose}
+        >
+          {createUserForm && ReactoryForm ? (
+            <ReactoryForm
+              formDef={createUserForm}
+              formContext={{ props: { applicationId: queryVariables?.clientId } }}
+              onSubmit={handleAddUserSubmit}
+            />
+          ) : (
+            <Typography variant="body1">Loading form...</Typography>
+          )}
+        </FullScreenModal>
+      )}
     </Toolbar>
   );
 };

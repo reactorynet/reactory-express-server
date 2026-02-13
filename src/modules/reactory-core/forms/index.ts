@@ -12,6 +12,7 @@ import SupportTickets from './Support/SupportTickets';
 import SupportTicket from './Support/SupportTicket';
 import SupportticketDelete from './Support/SupportTicketDelete';
 import WorkflowForms from './Workflow'
+import UserForms from './User';
 
 export default [
   Application,
@@ -27,5 +28,6 @@ export default [
   SupportTickets,
   SupportTicket,
   SupportticketDelete,
-  ...WorkflowForms
+  ...WorkflowForms,
+  ...UserForms
 ];

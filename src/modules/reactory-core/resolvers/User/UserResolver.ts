@@ -163,6 +163,35 @@ class UserResolver {
     return context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0').deleteUser(id);
   }
 
+  @roles(['ADMIN'])
+  @mutation('ReactoryCoreCreateUserForApplication')
+  async ReactoryCoreCreateUserForApplication(
+    obj: any,
+    params: { input: any; clientId: string; password?: string; roles?: string[] },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const { input, clientId, password = crypto.randomBytes(16).toString('hex'), roles: userRoles = ['USER'] } = params;
+    const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>('core.SystemService@1.0.0');
+    
+    const reactoryClient = await systemService.getReactoryClient(clientId);
+    if (!reactoryClient) {
+      throw new Error(`ReactoryClient with id ${clientId} not found`);
+    }
+
+    const result = await userService.createUserForOrganization(
+      input,
+      password,
+      null, // no organization
+      userRoles,
+      'LOCAL',
+      reactoryClient as Reactory.Models.IReactoryClientDocument,
+      null  // no business unit
+    );
+
+    return result.user;
+  }
+
    @query('ReactoryUsers')
     async ReactoryUsers(parent: any, { filter, paging }: {
       filter?: ReactoryUserFilterInput;
