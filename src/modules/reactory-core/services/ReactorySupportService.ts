@@ -5,21 +5,28 @@ import moment from 'moment';
 import { QueryWithHelpers } from 'mongoose';
 import ReactorySupportTicketModel from '../models/ReactorySupportTicket';
 import ReactoryCommentModel from '../models/Comment';
+import ReactoryFileModel from '@reactory/server-modules/reactory-core/models/CoreFile';
 import { InsufficientPermissions } from '@reactory/server-core/exceptions';
 import { ObjectId } from 'mongodb';
+import { service } from '@reactory/server-core/application/decorators';
 
+@service({
+  id: "core.ReactorySupportService@1.0.0",
+  nameSpace: "core",
+  name: "ReactorySupportService",
+  version: "1.0.0",
+  dependencies: [
+     { id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' }
+  ],
+  serviceType: "support",
+  secondaryTypes: ["customerManagement", "user"]
+})
 class ReactorySupportService implements Reactory.Service.TReactorySupportService {
-  
-  name: string;
-  nameSpace: string;
-  version: string;
+      
+  private context: Reactory.Server.IReactoryContext
+  private fileService: Reactory.Service.IReactoryFileService; 
 
-  props: Reactory.Service.IReactoryServiceProps;
-  context: Reactory.Server.IReactoryContext
-
-  fileService: Reactory.Service.IReactoryFileService;  
-  constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
-    this.props = props;
+  constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {    
     this.context = context;
   } 
   
@@ -118,8 +125,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       throw new InsufficientPermissions('User does not have permission to attach files to this ticket');
     }
 
-    // Add files to ticket
-    const ReactoryFileModel = this.context.models.ReactoryFile;
+    // Add files to ticket    
     for (const fileId of fileIds) {
       const file = await ReactoryFileModel.findById(fileId).exec();
       if (file && !ticket.documents.some((d: any) => d.toString() === fileId)) {
@@ -131,7 +137,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     await ticket.save();
     await ticket.populate('documents');
 
-    return ticket;
+    return ticket as Reactory.Models.IReactorySupportTicket;
   }
 
   isAdminUser = (context: Reactory.Server.IReactoryContext): boolean => { 
@@ -266,7 +272,6 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   }
   
   getExecutionContext(): Reactory.Server.IReactoryContext {
-    // throw new Error('Method not implemented.');
     return this.context;
   }
   setExecutionContext(context: Reactory.Server.IReactoryContext): boolean {
@@ -276,30 +281,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
 
   setFileService(fileService: Reactory.Service.IReactoryFileService): void {
     this.fileService = fileService;    
-  }
-
-  setCommentService(commentService: Reactory.Service.ICommentService): void {
-    this.commentService = commentService;    
-  }
-  
-  static reactory: Reactory.Service.IReactoryServiceDefinition<ReactorySupportService> = {  
-    id: "core.ReactorySupportService@1.0.0",
-    nameSpace: "core",
-    name: "ReactorySupportService",
-    version: "1.0.0",
-    description: "Service for logging and managing reactory support tickets",
-    service: (
-      props: Reactory.Service.IReactoryServiceProps, 
-      context: Reactory.Server.IReactoryContext): ReactorySupportService => {
-        return new ReactorySupportService(props, context);
-    },
-    dependencies: [
-      { id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' },
-      { id: 'core.CommentService@1.0.0', alias: 'commentService' },
-    ],
-    serviceType: 'workflow',
-  };
-
+  }      
 }
 
 

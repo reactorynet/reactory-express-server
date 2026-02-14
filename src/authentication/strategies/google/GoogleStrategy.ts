@@ -123,6 +123,19 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
       googleAuth.props = authProps;
     }
 
+    // Update user last login
+    user.lastLogin = new Date();
+    
+    // Update membership lastLogin if partner exists
+    if (context.partner) {
+      const membership = user.memberships.find(m => 
+        m.clientId.toString() === context.partner._id.toString()
+      );
+      if (membership) {
+        membership.lastLogin = new Date();
+      }
+    }
+
     await user.save();
     
     Helpers.generateLoginToken(user).then((loginToken) => { 

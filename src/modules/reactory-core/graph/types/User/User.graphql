@@ -956,6 +956,17 @@ extend type Mutation {
     user_id: String!, 
     id: String!
   ): CoreSimpleResponse
+
+  """
+  Creates a new user and assigns them a membership for a specific ReactoryClient (application).
+  If the user already exists (by email), a new membership is added instead.
+  """
+  ReactoryCoreCreateUserForApplication(
+    input: CreateUserInput!,
+    clientId: String!,
+    password: String,
+    roles: [String]
+  ): User
 }
 
 extend type Subscription {

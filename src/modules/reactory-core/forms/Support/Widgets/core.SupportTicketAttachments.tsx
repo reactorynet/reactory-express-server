@@ -132,7 +132,7 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
           file,
           alias: file.name,
           path: `support-tickets/${ticket.id}`,
-          uploadContext: 'support-ticket-attachment',
+          uploadContext: `support-ticket-attachment/${ticket.id}`,
         });
 
         reactory.log('SupportTicketAttachments: Upload result', { uploadResult }, 'debug');
@@ -230,8 +230,8 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
   };
 
   const handleDownload = (document: any) => {
-    if (document.url) {
-      window.open(document.url, '_blank');
+    if (document.link) {
+      window.open(document.link, '_blank');
     } else {
       reactory.createNotification('Download not available', { type: 'warning' });
     }
@@ -263,7 +263,7 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
   };
 
   const isImage = (mimeType: string): boolean => {
-    return mimeType.startsWith('image/');
+    return mimeType?.startsWith('image/');
   };
 
   return (
@@ -353,11 +353,11 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
           {documents.map((doc) => (
             <Grid item xs={12} sm={6} md={4} key={doc.id}>
               <Card variant="outlined">
-                {isImage(doc.mimeType) && doc.url ? (
+                {isImage(doc.mimetype) && doc.link ? (
                   <CardMedia
                     component="img"
                     height="140"
-                    image={doc.url}
+                    image={doc.link}
                     alt={doc.name}
                     sx={{ objectFit: 'cover' }}
                   />
@@ -372,13 +372,13 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
                     }}
                   >
                     <Icon sx={{ fontSize: 64, color: 'text.secondary' }}>
-                      {getFileIcon(doc.mimeType)}
+                      {getFileIcon(doc.mimetype)}
                     </Icon>
                   </Box>
                 )}
                 
                 <CardContent>
-                  <Tooltip title={doc.name}>
+                  <Tooltip title={doc.filename}>
                     <Typography
                       variant="subtitle2"
                       noWrap
@@ -396,7 +396,7 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
                     />
                     <Chip
                       size="small"
-                      label={doc.mimeType.split('/')[1].toUpperCase()}
+                      label={doc.mimetype.split('/')[1].toUpperCase()}
                       variant="outlined"
                     />
                   </Box>

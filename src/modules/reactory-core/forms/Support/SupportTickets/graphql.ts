@@ -115,6 +115,11 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             }
             documents {
               id
+              filename
+              alias
+              size
+              link
+              mimetype
             }
             tags
             slaDeadline

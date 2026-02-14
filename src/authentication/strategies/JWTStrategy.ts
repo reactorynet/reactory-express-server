@@ -2,7 +2,7 @@ import { User } from '@reactory/server-modules/reactory-core/models'
 import logger from '@reactory/server-core/logging';
 import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions } from 'passport-jwt';
 import moment from 'moment';
-import Helpers, { OnDoneCallback } from './helpers';
+import { OnDoneCallback } from './helpers';
 import { isNil } from 'lodash';
 import amq from '@reactory/server-core/amq';
 import AuthTelemetry from './telemetry';
@@ -70,6 +70,23 @@ const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.
         AuthTelemetry.recordFailure('jwt', clientKey, 'user_not_found', duration);
         return done(null, false);
       }
+      
+      // Update last login timestamp
+      userResult.lastLogin = new Date();
+      
+      // Update membership lastLogin if partner context exists
+      if (request.context?.partner) {
+        const membership = userResult.memberships.find((m: Reactory.Models.IMembershipDocument) => 
+          m.clientId.toString() === request.context.partner._id.toString()
+        );
+        if (membership) {
+          membership.lastLogin = new Date();
+        }
+      }
+      
+      userResult.save().catch((saveError) => {
+        logger.error('Failed to update user lastLogin in JWT auth', saveError);
+      });
       
       if(request.context) {        
         request.context.user = userResult;

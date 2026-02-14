@@ -588,6 +588,8 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
       logo: 1,
       avatar: 1,
       color: 1,
+      public: 1,
+      clients: 1,
       createdAt: 1,
       updatedAt: 1,
       deleted: 1,

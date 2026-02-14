@@ -2,7 +2,6 @@ import Reactory from '@reactory/reactory-core';
 
 const schema: Reactory.Schema.ISchema = {
   type: 'object',
-  title: 'Application Users',
   properties: {
     clientId: {
       type: 'string',

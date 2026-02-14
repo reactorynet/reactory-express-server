@@ -49,6 +49,12 @@ class UserResolver {
 
   @property('User', 'memberships')
   memberships(usr: { memberships: Reactory.Models.IMembership[] }, args: any, context: Reactory.Server.IReactoryContext) {
+    // For admin users or when memberships are requested in admin contexts,
+    // return all memberships. Otherwise filter by current partner for security.
+    if (context?.user?.hasRole && context.user.hasRole(context.partner._id, 'ADMIN')) {
+      return usr.memberships || [];
+    }
+    
     if (Array.isArray(usr.memberships)) {
       return lodash.filter(usr.memberships, {
         clientId: context.partner._id,
@@ -155,6 +161,35 @@ class UserResolver {
   @mutation('deleteUser')
   async deleteUser(parent: any, { id }: any, context: Reactory.Server.IReactoryContext) {
     return context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0').deleteUser(id);
+  }
+
+  @roles(['ADMIN'])
+  @mutation('ReactoryCoreCreateUserForApplication')
+  async ReactoryCoreCreateUserForApplication(
+    obj: any,
+    params: { input: any; clientId: string; password?: string; roles?: string[] },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const { input, clientId, password = crypto.randomBytes(16).toString('hex'), roles: userRoles = ['USER'] } = params;
+    const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>('core.SystemService@1.0.0');
+    
+    const reactoryClient = await systemService.getReactoryClient(clientId);
+    if (!reactoryClient) {
+      throw new Error(`ReactoryClient with id ${clientId} not found`);
+    }
+
+    const result = await userService.createUserForOrganization(
+      input,
+      password,
+      null, // no organization
+      userRoles,
+      'LOCAL',
+      reactoryClient as Reactory.Models.IReactoryClientDocument,
+      null  // no business unit
+    );
+
+    return result.user;
   }
 
    @query('ReactoryUsers')

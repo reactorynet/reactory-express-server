@@ -35,6 +35,17 @@ const authenticate: BasicVerifyFunctionWithRequest = async (req: Reactory.Server
       req.user = user;
       req.context.user = user;
       
+      // Update membership lastLogin if partner exists
+      if (context.partner) {
+        const membership = user.memberships.find(m => 
+          m.clientId.toString() === context.partner._id.toString()
+        );
+        if (membership) {
+          membership.lastLogin = new Date();
+          await user.save(); // Save again after updating membership
+        }
+      }
+      
       const duration = (Date.now() - startTime) / 1000;
       AuthTelemetry.recordSuccess('local', clientKey, duration, user._id.toString());
       
