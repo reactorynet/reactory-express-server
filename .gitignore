@@ -1,6 +1,7 @@
 node_modules/
 dist/
 bin/server
+app/
 /*-audit.json
 package-lock.json
 yarn.lock

@@ -45,15 +45,50 @@ fi
 
 
 # Check if we need to clear existing containers
-if [ $PODMAN_CLEAR_CONTAINERS = "true" ]; then
+if [ "$PODMAN_CLEAR_CONTAINERS" = "true" ]; then
   echo "🧹 Clearing containers for project ${PODMAN_COMPOSE_PROJECT_NAME:-reactory}"
-  podman rm -f $(podman ps -aq --filter "label=io.podman.compose.project=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
-  # remove the container / project pod as well
-  podman pod rm -f $(podman pod ls -q --filter "name=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
-  # remove all volumes attached to the project
+  
+  # Get container IDs with error handling
+  CONTAINER_IDS=$(podman ps -aq --filter "label=io.podman.compose.project=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}" 2>/dev/null)
+  if [ -n "$CONTAINER_IDS" ]; then
+    podman rm -f $CONTAINER_IDS
+  else
+    echo "ℹ️  No containers found for project ${PODMAN_COMPOSE_PROJECT_NAME:-reactory}"
+  fi
+  
+  # Get pod IDs with error handling
+  POD_IDS=$(podman pod ls -q --filter "name=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}" 2>/dev/null)
+  if [ -n "$POD_IDS" ]; then
+    podman pod rm -f $POD_IDS
+  else
+    echo "ℹ️  No pods found for project ${PODMAN_COMPOSE_PROJECT_NAME:-reactory}"
+  fi
+  
+  # Remove volumes with error handling
   echo "🧹 Removing volumes for project ${PODMAN_COMPOSE_PROJECT_NAME:-reactory}"
-  podman volume rm -f $(podman volume ls -q --filter "name=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}")
+  VOLUME_IDS=$(podman volume ls -q --filter "name=${PODMAN_COMPOSE_PROJECT_NAME:-reactory}" 2>/dev/null)
+  if [ -n "$VOLUME_IDS" ]; then
+    podman volume rm -f $VOLUME_IDS
+  else
+    echo "ℹ️  No volumes found for project ${PODMAN_COMPOSE_PROJECT_NAME:-reactory}"
+  fi
+fi
+
+# Validate the docker-compose file before running
+COMPOSE_FILE="$(pwd)/config/${1:-reactory}/${DOCKER_COMPOSE_FILENAME:-docker-compose.yaml}"
+echo "🔍 Validating compose file: $COMPOSE_FILE"
+
+if [ ! -f "$COMPOSE_FILE" ]; then
+  echo "❌ Error: Compose file not found: $COMPOSE_FILE"
+  exit 1
+fi
+
+# Validate YAML syntax using Node.js
+if ! node -e "const yaml = require('yaml'); const fs = require('fs'); try { yaml.parse(fs.readFileSync('$COMPOSE_FILE', 'utf8')); } catch(e) { console.error('YAML Error:', e.message); process.exit(1); }" 2>/dev/null; then
+  echo "❌ Error: Invalid YAML syntax in compose file"
+  echo "Please check the file for indentation issues"
+  exit 1
 fi
 
 echo "🚀 Launching podman for ${1:-reactory} ${2:-podman} configuration"
-podman-compose -f $(pwd)/config/${1:-reactory}/${DOCKER_COMPOSE_FILENAME:-docker-compose.yaml} --env-file ./config/${1:-reactory}/.env.${2:-local} ${3:-up} -d
+podman-compose -f "$COMPOSE_FILE" --env-file "./config/${1:-reactory}/.env.${2:-local}" ${3:-up} -d
