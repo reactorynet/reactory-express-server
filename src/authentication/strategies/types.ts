@@ -5,7 +5,7 @@
  * and authentication-related interfaces.
  */
 
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 /**
  * Base OAuth Profile Interface

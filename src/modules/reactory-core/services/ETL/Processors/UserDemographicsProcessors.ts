@@ -1,5 +1,5 @@
 'use strict';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { MutationResult, QueryResult, IUserImportStruct } from './types';
 import { mutateGraph as execml, queryGraph as execql } from '@reactory/server-core/graph/ReactoryApolloClient';
 import { BusinessUnit, UserDemographic, Region, Team } from '@reactory/server-modules/reactory-core/models'

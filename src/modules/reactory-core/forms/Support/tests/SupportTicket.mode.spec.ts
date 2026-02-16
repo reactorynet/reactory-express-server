@@ -1,4 +1,4 @@
-import Reactory, { Reactor } from '@reactory/reactory-core';
+import Reactory, { Reactor } from '@reactorynet/reactory-core';
 import SupportTicketModel from '../models/SupportTicket/SupportTicket.view.model';
 describe('Reflection', () => {
 

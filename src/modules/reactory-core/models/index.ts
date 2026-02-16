@@ -39,7 +39,7 @@ import Template from "./Template";
 import Theme from "./Theme";
 import User from "./User";
 import UserDemographic from "./UserDemographics";
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 import logger from "@reactory/server-core/logging";
 import { encoder, strongRandom } from "@reactory/server-core/utils";
 import Hash from "@reactory/server-core/utils/hash";

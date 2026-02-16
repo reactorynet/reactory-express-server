@@ -52,7 +52,7 @@ export const SupportTicketsToolbar: React.FC<Props> = ...
 #### Added Dependency Injection + Self-Registration
 ```typescript
 // ✅ AFTER - Proper Reactory pattern
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 interface SupportTicketsToolbarDependencies {
   React: Reactory.React;
@@ -266,7 +266,7 @@ All dependencies are:
 
 ✅ **DO:**
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const MyWidget = (props) => {
   const { reactory } = props;

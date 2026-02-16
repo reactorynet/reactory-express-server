@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import i18n from "i18next";
 import modules from '@reactory/server-core/modules';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';

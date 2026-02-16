@@ -1,5 +1,5 @@
 import fs from 'fs';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { findIndex } from 'lodash';
 import ReactoryFileImportPackage from '@reactory/server-modules/reactory-core/models/ReactoryFileImportPackage';
 import ApiError from "@reactory/server-core/exceptions";

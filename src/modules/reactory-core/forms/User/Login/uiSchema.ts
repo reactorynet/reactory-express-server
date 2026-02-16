@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const uiSchema: Reactory.IFormUISchema = {
   'ui:form': {

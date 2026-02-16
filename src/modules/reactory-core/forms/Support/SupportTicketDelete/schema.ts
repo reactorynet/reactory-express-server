@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { InsufficientPermissions } from '@reactory/server-core/exceptions';
 /**
  * This function is used to resolve the schema for the SupportTicketDeleteAction form schema.

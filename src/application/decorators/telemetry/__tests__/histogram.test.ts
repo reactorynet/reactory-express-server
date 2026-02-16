@@ -1,5 +1,5 @@
 import { histogram } from '../histogram';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 describe('@histogram decorator', () => {
   let mockContext: Reactory.Server.IReactoryContext;

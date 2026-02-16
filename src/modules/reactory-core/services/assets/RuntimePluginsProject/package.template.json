@@ -20,7 +20,7 @@
     "build-storybook": "build-storybook"
   },
   "dependencies": {
-    "@reactory/reactory-core": "file:../artifacts/reactory-reactory-core-1.0.3.tgz",
+    "@reactorynet/reactory-core": "file:../artifacts/reactory-reactory-core-1.0.3.tgz",
     "core-js": "^3.1.4",
     "styled-jsx": ">= 3.x.x"
   },

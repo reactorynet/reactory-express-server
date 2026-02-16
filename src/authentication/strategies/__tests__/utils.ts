@@ -6,7 +6,7 @@
  */
 
 import { Request, Response } from 'express';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 /**
  * Mock Request Helper

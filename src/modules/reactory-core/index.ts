@@ -8,7 +8,7 @@ import models from './models';
 import coreServices from './services';
 import routes from './routes';
 import translations from './data/translations';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import middleware from './middleware';
 
 const ReactoryCoreModule: Reactory.Server.IReactoryModule = {

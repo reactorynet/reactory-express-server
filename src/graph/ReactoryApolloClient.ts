@@ -18,7 +18,7 @@ import { getMainDefinition } from '@apollo/client/utilities';
 
 import gql from 'graphql-tag';
 import Helpers from '@reactory/server-core/authentication/strategies/helpers';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { getCache, ReactoryCachePersistor } from './ReactoryApolloCache';
 
 const packageInfo: any = require('../../package.json');

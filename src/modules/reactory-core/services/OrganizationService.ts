@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import moment from 'moment';
 import { ObjectId } from 'mongodb';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { 
   Organization,
   BusinessUnit,

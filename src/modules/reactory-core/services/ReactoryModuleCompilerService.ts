@@ -2,7 +2,7 @@ import fs from "fs";
 import crypto from "crypto";
 import path from "path";
 import { cwd } from "process";
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 import { ENVIRONMENT } from "@reactory/server-core/types/constants";
 
 const util = require("util");

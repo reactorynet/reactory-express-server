@@ -1,5 +1,5 @@
 import { metric } from '../metric';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 describe('@metric decorator', () => {
   let mockContext: Reactory.Server.IReactoryContext;

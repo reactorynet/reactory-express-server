@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn, UpdateDateColumn, BaseEntity } from "typeorm";
 import { Brackets } from "typeorm";
-import { Models } from '@reactory/reactory-core'
+import { Models } from '@reactorynet/reactory-core'
 
 @Entity({ name: 'reactory_calendar_entry' })
 // Critical indexes for calendar performance

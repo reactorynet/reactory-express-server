@@ -4,7 +4,7 @@ import workflows from './workflow';
 import forms from './forms';
 import services from './services';
 import pdfs from './pdf';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { nameSpace, moduleName, } from './constants';
 
 export const ServerModule: Reactory.Server.IReactoryModule = {

@@ -3,7 +3,7 @@ const { ObjectId } = mongoose.Schema.Types;
 import moment from 'moment';
 
 import logger from '@reactory/server-core/logging';
-import Reactory from '@reactory/reactory-core'
+import Reactory from '@reactorynet/reactory-core'
 
 export interface ICache extends Document {
   id: any,

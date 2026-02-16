@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core'
+import Reactory from '@reactorynet/reactory-core'
 import ApiError, { BadRequestError, InsufficientPermissions, RecordNotFoundError } from '@reactory/server-core/exceptions';
 import nodeFetch, { Response, RequestInit } from 'node-fetch';
 

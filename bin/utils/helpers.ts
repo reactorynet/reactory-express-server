@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import readline, { ReadLine } from 'readline';
 import $colors from 'colors/safe';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import lodash from 'lodash';
 
 

@@ -1,5 +1,5 @@
 import path from 'path';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { resolver, query, property } from "@reactory/server-core/models/graphql/decorators/resolver";
 import { ReactoryAnonUser } from '@reactory/server-core/context/AnonUser';
 import { isNil, isArray, filter, intersection, uniq } from 'lodash';

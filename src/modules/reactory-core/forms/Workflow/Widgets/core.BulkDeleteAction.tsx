@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 interface BulkDeleteActionProps {
   reactory: Reactory.Client.IReactoryApi;

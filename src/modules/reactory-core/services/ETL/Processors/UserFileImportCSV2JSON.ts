@@ -2,7 +2,7 @@
 import fs from 'fs';
 import readline from 'readline';
 
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import ApiError from '@reactory/server-core/exceptions';
 
 const DefaultOptions = {

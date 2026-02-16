@@ -1,5 +1,5 @@
 import { mapSchema, getDirective, MapperKind } from '@graphql-tools/utils';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { GraphQLSchema, defaultFieldResolver } from 'graphql';
 
 const authDirective = (schema: GraphQLSchema): GraphQLSchema => {

@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import { filter, findIndex } from 'lodash';
 import logger from '@reactory/server-core/logging';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import ReactoryFile from '@reactory/server-modules/reactory-core/models/CoreFile';
 import Organization from '@reactory/server-modules/reactory-core/models/Organization';
 import ReactoryFileImportPackage from '@reactory/server-modules/reactory-core/models/ReactoryFileImportPackage';

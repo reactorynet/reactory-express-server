@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import logger from '@reactory/server-core/logging';
 import AuditModel from '@reactory/server-modules/reactory-core/models/Audit';
 import { PostgresDataSource } from '@reactory/server-modules/reactory-core/models';

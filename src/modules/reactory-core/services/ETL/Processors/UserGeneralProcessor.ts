@@ -1,7 +1,7 @@
 
 'use strict';
 
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import moment, { isMoment } from 'moment';
 import { mutateGraph as execml} from '@reactory/server-core/graph/ReactoryApolloClient';
 import iz from '@reactory/server-core/utils/validators';

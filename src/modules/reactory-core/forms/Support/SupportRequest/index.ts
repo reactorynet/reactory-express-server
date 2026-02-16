@@ -1,5 +1,5 @@
 
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import schema from './schema';
 import uiSchema from './uiSchema';
 import graphql from './graphql';

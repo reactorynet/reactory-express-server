@@ -1,5 +1,5 @@
 'use strict'
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 /**
  * Basic Login Form. Used for 3rd party authentication

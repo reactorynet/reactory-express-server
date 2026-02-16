@@ -153,7 +153,7 @@ Successfully implemented Phase 4 of the SupportTickets upgrade plan, which inclu
 All bulk action components follow the same pattern:
 
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 interface DependenciesInterface {
   React: Reactory.React;

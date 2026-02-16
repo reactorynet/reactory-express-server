@@ -1,4 +1,4 @@
-import Reactory, { Forms } from '@reactory/reactory-core';
+import Reactory, { Forms } from '@reactorynet/reactory-core';
 import logger from '@reactory/server-core/logging';
 import { PostgresOptions, Context, Generator, PostgresTableOptions, PostgresConnectionCredentials } from './types'
 import { service } from '@reactory/server-core/application/decorators';

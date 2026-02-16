@@ -6,7 +6,7 @@ import { promisify } from "util";
 import { ObjectId } from "mongodb";
 import sha1 from "sha1";
 import Hash from "@reactory/server-core/utils/hash";
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 import ApiError from "@reactory/server-core/exceptions";
 import ReactoryFileModel from "@reactory/server-modules/reactory-core/models/CoreFile";
 import logger from "@reactory/server-core/logging";

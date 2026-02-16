@@ -1,6 +1,6 @@
 import { isArray } from 'lodash';
 import { roles } from '@reactory/server-core/authentication/decorators'
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import modules from '@reactory/server-core/modules';
 
 class ReactoryFormService implements Reactory.Service.IReactoryFormService {

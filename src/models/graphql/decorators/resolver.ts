@@ -1,5 +1,5 @@
 
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 /**
  * The resolver decorator simply acts as a flag for the Reactory

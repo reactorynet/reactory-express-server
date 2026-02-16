@@ -7,7 +7,7 @@ import MSGraph from '@reactory/server-modules/reactory-azure/services/graph';
 import logger from '@reactory/server-core/logging';
 import ApiError from "@reactory/server-core/exceptions";
 import moment from "moment";
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 export interface IPersonalDemographicsInput {
   userId?: string,

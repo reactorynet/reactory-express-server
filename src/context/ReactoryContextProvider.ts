@@ -8,7 +8,7 @@ import colors from "colors/safe";
 import { ReactoryContainer } from "@reactory/server-core/ioc";
 import modules from "@reactory/server-core/modules";
 import i18next, { t } from "i18next";
-import Reactory, { React } from "@reactory/reactory-core";
+import Reactory, { React } from "@reactorynet/reactory-core";
 import Cache from "@reactory/server-modules/reactory-core/models/CoreCache";
 import ReactoryClientModel from "@reactory/server-modules/reactory-core/models/ReactoryClient";
 import UserModel from "@reactory/server-modules/reactory-core/models/User";

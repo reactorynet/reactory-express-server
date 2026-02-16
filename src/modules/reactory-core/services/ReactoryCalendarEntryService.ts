@@ -8,7 +8,7 @@ import {
 import { service } from "@reactory/server-core/application/decorators/service";
 import { PostgresDataSource } from "@reactory/server-modules/reactory-core/models";
 import { Repository } from "typeorm";
-import { Models } from '@reactory/reactory-core';
+import { Models } from '@reactorynet/reactory-core';
 export interface CreateReactoryCalendarEntryInput {
   calendarId: number;
   title: string;

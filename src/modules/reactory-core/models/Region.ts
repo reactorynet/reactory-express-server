@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const Region = new mongoose.Schema<Reactory.Models.IRegion>({
   title: String,

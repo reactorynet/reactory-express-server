@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { service } from '@reactory/server-core/application/decorators';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import fs from 'fs';

@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { WriteStream } from 'fs';
 //@ts-ignore
 import PdfPrinter from 'pdfmake/src/printer';

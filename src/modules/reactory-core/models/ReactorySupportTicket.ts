@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { MetaSchema } from './shared'
 
 export type ReactorySupportTicketDocument = Reactory.Models.IReactorySupportTicketDocument;

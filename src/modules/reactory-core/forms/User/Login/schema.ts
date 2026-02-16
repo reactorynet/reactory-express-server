@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { UserLogin } from "../../schema/User";
 
 const schema: Reactory.Schema.ISchema = {

@@ -1,7 +1,7 @@
 import logger from '../logging';
 import { CorsOptions, CorsOptionsDelegate } from 'cors'
 import getClient from './utils/ReactoryClientFromRequest';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import EnabledClients from '@reactory/server-core/data/clientConfigs';
 
 

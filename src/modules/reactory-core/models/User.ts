@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import * as lodash from 'lodash';
 
 import logger from '@reactory/server-core/logging';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 
 const { ObjectId: ObjectIdSchema } = mongoose.Schema.Types;

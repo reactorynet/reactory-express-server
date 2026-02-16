@@ -1,6 +1,6 @@
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver';
 import { roles } from '@reactory/server-core/authentication/decorators';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { ObjectId } from 'mongodb';
 import lodash from 'lodash';
 import crypto from 'crypto';

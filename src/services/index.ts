@@ -1,6 +1,6 @@
 
 
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-core/modules';
 import ApiError from '@reactory/server-core/exceptions';

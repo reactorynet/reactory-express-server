@@ -11,7 +11,7 @@ import {
   SQLColumn,
   QueryStringResultWithCount,
 } from '../types';
-import Reactory from '@reactory/reactory-core'
+import Reactory from '@reactorynet/reactory-core'
 
 let pool: mysql.Pool = null;
 

@@ -7,7 +7,7 @@ import {
     Template,
 } from '@reactory/server-modules/reactory-core/models'
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 interface ReactorySetEmailTemplateParams {
     emailTemplate: {

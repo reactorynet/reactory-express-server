@@ -1,5 +1,5 @@
 import { counter } from '../counter';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 describe('@counter decorator', () => {
   let mockContext: Reactory.Server.IReactoryContext;

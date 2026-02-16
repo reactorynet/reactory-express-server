@@ -72,7 +72,7 @@ export default async (): Promise<JestConfigWithTsJest> => {
 
        ],
        ignore: ['node_modules/**/*'],
-       include: ['src/**/*', 'node_modules/reactory/@reactory/reactory-core/**/*']
+       include: ['src/**/*', 'node_modules/@reactorynet/reactory-core/**/*']
      },     
   };
 

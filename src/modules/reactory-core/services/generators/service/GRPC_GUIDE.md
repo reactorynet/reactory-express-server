@@ -112,7 +112,7 @@ services/
 The generated service includes:
 
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { service } from '@reactory/server-core/application/decorators';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';

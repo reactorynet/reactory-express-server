@@ -66,7 +66,7 @@ export const SupportTicketsToolbar: React.FC<SupportTicketsToolbarProps> = ({
 
 **After:**
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 // Type definitions moved inline
 interface QuickFilterDefinition { ... }
@@ -213,7 +213,7 @@ window.reactory.api.getComponent('core', 'QuickFilters', '1.0.0')
 
 ### ✅ Correct (Server-Side Widgets)
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 interface MyWidgetDependencies {
   React: Reactory.React;

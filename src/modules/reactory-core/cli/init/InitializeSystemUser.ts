@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
 import ReactoryUser from '@reactory/server-modules/reactory-core/models/User';
 import lodash from 'lodash';

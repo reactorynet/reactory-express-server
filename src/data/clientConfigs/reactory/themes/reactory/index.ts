@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core'
+import Reactory from '@reactorynet/reactory-core'
 import { ReactoryLayouts } from '@reactory/server-core/data/layouts/index';
 
 const { CDN_ROOT } = process.env;

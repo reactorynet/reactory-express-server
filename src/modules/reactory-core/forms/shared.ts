@@ -1,4 +1,4 @@
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 import { defaultFormProps } from '@reactory/server-core/data/forms/defs';
 import { HelpFormEdit, HelpListForm } from '@reactory/server-modules/reactory-core/forms/ReactoryContentCapture/HelpEditor';
 import { TemplateEditor } from '@reactory/server-modules/reactory-core/forms/EmailTemplate/TemplateEditor/TemplateEditor'

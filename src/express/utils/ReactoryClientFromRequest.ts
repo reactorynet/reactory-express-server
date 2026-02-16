@@ -2,7 +2,7 @@ import express from 'express';
 import { isNil } from 'lodash';
 import logger from '@reactory/server-core/logging';
 import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const ReactoryClientFromRequest = async (req: express.Request) => {
 

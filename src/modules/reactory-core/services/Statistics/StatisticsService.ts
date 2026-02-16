@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { StatisticModel } from '../../models/Statistic';
 import StatisticPackageModel from '../../models/Statistic';
 import logger from '@reactory/server-core/logging';

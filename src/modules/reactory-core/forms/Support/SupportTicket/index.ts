@@ -1,5 +1,5 @@
 
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { SupportTicketSchemaResolver } from './schema';
 import uiSchema, { argsUiSchema } from './uiSchema';
 import graphql from './graphql';

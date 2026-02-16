@@ -5,7 +5,7 @@
 import { isArray } from 'lodash';
 import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-core/modules';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 let _forms: Reactory.Forms.IReactoryForm[] = [];
 

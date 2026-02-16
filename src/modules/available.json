@@ -6,7 +6,7 @@
     "fqn": "core.ReactoryServer@1.0.0",
     "moduleEntry": "reactory-core/index.ts",
     "license": "Apache-2.0",
-    "git": "git@github.com:reactorynet/reactory-express-server.git",
+    "git": "git@github.com:reactorynet/reactory-core.git",
     "shop": "https://reactory.net/shop/modules/reactory"
   },
   {
@@ -26,6 +26,7 @@
     "fqn": "core.ReactoryAzure@1.0.0",
     "moduleEntry": "reactory-azure/index.ts",
     "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-azure.git",
     "shop": "https://reactory.net/shop/modules/reactory-azure"
   },
   {
@@ -35,6 +36,7 @@
     "fqn": "reactory.Reactor@1.0.0",
     "moduleEntry": "reactory-reactor/index.ts",
     "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-reactor.git",
     "shop": "https://reactory.net/shop/modules/reactory-reactor"
   },
   {
@@ -44,6 +46,7 @@
     "fqn": "reactory.Queue@1.0.0",
     "moduleEntry": "reactory-queue/index.ts",
     "license": "private",
+    "git": "git@github.com:reactorynet/reactory-queue.git",
     "shop": "https://reactory.net/shop/modules/reactory-queue"
   },
   {
@@ -53,6 +56,7 @@
     "fqn": "reactory.SlackModule@1.0.0",
     "moduleEntry": "reactory-slack/index.ts",
     "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-slack.git",
     "shop": "https://reactory.net/shop/modules/reactory-slack"
   },
   {
@@ -62,25 +66,8 @@
     "fqn": "reactory.KYC@1.0.0",
     "moduleEntry": "reactory-kyc/index.ts",
     "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-kyc.git",
     "shop": "https://reactory.net/shop/modules/reactory-kyc"
-  },
-  {
-    "id": "zepz-engineer",
-    "name": "ZEPZ Engineer",
-    "key": "zepz-engineer",
-    "fqn": "zepz.EngineerModule@1.0.0",
-    "moduleEntry": "zepz-engineer/index.ts",
-    "license": "private",
-    "shop": "https://reactory.net/shop/modules/zepz-engineer"
-  },
-  {
-    "id": "zepz-customer",
-    "name": "ZEPZ Customer",
-    "key": "zepz-customer",
-    "fqn": "zepz.CustomerModule@1.0.0",
-    "moduleEntry": "zepz-customer/index.ts",
-    "license": "private",
-    "shop": "https://reactory.net/shop/modules/zepz-customer"
   },
   {
     "id": "reactory-communicator",
@@ -89,6 +76,7 @@
     "fqn": "reactory.CommunicatorModule@1.0.0",
     "moduleEntry": "reactory-communicator/index.ts",
     "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-communicator.git",
     "shop": "https://reactory.net/shop/modules/reactory-communicator"
   },  
   {
@@ -98,6 +86,7 @@
     "fqn": "reactory.KB@1.0.0",
     "moduleEntry": "reactory-kb/index.ts",
     "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-kb.git",
     "shop": "https://reactory.net/shop/modules/reactory-kb"
   },
   {
@@ -107,6 +96,7 @@
     "fqn": "classroom.ReactoryClassroom@1.0.0",
     "moduleEntry": "reactory-classroom/index.ts",
     "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-classroom.git",
     "shop": "https://reactory.net/shop/modules/reactory-classroom"
   }
 ]

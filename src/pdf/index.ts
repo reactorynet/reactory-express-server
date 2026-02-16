@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-core/modules';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 import express from 'express';
 import path from 'path';

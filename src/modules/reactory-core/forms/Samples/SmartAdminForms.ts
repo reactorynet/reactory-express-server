@@ -1,6 +1,6 @@
 "use strict";
 
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 /**
  * This file contains samples for the Smart Admin resource bundle as a 3rd party component provider.

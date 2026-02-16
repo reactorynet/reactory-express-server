@@ -505,7 +505,7 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
 ```typescript
 import { withFilter } from 'graphql-subscriptions';
 import pubsub, { SUPPORT_TICKET_EVENTS } from '@reactory/server-core/utils/pubsub';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const subscriptionResolvers: Reactory.Server.IReactoryResolvers = {
   Subscription: {

@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 export type Context = Reactory.Server.IReactoryContext;
 export type Generator<TP, TC extends Context> = Reactory.Forms.ReactoryFormGeneratorService<TP, TC>;

@@ -377,7 +377,7 @@ The service generator uses EJS (Embedded JavaScript) templates via the Reactory 
 
 ```typescript
 import { service } from "@reactory/server-core/application/decorators";
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 
 /**
  * <%= description %>
@@ -690,7 +690,7 @@ dependencies: [
 ### Main CLI Function Signature
 
 ```typescript
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 import { ReadLine } from "readline";
 
 /**
@@ -1040,7 +1040,7 @@ describe('ServiceGenCli', () => {
 ### Basic Generator Implementation
 
 ```typescript
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";

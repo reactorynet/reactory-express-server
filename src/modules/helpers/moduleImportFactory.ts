@@ -4,7 +4,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import logger from '@reactory/server-core/logging';
 
 const getImportName = (moduleDefinition: Reactory.Server.IReactoryModuleDefinition) => {

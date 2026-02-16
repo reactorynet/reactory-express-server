@@ -1,4 +1,4 @@
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 import path from 'path';
 import fs from 'fs';
 import fetch from 'node-fetch';

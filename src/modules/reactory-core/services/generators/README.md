@@ -112,7 +112,7 @@ generators/
 ### 2. Implement Generator Service
 
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { service } from '@reactory/server-core/application/decorators';
 
 @service({

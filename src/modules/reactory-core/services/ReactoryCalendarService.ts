@@ -2,8 +2,8 @@ import { Repository } from "typeorm";
 import { ReactoryCalendar } from "@reactory/server-modules/reactory-core/models/ReactoryCalendar";
 import { PostgresDataSource } from "@reactory/server-modules/reactory-core/models";
 import { service } from "@reactory/server-core/application/decorators/service";
-import { Server } from "@reactory/reactory-core";
-import { Models } from '@reactory/reactory-core';
+import { Server } from "@reactorynet/reactory-core";
+import { Models } from '@reactorynet/reactory-core';
 
 export interface CreateReactoryCalendarInput {
   name: string;

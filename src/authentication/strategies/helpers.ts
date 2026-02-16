@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import jwt from 'jwt-simple';
 import moment, { DurationInputArg1, DurationInputArg2 } from 'moment';
 import { v4 as uuid } from 'uuid';

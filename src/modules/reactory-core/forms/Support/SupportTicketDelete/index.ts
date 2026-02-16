@@ -1,5 +1,5 @@
 
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { SupportTicketDeleteActionSchemaResolver } from './schema';
 import uiSchema, { argsUiSchema } from './uiSchema';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';

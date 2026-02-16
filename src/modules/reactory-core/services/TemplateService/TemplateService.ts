@@ -2,7 +2,7 @@ import { readFileSync, existsSync, statSync } from 'fs';
 import path from 'path';
 import ejs from 'ejs';
 import lodash from 'lodash';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import { TemplateType } from '@reactory/server-core/types/constants';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import { Template } from '@reactory/server-modules/reactory-core/models';

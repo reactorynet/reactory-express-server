@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import modules from '@reactory/server-core/modules';
 import { ReactoryClient, Menu } from '@reactory/server-modules/reactory-core/models'
 import { ObjectId } from 'bson';

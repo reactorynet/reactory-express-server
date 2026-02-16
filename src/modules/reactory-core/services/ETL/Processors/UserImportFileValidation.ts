@@ -2,7 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 
 class UserFileImportValidation implements Reactory.Service.IProcessor {

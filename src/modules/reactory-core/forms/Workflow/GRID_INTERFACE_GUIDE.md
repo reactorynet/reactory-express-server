@@ -11,7 +11,7 @@ The ReactoryForm Grid interface provides a powerful, flexible way to display and
 ### 1. Form Definition (index.ts)
 
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import version from './version';
 import schema from './schema';
 import { GridUISchema, ListUiSchema } from './uiSchema';
@@ -68,7 +68,7 @@ const FormDefinition: Reactory.Forms.IReactoryForm = {
 ### 2. Schema Definition (schema.ts)
 
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const schema: Reactory.Schema.ISchema = {
   type: 'object',
@@ -591,7 +591,7 @@ conditionalRowStyling: [
 ## GraphQL Integration (graphql.ts)
 
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const graphql: Reactory.Forms.IFormGraphDefinition = {
   queries: {

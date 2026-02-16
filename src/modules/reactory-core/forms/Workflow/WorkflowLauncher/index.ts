@@ -1,4 +1,4 @@
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import version from './version';
 import schema from './schema';
 import uiSchema from './uiSchema';

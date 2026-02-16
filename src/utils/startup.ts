@@ -1,7 +1,7 @@
 'use strict'
 import logger from '@reactory/server-core/logging';
 import { startServices } from '@reactory/server-core/services';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
 import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
 import Helpers from '@reactory/server-core/authentication/strategies/helpers';

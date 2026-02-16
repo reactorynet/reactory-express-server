@@ -1,6 +1,6 @@
 import logger from '@reactory/server-core/logging';
 import Express from  'express';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const ReactoryErrorHandler = (err: Error, req: Express.Request, res: Express.Response, next: Function) => { 
   const context = (req as Reactory.Server.ReactoryExpressRequest)?.context;

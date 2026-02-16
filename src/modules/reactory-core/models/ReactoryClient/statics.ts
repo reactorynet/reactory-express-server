@@ -1,4 +1,4 @@
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 import logger from "@reactory/server-core/logging";
 import CoreData from "@reactory/server-core/data";
 import { ReactoryClientValidationError } from "@reactory/server-core/exceptions";

@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 
 export type StoreType = "rest" | "grapql" | "grpc" | Reactory.FQN;
 

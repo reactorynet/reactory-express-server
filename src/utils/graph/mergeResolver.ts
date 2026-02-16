@@ -1,5 +1,5 @@
 import logger from "@reactory/server-core/logging";
-import Reactory from "@reactory/reactory-core"
+import Reactory from "@reactorynet/reactory-core"
 import { ClassDeclaration, ClassExpression } from "typescript";
 
 

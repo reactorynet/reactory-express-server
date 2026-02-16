@@ -8,7 +8,7 @@ import {
  } from "@reactory/server-modules/reactory-core/models/ReactoryCalendar";
 import { service } from "@reactory/server-core/application/decorators/service";
 import { PostgresDataSource } from "../models";
-import { Models } from '@reactory/reactory-core';
+import { Models } from '@reactorynet/reactory-core';
 import { ReactoryCalendarEntryService } from "./ReactoryCalendarEntryService";
 
 @service({

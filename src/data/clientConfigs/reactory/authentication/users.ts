@@ -1,4 +1,4 @@
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 import yaml from 'js-yaml';
 import fs from 'fs';
 import logger from '@reactory/server-core/logging';

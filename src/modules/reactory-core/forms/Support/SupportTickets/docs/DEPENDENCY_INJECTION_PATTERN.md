@@ -33,7 +33,7 @@ export const MyWidget = ({ reactory }) => {
 ### ✅ Correct Pattern
 
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 interface MyWidgetDependencies {
   React: Reactory.React;
@@ -169,7 +169,7 @@ const { MyComponent } = reactory.getComponents(['core.MyComponent']);
 
 ### When Creating a Server-Side Widget:
 
-- [ ] Import ONLY `Reactory` from `'@reactory/reactory-core'`
+- [ ] Import ONLY `Reactory` from `'@reactorynet/reactory-core'`
 - [ ] Define a `Dependencies` interface with all needed types
 - [ ] Call `reactory.getComponents()` with all dependencies
 - [ ] Include `'react.React'` for hooks
@@ -434,7 +434,7 @@ const { Box } = MaterialCore;
 ### Server-Side Widgets (in `forms/*/Widgets/` or `forms/*/components/`)
 
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 // NO other imports!
 
 const MyWidget = (props) => {

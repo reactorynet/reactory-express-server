@@ -1,4 +1,4 @@
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 
 const ListUIOptions: Reactory.Client.Components.IMaterialListWidgetOptions = {      
     primaryText: '${itemIndex + 1}. ${item.reference}',

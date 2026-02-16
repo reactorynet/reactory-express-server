@@ -3,7 +3,7 @@ import Reactory, {
   Server,
   IReactoryComponentDefinition,
   IReactoryComponentFeature,
-} from "@reactory/reactory-core"; // import necessary types
+} from "@reactorynet/reactory-core"; // import necessary types
 import { service } from "@reactory/server-core/application/decorators/service";
 import logger from "@reactory/server-core/logging";
 

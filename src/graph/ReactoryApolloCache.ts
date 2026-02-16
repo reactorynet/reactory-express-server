@@ -1,5 +1,5 @@
 import { ApolloCache, InMemoryCache, InMemoryCacheConfig, makeVar } from '@apollo/client';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const config: InMemoryCacheConfig = {}
 

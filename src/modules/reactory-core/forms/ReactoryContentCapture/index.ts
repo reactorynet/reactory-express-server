@@ -2,7 +2,7 @@
 import schema from './schema';
 import * as uiSchemas from './uiSchemas';
 import $graphql from './graphql';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const {
   fullEditor,

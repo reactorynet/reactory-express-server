@@ -1,4 +1,4 @@
-import Reactory from "@reactory/reactory-core";
+import Reactory from "@reactorynet/reactory-core";
 
 /**
  * UI Schema for the Application dashboard form using TabbedLayout

@@ -142,7 +142,7 @@ import { QuickFilters } from '@reactory/client-core/...';
 
 ```typescript
 // ✅ CORRECT - Reactory pattern
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const {
   React,
@@ -341,7 +341,7 @@ Updated `/src/modules/reactory-core/forms/Support/SupportTickets/modules/index.t
 
 All server-side widgets MUST:
 ```typescript
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 const MyWidget = (props) => {
   const { reactory } = props;

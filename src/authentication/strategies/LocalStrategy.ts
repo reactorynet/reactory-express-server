@@ -4,7 +4,7 @@ import { BasicVerifyFunctionWithRequest, BasicStrategy } from 'passport-http';
 import Helpers, { OnDoneCallback } from './helpers';
 import { Application } from 'express';
 import passport from 'passport';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 import AuthTelemetry from './telemetry';
 
 

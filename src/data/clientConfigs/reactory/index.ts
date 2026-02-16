@@ -8,7 +8,7 @@ import roles from './authentication/roles';
 import menus from './menus';
 import whitelist from './whitelist';
 
-import Reactory from '@reactory/reactory-core'
+import Reactory from '@reactorynet/reactory-core'
 import { ObjectId } from 'mongodb';
 
 

@@ -1,5 +1,5 @@
 import { gauge } from '../gauge';
-import Reactory from '@reactory/reactory-core';
+import Reactory from '@reactorynet/reactory-core';
 
 describe('@gauge decorator', () => {
   let mockContext: Reactory.Server.IReactoryContext;
