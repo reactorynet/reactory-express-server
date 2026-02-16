@@ -25,6 +25,17 @@ const meta = new mongoose.Schema({
   },
 });
 
+const SocialsSchema = new mongoose.Schema({
+  provider: String,
+  url: String,
+  authenticated: Boolean,
+  scope: {},
+  auth: {},
+  valid: Boolean,
+  created: Date,
+  updated: Date,
+});
+
 const UserSchema = new mongoose.Schema({
   id: ObjectIdSchema,
   username: {
@@ -155,6 +166,7 @@ const UserSchema = new mongoose.Schema({
     required: true,
   },
   meta,
+  socials: [SocialsSchema],
 });
 
 UserSchema.methods.setPassword = function setPassword(password: string) {

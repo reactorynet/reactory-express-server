@@ -4,7 +4,7 @@ interface ApplicationUsersToolbarDependencies {
   React: Reactory.React;
   Material: Reactory.Client.Web.IMaterialModule;
   FullScreenModal: Reactory.Client.Components.FullScreenModal;
-  ReactoryForm: Reactory.Forms.IReactoryFormComponent;
+  UserProfile: React.ComponentType<any>;
 }
 
 interface ApplicationUsersToolbarProps {
@@ -31,14 +31,14 @@ interface ApplicationUsersToolbarProps {
 const ApplicationUsersToolbar = (props: ApplicationUsersToolbarProps) => {
   const { reactory, data, queryVariables, onQueryChange, onRefresh, selectedRows = [] } = props;
 
-  const { React, Material, FullScreenModal, ReactoryForm } = reactory.getComponents<ApplicationUsersToolbarDependencies>([
+  const { React, Material, FullScreenModal, UserProfile } = reactory.getComponents<ApplicationUsersToolbarDependencies>([
     'react.React',
     'material-ui.Material',
     'core.FullScreenModal',
-    'core.ReactoryForm'
+    'core.UserProfile@1.0.1'
   ]);
 
-  const { useState, useCallback, useEffect } = React;
+  const { useState, useCallback } = React;
 
   const {
     Box,
@@ -69,19 +69,6 @@ const ApplicationUsersToolbar = (props: ApplicationUsersToolbarProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
-  const [createUserForm, setCreateUserForm] = useState<Reactory.Forms.IReactoryForm>(null);
-
-  // Load the CreateUserForApplication form definition
-  useEffect(() => {
-    const formResult = reactory.form('core.CreateUserForApplication@1.0.0', (form, error) => {
-      if (!error) {
-        setCreateUserForm(form);
-      }
-    });
-    if (formResult) {
-      setCreateUserForm(formResult);
-    }
-  }, []);
 
   // Handle search input
   const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -321,14 +308,16 @@ const ApplicationUsersToolbar = (props: ApplicationUsersToolbarProps) => {
           open={addUserOpen}
           onClose={handleAddUserClose}
         >
-          {createUserForm && ReactoryForm ? (
-            <ReactoryForm
-              formDef={createUserForm}
-              formContext={{ props: { applicationId: queryVariables?.clientId } }}
-              onSubmit={handleAddUserSubmit}
+          {UserProfile ? (
+            <UserProfile
+              mode="new"
+              applicationId={queryVariables?.clientId}
+              onProfileSave={handleAddUserSubmit}
+              onProfileCancel={handleAddUserClose}
+              reactory={reactory}
             />
           ) : (
-            <Typography variant="body1">Loading form...</Typography>
+            <Typography variant="body1">Loading...</Typography>
           )}
         </FullScreenModal>
       )}

@@ -389,6 +389,11 @@ type User {
   Additional system metadata.
   """
   meta: UserMeta
+
+  """
+  Social media profiles linked to this user.
+  """
+  socials: [ReactorySocialReference]
 }
 
 """
@@ -967,6 +972,22 @@ extend type Mutation {
     password: String,
     roles: [String]
   ): User
+
+  """
+  Updates social media profiles for a user.
+  """
+  ReactoryCoreUpdateUserSocials(
+    userId: String!,
+    socials: [SocialReferenceInput]!
+  ): User
+}
+
+"""
+Input for a social media profile reference.
+"""
+input SocialReferenceInput {
+  provider: String!
+  url: String!
 }
 
 extend type Subscription {

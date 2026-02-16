@@ -192,6 +192,32 @@ class UserResolver {
     return result.user;
   }
 
+  @roles(['ADMIN'])
+  @mutation('ReactoryCoreUpdateUserSocials')
+  async ReactoryCoreUpdateUserSocials(
+    obj: any,
+    params: { userId: string; socials: Array<{ provider: string; url: string }> },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const { userId, socials } = params;
+    const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
+    const user = await userService.findUserById(userId) as Reactory.Models.IUserDocument;
+    if (!user) {
+      throw new Error(`User with id ${userId} not found`);
+    }
+
+    (user as any).socials = socials.map(s => ({
+      provider: s.provider,
+      url: s.url,
+      valid: true,
+      created: new Date(),
+      updated: new Date(),
+    }));
+
+    await user.save();
+    return user;
+  }
+
    @query('ReactoryUsers')
     async ReactoryUsers(parent: any, { filter, paging }: {
       filter?: ReactoryUserFilterInput;
