@@ -213,25 +213,7 @@ export default {
       //do an image fetch.  The skip image parameter will tell
       //the api whether or not to update the user profile.
       let msauth = userToRefresh.getAuthentication("microsoft");
-      if (msauth && msauth.props) {
-        /**
-         * we have an oauth value, we can proceed
-         * msauth.props.oauthToken
-         * {
-            "token": {
-              "token_type": "Bearer",
-              "scope": "Calendars.Read email Mail.Read openid profile User.Read",
-              "expires_in": 3599,
-              "ext_expires_in": 3599,
-              "access_token": "XXXXXXX",
-              "refresh_token": "XXXXXXX",
-              "id_token": "XXXXX",
-              "expires_at": {
-                "$date": "2019-10-19T06:12:29.755+0000"
-              }
-            }
-          }
-        */
+      if (msauth && msauth.props) {       
         let msuser = null;
         //check if the token is valid, do a refresh if needed
         const tokenValidation = await isTokenValid(msauth, true, userToRefresh).then();
