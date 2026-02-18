@@ -365,16 +365,16 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
   },
   
   resultMap: {
-    'paging.page': 'pagination.page',
-    'paging.total': 'pagination.total',
-    'paging.pageSize': 'pagination.limit',
+    'pagination.page': 'paging.page',
+    'pagination.total': 'paging.total',
+    'pagination.limit': 'paging.pageSize',
     'workflows': 'data'
   },
   
   variables: {
     'query.search': 'filter.searchString',
-    'query.page': 'paging.page',
-    'query.pageSize': 'paging.pageSize',
+    'query.page': 'pagination.page',
+    'query.pageSize': 'pagination.limit',
     'filter.nameSpace': 'filter.nameSpace',
     'filter.isActive': 'filter.isActive',
     'filter.tags': 'filter.tags'

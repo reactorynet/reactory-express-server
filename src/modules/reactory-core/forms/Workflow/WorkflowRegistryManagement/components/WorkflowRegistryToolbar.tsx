@@ -31,7 +31,6 @@ interface WorkflowRegistryToolbarDependencies {
   React: Reactory.React;
   Material: Reactory.Client.Web.IMaterialModule;
   QuickFilters: any;
-  SearchBar: any;
   AdvancedFilterPanel: any;
   BulkActivateAction: any;
   BulkDeactivateAction: any;
@@ -53,7 +52,17 @@ interface WorkflowRegistryToolbarProps {
       total: number;
       totalPages: number;
     };
-    selected?: any[] | null;    
+    selected?: any[] | null;
+  };
+  queryVariables?: {
+    filter?: {
+      searchString?: string;
+      [key: string]: any;
+    };
+    paging?: {
+      page: number;
+      pageSize: number;
+    };
   };
   onDataChange?: (filteredData: any[]) => void;
   onPagingChange?: (paging: {
@@ -61,6 +70,7 @@ interface WorkflowRegistryToolbarProps {
     pageSize: number;
   }) => void;
   onSelectedChange?: (selected: any[] | null) => void;
+  onQueryChange?: (queryName: string, variables: any) => void;
   searchText?: string;
   onSearchChange?: (text: string) => void;
   onFilterChange?: (filters: any[]) => void;
@@ -84,6 +94,8 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     onDataChange,
     searchText = '',
     onSearchChange,
+    onQueryChange,
+    queryVariables,
   } = props;
 
   // Get dependencies from registry
@@ -91,7 +103,6 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     React,
     Material,
     QuickFilters,
-    SearchBar,
     AdvancedFilterPanel,
     BulkActivateAction,
     BulkDeactivateAction,
@@ -103,7 +114,6 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     'react.React',
     'material-ui.Material',
     'core.QuickFilters',
-    'core.SearchBar',
     'core.AdvancedFilterPanel',
     'core.BulkActivateAction',
     'core.BulkDeactivateAction',
@@ -113,11 +123,12 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     'core.ExportAction',
   ]);
 
-  const { MaterialCore } = Material;
-  const { Box, Button, Icon, Toolbar, Badge, Divider, ButtonGroup, Tooltip } = MaterialCore;
+  const { MaterialCore, MaterialIcons } = Material;
+  const { Box, Button, Icon, Toolbar, Badge, Divider, ButtonGroup, Tooltip, TextField, InputAdornment, IconButton } = MaterialCore;
+  const { Search: SearchIcon, Clear: ClearIcon } = MaterialIcons || {};
 
   // If components aren't loaded, show loading state
-  if (!QuickFilters || !SearchBar || !AdvancedFilterPanel) {
+  if (!QuickFilters || !AdvancedFilterPanel) {
     return (
       <Toolbar sx={{ p: 2 }}>
         <Box>Loading filters...</Box>
@@ -128,6 +139,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
   const [advancedPanelOpen, setAdvancedPanelOpen] = React.useState(false);
   const [originalData] = React.useState(data);
   const [activeBulkAction, setActiveBulkAction] = React.useState<'activate' | 'deactivate' | 'execute' | 'tag' | 'delete' | 'export' | null>(null);
+  const [searchInput, setSearchInput] = React.useState(queryVariables?.filter?.searchString || '');
 
   // Get selected workflows
   const selectedWorkflows = data.selected || [];
@@ -285,30 +297,52 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     },
   ];
 
-  const handleSearch = React.useCallback((text: string) => {
-    if (onSearchChange) {
-      onSearchChange(text);
+  // Handle search input change (just update local state)
+  const handleSearchInputChange = React.useCallback((event: any) => {
+    setSearchInput(event.target.value);
+  }, []);
+
+  // Execute search (only when button clicked or Enter pressed)
+  const handleSearch = React.useCallback(() => {
+    if (onQueryChange) {
+      onQueryChange('registeredWorkflows', {
+        ...queryVariables,
+        filter: {
+          ...queryVariables?.filter,
+          searchString: searchInput
+        },
+        paging: {
+          ...queryVariables?.paging,
+          page: 1 // Reset to first page on new search
+        }
+      });
     }
+  }, [searchInput, queryVariables, onQueryChange]);
 
-    if (!text.trim()) {
-      onDataChange?.(originalData?.data || []);
-      return;
+  // Clear search
+  const handleClearSearch = React.useCallback(() => {
+    setSearchInput('');
+    if (onQueryChange) {
+      onQueryChange('registeredWorkflows', {
+        ...queryVariables,
+        filter: {
+          ...queryVariables?.filter,
+          searchString: ''
+        },
+        paging: {
+          ...queryVariables?.paging,
+          page: 1
+        }
+      });
     }
+  }, [queryVariables, onQueryChange]);
 
-    const searchLower = text.toLowerCase();
-    const filtered = originalData?.data?.filter((workflow: any) => {
-      return (
-        workflow.name?.toLowerCase().includes(searchLower) ||
-        workflow.nameSpace?.toLowerCase().includes(searchLower) ||
-        workflow.description?.toLowerCase().includes(searchLower) ||
-        workflow.author?.toLowerCase().includes(searchLower) ||
-        workflow.version?.toLowerCase().includes(searchLower) ||
-        workflow.tags?.some((tag: string) => tag.toLowerCase().includes(searchLower))
-      );
-    }) || [];
-
-    onDataChange?.(filtered);
-  }, [originalData, onDataChange, onSearchChange]);
+  // Handle search on Enter key
+  const handleKeyPress = React.useCallback((event: any) => {
+    if (event.key === 'Enter') {
+      handleSearch();
+    }
+  }, [handleSearch]);
 
   const handleQuickFilterChange = React.useCallback((activeFilters: string[]) => {
     if (activeFilters.length === 0) {
@@ -443,15 +477,36 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
       >
         {/* Search Bar and Actions Row */}
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <SearchBar
-            placeholder="Search workflows by name, namespace, description, author, or tags..."
-            onSearch={handleSearch}
-            initialValue={searchText}
-            debounceDelay={300}
-            showHelpTooltip
-            helpText='Search in name, namespace, description, author, version, and tags'
+          <TextField
             fullWidth
+            size="small"
+            placeholder="Search workflows by name, namespace, description, author, or tags..."
+            value={searchInput}
+            onChange={handleSearchInputChange}
+            onKeyPress={handleKeyPress}
+            InputProps={{
+              startAdornment: SearchIcon && (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+              endAdornment: searchInput && ClearIcon && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClearSearch}>
+                    <ClearIcon />
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
           />
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            startIcon={SearchIcon && <SearchIcon />}
+            sx={{ minWidth: 120 }}
+          >
+            Search
+          </Button>
           <Tooltip title="Advanced Filters">
             <Button
               variant="outlined"

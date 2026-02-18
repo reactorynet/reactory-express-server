@@ -206,18 +206,100 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   async getWorkflows(filter?: IWorkflowFilterInput, pagination?: IPaginationInput): Promise<IPaginatedWorkflows> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
-      
+
       // Get registered workflows from WorkflowRunner
       const allWorkflows = await workflowRunner?.getRegisteredWorkflows() as any as RegisteredWorkflow[] || [];
-      
+
+      // Get execution stats from MongoDB
+      const executionStats = await this.getWorkflowExecutionStats();
+
+      // Get scheduler and lifecycle manager for active status
+      const scheduler = workflowRunner?.getScheduler();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+
+      // Enrich workflows with execution stats and active status
+      const enrichedWorkflows = await Promise.all(allWorkflows.map(async (workflow: any) => {
+        const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
+
+        // Get execution statistics from MongoDB
+        const stats = executionStats.byWorkflowDefinition.find(
+          s => s.workflowDefinitionId === workflowId
+        );
+
+        const totalExecutions = stats?.total || 0;
+        const successfulExecutions = stats?.complete || 0;
+        const failedExecutions = stats?.terminated || 0;
+
+        // Determine active status based on schedules and running instances
+        let isActive = false;
+        let hasSchedule = false;
+
+        // Check if workflow has active schedules
+        const schedules = scheduler?.getSchedulesForWorkflow(workflowId) || [];
+        if (schedules.length > 0) {
+          hasSchedule = true;
+          // Check if any schedule is enabled
+          isActive = schedules.some((schedule: any) => schedule.config?.schedule?.enabled === true);
+        }
+
+        // Check if workflow has running instances
+        if (!isActive) {
+          const instances = lifecycleManager?.getInstancesByWorkflowId(workflowId) || [];
+          const runningInstances = instances.filter((instance: any) =>
+            instance.status === 'RUNNING' || instance.status === 'running'
+          );
+          if (runningInstances.length > 0) {
+            isActive = true;
+          }
+        }
+
+        return {
+          ...workflow,
+          isActive,
+          hasSchedule,
+          status: isActive ? 'ACTIVE' : 'INACTIVE',
+          statistics: {
+            totalExecutions,
+            successfulExecutions,
+            failedExecutions,
+            averageExecutionTime: executionStats.averageCompletionTime || 0
+          }
+        };
+      }));
+
       // Apply filters
-      let filteredWorkflows = allWorkflows;
+      let filteredWorkflows = enrichedWorkflows;
       if (filter) {
-        filteredWorkflows = allWorkflows.filter((workflow: any) => {
+        filteredWorkflows = enrichedWorkflows.filter((workflow: any) => {
+          // Filter by searchString (searches across multiple fields)
+          if (filter.searchString) {
+            const searchLower = filter.searchString.toLowerCase().trim();
+            const matchesSearch =
+              workflow.name?.toLowerCase().includes(searchLower) ||
+              workflow.nameSpace?.toLowerCase().includes(searchLower) ||
+              workflow.description?.toLowerCase().includes(searchLower) ||
+              workflow.version?.toLowerCase().includes(searchLower) ||
+              workflow.tags?.some((tag: string) => tag.toLowerCase().includes(searchLower)) ||
+              workflow.author?.toLowerCase().includes(searchLower) ||
+              `${workflow.nameSpace}.${workflow.name}@${workflow.version}`.toLowerCase().includes(searchLower);
+
+            if (!matchesSearch) return false;
+          }
+
+          // Filter by specific fields
           if (filter.nameSpace && workflow.nameSpace !== filter.nameSpace) return false;
+          if (filter.name && workflow.name !== filter.name) return false;
+          if (filter.version && workflow.version !== filter.version) return false;
           if (filter.isActive !== undefined && workflow.isActive !== filter.isActive) return false;
           if (filter.tags && !filter.tags.some((tag: string) => workflow.tags?.includes(tag))) return false;
           if (filter.author && workflow.author !== filter.author) return false;
+
+          // Filter by IDs array
+          if (filter.ids && filter.ids.length > 0) {
+            const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
+            if (!filter.ids.includes(workflowId)) return false;
+          }
+
           return true;
         });
       }
@@ -227,7 +309,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       const limit = pagination?.limit || 10;
       const startIndex = (page - 1) * limit;
       const endIndex = startIndex + limit;
-      
+
       const paginatedWorkflows = filteredWorkflows.slice(startIndex, endIndex);
       const total = filteredWorkflows.length;
       const pages = Math.ceil(total / limit);

@@ -70,6 +70,14 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
           }
         }
       }`,
+      variables: {
+        'query.search': 'filter.searchString',
+        'query.page': 'pagination.page',
+        'query.pageSize': 'pagination.limit',
+        'query.nameSpace': 'filter.nameSpace',
+        'query.isActive': 'filter.isActive',
+        'query.tags': 'filter.tags'
+      },
       resultType: 'object',
       resultMap: {
         'pagination.page': 'paging.page',
