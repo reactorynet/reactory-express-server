@@ -45,7 +45,7 @@ bash bin/install.sh
 | **4. Shell Environment** | Detects your shell profile (.zshrc, .zprofile, .bashrc) and appends the required `REACTORY_*` exports. |
 | **5. Server .env** | Walks you through MongoDB connection, API port, URLs, admin credentials, and more. Generates a complete `.env.<environment>` file with a random `SECRET_SAUCE`. |
 | **6. Modules & Clients** | Presents the available modules from `available.json` and lets you select which to enable. Creates the `enabled-<name>.json` and `enabled-clients.<name>.json` files. |
-| **7. Build & Install** | Optionally sets up MongoDB via Docker/Podman. Builds `reactory-core`, then runs `yarn install` in the server and client. |
+| **7. Build & Install** | Optionally sets up MongoDB via Docker/Podman. Installs `@reactorynet/reactory-core` from npm, then runs `yarn install` in the server and client. |
 
 Every step has sensible defaults and can be skipped. Re-running the installer is safe — it will not overwrite existing clones or configuration files unless you explicitly confirm.
 
@@ -171,13 +171,12 @@ mkdir reactory
 cd reactory
 git clone git@github.com:reactorynet/reactory-data.git ./reactory-data/
 git clone git@github.com:reactorynet/reactory-server.git ./reactory-server/
-git clone git@github.com:reactorynet/reactory-core.git ./reactory-core/
 git clone git@github.com:reactorynet/reactory-client.git ./reactory-client/
 ```
 
-This will clone the server into `reactory/reactory-server/` and the core types into `reactory/reactory-core` and the PWA client into `reactory/reactory-client/` as well as the data / or the CDN folder structure to `reactory/reactory-data/` folder.
+This will clone the server into `reactory/reactory-server/` and the PWA client into `reactory/reactory-client/` as well as the data / or the CDN folder structure to `reactory/reactory-data/` folder.
 
-The Reactory core library is a core types definition library and is shared across all applications. It has a two npm scripts that is used for compiling and deploying the library.  The `build:install` script, will compile and package and deploy the library. The `deploy-local` will use the environment variables we set prior and deploy the library to `reactory/reactory-server/lib`,  `reactory/reactory-client/lib` and the `reactory/reactory-data/plugins/artifacts` folders. 
+> **Note:** The Reactory Core library is now published to npm as `@reactorynet/reactory-core` and will be automatically installed when you run `yarn install` in the server and client directories. 
 
 ### Install env-cmd and create a configuration file
 Before you continue with the install, make sure you have env-cmd installed globally.
@@ -197,16 +196,6 @@ You can also run the [addconfig.sh](/bin/addconfig.sh) command to create an envi
 `>bin/addconfig.sh <config-name> <environment>`
 
 The config-name is the name of the configuration file you want to create.  The environment is the environment you want to create the configuration for. You can use the same utility to generate client configuration files as well.
-
-### Install Reactory Core Library
-The [Reactory Core library](https://github.com/reactorynet/reactory-core) is currently not published to npm, so you need to install it locally.  The easiest way to do this is to run the following commands.
-
-```bash
-cd reactory-core
-yarn install
-yarn build:install
-```
-If all dependencies are installed and it is the first time you run the deploy-local, it will take some time, as it is also running `npm i` on the reactory-server and reactory-client projects. If you encounter any errors, please check your environment variables and make sure they are set correctly.
 
 ### Install Azure Module
 Currently the Reactory server is using the Azure Graph API for authentication and authorization and has direct dependency on the Azure module. We will be refactoring the code and remove this direct dependency in the future and make the azure graph an optional module.

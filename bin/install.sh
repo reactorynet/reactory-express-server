@@ -340,7 +340,6 @@ setup_repos() {
 
   REACTORY_SERVER="$REACTORY_HOME/reactory-express-server"
   REACTORY_CLIENT="$REACTORY_HOME/reactory-pwa-client"
-  REACTORY_CORE="$REACTORY_HOME/reactory-core"
   REACTORY_DATA="$REACTORY_HOME/reactory-data"
   REACTORY_NATIVE="$REACTORY_HOME/reactory-native"
   REACTORY_PLUGINS="$REACTORY_DATA/plugins"
@@ -349,7 +348,6 @@ setup_repos() {
   info "Repository layout:"
   info "  Server  -> ${REACTORY_SERVER}"
   info "  Client  -> ${REACTORY_CLIENT}"
-  info "  Core    -> ${REACTORY_CORE}"
   info "  Data    -> ${REACTORY_DATA}"
   printf "\n"
 
@@ -380,10 +378,6 @@ setup_repos() {
   clone_repo "reactory-pwa-client" "$REACTORY_CLIENT" \
     "git@github.com:${REACTORY_GITHUB_ORG}/reactory-pwa-client.git" \
     "https://github.com/${REACTORY_GITHUB_ORG}/reactory-pwa-client.git"
-
-  clone_repo "reactory-core" "$REACTORY_CORE" \
-    "git@github.com:${REACTORY_GITHUB_ORG}/reactory-core.git" \
-    "https://github.com/${REACTORY_GITHUB_ORG}/reactory-core.git"
 
   clone_repo "reactory-data" "$REACTORY_DATA" \
     "git@github.com:${REACTORY_GITHUB_ORG}/reactory-data.git" \
@@ -624,14 +618,6 @@ create_modules_file() {
     cat > "$enabled_file" << 'MODEOF'
 [
   {
-    "id": "reactory-core",
-    "name": "ReactoryServer",
-    "key": "reactory-core",
-    "fqn": "core.ReactoryServer@1.0.0",
-    "moduleEntry": "reactory-core/index.ts",
-    "license": "Apache-2.0"
-  },
-  {
     "id": "reactory-azure",
     "name": "Reactory Azure",
     "key": "reactory-azure",
@@ -673,7 +659,7 @@ for i, m in enumerate(modules):
   }
 
   printf "\n"
-  info "The reactory-core and reactory-azure modules are required."
+  info "The reactory-azure module is required."
   local selections
   read -rp "$(printf "${BOLD}Enter module numbers to enable (comma-separated, or 'all'): ${NC}")" selections
 
@@ -693,9 +679,9 @@ for s in '${selections}'.split(','):
         if 0 <= idx < len(modules):
             selected.add(idx)
 
-# Always include reactory-core (index 0) and reactory-azure (index 2)
+# Always include reactory-azure
 for i, m in enumerate(modules):
-    if m['key'] in ('reactory-core', 'reactory-azure'):
+    if m['key'] == 'reactory-azure':
         selected.add(i)
 
 result = [modules[i] for i in sorted(selected)]
@@ -712,28 +698,6 @@ print(f'Enabled {len(result)} module(s)')
 # ---------------------------------------------------------------------------
 build_and_install() {
   banner "Step 7/7: Build & Install"
-
-  # --- Reactory Core ---
-  if [[ -d "$REACTORY_CORE" ]]; then
-    info "Building reactory-core library..."
-    pushd "$REACTORY_CORE" > /dev/null
-
-    if [[ -f "package.json" ]]; then
-      yarn install
-      if grep -q '"build:install"' package.json 2>/dev/null; then
-        yarn build:install
-        success "reactory-core built and installed"
-      else
-        warn "build:install script not found in reactory-core — skipping build"
-      fi
-    else
-      warn "No package.json in reactory-core — skipping"
-    fi
-
-    popd > /dev/null
-  else
-    warn "reactory-core not found at ${REACTORY_CORE} — skipping core build"
-  fi
 
   # --- Server ---
   if [[ -d "$REACTORY_SERVER" ]]; then
@@ -847,7 +811,6 @@ print_summary() {
   printf "  ${BOLD}REACTORY_HOME${NC}    = %s\n" "$REACTORY_HOME"
   printf "  ${BOLD}REACTORY_SERVER${NC}  = %s\n" "$REACTORY_SERVER"
   printf "  ${BOLD}REACTORY_CLIENT${NC}  = %s\n" "$REACTORY_CLIENT"
-  printf "  ${BOLD}REACTORY_CORE${NC}    = %s\n" "$REACTORY_CORE"
   printf "  ${BOLD}REACTORY_DATA${NC}    = %s\n" "$REACTORY_DATA"
   printf "\n"
   info "Configuration: ${BOLD}${CONFIG_NAME}${NC} / ${BOLD}${CONFIG_ENV}${NC}"
