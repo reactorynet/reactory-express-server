@@ -364,6 +364,42 @@ setup_repos() {
     local name="$1" dir="$2" ssh_url="$3" https_url="$4"
     if [[ -d "$dir/.git" ]]; then
       success "$name already cloned at $dir"
+      
+      # Navigate to the repository
+      pushd "$dir" > /dev/null || return
+      
+      # Check for uncommitted changes
+      if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+        warn "$name has uncommitted changes - stashing them"
+        git stash push -m "Auto-stash by install.sh at $(date +%Y-%m-%d\ %H:%M:%S)" || {
+          error "Failed to stash changes in $name"
+          popd > /dev/null
+          return 1
+        }
+        info "Changes stashed successfully"
+      fi
+      
+      # Fetch the latest changes
+      info "Fetching latest changes for $name..."
+      if git fetch origin; then
+        success "Fetched latest changes for $name"
+      else
+        warn "Failed to fetch changes for $name"
+        popd > /dev/null
+        return 1
+      fi
+      
+      # Pull the latest changes
+      info "Pulling latest changes for $name..."
+      if git pull origin "$(git branch --show-current)"; then
+        success "Pulled latest changes for $name"
+      else
+        warn "Failed to pull changes for $name"
+        popd > /dev/null
+        return 1
+      fi
+      
+      popd > /dev/null
       return
     fi
     local url
@@ -398,15 +434,53 @@ setup_repos() {
   # Clone the reactory-azure module (currently a hard dependency)
   local modules_dir="$REACTORY_SERVER/src/modules"
   if [[ -d "$modules_dir" ]]; then
-    if [[ ! -d "$modules_dir/reactory-azure/.git" ]]; then
+    local azure_dir="$modules_dir/reactory-azure"
+    local azure_url
+    [[ "$use_ssh" == "y" ]] && azure_url="git@github.com:${REACTORY_GITHUB_ORG}/reactory-azure.git" \
+      || azure_url="https://github.com/${REACTORY_GITHUB_ORG}/reactory-azure.git"
+    
+    if [[ ! -d "$azure_dir/.git" ]]; then
       info "Cloning reactory-azure module (required)..."
-      local azure_url
-      [[ "$use_ssh" == "y" ]] && azure_url="git@github.com:${REACTORY_GITHUB_ORG}/reactory-azure.git" \
-        || azure_url="https://github.com/${REACTORY_GITHUB_ORG}/reactory-azure.git"
-      git clone "$azure_url" "$modules_dir/reactory-azure"
+      git clone "$azure_url" "$azure_dir"
       success "reactory-azure module cloned"
     else
       success "reactory-azure module already present"
+      
+      # Navigate to the repository
+      pushd "$azure_dir" > /dev/null || return
+      
+      # Check for uncommitted changes
+      if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+        warn "reactory-azure has uncommitted changes - stashing them"
+        git stash push -m "Auto-stash by install.sh at $(date +%Y-%m-%d\ %H:%M:%S)" || {
+          error "Failed to stash changes in reactory-azure"
+          popd > /dev/null
+          return 1
+        }
+        info "Changes stashed successfully"
+      fi
+      
+      # Fetch the latest changes
+      info "Fetching latest changes for reactory-azure..."
+      if git fetch origin; then
+        success "Fetched latest changes for reactory-azure"
+      else
+        warn "Failed to fetch changes for reactory-azure"
+        popd > /dev/null
+        return 1
+      fi
+      
+      # Pull the latest changes
+      info "Pulling latest changes for reactory-azure..."
+      if git pull origin "$(git branch --show-current)"; then
+        success "Pulled latest changes for reactory-azure"
+      else
+        warn "Failed to pull changes for reactory-azure"
+        popd > /dev/null
+        return 1
+      fi
+      
+      popd > /dev/null
     fi
   fi
 }
