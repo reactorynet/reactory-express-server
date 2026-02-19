@@ -353,11 +353,11 @@ setup_repos() {
   info "  Data    -> ${REACTORY_DATA}"
   printf "\n"
 
-  local use_ssh="y"
+  USE_SSH="y"
   if confirm "Use SSH for git clone? (No = HTTPS)"; then
-    use_ssh="y"
+    USE_SSH="y"
   else
-    use_ssh="n"
+    USE_SSH="n"
   fi
 
   clone_repo() {
@@ -403,7 +403,7 @@ setup_repos() {
       return
     fi
     local url
-    [[ "$use_ssh" == "y" ]] && url="$ssh_url" || url="$https_url"
+    [[ "$USE_SSH" == "y" ]] && url="$ssh_url" || url="$https_url"
     info "Cloning $name..."
     git clone "$url" "$dir"
     success "$name cloned"
@@ -436,7 +436,7 @@ setup_repos() {
   if [[ -d "$modules_dir" ]]; then
     local azure_dir="$modules_dir/reactory-azure"
     local azure_url
-    [[ "$use_ssh" == "y" ]] && azure_url="git@github.com:${REACTORY_GITHUB_ORG}/reactory-azure.git" \
+    [[ "$USE_SSH" == "y" ]] && azure_url="git@github.com:${REACTORY_GITHUB_ORG}/reactory-azure.git" \
       || azure_url="https://github.com/${REACTORY_GITHUB_ORG}/reactory-azure.git"
     
     if [[ ! -d "$azure_dir/.git" ]]; then
@@ -660,6 +660,7 @@ setup_modules_and_clients() {
 
   local modules_dir="$REACTORY_SERVER/src/modules"
   local enabled_file="$modules_dir/enabled-${CONFIG_NAME}.json"
+  local installed_file="$modules_dir/installed.json"
 
   # --- Modules ---
   if [[ -f "$enabled_file" ]]; then
@@ -672,6 +673,12 @@ setup_modules_and_clients() {
   else
     create_modules_file "$enabled_file" "$modules_dir"
   fi
+
+  # Clone module code for every module listed in the enabled file
+  clone_enabled_modules "$enabled_file" "$modules_dir"
+
+  # Write installed.json so other scripts can verify module presence
+  write_installed_json "$modules_dir" "$installed_file"
 
   # --- Client configs ---
   local clients_dir="$REACTORY_SERVER/src/data/clientConfigs"
@@ -782,8 +789,118 @@ print(f'Enabled {len(result)} module(s)')
 }
 
 # ---------------------------------------------------------------------------
-# Step 7: Build & Install Dependencies
+# Clone module repositories for every module listed in an enabled file.
+# Skips reactory-core (shipped with the server) and modules that are already
+# present as git clones in the modules directory.
 # ---------------------------------------------------------------------------
+clone_enabled_modules() {
+  local enabled_file="$1"
+  local modules_dir="$2"
+  local available_file="$modules_dir/available.json"
+
+  if [[ ! -f "$enabled_file" ]]; then
+    warn "Enabled modules file not found — skipping module clone step"
+    return
+  fi
+
+  banner "Cloning module repositories"
+
+  # Build a lookup from key -> git URL using available.json (if present)
+  local available_json="{}"
+  if [[ -f "$available_file" ]]; then
+    available_json=$(python3 -c "
+import json
+with open('${available_file}') as f:
+    modules = json.load(f)
+lookup = {m['key']: m.get('git','') for m in modules}
+import json as j
+print(j.dumps(lookup))
+" 2>/dev/null || echo "{}")
+  fi
+
+  # Iterate over enabled modules
+  python3 -c "
+import json, sys
+
+with open('${enabled_file}') as f:
+    enabled = json.load(f)
+
+available = ${available_json}
+
+for m in enabled:
+    key = m.get('key','')
+    # reactory-core ships with the server — no separate clone needed
+    if key == 'reactory-core':
+        continue
+    git_url = m.get('git', available.get(key, ''))
+    print(f'{key}|{git_url}')
+" 2>/dev/null | while IFS='|' read -r key git_url; do
+    [[ -z "$key" ]] && continue
+
+    local module_dir="$modules_dir/$key"
+
+    # Skip if already a git repo
+    if [[ -d "$module_dir/.git" ]]; then
+      success "Module '$key' already present"
+      continue
+    fi
+
+    if [[ -z "$git_url" ]]; then
+      warn "No git URL for module '$key' — skipping clone"
+      continue
+    fi
+
+    # Convert SSH <-> HTTPS based on global USE_SSH preference
+    local clone_url="$git_url"
+    if [[ "${USE_SSH:-y}" == "n" && "$git_url" == git@* ]]; then
+      clone_url="${git_url/git@github.com:/https:\/\/github.com\/}"
+    elif [[ "${USE_SSH:-y}" == "y" && "$git_url" == https://* ]]; then
+      clone_url="${git_url/https:\/\/github.com\//git@github.com:}"
+    fi
+
+    info "Cloning module '$key'..."
+    if git clone "$clone_url" "$module_dir"; then
+      success "Module '$key' cloned"
+    else
+      warn "Could not clone '$key' — it may require special access. You can install it later with: bin/install-modules.sh --module $key"
+    fi
+  done
+}
+
+# ---------------------------------------------------------------------------
+# Write installed.json listing every module whose code is present locally.
+# ---------------------------------------------------------------------------
+write_installed_json() {
+  local modules_dir="$1"
+  local installed_file="$2"
+  local available_file="$modules_dir/available.json"
+
+  if [[ ! -f "$available_file" ]]; then
+    warn "available.json not found — skipping installed.json creation"
+    return
+  fi
+
+  python3 - <<PYEOF
+import json, os
+
+with open('${available_file}') as f:
+    available = json.load(f)
+
+installed = []
+for module in available:
+    key = module['key']
+    module_dir = os.path.join('${modules_dir}', key)
+    # reactory-core ships with the server; all others require a .git directory
+    if key == 'reactory-core' or os.path.isdir(os.path.join(module_dir, '.git')):
+        installed.append(module)
+
+with open('${installed_file}', 'w') as f:
+    json.dump(installed, f, indent=2)
+
+print(f"Wrote {len(installed)} installed module(s) to installed.json")
+PYEOF
+  success "installed.json updated: ${installed_file}"
+}
 build_and_install() {
   banner "Step 7/7: Build & Install"
 
