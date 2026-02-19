@@ -214,7 +214,9 @@ for i, m in enumerate(modules):
 
   local keys_to_install=()
   if [[ "$selections" == "all" ]]; then
-    mapfile -t keys_to_install < <(python3 -c "
+    while IFS= read -r line; do
+      keys_to_install+=("$line")
+    done < <(python3 -c "
 import json
 with open('${available_file}') as f:
     modules = json.load(f)
@@ -223,7 +225,9 @@ for m in modules:
         print(m['key'])
 ")
   else
-    mapfile -t keys_to_install < <(python3 -c "
+    while IFS= read -r line; do
+      keys_to_install+=("$line")
+    done < <(python3 -c "
 import json
 with open('${available_file}') as f:
     modules = json.load(f)
@@ -259,8 +263,10 @@ install_all_modules() {
 
   banner "Installing all available modules"
 
-  local all_keys
-  mapfile -t all_keys < <(python3 -c "
+  local all_keys=()
+  while IFS= read -r line; do
+    all_keys+=("$line")
+  done < <(python3 -c "
 import json
 with open('${available_file}') as f:
     modules = json.load(f)
