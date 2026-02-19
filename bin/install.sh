@@ -340,12 +340,12 @@ setup_repos() {
   }
 
   clone_repo "reactory-express-server" "$REACTORY_SERVER" \
-    "git@github.com:${REACTORY_GITHUB_ORG}/reactory-server.git" \
-    "https://github.com/${REACTORY_GITHUB_ORG}/reactory-server.git"
+    "git@github.com:${REACTORY_GITHUB_ORG}/reactory-express-server.git" \
+    "https://github.com/${REACTORY_GITHUB_ORG}/reactory-express-server.git"
 
   clone_repo "reactory-pwa-client" "$REACTORY_CLIENT" \
-    "git@github.com:${REACTORY_GITHUB_ORG}/reactory-client.git" \
-    "https://github.com/${REACTORY_GITHUB_ORG}/reactory-client.git"
+    "git@github.com:${REACTORY_GITHUB_ORG}/reactory-pwa-client.git" \
+    "https://github.com/${REACTORY_GITHUB_ORG}/reactory-pwa-client.git"
 
   clone_repo "reactory-core" "$REACTORY_CORE" \
     "git@github.com:${REACTORY_GITHUB_ORG}/reactory-core.git" \
