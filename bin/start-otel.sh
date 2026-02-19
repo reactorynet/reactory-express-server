@@ -13,6 +13,25 @@ source ./bin/shared/shell-utils.sh
 check_env_vars
 check_meili_search
 copy_env_file ${1:-reactory} ${2:-local}
+
+# Verify that the reactory-telemetry module is installed before attempting to
+# start with OpenTelemetry.  The module must be cloned into src/modules/ and
+# its OTLP instrumentation entry point must exist.
+TELEMETRY_MODULE_DIR="./src/modules/reactory-telemetry"
+TELEMETRY_ENTRY="$TELEMETRY_MODULE_DIR/reactory.inst.otlp.ts"
+if [[ ! -d "$TELEMETRY_MODULE_DIR" ]]; then
+  echo "ERROR: The reactory-telemetry module is not installed."
+  echo "       Install it with:  bin/install-modules.sh --module reactory-telemetry"
+  echo "       Or run the full installer: bin/install.sh"
+  exit 1
+fi
+if [[ ! -f "$TELEMETRY_ENTRY" ]]; then
+  echo "ERROR: reactory-telemetry module found but the OTLP entry point is missing:"
+  echo "       $TELEMETRY_ENTRY"
+  echo "       The module may be incomplete. Try re-installing with: bin/install-modules.sh --module reactory-telemetry"
+  exit 1
+fi
+
 echo "Starting Reactory Development Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}"
 sh ./bin/generate.sh ${1:-reactory} ${2:-local}
 # Start the application with OpenTelemetry configuration
