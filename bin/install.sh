@@ -90,6 +90,26 @@ require_command() {
   fi
 }
 
+validate_directory() {
+  local dir="$1"
+  local parent_dir
+  parent_dir="$(dirname "$dir")"
+  
+  if [[ ! -d "$parent_dir" ]]; then
+    error "Parent directory does not exist: $parent_dir"
+    error "Please create the parent directory first or choose a different location."
+    return 1
+  fi
+  
+  if [[ ! -w "$parent_dir" ]]; then
+    error "Parent directory is not writable: $parent_dir"
+    error "Please check permissions or choose a different location."
+    return 1
+  fi
+  
+  return 0
+}
+
 # ---------------------------------------------------------------------------
 # OS Detection
 # ---------------------------------------------------------------------------
@@ -298,8 +318,22 @@ setup_repos() {
   banner "Step 3/7: Repositories"
 
   local default_home="${REACTORY_HOME:-$HOME/reactory}"
-  REACTORY_HOME=$(prompt_value "Reactory root directory" "$default_home")
-  REACTORY_HOME="${REACTORY_HOME/#\~/$HOME}"
+  local validated=false
+  
+  while [[ "$validated" == false ]]; do
+    REACTORY_HOME=$(prompt_value "Reactory root directory" "$default_home")
+    REACTORY_HOME="${REACTORY_HOME/#\~/$HOME}"
+    
+    if validate_directory "$REACTORY_HOME"; then
+      validated=true
+    else
+      warn "Please enter a valid directory path."
+      if ! confirm "Try again?"; then
+        error "Installation cancelled by user."
+        exit 1
+      fi
+    fi
+  done
 
   info "Using root: ${BOLD}${REACTORY_HOME}${NC}"
   mkdir -p "$REACTORY_HOME"
