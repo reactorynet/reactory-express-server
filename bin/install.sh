@@ -57,6 +57,32 @@ prompt_value() {
 
 has_command() { command -v "$1" &>/dev/null; }
 
+# Safe brew install: skips already-installed formulae and resolves symlink/link conflicts.
+# When `brew install` fails only because of a `brew link` conflict (the bottle was poured
+# successfully but symlinking failed), it retries with `brew link --overwrite` so the
+# installer does not abort under `set -euo pipefail`.
+brew_install() {
+  local pkg="$1"
+  if brew list --formula "$pkg" &>/dev/null; then
+    success "$pkg is already installed"
+    return 0
+  fi
+  if brew install "$pkg"; then
+    return 0
+  fi
+  # The bottle may have been poured but the link step failed (e.g. conflicting symlinks
+  # from a differently-named formula like wxwidgets vs wxwidgets@3.2).  If the formula
+  # is now present in the cellar, attempt an overwrite link instead of aborting.
+  if brew list --formula "$pkg" &>/dev/null; then
+    warn "brew install $pkg encountered a link conflict — running: brew link --overwrite $pkg"
+    brew link --overwrite "$pkg" \
+      || warn "Could not link $pkg. You may need to run: brew link --overwrite $pkg"
+  else
+    error "Failed to install $pkg via Homebrew."
+    return 1
+  fi
+}
+
 require_command() {
   if ! has_command "$1"; then
     error "$1 is required but not found. $2"
@@ -140,7 +166,7 @@ install_system_deps() {
       dnf)    sudo dnf install -y git ;;
       yum)    sudo yum install -y git ;;
       pacman) sudo pacman -S --noconfirm git ;;
-      brew)   brew install git ;;
+      brew)   brew_install git ;;
       *)      error "Cannot auto-install git. Please install it manually." ; exit 1 ;;
     esac
   fi
@@ -179,7 +205,9 @@ install_system_deps() {
           error "Homebrew not found. Install from https://brew.sh"
           exit 1
         fi
-        brew install pkg-config cairo pango libpng jpeg giflib librsvg
+        for pkg in pkg-config cairo pango libpng jpeg giflib librsvg; do
+          brew_install "$pkg"
+        done
         ;;
       *)
         warn "Automatic dependency install not supported for your package manager."
@@ -757,7 +785,7 @@ offer_mongodb_setup() {
         brew)
           info "Installing MongoDB via Homebrew..."
           brew tap mongodb/brew 2>/dev/null || true
-          brew install mongodb-community
+          brew_install mongodb-community
           ;;
         *)
           warn "Auto-install not supported. See: https://docs.mongodb.com/manual/installation/"
