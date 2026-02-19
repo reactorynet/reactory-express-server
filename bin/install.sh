@@ -3,7 +3,7 @@
 # Reactory Platform Installer
 # Configures the express server, data/CDN, and PWA client.
 # Designed to be curl-piped:
-#   bash <(curl -fsSL https://raw.githubusercontent.com/reactorynet/reactory-server/master/bin/install.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/reactorynet/reactory-express-server/master/bin/install.sh)
 # Or run locally:
 #   bash bin/install.sh
 # ============================================================================

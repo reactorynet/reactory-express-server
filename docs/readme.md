@@ -24,7 +24,7 @@ The fastest way to get a fully configured Reactory environment is to use the int
 
 ### Run the installer remotely
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/reactorynet/reactory-server/master/bin/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/reactorynet/reactory-express-server/master/bin/install.sh)
 ```
 
 ### Run the installer locally
