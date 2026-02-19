@@ -693,7 +693,7 @@ for s in '${selections}'.split(','):
         if 0 <= idx < len(modules):
             selected.add(idx)
 
-# Always include reactory-core (index 0) and reactory-azure (index 2)
+# Always include reactory-core and reactory-azure
 for i, m in enumerate(modules):
     if m['key'] in ('reactory-core', 'reactory-azure'):
         selected.add(i)
@@ -712,28 +712,6 @@ print(f'Enabled {len(result)} module(s)')
 # ---------------------------------------------------------------------------
 build_and_install() {
   banner "Step 7/7: Build & Install"
-
-  # --- Reactory Core ---
-  if [[ -d "$REACTORY_CORE" ]]; then
-    info "Building reactory-core library..."
-    pushd "$REACTORY_CORE" > /dev/null
-
-    if [[ -f "package.json" ]]; then
-      yarn install
-      if grep -q '"build:install"' package.json 2>/dev/null; then
-        yarn build:install
-        success "reactory-core built and installed"
-      else
-        warn "build:install script not found in reactory-core — skipping build"
-      fi
-    else
-      warn "No package.json in reactory-core — skipping"
-    fi
-
-    popd > /dev/null
-  else
-    warn "reactory-core not found at ${REACTORY_CORE} — skipping core build"
-  fi
 
   # --- Server ---
   if [[ -d "$REACTORY_SERVER" ]]; then
