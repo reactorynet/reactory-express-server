@@ -5,6 +5,7 @@ import Reactory from '@reactorynet/reactory-core';
 import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
 import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
 import Helpers from '@reactory/server-core/authentication/strategies/helpers';
+import { publishClientEnvFiles } from '@reactory/server-core/utils/publishClientEnvFiles';
 
 const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
   logger.info('Startup process initiated.');
@@ -37,6 +38,20 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
     context.user = systemUser;
     context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();
     await startServices({}, context);
+    // Publish client env files if REACTORY_CLIENT is set
+    if (process.env.REACTORY_CLIENT) {
+      try {
+        const envResult = await publishClientEnvFiles();
+        if (envResult.published.length > 0) {
+          logger.info(`Published env files for ${envResult.published.length} client(s): ${envResult.published.join(', ')}`);
+        }
+        if (envResult.failed.length > 0) {
+          logger.warn(`Failed to publish env files for ${envResult.failed.length} client(s): ${envResult.failed.map(f => f.key).join(', ')}`);
+        }
+      } catch (envError) {
+        logger.warn('Could not publish client env files', envError);
+      }
+    }
     logger.info(`Startup Completed in ${(new Date().valueOf() - start) / 1000} seconds`);
     return context;
   } catch (startupError) {

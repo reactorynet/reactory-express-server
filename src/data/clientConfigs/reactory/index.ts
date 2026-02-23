@@ -9,20 +9,23 @@ import menus from './menus';
 import whitelist from './whitelist';
 
 import Reactory from '@reactorynet/reactory-core'
-import { ObjectId } from 'mongodb';
+import logger from '@reactory/server-core/logging';
 
 
 
 const { 
-  CDN_ROOT,
-  REACTORY_SITE_URL,
+  CDN_ROOT = 'http://localhost:4000/cdn/',
+  REACTORY_SITE_URL = 'http://localhost:3000',
   REACTORY_APPLICATION_USERNAME = 'reactory', 
   REACTORY_APPLICATION_EMAIL = 'machine@reactory.net',
-  REACTORY_APPLICATION_PASSWORD
+  REACTORY_APPLICATION_PASSWORD,
 } = process.env as unknown as Reactory.Server.ExtendedEnvironment<[Reactory.Server.ReactoryDefaultClientEnvironment]>;
 
-
-
+// Validate required environment variables
+if (!REACTORY_APPLICATION_PASSWORD) {
+  logger.error('REACTORY_APPLICATION_PASSWORD environment variable is required but not set. Startup cannot continue.');
+  process.exit(1);
+}
 
 const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   key: 'reactory',
