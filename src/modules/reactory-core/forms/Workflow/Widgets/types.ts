@@ -42,6 +42,18 @@ export interface WorkflowConfigurationProps {
   workflow: any;
 }
 
+export interface WorkflowInstanceInspectorProps {
+  reactory: Reactory.Client.IReactoryApi;
+  /**
+   * The workflow instance ID to inspect.
+   */
+  instanceId: string;
+  /**
+   * Optional callback when the inspector is closed.
+   */
+  onClose?: () => void;
+}
+
 export interface WorkflowManagerProps {
   reactory: Reactory.Client.IReactoryApi;
 }

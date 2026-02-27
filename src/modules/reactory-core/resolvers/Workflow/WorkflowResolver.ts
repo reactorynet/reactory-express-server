@@ -14,6 +14,11 @@ import {
   IWorkflowHistoryPagination,
   WorkflowESStatus,
 } from '../../services/Workflow/types';
+import { IWorkflowInstanceDocument } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager';
+import { IScheduleConfig, IScheduledWorkflow } from '@reactory/server-modules/reactory-core/workflow';
+
+
+
 // IScheduleConfig imported for future use in schedule-related resolvers
 // import { IScheduleConfig } from 'modules/reactory-core/workflow/Scheduler/Scheduler';
 
@@ -440,7 +445,7 @@ class WorkflowResolver {
     const workflowService = getWorkflowService(context);
     try {
       return await workflowService.deleteWorkflowSchedule(params.scheduleId);
-    } catch (error) {
+    } catch (error: Error) {
       context.log('Error deleting workflow schedule', { error, params }, 'error', 'WorkflowResolver');
       return {
         success: false,
@@ -459,7 +464,7 @@ class WorkflowResolver {
     const workflowService = getWorkflowService(context);
     try {
       return await workflowService.startSchedule(params.scheduleId);
-    } catch (error) {
+    } catch (error: Error) {
       context.log('Error starting workflow schedule', { error, params }, 'error', 'WorkflowResolver');
       return {
         success: false,
@@ -478,7 +483,7 @@ class WorkflowResolver {
     const workflowService = getWorkflowService(context);
     try {
       return await workflowService.stopSchedule(params.scheduleId);
-    } catch (error) {
+    } catch (error: Error) {
       context.log('Error stopping workflow schedule', { error, params }, 'error', 'WorkflowResolver');
       return {
         success: false,
@@ -497,7 +502,7 @@ class WorkflowResolver {
     const workflowService = getWorkflowService(context);
     try {
       return await workflowService.reloadSchedules();
-    } catch (error) {
+    } catch (error: Error) {
       context.log('Error reloading workflow schedules', { error }, 'error', 'WorkflowResolver');
       return {
         success: false,
@@ -517,7 +522,7 @@ class WorkflowResolver {
     const workflowService = getWorkflowService(context);
     try {
       return await workflowService.deleteWorkflowHistory(params.instanceId);
-    } catch (error) {
+    } catch (error: Error) {
       context.log('Error deleting workflow execution history', { error, params }, 'error', 'WorkflowResolver');
       return {
         success: false,
@@ -536,7 +541,7 @@ class WorkflowResolver {
     const workflowService = getWorkflowService(context);
     try {
       return await workflowService.deleteWorkflowHistoryBatch(params.instanceIds);
-    } catch (error) {
+    } catch (error: Error) {
       context.log('Error deleting workflow execution history batch', { error, params }, 'error', 'WorkflowResolver');
       return {
         success: false,
@@ -555,7 +560,7 @@ class WorkflowResolver {
     const workflowService = getWorkflowService(context);
     try {
       return await workflowService.clearWorkflowHistory(params.workflowDefinitionId);
-    } catch (error) {
+    } catch (error: Error) {
       context.log('Error clearing workflow execution history', { error, params }, 'error', 'WorkflowResolver');
       return {
         success: false,
@@ -578,7 +583,7 @@ class WorkflowResolver {
     const workflowService = getWorkflowService(context);
     try {
       return await workflowService.startWorkflowLegacy(params.name, params.data);
-    } catch (error) {
+    } catch (error: Error) {
       context.log('Error starting workflow (legacy)', { error, params }, 'error', 'WorkflowResolver');
       return false;
     }
@@ -631,10 +636,28 @@ class WorkflowResolver {
     return null;
   }
 
+  @property("RegisteredWorkflow", "id")
+  workflowId(obj: any) {
+    return obj.id || `${obj.nameSpace}.${obj.name}@${obj.version}`;
+  }
+
   @property("RegisteredWorkflow", "dependencies")
   async workflowDependencies(obj: any) {
     // Ensure dependencies are properly formatted
     return obj.dependencies || [];
+  }
+
+  @property("RegisteredWorkflow", "errors")
+  async workflowErrors(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
+    const workflowService = getWorkflowService(context);
+    const workflowId = obj.id || `${obj.nameSpace}.${obj.name}@${obj.version}`;
+
+    try {
+      return await workflowService.getWorkflowErrors(workflowId);
+    } catch (error) {
+      context.log('Error fetching errors for workflow', { error, workflowId }, 'error', 'WorkflowResolver');
+      return [];
+    }
   }
 
   @property("RegisteredWorkflow", "schedules")
@@ -695,6 +718,41 @@ class WorkflowResolver {
       context.log('Error fetching execution history for workflow', { error, workflowDefinitionId }, 'error', 'WorkflowResolver');
       return [];
     }
+  }
+
+  @property("WorkflowInstance", "status")
+  async instanceStatus(obj: IWorkflowInstanceDocument, args: any, context: Reactory.Server.IReactoryContext) {
+    return WorkflowESStatus[obj.status] || WorkflowESStatus.PENDING
+  }
+
+  @property("WorkflowSchedule", "workflow")
+  async workflowReferenceResolver(obj: IScheduleConfig) {    
+    if (!obj) return null; 
+    const { workflow } = obj;
+    if (!workflow) return null;
+    if (!workflow.id) return null;
+    if (workflow.id.includes('.')) { 
+      // If the ID is already in the format "namespace.name@version", return it as is
+      // extract the namespace, name, and version from the ID
+      const [nameSpaceName, version] = workflow.id.split('@');
+      const [nameSpace, name] = nameSpaceName.split('.');
+      
+      return {
+        id: workflow.id,
+        nameSpace: nameSpace,
+        name: name,
+        version: version
+      };
+    } 
+    // if the id is not in the format "namespace.name@version", we check if name, namespace, and version are provided and construct the id
+    if (workflow.nameSpace && workflow.name && workflow.version) {
+      return {
+        id: `${workflow.nameSpace}.${workflow.name}@${workflow.version}`,
+        nameSpace: workflow.nameSpace,
+        name: workflow.name,
+        version: workflow.version
+      };
+    }    
   }
 }
 

@@ -8,8 +8,8 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
         workflowInstances(filter: $filter, pagination: $pagination) {
           instances {
             id
-            workflowName
-            namespace
+            name
+            nameSpace
             version
             status
             progress

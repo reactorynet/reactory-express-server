@@ -17,7 +17,8 @@ export interface IScheduleConfig {
   description?: string;
   workflow: {
     id: string;
-    version: string;
+    version?: string;
+    name?: string;
     nameSpace?: string;
   };
   schedule: {
@@ -26,6 +27,7 @@ export interface IScheduleConfig {
     enabled?: boolean;
   };
   properties?: Record<string, any>;
+  propertiesFormId?: string; // Optional form ID for UI to render properties.  
   retry?: {
     attempts: number;
     delay: number; // in seconds
@@ -262,6 +264,163 @@ export class WorkflowScheduler {
     } catch (error) {
       logger.error(`Failed to add schedule ${config.id}`, error);
     }
+  }
+
+  /**
+   * Generate a sanitized filename for a schedule config
+   */
+  private getScheduleFileName(scheduleId: string): string {
+    const sanitized = scheduleId.replace(/[^a-zA-Z0-9_.-]/g, '-').toLowerCase();
+    return sanitized.endsWith('schedule') ? `${sanitized}.yaml` : `${sanitized}-schedule.yaml`;
+  }
+
+  /**
+   * Save a schedule configuration to a YAML file on disk.
+   * If a file already exists for this schedule ID, it will be overwritten.
+   * @param config - The schedule configuration to save
+   */
+  private saveScheduleToFile(config: IScheduleConfig): void {
+    const fileName = this.getScheduleFileName(config.id);
+    const filePath = path.join(this.scheduleDirectory, fileName);
+    const yamlContent = yaml.dump(config, { indent: 2, lineWidth: 120, noRefs: true });
+    fs.writeFileSync(filePath, yamlContent, 'utf8');
+    logger.info(`Saved schedule config to file: ${filePath}`);
+  }
+
+  /**
+   * Delete a schedule configuration YAML file from disk.
+   * @param scheduleId - The schedule ID whose file should be deleted
+   */
+  private deleteScheduleFile(scheduleId: string): void {
+    const fileName = this.getScheduleFileName(scheduleId);
+    const filePath = path.join(this.scheduleDirectory, fileName);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      logger.info(`Deleted schedule file: ${filePath}`);
+    } else {
+      logger.warn(`Schedule file not found for deletion: ${filePath}`);
+    }
+  }
+
+  /**
+   * Create a new schedule, persist it to YAML, add to in-memory map, and optionally start it.
+   * @param config - The schedule configuration
+   * @returns The created IScheduledWorkflow
+   */
+  public async createSchedule(config: IScheduleConfig): Promise<IScheduledWorkflow> {
+    if (this.schedules.has(config.id)) {
+      throw new Error(`Schedule with ID '${config.id}' already exists`);
+    }
+
+    if (!this.validateScheduleConfig(config)) {
+      throw new Error('Invalid schedule configuration: id, name, workflow.id, and schedule.cron are required');
+    }
+
+    if (!cron.validate(config.schedule.cron)) {
+      throw new Error(`Invalid cron expression: ${config.schedule.cron}`);
+    }
+
+    // Persist to disk
+    this.saveScheduleToFile(config);
+
+    // Add to in-memory map
+    this.addSchedule(config);
+
+    // Start if enabled
+    if (config.schedule.enabled !== false) {
+      await this.startSchedule(config.id);
+    }
+
+    const scheduled = this.schedules.get(config.id);
+    if (!scheduled) {
+      throw new Error('Failed to create schedule');
+    }
+
+    logger.info(`Created schedule: ${config.id} (${config.name})`);
+    return scheduled;
+  }
+
+  /**
+   * Update an existing schedule's configuration, persist changes to YAML,
+   * and restart the schedule if it was running.
+   * @param scheduleId - The ID of the schedule to update
+   * @param updates - Partial schedule config updates
+   * @returns The updated IScheduledWorkflow
+   */
+  public async updateScheduleConfig(scheduleId: string, updates: Partial<IScheduleConfig>): Promise<IScheduledWorkflow> {
+    const existing = this.schedules.get(scheduleId);
+    if (!existing) {
+      throw new Error(`Schedule not found: ${scheduleId}`);
+    }
+
+    // Merge updates into existing config (deep merge for nested objects)
+    const updatedConfig: IScheduleConfig = {
+      ...existing.config,
+      ...updates,
+      workflow: {
+        ...existing.config.workflow,
+        ...(updates.workflow || {}),
+      },
+      schedule: {
+        ...existing.config.schedule,
+        ...(updates.schedule || {}),
+      },
+    };
+
+    // Preserve the original ID
+    updatedConfig.id = scheduleId;
+
+    if (!this.validateScheduleConfig(updatedConfig)) {
+      throw new Error('Updated configuration is invalid');
+    }
+
+    if (!cron.validate(updatedConfig.schedule.cron)) {
+      throw new Error(`Invalid cron expression: ${updatedConfig.schedule.cron}`);
+    }
+
+    // Stop the current schedule if running
+    const wasRunning = existing.task != null;
+    if (wasRunning) {
+      await this.stopSchedule(scheduleId);
+    }
+
+    // Persist updated config to disk
+    this.saveScheduleToFile(updatedConfig);
+
+    // Update in-memory
+    existing.config = updatedConfig;
+
+    // Restart if it was running or if enabled
+    if (wasRunning || updatedConfig.schedule.enabled !== false) {
+      await this.startSchedule(scheduleId);
+    }
+
+    logger.info(`Updated schedule: ${scheduleId}`);
+    return existing;
+  }
+
+  /**
+   * Remove a schedule completely — stop it, remove from memory, and delete the YAML file.
+   * @param scheduleId - The ID of the schedule to remove
+   */
+  public async removeSchedule(scheduleId: string): Promise<void> {
+    const existing = this.schedules.get(scheduleId);
+    if (!existing) {
+      throw new Error(`Schedule not found: ${scheduleId}`);
+    }
+
+    // Stop if running
+    if (existing.task) {
+      await this.stopSchedule(scheduleId);
+    }
+
+    // Remove from in-memory map
+    this.schedules.delete(scheduleId);
+
+    // Delete the YAML file
+    this.deleteScheduleFile(scheduleId);
+
+    logger.info(`Removed schedule: ${scheduleId}`);
   }
 
   /**

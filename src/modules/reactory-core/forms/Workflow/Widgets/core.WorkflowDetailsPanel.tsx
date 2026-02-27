@@ -68,15 +68,13 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
   ]);
 
   const { MaterialCore } = Material;
-  const { 
-    Box, 
-    Tabs, 
-    Tab, 
-    Typography, 
-    IconButton, 
-    Icon, 
+  const {
+    Box,
+    Tabs,
+    Tab,
+    Typography,
+    Icon,
     Badge,
-    Tooltip,
     Chip
   } = MaterialCore;
 
@@ -85,10 +83,6 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
 
   const handleTabChange = (event: any, newValue: number) => {
     setActiveTab(newValue);
-  };
-
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
   };
 
   // Calculate statistics
@@ -144,23 +138,6 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
 
   const ActiveTabComponent = tabs[activeTab]?.component;
 
-  const executeWorkflow = () => {
-    // Switch to launch tab
-    setActiveTab(4);
-  };
-
-  const viewInstances = () => {
-    // Navigate to instance management with filter
-    reactory.navigation('/workflows/instances', {
-      state: {
-        filter: {
-          workflowName: workflow.name,
-          nameSpace: workflow.nameSpace
-        }
-      }
-    });
-  };
-
   return (
     <Box sx={{ width: '100%', bgcolor: 'background.paper' }}>
       {/* Header Section */}
@@ -176,9 +153,9 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           {/* Workflow ID */}
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               fontFamily: 'monospace',
               fontWeight: 600,
               color: 'primary.main'
@@ -237,30 +214,6 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
               )}
             </Box>
           )}
-        </Box>
-
-        {/* Action Buttons */}
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Tooltip title="Execute workflow">
-            <IconButton size="small" onClick={executeWorkflow} color="primary">
-              <Icon>play_arrow</Icon>
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="View instances">
-            <IconButton size="small" onClick={viewInstances}>
-              <Icon>history</Icon>
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Refresh">
-            <IconButton size="small" onClick={handleRefresh}>
-              <Icon>refresh</Icon>
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={workflow.isActive ? "Deactivate" : "Activate"}>
-            <IconButton size="small" color={workflow.isActive ? "warning" : "success"}>
-              <Icon>{workflow.isActive ? 'toggle_on' : 'toggle_off'}</Icon>
-            </IconButton>
-          </Tooltip>
         </Box>
       </Box>
 

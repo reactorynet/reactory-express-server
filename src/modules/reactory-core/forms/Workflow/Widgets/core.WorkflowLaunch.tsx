@@ -42,8 +42,6 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
         mutation StartWorkflow($workflowId: String!, $input: WorkflowExecutionInput) {
           startWorkflow(workflowId: $workflowId, input: $input) {
             id
-            workflowName
-            nameSpace
             status
             startTime
           }
@@ -98,8 +96,7 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
         <Typography 
           variant="body2" 
           sx={{ 
-            p: 1.5, 
-            bgcolor: '#f5f5f5', 
+            p: 1.5,             
             fontFamily: 'monospace',
             borderRadius: 1
           }}

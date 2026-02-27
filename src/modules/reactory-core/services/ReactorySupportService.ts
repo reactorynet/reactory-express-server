@@ -54,6 +54,8 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     if (updates.status) ticket.status = updates.status;
     if (updates.requestType) ticket.requestType = updates.requestType;
     if (updates.assignTo) ticket.assignedTo = new ObjectId(updates.assignTo) as any;
+    if (updates.priority) ticket.priority = updates.priority;
+    if (updates.tags) ticket.tags = updates.tags;
     
     ticket.updatedDate = new Date();
     ticket.updatedBy = this.context.user as any;

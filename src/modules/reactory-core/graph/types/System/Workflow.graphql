@@ -71,9 +71,11 @@ enum SystemStatusType {
 
 # Workflow Registry Types
 type WorkflowDependency {
+  id: String!
+  nameSpace: String!
   name: String!
   type: DependencyType!
-  version: String
+  version: String!
   optional: Boolean
   description: String
 }
@@ -102,6 +104,8 @@ type RegisteredWorkflow {
   dependencies: [WorkflowDependency!]
   schedule: WorkflowSchedule
   schedules: [WorkflowSchedule!]
+  """Computed field indicating if the workflow has any schedules"""
+  hasSchedule: Boolean
   statistics: WorkflowStatistics
   errors: [WorkflowError!]
   """Execution history from MongoDB persistence (last 10 executions)"""
@@ -150,7 +154,7 @@ type NotificationSettings {
 # Workflow Instance Types
 type WorkflowInstance {
   id: String!
-  workflowName: String!
+  name: String!
   nameSpace: String!
   version: String!
   status: WorkflowInstanceStatus!
@@ -162,7 +166,8 @@ type WorkflowInstance {
   output: JSON
   error: WorkflowError
   steps: [WorkflowStep!]
-  createdBy: String
+  createdBy: User
+  launchedFrom: String
   tags: [String!]
 }
 
@@ -213,6 +218,7 @@ type WorkflowSchedule {
   workflow: WorkflowReference!
   schedule: ScheduleSettings!
   properties: JSON
+  propertiesFormId: String
   retry: RetrySettings
   timeout: Int
   maxConcurrent: Int
@@ -227,9 +233,9 @@ type WorkflowSchedule {
 
 type WorkflowReference {
   id: String!
-  nameSpace: String!
-  name: String!
-  version: String!
+  nameSpace: String
+  name: String
+  version: String
 }
 
 type ScheduleSettings {
@@ -303,30 +309,47 @@ input WorkflowExecutionInput {
   timeout: Int
 }
 
-input ScheduleConfigInput {
-  workflowName: String!
-  nameSpace: String!
-  cronExpression: String!
+input ScheduleWorkflowInput {
+  id: String!
+  version: String
+  name: String
+  nameSpace: String
+}
+
+input ScheduleSettingsInput {
+  cron: String!
   timezone: String
   enabled: Boolean
-  startDate: DateTime
-  endDate: DateTime
-  maxExecutions: Int
-  input: JSON
-  tags: [String!]
+}
+
+input ScheduleRetryInput {
+  attempts: Int!
+  delay: Int!
+}
+
+input ScheduleConfigInput {
+  id: String
+  name: String!
   description: String
+  workflow: ScheduleWorkflowInput!
+  schedule: ScheduleSettingsInput!
+  properties: JSON
+  propertiesFormId: String
+  retry: ScheduleRetryInput
+  timeout: Int
+  maxConcurrent: Int
 }
 
 input UpdateScheduleInput {
-  cronExpression: String
-  timezone: String
-  enabled: Boolean
-  startDate: DateTime
-  endDate: DateTime
-  maxExecutions: Int
-  input: JSON
-  tags: [String!]
+  name: String
   description: String
+  workflow: ScheduleWorkflowInput
+  schedule: ScheduleSettingsInput
+  properties: JSON
+  propertiesFormId: String
+  retry: ScheduleRetryInput
+  timeout: Int
+  maxConcurrent: Int
 }
 
 """
@@ -371,6 +394,22 @@ input WorkflowFilterInput {
   Filter workflows by active status
   """
   isActive: Boolean
+  """
+  Filter workflows that have schedules
+  """
+  hasSchedule: Boolean
+  """
+  Filter workflows that have execution errors
+  """
+  hasErrors: Boolean
+  """
+  Filter workflows that have never been executed
+  """
+  neverRun: Boolean
+  """
+  Filter workflows that were recently updated (within last 24 hours)
+  """
+  recentlyUpdated: Boolean
 }
 
 """
@@ -515,6 +554,14 @@ type ExecutionPointerSummary {
   retryCount: Int!
   """Whether the step is currently active"""
   active: Boolean!
+  """Persistence data stored by the step"""
+  persistenceData: JSON
+  """Event data associated with the step"""
+  eventData: JSON
+  """Event name if the step is waiting for an event"""
+  eventName: String
+  """Outcome data from the step"""
+  outcome: JSON
 }
 
 """

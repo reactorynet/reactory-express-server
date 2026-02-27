@@ -94,6 +94,7 @@ export default async (): Promise<JestConfigWithTsJest> => {
       '^@reactory/server-modules/(.*)$': '<rootDir>/src/modules/$1',
       '^test/(.*)$': '<rootDir>/test/$1',
     },
+    testPathIgnorePatterns: ['/node_modules/', '/__tests__/support/'],
     setupFilesAfterEnv: ['<rootDir>/test/setup/init.ts'],
     // Coverage configuration
     collectCoverage: false, // Enable with --coverage flag
