@@ -53,6 +53,15 @@ const QUERY = `
         eventData
         eventName
         outcome
+        errorMessage
+        errorStack
+        errorTime
+        errors {
+          message
+          stack
+          errorTime
+          retryCount
+        }
       }
     }
   }
@@ -378,6 +387,8 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
             const hasPersistenceData = pointer.persistenceData && Object.keys(pointer.persistenceData).length > 0;
             const hasEventData = pointer.eventData && Object.keys(pointer.eventData).length > 0;
             const hasOutcome = pointer.outcome && (typeof pointer.outcome !== 'object' || Object.keys(pointer.outcome).length > 0);
+            const isFailed = pointer.status === 6;
+            const stepErrors: any[] = pointer.errors || [];
 
             return (
               <Step key={pointer.id} active expanded>
@@ -444,6 +455,42 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
                       : ''}
                   </Typography>
 
+                  {/* Error message (always visible when step has failed) */}
+                  {isFailed && pointer.errorMessage && (
+                    <Alert severity="error" variant="outlined" sx={{ mt: 1, '& .MuiAlert-message': { width: '100%' } }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: pointer.errorStack ? 0.5 : 0 }}>
+                        {pointer.errorMessage}
+                      </Typography>
+                      {pointer.errorStack && (
+                        <Box
+                          component="pre"
+                          sx={{
+                            mt: 0.5,
+                            p: 1,
+                            borderRadius: 1,
+                            bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            fontSize: '0.7rem',
+                            fontFamily: 'monospace',
+                            overflow: 'auto',
+                            maxHeight: 150,
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                            m: 0,
+                          }}
+                        >
+                          {pointer.errorStack}
+                        </Box>
+                      )}
+                      {pointer.errorTime && (
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                          Error at: {formatDate(pointer.errorTime)}
+                        </Typography>
+                      )}
+                    </Alert>
+                  )}
+
                   {/* Expanded details */}
                   <Collapse in={isExpanded}>
                     <Box sx={{ mt: 1.5 }}>
@@ -500,6 +547,68 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
                         {hasPersistenceData && renderJsonBlock('Persistence Data', pointer.persistenceData)}
                         {hasOutcome && renderJsonBlock('Outcome', pointer.outcome)}
                         {hasEventData && renderJsonBlock('Event Data', pointer.eventData)}
+
+                        {/* Error history across retries */}
+                        {stepErrors.length > 0 && (
+                          <Box sx={{ mt: 1.5 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                              Error History ({stepErrors.length} error{stepErrors.length !== 1 ? 's' : ''})
+                            </Typography>
+                            {stepErrors.map((err: any, eIdx: number) => (
+                              <Box
+                                key={`err-${eIdx}`}
+                                sx={{
+                                  mt: 1,
+                                  p: 1.5,
+                                  borderRadius: 1,
+                                  border: '1px solid',
+                                  borderColor: eIdx === stepErrors.length - 1 ? 'error.main' : 'divider',
+                                  bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
+                                }}
+                              >
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                  <Chip
+                                    label={`Attempt #${err.retryCount}`}
+                                    size="small"
+                                    variant="outlined"
+                                    color={eIdx === stepErrors.length - 1 ? 'error' : 'default'}
+                                  />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {formatDate(err.errorTime)}
+                                  </Typography>
+                                  {eIdx === stepErrors.length - 1 && (
+                                    <Chip label="Latest" size="small" color="error" />
+                                  )}
+                                </Box>
+                                <Typography variant="body2" color="error.main" sx={{ fontWeight: 500, mb: err.stack ? 0.5 : 0 }}>
+                                  {err.message}
+                                </Typography>
+                                {err.stack && (
+                                  <Box
+                                    component="pre"
+                                    sx={{
+                                      mt: 0.5,
+                                      p: 1,
+                                      borderRadius: 1,
+                                      bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
+                                      border: '1px solid',
+                                      borderColor: 'divider',
+                                      fontSize: '0.7rem',
+                                      fontFamily: 'monospace',
+                                      overflow: 'auto',
+                                      maxHeight: 100,
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                      m: 0,
+                                    }}
+                                  >
+                                    {err.stack}
+                                  </Box>
+                                )}
+                              </Box>
+                            ))}
+                          </Box>
+                        )}
                       </Paper>
                     </Box>
                   </Collapse>

@@ -149,6 +149,16 @@ export interface IWorkflowHistoryItem {
 }
 
 /**
+ * Interface for a step execution error captured by the workflow engine
+ */
+export interface IStepExecutionError {
+  message: string;
+  stack?: string | null;
+  errorTime: string;
+  retryCount: number;
+}
+
+/**
  * Interface for execution pointer summary
  */
 export interface IExecutionPointerSummary {
@@ -165,6 +175,14 @@ export interface IExecutionPointerSummary {
   eventData?: any;
   eventName?: string | null;
   outcome?: any;
+  /** The most recent error message from the last failed execution of this step */
+  errorMessage?: string | null;
+  /** The most recent error stack trace from the last failed execution of this step */
+  errorStack?: string | null;
+  /** The time the most recent error occurred */
+  errorTime?: string | null;
+  /** Full array of errors captured across all retry attempts */
+  errors?: IStepExecutionError[];
 }
 
 /**
@@ -727,6 +745,10 @@ export class WorkflowLifecycleManager extends EventEmitter {
         ? pointer.endTime.getTime() - pointer.startTime.getTime()
         : null;
 
+      // Extract error data persisted by the patched workflow-es executor
+      const stepErrors: IStepExecutionError[] = pointer.persistenceData?._errors || [];
+      const lastError = stepErrors.length > 0 ? stepErrors[stepErrors.length - 1] : null;
+
       return {
         id: pointer.id,
         stepId: pointer.stepId,
@@ -741,6 +763,10 @@ export class WorkflowLifecycleManager extends EventEmitter {
         eventData: pointer.eventData || null,
         eventName: pointer.eventName || null,
         outcome: pointer.outcome || null,
+        errorMessage: lastError?.message || null,
+        errorStack: lastError?.stack || null,
+        errorTime: lastError?.errorTime || null,
+        errors: stepErrors,
       };
     });
 

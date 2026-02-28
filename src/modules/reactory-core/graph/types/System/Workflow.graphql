@@ -562,6 +562,28 @@ type ExecutionPointerSummary {
   eventName: String
   """Outcome data from the step"""
   outcome: JSON
+  """The most recent error message from the last failed execution of this step"""
+  errorMessage: String
+  """The most recent error stack trace from the last failed execution of this step"""
+  errorStack: String
+  """The time the most recent error occurred"""
+  errorTime: DateTime
+  """Full array of errors captured across all retry attempts for this step"""
+  errors: [StepExecutionError!]
+}
+
+"""
+Error captured during a step execution attempt
+"""
+type StepExecutionError {
+  """Error message"""
+  message: String!
+  """Error stack trace"""
+  stack: String
+  """When the error occurred"""
+  errorTime: DateTime!
+  """The retry count when this error occurred"""
+  retryCount: Int!
 }
 
 """

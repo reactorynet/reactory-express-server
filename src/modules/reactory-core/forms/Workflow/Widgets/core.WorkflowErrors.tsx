@@ -87,6 +87,15 @@ const WorkflowErrors = (props: WorkflowErrorsProps) => {
                   startTime
                   endTime
                   retryCount
+                  errorMessage
+                  errorStack
+                  errorTime
+                  errors {
+                    message
+                    stack
+                    errorTime
+                    retryCount
+                  }
                 }
               }
               pagination {
@@ -314,40 +323,102 @@ const WorkflowErrors = (props: WorkflowErrorsProps) => {
                       if (pointer.endTime) return `${startText} | Ended: ${formatDate(pointer.endTime)}`;
                       return startText;
                     };
+                    const stepErrors: any[] = pointer.errors || [];
                     return (
-                      <ListItem key={pointer.id || `pointer-${pIdx}`} sx={{ pl: 0 }}>
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          <Icon 
-                            sx={{ fontSize: 18 }} 
-                            color={getIconColor()}
-                          >
-                            {getIconName()}
-                          </Icon>
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography variant="body2">
-                                Step {pointer.stepId}
-                              </Typography>
-                              <Chip 
-                                label={pointer.statusLabel} 
-                                size="small" 
-                                variant="outlined"
-                                color={getChipColor()}
-                              />
-                              {pointer.retryCount > 0 && (
-                                <Chip 
-                                  label={`${pointer.retryCount} retries`} 
-                                  size="small" 
-                                  variant="outlined"
-                                />
+                      <React.Fragment key={pointer.id || `pointer-${pIdx}`}>
+                        <ListItem sx={{ pl: 0, flexDirection: 'column', alignItems: 'flex-start' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                            <ListItemIcon sx={{ minWidth: 36 }}>
+                              <Icon 
+                                sx={{ fontSize: 18 }} 
+                                color={getIconColor()}
+                              >
+                                {getIconName()}
+                              </Icon>
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography variant="body2">
+                                    Step {pointer.stepId}
+                                  </Typography>
+                                  <Chip 
+                                    label={pointer.statusLabel} 
+                                    size="small" 
+                                    variant="outlined"
+                                    color={getChipColor()}
+                                  />
+                                  {pointer.retryCount > 0 && (
+                                    <Chip 
+                                      label={`${pointer.retryCount} retries`} 
+                                      size="small" 
+                                      variant="outlined"
+                                    />
+                                  )}
+                                </Box>
+                              }
+                              secondary={getSecondaryText()}
+                            />
+                          </Box>
+                          {/* Show the latest error message for failed steps */}
+                          {isFailed && pointer.errorMessage && (
+                            <Box sx={{ pl: 4.5, mt: 1, width: '100%' }}>
+                              <Alert severity="error" variant="outlined" sx={{ '& .MuiAlert-message': { width: '100%' } }}>
+                                <AlertTitle sx={{ fontSize: '0.8rem' }}>
+                                  {pointer.errorMessage}
+                                </AlertTitle>
+                                {pointer.errorStack && (
+                                  <Typography
+                                    variant="caption"
+                                    component="pre"
+                                    sx={{
+                                      mt: 1,
+                                      p: 1,
+                                      borderRadius: 1,
+                                      overflow: 'auto',
+                                      maxHeight: 120,
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                      fontFamily: 'monospace',
+                                      fontSize: '0.7rem',
+                                    }}
+                                  >
+                                    {pointer.errorStack}
+                                  </Typography>
+                                )}
+                              </Alert>
+                              {/* Show error history if there are multiple retry errors */}
+                              {stepErrors.length > 1 && (
+                                <Accordion sx={{ mt: 1 }} disableGutters elevation={0}>
+                                  <AccordionSummary expandIcon={<Icon sx={{ fontSize: 16 }}>expand_more</Icon>} sx={{ minHeight: 32, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
+                                    <Typography variant="caption" color="text.secondary">
+                                      {stepErrors.length} error(s) across retries
+                                    </Typography>
+                                  </AccordionSummary>
+                                  <AccordionDetails sx={{ p: 1 }}>
+                                    {stepErrors.map((err: any, eIdx: number) => (
+                                      <Box key={`err-${eIdx}`} sx={{ mb: 1, p: 1, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                            Retry #{err.retryCount}
+                                          </Typography>
+                                          <Typography variant="caption" color="text.secondary">
+                                            {formatDate(err.errorTime)}
+                                          </Typography>
+                                        </Box>
+                                        <Typography variant="caption" color="error.main">
+                                          {err.message}
+                                        </Typography>
+                                      </Box>
+                                    ))}
+                                  </AccordionDetails>
+                                </Accordion>
                               )}
                             </Box>
-                          }
-                          secondary={getSecondaryText()}
-                        />
-                      </ListItem>
+                          )}
+                        </ListItem>
+                        {pIdx < (instance.executionPointers || []).length - 1 && <Divider />}
+                      </React.Fragment>
                     );
                   })}
                 </List>
