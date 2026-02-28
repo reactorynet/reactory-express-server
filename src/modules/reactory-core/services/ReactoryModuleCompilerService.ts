@@ -327,7 +327,7 @@ class ReactoryModuleCompilerService
 
     try {
       const { stdout, stderr, error } = await exec(
-        `npx rollup --config rollup.${module.id}.js`,
+        `nvm use && npx rollup --config rollup.${module.id}.js`,
         { cwd: runtimeBase, encoding: "utf8" },
       );
 
@@ -460,20 +460,20 @@ class ReactoryModuleCompilerService
         );
       }
 
-      //run npm install in the runtime folder
+      //run yarn install in the runtime folder
       this.context.log(
-        "Running NPM Install - this may take ~3 - 5 minutes depending on your connection",
+        "Running yarn Install - this may take ~3 - 5 minutes depending on your connection",
         { runtimePath },
         "debug",
         ReactoryModuleCompilerService.reactory.id
       );
-      const { stdout, stderr } = await exec("yarn install", {
+      const { stdout, stderr } = await exec("nvm use && yarn install", {
         cwd: runtimePath,
       });
 
       if (stdout.length > 0)
         this.context.log(
-          `NPM Install stdout`,
+          `Yarn Install stdout`,
           { stdout },
           "debug",
           ReactoryModuleCompilerService.reactory.id
