@@ -31,7 +31,10 @@
     {
       "name": "💾 Data & Assets",
       "path": "./reactory-data"
-    }   
+    }<%- additionalFolders && additionalFolders.length > 0 ? ',\n    ' + additionalFolders.map(folder => `{
+      "name": "${folder.name}",
+      "path": "${folder.path}"
+    }`).join(",\n    ") : '' %>
   ],
   "settings": {
     "git.enabled": true,
