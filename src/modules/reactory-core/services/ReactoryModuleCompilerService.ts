@@ -9,6 +9,22 @@ const util = require("util");
 const exec = util.promisify(require("child_process").exec);
 
 /**
+ * Build a shell command prefix that sources nvm.sh so that `nvm use` works
+ * inside non-interactive shells spawned by child_process.exec().
+ *
+ * Falls back to an empty prefix when NVM_DIR is unset or nvm.sh is missing,
+ * which means the system-default node/npx/yarn will be used instead.
+ */
+const nvmPrefix = (): string => {
+  const nvmDir = process.env.NVM_DIR || path.join(require("os").homedir(), ".nvm");
+  const nvmSh = path.join(nvmDir, "nvm.sh");
+  if (fs.existsSync(nvmSh)) {
+    return `source "${nvmSh}" && nvm use && `;
+  }
+  return "";
+};
+
+/**
  * Compute a SHA-1 checksum directly from a string buffer.
  * This avoids any file I/O race conditions by hashing in-memory data.
  */
@@ -327,8 +343,8 @@ class ReactoryModuleCompilerService
 
     try {
       const { stdout, stderr, error } = await exec(
-        `nvm use && npx rollup --config rollup.${module.id}.js`,
-        { cwd: runtimeBase, encoding: "utf8" },
+        `${nvmPrefix()}npx rollup --config rollup.${module.id}.js`,
+        { cwd: runtimeBase, encoding: "utf8", shell: "/bin/bash" },
       );
 
       this.context.log(
@@ -467,8 +483,9 @@ class ReactoryModuleCompilerService
         "debug",
         ReactoryModuleCompilerService.reactory.id
       );
-      const { stdout, stderr } = await exec("nvm use && yarn install", {
+      const { stdout, stderr } = await exec(`${nvmPrefix()}yarn install`, {
         cwd: runtimePath,
+        shell: "/bin/bash",
       });
 
       if (stdout.length > 0)
