@@ -98,5 +98,15 @@
     "license": "commercial",
     "git": "git@github.com:reactorynet/reactory-classroom.git",
     "shop": "https://reactory.net/shop/modules/reactory-classroom"
+  },
+  {
+    "id": "reactory-socialeyes",
+    "name": "Reactory Social Eyes",
+    "key": "reactory-socialeyes",
+    "fqn": "reactory.SocialEyes@1.0.0",
+    "moduleEntry": "reactory-socialeyes/index.ts",
+    "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-socialeyes.git",
+    "shop": "https://reactory.net/shop/modules/reactory-socialeyes"
   }
 ]
