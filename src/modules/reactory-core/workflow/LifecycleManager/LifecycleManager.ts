@@ -149,6 +149,16 @@ export interface IWorkflowHistoryItem {
 }
 
 /**
+ * Interface for a step execution error captured by the workflow engine
+ */
+export interface IStepExecutionError {
+  message: string;
+  stack?: string | null;
+  errorTime: string;
+  retryCount: number;
+}
+
+/**
  * Interface for execution pointer summary
  */
 export interface IExecutionPointerSummary {
@@ -161,6 +171,18 @@ export interface IExecutionPointerSummary {
   duration?: number | null;
   retryCount: number;
   active: boolean;
+  persistenceData?: any;
+  eventData?: any;
+  eventName?: string | null;
+  outcome?: any;
+  /** The most recent error message from the last failed execution of this step */
+  errorMessage?: string | null;
+  /** The most recent error stack trace from the last failed execution of this step */
+  errorStack?: string | null;
+  /** The time the most recent error occurred */
+  errorTime?: string | null;
+  /** Full array of errors captured across all retry attempts */
+  errors?: IStepExecutionError[];
 }
 
 /**
@@ -422,6 +444,96 @@ export class WorkflowLifecycleManager extends EventEmitter {
   }
 
   /**
+   * Get counts of instances with failed execution pointers, grouped by workflow definition.
+   * This captures step-level failures that don't result in a TERMINATED workflow status.
+   * @returns Record mapping workflowDefinitionId to count of instances with at least one failed step
+   */
+  public async getInstancesWithFailedSteps(): Promise<Record<string, number>> {
+    try {
+      const results = await WorkflowInstanceModel.aggregate([
+        {
+          $match: {
+            'executionPointers.status': ExecutionPointerStatus.FAILED,
+            // Exclude terminated instances since they are already counted
+            status: { $ne: WorkflowESStatus.TERMINATED },
+          },
+        },
+        {
+          $group: {
+            _id: '$workflowDefinitionId',
+            count: { $sum: 1 },
+          },
+        },
+      ]).exec();
+
+      return results.reduce((acc: Record<string, number>, r: any) => {
+        acc[r._id] = r.count;
+        return acc;
+      }, {});
+    } catch (error) {
+      logger.error('Failed to get instances with failed steps', error);
+      return {};
+    }
+  }
+
+  /**
+   * Get error details for a specific workflow definition from execution history.
+   * Returns failed execution pointers with contextual error information.
+   * @param workflowDefinitionId - The workflow definition ID (e.g., 'kb.CollectSystemDocsWorkflow@1.0.0')
+   * @param limit - Maximum number of most recent error instances to return
+   * @returns Array of error detail objects
+   */
+  public async getWorkflowErrorDetails(
+    workflowDefinitionId: string,
+    limit: number = 10
+  ): Promise<Array<{
+    instanceId: string;
+    createTime: Date;
+    workflowStatus: number;
+    workflowStatusLabel: string;
+    failedSteps: Array<{
+      stepId: number;
+      status: number;
+      statusLabel: string;
+      startTime?: Date | null;
+      endTime?: Date | null;
+      retryCount: number;
+      persistenceData?: any;
+    }>;
+  }>> {
+    try {
+      const docs = await WorkflowInstanceModel.find({
+        workflowDefinitionId,
+        'executionPointers.status': ExecutionPointerStatus.FAILED,
+      })
+        .sort({ createTime: -1 })
+        .limit(limit)
+        .exec();
+
+      return docs.map((doc: IWorkflowInstanceDocument) => ({
+        instanceId: doc.id,
+        createTime: doc.createTime,
+        workflowStatus: doc.status,
+        workflowStatusLabel: getStatusLabel(doc.status),
+        failedSteps: (doc.executionPointers || [])
+          .filter((p) => p.status === ExecutionPointerStatus.FAILED)
+          .map((p) => ({
+            stepId: p.stepId,
+            status: p.status,
+            statusLabel: getExecutionPointerStatusLabel(p.status),
+            startTime: p.startTime,
+            endTime: p.endTime,
+            retryCount: p.retryCount,
+            persistenceData: p.persistenceData,
+          })),
+      }));
+    } catch (error) {
+      logger.error('Failed to get workflow error details', error);
+      return [];
+    }
+  }
+
+  /**
    * Search workflow history with text search
    * @param searchTerm - The search term
    * @param pagination - Pagination options
@@ -633,6 +745,10 @@ export class WorkflowLifecycleManager extends EventEmitter {
         ? pointer.endTime.getTime() - pointer.startTime.getTime()
         : null;
 
+      // Extract error data persisted by the patched workflow-es executor
+      const stepErrors: IStepExecutionError[] = pointer.persistenceData?._errors || [];
+      const lastError = stepErrors.length > 0 ? stepErrors[stepErrors.length - 1] : null;
+
       return {
         id: pointer.id,
         stepId: pointer.stepId,
@@ -643,6 +759,14 @@ export class WorkflowLifecycleManager extends EventEmitter {
         duration: pointerDuration,
         retryCount: pointer.retryCount,
         active: pointer.active,
+        persistenceData: pointer.persistenceData || null,
+        eventData: pointer.eventData || null,
+        eventName: pointer.eventName || null,
+        outcome: pointer.outcome || null,
+        errorMessage: lastError?.message || null,
+        errorStack: lastError?.stack || null,
+        errorTime: lastError?.errorTime || null,
+        errors: stepErrors,
       };
     });
 
@@ -856,7 +980,7 @@ export class WorkflowLifecycleManager extends EventEmitter {
    * Get workflow instance by ID (in-memory)
    */
   public getWorkflowInstance(instanceId: string): IWorkflowInstance | undefined {
-    return this.workflows.get(instanceId);
+    return WorkflowInstanceModel.findById(instanceId);
   }
 
   /**

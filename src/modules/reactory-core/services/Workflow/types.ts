@@ -62,37 +62,66 @@ export interface IWorkflowExecutionInput {
 }
 
 export interface IScheduleConfigInput {
-  workflowName: string;
-  nameSpace: string;
-  cronExpression: string;
-  timezone?: string;
-  enabled?: boolean;
-  startDate?: Date;
-  endDate?: Date;
-  maxExecutions?: number;
-  input?: any;
-  tags?: string[];
+  id?: string;
+  name: string;
   description?: string;
+  workflow: {
+    id: string;
+    version?: string;
+    nameSpace?: string;
+  };
+  schedule: {
+    cron: string;
+    timezone?: string;
+    enabled?: boolean;
+  };
+  properties?: any;
+  propertiesFormId?: string;
+  retry?: {
+    attempts: number;
+    delay: number;
+  };
+  timeout?: number;
+  maxConcurrent?: number;
 }
 
 export interface IUpdateScheduleInput {
-  cronExpression?: string;
-  timezone?: string;
-  enabled?: boolean;
-  startDate?: Date;
-  endDate?: Date;
-  maxExecutions?: number;
-  input?: any;
-  tags?: string[];
+  name?: string;
   description?: string;
+  workflow?: {
+    id: string;
+    version?: string;
+    nameSpace?: string;
+  };
+  schedule?: {
+    cron: string;
+    timezone?: string;
+    enabled?: boolean;
+  };
+  properties?: any;
+  propertiesFormId?: string;
+  retry?: {
+    attempts: number;
+    delay: number;
+  };
+  timeout?: number;
+  maxConcurrent?: number;
 }
 
 export interface IWorkflowFilterInput {
+  searchString?: string;
   nameSpace?: string;
+  name?: string;
+  version?: string;
+  ids?: string[];
   tags?: string[];
   status?: string;
   author?: string;
   isActive?: boolean;
+  hasSchedule?: boolean;
+  hasErrors?: boolean;
+  neverRun?: boolean;
+  recentlyUpdated?: boolean;
 }
 
 export interface IInstanceFilterInput {
@@ -314,4 +343,7 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
   // Legacy Support
   getWorkflowStatus(name: string): Promise<IWorkflowStatusResponse>;
   startWorkflowLegacy(name: string, data: any): Promise<boolean>;
+  
+  // Error retrieval
+  getWorkflowErrors(workflowId: string): Promise<Array<{ message: string; code: string; stack?: string }>>;
 }

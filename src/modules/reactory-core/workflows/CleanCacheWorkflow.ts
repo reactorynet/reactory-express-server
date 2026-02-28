@@ -61,6 +61,9 @@ CleanCacheWorkflow.meta = {
   component: CleanCacheWorkflow,
   category: "workflow",
   autoStart: false,
+  author: "Reactory",
+  tags: ['cache', 'maintenance', 'cleanup'],
+  description: "Workflow to clean the application cache (document cache store via mongoose) at regular intervals to maintain performance and manage memory usage.",
   props: {
     interval: 1000 * 30,
     enabled: true,

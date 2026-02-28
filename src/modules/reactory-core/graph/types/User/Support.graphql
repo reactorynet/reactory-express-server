@@ -104,7 +104,15 @@ input ReactorySupportTicketUpdate {
   """
   Comment
   """
-  comment: String  
+  comment: String
+  """
+  Priority level (critical, high, medium, low)
+  """
+  priority: String
+  """
+  Tags to set on the ticket
+  """
+  tags: [String]
 }
 
 """

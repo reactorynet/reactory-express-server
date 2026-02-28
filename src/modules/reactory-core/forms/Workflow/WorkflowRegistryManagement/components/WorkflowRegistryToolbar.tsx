@@ -137,7 +137,6 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
   }
 
   const [advancedPanelOpen, setAdvancedPanelOpen] = React.useState(false);
-  const [originalData] = React.useState(data);
   const [activeBulkAction, setActiveBulkAction] = React.useState<'activate' | 'deactivate' | 'execute' | 'tag' | 'delete' | 'export' | null>(null);
   const [searchInput, setSearchInput] = React.useState(queryVariables?.filter?.searchString || '');
 
@@ -152,7 +151,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
       inactive: data?.data?.filter((w: any) => w.isActive === false).length || 0,
       hasErrors: data?.data?.filter((w: any) => (w.statistics?.failedExecutions || 0) > 0).length || 0,
       neverRun: data?.data?.filter((w: any) => (w.statistics?.totalExecutions || 0) === 0).length || 0,
-      scheduled: data?.data?.filter((w: any) => w.hasSchedule).length || 0,
+      scheduled: data?.data?.filter((w: any) => w.hasSchedule === true).length || 0,
       recentlyUpdated: data?.data?.filter((w: any) => {
         if (!w.updatedAt) return false;
         const dayAgo = new Date();
@@ -345,104 +344,135 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
   }, [handleSearch]);
 
   const handleQuickFilterChange = React.useCallback((activeFilters: string[]) => {
+    if (!onQueryChange) return;
+
+    // Build filter object based on active quick filters
+    const filterUpdates: any = {
+      ...queryVariables?.filter,
+      searchString: searchInput // Preserve search
+    };
+
+    // Clear all quick filter fields first
+    delete filterUpdates.isActive;
+    delete filterUpdates.hasErrors;
+    delete filterUpdates.neverRun;
+    delete filterUpdates.hasSchedule;
+    delete filterUpdates.recentlyUpdated;
+
     if (activeFilters.length === 0) {
-      onDataChange?.(originalData?.data || []);
+      // No filters - reset to base state
+      onQueryChange('registeredWorkflows', {
+        ...queryVariables,
+        filter: filterUpdates,
+        pagination: {
+          ...queryVariables?.paging,
+          page: 1
+        }
+      });
       return;
     }
 
-    // Apply active quick filters
-    const activeFilterDefs = quickFilters.filter(f => activeFilters.includes(f.id));
-    
-    const filtered = originalData?.data?.filter((item: any) => {
-      return activeFilterDefs.some(filterDef => {
-        const { field, value, operator, additionalFilters } = filterDef.filter;
-        const fieldValue = field.split('.').reduce((obj: any, key: string) => obj?.[key], item);
-        
-        let matches = false;
-        switch (operator) {
-          case 'eq':
-            matches = fieldValue === value;
-            break;
-          case 'gt':
-            matches = fieldValue > value;
-            break;
-          case 'gte':
-            matches = fieldValue >= value || new Date(fieldValue) >= value;
-            break;
-          case 'in':
-            matches = Array.isArray(value) && value.includes(fieldValue);
-            break;
-          case 'is-null':
-            matches = fieldValue === null || fieldValue === undefined;
-            break;
-          default:
-            matches = false;
-        }
+    // Apply first active quick filter (single select mode)
+    // Map filter IDs to query variables
+    const firstFilter = activeFilters[0];
 
-        if (matches && additionalFilters) {
-          matches = additionalFilters.every(af => {
-            const afValue = af.field.split('.').reduce((obj: any, key: string) => obj?.[key], item);
-            switch (af.operator) {
-              case 'gte':
-                return afValue >= af.value;
-              default:
-                return true;
-            }
-          });
-        }
+    switch (firstFilter) {
+      case 'active':
+        filterUpdates.isActive = true;
+        break;
+      case 'inactive':
+        filterUpdates.isActive = false;
+        break;
+      case 'has-errors':
+        filterUpdates.hasErrors = true;
+        break;
+      case 'never-run':
+        filterUpdates.neverRun = true;
+        break;
+      case 'scheduled':
+        filterUpdates.hasSchedule = true;
+        break;
+      case 'recent':
+        filterUpdates.recentlyUpdated = true;
+        break;
+    }
 
-        return matches;
-      });
-    }) || [];
-
-    onDataChange?.(filtered);
-  }, [originalData, onDataChange, quickFilters]);
+    // Update query with new filters
+    onQueryChange('registeredWorkflows', {
+      ...queryVariables,
+      filter: filterUpdates,
+      pagination: {
+        ...queryVariables?.paging,
+        page: 1 // Reset to first page when filtering
+      }
+    });
+  }, [queryVariables, onQueryChange, searchInput]);
 
   const handleAdvancedFilterChange = React.useCallback((filters: any[]) => {
+    if (!onQueryChange) return;
+
+    const filterUpdates: any = {
+      ...queryVariables?.filter,
+      searchString: searchInput // Preserve search
+    };
+
     if (filters.length === 0) {
-      onDataChange?.(originalData?.data || []);
+      // Clear advanced filters
+      onQueryChange('registeredWorkflows', {
+        ...queryVariables,
+        filter: filterUpdates,
+        pagination: {
+          ...queryVariables?.paging,
+          page: 1
+        }
+      });
       return;
     }
 
-    const filtered = originalData?.data?.filter((item: any) => {
-      return filters.every(filter => {
-        const fieldValue = filter.field.split('.').reduce((obj: any, key: string) => obj?.[key], item);
-        const { operator, value } = filter;
+    // Convert advanced filters to query variables
+    filters.forEach(filter => {
+      switch (filter.field) {
+        case 'isActive':
+          filterUpdates.isActive = filter.value;
+          break;
+        case 'nameSpace':
+          filterUpdates.nameSpace = Array.isArray(filter.value) ? filter.value : [filter.value];
+          break;
+        case 'tags':
+          filterUpdates.tags = typeof filter.value === 'string'
+            ? filter.value.split(',').map((t: string) => t.trim())
+            : filter.value;
+          break;
+        case 'name':
+          // Add to search string
+          filterUpdates.searchString = filter.value;
+          break;
+        case 'author':
+          filterUpdates.author = filter.value;
+          break;
+        case 'statistics.failedExecutions':
+          if (filter.value === true) {
+            filterUpdates.hasErrors = true;
+          }
+          break;
+        case 'statistics.totalExecutions':
+          if (filter.value === true) {
+            filterUpdates.neverRun = true;
+          }
+          break;
+      }
+    });
 
-        switch (operator) {
-          case 'eq':
-            return fieldValue === value;
-          case 'in':
-            if (Array.isArray(value) && Array.isArray(fieldValue)) {
-              // For tags array - check if any tag matches
-              return fieldValue.some((tag: string) => 
-                value.some((v: string) => tag.toLowerCase().includes(v.toLowerCase()))
-              );
-            }
-            return Array.isArray(value) && value.includes(fieldValue);
-          case 'contains':
-            return typeof fieldValue === 'string' && 
-                   typeof value === 'string' && 
-                   fieldValue.toLowerCase().includes(value.toLowerCase());
-          case 'gt':
-            return fieldValue > value;
-          case 'eq-boolean':
-            // Special handling for boolean filters like "never executed"
-            if (filter.field === 'statistics.totalExecutions' && value === true) {
-              return fieldValue === 0;
-            }
-            if (filter.field === 'statistics.failedExecutions' && value === true) {
-              return fieldValue > 0;
-            }
-            return true;
-          default:
-            return true;
-        }
-      });
-    }) || [];
-
-    onDataChange?.(filtered);
-  }, [originalData, onDataChange]);
+    // Update query with new filters
+    onQueryChange('registeredWorkflows', {
+      ...queryVariables,
+      filter: filterUpdates,
+      pagination: {
+        ...queryVariables?.paging,
+        page: 1
+      }
+    });
+  }, [queryVariables, onQueryChange, searchInput]);
 
   // Bulk action handlers
   const handleBulkActionComplete = (actionType: string) => {

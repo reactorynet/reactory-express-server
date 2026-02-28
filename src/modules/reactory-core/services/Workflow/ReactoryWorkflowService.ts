@@ -217,6 +217,10 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       const scheduler = workflowRunner?.getScheduler();
       const lifecycleManager = workflowRunner?.getLifecycleManager();
 
+      // Get counts of non-terminated instances with failed execution pointers
+      // This captures step-level failures that workflow-es hasn't marked as TERMINATED
+      const failedStepCounts = await lifecycleManager?.getInstancesWithFailedSteps() || {};
+
       // Enrich workflows with execution stats and active status
       const enrichedWorkflows = await Promise.all(allWorkflows.map(async (workflow: any) => {
         const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
@@ -228,7 +232,10 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
         const totalExecutions = stats?.total || 0;
         const successfulExecutions = stats?.complete || 0;
-        const failedExecutions = stats?.terminated || 0;
+        // Count both terminated workflows AND non-terminated instances with failed steps
+        const terminatedCount = stats?.terminated || 0;
+        const failedStepInstanceCount = failedStepCounts[workflowId] || 0;
+        const failedExecutions = terminatedCount + failedStepInstanceCount;
 
         // Determine active status based on schedules and running instances
         let isActive = false;
@@ -298,6 +305,32 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
           if (filter.ids && filter.ids.length > 0) {
             const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
             if (!filter.ids.includes(workflowId)) return false;
+          }
+
+          // Filter by hasSchedule
+          if (filter.hasSchedule !== undefined && workflow.hasSchedule !== filter.hasSchedule) return false;
+
+          // Filter by hasErrors (workflows with failed executions)
+          if (filter.hasErrors !== undefined) {
+            const hasErrors = (workflow.statistics?.failedExecutions || 0) > 0;
+            if (hasErrors !== filter.hasErrors) return false;
+          }
+
+          // Filter by neverRun (workflows with no executions)
+          if (filter.neverRun !== undefined) {
+            const neverRun = (workflow.statistics?.totalExecutions || 0) === 0;
+            if (neverRun !== filter.neverRun) return false;
+          }
+
+          // Filter by recentlyUpdated (workflows updated in last 24 hours)
+          if (filter.recentlyUpdated !== undefined) {
+            let recentlyUpdated = false;
+            if (workflow.updatedAt) {
+              const dayAgo = new Date();
+              dayAgo.setDate(dayAgo.getDate() - 1);
+              recentlyUpdated = new Date(workflow.updatedAt) > dayAgo;
+            }
+            if (recentlyUpdated !== filter.recentlyUpdated) return false;
           }
 
           return true;
@@ -470,7 +503,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   async getWorkflowInstance(instanceId: string): Promise<IWorkflowInstance> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
-      const instance = await workflowRunner?.getWorkflowInstance(instanceId);
+      const instance = await workflowRunner?.lifecycleManager.getWorkflowInstance(instanceId);
       
       if (!instance) {
         throw new Error(`Workflow instance ${instanceId} not found`);
@@ -486,10 +519,17 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   async startWorkflow(workflowId: string, input?: IWorkflowExecutionInput): Promise<IWorkflowInstance> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
-      const [nameSpace, nameVersion] = workflowId.split('.');
-      const [name, version] = nameVersion?.split('@') || [workflowId, '1.0.0'];
-      
-      const instance = await workflowRunner?.startWorkflow(name, version || '1.0.0', input, this.context);
+
+      // Parse workflow ID: format is "namespace.name@version"
+      // Example: "core.CleanCacheWorkflow@1.0.0"
+      const atIndex = workflowId.lastIndexOf('@');
+      const version = atIndex > -1 ? workflowId.substring(atIndex + 1) : '1.0.0';
+    
+      // Pass the full workflow ID (with namespace) to the runner
+      const instanceId = await workflowRunner?.startWorkflow(workflowId, version, input, this.context);
+      const instance = await workflowRunner?.lifecycleManager.getWorkflowInstance(instanceId);
+      // the object here does not have the full details of the instance, so we need to fetch it again from the lifecycle manager to get all the details including status, start time, etc.
+      // get the regustered workflow 
 
       return instance;
     } catch (error) {
@@ -821,41 +861,83 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     }
   }
 
-  async createWorkflowSchedule(config: IScheduleConfigInput): Promise<IScheduledWorkflow> {
+  /**
+   * Flatten an IScheduledWorkflow into the shape expected by the WorkflowSchedule GraphQL type
+   */
+  private flattenScheduledWorkflow(scheduled: IScheduledWorkflow): any {
+    return {
+      ...scheduled.config,
+      lastRun: scheduled.lastRun,
+      nextRun: scheduled.nextRun,
+      runCount: scheduled.runCount,
+      errorCount: scheduled.errorCount,
+      isRunning: scheduled.isRunning,
+      enabled: scheduled.config.schedule?.enabled !== false,
+    };
+  }
+
+  async createWorkflowSchedule(config: IScheduleConfigInput): Promise<any> {
     try {
-      const workflowRunner = this.getWorkflowRunner();
-      // @ts-ignore
-      const scheduler = (await workflowRunner)?.getScheduler();
-      
-      const newSchedule = {
-        ...config,
-        createdBy: this.context.user?.id,
-        createdAt: new Date()
+      const workflowRunner = await this.getWorkflowRunner();
+      const scheduler = workflowRunner?.getScheduler();
+
+      if (!scheduler) {
+        throw new Error('Workflow scheduler is not available');
+      }
+
+      // Build the full IScheduleConfig from the input
+      const scheduleConfig: IScheduleConfig = {
+        id: config.id || `${config.workflow.nameSpace || 'default'}.${config.workflow.id}`.toLowerCase().replace(/[^a-z0-9.]/g, '-'),
+        name: config.name,
+        description: config.description,
+        workflow: {
+          id: config.workflow.id,
+          version: config.workflow.version || '1',
+          nameSpace: config.workflow.nameSpace,
+        },
+        schedule: {
+          cron: config.schedule.cron,
+          timezone: config.schedule.timezone,
+          enabled: config.schedule.enabled !== false,
+        },
+        properties: config.properties,
+        propertiesFormId: config.propertiesFormId,
+        retry: config.retry,
+        timeout: config.timeout,
+        maxConcurrent: config.maxConcurrent,
       };
 
-      // @ts-ignore
-      await scheduler?.addSchedule(newSchedule);
-
-      // @ts-ignore
-      return scheduler?.getSchedule(config.id);
+      const newSchedule = await scheduler.createSchedule(scheduleConfig);
+      return this.flattenScheduledWorkflow(newSchedule);
     } catch (error) {
       this.context.log('Error creating workflow schedule', { error, config }, 'error');
       throw error;
     }
   }
 
-  async updateWorkflowSchedule(scheduleId: string, updates: IUpdateScheduleInput): Promise<IScheduledWorkflow> {
+  async updateWorkflowSchedule(scheduleId: string, updates: IUpdateScheduleInput): Promise<any> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
-      
-      // @ts-ignore
-      const schedule = await scheduler?.updateSchedule(scheduleId, {
-        ...updates,
-        updatedAt: new Date()
-      });
 
-      return schedule;
+      if (!scheduler) {
+        throw new Error('Workflow scheduler is not available');
+      }
+
+      // Build partial IScheduleConfig from the update input
+      const configUpdates: Partial<IScheduleConfig> = {};
+      if (updates.name !== undefined) configUpdates.name = updates.name;
+      if (updates.description !== undefined) configUpdates.description = updates.description;
+      if (updates.workflow) configUpdates.workflow = { id: updates.workflow.id, version: updates.workflow.version || '1', nameSpace: updates.workflow.nameSpace };
+      if (updates.schedule) configUpdates.schedule = { cron: updates.schedule.cron, timezone: updates.schedule.timezone, enabled: updates.schedule.enabled };
+      if (updates.properties !== undefined) configUpdates.properties = updates.properties;
+      if (updates.propertiesFormId !== undefined) configUpdates.propertiesFormId = updates.propertiesFormId;
+      if (updates.retry !== undefined) configUpdates.retry = updates.retry;
+      if (updates.timeout !== undefined) configUpdates.timeout = updates.timeout;
+      if (updates.maxConcurrent !== undefined) configUpdates.maxConcurrent = updates.maxConcurrent;
+
+      const schedule = await scheduler.updateScheduleConfig(scheduleId, configUpdates);
+      return this.flattenScheduledWorkflow(schedule);
     } catch (error) {
       this.context.log('Error updating workflow schedule', { error, scheduleId, updates }, 'error');
       throw error;
@@ -866,8 +948,12 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     try {
       const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
-      // @ts-ignore
-      await scheduler?.removeSchedule(scheduleId);
+
+      if (!scheduler) {
+        throw new Error('Workflow scheduler is not available');
+      }
+
+      await scheduler.removeSchedule(scheduleId);
       
       return {
         success: true,
@@ -945,7 +1031,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
    * @param workflowId - The complete workflow ID (e.g., "core.CleanCacheWorkflow@1.0.0")
    * @returns Array of schedules for the specified workflow
    */
-  async getWorkflowSchedulesForWorkflowId(workflowId: string): Promise<IScheduleConfig[]> {
+  async getWorkflowSchedulesForWorkflowId(workflowId: string): Promise<any[]> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
@@ -958,7 +1044,15 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       );
 
       return schedules.map((schedule: IScheduledWorkflow) => {
-        return schedule.config
+        return {
+          ...schedule.config,
+          lastRun: schedule.lastRun,
+          nextRun: schedule.nextRun,
+          runCount: schedule.runCount,
+          errorCount: schedule.errorCount,
+          isRunning: schedule.isRunning,
+          enabled: schedule.config.schedule?.enabled !== false,
+        };
       }) || [];
     } catch (error) {
       this.context.log('Error getting schedules for workflow', { error, workflowId }, 'error');
@@ -1109,6 +1203,55 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     } catch (error) {
       this.context.log('Error starting workflow (legacy)', { error, name, data }, 'error');
       return false;
+    }
+  }
+
+  /**
+   * Get combined error information for a specific workflow definition.
+   * Merges ErrorHandler in-memory stats with execution history step-level failures from MongoDB.
+   * @param workflowId - The workflow definition ID (e.g., 'kb.CollectSystemDocsWorkflow@1.0.0')
+   * @returns Array of error objects with message, code, and stack
+   */
+  async getWorkflowErrors(workflowId: string): Promise<Array<{ message: string; code: string; stack?: string }>> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const errors: Array<{ message: string; code: string; stack?: string }> = [];
+
+      // 1. Get ErrorHandler in-memory stats (captures startWorkflow-level failures)
+      const errorStats = workflowRunner?.getAllErrorStats();
+      if (errorStats) {
+        const stats = errorStats.get(workflowId);
+        if (stats) {
+          errors.push({
+            message: stats.message || `${stats.errorType} error (${stats.count} occurrence(s))`,
+            code: stats.errorType || 'UNKNOWN',
+            stack: stats.stack,
+          });
+        }
+      }
+
+      // 2. Get execution history step-level failures from MongoDB
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+      if (lifecycleManager) {
+        const errorDetails = await lifecycleManager.getWorkflowErrorDetails(workflowId, 10);
+        for (const detail of errorDetails) {
+          for (const step of detail.failedSteps) {
+            const errorMessage = step.persistenceData?.message 
+              || step.persistenceData?.error?.message
+              || `Step ${step.stepId} failed (${step.statusLabel})`;
+            errors.push({
+              message: `[Instance ${detail.instanceId}] ${errorMessage}`,
+              code: `STEP_FAILED_${step.stepId}`,
+              stack: step.persistenceData?.stack || step.persistenceData?.error?.stack,
+            });
+          }
+        }
+      }
+
+      return errors;
+    } catch (error) {
+      this.context.log('Error getting workflow errors', { error, workflowId }, 'error');
+      return [];
     }
   }
 }

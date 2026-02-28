@@ -87,7 +87,7 @@ export class CircuitBreaker {
       this.onSuccess();
       return result;
     } catch (error) {
-      this.onFailure();
+      this.onFailure(error as Error);
       throw error;
     }
   }
@@ -97,10 +97,11 @@ export class CircuitBreaker {
     this.state = 'CLOSED';
   }
 
-  private onFailure(): void {
+  private onFailure(error: Error): void {
     this.failureCount++;
     this.lastFailureTime = Date.now();
-
+    
+    logger.error(`Workflow ${context.workflowId} failed due to error ${error?.message}`, { error });
     if (this.failureCount >= this.config.failureThreshold) {
       this.state = 'OPEN';
       logger.warn(`Circuit breaker opened after ${this.failureCount} failures`);

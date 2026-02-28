@@ -203,13 +203,19 @@ export class WorkflowRunner {
       
 
       // Initialize lifecycle manager
-      await this.lifecycleManager.initialize();
+      await this.lifecycleManager.initialize({
+        host,
+      });
 
       // Initialize configuration manager
-      await this.configurationManager.initialize();
+      await this.configurationManager.initialize({
+        host,
+      });
 
       // Initialize security manager
-      await this.securityManager.initialize();
+      await this.securityManager.initialize({
+        host,
+      });
 
       logger.info('WorkflowRunner initialized successfully');
     } catch (error) {
@@ -478,13 +484,13 @@ export class WorkflowRunner {
       return await this.errorHandler.executeWithRetry(
         async () => {
           const startResult = await this.state.host!.startWorkflow(id, versionNumber, data);
-          logger.debug(`Workflow ${id}@${versionNumber} started successfully`, startResult);
+          logger.debug(`Workflow ${id} :${versionNumber} started successfully`, startResult);
           return startResult;
         },
         errorContext
       );
     } catch (error) {
-      logger.error(`Failed to start workflow ${id}@${version}`, error);
+      logger.error(`Failed to start workflow ${id} :${versionNumber}`, error);
       throw error;
     }
   }

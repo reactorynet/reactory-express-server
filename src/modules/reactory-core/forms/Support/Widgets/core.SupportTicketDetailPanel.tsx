@@ -79,11 +79,8 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
     Tabs, 
     Tab, 
     Typography, 
-    IconButton, 
     Icon, 
     Badge,
-    Divider,
-    Tooltip
   } = MaterialCore;
 
   const [activeTab, setActiveTab] = React.useState(0);
@@ -214,30 +211,6 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
               }}
             />
           )}
-        </Box>
-
-        {/* Action Buttons */}
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Tooltip title="Edit ticket">
-            <IconButton size="small">
-              <Icon>edit</Icon>
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Add comment">
-            <IconButton size="small">
-              <Icon>comment</Icon>
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Assign ticket">
-            <IconButton size="small">
-              <Icon>person_add</Icon>
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Close ticket">
-            <IconButton size="small">
-              <Icon>close</Icon>
-            </IconButton>
-          </Tooltip>
         </Box>
       </Box>
 

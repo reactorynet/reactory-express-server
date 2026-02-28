@@ -22,9 +22,10 @@ const WORKFLOW_ES_STATUS: Record<number, { label: string; color: string; icon: s
 const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
   const { reactory, workflow, refreshKey } = props;
 
-  const { React, Material } = reactory.getComponents<any>([
+  const { React, Material, WorkflowInstanceInspector } = reactory.getComponents<any>([
     'react.React',
     'material-ui.Material',
+    'core.WorkflowInstanceInspector',
   ]);
 
   const { MaterialCore } = Material;  
@@ -90,6 +91,10 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
   const [deleteTargetId, setDeleteTargetId] = React.useState(null);
   const [deleting, setDeleting] = React.useState(false);
 
+  // Instance inspector modal state
+  const [inspectorInstanceId, setInspectorInstanceId] = React.useState(null);
+  const [inspectorOpen, setInspectorOpen] = React.useState(false);
+
   // Refresh trigger
   const [localRefreshKey, setLocalRefreshKey] = React.useState(0);
 
@@ -108,7 +113,7 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
             workflowInstances(filter: $filter, pagination: $pagination) {
               instances {
                 id
-                workflowName
+                name
                 nameSpace
                 version
                 status
@@ -116,7 +121,11 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                 startTime
                 endTime
                 duration
-                createdBy
+                createdBy {
+                  id
+                  firstName
+                  lastName
+                }
                 error {
                   message
                   code
@@ -129,7 +138,7 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
           }
         `, {
           filter: {
-            workflowName: workflow.name,
+            name: workflow.name,
             nameSpace: workflow.nameSpace
           },
           pagination: {
@@ -312,7 +321,13 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
   };
 
   const viewInstance = (instanceId: string) => {
-    reactory.navigation(`/workflows/instances/${instanceId}`);
+    setInspectorInstanceId(instanceId);
+    setInspectorOpen(true);
+  };
+
+  const closeInspector = () => {
+    setInspectorOpen(false);
+    setInspectorInstanceId(null);
   };
 
   const handleTabChange = (_event: any, newValue: number) => {
@@ -935,6 +950,33 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
             {deleting ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Instance Inspector Modal */}
+      <Dialog
+        open={inspectorOpen}
+        onClose={closeInspector}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { maxHeight: '90vh' } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Icon>manage_search</Icon>
+            <Typography variant="h6">Instance Inspector</Typography>
+          </Box>
+          <IconButton onClick={closeInspector} size="small">
+            <Icon>close</Icon>
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          {inspectorOpen && inspectorInstanceId && (
+            <WorkflowInstanceInspector
+              reactory={reactory}
+              instanceId={inspectorInstanceId}
+            />
+          )}
+        </DialogContent>
       </Dialog>
     </Box>
   );

@@ -16,6 +16,7 @@ export {
   type IPaginatedWorkflowHistory,
   type IWorkflowHistoryItem,
   type IExecutionPointerSummary,
+  type IStepExecutionError,
   type IWorkflowExecutionStats,
   type IWorkflowInstanceDocument,
   type IWorkflowInstanceFilter,

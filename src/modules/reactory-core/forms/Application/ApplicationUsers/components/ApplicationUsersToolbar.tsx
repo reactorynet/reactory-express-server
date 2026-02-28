@@ -22,6 +22,11 @@ interface ApplicationUsersToolbarProps {
     clientKey?: string;
   };
   formData: any;
+  formContext: {
+    props: {
+      applicationId: string;
+    }
+  };
   queryVariables: any;
   onQueryChange?: (query: string, variables: any) => void;
   onRefresh?: () => void;
@@ -29,7 +34,7 @@ interface ApplicationUsersToolbarProps {
 }
 
 const ApplicationUsersToolbar = (props: ApplicationUsersToolbarProps) => {
-  const { reactory, data, queryVariables, onQueryChange, onRefresh, selectedRows = [] } = props;
+  const { formContext, reactory, data, queryVariables, onQueryChange, onRefresh, selectedRows = [] } = props;
 
   const { React, Material, FullScreenModal, UserProfile } = reactory.getComponents<ApplicationUsersToolbarDependencies>([
     'react.React',
@@ -311,7 +316,7 @@ const ApplicationUsersToolbar = (props: ApplicationUsersToolbarProps) => {
           {UserProfile ? (
             <UserProfile
               mode="new"
-              applicationId={queryVariables?.clientId}
+              applicationId={formContext.props.applicationId}
               onProfileSave={handleAddUserSubmit}
               onProfileCancel={handleAddUserClose}
               reactory={reactory}

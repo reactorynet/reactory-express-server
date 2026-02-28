@@ -17,123 +17,191 @@ interface ISupportTicketDeleteArgs {
 }
 
 
+interface ISupportTicketUpdateResult {
+  ReactoryUpdateSupportTicket: Reactory.Models.IReactorySupportTicket
+}
+
 interface ISupportTicketWorkflowModule {  
   openTicket(args: ISupportTickeArgs): Promise<Reactory.Models.IReactorySupportTicket>
   closeTicket(args: ISupportTickeArgs): Promise<boolean>
   commentTicket(args: ISupportTickeArgs): Promise<Reactory.Models.IReactorySupportTicket>
   addNew(): void,
   deleteTicket(args: ISupportTicketDeleteArgs): Promise<void>
+  updateTicket(args: { ticket: Reactory.Models.IReactorySupportTicket, updates: Partial<Reactory.Models.IReactorySupportTicketUpdate> }): Promise<Reactory.Models.IReactorySupportTicket | null>
+  reassignTicket(args: { ticket: Reactory.Models.IReactorySupportTicket, assignTo: string }): Promise<Reactory.Models.IReactorySupportTicket | null>
+  changePriority(args: { ticket: Reactory.Models.IReactorySupportTicket, priority: string }): Promise<Reactory.Models.IReactorySupportTicket | null>
+  addTags(args: { ticket: Reactory.Models.IReactorySupportTicket, tags: string[] }): Promise<Reactory.Models.IReactorySupportTicket | null>
 }
+
+const TICKET_FIELDS = `
+  id
+  request
+  requestType
+  description
+  status
+  priority
+  reference
+  tags
+  assignedTo {
+    id
+    firstName
+    lastName
+    avatar
+    email
+  }
+  createdBy {
+    id
+    firstName
+    lastName
+    avatar
+    email
+  }
+  createdDate
+  updatedDate
+  slaDeadline
+  isOverdue
+`;
 
 const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTicketWorkflowModule => {
 
   const { reactory } = props;
-  const {
-    loggedIn,
-  } = reactory.getUser();
 
-  const {
-    user
-  } = loggedIn;
-
-
-  const statusUdpate = async ({ ticket, status, comment }: { ticket: Reactory.Models.IReactorySupportTicket, status: string, comment?: string }) => { 
+  const executeUpdate = async (
+    ticket: Reactory.Models.IReactorySupportTicket,
+    updates: Partial<Reactory.Models.IReactorySupportTicketUpdate>,
+    successMessage: string,
+    errorMessage: string
+  ): Promise<Reactory.Models.IReactorySupportTicket | null> => {
     try {
-      let result = await reactory.graphqlMutation<ISupportTicketOpenMutationResult, {id: string, status: string, comment?: string}>(`
-        mutation ReactorySupportTicketStatusUpdate($id: String!, $status: String!, $comment: String) {
-          ReactorySupportTicketStatusUpdate(id: $id, status: $status, comment: $comment) {
-            id
-            status
+      const result = await reactory.graphqlMutation<
+        ISupportTicketUpdateResult,
+        { ticket_id: string; updates: Partial<Reactory.Models.IReactorySupportTicketUpdate> }
+      >(`mutation ReactoryUpdateSupportTicket($ticket_id: String, $updates: ReactorySupportTicketUpdate) {
+          ReactoryUpdateSupportTicket(ticket_id: $ticket_id, updates: $updates) {
+            ${TICKET_FIELDS}
           }
-        }`, { 
-          id: ticket.id, 
-          status, 
-          comment })
-          .then();
-        reactory.log(`Ticket ${ticket.reference} ${status}`,{ result } , 'info'); 
-        
-        const { data, errors } = result;
-        if(errors && errors.length > 0) {
-          reactory.createNotification(`Error ${status} ticket`, { type: 'error' });
-          reactory.log(`Error ${status} ticket: ${errors[0].message}`, 'error');
-          return ticket;
-        }
-        return data.ReactorySupportTicketOpen
+        }`, {
+        ticket_id: `${ticket.id}`,
+        updates,
+      }).then();
+
+      const { data, errors } = result;
+      if (errors && errors.length > 0) {
+        reactory.createNotification(errorMessage, { type: 'error' });
+        reactory.log(`${errorMessage}: ${errors[0].message}`, 'error');
+        return null;
+      }
+
+      reactory.createNotification(successMessage, { type: 'success' });
+      return data.ReactoryUpdateSupportTicket;
     } catch (error) {
-      reactory.createNotification(`Error ${status} ticket`, { type: 'error' });
-      return ticket; 
+      reactory.createNotification(errorMessage, { type: 'error' });
+      return null;
     }
   };
 
+  const updateTicket = async ({ ticket, updates }: { ticket: Reactory.Models.IReactorySupportTicket, updates: Partial<Reactory.Models.IReactorySupportTicketUpdate> }) => {
+    return executeUpdate(
+      ticket,
+      updates,
+      `Ticket ${ticket.reference} updated`,
+      `Error updating ticket ${ticket.reference}`
+    );
+  };
+
   const openTicket = async ({ ticket }: { ticket: Reactory.Models.IReactorySupportTicket }) => {
-    return statusUdpate({ ticket, status: 'open' });
-  }
+    return executeUpdate(
+      ticket,
+      { status: 'open' },
+      `Ticket ${ticket.reference} opened`,
+      `Error opening ticket ${ticket.reference}`
+    );
+  };
 
-  /**
-   * Close a ticket using status update
-   */
   const closeTicket = async ({ ticket }: ISupportTickeArgs): Promise<boolean> => {
-    reactory.createNotification(`Ticket ${ticket.reference} closed`, {  });
+    const result = await executeUpdate(
+      ticket,
+      { status: 'closed' },
+      `Ticket ${ticket.reference} closed`,
+      `Error closing ticket ${ticket.reference}`
+    );
+    return result !== null;
+  };
 
-    const result = statusUdpate({ ticket, status: 'closed' });
-    if(result) {
-      reactory.createNotification(`Ticket ${ticket.reference} closed`, { type: 'success' });
-      return true;
-    } else {
-      reactory.createNotification(`Error closing ticket ${ticket.reference}`, { type: 'error' });
-      return false;
-    }
-  }
+  const reassignTicket = async ({ ticket, assignTo }: { ticket: Reactory.Models.IReactorySupportTicket, assignTo: string }) => {
+    return executeUpdate(
+      ticket,
+      { assignTo },
+      `Ticket ${ticket.reference} reassigned`,
+      `Error reassigning ticket ${ticket.reference}`
+    );
+  };
+
+  const changePriority = async ({ ticket, priority }: { ticket: Reactory.Models.IReactorySupportTicket, priority: string }) => {
+    return executeUpdate(
+      ticket,
+      { priority },
+      `Ticket ${ticket.reference} priority changed to ${priority}`,
+      `Error changing priority for ticket ${ticket.reference}`
+    );
+  };
+
+  const addTags = async ({ ticket, tags }: { ticket: Reactory.Models.IReactorySupportTicket, tags: string[] }) => {
+    const existingTags = ticket.tags || [];
+    const mergedTags = [...new Set([...existingTags, ...tags])];
+    return executeUpdate(
+      ticket,
+      { tags: mergedTags },
+      `Tags added to ticket ${ticket.reference}`,
+      `Error adding tags to ticket ${ticket.reference}`
+    );
+  };
 
   const commentTicket = async ({ ticket, comment }: ISupportTickeArgs) => {
-
     try {
-      if(!comment) {
-        reactory.createNotification(`Comment cannot be empty`, { type: 'error' });
+      if (!comment) {
+        reactory.createNotification('Comment cannot be empty', { type: 'error' });
         return ticket;
       }
 
-      const result = reactory.graphqlMutation<ISupportTicketOpenMutationResult, {id: string, comment: string}>(`
+      const result = await reactory.graphqlMutation<ISupportTicketOpenMutationResult, { id: string, comment: string }>(`
         mutation ReactorySupportTicketComment($id: String!, $comment: String!) {
           ReactorySupportTicketComment(id: $id, comment: $comment) {
             id
             status
           }
-        }`, { 
-          id: ticket.id, 
-          comment })
-          .then();
-        reactory.log(`Ticket ${ticket.reference} commented`,{ result } , 'info');          
-    } catch (error) { 
+        }`, {
+        id: `${ticket.id}`,
+        comment,
+      }).then();
+      reactory.log(`Ticket ${ticket.reference} commented`, { result }, 'info');
+    } catch (error) {
       reactory.createNotification(`Error adding comment to ticket ${ticket.reference}`, { type: 'error' });
       return ticket;
-    }        
-  }
+    }
+  };
 
-  const addNew = () => {    
-    reactory.navigation('/support/request', 
-      { state: {}, replace: false })
-  }
+  const addNew = () => {
+    reactory.navigation('/support/request',
+      { state: {}, replace: false });
+  };
 
-  const deleteTicket = async (args: ISupportTicketDeleteArgs): Promise<void> => { 
-    
+  const deleteTicket = async (args: ISupportTicketDeleteArgs): Promise<void> => {
     try {
-
-      const result = reactory.graphqlMutation<ISupportTicketOpenMutationResult, {ids: string[]}>(`
+      const result = await reactory.graphqlMutation<ISupportTicketOpenMutationResult, { ids: string[] }>(`
         mutation ReactorySupportTicketDelete($ids: [String]!) {
           ReactorySupportTicketDelete(ids: $ids) {
             id
             status
           }
-        }`, { 
-          ids: args.tickets.map(t => `${t.id}`) })
-          .then();
-        reactory.log(`${args?.tickets?.length || 0} Ticket(s) deleted`,{ result } , 'info');
-
-    } catch (error) { 
-      reactory.createNotification(`Error deleting ticket`, { type: 'error' });
+        }`, {
+        ids: args.tickets.map(t => `${t.id}`),
+      }).then();
+      reactory.log(`${args?.tickets?.length || 0} Ticket(s) deleted`, { result }, 'info');
+    } catch (error) {
+      reactory.createNotification('Error deleting ticket', { type: 'error' });
     }
-  }
+  };
 
   return {
     openTicket,
@@ -141,7 +209,11 @@ const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTick
     commentTicket,
     addNew,
     deleteTicket,
-  }
+    updateTicket,
+    reassignTicket,
+    changePriority,
+    addTags,
+  };
 }
 
 

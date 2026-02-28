@@ -45,6 +45,7 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
       text: `query RegisteredWorkflows($filter: WorkflowFilterInput, $pagination: PaginationInput) {
         workflows(filter: $filter, pagination: $pagination) {
           workflows {
+            id
             name
             nameSpace
             version
@@ -54,12 +55,22 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             createdAt
             updatedAt
             status
+            isActive
+            hasSchedule
             dependencies {
+              id
               name
+              nameSpace
               type
               version
               optional
               description
+            }
+            statistics {
+              totalExecutions
+              successfulExecutions
+              failedExecutions
+              averageExecutionTime
             }
           }
           pagination {

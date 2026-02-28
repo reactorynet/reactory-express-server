@@ -26,6 +26,13 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
   },
   {
     compilerOptions: {},
+    id: 'core.WorkflowInstanceInspector@1.0.0',
+    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowInstanceInspector.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
     id: 'core.WorkflowErrors@1.0.0',
     src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowErrors.tsx`)),
     compiler: 'rollup',
