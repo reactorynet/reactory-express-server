@@ -36,6 +36,7 @@ const APPLICATION_ACCOUNT: Reactory.Server.IStaticallyLoadedUser = {
   roles: ['ADMIN', 'DEVELOPER'],
   firstName: 'Reactory',
   lastName: 'Admin',
+  teams: [],
   password: REACTORY_APPLICATION_PASSWORD,
   username: "reactory",
 };
@@ -50,6 +51,7 @@ const APPLICATION_ANON_USER_ACCOUNT: Reactory.Server.IStaticallyLoadedUser = {
   firstName: 'Anonymous',
   lastName: 'User',
   username: 'anonymous',
+  teams: [],
   password: REACTORY_APPLICATION_ANONUSER_PASSWORD,
 };
 
