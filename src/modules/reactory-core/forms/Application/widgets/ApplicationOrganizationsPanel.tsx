@@ -3,6 +3,7 @@
 interface IComponentsImport {
   React: Reactory.React;
   Material: Reactory.Client.Web.IMaterialModule;
+  ApplicationOrganizations: Reactory.Client.AnyValidComponent;
 }
 
 interface ApplicationOrganizationsPanelProps {
@@ -15,63 +16,40 @@ interface ApplicationOrganizationsPanelProps {
 const ApplicationOrganizationsPanel = (props: ApplicationOrganizationsPanelProps) => {
   const { reactory, formData, applicationId, mode = 'view' } = props;
 
-  const { React, Material } = reactory.getComponents<IComponentsImport>([
+  const { React, Material, ApplicationOrganizations } = reactory.getComponents<IComponentsImport>([
     'react.React',
     'material-ui.Material',
+    'core.ApplicationOrganizations@1.0.0',
   ]);
 
-  const {
-    Card,
-    CardContent,
-    CardHeader,
-    Box,
-    Typography,
-    Divider,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemAvatar,
-    Avatar,
-    Chip,
-  } = Material.MaterialCore;
+  const { Box } = Material.MaterialCore;
 
-  const { Business: BusinessIcon } = Material.MaterialIcons;
+  // If no application ID is available, show a message
+  if (!applicationId) {
+    const { Typography, Card, CardContent } = Material.MaterialCore;
+    const { Warning: WarningIcon } = Material.MaterialIcons;
 
-  const organizations = formData?.organizations || [];
-  const totalOrganisations = formData?.totalOrganisations || 0;
-
-  return (
-    <Box sx={{ p: 2 }}>
-      <Card>
-        <CardHeader avatar={<BusinessIcon />} title="Organizations" subheader={`Total: ${totalOrganisations}`} />
-        <Divider />
-        <CardContent>
-          {organizations.length > 0 ? (
-            <List>
-              {organizations.map((org: any) => (
-                <ListItem key={org.id}>
-                  <ListItemAvatar>
-                    <Avatar src={org.avatar} alt={org.name} />
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={org.name}
-                    secondary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        <Chip label={org.slug} size="small" />
-                        <Typography variant="caption">Created: {new Date(org.createdAt).toLocaleDateString()}</Typography>
-                      </Box>
-                    }
-                  />
-                </ListItem>
-              ))}
-            </List>
-          ) : (
+    return (
+      <Box sx={{ p: 2 }}>
+        <Card>
+          <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <WarningIcon color="warning" />
             <Typography variant="body2" color="text.secondary">
-              No organizations found. Organization data will be populated here when available.
+              No application ID provided. Please provide an applicationId to view organizations.
             </Typography>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Render the ApplicationOrganizations form component
+  return (
+    <Box sx={{ width: '100%', height: '100%' }}>
+      <ApplicationOrganizations
+        applicationId={applicationId}
+        mode={mode}
+      />
     </Box>
   );
 };

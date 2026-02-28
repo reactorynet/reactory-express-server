@@ -1,5 +1,6 @@
 import Application from './Application';
 import ApplicationUsers from './Application/ApplicationUsers';
+import ApplicationOrganizations from './Application/ApplicationOrganizations';
 import Applications from './Applications';
 import ReactoryContentCapture from './ReactoryContentCapture';
 import ReactoryContentList from './ReactoryContentList';
@@ -17,6 +18,7 @@ import UserForms from './User';
 export default [
   Application,
   ApplicationUsers,
+  ApplicationOrganizations,
   Applications,
   ReactoryContentCapture,
   ReactoryContentList,
