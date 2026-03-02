@@ -1,0 +1,39 @@
+diff --git a/node_modules/workflow-es/build/src/services/execution-result-processor.js b/node_modules/workflow-es/build/src/services/execution-result-processor.js
+index 1cceb1c..b42c763 100644
+--- a/node_modules/workflow-es/build/src/services/execution-result-processor.js
++++ b/node_modules/workflow-es/build/src/services/execution-result-processor.js
+@@ -12,7 +12,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ var inversify_1 = require("inversify");
+ var abstractions_1 = require("../abstractions");
+ var models_1 = require("../models");
+-var util_1 = require("util");
++var isNullOrUndefined = function (val) { return val === null || val === undefined; };
++var util_1 = { isNullOrUndefined: isNullOrUndefined };
+ var ExecutionResultProcessor = /** @class */ (function () {
+     function ExecutionResultProcessor() {
+     }
+diff --git a/node_modules/workflow-es/build/src/services/workflow-executor.js b/node_modules/workflow-es/build/src/services/workflow-executor.js
+index a35d3b9..9859918 100644
+--- a/node_modules/workflow-es/build/src/services/workflow-executor.js
++++ b/node_modules/workflow-es/build/src/services/workflow-executor.js
+@@ -119,6 +119,20 @@ var WorkflowExecutor = /** @class */ (function () {
+                                         perr.message = err_1.message;
+                                         perr.errorTime = new Date();
+                                         result.errors.push(perr);
++                                        // --- REACTORY PATCH: persist error details on pointer ---
++                                        if (!pointer.persistenceData) {
++                                            pointer.persistenceData = {};
++                                        }
++                                        if (!Array.isArray(pointer.persistenceData._errors)) {
++                                            pointer.persistenceData._errors = [];
++                                        }
++                                        pointer.persistenceData._errors.push({
++                                            message: err_1.message || String(err_1),
++                                            stack: err_1.stack || null,
++                                            errorTime: new Date().toISOString(),
++                                            retryCount: pointer.retryCount || 0
++                                        });
++                                        // --- END REACTORY PATCH ---
+                                         this_1.resultProcessor.handleStepException(instance, def, pointer, step);
+                                         return [3 /*break*/, 4];
+                                     case 4: return [3 /*break*/, 6];
