@@ -28,7 +28,7 @@ class Organization {
 
   @query("CorePagedOrganizations")
   @roles(["USER"])
-  async CorePagedOrganizations(obj: any, params: CorePagedOrganizationParams, context: Reactory.Server.ReactoryContext): Promise<Reactory.Models.IOrganization[]> {
+  async CorePagedOrganizations(obj: any, params: CorePagedOrganizationParams, context: Reactory.Server.ReactoryContext): Promise<{ paging: Reactory.Models.IPagingResult; organizations: Reactory.Models.IOrganization[] }> {
     const organizationService = context.getService("core.OrganizationService@1.0.0") as Reactory.Service.IReactoryOrganizationService;
 
     return organizationService.getPagedOrganizationsForLoggedInUser(params.search, "name", "asc", params.paging);

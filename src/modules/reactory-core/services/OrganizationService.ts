@@ -544,38 +544,63 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 
   @roles(['USER'])
-  async getPagedOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc', paging: Reactory.Models.IPagingRequest): Promise<Reactory.Models.IOrganizationDocument[]> {
+  async getPagedOrganizationsForLoggedInUser(
+    search: string,
+    sort: string,
+    direction: string = 'asc',
+    paging: Reactory.Models.IPagingRequest,
+  ): Promise<{ paging: Reactory.Models.IPagingResult; organizations: Reactory.Models.IOrganizationDocument[] }> {
 
     const { user, partner } = this.context;
     const sortBy = sort || 'name';
+    const page = paging?.page ?? 1;
+    const pageSize = paging?.pageSize ?? 10;
 
-    if (user.hasAnyRole(partner._id) === false) return [];
+    const result: {
+      paging: Reactory.Models.IPagingResult;
+      organizations: Reactory.Models.IOrganizationDocument[];
+    } = {
+      paging: { page, pageSize, total: 0, hasNext: false },
+      organizations: [],
+    };
 
-    if (
+    if (user.hasAnyRole(partner._id) === false) return result;
+
+    let filter: Record<string, any> = {};
+
+    const isAdmin =
       user.hasRole(partner._id, 'ADMIN') === true ||
-      user.hasRole(partner._id, 'DEVELOPER')
-    ) {
-      return Organization.find({}).sort(direction).then();
+      user.hasRole(partner._id, 'DEVELOPER') === true;
+
+    if (!isAdmin) {
+      const _membershipOrganizationIds: any[] = [];
+      this.context.user.memberships.forEach((membership) => {
+        if (
+          membership.organizationId &&
+          membership.clientId.equals(partner._id) &&
+          _membershipOrganizationIds.indexOf(membership.organizationId) < 0
+        ) {
+          _membershipOrganizationIds.push(membership.organizationId);
+        }
+      });
+      filter._id = { $in: _membershipOrganizationIds };
     }
 
-    const _membershipOrganizationIds: any[] = [];
-    this.context.user.memberships.forEach((membership) => {
-      if (
-        membership.organizationId &&
-        membership.clientId.equals(partner._id) &&
-        _membershipOrganizationIds.indexOf(membership.organizationId) < 0
-      ) {
-        _membershipOrganizationIds.push(membership.organizationId);
-      }
-    });
+    if (search && search.trim().length > 0) {
+      filter.name = { $regex: search.trim(), $options: 'i' };
+    }
 
-    // collect all my membership organizations
-    return Organization.find({ _id: { $in: _membershipOrganizationIds } })
-      .sort(sortBy)
-      .limit(paging.pageSize)
-      .skip(paging.pageSize * paging.page)
+    const sortOption: Record<string, 1 | -1> = { [sortBy]: direction === 'desc' ? -1 : 1 };
+
+    result.paging.total = await Organization.countDocuments(filter);
+    result.organizations = await Organization.find(filter)
+      .sort(sortOption)
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
       .then();
+    result.paging.hasNext = (page * pageSize) < result.paging.total;
 
+    return result;
   }
 
 

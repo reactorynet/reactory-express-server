@@ -28,6 +28,7 @@ import { ReactoryCalendarEntryService } from './ReactoryCalendarEntryService';
 import { ReactoryCalendarIntegrationService } from './ReactoryCalendarIntegrationService';
 //custom services to be expressed here
 import GeneratorServices from './generators';
+import SecurityService from './SecurityService';
 
 
 const services = [
@@ -58,7 +59,8 @@ const services = [
   ReactoryCalendarService,
   ReactoryCalendarEntryService,
   ReactoryCalendarIntegrationService,
-  ...GeneratorServices
+  ...GeneratorServices,
+  SecurityService,
 ]
 
 export default services;

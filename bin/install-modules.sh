@@ -22,6 +22,7 @@
 #   bin/install-modules.sh --plugins-only           # skip module selection
 #   bin/install-modules.sh --https                  # force HTTPS clone URLs
 #   bin/install-modules.sh --ssh                    # force SSH clone URLs (default)
+#   bin/install-modules.sh --reset-runtime           # clear plugins/__runtime__ compiled bundles
 # ============================================================================
 set -euo pipefail
 
@@ -97,6 +98,61 @@ find_data_root() {
     return
   fi
   echo ""
+}
+
+# ---------------------------------------------------------------------------
+# Clear compiled bundles in plugins/__runtime__/
+# The server will automatically recompile missing widgets from source on
+# next startup, so this is safe to do at any time.
+# ---------------------------------------------------------------------------
+clear_runtime_dir() {
+  local runtime_dir="$1"
+
+  if [[ ! -d "$runtime_dir" ]]; then
+    warn "Runtime directory not found: $runtime_dir — nothing to clear."
+    return 0
+  fi
+
+  local file_count
+  file_count=$(find "$runtime_dir" -maxdepth 1 -type f \( -name '*.js' -o -name '*.js.map' \) | wc -l | tr -d ' ')
+
+  if [[ "$file_count" -eq 0 ]]; then
+    info "No compiled bundles found in __runtime__/ — nothing to clear."
+    return 0
+  fi
+
+  info "Found $file_count compiled bundle(s) in __runtime__/"
+  find "$runtime_dir" -maxdepth 1 -type f \( -name '*.js' -o -name '*.js.map' \) -delete
+  success "Cleared $file_count compiled bundle(s) from __runtime__/"
+  info "The server will recompile missing widgets from source on next startup."
+}
+
+# ---------------------------------------------------------------------------
+# Prompt the user to clear the __runtime__ directory
+# ---------------------------------------------------------------------------
+prompt_clear_runtime() {
+  local plugins_dir="$1"
+  local runtime_dir="$plugins_dir/__runtime__"
+
+  if [[ ! -d "$runtime_dir" ]]; then
+    return 0
+  fi
+
+  local file_count
+  file_count=$(find "$runtime_dir" -maxdepth 1 -type f \( -name '*.js' -o -name '*.js.map' \) | wc -l | tr -d ' ')
+
+  if [[ "$file_count" -eq 0 ]]; then
+    return 0
+  fi
+
+  printf "\n"
+  info "The plugins/__runtime__/ directory contains $file_count compiled widget bundle(s)."
+  info "Clearing these forces the server to recompile from source on next startup."
+  if confirm "Reset __runtime__/ compiled bundles?" "n"; then
+    clear_runtime_dir "$runtime_dir"
+  else
+    info "Keeping existing __runtime__/ bundles."
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -373,6 +429,13 @@ main() {
   local server_root
   server_root=$(find_server_root)
 
+  # Run nvm use if .nvmrc is present, to ensure correct Node version for yarn/npm
+  if [[ -f "$server_root/.nvmrc" && -s "$NVM_DIR/nvm.sh" ]]; then
+    # shellcheck source=/dev/null
+    source "$NVM_DIR/nvm.sh"
+    nvm use --silent
+  fi
+
   if [[ -z "$server_root" ]]; then
     error "Cannot locate the Reactory server root."
     error "Set the REACTORY_SERVER environment variable or run this script from the server directory."
@@ -424,6 +487,7 @@ main() {
   local use_ssh="y"
   local modules_only=false
   local plugins_only=false
+  local reset_runtime=false
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -434,6 +498,7 @@ main() {
       --plugins-only)   plugins_only=true ;;
       --https)          use_ssh="n" ;;
       --ssh)            use_ssh="y" ;;
+      --reset-runtime)  reset_runtime=true ;;
       -h|--help)
         cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
@@ -446,6 +511,7 @@ Options:
   --plugins-only       Only install plugins (skip server modules)
   --ssh                Force SSH clone URLs (default)
   --https              Force HTTPS clone URLs
+  --reset-runtime      Clear compiled bundles in plugins/__runtime__/
   -h, --help           Show this help message
 
 Environment:
@@ -498,6 +564,25 @@ EOF
     install_entry_by_key "$specific_plugin" "$plugins_dir" "$plugins_available" "$use_ssh" "y"
     write_installed_json "$plugins_dir" "$plugins_available" "$plugins_installed"
     success "installed.json updated: $plugins_installed"
+    if [[ "$reset_runtime" == true ]]; then
+      clear_runtime_dir "$plugins_dir/__runtime__"
+    else
+      prompt_clear_runtime "$plugins_dir"
+    fi
+    exit 0
+  fi
+
+  # ------------------------------------------------------------------
+  # Explicit --reset-runtime without other install operations
+  # ------------------------------------------------------------------
+  if [[ "$reset_runtime" == true && "$install_all" != true \
+        && "$modules_only" != true && "$plugins_only" != true ]]; then
+    if [[ "$has_plugins" == true ]]; then
+      clear_runtime_dir "$plugins_dir/__runtime__"
+    else
+      error "Plugin directory not available — cannot reset __runtime__/."
+      exit 1
+    fi
     exit 0
   fi
 
@@ -510,6 +595,11 @@ EOF
     fi
     if [[ "$modules_only" != true && "$has_plugins" == true ]]; then
       install_all_entries "plugin" "$plugins_dir" "$plugins_available" "$use_ssh" "" "y"
+      if [[ "$reset_runtime" == true ]]; then
+        clear_runtime_dir "$plugins_dir/__runtime__"
+      else
+        prompt_clear_runtime "$plugins_dir"
+      fi
     fi
   else
     # ----------------------------------------------------------------
@@ -521,6 +611,11 @@ EOF
     if [[ "$modules_only" != true && "$has_plugins" == true ]]; then
       printf "\n"
       interactive_select "plugin" "$plugins_dir" "$plugins_available" "$use_ssh" "" "y"
+      if [[ "$reset_runtime" == true ]]; then
+        clear_runtime_dir "$plugins_dir/__runtime__"
+      else
+        prompt_clear_runtime "$plugins_dir"
+      fi
     fi
   fi
 
