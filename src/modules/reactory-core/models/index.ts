@@ -25,6 +25,7 @@ import {
   ReactoryCalendarWorkflowTrigger, 
   ReactoryCalendarServiceTrigger 
 } from "./ReactoryCalendar";
+import UserSession from "./UserSession";
 import ReactoryClient from "./ReactoryClient";
 import ReactoryModelMeta from "./ReactoryModelMeta";
 import ReactoryFileImportPackage from "./ReactoryFileImportPackage";
@@ -60,7 +61,8 @@ export const PostgresDataSource = new DataSource({
     ReactoryCalendarParticipant, 
     ReactoryCalendarRecurrencePattern, 
     ReactoryCalendarWorkflowTrigger, 
-    ReactoryCalendarServiceTrigger,    
+    ReactoryCalendarServiceTrigger,
+    UserSession,
   ],
 });
 
@@ -105,7 +107,8 @@ export type CoreModelTypes =
   | typeof Template
   | typeof Theme
   | typeof User
-  | typeof UserDemographic;
+  | typeof UserDemographic
+  | typeof UserSession;
 
 
 export { default as User } from './User';
@@ -147,6 +150,7 @@ export {
   ReactoryCalendarWorkflowTrigger, 
   ReactoryCalendarServiceTrigger 
 } from './ReactoryCalendar';
+export { default as UserSession } from './UserSession';
 
 export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTypes>[] =
   [
