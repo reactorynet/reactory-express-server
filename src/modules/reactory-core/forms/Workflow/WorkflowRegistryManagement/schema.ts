@@ -43,6 +43,17 @@ const schema: Reactory.Schema.ISchema = {
             title: 'Status',
             enum: ['INACTIVE', 'ACTIVE', 'PAUSED', 'CANCELLED', 'COMPLETED', 'FAILED']
           },
+          workflowType: {
+            type: 'string',
+            title: 'Workflow Type',
+            enum: ['YAML', 'CODE'],
+            description: 'Whether this workflow is defined declaratively in YAML or programmatically in code.'
+          },
+          location: {
+            type: 'string',
+            title: 'Location',
+            description: 'File system path or source location of the workflow definition.'
+          },
           tags: {
             type: 'array',
             title: 'Tags',

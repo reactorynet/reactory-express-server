@@ -49,6 +49,9 @@
         },
         "security": {
           "$ref": "#/definitions/SecuritySettings"
+        },
+        "designer": {
+          "$ref": "#/definitions/DesignerMetadata"
         }
       }
     },
@@ -198,6 +201,9 @@
           "items": {
             "$ref": "#/definitions/WorkflowStep"
           }
+        },
+        "designer": {
+          "$ref": "#/definitions/StepDesignerMetadata"
         }
       },
       "allOf": [
@@ -787,6 +793,252 @@
             "type": "string"
           },
           "description": "Required roles"
+        }
+      }
+    },
+    "DesignerMetadata": {
+      "type": "object",
+      "description": "Visual designer metadata for the workflow canvas",
+      "properties": {
+        "canvas": {
+          "type": "object",
+          "description": "Canvas viewport settings persisted from the designer",
+          "properties": {
+            "zoom": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 3.0,
+              "default": 1.0,
+              "description": "Canvas zoom level"
+            },
+            "panX": {
+              "type": "number",
+              "default": 0,
+              "description": "Horizontal pan offset in pixels"
+            },
+            "panY": {
+              "type": "number",
+              "default": 0,
+              "description": "Vertical pan offset in pixels"
+            },
+            "gridSize": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 100,
+              "default": 20,
+              "description": "Grid spacing in pixels"
+            },
+            "snapToGrid": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether steps snap to grid when moved"
+            }
+          }
+        },
+        "connections": {
+          "type": "array",
+          "description": "Visual connection metadata for step-to-step links",
+          "items": {
+            "$ref": "#/definitions/ConnectionDesignerMetadata"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "description": "Sticky notes or annotations placed on the canvas",
+          "items": {
+            "type": "object",
+            "required": ["id", "text", "position"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique note identifier"
+              },
+              "text": {
+                "type": "string",
+                "description": "Note content (supports Markdown)"
+              },
+              "position": {
+                "$ref": "#/definitions/Position"
+              },
+              "size": {
+                "$ref": "#/definitions/Size"
+              },
+              "color": {
+                "type": "string",
+                "description": "Background colour of the note"
+              }
+            }
+          }
+        },
+        "groups": {
+          "type": "array",
+          "description": "Visual groups that cluster related steps together",
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "stepIds"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "stepIds": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "color": {
+                "type": "string"
+              },
+              "collapsed": {
+                "type": "boolean",
+                "default": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "StepDesignerMetadata": {
+      "type": "object",
+      "description": "Visual designer metadata for a single workflow step",
+      "properties": {
+        "position": {
+          "$ref": "#/definitions/Position"
+        },
+        "size": {
+          "$ref": "#/definitions/Size"
+        },
+        "color": {
+          "type": "string",
+          "description": "Custom background colour for the step node"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Material icon name or custom icon identifier"
+        },
+        "collapsed": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the step node is shown in collapsed form"
+        },
+        "helpText": {
+          "type": "string",
+          "description": "Tooltip or help text shown when hovering the step node"
+        },
+        "ports": {
+          "type": "object",
+          "description": "Custom port layout overrides",
+          "properties": {
+            "inputs": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/PortDesignerMetadata" }
+            },
+            "outputs": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/PortDesignerMetadata" }
+            }
+          }
+        }
+      }
+    },
+    "ConnectionDesignerMetadata": {
+      "type": "object",
+      "description": "Visual metadata for a connection between steps",
+      "required": ["sourceStepId", "sourcePort", "targetStepId", "targetPort"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique connection identifier"
+        },
+        "sourceStepId": {
+          "type": "string",
+          "description": "ID of the step the connection originates from"
+        },
+        "sourcePort": {
+          "type": "string",
+          "description": "Name of the source port"
+        },
+        "targetStepId": {
+          "type": "string",
+          "description": "ID of the step the connection targets"
+        },
+        "targetPort": {
+          "type": "string",
+          "description": "Name of the target port"
+        },
+        "points": {
+          "type": "array",
+          "description": "Optional intermediate waypoints for the connection path",
+          "items": { "$ref": "#/definitions/Position" }
+        },
+        "style": {
+          "type": "string",
+          "enum": ["straight", "curved", "orthogonal"],
+          "default": "curved",
+          "description": "Connection line rendering style"
+        },
+        "color": {
+          "type": "string",
+          "description": "Custom colour for the connection line"
+        },
+        "label": {
+          "type": "string",
+          "description": "Optional label displayed on the connection"
+        }
+      }
+    },
+    "PortDesignerMetadata": {
+      "type": "object",
+      "description": "Visual metadata for a step port",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Port name matching the step input/output key"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label for the port"
+        },
+        "position": {
+          "$ref": "#/definitions/Position"
+        },
+        "dataType": {
+          "type": "string",
+          "description": "Expected data type flowing through the port"
+        }
+      }
+    },
+    "Position": {
+      "type": "object",
+      "description": "2D position on the designer canvas",
+      "required": ["x", "y"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate in pixels"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate in pixels"
+        }
+      }
+    },
+    "Size": {
+      "type": "object",
+      "description": "Dimensions of a visual element",
+      "required": ["width", "height"],
+      "properties": {
+        "width": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Width in pixels"
+        },
+        "height": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Height in pixels"
         }
       }
     }

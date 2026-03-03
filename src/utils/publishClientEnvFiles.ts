@@ -63,7 +63,7 @@ export async function publishClientEnvFiles(
 
   const envBaseDir = path.resolve(clientRoot, 'config', 'env');
 
-  const clients = await ReactoryClientModel.find({}).exec();
+  const clients: Reactory.Models.IReactoryClientDocument[] = await ReactoryClientModel.find({}).exec();
 
   if (!clients || clients.length === 0) {
     logger.info('No ReactoryClient documents found – nothing to publish.');

@@ -31,6 +31,8 @@ import {
   IWorkflowHistoryItem,
   IWorkflowExecutionStats,
   WorkflowESStatus,
+  IYamlWorkflowDefinitionResult,
+  WorkflowSourceType,
 } from './types';
 import { IScheduleConfig } from '@reactory/server-modules/reactory-core/workflow/Scheduler/Scheduler';
 import { IWorkflowInstance, IWorkflowLifecycleStats } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager';
@@ -265,6 +267,8 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
           isActive,
           hasSchedule,
           status: isActive ? 'ACTIVE' : 'INACTIVE',
+          workflowType: workflow.workflowType || 'CODE',
+          location: workflow.location || undefined,
           statistics: {
             totalExecutions,
             successfulExecutions,
@@ -449,6 +453,204 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       this.context.log('Error getting workflow', { error }, 'error');
       throw error;
     }
+  }
+
+  /**
+   * Load and parse a YAML workflow definition from the workflow's registered location.
+   * 
+   * The location can be:
+   * - An absolute path to a module-shipped YAML file
+   * - A relative path resolved against the workflow catalog ($REACTORY_DATA/workflows/catalog)
+   * - A path in a user directory
+   * 
+   * The source type is inferred from the resolved location.
+   */
+  async getWorkflowYamlDefinition(
+    nameSpace: string,
+    name: string,
+    version?: string
+  ): Promise<IYamlWorkflowDefinitionResult> {
+    // eslint-disable-next-line @typescript-eslint/prefer-node-protocol
+    const { readFileSync, existsSync } = await import('fs');
+    // eslint-disable-next-line @typescript-eslint/prefer-node-protocol
+    const path = await import('path');
+    const yaml = await import('js-yaml');
+
+    try {
+      // Look up the registered workflow to get its location
+      const workflowRunner = await this.getWorkflowRunner();
+      const workflow = workflowRunner?.getWorkflowByName(nameSpace, name) as any;
+
+      if (!workflow) {
+        throw new Error(`Workflow ${nameSpace}.${name} not found in registry`);
+      }
+
+      if (workflow.workflowType !== 'YAML') {
+        throw new Error(
+          `Workflow ${nameSpace}.${name} is a ${workflow.workflowType || 'CODE'} workflow and does not have a YAML definition`
+        );
+      }
+
+      // Resolve the YAML file location
+      const resolvedPath = this.resolveWorkflowYamlPath(
+        workflow.location,
+        nameSpace,
+        name,
+        version || workflow.version,
+        { existsSync, path }
+      );
+
+      if (!resolvedPath.filePath || !existsSync(resolvedPath.filePath)) {
+        throw new Error(
+          `YAML definition file not found for ${nameSpace}.${name}. ` +
+          `Searched: ${resolvedPath.searchedPaths?.join(', ') || resolvedPath.filePath}`
+        );
+      }
+
+      // Read and parse the YAML
+      const yamlSource = readFileSync(resolvedPath.filePath, 'utf8');
+      const parsed = yaml.load(yamlSource) as any;
+
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error(`Invalid YAML content in ${resolvedPath.filePath}`);
+      }
+
+      return {
+        nameSpace: parsed.nameSpace || nameSpace,
+        name: parsed.name || name,
+        version: parsed.version || version || workflow.version,
+        description: parsed.description,
+        author: parsed.author,
+        tags: parsed.tags,
+        inputs: parsed.inputs,
+        outputs: parsed.outputs,
+        variables: parsed.variables,
+        steps: parsed.steps || [],
+        designer: parsed.metadata?.designer || null,
+        yamlSource,
+        sourceType: resolvedPath.sourceType,
+        location: resolvedPath.filePath,
+      };
+    } catch (error) {
+      this.context.log(
+        `Error loading YAML workflow definition for ${nameSpace}.${name}`,
+        { error },
+        'error'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Resolve the file path for a YAML workflow definition.
+   * 
+   * Search order:
+   * 1. If location is an absolute path, use it directly
+   * 2. Workflow catalog: $REACTORY_DATA/workflows/catalog/<nameSpace>/<name>/<version>/<name>.yaml
+   * 3. The location as a relative path from the server root
+   */
+  /**
+   * Infer the workflow source type based on the file path.
+   */
+  private inferSourceType(filePath: string): WorkflowSourceType {
+    const reactoryData = process.env.REACTORY_DATA || '';
+    if (filePath.includes(reactoryData + '/workflows/catalog')) {
+      return 'CATALOG';
+    }
+    if (filePath.includes('/home/') || filePath.includes('/Users/')) {
+      return 'USER';
+    }
+    return 'MODULE';
+  }
+
+  /**
+   * Search the workflow catalog directory for a YAML file.
+   */
+  private searchCatalog(
+    reactoryData: string,
+    nameSpace: string,
+    name: string,
+    version: string,
+    deps: { existsSync: (p: string) => boolean; path: typeof import('path') }
+  ): { filePath: string | null; searchedPaths: string[] } {
+    const { existsSync, path } = deps;
+    const searchedPaths: string[] = [];
+    const yamlExtensions = ['.yaml', '.yml'];
+
+    // With version directory
+    for (const ext of yamlExtensions) {
+      const catalogPath = path.join(
+        reactoryData, 'workflows', 'catalog',
+        nameSpace, name, version, `${name}${ext}`
+      );
+      searchedPaths.push(catalogPath);
+      if (existsSync(catalogPath)) {
+        return { filePath: catalogPath, searchedPaths };
+      }
+    }
+
+    // Without version directory
+    for (const ext of yamlExtensions) {
+      const catalogPath = path.join(
+        reactoryData, 'workflows', 'catalog',
+        nameSpace, name, `${name}${ext}`
+      );
+      searchedPaths.push(catalogPath);
+      if (existsSync(catalogPath)) {
+        return { filePath: catalogPath, searchedPaths };
+      }
+    }
+
+    return { filePath: null, searchedPaths };
+  }
+
+  /**
+   * Resolve the file path for a YAML workflow definition.
+   *
+   * Search order:
+   * 1. If location is an absolute path, use it directly
+   * 2. Workflow catalog: $REACTORY_DATA/workflows/catalog/<nameSpace>/<name>/<version>/<name>.yaml
+   * 3. The location as a relative path from the server root
+   */
+  private resolveWorkflowYamlPath(
+    location: string | undefined,
+    nameSpace: string,
+    name: string,
+    version: string,
+    deps: { existsSync: (p: string) => boolean; path: typeof import('path') }
+  ): { filePath: string | null; sourceType: WorkflowSourceType; searchedPaths?: string[] } {
+    const { existsSync, path } = deps;
+    const searchedPaths: string[] = [];
+
+    // 1. Explicit absolute path from the workflow registration
+    if (location && path.isAbsolute(location)) {
+      searchedPaths.push(location);
+      if (existsSync(location)) {
+        return { filePath: location, sourceType: this.inferSourceType(location) };
+      }
+    }
+
+    // 2. Workflow catalog
+    const reactoryData = process.env.REACTORY_DATA;
+    if (reactoryData) {
+      const catalogResult = this.searchCatalog(reactoryData, nameSpace, name, version, deps);
+      searchedPaths.push(...catalogResult.searchedPaths);
+      if (catalogResult.filePath) {
+        return { filePath: catalogResult.filePath, sourceType: 'CATALOG' };
+      }
+    }
+
+    // 3. Relative path from server root
+    if (location) {
+      const serverRoot = process.env.REACTORY_SERVER || process.cwd();
+      const relativePath = path.resolve(serverRoot, location);
+      searchedPaths.push(relativePath);
+      if (existsSync(relativePath)) {
+        return { filePath: relativePath, sourceType: 'MODULE' };
+      }
+    }
+
+    return { filePath: null, sourceType: 'MODULE', searchedPaths };
   }
 
   // Workflow Instances

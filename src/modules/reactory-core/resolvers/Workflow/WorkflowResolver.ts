@@ -105,6 +105,22 @@ class WorkflowResolver {
     return workflowService.getWorkflowWithId(params.id);
   }
 
+  // YAML Workflow Definitions
+  @roles(["USER"], 'args.context')
+  @query("workflowYamlDefinition")
+  async getWorkflowYamlDefinition(
+    obj: any,
+    params: {
+      nameSpace: string,
+      name: string,
+      version?: string
+    },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    return workflowService.getWorkflowYamlDefinition(params.nameSpace, params.name, params.version);
+  }
+
   // Workflow Instance Queries
   @roles(["USER"], 'args.context')
   @query("workflowInstances")

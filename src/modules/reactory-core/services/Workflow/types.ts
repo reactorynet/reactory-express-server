@@ -274,6 +274,28 @@ export interface IWorkflowStatusResponse {
   schedules?: IScheduleConfig[];  
 }
 
+export type WorkflowSourceType = 'MODULE' | 'CATALOG' | 'USER';
+
+export interface IYamlWorkflowDefinitionResult {
+  nameSpace: string;
+  name: string;
+  version: string;
+  description?: string;
+  author?: string;
+  tags?: string[];
+  inputs?: Record<string, any>;
+  outputs?: Record<string, any>;
+  variables?: Record<string, any>;
+  steps: any[];
+  designer?: any;
+  /** The raw YAML source text */
+  yamlSource?: string;
+  /** The source type indicating where this definition was loaded from */
+  sourceType?: WorkflowSourceType;
+  /** The resolved file path the definition was loaded from */
+  location?: string;
+}
+
 export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefaultService {
   // System Status & Health
   getSystemStatus(): Promise<IWorkflowSystemStatus>;
@@ -285,6 +307,10 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
   getWorkflowRegistry(): Promise<IWorkflowRegistryResponse>;
   getWorkflow(nameSpace: string, name: string): Promise<RegisteredWorkflow>;
   getWorkflowWithId(id: string): Promise<RegisteredWorkflow>;
+  
+  // YAML Workflow Definitions
+  /** Load and parse a YAML workflow definition from the workflow's registered location */
+  getWorkflowYamlDefinition(nameSpace: string, name: string, version?: string): Promise<IYamlWorkflowDefinitionResult>;
   
   // Workflow Instances (in-memory)
   getWorkflowInstances(filter?: IInstanceFilterInput, pagination?: IPaginationInput): Promise<IPaginatedInstances>;

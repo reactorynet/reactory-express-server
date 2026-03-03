@@ -57,6 +57,8 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             status
             isActive
             hasSchedule
+            workflowType
+            location
             dependencies {
               id
               name

@@ -21,6 +21,8 @@ export interface WorkflowMetadata {
   timeout?: number;
   retryPolicy?: RetryPolicy;
   security?: SecuritySettings;
+  /** Visual designer metadata for the workflow canvas */
+  designer?: DesignerMetadata;
 }
 
 export interface WorkflowStep {
@@ -38,6 +40,8 @@ export interface WorkflowStep {
   dependsOn?: string | string[];
   config?: StepConfig;
   steps?: WorkflowStep[]; // For nested steps in control flow
+  /** Visual designer metadata for this step node */
+  designer?: StepDesignerMetadata;
 }
 
 export type StepType = 
@@ -194,6 +198,92 @@ export interface SecuritySettings {
   requiresAuthentication?: boolean;
   permissions?: string[];
   roles?: string[];
+}
+
+// Designer metadata types
+
+/** 2D position on the designer canvas */
+export interface Position {
+  x: number;
+  y: number;
+}
+
+/** Dimensions of a visual element */
+export interface Size {
+  width: number;
+  height: number;
+}
+
+/** Visual designer metadata for the workflow canvas */
+export interface DesignerMetadata {
+  /** Canvas viewport settings persisted from the designer */
+  canvas?: {
+    zoom?: number;
+    panX?: number;
+    panY?: number;
+    gridSize?: number;
+    snapToGrid?: boolean;
+  };
+  /** Visual connection metadata for step-to-step links */
+  connections?: ConnectionDesignerMetadata[];
+  /** Sticky notes or annotations placed on the canvas */
+  notes?: DesignerNote[];
+  /** Visual groups that cluster related steps together */
+  groups?: DesignerGroup[];
+}
+
+/** Visual metadata for a connection between steps */
+export interface ConnectionDesignerMetadata {
+  id?: string;
+  sourceStepId: string;
+  sourcePort: string;
+  targetStepId: string;
+  targetPort: string;
+  /** Optional intermediate waypoints for the connection path */
+  points?: Position[];
+  style?: 'straight' | 'curved' | 'orthogonal';
+  color?: string;
+  label?: string;
+}
+
+/** A sticky note/annotation on the designer canvas */
+export interface DesignerNote {
+  id: string;
+  text: string;
+  position: Position;
+  size?: Size;
+  color?: string;
+}
+
+/** A visual group that clusters related steps */
+export interface DesignerGroup {
+  id: string;
+  label: string;
+  stepIds: string[];
+  color?: string;
+  collapsed?: boolean;
+}
+
+/** Visual designer metadata for a single workflow step node */
+export interface StepDesignerMetadata {
+  position?: Position;
+  size?: Size;
+  color?: string;
+  icon?: string;
+  collapsed?: boolean;
+  helpText?: string;
+  ports?: {
+    inputs?: PortDesignerMetadata[];
+    outputs?: PortDesignerMetadata[];
+  };
+}
+
+/** Visual metadata for a step port */
+export interface PortDesignerMetadata {
+  name: string;
+  label?: string;
+  position?: Position;
+  dataType?: string;
 }
 
 // Execution context interfaces

@@ -4,7 +4,6 @@ const { ObjectId } = mongoose.Schema.Types;
 
 
 const ContentSchema = new mongoose.Schema<Reactory.Models.IReactoryContent>({
-  id: ObjectId,
   slug: String,
   partner: {
     type: ObjectId,

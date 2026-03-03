@@ -29,12 +29,32 @@ const {
   MONGOOSE,
 } = process.env;
 
+/**
+ * Indicates the source type of a workflow definition.
+ * - YAML: Declarative workflow loaded from a .yaml / .yml file via the YamlFlow engine.
+ * - CODE: Programmatic workflow defined as a TypeScript/JavaScript class.
+ */
+export type WorkflowType = 'YAML' | 'CODE';
+
 export interface IWorkflow {
   nameSpace: string;
   name: string;
   version: string;
   component: any;
   category: string;
+  /**
+   * Type of workflow definition.
+   * YAML = loaded from a YAML file via the YamlFlow engine.
+   * CODE = programmatic TypeScript/JavaScript workflow class.
+   * Defaults to 'CODE' when not specified.
+   */
+  workflowType?: WorkflowType;
+  /**
+   * File system path or URL where the workflow definition originates.
+   * For YAML workflows this is the absolute path to the .yaml file.
+   * For code-based workflows this is typically the module path.
+   */
+  location?: string;
   autoStart?: boolean;
   props?: any;
   isActive?: boolean;

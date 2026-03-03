@@ -70,6 +70,14 @@ enum SystemStatusType {
 }
 
 # Workflow Registry Types
+"""Source type of a workflow definition."""
+enum WorkflowType {
+  """Declarative workflow loaded from a YAML file via the YamlFlow engine."""
+  YAML
+  """Programmatic workflow defined as a TypeScript / JavaScript class."""
+  CODE
+}
+
 type WorkflowDependency {
   id: String!
   nameSpace: String!
@@ -110,6 +118,134 @@ type RegisteredWorkflow {
   errors: [WorkflowError!]
   """Execution history from MongoDB persistence (last 10 executions)"""
   executionHistory: [WorkflowExecutionHistory!]
+  """Whether this is a YAML-based declarative workflow or a code-based workflow."""
+  workflowType: WorkflowType
+  """File system path or source location of the workflow definition."""
+  location: String
+}
+
+"""Source location categories for YAML workflow definitions."""
+enum WorkflowSourceType {
+  """Shipped as part of a Reactory server module."""
+  MODULE
+  """Stored in the application CDN workflow catalog ($REACTORY_DATA/workflows/catalog)."""
+  CATALOG
+  """Stored in a user-specific directory."""
+  USER
+}
+
+# Designer metadata types
+type DesignerPosition {
+  x: Float!
+  y: Float!
+}
+
+type DesignerSize {
+  width: Float!
+  height: Float!
+}
+
+type DesignerCanvasSettings {
+  zoom: Float
+  panX: Float
+  panY: Float
+  gridSize: Int
+  snapToGrid: Boolean
+}
+
+type DesignerConnectionMetadata {
+  id: String
+  sourceStepId: String!
+  sourcePort: String!
+  targetStepId: String!
+  targetPort: String!
+  points: [DesignerPosition!]
+  style: String
+  color: String
+  label: String
+}
+
+type DesignerNote {
+  id: String!
+  text: String!
+  position: DesignerPosition!
+  size: DesignerSize
+  color: String
+}
+
+type DesignerGroup {
+  id: String!
+  label: String!
+  stepIds: [String!]!
+  color: String
+  collapsed: Boolean
+}
+
+type DesignerPortMetadata {
+  name: String!
+  label: String
+  position: DesignerPosition
+  dataType: String
+}
+
+type StepDesignerPortsMetadata {
+  inputs: [DesignerPortMetadata!]
+  outputs: [DesignerPortMetadata!]
+}
+
+type StepDesignerMetadata {
+  position: DesignerPosition
+  size: DesignerSize
+  color: String
+  icon: String
+  collapsed: Boolean
+  helpText: String
+  ports: StepDesignerPortsMetadata
+}
+
+type DesignerMetadata {
+  canvas: DesignerCanvasSettings
+  connections: [DesignerConnectionMetadata!]
+  notes: [DesignerNote!]
+  groups: [DesignerGroup!]
+}
+
+type YamlWorkflowStep {
+  id: String!
+  name: String
+  description: String
+  type: String!
+  enabled: Boolean
+  continueOnError: Boolean
+  timeout: Int
+  inputs: JSON
+  outputs: JSON
+  condition: String
+  dependsOn: JSON
+  config: JSON
+  steps: [YamlWorkflowStep!]
+  designer: StepDesignerMetadata
+}
+
+"""The full YAML workflow definition including visual designer metadata."""
+type YamlWorkflowDefinition {
+  nameSpace: String!
+  name: String!
+  version: String!
+  description: String
+  author: String
+  tags: [String!]
+  inputs: JSON
+  outputs: JSON
+  variables: JSON
+  steps: [YamlWorkflowStep!]!
+  designer: DesignerMetadata
+  """The raw YAML source text."""
+  yamlSource: String
+  """The source type indicating where this definition was loaded from."""
+  sourceType: WorkflowSourceType
+  """The resolved file path the definition was loaded from."""
+  location: String
 }
 
 type WorkflowRegistryStats {
@@ -819,6 +955,18 @@ extend type Query {
 
   # Configuration
   workflowConfigurations: ConfigurationResponse
+
+  # YAML Workflow Definitions
+  """
+  Load a YAML workflow definition by workflow identity.
+  Resolves the YAML file from the workflow's registered location,
+  parses it, and returns the full definition including designer metadata.
+  """
+  workflowYamlDefinition(
+    nameSpace: String!
+    name: String!
+    version: String
+  ): YamlWorkflowDefinition
 
   # Legacy compatibility
   workflowStatus(name: String!): WorkflowResult

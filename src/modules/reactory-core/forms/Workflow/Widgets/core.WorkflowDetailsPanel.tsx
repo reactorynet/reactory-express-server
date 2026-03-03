@@ -13,6 +13,7 @@ interface DetailPanelDependencies {
   WorkflowSchedule: any;
   WorkflowLaunch: any;
   WorkflowConfiguration: any;
+  WorkflowDesigner: any;
 }
 
 /**
@@ -53,6 +54,7 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
     WorkflowSchedule,
     WorkflowLaunch,
     WorkflowConfiguration,
+    WorkflowDesigner,
   } = reactory.getComponents<DetailPanelDependencies>([
     'react.React',
     'material-ui.Material',
@@ -65,6 +67,7 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
     'core.WorkflowSchedule',
     'core.WorkflowLaunch',
     'core.WorkflowConfiguration',
+    'core.WorkflowDesigner',
   ]);
 
   const { MaterialCore } = Material;
@@ -91,6 +94,8 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
   const successfulExecutions = workflow.statistics?.successfulExecutions || 0;
 
   // Tab configuration
+  const isYamlWorkflow = workflow.workflowType === 'YAML';
+
   const tabs = [
     {
       id: 'overview',
@@ -134,9 +139,14 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
       badge: workflow.dependencies?.length || 0,
       component: WorkflowConfiguration,
     },
+    ...(isYamlWorkflow ? [{
+      id: 'designer',
+      label: 'Designer',
+      icon: 'account_tree',
+      badge: 0,
+      component: WorkflowDesigner,
+    }] : []),
   ];
-
-  const ActiveTabComponent = tabs[activeTab]?.component;
 
   return (
     <Box sx={{ width: '100%', bgcolor: 'background.paper' }}>
@@ -191,6 +201,15 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
             size="small"
             icon={<Icon>folder</Icon>}
             color="primary"
+            variant="outlined"
+          />
+
+          {/* Workflow Type Badge */}
+          <Chip
+            label={workflow.workflowType || 'CODE'}
+            size="small"
+            icon={<Icon>{workflow.workflowType === 'YAML' ? 'description' : 'code'}</Icon>}
+            color={workflow.workflowType === 'YAML' ? 'secondary' : 'default'}
             variant="outlined"
           />
 
@@ -293,13 +312,36 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
 
       {/* Tab Content */}
       <Box sx={{ p: 0 }}>
-        {ActiveTabComponent && (
-          <ActiveTabComponent 
-            workflow={workflow} 
-            reactory={reactory}
-            refreshKey={refreshKey}
-          />
-        )}
+        {(() => {
+          const activeTabConfig = tabs[activeTab];
+          if (!activeTabConfig) return null;
+          const { id, component: TabComponent } = activeTabConfig;
+
+          // WorkflowDesigner has a different props contract — pass workflowId directly
+          if (id === 'designer') {
+            const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
+            return TabComponent ? React.createElement(TabComponent, {
+              workflowId,
+              workflow,
+              reactory,
+              readonly: false,
+            }) : (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Typography color="text.secondary">
+                  Workflow Designer component not available.
+                </Typography>
+              </Box>
+            );
+          }
+
+          return TabComponent ? (
+            <TabComponent 
+              workflow={workflow} 
+              reactory={reactory}
+              refreshKey={refreshKey}
+            />
+          ) : null;
+        })()}
       </Box>
     </Box>
   );
