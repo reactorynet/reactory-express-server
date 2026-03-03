@@ -31,6 +31,14 @@ type MenuItem {
   """
   roles: [String]
   """
+  The enabled flag for the menu item
+  """
+  enabled: Boolean
+  """
+  The feature flags for the menu item
+  """
+  featureFlags: [String]
+  """
   The items for the menu item
   """
   items: [ MenuItem ]
@@ -65,6 +73,14 @@ type Menu {
   The roles for the menu
   """
   roles: [String]
+  """
+  The enabled flag for the menu
+  """
+  enabled: Boolean
+  """
+  The feature flags for the menu
+  """
+  featureFlags: [String]
   """
   The entries for the menu
   """

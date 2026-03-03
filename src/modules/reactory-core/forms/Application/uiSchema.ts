@@ -58,6 +58,11 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
       icon: "menu",
       title: "Menus",
     },
+    {
+      field: "featureFlags",
+      icon: "flag",
+      title: "Feature Flags",
+    },
   ],
   "ui:options": {
     activeTab: "query",
@@ -125,6 +130,14 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
   },
   menus: {
     "ui:widget": "ApplicationMenusPanel",
+    "ui:props-map": {
+      'formContext.props.applicationId': 'applicationId',
+      'formContext.props.mode': 'mode',
+      'formContext.formData.featureFlags.featureFlags': 'availableFeatureFlags',
+    },
+  },
+  featureFlags: {
+    "ui:widget": "ApplicationFeatureFlagsPanel",
     "ui:props-map": {
       'formContext.props.applicationId': 'applicationId',
       'formContext.props.mode': 'mode',

@@ -2,6 +2,31 @@ import mongoose from 'mongoose';
 
 const { ObjectId } = mongoose.Schema.Types;
 
+/**
+ * Schema for a menu entry item. Supports n-level nesting
+ * via a self-referencing `items` field added after definition.
+ */
+const MenuEntrySchema = new mongoose.Schema({
+  id: ObjectId,
+  ordinal: Number,
+  title: String,
+  link: String,
+  external: Boolean,
+  icon: String,
+  image: String,
+  roles: [String],
+  enabled: {
+    type: Boolean,
+    default: true,
+  },
+  featureFlags: [String],
+});
+
+// Self-reference to support n-level nested menu items
+MenuEntrySchema.add({
+  items: [MenuEntrySchema],
+});
+
 const MenuItemSchema = new mongoose.Schema({
   id: ObjectId,
   ordinal: Number,
@@ -9,13 +34,18 @@ const MenuItemSchema = new mongoose.Schema({
   link: String,
   external: Boolean,
   icon: String,
+  image: String,
   roles: [String],
-  items: [
-    {
-      type: ObjectId,
-      ref: 'MenuItem'
-    }
-  ]
+  enabled: {
+    type: Boolean,
+    default: true,
+  },
+  featureFlags: [String],
+});
+
+// Self-reference to support n-level nested menu items
+MenuItemSchema.add({
+  items: [{ type: ObjectId, ref: 'MenuItem' }],
 });
 
 export const MenuItemModel = mongoose.model('MenuItem', MenuItemSchema, 'reactory_menu_items');
@@ -30,32 +60,16 @@ const MenuSchema = new mongoose.Schema({
     type: ObjectId,
     ref: 'ReactoryClient',
   },
-  entries: [
-    {
-      id: ObjectId,
-      ordinal: Number,
-      title: String,
-      link: String,
-      external: Boolean,
-      icon: String,
-      items: [
-        {
-          id: ObjectId,
-          ordinal: Number,
-          title: String,
-          link: String,
-          external: Boolean,
-          icon: String,
-          roles: [String],
-        },
-      ],
-      roles: [String],
-    },
-  ],
+  entries: [MenuEntrySchema],
   name: String,
   target: String,
   icon: String,
   roles: [String],
+  enabled: {
+    type: Boolean,
+    default: true,
+  },
+  featureFlags: [String],
   createdAt: Date,
   updatedAt: Date,
 });

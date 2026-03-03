@@ -318,6 +318,11 @@ type ReactoryClient {
   themes: [ApplicationTheme]
 
   """
+  The feature flags configured for the client application
+  """
+  featureFlags: [FeatureFlagValue]
+
+  """
   The users who have memberships for this client application
   """
   users(paging: PagingRequest): UserList

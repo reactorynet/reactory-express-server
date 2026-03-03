@@ -192,6 +192,8 @@ const schema: Reactory.Schema.IObjectSchema = {
               key: { type: "string", title: "Menu Key" },
               target: { type: "string", title: "Target" },
               roles: { type: "array", items: { type: "string" }, title: "Roles" },
+              enabled: { type: "boolean", title: "Enabled" },
+              featureFlags: { type: "array", items: { type: "string" }, title: "Feature Flags" },
               items: {
                 type: "array",
                 title: "Menu Items",
@@ -202,10 +204,36 @@ const schema: Reactory.Schema.IObjectSchema = {
                     label: { type: "string", title: "Label" },
                     icon: { type: "string", title: "Icon" },
                     route: { type: "string", title: "Route" },
-                    roles: { type: "array", items: { type: "string" }, title: "Roles" }
+                    roles: { type: "array", items: { type: "string" }, title: "Roles" },
+                    enabled: { type: "boolean", title: "Enabled" },
+                    featureFlags: { type: "array", items: { type: "string" }, title: "Feature Flags" }
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    featureFlags: {
+      type: "object",
+      properties: {
+        totalFeatureFlags: { type: "number", title: "Total Feature Flags" },
+        featureFlags: {
+          type: "array",
+          title: "Feature Flags",
+          items: {
+            type: "object",
+            properties: {
+              feature: { type: "string", title: "Feature Key" },
+              partner: { type: "string", title: "Partner" },
+              organization: { type: "string", title: "Organization" },
+              businessUnit: { type: "string", title: "Business Unit" },
+              regions: { type: "array", items: { type: "string" }, title: "Regions" },
+              roles: { type: "array", items: { type: "string" }, title: "Roles" },
+              timezones: { type: "array", items: { type: "string" }, title: "Timezones" },
+              value: { type: "object", title: "Value", additionalProperties: true },
+              enabled: { type: "boolean", title: "Enabled" }
             }
           }
         }

@@ -67,6 +67,34 @@ class ReactoryMenuResolver {
   }
 
   @roles(["USER", "ANON"], 'args.context')
+  @property("Menu", "enabled")
+  async getMenuEnabled(menu: any,
+    params: any,
+    context: Reactory.Server.IReactoryContext,
+  ): Promise<boolean> {
+
+    if (typeof menu?.enabled === 'boolean') {
+      return menu.enabled;
+    }
+
+    return true;
+  }
+
+  @roles(["USER", "ANON"], 'args.context')
+  @property("Menu", "featureFlags")
+  async getMenuFeatureFlags(menu: any,
+    params: any,
+    context: Reactory.Server.IReactoryContext,
+  ): Promise<string[]> {
+
+    if (menu?.featureFlags && Array.isArray(menu.featureFlags)) {
+      return menu.featureFlags;
+    }
+
+    return [];
+  }
+
+  @roles(["USER", "ANON"], 'args.context')
   @property("MenuItem", "id")
   async getMenuItemId(menuItem: any,
     params: any,
@@ -95,6 +123,70 @@ class ReactoryMenuResolver {
     context: Reactory.Server.IReactoryContext,
   ): Promise<string> {
     return context.i18n.t(menuItem.title);
+  }
+
+  /**
+   * Resolver for nested menu item children, sorted by ordinal.
+   * Supports n-level nesting of menu items.
+   * @param menuItem
+   * @param params
+   * @param context
+   * @returns
+   */
+  @roles(["USER", "ANON"], 'args.context')
+  @property("MenuItem", "items")
+  async getMenuItemItems(menuItem: any,
+    params: any,
+    context: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.UX.IMenuItem[]> {
+
+    if (menuItem?.items && menuItem.items.length > 0) {
+      return context.utils.lodash.sortBy(menuItem.items, "ordinal");
+    }
+
+    return [];
+  }
+
+  /**
+   * Resolver for menu item enabled status
+   * @param menuItem
+   * @param params
+   * @param context
+   * @returns
+   */
+  @roles(["USER", "ANON"], 'args.context')
+  @property("MenuItem", "enabled")
+  async getMenuItemEnabled(menuItem: any,
+    params: any,
+    context: Reactory.Server.IReactoryContext,
+  ): Promise<boolean> {
+
+    if (typeof menuItem?.enabled === 'boolean') {
+      return menuItem.enabled;
+    }
+
+    return true;
+  }
+
+  /**
+   * Resolver for menu item feature flags
+   * @param menuItem
+   * @param params
+   * @param context
+   * @returns
+   */
+  @roles(["USER", "ANON"], 'args.context')
+  @property("MenuItem", "featureFlags")
+  async getMenuItemFeatureFlags(menuItem: any,
+    params: any,
+    context: Reactory.Server.IReactoryContext,
+  ): Promise<string[]> {
+
+    if (menuItem?.featureFlags && Array.isArray(menuItem.featureFlags)) {
+      return menuItem.featureFlags;
+    }
+
+    return [];
   }
 
   

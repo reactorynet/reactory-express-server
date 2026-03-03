@@ -17,6 +17,7 @@ const CoreTypeDefinitions = loadGraphQLTypeDefinitions([
   'System/Cache',
   'System/File',
   'System/UX',
+  'System/FeatureFlag',
   'System/Region',
   'System/Natural',
   'Forms/Form',

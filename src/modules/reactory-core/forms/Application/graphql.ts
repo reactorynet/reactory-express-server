@@ -32,8 +32,11 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
           menus {
             id
             key
+            name
             target
             roles
+            enabled
+            featureFlags
             items: entries {
               id
               ordinal
@@ -42,6 +45,8 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
               external
               icon
               roles
+              enabled
+              featureFlags
               items {
                 id
                 ordinal
@@ -50,6 +55,8 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
                 external
                 icon
                 roles
+                enabled
+                featureFlags
               }
             }
           }
@@ -59,6 +66,17 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             name
             version
             type
+          }
+          featureFlags {
+            feature
+            partner
+            organization
+            businessUnit
+            regions
+            roles
+            timezones
+            value
+            enabled
           }
           routes {
             id
@@ -70,23 +88,7 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             roles
             componentFqn
             componentProps
-          }
-          users {
-            paging {
-              page
-              pageSize
-              total
-              hasNext
-            }
-            users {
-              id
-              firstName
-              lastName
-              email
-              avatar
-            }
-            totalUsers
-          }
+          }          
           createdAt
           updatedAt
         }
@@ -109,6 +111,7 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
       'settings': 'settings.settings',
       'menus': 'menus.menus',
       'themes': 'themes.themes',
+      'featureFlags': 'featureFlags.featureFlags',
       'routes': 'routes.routes',
       'users.users': 'users.users',
       'users.totalUsers': 'users.totalUsers',

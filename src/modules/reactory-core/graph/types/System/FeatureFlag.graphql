@@ -1,0 +1,97 @@
+"""
+Feature flag permissions configuration
+"""
+type FeatureFlagPermissions {
+  """
+  The roles that are allowed to view the feature flag
+  """
+  viewer: [String]
+  """
+  The roles that are allowed to edit the feature flag
+  """
+  editor: [String]
+  """
+  The roles that are allowed to admin the feature flag
+  """
+  admin: [String]
+}
+
+"""
+Feature flag definition for the client application
+"""
+type FeatureFlag {
+  """
+  The unique id for the feature flag
+  """
+  id: String
+  """
+  The namespace for the feature flag
+  """
+  nameSpace: String
+  """
+  The name of the feature flag
+  """
+  name: String
+  """
+  The version of the feature flag
+  """
+  version: String
+  """
+  A user friendly title for the feature flag
+  """
+  title: String
+  """
+  A description for the feature flag
+  """
+  description: String
+  """
+  The permissions for the feature flag
+  """
+  permissions: FeatureFlagPermissions
+  """
+  The form FQN to use for the feature flag data
+  """
+  form: String
+}
+
+"""
+Feature flag value for a specific configuration
+"""
+type FeatureFlagValue {
+  """
+  The feature reference (FQN string or ObjectId)
+  """
+  feature: String
+  """
+  The partner for which this feature flag is configured
+  """
+  partner: String
+  """
+  The organization the feature flag is bound to
+  """
+  organization: String
+  """
+  The business unit the feature flag is bound to
+  """
+  businessUnit: String
+  """
+  The regions (2 digit ISO country codes)
+  """
+  regions: [String]
+  """
+  The application roles to which the feature flag applies
+  """
+  roles: [String]
+  """
+  The time zones to which the feature flag applies
+  """
+  timezones: [String]
+  """
+  The data value for the feature flag
+  """
+  value: Any
+  """
+  Whether this feature flag is enabled
+  """
+  enabled: Boolean
+}

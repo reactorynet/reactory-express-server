@@ -1,5 +1,7 @@
 'use strict';
 
+// @ts-nocheck
+
 interface IComponentsImport {
   React: Reactory.React;
   Material: Reactory.Client.Web.IMaterialModule;
@@ -10,14 +12,17 @@ interface ApplicationMenusPanelProps {
   formData?: any;
   applicationId?: string;
   mode?: 'view' | 'edit';
+  availableFeatureFlags?: { feature: string; enabled?: boolean }[];
 }
 
 const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
-  const { reactory, formData, applicationId, mode = 'view' } = props;
+  const { reactory, formData, applicationId, mode = 'view', availableFeatureFlags = [] } = props;
 
   if(formData && formData.menus) {
     reactory.log('ApplicationMenusPanel received formData:', formData);
   }
+
+  const isAdmin = reactory.hasRole(['ADMIN']);
 
   const { React, Material } = reactory.getComponents<IComponentsImport>([
     'react.React',
@@ -50,6 +55,14 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
     ListItemIcon,
     Chip,
     Grid,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem: SelectMenuItem,
+    OutlinedInput,
+    Checkbox,
+    Alert,
+    Autocomplete,
   } = Material.MaterialCore;
 
   const {
@@ -77,6 +90,8 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
       key: '',
       target: '',
       roles: [],
+      featureFlags: [],
+      enabled: true,
       items: []
     });
     setIsEditing(false);
@@ -128,7 +143,9 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
       label: '',
       icon: '',
       route: '',
-      roles: []
+      roles: [],
+      enabled: true,
+      featureFlags: []
     });
     setItemDialogOpen(true);
   };
@@ -175,7 +192,7 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
           title="Application Menus"
           subheader={`Total: ${totalMenus}`}
           action={
-            mode === 'edit' && (
+            isAdmin && mode === 'edit' && (
               <Button
                 startIcon={<AddIcon />}
                 variant="contained"
@@ -188,20 +205,37 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
         />
         <Divider />
         <CardContent>
+          {!isAdmin && mode === 'edit' && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Only administrators can edit menus and feature flag assignments.
+            </Alert>
+          )}
           {menus.length > 0 ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {menus.map((menu: any, menuIndex: number) => (
-                <Accordion key={menu.id || menu.key}>
+                <Accordion key={menu.id || menu.key} defaultExpanded={false}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
                       <MenuIcon />
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="h6">{menu.key}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="h6">{menu.name}</Typography>
+                          {!menu.enabled && (
+                            <Chip label="Disabled" size="small" color="error" variant="outlined" />
+                          )}
+                        </Box>
                         <Typography variant="caption" color="text.secondary">
                           Target: {menu.target} • {menu.items?.length || 0} items
                         </Typography>
+                        {menu.featureFlags?.length > 0 && (
+                          <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                            {menu.featureFlags.map((flag: string) => (
+                              <Chip key={flag} label={`Flag: ${flag}`} size="small" variant="outlined" />
+                            ))}
+                          </Box>
+                        )}
                       </Box>
-                      {mode === 'edit' && (
+                      {isAdmin && mode === 'edit' && (
                         <Box onClick={(e) => e.stopPropagation()}>
                           <IconButton
                             size="small"
@@ -248,7 +282,7 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
                             <ListItem
                               key={item.id || itemIndex}
                               secondaryAction={
-                                mode === 'edit' && (
+                                isAdmin && mode === 'edit' && (
                                   <Box>
                                     <IconButton size="small">
                                       <DragIcon fontSize="small" />
@@ -261,14 +295,28 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
                                 <LinkIcon />
                               </ListItemIcon>
                               <ListItemText
-                                primary={item.label}
+                                primary={
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography>{item.label}</Typography>
+                                    {!item.enabled && (
+                                      <Chip label="Disabled" size="small" color="error" variant="outlined" />
+                                    )}
+                                  </Box>
+                                }
                                 secondary={
-                                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
                                     <Typography variant="caption" fontFamily="monospace">
                                       {item.route}
                                     </Typography>
+                                    {item.featureFlags?.length > 0 && (
+                                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                        {item.featureFlags.map((flag: string) => (
+                                          <Chip key={flag} label={`Flag: ${flag}`} size="small" variant="outlined" />
+                                        ))}
+                                      </Box>
+                                    )}
                                     {item.roles?.length > 0 && (
-                                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                                         {item.roles.map((role: string) => (
                                           <Chip key={role} label={role} size="small" />
                                         ))}
@@ -326,6 +374,37 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
               fullWidth
               helperText="Comma-separated list of roles that can see this menu"
             />
+            <Autocomplete
+              multiple
+              options={availableFeatureFlags?.map((f: any) => f.feature) || []}
+              value={selectedMenu?.featureFlags || []}
+              onChange={(_, newValue) => handleFieldChange('featureFlags', newValue)}
+              freeSolo
+              renderTags={(value, getTagProps) =>
+                value.map((option: string, index: number) => (
+                  <Chip
+                    variant="outlined"
+                    label={option}
+                    size="small"
+                    {...getTagProps({ index })}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Feature Flags"
+                  helperText="Select feature flags required for this menu"
+                />
+              )}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography>Enabled</Typography>
+              <Material.MaterialCore.Switch
+                checked={selectedMenu?.enabled !== false}
+                onChange={(e) => handleFieldChange('enabled', e.target.checked)}
+              />
+            </Box>
             
             <Divider sx={{ my: 2 }} />
             
@@ -421,6 +500,37 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
               fullWidth
               helperText="Comma-separated list of required roles"
             />
+            <Autocomplete
+              multiple
+              options={availableFeatureFlags?.map((f: any) => f.feature) || []}
+              value={selectedItem?.featureFlags || []}
+              onChange={(_, newValue) => setSelectedItem({ ...selectedItem, featureFlags: newValue })}
+              freeSolo
+              renderTags={(value, getTagProps) =>
+                value.map((option: string, index: number) => (
+                  <Chip
+                    variant="outlined"
+                    label={option}
+                    size="small"
+                    {...getTagProps({ index })}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Feature Flags"
+                  helperText="Select feature flags required for this menu item"
+                />
+              )}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography>Enabled</Typography>
+              <Material.MaterialCore.Switch
+                checked={selectedItem?.enabled !== false}
+                onChange={(e) => setSelectedItem({ ...selectedItem, enabled: e.target.checked })}
+              />
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
