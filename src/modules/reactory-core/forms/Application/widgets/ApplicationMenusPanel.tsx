@@ -15,6 +15,10 @@ interface ApplicationMenusPanelProps {
 const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
   const { reactory, formData, applicationId, mode = 'view' } = props;
 
+  if(formData && formData.menus) {
+    reactory.log('ApplicationMenusPanel received formData:', formData);
+  }
+
   const { React, Material } = reactory.getComponents<IComponentsImport>([
     'react.React',
     'material-ui.Material',

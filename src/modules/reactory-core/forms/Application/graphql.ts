@@ -34,6 +34,24 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             key
             target
             roles
+            items: entries {
+              id
+              ordinal
+              label: title
+              route: link
+              external
+              icon
+              roles
+              items {
+                id
+                ordinal
+                label: title
+                route: link
+                external
+                icon
+                roles
+              }
+            }
           }
           themes {
             id

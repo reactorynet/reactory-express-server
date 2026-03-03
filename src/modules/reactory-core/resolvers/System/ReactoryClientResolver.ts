@@ -29,6 +29,12 @@ export class ReactoryClientResolver {
     const clientId = obj._id || obj.id;
     return userService.getUsersByClientMembership(clientId, args.paging);
   }
+
+    @property("ReactoryClient", "menus")
+    menus(partner: Reactory.Models.ReactoryClientDocument, __: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.UX.IReactoryMenuConfig[]> {
+      const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
+      return systemService.getMenusForClient(partner)    
+    };
   
   @roles(["ADMIN"])
   @query("ReactoryClientWithId")
