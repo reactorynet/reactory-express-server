@@ -19,7 +19,7 @@ const nvmPrefix = (): string => {
   const nvmDir = process.env.NVM_DIR || path.join(require("os").homedir(), ".nvm");
   const nvmSh = path.join(nvmDir, "nvm.sh");
   if (fs.existsSync(nvmSh)) {
-    return `source "${nvmSh}" && nvm use && `;
+    return `unset npm_config_prefix && source "${nvmSh}" && nvm use && `;
   }
   return "";
 };
