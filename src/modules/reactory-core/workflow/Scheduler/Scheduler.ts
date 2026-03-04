@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import yaml from 'js-yaml';
 import cron from 'node-cron';
@@ -7,6 +8,24 @@ import logger from '../../../../logging';
 import { WorkflowRunner } from '../WorkflowRunner/WorkflowRunner';
 import { IWorkflow } from '../WorkflowRunner/WorkflowRunner';
 import { ReactoryAuditService } from '@reactory/server-modules/reactory-core/services/ReactoryAuditService';
+import { SchedulerLockModel } from './SchedulerLock.model';
+
+/**
+ * Stable identity string for this pod/process. Set REACTORY_POD_ID in the
+ * deployment environment (e.g. the Pod name in Kubernetes) for a meaningful
+ * value; falls back to hostname + PID so it is always unique.
+ */
+const POD_IDENTITY: string =
+  process.env.REACTORY_POD_ID || `${os.hostname()}-${process.pid}`;
+
+/**
+ * How long a lock document lives in MongoDB before the TTL index removes it.
+ * Must be comfortably longer than the worst-case workflow execution time so
+ * the lock is not reclaimed while a workflow is still running.
+ * Default: 10 minutes.  Override via REACTORY_SCHEDULE_LOCK_TTL_MS.
+ */
+const LOCK_TTL_MS: number =
+  Number.parseInt(process.env.REACTORY_SCHEDULE_LOCK_TTL_MS || '600000', 10);
 
 // Import cron-parser using require to avoid TypeScript import issues
 const CronParser = require('cron-parser');
@@ -510,10 +529,22 @@ export class WorkflowScheduler {
     }
 
     const { config } = scheduledWorkflow;
-    
-    // Check if already running and max concurrent limit
+
+    // ── In-process guard (fast path — no DB round-trip needed within one pod) ──
     if (scheduledWorkflow.isRunning && config.maxConcurrent === 1) {
-      logger.warn(`Schedule ${scheduleId} is already running, skipping execution`);
+      logger.warn(`Schedule ${scheduleId} is already running in this process, skipping execution`);
+      return;
+    }
+
+    // ── Distributed guard — acquire a MongoDB lock for this (schedule, slot) ──
+    // Only one pod across the entire cluster can create the lock document.
+    // All others receive a duplicate-key error and skip.
+    const slot = this.slotTimeForNow();
+    const lockAcquired = await this.acquireScheduleLock(scheduleId, slot);
+    if (!lockAcquired) {
+      logger.debug(
+        `Schedule ${scheduleId} slot ${slot.toISOString()} already claimed by another pod — skipping`
+      );
       return;
     }
 
@@ -582,6 +613,54 @@ export class WorkflowScheduler {
           await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
         }
       }
+    }
+  }
+
+  /**
+   * Return the current wall-clock time truncated to the minute.
+   *
+   * All pods racing on the same cron tick derive an identical slot value,
+   * which is what makes the compound unique index (scheduleId, slotTime)
+   * act as a single serialisation point across the cluster.
+   */
+  private slotTimeForNow(): Date {
+    const slot = new Date();
+    slot.setSeconds(0, 0);
+    return slot;
+  }
+
+  /**
+   * Attempt to insert a lock document for (scheduleId, slotTime).
+   *
+   * Returns `true` when this pod wins the race (insert succeeds).
+   * Returns `false` when another pod already holds the lock (duplicate-key
+   * error, code 11000).
+   * Re-throws any other unexpected database errors so the caller can log them.
+   */
+  private async acquireScheduleLock(
+    scheduleId: string,
+    slotTime: Date
+  ): Promise<boolean> {
+    try {
+      await SchedulerLockModel.create({
+        scheduleId,
+        slotTime,
+        instanceId: POD_IDENTITY,
+        acquiredAt: new Date(),
+        expiresAt: new Date(Date.now() + LOCK_TTL_MS),
+      });
+      logger.debug(
+        `Acquired schedule lock: ${scheduleId} slot=${slotTime.toISOString()} pod=${POD_IDENTITY}`
+      );
+      return true;
+    } catch (err: any) {
+      if (err?.code === 11000) {
+        // Expected: another pod inserted first
+        return false;
+      }
+      // Unexpected DB error — propagate so the caller can decide
+      logger.error(`Failed to acquire schedule lock for ${scheduleId}`, err);
+      throw err;
     }
   }
 
