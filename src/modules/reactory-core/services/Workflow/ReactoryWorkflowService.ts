@@ -32,6 +32,8 @@ import {
   IWorkflowExecutionStats,
   WorkflowESStatus,
   IYamlWorkflowDefinitionResult,
+  IYamlLoadError,
+  YamlLoadStatus,
   WorkflowSourceType,
 } from './types';
 import { IScheduleConfig } from '@reactory/server-modules/reactory-core/workflow/Scheduler/Scheduler';
@@ -71,6 +73,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     if (!this.workflowRunner.isInitialized()) {      
       await this.workflowRunner.initialize();
     }
+    await this.syncYamlWorkflowDefinitions();
     this.context.log(`Workflow service startup ${this.context.colors.green('STARTUP OKAY')} ✅`);
     return true;
   }
@@ -82,6 +85,115 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
     return true;
+  }
+
+  /**
+   * Copies YAML workflow definition files from their registered module location
+   * to the $REACTORY_DATA/workflows/catalog directory so they can be loaded at
+   * runtime.  This runs once during service startup.
+   *
+   * For each registered YAML workflow whose `location` is an absolute file path
+   * the method:
+   *   1. Resolves the catalog target path:
+   *      $REACTORY_DATA/workflows/catalog/<nameSpace>/<name>/<version>/<name>.yaml
+   *   2. Creates the target directory if it doesn't exist.
+   *   3. Copies the source file if the catalog file is absent or stale.
+   */
+  private async syncYamlWorkflowDefinitions(): Promise<void> {
+    const reactoryData = process.env.REACTORY_DATA;
+    if (!reactoryData) {
+      this.context.log('REACTORY_DATA env var is not set – skipping YAML workflow sync', {}, 'warn');
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/prefer-node-protocol
+    const { existsSync, mkdirSync, copyFileSync, statSync } = await import('fs');
+    // eslint-disable-next-line @typescript-eslint/prefer-node-protocol
+    const path = await import('path');
+    const fsDeps = { existsSync, mkdirSync, copyFileSync, statSync, path };
+
+    const runner = await this.getWorkflowRunner();
+    const workflows = runner.getRegisteredWorkflows();
+    let copied = 0, skipped = 0, failed = 0;
+
+    for (const workflow of workflows) {
+      if (workflow.workflowType !== 'YAML') continue;
+      const { nameSpace, name, version = '1.0.0' } = workflow;
+      const sourceFile = this.resolveYamlSourceFile(workflow, fsDeps);
+      if (sourceFile == null) { skipped++; continue; }
+
+      const result = this.copyYamlToCatalog(sourceFile, nameSpace, name, version, reactoryData, fsDeps);
+      if (result === 'copied') copied++;
+      else if (result === 'skipped') skipped++;
+      else failed++;
+    }
+
+    this.context.log(
+      `YAML workflow catalog sync complete: ${copied} copied, ${skipped} skipped, ${failed} failed`,
+      { copied, skipped, failed },
+      failed > 0 ? 'warn' : 'info'
+    );
+  }
+
+  /** Resolve the absolute source YAML file path from a workflow registration. Returns null and logs when unresolvable. */
+  private resolveYamlSourceFile(
+    workflow: { nameSpace: string; name: string; version?: string; location?: string },
+    deps: { existsSync: (p: string) => boolean; path: typeof import('path') }
+  ): string | null {
+    const { nameSpace, name, version = '1.0.0', location } = workflow;
+    if (location && !location.startsWith('yaml:') && deps.path.isAbsolute(location) && deps.existsSync(location)) {
+      return location;
+    }
+    if (location?.startsWith('yaml:')) {
+      this.context.log(
+        `Workflow ${nameSpace}.${name}@${version} uses legacy yaml: URI ("${location}"). ` +
+        `Update the registration to an absolute file path.`,
+        { nameSpace, name, version, location }, 'warn'
+      );
+      return null;
+    }
+    this.context.log(
+      `Workflow ${nameSpace}.${name}@${version} is YAML but location is unresolvable ("${location ?? '(none)'}").`,
+      { nameSpace, name, version }, 'warn'
+    );
+    return null;
+  }
+
+  /** Copy a single YAML file from its module source to the workflow catalog. */
+  private copyYamlToCatalog(
+    sourceFile: string,
+    nameSpace: string,
+    name: string,
+    version: string,
+    reactoryData: string,
+    deps: {
+      existsSync: (p: string) => boolean;
+      mkdirSync: (p: string, opts?: any) => void;
+      copyFileSync: (src: string, dst: string) => void;
+      statSync: (p: string) => { mtime: Date };
+      path: typeof import('path');
+    }
+  ): 'copied' | 'skipped' | 'error' {
+    const { existsSync, mkdirSync, copyFileSync, statSync, path } = deps;
+    const targetDir = path.join(reactoryData, 'workflows', 'catalog', nameSpace, name, version);
+    const targetFile = path.join(targetDir, path.basename(sourceFile));
+    try {
+      if (existsSync(targetFile) && statSync(sourceFile).mtime <= statSync(targetFile).mtime) {
+        return 'skipped';
+      }
+      if (!existsSync(targetDir)) mkdirSync(targetDir, { recursive: true });
+      copyFileSync(sourceFile, targetFile);
+      this.context.log(
+        `Synced YAML workflow ${nameSpace}.${name}@${version} → ${targetFile}`,
+        { sourceFile, targetFile }, 'info'
+      );
+      return 'copied';
+    } catch (err) {
+      this.context.log(
+        `Failed to sync YAML workflow ${nameSpace}.${name}@${version}: ${err instanceof Error ? err.message : String(err)}`,
+        { sourceFile, targetFile, err }, 'error'
+      );
+      return 'error';
+    }
   }
 
   // Helper method to get WorkflowRunner instance
@@ -457,13 +569,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
   /**
    * Load and parse a YAML workflow definition from the workflow's registered location.
-   * 
-   * The location can be:
-   * - An absolute path to a module-shipped YAML file
-   * - A relative path resolved against the workflow catalog ($REACTORY_DATA/workflows/catalog)
-   * - A path in a user directory
-   * 
-   * The source type is inferred from the resolved location.
+   * Always returns a result – check loadStatus and errors for failure details.
    */
   async getWorkflowYamlDefinition(
     nameSpace: string,
@@ -475,70 +581,189 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     // eslint-disable-next-line @typescript-eslint/prefer-node-protocol
     const path = await import('path');
     const yaml = await import('js-yaml');
+    const deps = { existsSync, path, readFileSync, yaml };
 
+    const errors: IYamlLoadError[] = [];
+    let yamlSource: string | undefined;
+    let resolvedFilePath: string | null = null;
+    let resolvedSourceType: WorkflowSourceType = 'MODULE';
+    let parsed: any;
+
+    const workflow = await this.yamlStageRegistryLookup(nameSpace, name, errors);
+    let loadStatus = this.yamlRegistryStatus(workflow, nameSpace, name, errors);
+
+    if (loadStatus === 'SUCCESS') {
+      const resolved = this.yamlStageFileResolve(workflow, nameSpace, name, version, errors, deps);
+      resolvedFilePath = resolved.filePath;
+      resolvedSourceType = resolved.sourceType;
+
+      if (resolvedFilePath) {
+        const rp = this.yamlStageReadAndParse(resolvedFilePath, nameSpace, name, errors, deps);
+        yamlSource = rp.yamlSource;
+        parsed = rp.parsed;
+        loadStatus = rp.loadStatus;
+      } else {
+        loadStatus = 'NOT_FOUND';
+      }
+    }
+
+    const hasErrors = errors.length > 0;
+    if (hasErrors) {
+      const isWarning = loadStatus === 'SUCCESS';
+      this.context.log(
+        `YAML workflow definition load for ${nameSpace}.${name} completed with status=${loadStatus}`,
+        { errors },
+        isWarning ? 'warn' : 'error'
+      );
+    }
+
+    return {
+      nameSpace: parsed?.nameSpace || nameSpace,
+      name: parsed?.name || name,
+      version: parsed?.version || version || workflow?.version || '1.0.0',
+      description: parsed?.description,
+      author: parsed?.author,
+      tags: parsed?.tags,
+      inputs: parsed?.inputs,
+      outputs: parsed?.outputs,
+      variables: parsed?.variables,
+      steps: parsed?.steps || [],
+      designer: parsed?.metadata?.designer || null,
+      yamlSource,
+      sourceType: resolvedSourceType,
+      location: resolvedFilePath ?? undefined,
+      loadStatus,
+      errors: hasErrors ? errors : undefined,
+    };
+  }
+
+  /** Stage 1 – look up the workflow in the runner registry. */
+  private async yamlStageRegistryLookup(
+    nameSpace: string,
+    name: string,
+    errors: IYamlLoadError[]
+  ): Promise<any> {
     try {
-      // Look up the registered workflow to get its location
-      const workflowRunner = await this.getWorkflowRunner();
-      const workflow = workflowRunner?.getWorkflowByName(nameSpace, name) as any;
+      const runner = await this.getWorkflowRunner();
+      return runner?.getWorkflowByName(nameSpace, name) ?? null;
+    } catch (err) {
+      errors.push({
+        stage: 'REGISTRY',
+        message: err instanceof Error ? err.message : String(err),
+        code: 'RUNNER_UNAVAILABLE',
+      });
+      return null;
+    }
+  }
 
-      if (!workflow) {
-        throw new Error(`Workflow ${nameSpace}.${name} not found in registry`);
-      }
+  /** Validate registry result and return initial load status. */
+  private yamlRegistryStatus(
+    workflow: any,
+    nameSpace: string,
+    name: string,
+    errors: IYamlLoadError[]
+  ): YamlLoadStatus {
+    if (!workflow) {
+      errors.push({ stage: 'REGISTRY', message: `Workflow ${nameSpace}.${name} not found in registry`, code: 'WORKFLOW_NOT_FOUND' });
+      return 'NOT_FOUND';
+    }
+    if (workflow.workflowType !== 'YAML') {
+      errors.push({
+        stage: 'REGISTRY',
+        message: `Workflow ${nameSpace}.${name} is a ${workflow.workflowType || 'CODE'} workflow and does not have a YAML definition`,
+        code: 'NOT_YAML_WORKFLOW',
+      });
+      return 'REGISTRY_ERROR';
+    }
+    return 'SUCCESS';
+  }
 
-      if (workflow.workflowType !== 'YAML') {
-        throw new Error(
-          `Workflow ${nameSpace}.${name} is a ${workflow.workflowType || 'CODE'} workflow and does not have a YAML definition`
-        );
-      }
-
-      // Resolve the YAML file location
+  /** Stage 2 – resolve the YAML file path. Returns null filePath on failure. */
+  private yamlStageFileResolve(
+    workflow: any,
+    nameSpace: string,
+    name: string,
+    version: string | undefined,
+    errors: IYamlLoadError[],
+    deps: { existsSync: (p: string) => boolean; path: typeof import('path') }
+  ): { filePath: string | null; sourceType: WorkflowSourceType } {
+    try {
       const resolvedPath = this.resolveWorkflowYamlPath(
         workflow.location,
         nameSpace,
         name,
         version || workflow.version,
-        { existsSync, path }
+        deps
       );
-
-      if (!resolvedPath.filePath || !existsSync(resolvedPath.filePath)) {
-        throw new Error(
-          `YAML definition file not found for ${nameSpace}.${name}. ` +
-          `Searched: ${resolvedPath.searchedPaths?.join(', ') || resolvedPath.filePath}`
-        );
+      if (!resolvedPath.filePath || !deps.existsSync(resolvedPath.filePath)) {
+        const searched = resolvedPath.searchedPaths?.join(', ') || '(none)';
+        errors.push({ stage: 'FILE_RESOLVE', message: `YAML file for ${nameSpace}.${name} not found. Searched: ${searched}`, code: 'FILE_NOT_FOUND' });
+        return { filePath: null, sourceType: 'MODULE' };
       }
-
-      // Read and parse the YAML
-      const yamlSource = readFileSync(resolvedPath.filePath, 'utf8');
-      const parsed = yaml.load(yamlSource) as any;
-
-      if (!parsed || typeof parsed !== 'object') {
-        throw new Error(`Invalid YAML content in ${resolvedPath.filePath}`);
-      }
-
-      return {
-        nameSpace: parsed.nameSpace || nameSpace,
-        name: parsed.name || name,
-        version: parsed.version || version || workflow.version,
-        description: parsed.description,
-        author: parsed.author,
-        tags: parsed.tags,
-        inputs: parsed.inputs,
-        outputs: parsed.outputs,
-        variables: parsed.variables,
-        steps: parsed.steps || [],
-        designer: parsed.metadata?.designer || null,
-        yamlSource,
-        sourceType: resolvedPath.sourceType,
-        location: resolvedPath.filePath,
-      };
-    } catch (error) {
-      this.context.log(
-        `Error loading YAML workflow definition for ${nameSpace}.${name}`,
-        { error },
-        'error'
-      );
-      throw error;
+      return { filePath: resolvedPath.filePath, sourceType: resolvedPath.sourceType };
+    } catch (err) {
+      errors.push({ stage: 'FILE_RESOLVE', message: err instanceof Error ? err.message : String(err), code: 'RESOLVE_ERROR' });
+      return { filePath: null, sourceType: 'MODULE' };
     }
+  }
+
+  /** Stage 3 – read file content. Returns undefined on failure. */
+  private yamlStageFileRead(
+    filePath: string,
+    errors: IYamlLoadError[],
+    deps: { readFileSync: (p: string, enc: string) => string }
+  ): string | undefined {
+    try {
+      return deps.readFileSync(filePath, 'utf8');
+    } catch (err) {
+      errors.push({ stage: 'FILE_READ', message: err instanceof Error ? err.message : String(err), code: 'READ_ERROR' });
+      return undefined;
+    }
+  }
+
+  /** Stage 4 – parse YAML text into an object. Returns null on failure. */
+  private yamlStageParse(
+    source: string,
+    nameSpace: string,
+    name: string,
+    errors: IYamlLoadError[],
+    deps: { yaml: typeof import('js-yaml') }
+  ): any {
+    try {
+      const parsed = deps.yaml.load(source);
+      if (!parsed || typeof parsed !== 'object') {
+        errors.push({ stage: 'PARSE', message: `Parsed YAML for ${nameSpace}.${name} is not an object (got ${typeof parsed})`, code: 'NOT_AN_OBJECT' });
+        return null;
+      }
+      return parsed;
+    } catch (err: any) {
+      const line = err?.mark?.line == null ? undefined : (err.mark.line as number) + 1;
+      const column = err?.mark?.column == null ? undefined : (err.mark.column as number) + 1;
+      errors.push({
+        stage: 'PARSE',
+        message: err instanceof Error ? err.message : String(err),
+        code: 'YAML_PARSE_ERROR',
+        line,
+        column,
+      });
+      return null;
+    }
+  }
+
+  /** Stage 3+4 combined – read file then parse. Returns { yamlSource, parsed, loadStatus }. */
+  private yamlStageReadAndParse(
+    filePath: string,
+    nameSpace: string,
+    name: string,
+    errors: IYamlLoadError[],
+    deps: { readFileSync: (p: string, enc: string) => string; yaml: typeof import('js-yaml') }
+  ): { yamlSource: string | undefined; parsed: any; loadStatus: YamlLoadStatus } {
+    const yamlSource = this.yamlStageFileRead(filePath, errors, deps);
+    if (yamlSource == null) {
+      return { yamlSource: undefined, parsed: null, loadStatus: 'IO_ERROR' };
+    }
+    const parsed = this.yamlStageParse(yamlSource, nameSpace, name, errors, deps);
+    return { yamlSource, parsed, loadStatus: parsed == null ? 'PARSE_ERROR' : 'SUCCESS' };
   }
 
   /**
@@ -622,15 +847,20 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     const { existsSync, path } = deps;
     const searchedPaths: string[] = [];
 
+    // Normalise legacy "yaml:<ns>.<name>@<ver>/<filename>" URIs – the file won't
+    // be present at the raw URI string; rely on the catalog search below.
+    const isLegacyYamlUri = location?.startsWith('yaml:');
+
     // 1. Explicit absolute path from the workflow registration
-    if (location && path.isAbsolute(location)) {
+    if (location && !isLegacyYamlUri && path.isAbsolute(location)) {
       searchedPaths.push(location);
       if (existsSync(location)) {
         return { filePath: location, sourceType: this.inferSourceType(location) };
       }
     }
 
-    // 2. Workflow catalog
+    // 2. Workflow catalog ($REACTORY_DATA/workflows/catalog/…)
+    //    This is populated at startup by syncYamlWorkflowDefinitions().
     const reactoryData = process.env.REACTORY_DATA;
     if (reactoryData) {
       const catalogResult = this.searchCatalog(reactoryData, nameSpace, name, version, deps);
@@ -640,8 +870,8 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       }
     }
 
-    // 3. Relative path from server root
-    if (location) {
+    // 3. Relative path from server root (only when a real relative path was given)
+    if (location && !isLegacyYamlUri) {
       const serverRoot = process.env.REACTORY_SERVER || process.cwd();
       const relativePath = path.resolve(serverRoot, location);
       searchedPaths.push(relativePath);

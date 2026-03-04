@@ -246,6 +246,53 @@ type YamlWorkflowDefinition {
   sourceType: WorkflowSourceType
   """The resolved file path the definition was loaded from."""
   location: String
+  """
+  Overall load status.
+  SUCCESS means fully usable. Any other value means the definition could not be
+  fully loaded — check the errors array for details.
+  """
+  loadStatus: YamlLoadStatus!
+  """Ordered list of errors captured at each processing stage."""
+  errors: [YamlLoadError!]
+}
+
+"""Overall status of a YAML workflow definition load attempt."""
+enum YamlLoadStatus {
+  """Fully loaded and parsed without errors."""
+  SUCCESS
+  """Loaded but with validation warnings; the definition may be partially usable."""
+  PARTIAL
+  """Workflow not in registry or the YAML file could not be located."""
+  NOT_FOUND
+  """File was located but could not be read from disk."""
+  IO_ERROR
+  """File was read but the YAML content could not be parsed."""
+  PARSE_ERROR
+  """The workflow exists in the registry but is not a YAML-type workflow."""
+  REGISTRY_ERROR
+}
+
+"""The processing stage at which a YAML load error occurred."""
+enum YamlLoadStage {
+  REGISTRY
+  FILE_RESOLVE
+  FILE_READ
+  PARSE
+  VALIDATION
+}
+
+"""A single error captured during YAML workflow definition loading."""
+type YamlLoadError {
+  """The processing stage at which the error occurred."""
+  stage: YamlLoadStage!
+  """Human-readable description of the error."""
+  message: String!
+  """Short machine-readable error code."""
+  code: String
+  """Line number within the YAML source (populated for parse errors)."""
+  line: Int
+  """Column number within the YAML source (populated for parse errors)."""
+  column: Int
 }
 
 type WorkflowRegistryStats {
@@ -961,12 +1008,14 @@ extend type Query {
   Load a YAML workflow definition by workflow identity.
   Resolves the YAML file from the workflow's registered location,
   parses it, and returns the full definition including designer metadata.
+  Always returns a result — check loadStatus and errors for failure details
+  rather than treating a null return as an indicator of failure.
   """
   workflowYamlDefinition(
     nameSpace: String!
     name: String!
     version: String
-  ): YamlWorkflowDefinition
+  ): YamlWorkflowDefinition!
 
   # Legacy compatibility
   workflowStatus(name: String!): WorkflowResult

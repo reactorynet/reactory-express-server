@@ -61,6 +61,13 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
   },
   {
     compilerOptions: {},
+    id: 'core.WorkflowYamlView@1.0.0',
+    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowYamlView.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
     id: 'core.WorkflowManager@1.0.0',
     src: fileAsString(require.resolve('../../Widgets/core.WorkflowManager.ts')),
     compiler: 'rollup',

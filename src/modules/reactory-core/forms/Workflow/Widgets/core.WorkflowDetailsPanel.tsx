@@ -14,6 +14,7 @@ interface DetailPanelDependencies {
   WorkflowLaunch: any;
   WorkflowConfiguration: any;
   WorkflowDesigner: any;
+  WorkflowYamlView: any;
 }
 
 /**
@@ -55,6 +56,7 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
     WorkflowLaunch,
     WorkflowConfiguration,
     WorkflowDesigner,
+    WorkflowYamlView,
   } = reactory.getComponents<DetailPanelDependencies>([
     'react.React',
     'material-ui.Material',
@@ -68,6 +70,7 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
     'core.WorkflowLaunch',
     'core.WorkflowConfiguration',
     'core.WorkflowDesigner',
+    'core.WorkflowYamlView',
   ]);
 
   const { MaterialCore } = Material;
@@ -139,13 +142,22 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
       badge: workflow.dependencies?.length || 0,
       component: WorkflowConfiguration,
     },
-    ...(isYamlWorkflow ? [{
-      id: 'designer',
-      label: 'Designer',
-      icon: 'account_tree',
-      badge: 0,
-      component: WorkflowDesigner,
-    }] : []),
+    ...(isYamlWorkflow ? [
+      {
+        id: 'yaml',
+        label: 'YAML',
+        icon: 'description',
+        badge: 0,
+        component: WorkflowYamlView,
+      },
+      {
+        id: 'designer',
+        label: 'Designer',
+        icon: 'account_tree',
+        badge: 0,
+        component: WorkflowDesigner,
+      },
+    ] : []),
   ];
 
   return (
@@ -316,6 +328,21 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
           const activeTabConfig = tabs[activeTab];
           if (!activeTabConfig) return null;
           const { id, component: TabComponent } = activeTabConfig;
+
+          // WorkflowYamlView – pass workflow directly (makes its own data query)
+          if (id === 'yaml') {
+            return TabComponent ? React.createElement(TabComponent, {
+              workflow,
+              reactory,
+              readonly: false,
+            }) : (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Typography color="text.secondary">
+                  YAML View component not available.
+                </Typography>
+              </Box>
+            );
+          }
 
           // WorkflowDesigner has a different props contract — pass workflowId directly
           if (id === 'designer') {

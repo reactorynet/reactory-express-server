@@ -23,6 +23,9 @@ export {
   WorkflowESStatus,
 };
 
+// Re-export YAML error types
+export type { YamlLoadStage, YamlLoadStatus, IYamlLoadError };
+
 // Workflow Service Types
 export interface IWorkflowSystemStatus {
   system: {
@@ -276,6 +279,48 @@ export interface IWorkflowStatusResponse {
 
 export type WorkflowSourceType = 'MODULE' | 'CATALOG' | 'USER';
 
+/**
+ * The processing stage at which a YAML load error occurred.
+ * Used to provide fine-grained diagnostic information to the UI.
+ */
+export type YamlLoadStage = 'REGISTRY' | 'FILE_RESOLVE' | 'FILE_READ' | 'PARSE' | 'VALIDATION';
+
+/**
+ * Overall YAML load status.
+ * - SUCCESS    - fully loaded and parsed without errors
+ * - PARTIAL    - loaded but with validation warnings
+ * - NOT_FOUND  - workflow not in registry or file could not be found
+ * - IO_ERROR   - file was found but could not be read
+ * - PARSE_ERROR - file was read but YAML could not be parsed
+ * - REGISTRY_ERROR - the workflow exists but is not a YAML type
+ */
+export type YamlLoadStatus =
+  | 'SUCCESS'
+  | 'PARTIAL'
+  | 'NOT_FOUND'
+  | 'IO_ERROR'
+  | 'PARSE_ERROR'
+  | 'REGISTRY_ERROR';
+
+/**
+ * Describes a single error that occurred during YAML definition loading.
+ * Multiple errors can be attached to a single load result.
+ */
+export interface IYamlLoadError {
+  /** The processing stage at which the error occurred */
+  stage: YamlLoadStage;
+  /** Human-readable description of the error */
+  message: string;
+  /** Short machine-readable error code */
+  code?: string;
+  /** Line number within the YAML source (populated for parse errors) */
+  line?: number;
+  /** Column number within the YAML source (populated for parse errors) */
+  column?: number;
+  /** Original stack trace (populated in development mode) */
+  stack?: string;
+}
+
 export interface IYamlWorkflowDefinitionResult {
   nameSpace: string;
   name: string;
@@ -288,12 +333,16 @@ export interface IYamlWorkflowDefinitionResult {
   variables?: Record<string, any>;
   steps: any[];
   designer?: any;
-  /** The raw YAML source text */
+  /** The raw YAML source text (present even when there are parse errors, so the UI can display it) */
   yamlSource?: string;
   /** The source type indicating where this definition was loaded from */
   sourceType?: WorkflowSourceType;
   /** The resolved file path the definition was loaded from */
   location?: string;
+  /** Overall load status -- SUCCESS means the definition is fully usable */
+  loadStatus: YamlLoadStatus;
+  /** Ordered list of errors captured at each processing stage */
+  errors?: IYamlLoadError[];
 }
 
 export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefaultService {
