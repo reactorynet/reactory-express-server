@@ -39,6 +39,92 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
   pdfs: [],
   middleware,
   routes,
+  featureFlags: [
+    {
+      id: 'workflow-editor-beta-ui',
+      nameSpace: 'core',
+      name: 'WorkflowEditorBetaUI',
+      version: '1.0.0',
+      title: 'Workflow Editor Beta UI',
+      description: 'Enable the new beta user interface for the workflow editor with improved design and user experience',
+      permissions: {
+        viewer: ['USER', 'ADMIN'],
+        editor: ['ADMIN'],
+        admin: ['ADMIN']
+      },
+      form: 'core.WorkflowEditorFeatureFlagForm@1.0.0'
+    },
+    {
+      id: 'workflow-advanced-features',
+      nameSpace: 'core',
+      name: 'WorkflowAdvancedFeatures',
+      version: '1.0.0',
+      title: 'Advanced Workflow Features',
+      description: 'Enable advanced workflow features including conditional logic, loops, and complex branching',
+      permissions: {
+        viewer: ['USER', 'ADMIN'],
+        editor: ['ADMIN'],
+        admin: ['ADMIN']
+      },
+      form: 'core.WorkflowEditorFeatureFlagForm@1.0.0'
+    },
+    {
+      id: 'workflow-collaboration',
+      nameSpace: 'core',
+      name: 'WorkflowCollaboration',
+      version: '1.0.0',
+      title: 'Workflow Collaboration',
+      description: 'Enable real-time collaboration features for workflow editing with multiple users',
+      permissions: {
+        viewer: ['USER', 'ADMIN'],
+        editor: ['ADMIN'],
+        admin: ['ADMIN']
+      },
+      form: 'core.WorkflowEditorFeatureFlagForm@1.0.0'
+    },
+    {
+      id: 'workflow-templates-beta',
+      nameSpace: 'core',
+      name: 'WorkflowTemplatesBeta',
+      version: '1.0.0',
+      title: 'Beta Workflow Templates',
+      description: 'Access beta workflow templates with new patterns and use cases',
+      permissions: {
+        viewer: ['USER', 'ADMIN'],
+        editor: ['ADMIN'],
+        admin: ['ADMIN']
+      },
+      form: 'core.WorkflowEditorFeatureFlagForm@1.0.0'
+    },
+    {
+      id: 'workflow-validation-experimental',
+      nameSpace: 'core',
+      name: 'WorkflowValidationExperimental',
+      version: '1.0.0',
+      title: 'Experimental Workflow Validation',
+      description: 'Enable experimental workflow validation features including AI-powered validation and advanced error detection',
+      permissions: {
+        viewer: ['USER', 'ADMIN'],
+        editor: ['ADMIN'],
+        admin: ['ADMIN']
+      },
+      form: 'core.WorkflowEditorFeatureFlagForm@1.0.0'
+    },
+    {
+      id: 'workflow-ai-assistance',
+      nameSpace: 'core',
+      name: 'WorkflowAIAssistance',
+      version: '1.0.0',
+      title: 'AI Workflow Assistance',
+      description: 'Enable AI-powered assistance for workflow creation, optimization suggestions, and automated workflow generation',
+      permissions: {
+        viewer: ['USER', 'ADMIN'],
+        editor: ['ADMIN'],
+        admin: ['ADMIN']
+      },
+      form: 'core.WorkflowEditorFeatureFlagForm@1.0.0'
+    }
+  ]
 };
 
 export default ReactoryCoreModule

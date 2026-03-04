@@ -26,6 +26,7 @@ import ReactoryMenuResolver from './Menu/MenuResolver';
 import NaturalResolver from './System/NaturalResolver';
 import WorkflowResolver from './Workflow/WorkflowResolver';
 import AuditResolver from './System/AuditResolver';
+import FeatureFlagResolver from './System/FeatureFlagResolver';
 
 import { mergeGraphResolver } from '@reactory/server-core/utils';
 
@@ -57,5 +58,6 @@ export default mergeGraphResolver([
   ReactoryMenuResolver,
   NaturalResolver,
   WorkflowResolver,
-  AuditResolver
+  AuditResolver,
+  FeatureFlagResolver
 ]);

@@ -27,6 +27,7 @@ import {
 } from "./ReactoryCalendar";
 import UserSession from "./UserSession";
 import ReactoryClient from "./ReactoryClient";
+import ReactoryFeatureFlag from "./ReactoryFeatureFlag";
 import ReactoryModelMeta from "./ReactoryModelMeta";
 import ReactoryFileImportPackage from "./ReactoryFileImportPackage";
 import ReactoryResource from "./ReactoryResource";
@@ -91,6 +92,7 @@ export type CoreModelTypes =
   | typeof Project
   | typeof ProjectBoard
   | typeof ReactoryClient
+  | typeof ReactoryFeatureFlag
   | typeof ReactoryResource
   | typeof ReactoryTranslation
   | typeof ReactoryCalendar
@@ -131,6 +133,8 @@ export { default as PersonalDemographic } from './PersonalDemographic';
 export { default as Project } from './Project';
 export { default as ProjectBoard } from './ProjectBoard';
 export { default as ReactoryClient } from './ReactoryClient';
+export { default as ReactoryFeatureFlag } from './ReactoryFeatureFlag';
+export { ReactoryFeatureFlagValueSchema } from './ReactoryFeatureFlag';
 export { default as ReactoryResource } from './ReactoryResource';
 export { default as ReactorySupportTicket } from './ReactorySupportTicket';
 export { default as ReactoryTranslation } from './ReactoryTranslation';
@@ -473,6 +477,19 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       stem: "project-board",
       tags: ["project-board", "core", "system"],
       component: ProjectBoard,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+    },
+    {
+      nameSpace: "core",
+      version: "1.0.0",
+      name: "ReactoryFeatureFlag",
+      description: "Provides a feature flag model for registering and querying available feature flags",
+      stem: "reactory-feature-flag",
+      tags: ["feature-flag", "reactory", "system"],
+      component: ReactoryFeatureFlag,
       domain: "model",
       overwrite: true,
       roles: [],

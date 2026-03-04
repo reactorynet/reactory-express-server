@@ -82,6 +82,10 @@ const Application: Reactory.Forms.IReactoryForm = {
       componentFqn: 'reactory.ApplicationMenusPanel@1.0.0',
       widget: 'ApplicationMenusPanel',
     },
+    {
+      componentFqn: 'reactory.ApplicationFeatureFlagsPanel@1.0.0',
+      widget: 'ApplicationFeatureFlagsPanel',
+    },
   ],
   schema,
   uiSchema,

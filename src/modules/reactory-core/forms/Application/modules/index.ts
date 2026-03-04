@@ -70,6 +70,13 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
     compiler: 'rollup',
     fileType: 'tsx'
   },
+  {
+    compilerOptions: {},
+    id: 'reactory.ApplicationFeatureFlagsPanel@1.0.0',
+    src: fileAsString(path.resolve(__dirname, `../widgets/ApplicationFeatureFlagsPanel.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
 ];
 
 export default modules;

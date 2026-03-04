@@ -1,1 +1,12 @@
-export default ['USER', 'ADMIN', 'ANON', 'DEVELOPER']
+export default [
+  'USER', 
+  'ADMIN', 
+  'ANON', 
+  'DEVELOPER',
+  'CONTENT_MANAGER',
+  'BILLING_MANAGER',
+  'SUPPORT_MANAGER',
+  'WORKFLOW_MANAGER',
+  'ORGANIZATION_ADMIN',
+  'APPLICATION_ADMIN',
+]

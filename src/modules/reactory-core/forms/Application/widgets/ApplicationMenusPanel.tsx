@@ -10,15 +10,23 @@ interface IComponentsImport {
 interface ApplicationMenusPanelProps {
   reactory: Reactory.Client.IReactoryApi;
   formData?: any;
+  onChange?: (formData: any) => void;
   applicationId?: string;
   mode?: 'view' | 'edit';
   availableFeatureFlags?: { feature: string; enabled?: boolean }[];
 }
 
 const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
-  const { reactory, formData, applicationId, mode = 'view', availableFeatureFlags = [] } = props;
+  const {
+    reactory,
+    formData,
+    onChange,
+    applicationId,
+    mode = 'view',
+    availableFeatureFlags = [],
+  } = props;
 
-  if(formData && formData.menus) {
+  if (formData && formData.menus) {
     reactory.log('ApplicationMenusPanel received formData:', formData);
   }
 
@@ -29,7 +37,7 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
     'material-ui.Material',
   ]);
 
-  const { useState } = React;
+  const { useState, useCallback } = React;
 
   const {
     Card,
@@ -63,6 +71,9 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
     Checkbox,
     Alert,
     Autocomplete,
+    Switch,
+    Tooltip,
+    FormControlLabel,
   } = Material.MaterialCore;
 
   const {
@@ -73,6 +84,9 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
     ExpandMore: ExpandMoreIcon,
     DragIndicator: DragIcon,
     Link: LinkIcon,
+    ToggleOn: ToggleOnIcon,
+    ToggleOff: ToggleOffIcon,
+    Flag: FlagIcon,
   } = Material.MaterialIcons;
 
   const menus = formData?.menus || [];
@@ -84,48 +98,95 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [currentMenuIndex, setCurrentMenuIndex] = useState<number>(-1);
+  const [editItemIndex, setEditItemIndex] = useState<number>(-1);
+
+  /**
+   * Propagate changes back to the parent form via onChange.
+   */
+  const propagateChange = useCallback(
+    (updatedMenus: any[]) => {
+      if (typeof onChange === 'function') {
+        onChange({
+          ...formData,
+          menus: updatedMenus,
+          totalMenus: updatedMenus.length,
+        });
+      }
+    },
+    [onChange, formData],
+  );
+
+  /**
+   * Get feature flag label options from availableFeatureFlags.
+   */
+  const featureFlagOptions: string[] = availableFeatureFlags
+    .map((f: any) => f.feature)
+    .filter(Boolean);
+
+  /**
+   * Toggle menu enabled/disabled state inline.
+   */
+  const handleToggleMenuEnabled = (menuIndex: number) => {
+    const updated = menus.map((m: any, i: number) =>
+      i === menuIndex ? { ...m, enabled: !m.enabled } : m,
+    );
+    propagateChange(updated);
+  };
+
+  /**
+   * Toggle menu item enabled/disabled state inline.
+   */
+  const handleToggleItemEnabled = (menuIndex: number, itemIndex: number) => {
+    const updated = menus.map((m: any, mi: number) => {
+      if (mi !== menuIndex) return m;
+      const updatedItems = m.items.map((item: any, ii: number) =>
+        ii === itemIndex ? { ...item, enabled: !item.enabled } : item,
+      );
+      return { ...m, items: updatedItems };
+    });
+    propagateChange(updated);
+  };
 
   const handleAddMenu = () => {
     setSelectedMenu({
       key: '',
+      name: '',
       target: '',
       roles: [],
       featureFlags: [],
       enabled: true,
-      items: []
+      items: [],
     });
+    setCurrentMenuIndex(-1);
     setIsEditing(false);
     setDialogOpen(true);
   };
 
   const handleEditMenu = (menu: any, index: number) => {
-    setSelectedMenu({ ...menu });
+    setSelectedMenu({ ...menu, items: [...(menu.items || [])] });
     setCurrentMenuIndex(index);
     setIsEditing(true);
     setDialogOpen(true);
   };
 
-  const handleDeleteMenu = async (menuId: string) => {
-    if (confirm('Are you sure you want to delete this menu?')) {
-      try {
-        // TODO: Implement delete mutation
-        reactory.log('Delete menu:', menuId);
-      } catch (error) {
-        reactory.log('Error deleting menu:', error);
-      }
-    }
+  const handleDeleteMenu = (menuIndex: number) => {
+    const updated = menus.filter((_: any, i: number) => i !== menuIndex);
+    propagateChange(updated);
   };
 
-  const handleSaveMenu = async () => {
-    try {
-      // TODO: Implement save/update mutation
-      reactory.log(isEditing ? 'Update menu:' : 'Create menu:', selectedMenu);
-      setDialogOpen(false);
-      setSelectedMenu(null);
-      setCurrentMenuIndex(-1);
-    } catch (error) {
-      reactory.log('Error saving menu:', error);
+  const handleSaveMenu = () => {
+    let updated: any[];
+    if (isEditing && currentMenuIndex >= 0) {
+      updated = menus.map((m: any, i: number) =>
+        i === currentMenuIndex ? { ...selectedMenu } : m,
+      );
+    } else {
+      updated = [...menus, { ...selectedMenu }];
     }
+    propagateChange(updated);
+    setDialogOpen(false);
+    setSelectedMenu(null);
+    setCurrentMenuIndex(-1);
   };
 
   const handleDialogClose = () => {
@@ -135,7 +196,7 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
   };
 
   const handleFieldChange = (field: string, value: any) => {
-    setSelectedMenu({ ...selectedMenu, [field]: value });
+    setSelectedMenu((prev: any) => ({ ...prev, [field]: value }));
   };
 
   const handleAddMenuItem = () => {
@@ -145,43 +206,47 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
       route: '',
       roles: [],
       enabled: true,
-      featureFlags: []
+      featureFlags: [],
     });
+    setEditItemIndex(-1);
     setItemDialogOpen(true);
   };
 
-  const handleEditMenuItem = (item: any) => {
+  const handleEditMenuItem = (item: any, index: number) => {
     setSelectedItem({ ...item });
+    setEditItemIndex(index);
     setItemDialogOpen(true);
   };
 
   const handleDeleteMenuItem = (itemIndex: number) => {
-    const updatedItems = selectedMenu.items.filter((_: any, idx: number) => idx !== itemIndex);
-    setSelectedMenu({ ...selectedMenu, items: updatedItems });
+    const updatedItems = selectedMenu.items.filter(
+      (_: any, idx: number) => idx !== itemIndex,
+    );
+    setSelectedMenu((prev: any) => ({ ...prev, items: updatedItems }));
   };
 
   const handleSaveMenuItem = () => {
-    if (selectedItem.id) {
+    let updatedItems: any[];
+    if (editItemIndex >= 0) {
       // Edit existing item
-      const updatedItems = selectedMenu.items.map((item: any) =>
-        item.id === selectedItem.id ? selectedItem : item
+      updatedItems = selectedMenu.items.map((item: any, idx: number) =>
+        idx === editItemIndex ? { ...selectedItem } : item,
       );
-      setSelectedMenu({ ...selectedMenu, items: updatedItems });
     } else {
       // Add new item
       const newItem = { ...selectedItem, id: `item_${Date.now()}` };
-      setSelectedMenu({
-        ...selectedMenu,
-        items: [...(selectedMenu.items || []), newItem]
-      });
+      updatedItems = [...(selectedMenu.items || []), newItem];
     }
+    setSelectedMenu((prev: any) => ({ ...prev, items: updatedItems }));
     setItemDialogOpen(false);
     setSelectedItem(null);
+    setEditItemIndex(-1);
   };
 
   const handleItemDialogClose = () => {
     setItemDialogOpen(false);
     setSelectedItem(null);
+    setEditItemIndex(-1);
   };
 
   return (
@@ -190,12 +255,13 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
         <CardHeader
           avatar={<MenuIcon />}
           title="Application Menus"
-          subheader={`Total: ${totalMenus}`}
+          subheader={`${menus.length} menu${menus.length !== 1 ? 's' : ''}`}
           action={
-            isAdmin && mode === 'edit' && (
+            isAdmin && (
               <Button
                 startIcon={<AddIcon />}
                 variant="contained"
+                size="small"
                 onClick={handleAddMenu}
               >
                 Add Menu
@@ -205,7 +271,7 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
         />
         <Divider />
         <CardContent>
-          {!isAdmin && mode === 'edit' && (
+          {!isAdmin && (
             <Alert severity="info" sx={{ mb: 2 }}>
               Only administrators can edit menus and feature flag assignments.
             </Alert>
@@ -213,43 +279,106 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
           {menus.length > 0 ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {menus.map((menu: any, menuIndex: number) => (
-                <Accordion key={menu.id || menu.key} defaultExpanded={false}>
+                <Accordion
+                  key={menu.id || menu.key || menuIndex}
+                  defaultExpanded={false}
+                >
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        width: '100%',
+                      }}
+                    >
                       <MenuIcon />
                       <Box sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
                           <Typography variant="h6">{menu.name}</Typography>
-                          {!menu.enabled && (
-                            <Chip label="Disabled" size="small" color="error" variant="outlined" />
-                          )}
+                          <Chip
+                            label={menu.enabled !== false ? 'Enabled' : 'Disabled'}
+                            size="small"
+                            color={menu.enabled !== false ? 'success' : 'error'}
+                            variant="outlined"
+                          />
                         </Box>
                         <Typography variant="caption" color="text.secondary">
-                          Target: {menu.target} • {menu.items?.length || 0} items
+                          Target: {menu.target} &bull;{' '}
+                          {menu.items?.length || 0} items
                         </Typography>
                         {menu.featureFlags?.length > 0 && (
-                          <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              gap: 0.5,
+                              mt: 0.5,
+                              flexWrap: 'wrap',
+                            }}
+                          >
                             {menu.featureFlags.map((flag: string) => (
-                              <Chip key={flag} label={`Flag: ${flag}`} size="small" variant="outlined" />
+                              <Chip
+                                key={flag}
+                                icon={<FlagIcon sx={{ fontSize: 14 }} />}
+                                label={flag}
+                                size="small"
+                                variant="outlined"
+                                color="primary"
+                              />
                             ))}
                           </Box>
                         )}
                       </Box>
-                      {isAdmin && mode === 'edit' && (
-                        <Box onClick={(e) => e.stopPropagation()}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditMenu(menu, menuIndex)}
+                      {isAdmin && (
+                        <Box onClick={(e: any) => e.stopPropagation()}>
+                          <Tooltip
+                            title={
+                              menu.enabled !== false
+                                ? 'Disable menu'
+                                : 'Enable menu'
+                            }
                           >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDeleteMenu(menu.id)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleToggleMenuEnabled(menuIndex)
+                              }
+                              color={
+                                menu.enabled !== false ? 'success' : 'default'
+                              }
+                            >
+                              {menu.enabled !== false ? (
+                                <ToggleOnIcon />
+                              ) : (
+                                <ToggleOffIcon />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit menu">
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleEditMenu(menu, menuIndex)
+                              }
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete menu">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteMenu(menuIndex)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </Box>
                       )}
                     </Box>
@@ -260,13 +389,23 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
                         <Typography variant="caption" color="text.secondary">
                           Roles:
                         </Typography>
-                        <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 0.5,
+                            mt: 0.5,
+                            flexWrap: 'wrap',
+                          }}
+                        >
                           {menu.roles?.length > 0 ? (
                             menu.roles.map((role: string) => (
                               <Chip key={role} label={role} size="small" />
                             ))
                           ) : (
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               No roles specified
                             </Typography>
                           )}
@@ -277,59 +416,164 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
                         Menu Items
                       </Typography>
                       {menu.items?.length > 0 ? (
-                        <List>
-                          {menu.items.map((item: any, itemIndex: number) => (
-                            <ListItem
-                              key={item.id || itemIndex}
-                              secondaryAction={
-                                isAdmin && mode === 'edit' && (
-                                  <Box>
-                                    <IconButton size="small">
-                                      <DragIcon fontSize="small" />
-                                    </IconButton>
-                                  </Box>
-                                )
-                              }
-                            >
-                              <ListItemIcon>
-                                <LinkIcon />
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Typography>{item.label}</Typography>
-                                    {!item.enabled && (
-                                      <Chip label="Disabled" size="small" color="error" variant="outlined" />
-                                    )}
-                                  </Box>
+                        <List disablePadding>
+                          {menu.items.map(
+                            (item: any, itemIndex: number) => (
+                              <ListItem
+                                key={item.id || itemIndex}
+                                divider
+                                sx={{
+                                  opacity:
+                                    item.enabled !== false ? 1 : 0.55,
+                                  py: 1,
+                                }}
+                                secondaryAction={
+                                  isAdmin && (
+                                    <Box>
+                                      <Tooltip
+                                        title={
+                                          item.enabled !== false
+                                            ? 'Disable item'
+                                            : 'Enable item'
+                                        }
+                                      >
+                                        <IconButton
+                                          size="small"
+                                          onClick={() =>
+                                            handleToggleItemEnabled(
+                                              menuIndex,
+                                              itemIndex,
+                                            )
+                                          }
+                                          color={
+                                            item.enabled !== false
+                                              ? 'success'
+                                              : 'default'
+                                          }
+                                        >
+                                          {item.enabled !== false ? (
+                                            <ToggleOnIcon fontSize="small" />
+                                          ) : (
+                                            <ToggleOffIcon fontSize="small" />
+                                          )}
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Box>
+                                  )
                                 }
-                                secondary={
-                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
-                                    <Typography variant="caption" fontFamily="monospace">
-                                      {item.route}
-                                    </Typography>
-                                    {item.featureFlags?.length > 0 && (
-                                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                                        {item.featureFlags.map((flag: string) => (
-                                          <Chip key={flag} label={`Flag: ${flag}`} size="small" variant="outlined" />
-                                        ))}
-                                      </Box>
-                                    )}
-                                    {item.roles?.length > 0 && (
-                                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                                        {item.roles.map((role: string) => (
-                                          <Chip key={role} label={role} size="small" />
-                                        ))}
-                                      </Box>
-                                    )}
-                                  </Box>
-                                }
-                              />
-                            </ListItem>
-                          ))}
+                              >
+                                <ListItemIcon sx={{ minWidth: 36 }}>
+                                  <LinkIcon fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                      }}
+                                    >
+                                      <Typography variant="body2">
+                                        {item.label}
+                                      </Typography>
+                                      <Chip
+                                        label={
+                                          item.enabled !== false
+                                            ? 'On'
+                                            : 'Off'
+                                        }
+                                        size="small"
+                                        color={
+                                          item.enabled !== false
+                                            ? 'success'
+                                            : 'error'
+                                        }
+                                        variant="outlined"
+                                        sx={{ height: 20, fontSize: 11 }}
+                                      />
+                                    </Box>
+                                  }
+                                  secondary={
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 0.5,
+                                        mt: 0.5,
+                                      }}
+                                    >
+                                      <Typography
+                                        variant="caption"
+                                        fontFamily="monospace"
+                                      >
+                                        {item.route}
+                                      </Typography>
+                                      {item.featureFlags?.length > 0 && (
+                                        <Box
+                                          sx={{
+                                            display: 'flex',
+                                            gap: 0.5,
+                                            flexWrap: 'wrap',
+                                          }}
+                                        >
+                                          {item.featureFlags.map(
+                                            (flag: string) => (
+                                              <Chip
+                                                key={flag}
+                                                icon={
+                                                  <FlagIcon
+                                                    sx={{ fontSize: 12 }}
+                                                  />
+                                                }
+                                                label={flag}
+                                                size="small"
+                                                variant="outlined"
+                                                color="primary"
+                                                sx={{
+                                                  height: 20,
+                                                  fontSize: 11,
+                                                }}
+                                              />
+                                            ),
+                                          )}
+                                        </Box>
+                                      )}
+                                      {item.roles?.length > 0 && (
+                                        <Box
+                                          sx={{
+                                            display: 'flex',
+                                            gap: 0.5,
+                                            flexWrap: 'wrap',
+                                          }}
+                                        >
+                                          {item.roles.map(
+                                            (role: string) => (
+                                              <Chip
+                                                key={role}
+                                                label={role}
+                                                size="small"
+                                                sx={{
+                                                  height: 20,
+                                                  fontSize: 11,
+                                                }}
+                                              />
+                                            ),
+                                          )}
+                                        </Box>
+                                      )}
+                                    </Box>
+                                  }
+                                />
+                              </ListItem>
+                            ),
+                          )}
                         </List>
                       ) : (
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                        >
                           No menu items
                         </Typography>
                       )}
@@ -339,58 +583,85 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
               ))}
             </Box>
           ) : (
-            <Typography variant="body2" color="text.secondary">
+            <Alert severity="info">
               No menus configured. Menus will be displayed here when available.
-            </Typography>
+            </Alert>
           )}
         </CardContent>
       </Card>
 
       {/* Menu Edit/Create Dialog */}
-      <Dialog open={dialogOpen} onClose={handleDialogClose} maxWidth="md" fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           {isEditing ? 'Edit Menu' : 'Add New Menu'}
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <Box
+            sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}
+          >
+            <TextField
+              label="Menu Name"
+              value={selectedMenu?.name || ''}
+              onChange={(e: any) => handleFieldChange('name', e.target.value)}
+              fullWidth
+              helperText="Display name for the menu"
+            />
             <TextField
               label="Menu Key"
               value={selectedMenu?.key || ''}
-              onChange={(e) => handleFieldChange('key', e.target.value)}
+              onChange={(e: any) => handleFieldChange('key', e.target.value)}
               fullWidth
               helperText="Unique identifier for the menu"
             />
             <TextField
               label="Target"
               value={selectedMenu?.target || ''}
-              onChange={(e) => handleFieldChange('target', e.target.value)}
+              onChange={(e: any) =>
+                handleFieldChange('target', e.target.value)
+              }
               fullWidth
               helperText="Target location (e.g., header, sidebar, footer)"
             />
             <TextField
               label="Roles"
               value={selectedMenu?.roles?.join(', ') || ''}
-              onChange={(e) => handleFieldChange('roles', e.target.value.split(',').map((r: string) => r.trim()))}
+              onChange={(e: any) =>
+                handleFieldChange(
+                  'roles',
+                  e.target.value
+                    .split(',')
+                    .map((r: string) => r.trim())
+                    .filter(Boolean),
+                )
+              }
               fullWidth
               helperText="Comma-separated list of roles that can see this menu"
             />
             <Autocomplete
               multiple
-              options={availableFeatureFlags?.map((f: any) => f.feature) || []}
+              options={featureFlagOptions}
               value={selectedMenu?.featureFlags || []}
-              onChange={(_, newValue) => handleFieldChange('featureFlags', newValue)}
+              onChange={(_: any, newValue: string[]) =>
+                handleFieldChange('featureFlags', newValue)
+              }
               freeSolo
-              renderTags={(value, getTagProps) =>
+              renderTags={(value: string[], getTagProps: any) =>
                 value.map((option: string, index: number) => (
                   <Chip
                     variant="outlined"
                     label={option}
                     size="small"
+                    color="primary"
                     {...getTagProps({ index })}
                   />
                 ))
               }
-              renderInput={(params) => (
+              renderInput={(params: any) => (
                 <TextField
                   {...params}
                   label="Feature Flags"
@@ -398,17 +669,27 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
                 />
               )}
             />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography>Enabled</Typography>
-              <Material.MaterialCore.Switch
-                checked={selectedMenu?.enabled !== false}
-                onChange={(e) => handleFieldChange('enabled', e.target.checked)}
-              />
-            </Box>
-            
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={selectedMenu?.enabled !== false}
+                  onChange={(e: any) =>
+                    handleFieldChange('enabled', e.target.checked)
+                  }
+                />
+              }
+              label="Enabled"
+            />
+
             <Divider sx={{ my: 2 }} />
-            
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <Typography variant="subtitle1">Menu Items</Typography>
               <Button
                 startIcon={<AddIcon />}
@@ -418,18 +699,22 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
                 Add Item
               </Button>
             </Box>
-            
+
             {selectedMenu?.items?.length > 0 ? (
               <Paper variant="outlined" sx={{ p: 1 }}>
                 <List dense>
                   {selectedMenu.items.map((item: any, idx: number) => (
                     <ListItem
                       key={item.id || idx}
+                      divider
+                      sx={{
+                        opacity: item.enabled !== false ? 1 : 0.55,
+                      }}
                       secondaryAction={
                         <Box>
                           <IconButton
                             size="small"
-                            onClick={() => handleEditMenuItem(item)}
+                            onClick={() => handleEditMenuItem(item, idx)}
                           >
                             <EditIcon fontSize="small" />
                           </IconButton>
@@ -444,8 +729,66 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
                       }
                     >
                       <ListItemText
-                        primary={item.label}
-                        secondary={item.route}
+                        primary={
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            <Typography variant="body2">
+                              {item.label}
+                            </Typography>
+                            <Chip
+                              label={
+                                item.enabled !== false ? 'On' : 'Off'
+                              }
+                              size="small"
+                              color={
+                                item.enabled !== false
+                                  ? 'success'
+                                  : 'error'
+                              }
+                              variant="outlined"
+                              sx={{ height: 20, fontSize: 11 }}
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              fontFamily="monospace"
+                            >
+                              {item.route}
+                            </Typography>
+                            {item.featureFlags?.length > 0 && (
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  gap: 0.5,
+                                  mt: 0.5,
+                                  flexWrap: 'wrap',
+                                }}
+                              >
+                                {item.featureFlags.map((flag: string) => (
+                                  <Chip
+                                    key={flag}
+                                    icon={
+                                      <FlagIcon sx={{ fontSize: 12 }} />
+                                    }
+                                    label={flag}
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    sx={{ height: 20, fontSize: 11 }}
+                                  />
+                                ))}
+                              </Box>
+                            )}
+                          </Box>
+                        }
                       />
                     </ListItem>
                   ))}
@@ -467,56 +810,92 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
       </Dialog>
 
       {/* Menu Item Edit/Create Dialog */}
-      <Dialog open={itemDialogOpen} onClose={handleItemDialogClose} maxWidth="sm" fullWidth>
+      <Dialog
+        open={itemDialogOpen}
+        onClose={handleItemDialogClose}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
-          {selectedItem?.id ? 'Edit Menu Item' : 'Add Menu Item'}
+          {editItemIndex >= 0 ? 'Edit Menu Item' : 'Add Menu Item'}
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <Box
+            sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}
+          >
             <TextField
               label="Label"
               value={selectedItem?.label || ''}
-              onChange={(e) => setSelectedItem({ ...selectedItem, label: e.target.value })}
+              onChange={(e: any) =>
+                setSelectedItem((prev: any) => ({
+                  ...prev,
+                  label: e.target.value,
+                }))
+              }
               fullWidth
             />
             <TextField
               label="Icon"
               value={selectedItem?.icon || ''}
-              onChange={(e) => setSelectedItem({ ...selectedItem, icon: e.target.value })}
+              onChange={(e: any) =>
+                setSelectedItem((prev: any) => ({
+                  ...prev,
+                  icon: e.target.value,
+                }))
+              }
               fullWidth
               helperText="Material icon name (e.g., dashboard, settings)"
             />
             <TextField
               label="Route"
               value={selectedItem?.route || ''}
-              onChange={(e) => setSelectedItem({ ...selectedItem, route: e.target.value })}
+              onChange={(e: any) =>
+                setSelectedItem((prev: any) => ({
+                  ...prev,
+                  route: e.target.value,
+                }))
+              }
               fullWidth
               helperText="Route path (e.g., /dashboard, /settings)"
             />
             <TextField
               label="Roles"
               value={selectedItem?.roles?.join(', ') || ''}
-              onChange={(e) => setSelectedItem({ ...selectedItem, roles: e.target.value.split(',').map((r: string) => r.trim()) })}
+              onChange={(e: any) =>
+                setSelectedItem((prev: any) => ({
+                  ...prev,
+                  roles: e.target.value
+                    .split(',')
+                    .map((r: string) => r.trim())
+                    .filter(Boolean),
+                }))
+              }
               fullWidth
               helperText="Comma-separated list of required roles"
             />
             <Autocomplete
               multiple
-              options={availableFeatureFlags?.map((f: any) => f.feature) || []}
+              options={featureFlagOptions}
               value={selectedItem?.featureFlags || []}
-              onChange={(_, newValue) => setSelectedItem({ ...selectedItem, featureFlags: newValue })}
+              onChange={(_: any, newValue: string[]) =>
+                setSelectedItem((prev: any) => ({
+                  ...prev,
+                  featureFlags: newValue,
+                }))
+              }
               freeSolo
-              renderTags={(value, getTagProps) =>
+              renderTags={(value: string[], getTagProps: any) =>
                 value.map((option: string, index: number) => (
                   <Chip
                     variant="outlined"
                     label={option}
                     size="small"
+                    color="primary"
                     {...getTagProps({ index })}
                   />
                 ))
               }
-              renderInput={(params) => (
+              renderInput={(params: any) => (
                 <TextField
                   {...params}
                   label="Feature Flags"
@@ -524,19 +903,26 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
                 />
               )}
             />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography>Enabled</Typography>
-              <Material.MaterialCore.Switch
-                checked={selectedItem?.enabled !== false}
-                onChange={(e) => setSelectedItem({ ...selectedItem, enabled: e.target.checked })}
-              />
-            </Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={selectedItem?.enabled !== false}
+                  onChange={(e: any) =>
+                    setSelectedItem((prev: any) => ({
+                      ...prev,
+                      enabled: e.target.checked,
+                    }))
+                  }
+                />
+              }
+              label="Enabled"
+            />
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleItemDialogClose}>Cancel</Button>
           <Button onClick={handleSaveMenuItem} variant="contained">
-            {selectedItem?.id ? 'Update' : 'Add'}
+            {editItemIndex >= 0 ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
       </Dialog>

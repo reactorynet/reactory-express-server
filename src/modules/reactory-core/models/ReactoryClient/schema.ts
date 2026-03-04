@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import methods from './methods';
 import statics from './statics';
+import { ReactoryFeatureFlagValueSchema } from '../ReactoryFeatureFlag';
 const { ObjectId } = mongoose.Schema.Types;
 
 const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IReactoryApplicationPlugin>({ 
@@ -101,6 +102,7 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
   ],
   whitelist: [String],
   plugins: [ReactoryApplicationPluginSchema],
+  featureFlags: [ReactoryFeatureFlagValueSchema],
 }, {
   methods,
   statics,
