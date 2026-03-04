@@ -95,3 +95,11 @@ type FeatureFlagValue {
   """
   enabled: Boolean
 }
+
+extend type Query {
+  """
+  Returns all registered feature flag definitions from the catalogue
+  (gathered from all modules).
+  """
+  ReactoryFeatureFlagCatalogue: [FeatureFlag]
+}

@@ -173,6 +173,14 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
           link: '/workflows/launch',
           icon: 'view_list',
           roles: ['USER'],
+        },
+        {
+          ordinal: 6,
+          title: 'reactory:reactory.menu.workflow-editor-beta',
+          link: '/workflows/editor-beta',
+          icon: 'edit_note',
+          roles: ['ADMIN', 'DEVELOPER'],
+          featureFlags: ['core.WorkflowEditorBetaUI@1.0.0']
         }
       ],
     },

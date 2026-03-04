@@ -10,6 +10,8 @@ import whitelist from './whitelist';
 
 import Reactory from '@reactorynet/reactory-core'
 import logger from '@reactory/server-core/logging';
+import safeUrl from 'utils/url/safeUrl';
+
 
 
 
@@ -58,7 +60,7 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
       roles: ['USER', 'ANON'],
       platform: 'web',
       mimeType: 'application/javascript',
-      uri: `${CDN_ROOT}plugins/reactory-client-core/lib/reactory.client.core.js`      
+      uri: safeUrl([CDN_ROOT, 'plugins', 'reactory-client-core', 'lib', 'reactory.client.core.js'])      
     }
   ],
   allowCustomTheme: true,
@@ -81,7 +83,38 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   ],
   settings,
   whitelist,
-  featureFlags: []
+  featureFlags: [
+    {
+      feature: 'core.WorkflowEditorBetaUI@1.0.0',
+      value: true,
+      roles: ['ADMIN', 'DEVELOPER'],
+    },
+    {
+      feature: 'core.WorkflowAdvancedFeatures@1.0.0',
+      value: true,
+      roles: ['ADMIN', 'DEVELOPER'],      
+    },
+    {
+      feature: 'core.WorkflowCollaboration@1.0.0',
+      value: false,
+      roles: ['ADMIN'],
+    },
+    {
+      feature: 'core.WorkflowTemplatesBeta@1.0.0',
+      value: true,
+      roles: ['USER', 'ADMIN', 'DEVELOPER'],
+    },
+    {
+      feature: 'core.WorkflowValidationExperimental@1.0.0',
+      value: false,
+      roles: ['ADMIN', 'DEVELOPER'],
+    },
+    {
+      feature: 'core.WorkflowAIAssistance@1.0.0',
+      value: false,
+      roles: ['ADMIN'],
+    }
+  ]
 };
 
 export default REACTORY_CONFIG;
