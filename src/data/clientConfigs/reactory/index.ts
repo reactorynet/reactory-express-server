@@ -10,13 +10,12 @@ import whitelist from './whitelist';
 
 import Reactory from '@reactorynet/reactory-core'
 import logger from '@reactory/server-core/logging';
-import safeUrl from 'utils/url/safeUrl';
+import { safeCDNUrl } from 'utils/url/safeUrl';
 
 
 
 
 const { 
-  CDN_ROOT = 'http://localhost:4000/cdn/',
   REACTORY_SITE_URL = 'http://localhost:3000',
   REACTORY_APPLICATION_USERNAME = 'reactory', 
   REACTORY_APPLICATION_EMAIL = 'machine@reactory.net',
@@ -40,7 +39,7 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   emailSendVia: process.env.REACTORY_EMAIL_SEND_VIA || 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY as string,
   resetEmailRoute: '/forgot-password',
-  avatar: `${CDN_ROOT}themes/reactory/images/avatar.png`,
+  avatar: safeCDNUrl('themes/reactory/images/avatar.png'),
   applicationRoles: roles,
   users,
   billingType: 'free',
@@ -60,7 +59,7 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
       roles: ['USER', 'ANON'],
       platform: 'web',
       mimeType: 'application/javascript',
-      uri: safeUrl([CDN_ROOT, 'plugins', 'reactory-client-core', 'lib', 'reactory.client.core.js'])      
+      uri: safeCDNUrl('plugins/reactory-client-core/lib/reactory.client.core.js')      
     }
   ],
   allowCustomTheme: true,
