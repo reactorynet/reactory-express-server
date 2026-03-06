@@ -5,6 +5,7 @@ import { GridUISchema, ListUiSchema } from './uiSchema';
 import graphql from './graphql';
 import modules from './modules';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 const name = "WorkflowRegistryManagement";
 const nameSpace = "core";
@@ -35,7 +36,7 @@ const WorkflowRegistryManagement: Reactory.Forms.IReactoryForm = {
     }
   ],
   uiFramework: 'material',
-  avatar: `${ENVIRONMENT.CDN_ROOT}themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase(),
+  avatar: safeCDNUrl(`themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase()),
   registerAsComponent: true,
   title: 'Workflow Registry',
   description: 'Browse and manage registered workflows in the system',

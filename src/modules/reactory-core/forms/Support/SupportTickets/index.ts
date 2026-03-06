@@ -5,6 +5,7 @@ import { GridUISchema, ListUiSchema } from './uiSchema';
 import modules from './modules';
 import graphql from './graphql';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 const name = "SupportTickets";
 const nameSpace = "core";
@@ -35,7 +36,7 @@ const SupportTickets: Reactory.Forms.IReactoryForm = {
     }
   ],
   uiFramework: 'material',
-  avatar: `${ENVIRONMENT.CDN_ROOT}themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase(),
+  avatar: safeCDNUrl(`themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase()),
   registerAsComponent: true,
   title: 'Support Tickets',
   description: 'Returns a list of active support tickets for the logged in user',

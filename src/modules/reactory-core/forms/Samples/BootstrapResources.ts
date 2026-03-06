@@ -1,6 +1,6 @@
 
 
-const { CDN_ROOT } = process.env;
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 export const bootstrapMaterialResources = [
   {
@@ -18,21 +18,21 @@ export const bootstrapMaterialResources = [
   },
   {
     framework: 'bootstrap',
-    uri: `${CDN_ROOT}ui/bootstrap-material-design/css/bootstrap-material-design.css`,
+    uri: safeCDNUrl('ui/bootstrap-material-design/css/bootstrap-material-design.css'),
     type: 'style',
     async: true,
     name: 'bootstrap_theme',
   },
   {
     framework: 'bootstrap',
-    uri: `${CDN_ROOT}ui/bootstrap-material-design/js/material.js`,
+    uri: safeCDNUrl('ui/bootstrap-material-design/js/material.js'),
     type: 'script',
     async: true,
     name: 'bootstrap_theme_js0',
   },
   {
     framework: 'bootstrap',
-    uri: `${CDN_ROOT}ui/bootstrap-material-design/js/ripples.js`,
+    uri: safeCDNUrl('ui/bootstrap-material-design/js/ripples.js'),
     type: 'script',
     async: true,
     name: 'bootstrap_theme_js1',

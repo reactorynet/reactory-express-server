@@ -110,13 +110,14 @@ const toClientEnv = function toClientEnv(options?: {
 
   const {
     API_URI_ROOT = 'http://localhost:4000',
-    CDN_ROOT = 'http://localhost:4000/cdn/',
+    CDN_ROOT = 'http://localhost:4000/cdn',
   } = process.env;
 
   let apiEndpoint = options?.apiEndpoint || API_URI_ROOT;
   // ensure apiEndpoint does not end with a slash
   apiEndpoint = apiEndpoint.replace(/\/+$/, '');
-  const cdnRoot = options?.cdnRoot || CDN_ROOT;
+  // Normalise CDN root — never store a trailing slash
+  const cdnRoot = (options?.cdnRoot || CDN_ROOT).replace(/\/+$/, '');
   const port = options?.port || 3000;
   const nodeEnv = options?.nodeEnv || process.env.NODE_ENV || 'development';
 

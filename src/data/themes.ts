@@ -1,4 +1,4 @@
-const woosparksTheme = {
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';\n\nconst woosparksTheme = {
   name: 'woosparks',
   theme: {
     palette: {
@@ -22,8 +22,8 @@ const woosparksTheme = {
     },
     assets: {
       login: {
-        featureImage: `${process.env.CDN_ROOT}themes/woosparks/images/phoenix.png`,
-        logo: `${process.env.CDN_ROOT}themes/woosparks/images/logo.png`,
+        featureImage: safeCDNUrl('themes/woosparks/images/phoenix.png'),
+        logo: safeCDNUrl('themes/woosparks/images/logo.png'),
       },
     },
   },

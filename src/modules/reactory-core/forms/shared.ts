@@ -6,6 +6,7 @@ import { ReactoryApplicationsForm, ReactoryDashboard, ReactoryClientAdminPage } 
 import UserForms from '@reactory/server-modules/reactory-core/forms/User';
 import OrganizationForms from '@reactory/server-modules/reactory-core/forms/Organization';
 import MicrosoftOpenIDAuthenticationForm from '@reactory/server-modules/reactory-core/forms/Security/microsoft_auth';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 
 const { CDN_ROOT } = process.env;
@@ -109,14 +110,14 @@ const MessageForm: Reactory.Forms.IReactoryForm = {
 const msTeamsResources = [
   {
     framework: 'ms-teams',
-    uri: `${CDN_ROOT}ui/ms-teams/site.css`,
+    uri: safeCDNUrl('ui/ms-teams/site.css'),
     type: 'style',
     async: true,
     name: 'ms_teams',
   },
   {
     framework: 'ms-teams',
-    uri: `${CDN_ROOT}ui/ms-teams/msteams-16.css`,
+    uri: safeCDNUrl('ui/ms-teams/msteams-16.css'),
     type: 'style',
     async: true,
     name: 'ms_teams',
@@ -130,7 +131,7 @@ const msTeamsResources = [
   },
   {
     framework: 'ms-teams',
-    uri: `${CDN_ROOT}ui/ms-teams/teamsapp.js`,
+    uri: safeCDNUrl('ui/ms-teams/teamsapp.js'),
     type: 'script',
     async: true,
     name: 'teams_app',

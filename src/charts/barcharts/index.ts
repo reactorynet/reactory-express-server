@@ -6,6 +6,7 @@ import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import Reactory from '@reactorynet/reactory-core';
 import logger from '../../logging';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 
 
@@ -56,7 +57,7 @@ export const BarChart = async (props: Reactory.IChartProps): Promise<Reactory.IC
   let additional = {};
   if (resolveCDN === true) {
     additional = {
-      cdn: `${process.env.CDN_ROOT}content/images/charts/${file}?${new Date().valueOf()}`,
+      cdn: safeCDNUrl(`content/images/charts/${file}?${new Date().valueOf()}`),
     };
   }
   return { file: outputpath, ...additional };

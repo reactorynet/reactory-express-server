@@ -6,6 +6,7 @@ import { roles } from '@reactory/server-core/authentication/decorators';
 import { Content } from '@reactory/server-modules/reactory-core/models';
 import logger from '@reactory/server-core/logging';
 import { pathExistsSync } from 'fs-extra';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 class ReactoryContentService implements Reactory.Service.IReactoryContentService {
 
@@ -164,13 +165,13 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
       //step check the folder        
       if (folder) {
         let fullpath = path.join(process.env.APP_DATA_ROOT, folder);
-        let cdnpath = path.join(process.env.CDN_ROOT, folder);
+        let cdnpath = safeCDNUrl(folder);
         if (existsSync(fullpath) === false) mkdirSync(fullpath, { recursive: true });
         if (svg) {
           let svgfile = path.join(fullpath, `${filename}.svg`);
           writeFileSync(svgfile, svg);
           logger.debug(`Saved svg to ${svgfile}`)
-          result.svgURL = path.join(cdnpath, `${filename}.svg`);
+          result.svgURL = safeCDNUrl(`${folder}/${filename}.svg`);
           let pngfile = path.join(fullpath, `${filename}.png`);
           result.success = true;
 
@@ -180,7 +181,7 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
               height
             });
             logger.info(`Converted svg to ${pngfile}`)
-            result.pngURL = path.join(cdnpath, `${filename}.png`);
+            result.pngURL = safeCDNUrl(`${folder}/${filename}.png`);
 
           } catch (convertErr) {
             logger.error(`Could not convert ${svgfile} to ${pngfile}`, convertErr)

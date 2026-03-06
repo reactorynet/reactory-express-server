@@ -10,7 +10,7 @@ import whitelist from './whitelist';
 
 import Reactory from '@reactorynet/reactory-core'
 import logger from '@reactory/server-core/logging';
-import { safeCDNUrl } from 'utils/url/safeUrl';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 
 

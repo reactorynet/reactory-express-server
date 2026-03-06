@@ -12,6 +12,7 @@ import ReactoryFileModel from "@reactory/server-modules/reactory-core/models/Cor
 import logger from "@reactory/server-core/logging";
 import { template } from "lodash";
 import { roles } from "@reactory/server-core/authentication/decorators";
+import safeUrl, { safeCDNUrl } from 'utils/url/safeUrl';
 const { APP_DATA_ROOT, CDN_ROOT } = process.env;
 
 const writeFilePromise = promisify(writeFile);
@@ -115,13 +116,13 @@ export class ReactoryFileService
           mimetype: "application/octet-stream",
           alias: dirent.name,
           size: stats.size,
-          link: `${CDN_ROOT}${path.join(
+          link: safeCDNUrl(path.join(
             "profiles",
             userId.toString(),
             "home",
             rootPath,
             dirent.name
-          )}`,
+          )),
           hash: Hash(filePath),
           uploadedBy: this.context.user._id,
           createdAt: stats.birthtime,
@@ -744,7 +745,7 @@ export class ReactoryFileService
       // get the physical file and pathname
       let phyicalFilePath = path.join(physicalPath, $filename);
 
-      let web_link = `${process.env.CDN_ROOT}${virtualFilePath}`;
+      let web_link = safeCDNUrl(virtualFilePath);
 
       //make sure the folder structure exists before attemptying the write
       if (fs.existsSync(physicalPath) === false) {
@@ -874,7 +875,7 @@ export class ReactoryFileService
       `catatlogFile(filenmae: ${filename}, ${mimetype}) ${fileStats} ${fileStats.size} --> CATALOGGING`
     );
 
-    const link = `${filename.replace(`${APP_DATA_ROOT}/`, CDN_ROOT)}`;
+    const link = safeCDNUrl(filename.replace(`${APP_DATA_ROOT}/`, ''));
     const _id: ObjectId = id ? ObjectId.createFromHexString(id) : new ObjectId();
     const $filename = path.basename(filename);
     const $path = filename

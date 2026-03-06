@@ -5,6 +5,7 @@ import { ObjectId } from 'mongodb';
 import lodash from 'lodash';
 import crypto from 'crypto';
 import { PagedUserResults, ReactoryUserFilterInput, ReactoryUserQueryFailed, ReactoryUserQueryResult } from './types';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 //@ts-ignore
 @resolver
@@ -21,9 +22,9 @@ class UserResolver {
       if (obj.avatar.startsWith('http')) {
         return obj.avatar;
       }
-      return `${process.env.CDN_ROOT}profiles/${obj._id}/${obj.avatar}`;
+      return safeCDNUrl(`profiles/${obj._id}/${obj.avatar}`);
     }
-    return `${process.env.CDN_ROOT}profiles/default/default.png`;
+    return safeCDNUrl('profiles/default/default.png');
   }
 
   @property('User', 'fullName')

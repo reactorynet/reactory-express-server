@@ -2,6 +2,7 @@
 /* eslint-disable import/no-unresolved */
 import Reactory from '@reactorynet/reactory-core';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 /**
  * This form is used to register the core plugin.
@@ -21,7 +22,7 @@ const CorePluginForm: Reactory.Forms.IReactoryForm = {
             id: 'reactory.core',
             name: 'reactory.core',
             type: 'script',
-            uri: `${ENVIRONMENT.CDN_ROOT}plugins/reactory-client-core/lib/reactory.client.core.js`,
+            uri: safeCDNUrl('plugins/reactory-client-core/lib/reactory.client.core.js'),
         },
     ],
     title: 'Reactory Core Global Form',

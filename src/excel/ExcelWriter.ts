@@ -5,7 +5,6 @@ import moment from "moment";
 
 let DefaultExcelWriterOptions: Reactory.Service.IExcelWriterOptions;
 const {
-  CDN_ROOT,
   API_DATA_ROOT
 } = process.env;
 

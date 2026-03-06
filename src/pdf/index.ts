@@ -14,6 +14,7 @@ import { isArray } from 'util';
 import _, { find } from 'lodash';
 import ApiError, { RecordNotFoundError } from '../exceptions';
 import { ReactoryContext } from '@reactory/server-core/context';
+import safeUrl from 'utils/url/safeUrl';
 
 const pdfmake = require('pdfmake/build/pdfmake');
 const PdfPrinter = require('pdfmake/src/printer');
@@ -158,7 +159,9 @@ const generate = async (props: any, res: any, usepdfkit = false, req: any) => {
     // Pipe its output somewhere, like to a file or HTTP response
     // See below for browser usage
     doc.pipe(res);
-    const partnerLogo = `${partner.themeOptions.assets.logo.replace(process.env.CDN_ROOT, `${process.env.APP_DATA_ROOT}/`)}`;
+    const cdnRoot = (process.env.CDN_ROOT || '').replace(/\/+$/, '');
+    const dataRoot = (process.env.APP_DATA_ROOT || '').replace(/\/+$/, '');
+    const partnerLogo = partner.themeOptions.assets.logo.replace(cdnRoot, dataRoot);
     logger.info(`Partner logo resolved to: ${partnerLogo}`, definition);
 
     if (props.debug === true) {
@@ -321,7 +324,9 @@ router.get('/', (req: any, res) => {
   // See below for browser usage
   doc.pipe(res);
 
-  const partnerLogo = `${partner.themeOptions.assets.logo.replace(process.env.CDN_ROOT, `${process.env.APP_DATA_ROOT}/`)}`;
+  const cdnRoot = (process.env.CDN_ROOT || '').replace(/\/+$/, '');
+  const dataRoot = (process.env.APP_DATA_ROOT || '').replace(/\/+$/, '');
+  const partnerLogo = partner.themeOptions.assets.logo.replace(cdnRoot, dataRoot);
   logger.info(`Partner logo resolved to: ${partnerLogo}`);
 
   doc.image(pdfpng(partnerLogo), 160, 30, {

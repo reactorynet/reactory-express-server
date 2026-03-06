@@ -1,7 +1,6 @@
 import Reactory from '@reactorynet/reactory-core'
 import { ReactoryLayouts } from '@reactory/server-core/data/layouts/index';
-
-const { CDN_ROOT } = process.env;
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 const DARK_PALETTE: Reactory.UX.ITheme = {
   type: 'material',
@@ -76,10 +75,10 @@ const ReactoryTheme: Reactory.UX.IReactoryTheme = {
     }
   ],    
   assets: [
-    { id: "featureImage", name: 'featureImage', url: `${CDN_ROOT}themes/reactory/images/phoenix.png`, assetType: "image",  },
-    { id: 'logo', name: 'logo', url: `${CDN_ROOT}themes/reactory/images/logo.png`, assetType: 'image' },
-    { id: 'favicon', name: 'favicon', url: `${CDN_ROOT}themes/reactory/images/favicon.png`, assetType: 'image' },
-    { id: 'avatar', name: 'avatar', url: `${CDN_ROOT}themes/reactory/images/avatar.png`, assetType: 'image' },
+    { id: "featureImage", name: 'featureImage', url: safeCDNUrl(`themes/reactory/images/phoenix.png`), assetType: "image",  },
+    { id: 'logo', name: 'logo', url: safeCDNUrl(`themes/reactory/images/logo.png`), assetType: 'image' },
+    { id: 'favicon', name: 'favicon', url: safeCDNUrl(`themes/reactory/images/favicon.png`), assetType: 'image' },
+    { id: 'avatar', name: 'avatar', url: safeCDNUrl(`themes/reactory/images/avatar.png`), assetType: 'image' },
   ],
   layouts: ReactoryLayouts,  
   content: {

@@ -4,12 +4,12 @@ import ApiError, { OrganizationNotFoundError } from '@reactory/server-core/excep
 
 import Reactory from '@reactorynet/reactory-core';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 // TODO: Convert to a reactory resolver class type.
 
 const {
   APP_DATA_ROOT,
-  CDN_ROOT
 } = process.env;
 
 
@@ -26,11 +26,11 @@ const organizationResolver = {
     },
     avatarURL(organization: any, params: any, context: Reactory.Server.IReactoryContext) { //eslint-disable-line
       if (organization && organization.avatar) {
-        return `${CDN_ROOT}organization/${organization._id}/${organization.avatar}?t=${moment().format('YYYMMDDhh')}`;
+        return safeCDNUrl(`organization/${organization._id}/${organization.avatar}?t=${moment().format('YYYMMDDhh')}`);
       }
 
       if (organization && organization.logo) {
-        return `${CDN_ROOT}organization/${organization._id}/${organization.logo}?t=${moment().format('YYYMMDDhh')}`;
+        return safeCDNUrl(`organization/${organization._id}/${organization.logo}?t=${moment().format('YYYMMDDhh')}`);
       }
 
       return null;
@@ -42,7 +42,7 @@ const organizationResolver = {
     },
     logoURL: (organization) => {
       if (organization && organization.logo) {
-        return `${CDN_ROOT}organization/${organization._id}/${organization.logo}?t=${moment().format('YYYMMDDhh')}`;
+        return safeCDNUrl(`organization/${organization._id}/${organization.logo}?t=${moment().format('YYYMMDDhh')}`);
       }
 
       return null;

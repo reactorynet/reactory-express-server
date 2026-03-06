@@ -7,6 +7,7 @@ import version from './version';
 import modules from './modules';
 
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 const name = "SupportTicket";
 const nameSpace = "core";
@@ -20,7 +21,7 @@ const SupportTicket: Reactory.Forms.IReactoryForm = {
   title: "reactory:support-ticket.form.title",  
   description: 'reactory:support-ticket.form.description',
   icon: 'dynamic_form',
-  avatar: `${ENVIRONMENT.CDN_ROOT}themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase(),
+  avatar: safeCDNUrl(`themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase()),
   registerAsComponent: true,  
   schema: SupportTicketSchemaResolver,
   uiFramework: 'material',

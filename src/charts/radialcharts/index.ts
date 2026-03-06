@@ -3,6 +3,7 @@ import fs from 'fs';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import Reactory from '@reactorynet/reactory-core';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 const defaultData = {
   labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
@@ -78,7 +79,7 @@ export const DefaultRadarChart = async (props: Reactory.IChartProps): Promise<Re
   let additional = {};
   if (resolveCDN === true) {
     additional = {
-      cdn: `${process.env.CDN_ROOT}content/images/charts/${file}?${new Date().valueOf()}`,
+      cdn: safeCDNUrl(`content/images/charts/${file}?${new Date().valueOf()}`),
     };
   }
   return { file: outputpath, ...additional };
@@ -169,7 +170,7 @@ export const DefaultRadarChart = async (props: Reactory.IChartProps): Promise<Re
 //         let additional = {};
 //         if (resolveCDN === true) {
 //           additional = {
-//             cdn: `${process.env.CDN_ROOT}content/images/charts/${file}?${new Date().valueOf()}`,
+//             cdn: safeCDNUrl(`content/images/charts/${file}?${new Date().valueOf()}`),
 //           };
 //         }
 //         resolve({ file: outputpath, ...additional });

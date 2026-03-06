@@ -5,6 +5,7 @@ import { GridUISchema } from './uiSchema';
 import modules from './modules';
 import graphql from './graphql';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 const name = 'ApplicationUsers';
 const nameSpace = 'core';
@@ -27,7 +28,7 @@ const ApplicationUsers: Reactory.Forms.IReactoryForm = {
     }
   ],
   uiFramework: 'material',
-  avatar: `${ENVIRONMENT.CDN_ROOT}themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase(),
+  avatar: safeCDNUrl(`themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase()),
   registerAsComponent: true,
   title: 'Application Users',
   description: 'Manage users for a specific application/client with advanced filtering and search',

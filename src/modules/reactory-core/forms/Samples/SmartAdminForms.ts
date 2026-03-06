@@ -1,60 +1,59 @@
 "use strict";
 
 import Reactory from '@reactorynet/reactory-core';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 /**
  * This file contains samples for the Smart Admin resource bundle as a 3rd party component provider.
  */
 
 
-const { CDN_ROOT } = process.env;
-
 const smartAdminResources = [
   {
     framework: 'bootstrap',
-    uri: `${CDN_ROOT}ui/smart-admin/css/bootstrap.min.css`,
+    uri: safeCDNUrl('ui/smart-admin/css/bootstrap.min.css'),
     type: 'style',
     async: true,
     name: 'bootstrap_main',
   },
   {
     framework: 'font-awesome',
-    uri: `${CDN_ROOT}ui/smart-admin/css/font-awesome.min.css`,
+    uri: safeCDNUrl('ui/smart-admin/css/font-awesome.min.css'),
     type: 'style',
     async: true,
     name: 'font-awesome',
   },
   {
     framework: 'bootstrap-invoice',
-    uri: `${CDN_ROOT}ui/smart-admin/css/invoice.min.css`,
+    uri: safeCDNUrl('ui/smart-admin/css/invoice.min.css'),
     type: 'style',
     async: true,
     name: 'bootstrap_invoice',
   },
   {
     framework: 'smart-admin-production',
-    uri: `${CDN_ROOT}ui/smart-admin/css/smartadmin-production.min.css`,
+    uri: safeCDNUrl('ui/smart-admin/css/smartadmin-production.min.css'),
     type: 'style',
     async: true,
     name: 'smart_admin_prod',
   },
   {
     framework: 'smart-admin-production-plugins',
-    uri: `${CDN_ROOT}ui/smart-admin/css/smartadmin-production-plugins.min.css`,
+    uri: safeCDNUrl('ui/smart-admin/css/smartadmin-production-plugins.min.css'),
     type: 'style',
     async: true,
     name: 'smart_admin_prod_plugins',
   },
   {
     framework: 'smart-admin-react',
-    uri: `${CDN_ROOT}ui/smart-admin/css/smartadmin-react.css`,
+    uri: safeCDNUrl('ui/smart-admin/css/smartadmin-react.css'),
     type: 'style',
     async: true,
     name: 'smart_admin_ract',
   },
   {
     framework: 'smart-admin-skins',
-    uri: `${CDN_ROOT}ui/smart-admin/css/smartadmin-skins.min.css`,
+    uri: safeCDNUrl('ui/smart-admin/css/smartadmin-skins.min.css'),
     type: 'style',
     async: true,
     name: 'smart_admin_skins',

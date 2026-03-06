@@ -4,6 +4,7 @@ import path from "path";
 import { cwd } from "process";
 import Reactory from "@reactorynet/reactory-core";
 import { ENVIRONMENT } from "@reactory/server-core/types/constants";
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 const util = require("util");
 const exec = util.promisify(require("child_process").exec);
@@ -301,7 +302,7 @@ class ReactoryModuleCompilerService
     return {
       name: module.id,
       type: "script",
-      uri: `${process.env.CDN_ROOT}plugins/__runtime__/lib/${module.id}.min.js?cs=${checksum}`,
+      uri: safeCDNUrl(`plugins/__runtime__/lib/${module.id}.min.js?cs=${checksum}`),
       id: module.id,
       signature: checksum,
       signatureMethod: "sha1",
@@ -401,7 +402,7 @@ class ReactoryModuleCompilerService
     return {
       name: module.id,
       type: "script",
-      uri: `${process.env.CDN_ROOT}plugins/__runtime__/lib/${module.id}.min.js?error=true`,
+      uri: safeCDNUrl(`plugins/__runtime__/lib/${module.id}.min.js?error=true`),
       id: module.id,
       signature: "",
       signatureMethod: "sha1",
