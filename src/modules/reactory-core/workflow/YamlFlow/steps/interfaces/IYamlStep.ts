@@ -3,6 +3,7 @@
  * Defines the contract for all step implementations
  */
 
+import Reactory from '@reactorynet/reactory-core';
 import { YamlWorkflowDefinition } from '../../types/WorkflowDefinition';
 
 /**
@@ -38,6 +39,13 @@ export interface StepExecutionContext {
     info: (message: string, ...args: any[]) => void;
     debug: (message: string, ...args: any[]) => void;
   };
+
+  /** 
+   * Reactory context for accessing services, user info, and partner context.
+   * Provides access to getService(), user, partner, and other platform capabilities.
+   * May be undefined if the workflow is executed outside of a Reactory server context.
+   */
+  reactoryContext?: Reactory.Server.IReactoryContext;
 }
 
 /**

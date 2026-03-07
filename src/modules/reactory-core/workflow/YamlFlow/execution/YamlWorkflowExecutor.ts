@@ -4,6 +4,7 @@
  * progress tracking, and error handling
  */
 
+import Reactory from '@reactorynet/reactory-core';
 import { YamlStepRegistry } from '../steps/registry/YamlStepRegistry';
 import { YamlWorkflowDefinition, StepConfig } from '../types/WorkflowDefinition';
 import { IYamlStep, StepExecutionContext } from '../steps/interfaces/IYamlStep';
@@ -28,10 +29,12 @@ export class YamlWorkflowExecutor {
   private stepRegistry: YamlStepRegistry;
   private currentState: ExecutionStateSnapshot;
   private isCancelled: boolean = false;
+  private readonly reactoryContext?: Reactory.Server.IReactoryContext;
   
-  constructor(stepRegistry: YamlStepRegistry) {
+  constructor(stepRegistry: YamlStepRegistry, reactoryContext?: Reactory.Server.IReactoryContext) {
     this.stepRegistry = stepRegistry;
     this.currentState = this.createInitialState();
+    this.reactoryContext = reactoryContext;
   }
   
   /**
@@ -197,6 +200,8 @@ export class YamlWorkflowExecutor {
       
       // Create execution context
       const context = this.createExecutionContext(workflow, executionId, startTime, options);
+      // Attach Reactory context from options or constructor
+      context.reactoryContext = options.reactoryContext || this.reactoryContext;
       
       // Execute steps in order
       const executedSteps: StepExecutionRecord[] = [];
@@ -426,7 +431,8 @@ export class YamlWorkflowExecutor {
           nameSpace: workflowContext.workflow.namespace,
           name: workflowContext.workflow.name,
           version: workflowContext.workflow.version
-        }
+        },
+        reactoryContext: workflowContext.reactoryContext,
       };
       
       // Execute step

@@ -3,6 +3,7 @@
  * Defines interfaces and types for workflow execution engine
  */
 
+import Reactory from '@reactorynet/reactory-core';
 import { StepExecutionResult } from '../../steps/interfaces/IYamlStep';
 
 /**
@@ -44,6 +45,12 @@ export interface WorkflowExecutionContext {
     completedSteps: string[];
     totalSteps: number;
   };
+
+  /**
+   * Reactory context for accessing services, user info, and partner context.
+   * Available to all steps in the workflow execution.
+   */
+  reactoryContext?: Reactory.Server.IReactoryContext;
 }
 
 /**
@@ -207,6 +214,9 @@ export interface ExecutionOptions {
   
   /** Dry run mode - validate without executing */
   dryRun?: boolean;
+
+  /** Reactory context to provide to workflow steps */
+  reactoryContext?: Reactory.Server.IReactoryContext;
 }
 
 /**
