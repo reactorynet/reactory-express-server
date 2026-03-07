@@ -1,4 +1,6 @@
-import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';\n\nconst woosparksTheme = {
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
+
+const woosparksTheme = {
   name: 'woosparks',
   theme: {
     palette: {
