@@ -86,7 +86,7 @@ echo "⬇️ Compiling Reactory Server"
 # First we compile our helpers in the bin/ directory
 NODE_PATH=./src npx babel ./bin --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow --extensions ".ts" --out-dir $BUILD_PATH/bin
 # Compile the app/ directory
-NODE_PATH=./src env-cmd -f $ENV_FILE npx babel ./src --presets @babel/env --extensions ".ts,.tsx" --out-dir $APP_BUILD_PATH
+NODE_PATH=./src env-cmd -f $ENV_FILE npx babel ./src --presets @babel/env --extensions ".ts,.tsx" --ignore "**/node_modules/**" --out-dir $APP_BUILD_PATH
 # Copy additional files while preserving directory structure
 echo "🔁 Synchronizing additional files [app, bin, lib]"
 rsync -av --filter='merge ./bin/build.app.rsync' ./src/ $APP_BUILD_PATH --quiet
