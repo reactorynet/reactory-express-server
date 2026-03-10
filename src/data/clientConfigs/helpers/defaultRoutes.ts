@@ -17,6 +17,17 @@ export const loginroute = {
   ],
 };
 
+export const registerRoute = {
+  id: '5',
+  key: 'register',
+  title: 'Register',
+  path: '/register',
+  public: true,
+  roles: ['ANON'],
+  componentFqn: 'core.Register@1.0.0',
+};
+
+
 export const forgotpasswordroute = {
   id: '1',
   key: 'forgot-password',

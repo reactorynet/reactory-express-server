@@ -3,9 +3,11 @@ import {
   loginroute,
   logoutroute,
   resetpasswordroute,
-  forgotpasswordroute,  
+  forgotpasswordroute,
+  registerRoute,  
 } from '@reactory/server-core/data/clientConfigs/helpers/defaultRoutes';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
+import safeUrl from '@reactory/server-core/utils/url/safeUrl';
 
 
 
@@ -37,35 +39,36 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
               provider: 'google', 
               component: 'core.GoogleLoginButton@1.0.0', 
               props: { 
-                url: `${ENVIRONMENT.API_URI_ROOT}auth/google/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
+                url: safeUrl([process?.env?.API_URI_ROOT ?? 'http://localhost:4000', 'auth/google/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}']) 
               }
             },
-            // { 
-            //   provider: 'microsoft', 
-            //   component: 'microsoft.MicrosoftLogin@1.0.0',
-            //   props: { 
-            //     url: `${ENVIRONMENT.API_URI_ROOT}auth/microsoft/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
-            //   }
-            // },
-            // { 
-            //   provider: 'github', 
-            //   component: 'core.GitHubLoginButton@1.0.0', 
-            //   props: { 
-            //     url: `${ENVIRONMENT.API_URI_ROOT}auth/github/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
-            //   }
-            // },
-            // { 
-            //   provider: 'okta', 
-            //   component: 'core.OktaLoginButton@1.0.0', 
-            //   props: { 
-            //     url: `${ENVIRONMENT.API_URI_ROOT}auth/okta/start??x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}` 
-            //   }
-            // },                        
+            { 
+              provider: 'microsoft', 
+              component: 'core.MicrosoftLoginButton@1.0.0',
+              props: { 
+                url: safeUrl([process?.env?.API_URI_ROOT ?? 'http://localhost:4000', 'auth/microsoft/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}']) 
+              }
+            },
+            { 
+              provider: 'github', 
+              component: 'core.GitHubLoginButton@1.0.0', 
+              props: { 
+                url: safeUrl([process?.env?.API_URI_ROOT ?? 'http://localhost:4000', 'auth/github/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}']) 
+              }
+            },
+            { 
+              provider: 'okta', 
+              component: 'core.OktaLoginButton@1.0.0', 
+              props: { 
+                url: safeUrl([process?.env?.API_URI_ROOT ?? 'http://localhost:4000', 'auth/okta/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}']) 
+              }
+            },                        
           ],
         },
       },
     ],
   },
+  registerRoute,
   {
     key: 'about',
     title: 'About Reactory',
