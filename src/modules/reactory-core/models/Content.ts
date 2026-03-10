@@ -26,6 +26,14 @@ const ContentSchema = new mongoose.Schema<Reactory.Models.IReactoryContent>({
     flagTypes: [ String ],
     reason: String,
   }],
+  parent: {
+    type: ObjectId,
+    ref: 'Content'
+  },
+  children: [{
+    type: ObjectId,
+    ref: 'Content'
+  }],
   flagged: Boolean,
   topics: [ String ],
   title: String,

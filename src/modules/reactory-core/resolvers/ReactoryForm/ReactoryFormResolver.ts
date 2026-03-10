@@ -77,8 +77,8 @@ class ReactoryFormResolver {
 
   @property("ReactoryForm", "backButton")
   async getBackButton(form: Reactory.Forms.IReactoryForm, args: any, context: Reactory.Server.IReactoryContext, info: any): Promise<boolean> {   
-    if(form.backButton === null) return false;
-    if(form.backButton) return true;
+    if(!form.backButton) return false;
+    else return true;
   }
 
   @property("ReactoryForm", "defaultFormValue")

@@ -113,19 +113,20 @@ const toClientEnv = function toClientEnv(options?: {
     CDN_ROOT = 'http://localhost:4000/cdn',
   } = process.env;
 
+
   let apiEndpoint = options?.apiEndpoint || API_URI_ROOT;
+  const upperKey = client.key.toUpperCase().replace(/-/g, '_');
   // ensure apiEndpoint does not end with a slash
   apiEndpoint = apiEndpoint.replace(/\/+$/, '');
   // Normalise CDN root — never store a trailing slash
   const cdnRoot = (options?.cdnRoot || CDN_ROOT).replace(/\/+$/, '');
-  const port = options?.port || 3000;
+  const port = options?.port || process.env[`${upperKey}_APPLICATION_PORT`] ? Number.parseInt(process.env[`${upperKey}_APPLICATION_PORT`], 10) : 3000;
   const nodeEnv = options?.nodeEnv || process.env.NODE_ENV || 'development';
 
   // Resolve the client password from the environment since the model stores
   // a hashed version. Convention: REACTORY_CLIENT_PASSWORD_<UPPER_KEY> or
   // falls back to REACTORY_APPLICATION_PASSWORD.
-  const upperKey = client.key.toUpperCase().replace(/-/g, '_');
-  const clientPassword = process.env[`REACTORY_CLIENT_PASSWORD_${upperKey}`]
+  const clientPassword = process.env[`${upperKey}_APPLICATION_PASSWORD`]
     || process.env.REACTORY_APPLICATION_PASSWORD
     || '';
 
