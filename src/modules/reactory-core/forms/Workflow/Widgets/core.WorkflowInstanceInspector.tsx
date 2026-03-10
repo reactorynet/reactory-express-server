@@ -252,8 +252,19 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
   const pointers: any[] = inst.executionPointers || [];
   const sortedPointers = [...pointers].sort((a, b) => a.stepId - b.stepId);
 
+  const handleDownloadData = () => {
+    const json = JSON.stringify(inst, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `workflow-${inst.id || 'instance'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, overflowY: 'auto', maxHeight: '100%' }}>
       {/* ========== Header ========== */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}>
         <Box sx={{ flex: 1 }}>
@@ -335,16 +346,23 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
       {/* ========== Input / Workflow Data ========== */}
       {inst.data && Object.keys(inst.data).length > 0 && (
         <Box sx={{ mb: 3 }}>
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', mb: 1 }}
-            onClick={() => setShowInputData((prev: boolean) => !prev)}
-          >
-            <Icon sx={{ fontSize: 18, transition: 'transform 0.2s', transform: showInputData ? 'rotate(90deg)' : 'none' }}>
-              chevron_right
-            </Icon>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-              Workflow Data
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', flex: 1 }}
+              onClick={() => setShowInputData((prev: boolean) => !prev)}
+            >
+              <Icon sx={{ fontSize: 18, transition: 'transform 0.2s', transform: showInputData ? 'rotate(90deg)' : 'none' }}>
+                chevron_right
+              </Icon>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Workflow Data
+              </Typography>
+            </Box>
+            <Tooltip title="Download as JSON">
+              <IconButton size="small" onClick={handleDownloadData}>
+                <Icon sx={{ fontSize: 18 }}>download</Icon>
+              </IconButton>
+            </Tooltip>
           </Box>
           <Collapse in={showInputData}>
             <Box
@@ -358,7 +376,7 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
                 fontSize: '0.8rem',
                 fontFamily: 'monospace',
                 overflow: 'auto',
-                maxHeight: 300,
+                maxHeight: 600,
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
                 m: 0,

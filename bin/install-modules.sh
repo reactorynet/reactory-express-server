@@ -1,28 +1,41 @@
 #!/usr/bin/env bash
 # ============================================================================
-# Reactory Module & Plugin Installer
+# Reactory Module, Plugin & Client Config Installer
 #
-# Installs optional Reactory server modules into src/modules/ and client
-# plugins into $REACTORY_DATA/plugins/ by cloning them from their git
-# repositories.
+# Installs optional Reactory server modules into src/modules/, client
+# plugins into $REACTORY_DATA/plugins/, and client configurations into
+# src/data/clientConfigs/ by cloning them from their git repositories.
 #
-# Module catalogue:  src/modules/available.json
-# Plugin catalogue:  $REACTORY_DATA/plugins/available.json
+# Module catalogue:        src/modules/available.json
+# Plugin catalogue:        $REACTORY_DATA/plugins/available.json
+# Client config catalogue: src/data/clientConfigs/available.json
+#
+# Private catalogues (optional, git-ignored):
+#   src/modules/available-private.json
+#   $REACTORY_DATA/plugins/available-private.json
+#   src/data/clientConfigs/available-private.json
+#
+# When a private catalogue exists alongside the public one it is merged in
+# automatically.  Private entries take precedence over public entries that
+# share the same key, letting engineers add or override entries without
+# modifying the platform-shipped catalogues.
 #
 # After installation an installed.json manifest is written to each target
 # directory so that other scripts can verify which components are present
 # without needing network access.
 #
 # Usage:
-#   bin/install-modules.sh                          # interactive (modules + plugins)
+#   bin/install-modules.sh                          # interactive (modules + plugins + clients)
 #   bin/install-modules.sh --all                    # install everything
 #   bin/install-modules.sh --module <key>           # install one server module
 #   bin/install-modules.sh --plugin <key>           # install one plugin
-#   bin/install-modules.sh --modules-only           # skip plugin selection
-#   bin/install-modules.sh --plugins-only           # skip module selection
+#   bin/install-modules.sh --client <key>           # install one client config
+#   bin/install-modules.sh --modules-only           # only install server modules
+#   bin/install-modules.sh --plugins-only           # only install plugins
+#   bin/install-modules.sh --clients-only           # only install client configs
 #   bin/install-modules.sh --https                  # force HTTPS clone URLs
 #   bin/install-modules.sh --ssh                    # force SSH clone URLs (default)
-#   bin/install-modules.sh --reset-runtime           # clear plugins/__runtime__ compiled bundles
+#   bin/install-modules.sh --reset-runtime          # clear plugins/__runtime__ compiled bundles
 # ============================================================================
 set -euo pipefail
 
@@ -245,6 +258,55 @@ PYEOF
 }
 
 # ---------------------------------------------------------------------------
+# Build a merged catalogue from available.json + available-private.json.
+#
+# If available-private.json exists in the same directory as the public
+# catalogue it is merged in: private entries override public entries that
+# share the same key, and any additional private entries are appended.
+# The merged result is written to a temp file whose path is printed to
+# stdout.  If no private catalogue is found the original path is echoed
+# unchanged so callers can always use the return value as the catalogue.
+# ---------------------------------------------------------------------------
+build_merged_catalogue() {
+  local available_file="$1"
+  local private_file
+  private_file="$(dirname "$available_file")/available-private.json"
+
+  if [[ ! -f "$private_file" ]]; then
+    echo "$available_file"
+    return 0
+  fi
+
+  local tmp
+  tmp=$(mktemp /tmp/reactory-catalogue-XXXXXX.json)
+
+  python3 - <<PYEOF
+import json
+
+with open('${available_file}') as f:
+    public = json.load(f)
+
+with open('${private_file}') as f:
+    private = json.load(f)
+
+# Public entries first; private entries override by key and append new ones
+merged = {m['key']: m for m in public}
+for m in private:
+    merged[m['key']] = m
+
+with open('${tmp}', 'w') as f:
+    json.dump(list(merged.values()), f, indent=2)
+
+pub_count  = len(public)
+priv_count = len(private)
+total      = len(merged)
+print(f"Merged catalogue: {pub_count} public + {priv_count} private = {total} entries")
+PYEOF
+
+  echo "$tmp"
+}
+
+# ---------------------------------------------------------------------------
 # Resolve a git URL from an available.json file by key
 # ---------------------------------------------------------------------------
 resolve_git_url() {
@@ -464,6 +526,15 @@ main() {
     fi
   fi
 
+  local clients_dir="$server_root/src/data/clientConfigs"
+  local clients_available="$clients_dir/available.json"
+  local clients_installed="$clients_dir/installed.json"
+  local has_clients=false
+
+  if [[ -f "$clients_available" ]]; then
+    has_clients=true
+  fi
+
   # --- Pre-flight checks ---
   if [[ ! -f "$modules_available" ]]; then
     error "Module catalogue not found: $modules_available"
@@ -484,9 +555,11 @@ main() {
   local install_all=false
   local specific_module=""
   local specific_plugin=""
+  local specific_client=""
   local use_ssh="y"
   local modules_only=false
   local plugins_only=false
+  local clients_only=false
   local reset_runtime=false
 
   while [[ $# -gt 0 ]]; do
@@ -494,8 +567,10 @@ main() {
       --all)            install_all=true ;;
       --module)         specific_module="${2:-}"; shift ;;
       --plugin)         specific_plugin="${2:-}"; shift ;;
+      --client)         specific_client="${2:-}"; shift ;;
       --modules-only)   modules_only=true ;;
       --plugins-only)   plugins_only=true ;;
+      --clients-only)   clients_only=true ;;
       --https)          use_ssh="n" ;;
       --ssh)            use_ssh="y" ;;
       --reset-runtime)  reset_runtime=true ;;
@@ -504,11 +579,13 @@ main() {
 Usage: $(basename "$0") [OPTIONS]
 
 Options:
-  --all                Install all available modules and plugins
+  --all                Install all available modules, plugins, and client configs
   --module <key>       Install a specific server module by key
   --plugin <key>       Install a specific plugin by key
-  --modules-only       Only install server modules (skip plugins)
-  --plugins-only       Only install plugins (skip server modules)
+  --client <key>       Install a specific client config by key
+  --modules-only       Only install server modules (skip plugins and client configs)
+  --plugins-only       Only install plugins (skip modules and client configs)
+  --clients-only       Only install client configs (skip modules and plugins)
   --ssh                Force SSH clone URLs (default)
   --https              Force HTTPS clone URLs
   --reset-runtime      Clear compiled bundles in plugins/__runtime__/
@@ -529,26 +606,59 @@ EOF
   done
 
   # --- Banner ---
-  banner "Reactory Module & Plugin Installer"
+  banner "Reactory Module, Plugin & Client Config Installer"
   info "Server root  : $server_root"
   info "Modules dir  : $modules_dir"
+  [[ -f "$modules_dir/available-private.json" ]] && info "              + available-private.json detected"
   if [[ "$has_plugins" == true ]]; then
     info "Plugins dir  : $plugins_dir"
     info "Data root    : $data_root"
+    [[ -f "$plugins_dir/available-private.json" ]] && info "              + available-private.json detected"
   else
     warn "Plugin catalogue not found — plugin installation will be skipped."
     if [[ -z "$data_root" ]]; then
       warn "Set REACTORY_DATA or ensure reactory-data is a sibling of the server directory."
     fi
   fi
+  if [[ "$has_clients" == true ]]; then
+    info "Clients dir  : $clients_dir"
+    [[ -f "$clients_dir/available-private.json" ]] && info "              + available-private.json detected"
+  else
+    warn "Client config catalogue not found — client config installation will be skipped."
+  fi
   printf "\n"
+
+  # --- Build merged catalogues (public + private) ---
+  local modules_catalogue
+  modules_catalogue=$(build_merged_catalogue "$modules_available")
+
+  local plugins_catalogue=""
+  if [[ "$has_plugins" == true ]]; then
+    plugins_catalogue=$(build_merged_catalogue "$plugins_available")
+  fi
+
+  local clients_catalogue=""
+  if [[ "$has_clients" == true ]]; then
+    clients_catalogue=$(build_merged_catalogue "$clients_available")
+  fi
+
+  # Clean up any temp files created by build_merged_catalogue on exit
+  cleanup_tmp_catalogues() {
+    [[ "$modules_catalogue" != "$modules_available" && -f "$modules_catalogue" ]] \
+      && rm -f "$modules_catalogue"
+    [[ -n "$plugins_catalogue" && "$plugins_catalogue" != "$plugins_available" && -f "$plugins_catalogue" ]] \
+      && rm -f "$plugins_catalogue"
+    [[ -n "$clients_catalogue" && "$clients_catalogue" != "$clients_available" && -f "$clients_catalogue" ]] \
+      && rm -f "$clients_catalogue"
+  }
+  trap cleanup_tmp_catalogues EXIT
 
   # ------------------------------------------------------------------
   # Install a specific module
   # ------------------------------------------------------------------
   if [[ -n "$specific_module" ]]; then
-    install_entry_by_key "$specific_module" "$modules_dir" "$modules_available" "$use_ssh" "y"
-    write_installed_json "$modules_dir" "$modules_available" "$modules_installed" "reactory-core"
+    install_entry_by_key "$specific_module" "$modules_dir" "$modules_catalogue" "$use_ssh" "y"
+    write_installed_json "$modules_dir" "$modules_catalogue" "$modules_installed" "reactory-core"
     success "installed.json updated: $modules_installed"
     exit 0
   fi
@@ -561,14 +671,28 @@ EOF
       error "Plugin catalogue not available — cannot install plugin."
       exit 1
     fi
-    install_entry_by_key "$specific_plugin" "$plugins_dir" "$plugins_available" "$use_ssh" "y"
-    write_installed_json "$plugins_dir" "$plugins_available" "$plugins_installed"
+    install_entry_by_key "$specific_plugin" "$plugins_dir" "$plugins_catalogue" "$use_ssh" "y"
+    write_installed_json "$plugins_dir" "$plugins_catalogue" "$plugins_installed"
     success "installed.json updated: $plugins_installed"
     if [[ "$reset_runtime" == true ]]; then
       clear_runtime_dir "$plugins_dir/__runtime__"
     else
       prompt_clear_runtime "$plugins_dir"
     fi
+    exit 0
+  fi
+
+  # ------------------------------------------------------------------
+  # Install a specific client config
+  # ------------------------------------------------------------------
+  if [[ -n "$specific_client" ]]; then
+    if [[ "$has_clients" != true ]]; then
+      error "Client config catalogue not available — cannot install client config."
+      exit 1
+    fi
+    install_entry_by_key "$specific_client" "$clients_dir" "$clients_catalogue" "$use_ssh" "n"
+    write_installed_json "$clients_dir" "$clients_catalogue" "$clients_installed" "reactory"
+    success "installed.json updated: $clients_installed"
     exit 0
   fi
 
@@ -590,46 +714,58 @@ EOF
   # Install everything (--all)
   # ------------------------------------------------------------------
   if [[ "$install_all" == true ]]; then
-    if [[ "$plugins_only" != true ]]; then
-      install_all_entries "module" "$modules_dir" "$modules_available" "$use_ssh" "reactory-core" "y"
+    if [[ "$plugins_only" != true && "$clients_only" != true ]]; then
+      install_all_entries "module" "$modules_dir" "$modules_catalogue" "$use_ssh" "reactory-core" "y"
     fi
-    if [[ "$modules_only" != true && "$has_plugins" == true ]]; then
-      install_all_entries "plugin" "$plugins_dir" "$plugins_available" "$use_ssh" "" "y"
+    if [[ "$modules_only" != true && "$clients_only" != true && "$has_plugins" == true ]]; then
+      install_all_entries "plugin" "$plugins_dir" "$plugins_catalogue" "$use_ssh" "" "y"
       if [[ "$reset_runtime" == true ]]; then
         clear_runtime_dir "$plugins_dir/__runtime__"
       else
         prompt_clear_runtime "$plugins_dir"
       fi
+    fi
+    if [[ "$modules_only" != true && "$plugins_only" != true && "$has_clients" == true ]]; then
+      install_all_entries "client config" "$clients_dir" "$clients_catalogue" "$use_ssh" "reactory" "n"
     fi
   else
     # ----------------------------------------------------------------
     # Interactive flow
     # ----------------------------------------------------------------
-    if [[ "$plugins_only" != true ]]; then
-      interactive_select "module" "$modules_dir" "$modules_available" "$use_ssh" "reactory-core" "y"
+    if [[ "$plugins_only" != true && "$clients_only" != true ]]; then
+      interactive_select "module" "$modules_dir" "$modules_catalogue" "$use_ssh" "reactory-core" "y"
     fi
-    if [[ "$modules_only" != true && "$has_plugins" == true ]]; then
+    if [[ "$modules_only" != true && "$clients_only" != true && "$has_plugins" == true ]]; then
       printf "\n"
-      interactive_select "plugin" "$plugins_dir" "$plugins_available" "$use_ssh" "" "y"
+      interactive_select "plugin" "$plugins_dir" "$plugins_catalogue" "$use_ssh" "" "y"
       if [[ "$reset_runtime" == true ]]; then
         clear_runtime_dir "$plugins_dir/__runtime__"
       else
         prompt_clear_runtime "$plugins_dir"
       fi
+    fi
+    if [[ "$modules_only" != true && "$plugins_only" != true && "$has_clients" == true ]]; then
+      printf "\n"
+      interactive_select "client config" "$clients_dir" "$clients_catalogue" "$use_ssh" "reactory" "n"
     fi
   fi
 
   # ------------------------------------------------------------------
   # Refresh installed manifests
   # ------------------------------------------------------------------
-  if [[ "$plugins_only" != true ]]; then
-    write_installed_json "$modules_dir" "$modules_available" "$modules_installed" "reactory-core"
+  if [[ "$plugins_only" != true && "$clients_only" != true ]]; then
+    write_installed_json "$modules_dir" "$modules_catalogue" "$modules_installed" "reactory-core"
     success "installed.json updated: $modules_installed"
   fi
 
-  if [[ "$modules_only" != true && "$has_plugins" == true ]]; then
-    write_installed_json "$plugins_dir" "$plugins_available" "$plugins_installed"
+  if [[ "$modules_only" != true && "$clients_only" != true && "$has_plugins" == true ]]; then
+    write_installed_json "$plugins_dir" "$plugins_catalogue" "$plugins_installed"
     success "installed.json updated: $plugins_installed"
+  fi
+
+  if [[ "$modules_only" != true && "$plugins_only" != true && "$has_clients" == true ]]; then
+    write_installed_json "$clients_dir" "$clients_catalogue" "$clients_installed" "reactory"
+    success "installed.json updated: $clients_installed"
   fi
 
   printf "\n"
@@ -640,6 +776,10 @@ EOF
   if [[ "$has_plugins" == true ]]; then
     info "Plugins are available in:"
     info "  $plugins_dir/"
+  fi
+  if [[ "$has_clients" == true ]]; then
+    info "Client configs are available in:"
+    info "  $clients_dir/"
   fi
   info "Or re-run the main installer: bin/install.sh"
   printf "\n"
