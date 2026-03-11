@@ -2,6 +2,8 @@ import Reactory from "@reactorynet/reactory-core";
 import { ObjectId } from "mongodb";
 import ApiError, {
   RecordNotFoundError,
+  UserExistsError,
+  UserValidationError,
 } from "@reactory/server-core/exceptions";
 import User from '@reactory/server-modules/reactory-core/models/User'
 import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
@@ -1012,7 +1014,115 @@ class UserService implements Reactory.Service.IReactoryUserService {
     user.deleted = true;
     await user.save();
     return true;
-  }  
+  }
+
+  /**
+   * Self-registration for anonymous users.
+   * No role guard — public endpoint flow only.
+   * Finds or creates the organization, creates the user, and assigns memberships.
+   * If no username is provided, derives one from the email local-part.
+   */
+  async selfRegister(
+    userInput: Reactory.Models.IUserCreateParams,
+    organizationInput: { name?: string; id?: string },
+    partner: Reactory.Models.IReactoryClientDocument,
+  ): Promise<{ user: Reactory.Models.IUserDocument; organization: Reactory.Models.IOrganizationDocument }> {
+    if (!userInput?.email) throw new UserValidationError('Email is required', { field: 'email' });
+    if (!userInput?.password) throw new UserValidationError('Password is required', { field: 'password' });
+    if (!partner?._id) throw new ApiError('Partner is required for registration');
+
+    // 1. Resolve username — fall back to sanitized email local-part when blank
+    let username = (userInput.username || '').trim().toLowerCase();
+    if (!username) {
+      const emailLocal = userInput.email.split('@')[0];
+      username = emailLocal.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 50);
+      if (username.length < 3) username = username.padEnd(3, '_');
+    }
+    // Ensure uniqueness: if the derived/provided username is already taken, append a 4-digit suffix
+    const existingByUsername = await User.findOne({ username }).then();
+    if (existingByUsername) {
+      const suffix = Math.floor(1000 + Math.random() * 9000).toString();
+      username = `${username.slice(0, 46)}_${suffix}`;
+    }
+
+    // 2. Find or create the organization directly via model (bypasses role-guarded service)
+    let organization: Reactory.Models.IOrganizationDocument = null;
+    const isNewOrg = !organizationInput?.id;
+    if (!isNewOrg && ObjectId.isValid(organizationInput.id)) {
+      organization = await Organization.findById(organizationInput.id).then();
+    } else if (organizationInput?.name) {
+      organization = await Organization.findOne(
+        { name: { $regex: `^${organizationInput.name.trim()}$`, $options: 'i' } }
+      ).then();
+      if (!organization) {
+        organization = await new Organization({ name: organizationInput.name }).save().then() as Reactory.Models.IOrganizationDocument;
+      }
+    }
+
+    // 3. Ensure email is not already registered
+    const existing = await User.findOne({ email: userInput.email }).then();
+    if (existing) throw new UserExistsError(`A user with email ${userInput.email} already exists`, { email: userInput.email });
+
+    // 4. Create the user
+    const newUser = new User({
+      ...userInput,
+      username,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    newUser.setPassword(userInput.password);
+    await newUser.save();
+
+    // 5. Assign memberships
+    const roles = isNewOrg ? ['USER', 'ORG_ADMIN'] : ['USER'];
+    const clientId = new ObjectId(partner._id);
+
+    const baseMembers = [
+      { clientId, provider: 'LOCAL', enabled: true, roles },
+    ] as any[];
+
+    if (organization?._id) {
+      baseMembers.push({ clientId, organizationId: organization._id, provider: 'LOCAL', enabled: true, roles });
+    }
+
+    baseMembers.forEach((m) => newUser.memberships.push(m));
+    const savedUser = await newUser.save();
+
+    return { user: savedUser as Reactory.Models.IUserDocument, organization };
+  }
+
+  /**
+   * Checks whether a username is already taken.
+   * Returns the count of users whose username starts with the given input
+   * (useful for suggesting alternatives) and a suggested unique username
+   * when the exact name is already in use.
+   */
+  async checkUsernameExists(
+    username: string,
+  ): Promise<{ exists: boolean; count: number; suggestion?: string }> {
+    if (!username || username.trim().length < 3) {
+      return { exists: false, count: 0 };
+    }
+
+    const sanitized = username.trim().toLowerCase();
+
+    const count = await User.countDocuments({
+      username: { $regex: `^${sanitized}`, $options: 'i' },
+    }).then();
+
+    const exact = await User.findOne({ username: sanitized }, { _id: 1 }).then();
+    const exists = !!exact;
+
+    if (!exists) {
+      return { exists: false, count };
+    }
+
+    // Suggest a unique alternative by appending a 4-digit random suffix
+    const suffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const suggestion = `${sanitized.slice(0, 46)}_${suffix}`;
+
+    return { exists: true, count, suggestion };
+  }
 }
 
 export default UserService;

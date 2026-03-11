@@ -5,6 +5,7 @@ import Reactory, {
   IReactoryComponentFeature,
 } from "@reactorynet/reactory-core"; // import necessary types
 import { service } from "@reactory/server-core/application/decorators/service";
+import { cached } from "@reactory/server-core/application/decorators/cache";
 import logger from "@reactory/server-core/logging";
 
 @service({
@@ -147,6 +148,7 @@ export class ReactoryModelRegistry
     this.modelRegistry.push(model);
   }
 
+  @cached('model-registry:getModel:${0.nameSpace}:${0.name}:${0.version}', { ttl: 300 })
   getModel<T>(specs: Partial<IReactoryComponentDefinition<T>>): T | null {
     if (!specs) throw new Error('No specs provided');
     if (typeof specs !== 'object') throw new Error('Specs must be a partial object with at least one key-value pair');
