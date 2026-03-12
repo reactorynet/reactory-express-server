@@ -5,7 +5,7 @@
 
 import { BaseYamlStep } from '../base/BaseYamlStep';
 import { StepExecutionContext, StepExecutionResult, ValidationResult } from '../interfaces/IYamlStep';
-
+import safeUrl from '@reactory/server-core/utils/url/safeUrl';
 /**
  * Configuration interface for ApiCallStep
  */
