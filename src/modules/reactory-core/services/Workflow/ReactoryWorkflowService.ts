@@ -35,6 +35,9 @@ import {
   IYamlLoadError,
   YamlLoadStatus,
   WorkflowSourceType,
+  IWorkflowDefinitionInput,
+  IWorkflowValidationResult,
+  IWorkflowValidationError,
 } from './types';
 import { IScheduleConfig } from '@reactory/server-modules/reactory-core/workflow/Scheduler/Scheduler';
 import { IWorkflowInstance, IWorkflowLifecycleStats } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager';
@@ -1684,6 +1687,283 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     } catch (error) {
       this.context.log('Error getting workflow errors', { error, workflowId }, 'error');
       return [];
+    }
+  }
+
+  // ─── Workflow Definition CRUD ───────────────────────────────────────────────
+
+  /**
+   * Validate a workflow definition without saving it.
+   */
+  async validateWorkflowDefinition(
+    definition: IWorkflowDefinitionInput
+  ): Promise<IWorkflowValidationResult> {
+    const errors: IWorkflowValidationError[] = [];
+    const warnings: IWorkflowValidationError[] = [];
+
+    if (!definition.nameSpace || definition.nameSpace.trim().length === 0) {
+      errors.push({ field: 'nameSpace', message: 'nameSpace is required', code: 'REQUIRED' });
+    }
+    if (!definition.name || definition.name.trim().length === 0) {
+      errors.push({ field: 'name', message: 'name is required', code: 'REQUIRED' });
+    }
+    if (!definition.version || definition.version.trim().length === 0) {
+      errors.push({ field: 'version', message: 'version is required', code: 'REQUIRED' });
+    }
+
+    // Reject path traversal characters in identifiers
+    const pathSegmentPattern = /^[a-zA-Z0-9_.\-]+$/;
+    for (const field of ['nameSpace', 'name', 'version'] as const) {
+      const value = definition[field];
+      if (value && !pathSegmentPattern.test(value)) {
+        errors.push({
+          field,
+          message: `${field} contains invalid characters. Only alphanumeric, dash, underscore, and dot are allowed.`,
+          code: 'INVALID_CHARACTERS',
+        });
+      }
+    }
+
+    if (!definition.steps || definition.steps.length === 0) {
+      errors.push({ field: 'steps', message: 'At least one step is required', code: 'REQUIRED' });
+    }
+
+    if (definition.steps) {
+      const stepIds = new Set<string>();
+      for (let i = 0; i < definition.steps.length; i++) {
+        const step = definition.steps[i];
+        if (!step.id) {
+          errors.push({ field: `steps[${i}].id`, message: 'Step id is required', code: 'REQUIRED' });
+        } else if (stepIds.has(step.id)) {
+          errors.push({ field: `steps[${i}].id`, message: `Duplicate step id: ${step.id}`, code: 'DUPLICATE' });
+        } else {
+          stepIds.add(step.id);
+        }
+        if (!step.type) {
+          errors.push({ field: `steps[${i}].type`, message: 'Step type is required', code: 'REQUIRED' });
+        }
+      }
+
+      // Validate designer connections reference existing steps
+      if (definition.designer?.connections) {
+        for (const conn of definition.designer.connections) {
+          if (conn.sourceStepId && !stepIds.has(conn.sourceStepId)) {
+            warnings.push({
+              field: 'designer.connections',
+              message: `Connection references unknown source step: ${conn.sourceStepId}`,
+              code: 'UNKNOWN_STEP_REF',
+            });
+          }
+          if (conn.targetStepId && !stepIds.has(conn.targetStepId)) {
+            warnings.push({
+              field: 'designer.connections',
+              message: `Connection references unknown target step: ${conn.targetStepId}`,
+              code: 'UNKNOWN_STEP_REF',
+            });
+          }
+        }
+      }
+    }
+
+    if (!definition.description) {
+      warnings.push({ field: 'description', message: 'Description is recommended', code: 'RECOMMENDED' });
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors.length > 0 ? errors : undefined,
+      warnings: warnings.length > 0 ? warnings : undefined,
+    };
+  }
+
+  /**
+   * Save (create or update) a workflow definition to the YAML catalog.
+   * Builds the YAML structure from the input, writes to the catalog directory,
+   * and returns the definition via the standard load pipeline.
+   */
+  async saveWorkflowDefinition(
+    definition: IWorkflowDefinitionInput
+  ): Promise<IYamlWorkflowDefinitionResult> {
+    const validation = await this.validateWorkflowDefinition(definition);
+    if (!validation.isValid) {
+      return {
+        nameSpace: definition.nameSpace,
+        name: definition.name,
+        version: definition.version,
+        steps: [],
+        loadStatus: 'PARSE_ERROR',
+        errors: (validation.errors || []).map((e) => ({
+          stage: 'VALIDATION' as const,
+          message: e.message,
+          code: e.code,
+        })),
+      };
+    }
+
+    const { writeFileSync, mkdirSync, existsSync } = await import('fs');
+    const path = await import('path');
+    const yaml = await import('js-yaml');
+
+    const reactoryData = process.env.REACTORY_DATA;
+    if (!reactoryData) {
+      return {
+        nameSpace: definition.nameSpace,
+        name: definition.name,
+        version: definition.version,
+        steps: [],
+        loadStatus: 'NOT_FOUND',
+        errors: [{ stage: 'FILE_RESOLVE' as const, message: 'REACTORY_DATA environment variable is not set' }],
+      };
+    }
+
+    const { nameSpace, name, version } = definition;
+    const targetDir = path.join(reactoryData, 'workflows', 'catalog', nameSpace, name, version);
+    const targetFile = path.join(targetDir, `${name}.yaml`);
+
+    // Build the YAML object structure matching the expected parse format
+    const yamlObject: Record<string, any> = {
+      nameSpace,
+      name,
+      version,
+    };
+    if (definition.description) yamlObject.description = definition.description;
+    if (definition.author) yamlObject.author = definition.author;
+    if (definition.tags && definition.tags.length > 0) yamlObject.tags = definition.tags;
+    if (definition.inputs) yamlObject.inputs = definition.inputs;
+    if (definition.outputs) yamlObject.outputs = definition.outputs;
+    if (definition.variables) yamlObject.variables = definition.variables;
+
+    // Build steps, separating designer metadata from step definitions
+    yamlObject.steps = definition.steps.map((step) => {
+      const yamlStep: Record<string, any> = { id: step.id, type: step.type };
+      if (step.name) yamlStep.name = step.name;
+      if (step.description) yamlStep.description = step.description;
+      if (step.enabled !== undefined) yamlStep.enabled = step.enabled;
+      if (step.continueOnError !== undefined) yamlStep.continueOnError = step.continueOnError;
+      if (step.timeout !== undefined) yamlStep.timeout = step.timeout;
+      if (step.inputs) yamlStep.inputs = step.inputs;
+      if (step.outputs) yamlStep.outputs = step.outputs;
+      if (step.condition) yamlStep.condition = step.condition;
+      if (step.dependsOn) yamlStep.dependsOn = step.dependsOn;
+      if (step.config) yamlStep.config = step.config;
+      if (step.steps) yamlStep.steps = step.steps;
+      if (step.designer) yamlStep.designer = step.designer;
+      return yamlStep;
+    });
+
+    // Store designer metadata under metadata.designer (matches read pipeline)
+    if (definition.designer) {
+      yamlObject.metadata = { designer: definition.designer };
+    }
+
+    try {
+      if (!existsSync(targetDir)) {
+        mkdirSync(targetDir, { recursive: true });
+      }
+
+      const yamlContent = yaml.dump(yamlObject, {
+        indent: 2,
+        lineWidth: 120,
+        noRefs: true,
+        sortKeys: false,
+      });
+      writeFileSync(targetFile, yamlContent, 'utf8');
+
+      this.context.log(
+        `Saved workflow definition ${nameSpace}.${name}@${version} to ${targetFile}`,
+        { targetFile },
+        'info'
+      );
+
+      // Return the definition through the standard load pipeline for consistency
+      return this.getWorkflowYamlDefinition(nameSpace, name, version);
+    } catch (err) {
+      this.context.log(
+        `Failed to save workflow definition ${nameSpace}.${name}@${version}: ${err instanceof Error ? err.message : String(err)}`,
+        { targetFile, err },
+        'error'
+      );
+      return {
+        nameSpace,
+        name,
+        version,
+        steps: [],
+        loadStatus: 'NOT_FOUND',
+        errors: [{
+          stage: 'FILE_RESOLVE' as const,
+          message: `Failed to write workflow file: ${err instanceof Error ? err.message : String(err)}`,
+        }],
+      };
+    }
+  }
+
+  /**
+   * Delete a workflow definition from the YAML catalog.
+   */
+  async deleteWorkflowDefinition(
+    nameSpace: string,
+    name: string,
+    version?: string
+  ): Promise<IWorkflowOperationResult> {
+    const pathSegmentPattern = /^[a-zA-Z0-9_.\-]+$/;
+    for (const [field, value] of [['nameSpace', nameSpace], ['name', name], ['version', version]] as const) {
+      if (value && !pathSegmentPattern.test(value)) {
+        return { success: false, message: `${field} contains invalid characters` };
+      }
+    }
+
+    const { unlinkSync, existsSync, readdirSync, rmdirSync } = await import('fs');
+    const path = await import('path');
+
+    const reactoryData = process.env.REACTORY_DATA;
+    if (!reactoryData) {
+      return { success: false, message: 'REACTORY_DATA environment variable is not set' };
+    }
+
+    const resolvedVersion = version || '1.0.0';
+    const targetDir = path.join(reactoryData, 'workflows', 'catalog', nameSpace, name, resolvedVersion);
+
+    // Search for the YAML file (could be .yaml or .yml)
+    const extensions = ['.yaml', '.yml'];
+    let targetFile: string | null = null;
+
+    for (const ext of extensions) {
+      const candidate = path.join(targetDir, `${name}${ext}`);
+      if (existsSync(candidate)) {
+        targetFile = candidate;
+        break;
+      }
+    }
+
+    if (!targetFile) {
+      return { success: false, message: `Workflow definition ${nameSpace}.${name}@${resolvedVersion} not found in catalog` };
+    }
+
+    try {
+      unlinkSync(targetFile);
+
+      // Clean up empty version directory
+      if (existsSync(targetDir) && readdirSync(targetDir).length === 0) {
+        rmdirSync(targetDir);
+      }
+
+      this.context.log(
+        `Deleted workflow definition ${nameSpace}.${name}@${resolvedVersion} from ${targetFile}`,
+        { targetFile },
+        'info'
+      );
+
+      return { success: true, message: `Workflow definition ${nameSpace}.${name}@${resolvedVersion} deleted` };
+    } catch (err) {
+      this.context.log(
+        `Failed to delete workflow definition ${nameSpace}.${name}@${resolvedVersion}: ${err instanceof Error ? err.message : String(err)}`,
+        { targetFile, err },
+        'error'
+      );
+      return {
+        success: false,
+        message: `Failed to delete workflow file: ${err instanceof Error ? err.message : String(err)}`,
+      };
     }
   }
 }

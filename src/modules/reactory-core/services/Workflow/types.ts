@@ -345,6 +345,126 @@ export interface IYamlWorkflowDefinitionResult {
   errors?: IYamlLoadError[];
 }
 
+// ─── Workflow Definition Save/Validate Input Types ──────────────────────────
+
+export interface IDesignerPositionInput {
+  x: number;
+  y: number;
+}
+
+export interface IDesignerSizeInput {
+  width: number;
+  height: number;
+}
+
+export interface IDesignerCanvasSettingsInput {
+  zoom?: number;
+  panX?: number;
+  panY?: number;
+  gridSize?: number;
+  snapToGrid?: boolean;
+}
+
+export interface IDesignerConnectionMetadataInput {
+  id?: string;
+  sourceStepId: string;
+  sourcePort: string;
+  targetStepId: string;
+  targetPort: string;
+  points?: IDesignerPositionInput[];
+  style?: string;
+  color?: string;
+  label?: string;
+}
+
+export interface IDesignerNoteInput {
+  id: string;
+  text: string;
+  position: IDesignerPositionInput;
+  size?: IDesignerSizeInput;
+  color?: string;
+}
+
+export interface IDesignerGroupInput {
+  id: string;
+  label: string;
+  stepIds: string[];
+  color?: string;
+  collapsed?: boolean;
+}
+
+export interface IDesignerPortMetadataInput {
+  name: string;
+  label?: string;
+  position?: IDesignerPositionInput;
+  dataType?: string;
+}
+
+export interface IStepDesignerPortsMetadataInput {
+  inputs?: IDesignerPortMetadataInput[];
+  outputs?: IDesignerPortMetadataInput[];
+}
+
+export interface IStepDesignerMetadataInput {
+  position?: IDesignerPositionInput;
+  size?: IDesignerSizeInput;
+  color?: string;
+  icon?: string;
+  collapsed?: boolean;
+  helpText?: string;
+  ports?: IStepDesignerPortsMetadataInput;
+}
+
+export interface IDesignerMetadataInput {
+  canvas?: IDesignerCanvasSettingsInput;
+  connections?: IDesignerConnectionMetadataInput[];
+  notes?: IDesignerNoteInput[];
+  groups?: IDesignerGroupInput[];
+}
+
+export interface IWorkflowStepInput {
+  id: string;
+  name?: string;
+  description?: string;
+  type: string;
+  enabled?: boolean;
+  continueOnError?: boolean;
+  timeout?: number;
+  inputs?: any;
+  outputs?: any;
+  condition?: string;
+  dependsOn?: any;
+  config?: any;
+  steps?: IWorkflowStepInput[];
+  designer?: IStepDesignerMetadataInput;
+}
+
+export interface IWorkflowDefinitionInput {
+  nameSpace: string;
+  name: string;
+  version: string;
+  description?: string;
+  author?: string;
+  tags?: string[];
+  inputs?: any;
+  outputs?: any;
+  variables?: any;
+  steps: IWorkflowStepInput[];
+  designer?: IDesignerMetadataInput;
+}
+
+export interface IWorkflowValidationError {
+  field?: string;
+  message: string;
+  code?: string;
+}
+
+export interface IWorkflowValidationResult {
+  isValid: boolean;
+  errors?: IWorkflowValidationError[];
+  warnings?: IWorkflowValidationError[];
+}
+
 export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefaultService {
   // System Status & Health
   getSystemStatus(): Promise<IWorkflowSystemStatus>;
@@ -421,4 +541,12 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
   
   // Error retrieval
   getWorkflowErrors(workflowId: string): Promise<Array<{ message: string; code: string; stack?: string }>>;
+  
+  // Workflow Definition CRUD
+  /** Save (create or update) a workflow definition to the YAML catalog */
+  saveWorkflowDefinition(definition: IWorkflowDefinitionInput): Promise<IYamlWorkflowDefinitionResult>;
+  /** Delete a workflow definition from the YAML catalog */
+  deleteWorkflowDefinition(nameSpace: string, name: string, version?: string): Promise<IWorkflowOperationResult>;
+  /** Validate a workflow definition without saving it */
+  validateWorkflowDefinition(definition: IWorkflowDefinitionInput): Promise<IWorkflowValidationResult>;
 }

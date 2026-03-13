@@ -13,6 +13,7 @@ import {
   IWorkflowHistoryFilter,
   IWorkflowHistoryPagination,
   WorkflowESStatus,
+  IWorkflowDefinitionInput,
 } from '../../services/Workflow/types';
 import { IWorkflowInstanceDocument } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager';
 import { IScheduleConfig, IScheduledWorkflow } from '@reactory/server-modules/reactory-core/workflow';
@@ -602,6 +603,67 @@ class WorkflowResolver {
     } catch (error: Error) {
       context.log('Error starting workflow (legacy)', { error, params }, 'error', 'WorkflowResolver');
       return false;
+    }
+  }
+
+  @roles(["ADMIN", "WORKFLOW_ADMIN"], 'args.context')
+  @mutation("saveWorkflowDefinition")
+  async saveWorkflowDefinition(
+    obj: any,
+    params: { definition: IWorkflowDefinitionInput },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      return await workflowService.saveWorkflowDefinition(params.definition);
+    } catch (error: any) {
+      context.log('Error saving workflow definition', { error, params }, 'error', 'WorkflowResolver');
+      return {
+        id: '',
+        name: params.definition.name,
+        nameSpace: params.definition.nameSpace,
+        version: params.definition.version,
+        loadStatus: 'NOT_FOUND',
+        raw: null,
+        definition: null,
+        designer: null,
+      };
+    }
+  }
+
+  @roles(["ADMIN", "WORKFLOW_ADMIN"], 'args.context')
+  @mutation("deleteWorkflowDefinition")
+  async deleteWorkflowDefinition(
+    obj: any,
+    params: { nameSpace: string; name: string; version?: string },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      return await workflowService.deleteWorkflowDefinition(params.nameSpace, params.name, params.version);
+    } catch (error: any) {
+      context.log('Error deleting workflow definition', { error, params }, 'error', 'WorkflowResolver');
+      return { success: false, message: `Error deleting workflow definition: ${error.message}` };
+    }
+  }
+
+  @roles(["USER"], 'args.context')
+  @mutation("validateWorkflowDefinition")
+  async validateWorkflowDefinition(
+    obj: any,
+    params: { definition: IWorkflowDefinitionInput },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      return await workflowService.validateWorkflowDefinition(params.definition);
+    } catch (error: any) {
+      context.log('Error validating workflow definition', { error, params }, 'error', 'WorkflowResolver');
+      return {
+        valid: false,
+        errors: [{ field: 'definition', message: `Validation failed: ${error.message}`, code: 'VALIDATION_ERROR' }],
+        warnings: [],
+      };
     }
   }
 

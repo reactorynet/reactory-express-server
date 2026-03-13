@@ -897,6 +897,129 @@ type ValidationWarning {
   code: String
 }
 
+# ─── Workflow Definition Input Types ───────────────────────────────────────────
+
+input DesignerPositionInput {
+  x: Float!
+  y: Float!
+}
+
+input DesignerSizeInput {
+  width: Float!
+  height: Float!
+}
+
+input DesignerCanvasSettingsInput {
+  zoom: Float
+  panX: Float
+  panY: Float
+  gridSize: Int
+  snapToGrid: Boolean
+}
+
+input DesignerConnectionMetadataInput {
+  id: String
+  sourceStepId: String!
+  sourcePort: String!
+  targetStepId: String!
+  targetPort: String!
+  points: [DesignerPositionInput!]
+  style: String
+  color: String
+  label: String
+}
+
+input DesignerNoteInput {
+  id: String!
+  text: String!
+  position: DesignerPositionInput!
+  size: DesignerSizeInput
+  color: String
+}
+
+input DesignerGroupInput {
+  id: String!
+  label: String!
+  stepIds: [String!]!
+  color: String
+  collapsed: Boolean
+}
+
+input DesignerPortMetadataInput {
+  name: String!
+  label: String
+  position: DesignerPositionInput
+  dataType: String
+}
+
+input StepDesignerPortsMetadataInput {
+  inputs: [DesignerPortMetadataInput!]
+  outputs: [DesignerPortMetadataInput!]
+}
+
+input StepDesignerMetadataInput {
+  position: DesignerPositionInput
+  size: DesignerSizeInput
+  color: String
+  icon: String
+  collapsed: Boolean
+  helpText: String
+  ports: StepDesignerPortsMetadataInput
+}
+
+input DesignerMetadataInput {
+  canvas: DesignerCanvasSettingsInput
+  connections: [DesignerConnectionMetadataInput!]
+  notes: [DesignerNoteInput!]
+  groups: [DesignerGroupInput!]
+}
+
+input WorkflowStepInput {
+  id: String!
+  name: String
+  description: String
+  type: String!
+  enabled: Boolean
+  continueOnError: Boolean
+  timeout: Int
+  inputs: JSON
+  outputs: JSON
+  condition: String
+  dependsOn: JSON
+  config: JSON
+  steps: [WorkflowStepInput!]
+  designer: StepDesignerMetadataInput
+}
+
+"""Input type for saving a workflow definition to the YAML catalog."""
+input WorkflowDefinitionInput {
+  nameSpace: String!
+  name: String!
+  version: String!
+  description: String
+  author: String
+  tags: [String!]
+  inputs: JSON
+  outputs: JSON
+  variables: JSON
+  steps: [WorkflowStepInput!]!
+  designer: DesignerMetadataInput
+}
+
+"""Result of a workflow definition validation."""
+type WorkflowValidationResult {
+  isValid: Boolean!
+  errors: [WorkflowValidationError!]
+  warnings: [WorkflowValidationError!]
+}
+
+"""A single validation error or warning on a workflow definition."""
+type WorkflowValidationError {
+  field: String
+  message: String!
+  code: String
+}
+
 # Legacy compatibility types
 type WorkflowResult {
   name: String
@@ -1069,4 +1192,14 @@ extend type Mutation {
 
   # Legacy compatibility
   startWorkflowLegacy(name: String!, data: WorkflowInput): Boolean
+
+  # ─── Workflow Definition CRUD ──────────────────────────────────────────────
+  """Save (create or update) a workflow definition to the YAML catalog."""
+  saveWorkflowDefinition(definition: WorkflowDefinitionInput!): YamlWorkflowDefinition
+
+  """Delete a workflow definition from the YAML catalog."""
+  deleteWorkflowDefinition(nameSpace: String!, name: String!, version: String): WorkflowOperationResult
+
+  """Validate a workflow definition without saving it."""
+  validateWorkflowDefinition(definition: WorkflowDefinitionInput!): WorkflowValidationResult
 }
