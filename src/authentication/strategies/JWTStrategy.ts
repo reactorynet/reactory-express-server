@@ -126,9 +126,6 @@ const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.
         }
 
         if (!sessionValid) {
-          logger.info(
-            `JWT auth: token refresh id ${payload.refresh} not found in active sessions for user ${payload.userId}`
-          );
           AuthTelemetry.recordFailure('jwt', clientKey, 'session_revoked', duration);
           return done(null, false);
         }
@@ -141,10 +138,7 @@ const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.
           if (user.hasRole(request.context.partner._id?.toString() ?? '', 'ANON')) {
             request.context.user.anon = true;
           }
-        }
-        request.context.debug(
-          `User ${(user as any)._id?.toString()} authenticated and set on context: ${request.context.id}`
-        );
+        }        
       }
 
       // ── Async touchSession (fire-and-forget) ──────────────────────────
