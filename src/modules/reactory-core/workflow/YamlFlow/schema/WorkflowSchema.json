@@ -7,8 +7,8 @@
   "properties": {
     "nameSpace": {
       "type": "string",
-      "pattern": "^[a-zA-Z][a-zA-Z0-9]*$",
-      "description": "CamelCase namespace for the workflow (e.g., 'myCompany', 'projectName')"
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+      "description": "Namespace for the workflow (e.g., 'myCompany', 'reactory-socialeyes')"
     },
     "name": {
       "type": "string",
@@ -74,20 +74,26 @@
       }
     },
     "variables": {
-      "type": "object",
-      "description": "Workflow-scoped variables",
-      "patternProperties": {
-        "^[a-zA-Z][a-zA-Z0-9_]*$": {
-          "oneOf": [
-            { "type": "string" },
-            { "type": "number" },
-            { "type": "boolean" },
-            { "type": "null" },
-            { "type": "object" },
-            { "type": "array" }
-          ]
-        }
-      }
+      "description": "Workflow-scoped variables (object map or JSON-serialized array/object string)",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_]*$": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" },
+                { "type": "null" },
+                { "type": "object" },
+                { "type": "array" }
+              ]
+            }
+          }
+        },
+        { "type": "array" }
+      ]
     },
     "steps": {
       "type": "array",
@@ -105,8 +111,8 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
-          "description": "Unique identifier for the step"
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_-]*$",
+          "description": "Unique identifier for the step (may start with underscore for reserved steps like __start__, __end__)"
         },
         "name": {
           "type": "string",
@@ -130,7 +136,16 @@
             "parallel",
             "forEach",
             "while",
-            "custom"
+            "custom",
+            "start",
+            "end",
+            "service_invoke",
+            "condition",
+            "for_each",
+            "rest",
+            "data_transform",
+            "cli_command",
+            "task"
           ],
           "description": "Type of step to execute"
         },
@@ -145,38 +160,47 @@
           "description": "Whether to continue workflow execution if this step fails"
         },
         "timeout": {
-          "type": "integer",
-          "minimum": 1,
+          "oneOf": [{"type": "integer", "minimum": 1}, {"type": "null"}],
           "description": "Step timeout in milliseconds"
         },
         "retryPolicy": {
           "$ref": "#/definitions/RetryPolicy"
         },
         "inputs": {
-          "type": "object",
-          "description": "Step input parameters",
-          "patternProperties": {
-            "^[a-zA-Z][a-zA-Z0-9_]*$": {
-              "oneOf": [
-                { "type": "string" },
-                { "type": "number" },
-                { "type": "boolean" },
-                { "type": "null" },
-                { "type": "object" },
-                { "type": "array" }
-              ]
+          "description": "Step input parameters (object or JSON-serialized string)",
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z][a-zA-Z0-9_]*$": {
+                  "oneOf": [
+                    { "type": "string" },
+                    { "type": "number" },
+                    { "type": "boolean" },
+                    { "type": "null" },
+                    { "type": "object" },
+                    { "type": "array" }
+                  ]
+                }
+              }
             }
-          }
+          ]
         },
         "outputs": {
-          "type": "object",
-          "description": "Step output mapping",
-          "patternProperties": {
-            "^[a-zA-Z][a-zA-Z0-9_]*$": {
-              "type": "string",
-              "description": "Output variable assignment"
+          "description": "Step output mapping (object or JSON-serialized string)",
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z][a-zA-Z0-9_]*$": {
+                  "type": "string",
+                  "description": "Output variable assignment"
+                }
+              }
             }
-          }
+          ]
         },
         "condition": {
           "type": "string",
@@ -822,14 +846,12 @@
               "description": "Vertical pan offset in pixels"
             },
             "gridSize": {
-              "type": "integer",
-              "minimum": 5,
-              "maximum": 100,
+              "oneOf": [{"type": "integer", "minimum": 5, "maximum": 100}, {"type": "null"}],
               "default": 20,
               "description": "Grid spacing in pixels"
             },
             "snapToGrid": {
-              "type": "boolean",
+              "oneOf": [{"type": "boolean"}, {"type": "null"}],
               "default": true,
               "description": "Whether steps snap to grid when moved"
             }
@@ -843,59 +865,44 @@
           }
         },
         "notes": {
-          "type": "array",
-          "description": "Sticky notes or annotations placed on the canvas",
-          "items": {
-            "type": "object",
-            "required": ["id", "text", "position"],
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "Unique note identifier"
-              },
-              "text": {
-                "type": "string",
-                "description": "Note content (supports Markdown)"
-              },
-              "position": {
-                "$ref": "#/definitions/Position"
-              },
-              "size": {
-                "$ref": "#/definitions/Size"
-              },
-              "color": {
-                "type": "string",
-                "description": "Background colour of the note"
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "text", "position"],
+                "properties": {
+                  "id": {"type": "string"},
+                  "text": {"type": "string"},
+                  "position": {"$ref": "#/definitions/Position"},
+                  "size": {"$ref": "#/definitions/Size"},
+                  "color": {"type": "string"}
+                }
               }
             }
-          }
+          ],
+          "description": "Sticky notes or annotations placed on the canvas — may be null when none exist"
         },
         "groups": {
-          "type": "array",
-          "description": "Visual groups that cluster related steps together",
-          "items": {
-            "type": "object",
-            "required": ["id", "label", "stepIds"],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "label": {
-                "type": "string"
-              },
-              "stepIds": {
-                "type": "array",
-                "items": { "type": "string" }
-              },
-              "color": {
-                "type": "string"
-              },
-              "collapsed": {
-                "type": "boolean",
-                "default": false
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "label", "stepIds"],
+                "properties": {
+                  "id": {"type": "string"},
+                  "label": {"type": "string"},
+                  "stepIds": {"type": "array", "items": {"type": "string"}},
+                  "color": {"type": "string"},
+                  "collapsed": {"type": "boolean", "default": false}
+                }
               }
             }
-          }
+          ],
+          "description": "Visual groups that cluster related steps together — may be null when none exist"
         }
       }
     },
@@ -973,17 +980,16 @@
           "items": { "$ref": "#/definitions/Position" }
         },
         "style": {
-          "type": "string",
-          "enum": ["straight", "curved", "orthogonal"],
+          "oneOf": [{"type": "string", "enum": ["straight", "curved", "orthogonal"]}, {"type": "null"}],
           "default": "curved",
           "description": "Connection line rendering style"
         },
         "color": {
-          "type": "string",
+          "oneOf": [{"type": "string"}, {"type": "null"}],
           "description": "Custom colour for the connection line"
         },
         "label": {
-          "type": "string",
+          "oneOf": [{"type": "string"}, {"type": "null"}],
           "description": "Optional label displayed on the connection"
         }
       }
@@ -998,14 +1004,14 @@
           "description": "Port name matching the step input/output key"
         },
         "label": {
-          "type": "string",
+          "oneOf": [{"type": "string"}, {"type": "null"}],
           "description": "Display label for the port"
         },
         "position": {
           "$ref": "#/definitions/Position"
         },
         "dataType": {
-          "type": "string",
+          "oneOf": [{"type": "string"}, {"type": "null"}],
           "description": "Expected data type flowing through the port"
         }
       }

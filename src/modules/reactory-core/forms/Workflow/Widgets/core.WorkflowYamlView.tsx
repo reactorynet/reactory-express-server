@@ -93,6 +93,11 @@ const STATUS_LABEL: Record<string, string> = {
   REGISTRY_ERROR: 'Registry error',
 };
 
+// Rich text editors (Froala / Quill) create heavyweight DOM structures per
+// line.  Above this threshold we fall back to a plain <pre> to avoid OOM
+// crashes and infinite onChange re-render loops.
+const LARGE_CONTENT_THRESHOLD = 200 * 1024; // 200 KB
+
 /**
  * WorkflowYamlView
  *
@@ -190,7 +195,7 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
   };
 
   const handleEditorChange = (value: string) => {
-    if (!readonly) {
+    if (!readonly && value !== yamlSource) {
       setYamlSource(value);
     }
   };
@@ -327,7 +332,6 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
       {/* ── YAML editor ──────────────────────────────────────────────────── */}
       <Box sx={{ flexGrow: 1, overflow: 'hidden', position: 'relative' }}>
         {hasCriticalErrors && !yamlSource ? (
-          // Nothing to display — no source was loaded
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 2, p: 4 }}>
             <Icon sx={{ fontSize: 48, color: 'error.main' }}>broken_image</Icon>
             <Typography variant="body1" color="error.main" align="center">
@@ -337,15 +341,39 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
               Review the errors above for details.
             </Typography>
           </Box>
+        ) : yamlSource.length > LARGE_CONTENT_THRESHOLD ? (
+          /* Large content: plain <pre> to avoid rich-editor OOM / onChange loops */
+          <Box sx={{ height: editorHeight, display: 'flex', flexDirection: 'column' }}>
+            <Alert severity="info" sx={{ borderRadius: 0, flexShrink: 0 }}>
+              YAML source is {(yamlSource.length / 1024).toFixed(0)} KB — displayed
+              read-only for performance. Use the copy button to edit externally.
+            </Alert>
+            <Box sx={{
+              flex: 1,
+              overflow: 'auto',
+              bgcolor: 'grey.900',
+              color: 'grey.100',
+            }}>
+              <pre style={{
+                fontFamily: '"Courier New", Courier, monospace',
+                fontSize: '0.8125rem',
+                lineHeight: 1.6,
+                padding: '12px 16px',
+                margin: 0,
+                whiteSpace: 'pre',
+                wordBreak: 'normal',
+                overflowWrap: 'normal',
+                color: 'inherit',
+              }}>
+                {yamlSource}
+              </pre>
+            </Box>
+          </Box>
         ) : RichEditorWidget ? (
-          /* Use RichEditor if available */
           <Box sx={{
             height: editorHeight,
-            // Froala
             '& .fr-box': { height: '100%' },
             '& .fr-wrapper': { height: 'calc(100% - 45px)', overflow: 'auto' },
-            // Quill (ReactQuill) — outer wrapper and ReactQuill root must fill
-            // the Box so the flex layout in the styled component works correctly.
             '& > *': { height: '100%' },
             '& .ql-editor': { minHeight: 0 },
           }}>
@@ -353,11 +381,10 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
               idSchema={{ $id: 'workflow-yaml-editor' }}
               formData={yamlSource}
               format="yaml"
-              onChange={handleEditorChange}                            
+              onChange={handleEditorChange}
             />
           </Box>
         ) : (
-          /* Fallback: styled TextField for YAML code display / editing */
           <TextField
             multiline
             fullWidth

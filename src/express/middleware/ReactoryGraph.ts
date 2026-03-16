@@ -232,7 +232,6 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
 
       app.use(
         '/graph',
-        // Handle file uploads FIRST - this processes multipart/form-data
         multipartHandler,
         // Then handle other body types
         bodyParser.urlencoded({ extended: true }),

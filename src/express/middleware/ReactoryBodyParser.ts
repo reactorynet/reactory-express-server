@@ -4,7 +4,7 @@ import bodyParser from 'body-parser';
 
 const ReactoryBodyParser = (app: Express.Application, _: Http.Server): void => {
   app.use(bodyParser.urlencoded({ extended: false }));
-  app.use(bodyParser.json({ limit: process.env.MAX_FILE_UPLOAD }));
+  app.use(bodyParser.json({ limit: process.env.MAX_FILE_UPLOAD || '20mb' }));
 };
 
 const ReactoryBodyParserDefinition: Reactory.Server.ReactoryMiddlewareDefinition = {
