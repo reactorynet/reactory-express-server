@@ -20,6 +20,7 @@ import gql from 'graphql-tag';
 import Helpers from '@reactory/server-core/authentication/strategies/helpers';
 import Reactory from '@reactorynet/reactory-core';
 import { getCache, ReactoryCachePersistor } from './ReactoryApolloCache';
+import safeUrl from 'utils/url/safeUrl';
 
 const packageInfo: any = require('../../package.json');
 
@@ -87,7 +88,7 @@ export const clientFor = async (context: Reactory.Server.IReactoryContext): Prom
 
   // Create HTTP link for non-subscription operations
   const httpLink = new HttpLink({
-    uri: `${process.env.API_URI_ROOT}graph`,
+    uri: safeUrl([process.env.API_URI_ROOT as string || 'http://localhost:4000/', 'graph']),
     fetch: fetch as any
   });
 
