@@ -620,7 +620,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       );
     }
 
-    return {
+    const result = {
       nameSpace: parsed?.nameSpace || nameSpace,
       name: parsed?.name || name,
       version: parsed?.version || version || workflow?.version || '1.0.0',
@@ -638,6 +638,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       loadStatus,
       errors: hasErrors ? errors : undefined,
     };
+    return result;
   }
 
   /** Stage 1 – look up the workflow in the runner registry. */
@@ -805,27 +806,41 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     const searchedPaths: string[] = [];
     const yamlExtensions = ['.yaml', '.yml'];
 
+    // Alternate filename: PascalCase → kebab-case
+    // e.g. ProcessDirectMessages → process-direct-messages
+    const kebabName = name
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+      .replace(/([a-z\d])([A-Z])/g, '$1-$2')
+      .toLowerCase();
+    const filenames = kebabName !== name.toLowerCase()
+      ? [name, kebabName]
+      : [name];
+
     // With version directory
-    for (const ext of yamlExtensions) {
-      const catalogPath = path.join(
-        reactoryData, 'workflows', 'catalog',
-        nameSpace, name, version, `${name}${ext}`
-      );
-      searchedPaths.push(catalogPath);
-      if (existsSync(catalogPath)) {
-        return { filePath: catalogPath, searchedPaths };
+    for (const fname of filenames) {
+      for (const ext of yamlExtensions) {
+        const catalogPath = path.join(
+          reactoryData, 'workflows', 'catalog',
+          nameSpace, name, version, `${fname}${ext}`
+        );
+        searchedPaths.push(catalogPath);
+        if (existsSync(catalogPath)) {
+          return { filePath: catalogPath, searchedPaths };
+        }
       }
     }
 
     // Without version directory
-    for (const ext of yamlExtensions) {
-      const catalogPath = path.join(
-        reactoryData, 'workflows', 'catalog',
-        nameSpace, name, `${name}${ext}`
-      );
-      searchedPaths.push(catalogPath);
-      if (existsSync(catalogPath)) {
-        return { filePath: catalogPath, searchedPaths };
+    for (const fname of filenames) {
+      for (const ext of yamlExtensions) {
+        const catalogPath = path.join(
+          reactoryData, 'workflows', 'catalog',
+          nameSpace, name, `${fname}${ext}`
+        );
+        searchedPaths.push(catalogPath);
+        if (existsSync(catalogPath)) {
+          return { filePath: catalogPath, searchedPaths };
+        }
       }
     }
 
