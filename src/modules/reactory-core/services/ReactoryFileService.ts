@@ -1,6 +1,7 @@
 import fetch, { RequestInit, Response } from "node-fetch";
 import fs, { writeFile } from "fs";
 import path from "path";
+import os from "os";
 import crypto from "crypto";
 import { promisify } from "util";
 import { ObjectId } from "mongodb";
@@ -78,6 +79,12 @@ export class ReactoryFileService
       this.context.partner._id.toString(),
       "home"
     );
+
+    // [DESKTOP OVERRIDE]: If running in local desktop mode, bypass CDN folder
+    if (process.env.IS_DESKTOP_INSTALL === "true") {
+      const desktopRoot = process.env.REACTOR_DESKTOP_ROOT ? path.join(os.homedir(), process.env.REACTOR_DESKTOP_ROOT) : os.homedir();
+      rootFolder = process.env.REACTOR_HOME_PATH || desktopRoot;
+    }
 
     let _rootPath = rootPath;
     if (rootPath.indexOf("${") && this.context.hasRole("DEVELOPER") || this.context.hasRole("ADMIN")) {
