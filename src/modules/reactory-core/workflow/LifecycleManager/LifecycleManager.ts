@@ -980,7 +980,7 @@ export class WorkflowLifecycleManager extends EventEmitter {
    * Get workflow instance by ID (in-memory)
    */
   public getWorkflowInstance(instanceId: string): IWorkflowInstance | undefined {
-    return WorkflowInstanceModel.findById(instanceId);
+    return this.workflows.get(instanceId);
   }
 
   /**

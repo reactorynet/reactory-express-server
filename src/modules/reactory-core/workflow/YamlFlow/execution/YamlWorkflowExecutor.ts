@@ -113,14 +113,15 @@ export class YamlWorkflowExecutor {
       for (const step of workflow.steps) {
         try {
           if (this.stepRegistry.hasStep(step.type)) {
-            // Create StepConfig from WorkflowStep
+            // Create StepConfig from WorkflowStep (resolving inputs JSON → config)
+            const resolvedConfig = this.resolveStepConfig(step);
             const stepConfig: StepConfig = {
               id: step.id,
               type: step.type,
-              config: step.config || {}
+              config: resolvedConfig
             };
             const stepInstance = this.stepRegistry.createStep(stepConfig);
-            const validation = stepInstance.validateConfig(stepConfig.config || {});
+            const validation = stepInstance.validateConfig(resolvedConfig);
             if (!validation.valid) {
               errors.push(...validation.errors.map(e => ({ 
                 message: `Step '${step.id}': ${e}`, 
@@ -372,6 +373,32 @@ export class YamlWorkflowExecutor {
   }
   
   /**
+   * Resolve the effective configuration for a workflow step.
+   * YAML-defined workflows store step config in the `inputs` field as a JSON string;
+   * code-defined steps may use the `config` field directly.
+   */
+  private resolveStepConfig(step: any): Record<string, any> {
+    // Prefer explicit config object
+    if (step.config && typeof step.config === 'object' && Object.keys(step.config).length > 0) {
+      return step.config;
+    }
+    // Fall back to inputs (YAML designer stores config here as a JSON string)
+    if (step.inputs != null) {
+      if (typeof step.inputs === 'string') {
+        try {
+          return JSON.parse(step.inputs);
+        } catch {
+          return { raw: step.inputs };
+        }
+      }
+      if (typeof step.inputs === 'object') {
+        return step.inputs;
+      }
+    }
+    return {};
+  }
+
+  /**
    * Execute a single step
    */
   private async executeStep(
@@ -382,11 +409,12 @@ export class YamlWorkflowExecutor {
     const startTime = new Date();
     
     try {
-      // Convert WorkflowStep to StepConfig
+      // Convert WorkflowStep to StepConfig (resolving inputs JSON → config)
+      const resolvedConfig = this.resolveStepConfig(stepConfig);
       const config: StepConfig = {
         id: stepConfig.id,
         type: stepConfig.type,
-        config: stepConfig.config || {}
+        config: resolvedConfig
       };
       
       // Create step instance

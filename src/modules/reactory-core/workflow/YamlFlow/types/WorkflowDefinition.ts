@@ -44,7 +44,7 @@ export interface WorkflowStep {
   designer?: StepDesignerMetadata;
 }
 
-export type StepType = 
+export type StepType =
   | 'log'
   | 'delay'
   | 'validation'
@@ -56,7 +56,12 @@ export type StepType =
   | 'parallel'
   | 'forEach'
   | 'while'
-  | 'custom';
+  | 'custom'
+  | 'start'
+  | 'end'
+  | 'condition'
+  | 'for_each'
+  | 'service_invoke';
 
 export interface StepConfig {
   [key: string]: any;

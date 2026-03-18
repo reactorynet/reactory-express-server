@@ -1,8 +1,8 @@
-import { 
-  configureWorkflow, 
-  ConsoleLogger, 
+import {
+  configureWorkflow,
+  ConsoleLogger,
   IPersistenceProvider,
-  ILogger, 
+  ILogger,
   WorkflowHost,
 } from 'workflow-es';
 import { MongoDBPersistence } from 'workflow-es-mongodb';
@@ -24,6 +24,9 @@ import {
 } from '../LifecycleManager/LifecycleManager';
 import { ConfigurationManager, IConfigurationStats, type IWorkflowConfig } from '../ConfigurationManager/ConfigurationManager';
 import { ISecurityStats, SecurityManager, type IInputValidationResult } from '../SecurityManager/SecurityManager';
+import { YamlWorkflowExecutor } from '../YamlFlow/execution/YamlWorkflowExecutor';
+import { YamlStepRegistry } from '../YamlFlow/steps/registry/YamlStepRegistry';
+import type { YamlWorkflowDefinition } from '../YamlFlow/types/WorkflowDefinition';
 
 const {
   MONGOOSE,
@@ -333,15 +336,18 @@ export class WorkflowRunner {
   }
 
   /**
-   * Validate workflow
+   * Validate workflow.
+   * CODE workflows require a component class; YAML workflows require props (the parsed definition).
    */
   private validateWorkflow(workflow: IWorkflow): boolean {
     try {
-      return !!(workflow && 
-        workflow.nameSpace && 
-        workflow.name && 
-        workflow.version && 
-        workflow.component);
+      if (!workflow || !workflow.nameSpace || !workflow.name || !workflow.version) {
+        return false;
+      }
+      if (workflow.workflowType === 'YAML') {
+        return !!(workflow.props);
+      }
+      return !!(workflow.component);
     } catch (error) {
       logger.error('Workflow validation failed', error);
       return false;
@@ -357,8 +363,12 @@ export class WorkflowRunner {
         throw new Error('Invalid workflow');
       }
 
-      logger.debug('Adding workflow to host', workflow);
-      if (this.state.host) {
+      if (workflow.workflowType === 'YAML') {
+        // YAML workflows don't register with workflow-es host
+        logger.debug(`Adding YAML workflow ${workflow.nameSpace}.${workflow.name}@${workflow.version} to registry`);
+        this.setState({ workflows: [...this.state.workflows, workflow] });
+      } else if (this.state.host) {
+        logger.debug('Adding workflow to host', workflow);
         this.state.host.registerWorkflow(workflow.component);
         this.setState({ workflows: [...this.state.workflows, workflow] });
       } else {
@@ -448,8 +458,14 @@ export class WorkflowRunner {
       
       for (const workflow of workflows) {
         try {
-          logger.debug(`Registering workflow ${workflow.nameSpace}.${workflow.name}@${workflow.version} in host`, { __type: typeof workflow });        
-          host.registerWorkflow(workflow.component);
+          if (workflow.workflowType === 'YAML') {
+            // YAML workflows are executed via YamlWorkflowExecutor, not the workflow-es host.
+            // They don't have a component class to register.
+            logger.debug(`Registered YAML workflow ${workflow.nameSpace}.${workflow.name}@${workflow.version} (skipping workflow-es host)`);
+          } else {
+            logger.debug(`Registering workflow ${workflow.nameSpace}.${workflow.name}@${workflow.version} in host`, { __type: typeof workflow });
+            host.registerWorkflow(workflow.component);
+          }
           if (workflow.autoStart === true) {
             autoStart.push(workflow);
           }
@@ -468,9 +484,20 @@ export class WorkflowRunner {
   }
 
   /**
-   * Start a specific workflow with enhanced error handling
+   * Start a specific workflow with enhanced error handling.
+   * Routes YAML workflows to YamlWorkflowExecutor and CODE workflows to the workflow-es host.
    */
-  public async startWorkflow(id: string, version: string, data: any, context: Reactory.Server.IReactoryContext): Promise<any> {
+  public async startWorkflow(id: string, version: string, data: any, context?: Reactory.Server.IReactoryContext): Promise<any> {
+    // Check if this is a YAML workflow
+    const workflow = this.state.workflows.find(w => {
+      const workflowId = `${w.nameSpace}.${w.name}@${w.version}`;
+      return workflowId === id || w.name === id;
+    });
+
+    if (workflow?.workflowType === 'YAML') {
+      return this.executeYamlWorkflow(workflow, data, context);
+    }
+
     const errorContext: IErrorContext = {
       workflowId: id,
       version,
@@ -511,6 +538,63 @@ export class WorkflowRunner {
       );
     } catch (error) {
       logger.error(`Failed to start workflow ${id} :${versionNumber}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute a YAML workflow via YamlWorkflowExecutor with full lifecycle tracking.
+   * Creates a lifecycle instance, runs the YAML definition through the executor,
+   * and updates the instance status on completion or failure.
+   */
+  private async executeYamlWorkflow(
+    workflow: IWorkflow,
+    data: any,
+    context?: Reactory.Server.IReactoryContext
+  ): Promise<string> {
+    const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
+    const definition = workflow.props as YamlWorkflowDefinition;
+
+    if (!definition || !definition.steps) {
+      throw new Error(`YAML workflow ${workflowId} has no valid definition (missing steps). Check that 'props' contains the parsed YAML definition.`);
+    }
+
+    // Create a lifecycle instance so the execution is tracked
+    const instance = this.lifecycleManager.createWorkflowInstance(
+      workflowId,
+      workflow.version,
+      WorkflowPriority.NORMAL,
+      [],
+      { workflowType: 'YAML', input: data }
+    );
+
+    // Transition to RUNNING
+    await this.lifecycleManager.startWorkflow(instance.id);
+
+    const stepRegistry = new YamlStepRegistry();
+    const reactoryCtx = context || this.context;
+    const executor = new YamlWorkflowExecutor(stepRegistry, reactoryCtx);
+
+    try {
+      const result = await executor.executeWorkflow(definition, {
+        inputs: data,
+        reactoryContext: reactoryCtx,
+      });
+
+      if (result.success) {
+        this.lifecycleManager.completeWorkflow(instance.id, result.outputs);
+        logger.info(`YAML workflow ${workflowId} completed successfully (instance: ${instance.id})`);
+      } else {
+        const error = new Error(result.error?.message || 'YAML workflow execution failed');
+        this.lifecycleManager.failWorkflow(instance.id, error);
+        logger.error(`YAML workflow ${workflowId} failed (instance: ${instance.id})`, result.error);
+      }
+
+      return instance.id;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.lifecycleManager.failWorkflow(instance.id, err);
+      logger.error(`YAML workflow ${workflowId} threw an exception (instance: ${instance.id})`, error);
       throw error;
     }
   }

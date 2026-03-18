@@ -100,8 +100,7 @@ export class CircuitBreaker {
   private onFailure(error: Error): void {
     this.failureCount++;
     this.lastFailureTime = Date.now();
-    
-    logger.error(`Workflow ${context.workflowId} failed due to error ${error?.message}`, { error });
+
     if (this.failureCount >= this.config.failureThreshold) {
       this.state = 'OPEN';
       logger.warn(`Circuit breaker opened after ${this.failureCount} failures`);

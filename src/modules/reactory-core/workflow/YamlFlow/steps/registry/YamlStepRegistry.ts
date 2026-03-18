@@ -19,6 +19,11 @@ import { DataTransformationStep } from '../core/DataTransformationStep';
 import { ApiCallStep } from '../core/ApiCallStep';
 import { CliCommandStep } from '../core/CliCommandStep';
 import { FileOperationStep } from '../core/FileOperationStep';
+import { StartStep } from '../core/StartStep';
+import { EndStep } from '../core/EndStep';
+import { ServiceInvokeStep } from '../core/ServiceInvokeStep';
+import { ConditionStep } from '../core/ConditionStep';
+import { ForEachStep } from '../core/ForEachStep';
 
 /**
  * Central registry for all YAML workflow step types
@@ -206,6 +211,33 @@ export class YamlStepRegistry {
     
     this.registerStep('fileOperation', FileOperationStep, {
       description: 'Perform file system operations',
+      version: '1.0.0'
+    });
+
+    // Control flow steps
+    this.registerStep('start', StartStep, {
+      description: 'Workflow entry point',
+      version: '1.0.0'
+    });
+
+    this.registerStep('end', EndStep, {
+      description: 'Workflow exit point',
+      version: '1.0.0'
+    });
+
+    this.registerStep('condition', ConditionStep, {
+      description: 'Conditional branching',
+      version: '1.0.0'
+    });
+
+    this.registerStep('for_each', ForEachStep, {
+      description: 'Iterate over a collection',
+      version: '1.0.0'
+    });
+
+    // Service integration steps
+    this.registerStep('service_invoke', ServiceInvokeStep, {
+      description: 'Invoke a Reactory service method',
       version: '1.0.0'
     });
   }
