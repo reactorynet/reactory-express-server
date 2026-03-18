@@ -17,13 +17,10 @@ const AnyScalarConfig: GraphQLScalarTypeConfig<any, string> = {
     }    
   },
   serialize: (value) => {
-    try {
-      return typeof value === 'object' ? value
-        : typeof value === 'string' ? JSON.parse(value)
-          : null;
-    } catch (error) { 
-      logger.error(error);
-    }
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') return value;
+    return null;
   },
   parseLiteral: (ast) => {
     try {
