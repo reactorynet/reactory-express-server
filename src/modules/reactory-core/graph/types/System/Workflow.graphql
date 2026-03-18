@@ -254,6 +254,13 @@ type YamlWorkflowDefinition {
   loadStatus: YamlLoadStatus!
   """Ordered list of errors captured at each processing stage."""
   errors: [YamlLoadError!]
+  """
+  Step-level validation errors produced by running the YAML executor's
+  validation pass (step type registry checks, config validation, dependency
+  resolution) without actually executing the workflow.
+  Only populated when the definition was successfully loaded (loadStatus = SUCCESS).
+  """
+  validationErrors: [WorkflowValidationError!]
 }
 
 """Overall status of a YAML workflow definition load attempt."""

@@ -17,6 +17,12 @@ interface YamlLoadError {
   column?: number;
 }
 
+interface WorkflowValidationError {
+  field?: string | null;
+  message: string;
+  code?: string | null;
+}
+
 interface YamlLoadDeps {
   React: Reactory.React;
   Material: Reactory.Client.Web.IMaterialModule;
@@ -52,6 +58,11 @@ const YAML_DEFINITION_QUERY = `
         code
         line
         column
+      }
+      validationErrors {
+        field
+        message
+        code
       }
     }
   }
@@ -148,10 +159,12 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
   const [yamlSource, setYamlSource] = React.useState<string>('');
   const [loadStatus, setLoadStatus] = React.useState<string | null>(null);
   const [errors, setErrors] = React.useState<YamlLoadError[]>([]);
+  const [validationErrors, setValidationErrors] = React.useState<WorkflowValidationError[]>([]);
   const [sourceType, setSourceType] = React.useState<string | null>(null);
   const [location, setLocation] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [errorsExpanded, setErrorsExpanded] = React.useState(true);
+  const [validationExpanded, setValidationExpanded] = React.useState(true);
 
   React.useEffect(() => {
     if (!workflow?.nameSpace || !workflow?.name) return;
@@ -174,6 +187,7 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
       setYamlSource(def.yamlSource || '');
       setLoadStatus(def.loadStatus || 'SUCCESS');
       setErrors(def.errors || []);
+      setValidationErrors(def.validationErrors || []);
       setSourceType(def.sourceType || null);
       setLocation(def.location || null);
     }).catch((err: any) => {
@@ -252,6 +266,19 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
           />
         )}
 
+        {/* Validation errors chip */}
+        {validationErrors.length > 0 && (
+          <Chip
+            size="small"
+            icon={<Icon sx={{ fontSize: 14 }}>rule</Icon>}
+            label={`${validationErrors.length} validation ${validationErrors.length === 1 ? 'error' : 'errors'}`}
+            color="warning"
+            variant="outlined"
+            onClick={() => setValidationExpanded(!validationExpanded)}
+            sx={{ cursor: 'pointer' }}
+          />
+        )}
+
         {/* Source type chip */}
         {sourceType && (
           <Chip
@@ -322,6 +349,55 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
                       </Typography>
                     </Box>
                   ))}
+                </Alert>
+              ))}
+            </AccordionDetails>
+          </Accordion>
+        </Box>
+      )}
+
+      {/* ── Validation errors ────────────────────────────────────────────── */}
+      {validationErrors.length > 0 && (
+        <Box sx={{ mx: 0, mt: 0 }}>
+          <Accordion
+            expanded={validationExpanded}
+            onChange={(_: any, expanded: boolean) => setValidationExpanded(expanded)}
+            disableGutters
+            elevation={0}
+            sx={{ border: 0, borderBottom: 1, borderColor: 'divider', '&:before': { display: 'none' } }}
+          >
+            <AccordionSummary
+              expandIcon={<Icon>expand_more</Icon>}
+              sx={{ bgcolor: 'warning.light', color: 'warning.contrastText', minHeight: 40, '& .MuiAccordionSummary-content': { my: 0.5 } }}
+            >
+              <Icon sx={{ mr: 1, fontSize: 18 }}>rule</Icon>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {validationErrors.length} step validation {validationErrors.length === 1 ? 'error' : 'errors'}
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ p: 0 }}>
+              {validationErrors.map((ve, i) => (
+                <Alert
+                  key={i}
+                  severity="warning"
+                  variant="standard"
+                  icon={<Icon sx={{ fontSize: 18 }}>error_outline</Icon>}
+                  sx={{ borderRadius: 0, '& + &': { borderTop: 1, borderColor: 'divider' } }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, flexWrap: 'wrap' }}>
+                    {ve.field && (
+                      <Chip
+                        label={ve.field}
+                        size="small"
+                        variant="outlined"
+                        color="warning"
+                        sx={{ fontFamily: 'monospace', fontSize: '0.75rem', height: 20 }}
+                      />
+                    )}
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                      {ve.code && <strong>[{ve.code}] </strong>}{ve.message}
+                    </Typography>
+                  </Box>
                 </Alert>
               ))}
             </AccordionDetails>

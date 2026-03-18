@@ -96,25 +96,72 @@ export class YamlStepRegistry {
   }
   
   /**
-   * Create a step instance from configuration
-   * @param stepConfig - Step configuration
+   * Create a step instance from configuration.
+   *
+   * YAML-designer workflows store step configuration in the `inputs` field as
+   * a JSON string (YAML `>-` block scalar).  This method resolves that to an
+   * object so step implementations always receive a proper config dict.
+   *
+   * @param stepConfig - Step configuration (may include raw `inputs` string)
    * @returns Created step instance
    */
   public createStep(stepConfig: StepConfig): IYamlStep {
+    const resolvedConfig = this.resolveConfig(stepConfig);
     const StepClass = this.getStepClass(stepConfig.type);
-    const step = new StepClass(stepConfig.id, stepConfig.config || {});
-    
+    const step = new StepClass(stepConfig.id, resolvedConfig);
+
     // Validate configuration if the step supports it
     if (typeof step.validateConfig === 'function') {
-      const validation = step.validateConfig(stepConfig.config || {});
+      const validation = step.validateConfig(resolvedConfig);
       if (!validation.valid) {
         throw new Error(
           `Step configuration validation failed: ${validation.errors.join(', ')}`
         );
       }
     }
-    
+
     return step;
+  }
+
+  /**
+   * Resolve the effective config for a step.
+   *
+   * Priority:
+   *  1. `stepConfig.config` if it is a non-empty object
+   *  2. `stepConfig.inputs` parsed from JSON string → object
+   *  3. `stepConfig.inputs` if already an object
+   *  4. Empty object `{}`
+   */
+  private resolveConfig(stepConfig: StepConfig): Record<string, any> {
+    // 1. Explicit config object with actual keys
+    if (
+      stepConfig.config &&
+      typeof stepConfig.config === 'object' &&
+      Object.keys(stepConfig.config).length > 0
+    ) {
+      return stepConfig.config;
+    }
+
+    // 2 & 3. Fall back to `inputs` (YAML designer stores config here)
+    const inputs = (stepConfig as any).inputs;
+    if (inputs != null) {
+      if (typeof inputs === 'string') {
+        try {
+          const parsed = JSON.parse(inputs);
+          if (parsed && typeof parsed === 'object') {
+            return parsed;
+          }
+        } catch {
+          // Not valid JSON — return as raw wrapper
+          return { raw: inputs };
+        }
+      }
+      if (typeof inputs === 'object') {
+        return inputs;
+      }
+    }
+
+    return {};
   }
   
   /**

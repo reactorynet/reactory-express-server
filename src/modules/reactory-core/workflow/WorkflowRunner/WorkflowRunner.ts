@@ -585,9 +585,22 @@ export class WorkflowRunner {
         this.lifecycleManager.completeWorkflow(instance.id, result.outputs);
         logger.info(`YAML workflow ${workflowId} completed successfully (instance: ${instance.id})`);
       } else {
-        const error = new Error(result.error?.message || 'YAML workflow execution failed');
+        // Aggregate all errors for better diagnostics
+        const allErrors = result.errors || (result.error ? [result.error] : []);
+        const errorSummary = allErrors.map(
+          (e: any) => `[${e.stepId || 'workflow'}] ${e.message}`
+        ).join('\n  ');
+        const error = new Error(
+          `YAML workflow ${workflowId} failed:\n  ${errorSummary}`
+        );
         this.lifecycleManager.failWorkflow(instance.id, error);
-        logger.error(`YAML workflow ${workflowId} failed (instance: ${instance.id})`, result.error);
+        logger.error(`YAML workflow ${workflowId} failed (instance: ${instance.id}):\n  ${errorSummary}`);
+        if (result.executedSteps) {
+          const failedSteps = result.executedSteps.filter((s: any) => !s.success);
+          for (const fs of failedSteps) {
+            logger.error(`  Step '${fs.stepId}' (${fs.stepType}): ${fs.error?.message || 'unknown error'}`);
+          }
+        }
       }
 
       return instance.id;

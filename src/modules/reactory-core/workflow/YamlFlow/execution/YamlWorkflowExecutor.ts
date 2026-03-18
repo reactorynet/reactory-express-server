@@ -113,26 +113,27 @@ export class YamlWorkflowExecutor {
       for (const step of workflow.steps) {
         try {
           if (this.stepRegistry.hasStep(step.type)) {
-            // Create StepConfig from WorkflowStep (resolving inputs JSON → config)
-            const resolvedConfig = this.resolveStepConfig(step);
+            // Pass the full step object so the registry can resolve inputs → config
             const stepConfig: StepConfig = {
               id: step.id,
               type: step.type,
-              config: resolvedConfig
+              config: this.resolveStepConfig(step),
+              inputs: (step as any).inputs  // preserve raw inputs for registry fallback
             };
             const stepInstance = this.stepRegistry.createStep(stepConfig);
+            const resolvedConfig = this.resolveStepConfig(step);
             const validation = stepInstance.validateConfig(resolvedConfig);
             if (!validation.valid) {
-              errors.push(...validation.errors.map(e => ({ 
-                message: `Step '${step.id}': ${e}`, 
-                stepId: step.id 
+              errors.push(...validation.errors.map(e => ({
+                message: `Step '${step.id}': ${e}`,
+                stepId: step.id
               })));
             }
           }
         } catch (error) {
-          errors.push({ 
-            message: `Step '${step.id}' configuration error: ${error instanceof Error ? error.message : 'Unknown error'}`, 
-            stepId: step.id 
+          errors.push({
+            message: `Step '${step.id}' configuration error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            stepId: step.id
           });
         }
       }
@@ -386,8 +387,13 @@ export class YamlWorkflowExecutor {
     if (step.inputs != null) {
       if (typeof step.inputs === 'string') {
         try {
-          return JSON.parse(step.inputs);
-        } catch {
+          const parsed = JSON.parse(step.inputs);
+          return parsed;
+        } catch (e) {
+          console.error(
+            `[YamlWorkflowExecutor] Failed to parse inputs JSON for step "${step.id}": ` +
+            `${e instanceof Error ? e.message : e}\n  Raw inputs (first 200 chars): ${step.inputs.substring(0, 200)}`
+          );
           return { raw: step.inputs };
         }
       }
@@ -395,6 +401,10 @@ export class YamlWorkflowExecutor {
         return step.inputs;
       }
     }
+    console.warn(
+      `[YamlWorkflowExecutor] Step "${step.id}" (type: ${step.type}) has no config or inputs. ` +
+      `Available keys: [${Object.keys(step).join(', ')}]`
+    );
     return {};
   }
 
@@ -414,9 +424,10 @@ export class YamlWorkflowExecutor {
       const config: StepConfig = {
         id: stepConfig.id,
         type: stepConfig.type,
-        config: resolvedConfig
+        config: resolvedConfig,
+        inputs: stepConfig.inputs  // preserve raw inputs for registry fallback
       };
-      
+
       // Create step instance
       const step = this.stepRegistry.createStep(config);
       

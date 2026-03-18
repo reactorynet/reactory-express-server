@@ -17,6 +17,8 @@ import {
 } from '../../services/Workflow/types';
 import { IWorkflowInstanceDocument } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager';
 import { IScheduleConfig, IScheduledWorkflow } from '@reactory/server-modules/reactory-core/workflow';
+import { YamlWorkflowExecutor } from '@reactory/server-modules/reactory-core/workflow/YamlFlow/execution/YamlWorkflowExecutor';
+import { YamlStepRegistry } from '@reactory/server-modules/reactory-core/workflow/YamlFlow/steps/registry/YamlStepRegistry';
 
 
 
@@ -804,24 +806,24 @@ class WorkflowResolver {
   }
 
   @property("WorkflowSchedule", "workflow")
-  async workflowReferenceResolver(obj: IScheduleConfig) {    
-    if (!obj) return null; 
+  async workflowReferenceResolver(obj: IScheduleConfig) {
+    if (!obj) return null;
     const { workflow } = obj;
     if (!workflow) return null;
     if (!workflow.id) return null;
-    if (workflow.id.includes('.')) { 
+    if (workflow.id.includes('.')) {
       // If the ID is already in the format "namespace.name@version", return it as is
       // extract the namespace, name, and version from the ID
       const [nameSpaceName, version] = workflow.id.split('@');
       const [nameSpace, name] = nameSpaceName.split('.');
-      
+
       return {
         id: workflow.id,
         nameSpace: nameSpace,
         name: name,
         version: version
       };
-    } 
+    }
     // if the id is not in the format "namespace.name@version", we check if name, namespace, and version are provided and construct the id
     if (workflow.nameSpace && workflow.name && workflow.version) {
       return {
@@ -830,7 +832,54 @@ class WorkflowResolver {
         name: workflow.name,
         version: workflow.version
       };
-    }    
+    }
+  }
+
+  // YamlWorkflowDefinition property resolvers
+
+  @property("YamlWorkflowDefinition", "validationErrors")
+  async yamlValidationErrors(obj: any, _args: any, context: Reactory.Server.IReactoryContext) {
+    // Only validate if the definition was successfully loaded and has steps
+    if (!obj || obj.loadStatus !== 'SUCCESS' || !obj.steps || obj.steps.length === 0) {
+      return null;
+    }
+
+    try {
+      const stepRegistry = new YamlStepRegistry();
+      const executor = new YamlWorkflowExecutor(stepRegistry, context);
+
+      const result = await executor.validateWorkflow({
+        nameSpace: obj.nameSpace,
+        name: obj.name,
+        version: obj.version,
+        description: obj.description,
+        author: obj.author,
+        tags: obj.tags,
+        steps: obj.steps,
+      });
+
+      if (result.valid) {
+        return [];
+      }
+
+      return result.errors.map((e: any) => ({
+        field: e.stepId || e.path || null,
+        message: e.message,
+        code: e.code || null,
+      }));
+    } catch (error) {
+      context.log(
+        `Error validating YAML workflow ${obj.nameSpace}.${obj.name}`,
+        { error },
+        'error',
+        'WorkflowResolver'
+      );
+      return [{
+        field: null,
+        message: `Validation failed: ${error instanceof Error ? error.message : String(error)}`,
+        code: 'VALIDATION_EXCEPTION',
+      }];
+    }
   }
 }
 
