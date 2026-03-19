@@ -31,6 +31,7 @@ type ReactoryUserFilesLoadOptions {
   sortOrder: String
   search: String
   includeFolders: Boolean
+  includeHidden: Boolean
 }
 
 input ReactoryUserFilesLoadOptionsInput {
@@ -40,11 +41,9 @@ input ReactoryUserFilesLoadOptionsInput {
   sortOrder: String
   search: String
   includeFolders: Boolean
+  includeHidden: Boolean
 }
 
-"""
-Load options for server files with additional administrative controls
-"""
 type ReactoryServerFilesLoadOptions {
   limit: Int
   offset: Int
