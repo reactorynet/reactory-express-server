@@ -130,6 +130,228 @@ list_repositories() {
     echo -e "\nTotal repositories: $count"
 }
 
+# Server repo root (directory containing src/modules), regardless of current working directory
+server_root_dir() {
+    (cd "$(dirname "$0")/.." && pwd)
+}
+
+# Normalize user repo input to owner/repo for gh (GitHub.com only).
+normalize_github_repo_spec() {
+    local spec="$1"
+    if [[ "$spec" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
+        echo "$spec"
+        return 0
+    fi
+    if [[ "$spec" =~ ^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)(\.git)?/?$ ]]; then
+        echo "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+        return 0
+    fi
+    if [[ "$spec" =~ ^git@github\.com:([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)(\.git)?$ ]]; then
+        echo "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+        return 0
+    fi
+    return 1
+}
+
+# Strip scheme/host and .git so we can compare remotes to owner/repo.
+normalize_gh_remote_url() {
+    local u="$1"
+    u="${u%.git}"
+    case "$u" in
+        git@github.com:*)
+            echo "${u#git@github.com:}"
+            ;;
+        ssh://git@github.com/*)
+            echo "${u#ssh://git@github.com/}"
+            ;;
+        https://github.com/*)
+            echo "${u#https://github.com/}"
+            ;;
+        http://github.com/*)
+            echo "${u#http://github.com/}"
+            ;;
+        *)
+            echo "$u"
+            ;;
+    esac
+}
+
+remote_matches_repo_slug() {
+    local url="$1"
+    local slug="$2"
+    local norm
+    norm="$(normalize_gh_remote_url "$url")"
+    norm="$(echo "$norm" | tr '[:upper:]' '[:lower:]')"
+    slug="$(echo "$slug" | tr '[:upper:]' '[:lower:]')"
+    [[ "$norm" == "$slug" ]]
+}
+
+# Require GitHub CLI and a logged-in account.
+require_gh() {
+    if ! has_command gh; then
+        print_error "The 'gh' (GitHub CLI) command was not found. Install it and ensure it is on PATH."
+        print_status "See: https://cli.github.com/"
+        exit 1
+    fi
+    if ! gh auth status &>/dev/null; then
+        print_error "GitHub CLI is installed but not authenticated. Run: gh auth login"
+        exit 1
+    fi
+}
+
+# Whether "gh repo create" accepts --owner (newer gh versions).
+gh_repo_create_supports_owner_flag() {
+    gh repo create --help 2>&1 | grep -q -- '--owner'
+}
+
+# Create remote from current dir, add origin, push. Uses --owner when slug is owner/repo and gh supports it.
+gh_repo_create_push_from_slug() {
+    local slug="$1"
+    local owner="${slug%%/*}"
+    local name="${slug#*/}"
+    local create_args=(--private --source=. --remote=origin --push)
+
+    if [ "$owner" = "$slug" ]; then
+        gh repo create "$slug" "${create_args[@]}"
+        return
+    fi
+
+    if gh_repo_create_supports_owner_flag; then
+        print_status "gh repo create: using --owner $owner (repo name: $name)"
+        gh repo create "$name" --owner "$owner" "${create_args[@]}"
+    else
+        print_status "gh repo create: using $slug (this gh has no --owner flag)"
+        gh repo create "$slug" "${create_args[@]}"
+    fi
+}
+
+# Initialize a single src/modules/<name> repo, create GitHub repo if missing, push.
+init_module_repo() {
+    local module_name="$1"
+    local repo_spec_raw="$2"
+    local server_root
+    local module_dir
+    local repo_slug
+    local gitignore_template
+    local default_branch="main"
+
+    if [ -z "$module_name" ] || [ -z "$repo_spec_raw" ]; then
+        print_error "init requires a module folder name and a target GitHub repository."
+        echo "Usage: $0 init <module-folder-name> <owner/repo|https://github.com/owner/repo.git>"
+        exit 1
+    fi
+
+    require_gh
+
+    if ! repo_slug="$(normalize_github_repo_spec "$repo_spec_raw")"; then
+        print_error "Could not parse target repo: $repo_spec_raw"
+        print_status "Use owner/repo, https://github.com/owner/repo.git, or git@github.com:owner/repo.git"
+        exit 1
+    fi
+
+    server_root="$(server_root_dir)"
+    module_dir="$server_root/src/modules/$module_name"
+    gitignore_template="$server_root/bin/templates/.gitignore-module"
+
+    case "$module_name" in
+        reactory-core|helpers)
+            print_error "Module '$module_name' is part of the core server tree; do not run init here."
+            exit 1
+            ;;
+    esac
+
+    if [ ! -d "$module_dir" ]; then
+        print_error "Module directory not found: $module_dir"
+        exit 1
+    fi
+
+    if [ ! -f "$gitignore_template" ]; then
+        print_error "Template .gitignore not found: $gitignore_template"
+        exit 1
+    fi
+
+    if [ ! -f "$module_dir/.gitignore" ]; then
+        cp "$gitignore_template" "$module_dir/.gitignore"
+        print_success "Copied .gitignore from module template"
+    else
+        print_warning "Keeping existing $module_dir/.gitignore (template not copied)"
+    fi
+
+    local prev="$PWD"
+    cd "$module_dir"
+
+    local current_branch
+    if git rev-parse --git-dir &>/dev/null; then
+        print_status "Using existing git repository in $module_dir"
+        if ! git rev-parse --verify HEAD &>/dev/null; then
+            git add -A
+            if git diff --cached --quiet; then
+                git commit --allow-empty -m "Initial commit"
+                print_warning "No tracked files after add (empty or all ignored); created empty initial commit"
+            else
+                git commit -m "Initial commit"
+            fi
+        fi
+        current_branch="$(git branch --show-current)"
+        if [ -z "$current_branch" ]; then
+            print_error "No current branch (detached HEAD). Check out a branch, then re-run init."
+            cd "$prev"
+            exit 1
+        fi
+    else
+        git init -b "$default_branch"
+        print_success "Initialized git in $module_dir"
+        current_branch="$default_branch"
+        git add -A
+        if git diff --cached --quiet; then
+            git commit --allow-empty -m "Initial commit"
+            print_warning "No tracked files after add (empty or all ignored); created empty initial commit"
+        else
+            git commit -m "Initial commit"
+        fi
+    fi
+
+    local remote_url
+    if ! gh repo view "$repo_slug" &>/dev/null; then
+        print_status "GitHub repository not found; creating private repo: $repo_slug"
+        if git remote get-url origin &>/dev/null; then
+            local cur_url
+            cur_url="$(git remote get-url origin)"
+            if remote_matches_repo_slug "$cur_url" "$repo_slug"; then
+                print_status "Removing stale origin (GitHub repo was missing): $cur_url"
+            else
+                print_warning "Removing origin pointing elsewhere: $cur_url"
+            fi
+            git remote remove origin
+        fi
+        gh_repo_create_push_from_slug "$repo_slug"
+        print_success "Created and pushed to $repo_slug"
+        cd "$prev"
+        return 0
+    fi
+
+    print_status "GitHub repository exists: $repo_slug"
+    remote_url="$(gh repo view "$repo_slug" --json url -q .url).git"
+
+    if git remote get-url origin &>/dev/null; then
+        local cur_url
+        cur_url="$(git remote get-url origin)"
+        if remote_matches_repo_slug "$cur_url" "$repo_slug"; then
+            print_status "origin already targets $repo_slug"
+        else
+            print_warning "Setting origin to $remote_url (was: $cur_url)"
+            git remote set-url origin "$remote_url"
+        fi
+    else
+        print_status "No origin remote; adding $remote_url"
+        git remote add origin "$remote_url"
+    fi
+
+    git push -u origin "$current_branch"
+    print_success "Pushed branch '$current_branch' to $repo_slug"
+    cd "$prev"
+}
+
 # Function to clean build folders of git repositories
 cleanup_build_folders() {
     print_status "Cleaning git repositories from build folders..."
@@ -175,12 +397,15 @@ show_help() {
     echo "  commits    - Show recent commits for all repositories"
     echo "  list       - List all repositories"
     echo "  cleanup    - Remove git repositories from build folders"
+    echo "  init       - Init or use existing git in src/modules/<name>; ensure GitHub repo + origin; push (requires gh)"
     echo "  help       - Show this help message"
     echo ""
     echo "Examples:"
     echo "  $0 status    # Check status of all repos"
     echo "  $0 pull      # Pull changes from all repos"
     echo "  $0 push      # Push changes to all repos"
+    echo "  $0 init reactory-aws reactornet/reactory-aws"
+    echo "               # Creates GitHub repo if missing; sets/fixes origin; pushes (works if .git already exists)"
     echo ""
 }
 
@@ -206,6 +431,9 @@ case "${1:-help}" in
         ;;
     "cleanup")
         cleanup_build_folders
+        ;;
+    "init")
+        init_module_repo "$2" "$3"
         ;;
     "help"|"--help"|"-h")
         show_help
