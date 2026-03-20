@@ -50,7 +50,8 @@ class CleanCacheWorkflow implements WorkflowBase<{interval: number, enabled: boo
       });
   }
 
-  static meta = {};
+  // @ts-ignore
+  static meta: Reactory.Workflow.IWorkflow = {};
 }
 
 CleanCacheWorkflow.meta = {
