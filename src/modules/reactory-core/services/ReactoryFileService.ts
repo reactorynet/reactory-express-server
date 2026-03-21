@@ -65,12 +65,15 @@ export class ReactoryFileService
       sortOrder?: "asc" | "desc";
       search?: string;
       includeFolders?: boolean;
+      /** When false (default), omit names starting with `.` (hidden files and folders). */
+      includeHidden?: boolean;
     }
   ): {
     path: string;
     files: Reactory.Models.IReactoryFile[];
     folders: { name: string; path: string }[];
   } {
+    const includeHidden = options?.includeHidden === true;
     let rootFolder = path.join(
       APP_DATA_ROOT,
       "profiles",
@@ -108,6 +111,10 @@ export class ReactoryFileService
     let folders: { name: string; path: string }[] = [];
 
     fs.readdirSync(rootFolder, { withFileTypes: true }).forEach((dirent) => {
+      const isHiddenName = dirent.name.startsWith(".");
+      if (isHiddenName && !includeHidden) {
+        return;
+      }
       if (dirent.isDirectory()) {
         folders.push({
           name: dirent.name,

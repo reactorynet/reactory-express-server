@@ -146,6 +146,7 @@ export class WorkflowRunner {
   private readonly configurationManager: ConfigurationManager;
   private readonly securityManager: SecurityManager;   
   private readonly context: Reactory.Server.IReactoryContext;
+  private stepRegistry: YamlStepRegistry;
 
   constructor(props: IWorkflowRunnerProps, context: Reactory.Server.IReactoryContext) {
     this.state = {
@@ -153,6 +154,7 @@ export class WorkflowRunner {
       host: null,
     };
     this.context = context;
+    this.stepRegistry = new YamlStepRegistry();
     this.errorHandler = new ErrorHandler();
     this.lifecycleManager = new WorkflowLifecycleManager();
     this.configurationManager = new ConfigurationManager({
@@ -214,6 +216,9 @@ export class WorkflowRunner {
       this._isInitialized = true;
       this._isStarting = false;
 
+      // Discover and register workflow steps from all enabled modules
+      this.discoverModuleSteps();
+
       // Set up AMQ event handlers
       await this.setupAmqEventHandlers();
       
@@ -246,6 +251,46 @@ export class WorkflowRunner {
       logger.error('Failed to initialize WorkflowRunner', error);
       throw error;
     }
+  }
+
+  /**
+   * Get the shared step registry used by this runner
+   */
+  public getStepRegistry(): YamlStepRegistry {
+    return this.stepRegistry;
+  }
+
+  /**
+   * Discover workflow step implementations from all enabled modules
+   * and register them in the shared step registry.
+   */
+  private discoverModuleSteps(): void {
+    const modules: Reactory.Server.IReactoryModule[] = (this.context as any).modules || [];
+    let registeredCount = 0;
+    for (const mod of modules) {
+      if (!mod.workflowSteps || !Array.isArray(mod.workflowSteps)) continue;
+      for (const stepProvider of mod.workflowSteps) {
+        try {
+          this.stepRegistry.registerStep(
+            stepProvider.stepType,
+            stepProvider.constructor as any,
+            stepProvider.options || {}
+          );
+          registeredCount++;
+          logger.debug(
+            `Registered workflow step '${stepProvider.stepType}' from module ${mod.nameSpace}.${mod.name}`
+          );
+        } catch (error) {
+          logger.warn(
+            `Failed to register step '${stepProvider.stepType}' from module ${mod.nameSpace}.${mod.name}: ${error}`
+          );
+        }
+      }
+    }
+    logger.info(
+      `Step registry initialized with ${this.stepRegistry.getRegisteredSteps().length} step types` +
+      (registeredCount > 0 ? ` (${registeredCount} from modules)` : '')
+    );
   }
 
   /**
@@ -571,9 +616,8 @@ export class WorkflowRunner {
     // Transition to RUNNING
     await this.lifecycleManager.startWorkflow(instance.id);
 
-    const stepRegistry = new YamlStepRegistry();
     const reactoryCtx = context || this.context;
-    const executor = new YamlWorkflowExecutor(stepRegistry, reactoryCtx);
+    const executor = new YamlWorkflowExecutor(this.stepRegistry, reactoryCtx);
 
     try {
       const result = await executor.executeWorkflow(definition, {

@@ -18,6 +18,7 @@ export type ReactoryUserFileLoadOptions = {
   sortOrder?: "asc" | "desc";
   search?: string;
   includeFolders?: boolean;
+  includeHidden?: boolean;
 };
 
 export type ReactoryFolder = {
@@ -254,6 +255,7 @@ class ReactoryFile {
         sortOrder?: "asc" | "desc";
         search?: string;
         includeFolders?: boolean;
+        includeHidden?: boolean;
       };
     },
     context: Reactory.Server.IReactoryContext
@@ -274,17 +276,20 @@ class ReactoryFile {
     const fileService = context.getService(
       "core.ReactoryFileService@1.0.0"
     ) as Reactory.Service.IReactoryFileService;
+    const userFilesLoadOptions = {
+      limit: 20,
+      offset: 0,
+      sortBy: "createdAt",
+      sortOrder: "desc" as const,
+      search: "",
+      includeFolders: true,
+      includeHidden: false,
+      ...(params.loadOptions || {}),
+    };
     const userFiles = await fileService.getUserFiles(
       context.user._id.toString(),
       params.path || "/",
-      params.loadOptions || {
-        limit: 20,
-        offset: 0,
-        sortBy: "createdAt",
-        sortOrder: "desc",
-        search: "",
-        includeFolders: true,
-      }
+      userFilesLoadOptions
     );
     if (!userFiles) {
       return {
@@ -296,14 +301,7 @@ class ReactoryFile {
     return {
       __typename: "ReactoryUserFiles",
       path: params.path || "/",
-      loadOptions: params.loadOptions || {
-        limit: 20,
-        offset: 0,
-        sortBy: "createdAt",
-        sortOrder: "desc",
-        search: "",
-        includeFolders: true,
-      },
+      loadOptions: userFilesLoadOptions,
       files: userFiles.files,
       folders: userFiles.folders,
     };

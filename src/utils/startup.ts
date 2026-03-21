@@ -16,6 +16,7 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
   try {
     const start = new Date().valueOf();
     let context = await ReactoryContextProvider(null).then();
+    await startServices({}, context);
     // we login the system user here to ensure that the system user is available for the rest of the system
     const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
     let systemUser = await userService.findUserWithEmail(REACTORY_APPLICATION_EMAIL);
@@ -36,8 +37,7 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
       context.state.auth_token = await Helpers.generateLoginToken(systemUser);
     };
     context.user = systemUser;
-    context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();
-    await startServices({}, context);
+    context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();    
     // Publish client env files if REACTORY_CLIENT is set
     if (process.env.REACTORY_CLIENT) {
       try {

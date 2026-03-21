@@ -1,391 +1,102 @@
 /**
- * TypeScript interfaces for YAML workflow definitions
- * Generated from WorkflowSchema.json for type safety
+ * TypeScript interfaces for YAML workflow definitions.
+ * Re-exports from shared @reactorynet/reactory-core types for backward compatibility.
  */
 
-export interface YamlWorkflowDefinition {
-  nameSpace: string;
-  name: string;
-  version: string;
-  description?: string;
-  author?: string;
-  tags?: string[];
-  metadata?: WorkflowMetadata;
-  inputs?: Record<string, InputParameter>;
-  outputs?: Record<string, OutputParameter>;
-  variables?: Record<string, any>;
-  steps: WorkflowStep[];
-}
+import Reactory from '@reactorynet/reactory-core';
 
-export interface WorkflowMetadata {
-  timeout?: number;
-  retryPolicy?: RetryPolicy;
-  security?: SecuritySettings;
-  /** Visual designer metadata for the workflow canvas */
-  designer?: DesignerMetadata;
-}
-
-export interface WorkflowStep {
-  id: string;
-  name?: string;
-  description?: string;
-  type: StepType;
-  enabled?: boolean;
-  continueOnError?: boolean;
-  timeout?: number;
-  retryPolicy?: RetryPolicy;
-  inputs?: Record<string, any>;
-  outputs?: Record<string, string>;
-  condition?: string;
-  dependsOn?: string | string[];
-  config?: StepConfig;
-  steps?: WorkflowStep[]; // For nested steps in control flow
-  /** Visual designer metadata for this step node */
-  designer?: StepDesignerMetadata;
-}
-
-export type StepType =
-  | 'log'
-  | 'delay'
-  | 'validation'
-  | 'dataTransformation'
-  | 'apiCall'
-  | 'cliCommand'
-  | 'fileOperation'
-  | 'conditional'
-  | 'parallel'
-  | 'forEach'
-  | 'while'
-  | 'custom'
-  | 'start'
-  | 'end'
-  | 'condition'
-  | 'for_each'
-  | 'service_invoke';
-
-export interface StepConfig {
-  [key: string]: any;
-}
+// Core workflow definition types
+export type YamlWorkflowDefinition = Reactory.Workflow.IYamlWorkflowDefinition;
+export type WorkflowMetadata = Reactory.Workflow.IWorkflowMetadata;
+export type WorkflowStep = Reactory.Workflow.IYamlWorkflowStep;
+export type StepType = Reactory.Workflow.StepType;
+export type StepConfig = Reactory.Workflow.IStepConfig;
 
 // Step-specific configurations
-export interface LogStepConfig extends StepConfig {
-  message: string;
-  level?: 'debug' | 'info' | 'warn' | 'error';
-  data?: Record<string, any>;
-}
+export type LogStepConfig = Reactory.Workflow.ILogStepConfig;
+export type DelayStepConfig = Reactory.Workflow.IDelayStepConfig;
+export type ValidationStepConfig = Reactory.Workflow.IValidationStepConfig;
+export type DataTransformationStepConfig = Reactory.Workflow.IDataTransformationStepConfig;
+export type ApiCallStepConfig = Reactory.Workflow.IApiCallStepConfig;
+export type CliCommandStepConfig = Reactory.Workflow.ICliCommandStepConfig;
+export type FileOperationStepConfig = Reactory.Workflow.IFileOperationStepConfig;
+export type ConditionalStepConfig = Reactory.Workflow.IConditionalStepConfig;
+export type ParallelStepConfig = Reactory.Workflow.IParallelStepConfig;
+export type ParallelBranch = Reactory.Workflow.IParallelBranch;
+export type ForEachStepConfig = Reactory.Workflow.IForEachStepConfig;
+export type WhileStepConfig = Reactory.Workflow.IWhileStepConfig;
 
-export interface DelayStepConfig extends StepConfig {
-  duration: number;
-  reason?: string;
-}
+// Parameter types
+export type InputParameter = Reactory.Workflow.IInputParameter;
+export type OutputParameter = Reactory.Workflow.IOutputParameter;
+export type ParameterValidation = Reactory.Workflow.IParameterValidation;
 
-export interface ValidationStepConfig extends StepConfig {
-  rules: ValidationRule[];
-  stopOnFirstError?: boolean;
-}
-
-export interface DataTransformationStepConfig extends StepConfig {
-  transformations: DataTransformation[];
-}
-
-export interface ApiCallStepConfig extends StepConfig {
-  url: string;
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
-  headers?: Record<string, string>;
-  body?: string | object;
-  authentication?: Authentication;
-  expectedStatusCodes?: number[];
-}
-
-export interface CliCommandStepConfig extends StepConfig {
-  command: string;
-  arguments?: string[];
-  workingDirectory?: string;
-  environment?: Record<string, string>;
-  expectedExitCodes?: number[];
-}
-
-export interface FileOperationStepConfig extends StepConfig {
-  operation: 'read' | 'write' | 'copy' | 'move' | 'delete' | 'exists' | 'mkdir';
-  source?: string;
-  destination?: string;
-  content?: string;
-  encoding?: string;
-  overwrite?: boolean;
-}
-
-export interface ConditionalStepConfig extends StepConfig {
-  condition: string;
-  thenSteps?: WorkflowStep[];
-  elseSteps?: WorkflowStep[];
-}
-
-export interface ParallelStepConfig extends StepConfig {
-  maxConcurrency?: number;
-  failFast?: boolean;
-  branches?: ParallelBranch[];
-}
-
-export interface ParallelBranch {
-  name: string;
-  steps: WorkflowStep[];
-}
-
-export interface ForEachStepConfig extends StepConfig {
-  items: string;
-  itemVariable?: string;
-  indexVariable?: string;
-  maxConcurrency?: number;
-  steps: WorkflowStep[];
-}
-
-export interface WhileStepConfig extends StepConfig {
-  condition: string;
-  maxIterations?: number;
-  steps: WorkflowStep[];
-}
-
-// Parameter definitions
-export interface InputParameter {
-  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
-  description?: string;
-  required?: boolean;
-  default?: any;
-  validation?: ParameterValidation;
-}
-
-export interface OutputParameter {
-  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
-  description?: string;
-  source: string;
-}
-
-export interface ParameterValidation {
-  pattern?: string;
-  minLength?: number;
-  maxLength?: number;
-  minimum?: number;
-  maximum?: number;
-  enum?: (string | number)[];
-}
-
-// Validation and transformation types
-export interface ValidationRule {
-  field: string;
-  type: 'required' | 'type' | 'pattern' | 'range' | 'custom';
-  value?: string | number | object;
-  message?: string;
-}
-
-export interface DataTransformation {
-  operation: 'map' | 'filter' | 'reduce' | 'sort' | 'group' | 'merge' | 'extract' | 'custom';
-  source?: string;
-  target?: string;
-  config?: Record<string, any>;
-}
-
-// Authentication types
-export interface Authentication {
-  type: 'none' | 'basic' | 'bearer' | 'apiKey' | 'oauth2';
-  config?: Record<string, any>;
-}
-
-// Retry and security policies
-export interface RetryPolicy {
-  maxAttempts?: number;
-  backoffStrategy?: 'fixed' | 'exponential' | 'linear';
-  initialDelay?: number;
-  maxDelay?: number;
-  retryOnErrors?: string[];
-}
-
-export interface SecuritySettings {
-  requiresAuthentication?: boolean;
-  permissions?: string[];
-  roles?: string[];
-}
+// Supporting types
+export type ValidationRule = Reactory.Workflow.IValidationRule;
+export type DataTransformation = Reactory.Workflow.IDataTransformation;
+export type Authentication = Reactory.Workflow.IAuthentication;
+export type RetryPolicy = Reactory.Workflow.IRetryPolicy;
+export type SecuritySettings = Reactory.Workflow.ISecuritySettings;
 
 // Designer metadata types
+export type Position = Reactory.Workflow.IPosition;
+export type Size = Reactory.Workflow.ISize;
+export type DesignerMetadata = Reactory.Workflow.IDesignerMetadata;
+export type ConnectionDesignerMetadata = Reactory.Workflow.IConnectionDesignerMetadata;
+export type DesignerNote = Reactory.Workflow.IDesignerNote;
+export type DesignerGroup = Reactory.Workflow.IDesignerGroup;
+export type StepDesignerMetadata = Reactory.Workflow.IStepDesignerMetadata;
+export type PortDesignerMetadata = Reactory.Workflow.IPortDesignerMetadata;
 
-/** 2D position on the designer canvas */
-export interface Position {
-  x: number;
-  y: number;
-}
-
-/** Dimensions of a visual element */
-export interface Size {
-  width: number;
-  height: number;
-}
-
-/** Visual designer metadata for the workflow canvas */
-export interface DesignerMetadata {
-  /** Canvas viewport settings persisted from the designer */
-  canvas?: {
-    zoom?: number;
-    panX?: number;
-    panY?: number;
-    gridSize?: number;
-    snapToGrid?: boolean;
-  };
-  /** Visual connection metadata for step-to-step links */
-  connections?: ConnectionDesignerMetadata[];
-  /** Sticky notes or annotations placed on the canvas */
-  notes?: DesignerNote[];
-  /** Visual groups that cluster related steps together */
-  groups?: DesignerGroup[];
-}
-
-/** Visual metadata for a connection between steps */
-export interface ConnectionDesignerMetadata {
-  id?: string;
-  sourceStepId: string;
-  sourcePort: string;
-  targetStepId: string;
-  targetPort: string;
-  /** Optional intermediate waypoints for the connection path */
-  points?: Position[];
-  style?: 'straight' | 'curved' | 'orthogonal';
-  color?: string;
-  label?: string;
-}
-
-/** A sticky note/annotation on the designer canvas */
-export interface DesignerNote {
-  id: string;
-  text: string;
-  position: Position;
-  size?: Size;
-  color?: string;
-}
-
-/** A visual group that clusters related steps */
-export interface DesignerGroup {
-  id: string;
-  label: string;
-  stepIds: string[];
-  color?: string;
-  collapsed?: boolean;
-}
-
-/** Visual designer metadata for a single workflow step node */
-export interface StepDesignerMetadata {
-  position?: Position;
-  size?: Size;
-  color?: string;
-  icon?: string;
-  collapsed?: boolean;
-  helpText?: string;
-  ports?: {
-    inputs?: PortDesignerMetadata[];
-    outputs?: PortDesignerMetadata[];
-  };
-}
-
-/** Visual metadata for a step port */
-export interface PortDesignerMetadata {
-  name: string;
-  label?: string;
-  position?: Position;
-  dataType?: string;
-}
-
-// Execution context interfaces
-export interface WorkflowExecutionContext {
-  workflowId: string;
-  instanceId: string;
-  userId?: string;
-  inputs: Record<string, any>;
-  variables: Record<string, any>;
-  stepResults: Record<string, StepExecutionResult>;
-  metadata: {
-    startTime: Date;
-    currentStepId?: string;
-    executionPath: string[];
-  };
-}
-
-export interface StepExecutionResult {
-  stepId: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
-  startTime?: Date;
-  endTime?: Date;
-  duration?: number;
-  outputs?: Record<string, any>;
-  error?: ExecutionError;
-  retryCount?: number;
-}
-
-export interface ExecutionError {
-  code: string;
-  message: string;
-  details?: any;
-  stack?: string;
-}
+// Execution context interfaces (from WorkflowDefinition.ts original)
+export type WorkflowExecutionContext = Reactory.Workflow.IExecutorWorkflowContext;
+export type StepExecutionResult = Reactory.Workflow.IStepExecutionRecord;
 
 // Parameter substitution types
-export interface ParameterSubstitutionContext {
-  env: Record<string, string>;
-  workflow: {
-    id: string;
-    instanceId: string;
-    nameSpace: string;
-    name: string;
-    version: string;
-  };
-  input: Record<string, any>;
-  variables: Record<string, any>;
-  step: {
-    id: string;
-    type: string;
-    outputs?: Record<string, any>;
-  };
-  outputs: Record<string, any>;
-}
+// Note: IParameterSubstitutionContext was in the original but is not heavily used.
+// If needed, it can be referenced directly via Reactory.Workflow namespace.
 
-// Parse result types
-export interface ParseResult {
+// Parse/validation result types
+export type ParseResult = {
   success: boolean;
   workflow?: YamlWorkflowDefinition;
   errors: ParseError[];
   warnings: ParseWarning[];
-}
+};
 
-export interface ParseError {
+export type ParseError = {
   code: string;
   message: string;
   line?: number;
   column?: number;
   path?: string;
   severity: 'error' | 'warning';
-}
+};
 
-export interface ParseWarning extends ParseError {
+export type ParseWarning = ParseError & {
   severity: 'warning';
-}
+};
 
-// Validation result types
-export interface ValidationResult {
+export type ValidationResult = {
   valid: boolean;
   errors: ValidationError[];
   warnings: ValidationWarning[];
-}
+};
 
-export interface ValidationError {
+export type ValidationError = {
   code: string;
   message: string;
   path: string;
   value?: any;
   expected?: any;
-}
+};
 
-export interface ValidationWarning extends ValidationError {
+export type ValidationWarning = ValidationError & {
   severity: 'warning';
-}
+};
 
 // Registry types
-export interface WorkflowRegistryEntry {
+export type WorkflowRegistryEntry = {
   nameSpace: string;
   name: string;
   version: string;
@@ -397,81 +108,63 @@ export interface WorkflowRegistryEntry {
     checksum?: string;
     lastModified?: Date;
   };
-}
+};
 
-export interface StepRegistryEntry {
+export type StepRegistryEntry = {
   type: string;
   name: string;
   description?: string;
   implementation: YamlStepImplementation;
   schema?: object;
   registeredAt: Date;
-}
+};
 
-export interface YamlStepImplementation {
+export type YamlStepImplementation = {
   execute(
     config: StepConfig,
     context: WorkflowExecutionContext,
     stepContext: StepExecutionContext
   ): Promise<StepExecutionResult>;
-  
   validate?(config: StepConfig): ValidationResult;
-  
   getSchema?(): object;
-}
+};
 
-export interface StepExecutionContext {
+export type StepExecutionContext = {
   stepId: string;
   stepType: string;
   inputs: Record<string, any>;
   timeout?: number;
   retryPolicy?: RetryPolicy;
-  logger: any; // Reactory logger interface
-  services: any; // Reactory services
-}
+  logger: any;
+  services: any;
+};
 
 // Builder types
-export interface YamlWorkflowBuilderOptions {
+export type YamlWorkflowBuilderOptions = {
   validateSchema?: boolean;
   strictMode?: boolean;
   allowCustomSteps?: boolean;
   parameterSubstitution?: boolean;
-}
+};
 
-export interface BuildResult {
+export type BuildResult = {
   success: boolean;
-  workflowBuilder?: any; // Reactory WorkflowBuilder instance
+  workflowBuilder?: any;
   errors: BuildError[];
   warnings: BuildWarning[];
-}
+};
 
-export interface BuildError {
+export type BuildError = {
   code: string;
   message: string;
   stepId?: string;
   path?: string;
-}
-
-export interface BuildWarning extends BuildError {
-  severity: 'warning';
-}
-
-// Export utility types
-export type StepConfigMap = {
-  log: LogStepConfig;
-  delay: DelayStepConfig;
-  validation: ValidationStepConfig;
-  dataTransformation: DataTransformationStepConfig;
-  apiCall: ApiCallStepConfig;
-  cliCommand: CliCommandStepConfig;
-  fileOperation: FileOperationStepConfig;
-  conditional: ConditionalStepConfig;
-  parallel: ParallelStepConfig;
-  forEach: ForEachStepConfig;
-  while: WhileStepConfig;
-  custom: StepConfig;
 };
 
-export type StepConfigForType<T extends StepType> = T extends keyof StepConfigMap 
-  ? StepConfigMap[T] 
-  : StepConfig;
+export type BuildWarning = BuildError & {
+  severity: 'warning';
+};
+
+// Step config type map
+export type StepConfigMap = Reactory.Workflow.StepConfigMap;
+export type StepConfigForType<T extends StepType> = Reactory.Workflow.StepConfigForType<T>;

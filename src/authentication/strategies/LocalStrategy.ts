@@ -12,7 +12,11 @@ const authenticate: BasicVerifyFunctionWithRequest = async (req: Reactory.Server
   const startTime = Date.now();
   const { context } = req;
   const clientKey = context?.partner?.key || 'api';
-  
+  if (!context) {
+    logger.error('Authentication context is missing');
+    done(new Error('Authentication context is missing'), false);
+    return;
+  }
   // Track attempt
   AuthTelemetry.recordAttempt('local', clientKey);
   

@@ -62,7 +62,7 @@ export class ReactoryModelRegistry
     if (this.context && Array.isArray(this.context?.modules) === true) {
       this.context.modules.forEach((module) => {
         module?.models?.forEach(async (model) => {
-          if (!model) {
+          if (model === undefined || model === null) {
             log(`Model is undefined in module ${module.name}`, {}, 'error', 'core.ReactoryModelRegistry');
             return;
           }             
@@ -84,6 +84,7 @@ export class ReactoryModelRegistry
                 model as Reactory.Service.IReactoryStartupAwareService
               ).onStartup.bind(that);              
               startupAwareModels.push(new Promise((resolve, reject) => { 
+                // @ts-ignore
                 model.onStartup(that.context).then(resolve).catch(reject); 
               }));
             }

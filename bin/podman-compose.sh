@@ -32,8 +32,10 @@ if [[ $REACTORY_ENV_ID != podman* ]]; then
   # wait for input to continue
   read -p "Press enter to continue or ctrl+c to exit"
 fi
-# source the env file
+# source the env file and export all variables so podman-compose can resolve them
+set -a
 source $ENV_FILE
+set +a
 
 # Check if PODMAN_COMPOSE_PROJECT_NAME is set
 if [ -z "$PODMAN_COMPOSE_PROJECT_NAME" ]; then
@@ -91,4 +93,4 @@ if ! node -e "const yaml = require('yaml'); const fs = require('fs'); try { yaml
 fi
 
 echo "🚀 Launching podman for ${1:-reactory} ${2:-podman} configuration"
-podman-compose -f "$COMPOSE_FILE" --env-file "./config/${1:-reactory}/.env.${2:-local}" ${3:-up} -d
+podman-compose -f "$COMPOSE_FILE" -p "${PODMAN_COMPOSE_PROJECT_NAME:-reactory-fullstack}" --env-file "./config/${1:-reactory}/.env.${2:-local}" ${3:-up} -d
