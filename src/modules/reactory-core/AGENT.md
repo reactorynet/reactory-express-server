@@ -30,7 +30,8 @@ reactory-core/
   middleware/            # Module-specific middleware
   schema/               # Schema definitions
   types/                # TypeScript type definitions
-  workflow/             # Workflow definitions
+  workflow/             # Workflow engine
+  workflows/            # Workflow definitions
   protobuf/             # gRPC/protobuf definitions
   data/                 # Static data (translations)
   build/                # Build assets
