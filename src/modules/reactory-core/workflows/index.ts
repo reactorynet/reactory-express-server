@@ -6,7 +6,7 @@ import { loadYamlWorkflow } from '@reactory/server-modules/reactory-core/workflo
 // ─────────────────────────────────────────────
 
 const WORKFLOW_FILES = [
-    { filename: 'DefaultUserOnboardingWorkflow.yaml', nameSpace: 'reactory-core', name: 'DefaultUserOnboardingWorkflow', version: '1.0.0' },    
+    { filename: 'DefaultUserOnboarding.yaml', nameSpace: 'reactory-core', name: 'DefaultUserOnboarding', version: '1.0.0' },    
 ];
 const workflows: Reactory.Workflow.IWorkflow[] = WORKFLOW_FILES
     .map(({ nameSpace, name, filename, version }) => loadYamlWorkflow(nameSpace, name, filename, version))

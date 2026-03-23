@@ -59,6 +59,55 @@ export class ReactoryClientResolver {
     const userService = context.getService<Reactory.Service.IReactoryUserService>("core.UserService@1.0.0");
     return userService.getUsersByClientMembership(clientId, paging, filter);
   }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientAddRoute")
+  async addRoute(obj: any, params: { clientId: string, route: any }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+    return systemService.addRoute(params.clientId, params.route);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientUpdateRoute")
+  async updateRoute(obj: any, params: { clientId: string, routeId: string, route: any }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+    return systemService.updateRoute(params.clientId, params.routeId, params.route);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientDeleteRoute")
+  async deleteRoute(obj: any, params: { clientId: string, routeId: string }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+    return systemService.deleteRoute(params.clientId, params.routeId);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientReorderRoutes")
+  async reorderRoutes(obj: any, params: { clientId: string, routeIds: string[] }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+    return systemService.reorderRoutes(params.clientId, params.routeIds);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientUpdateMenus")
+  async updateMenus(obj: any, params: { clientId: string, menus: any[] }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+    return systemService.updateMenus(params.clientId, params.menus);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientUpdateRoles")
+  async updateRoles(obj: any, params: { clientId: string, roles: string[] }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+    return systemService.updateApplicationRoles(params.clientId, params.roles);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientUpdateSettings")
+  async updateSettings(obj: any, params: { clientId: string, settings: any[] }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+    return systemService.updateSettings(params.clientId, params.settings);
+  }
 }
 
 @resolver

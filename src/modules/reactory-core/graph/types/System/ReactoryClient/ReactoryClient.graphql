@@ -462,6 +462,103 @@ input CreateReactoryClient {
   savesAs: ReactoryClientSaveAs! = DB_ONLY
 }
 
+"""
+Input type for creating or updating a client route
+"""
+input ClientRouteInput {
+  key: String
+  path: String
+  title: String
+  exact: Boolean
+  public: Boolean
+  roles: [String]
+  componentFqn: String
+  redirect: String
+  componentProps: Any
+}
+
+"""
+Input type for a menu item (recursive structure)
+"""
+input MenuItemInput {
+  id: ObjID
+  ordinal: Int
+  title: String
+  link: String
+  external: Boolean
+  icon: String
+  roles: [String]
+  enabled: Boolean
+  featureFlags: [String]
+  items: [MenuItemInput]
+}
+
+"""
+Input type for creating or updating a menu
+"""
+input MenuInput {
+  id: ObjID
+  name: String
+  key: String
+  target: String
+  roles: [String]
+  enabled: Boolean
+  featureFlags: [String]
+  entries: [MenuItemInput]
+}
+
+"""
+Input type for creating or updating a client setting
+"""
+input ReactoryClientSettingInput {
+  name: String
+  settingType: String
+  variant: String
+  title: String
+  description: String
+  componentFqn: String
+  formSchema: Any
+  data: Any
+}
+
 extend type Mutation {
-  ReactoryClientCreate(input: CreateReactoryClient!): ReactoryClientCreateResult!  
+  """
+  Creates a new ReactoryClient application
+  """
+  ReactoryClientCreate(input: CreateReactoryClient!): ReactoryClientCreateResult!
+
+  """
+  Adds a new route to the specified ReactoryClient. Restricted to ADMIN roles.
+  """
+  ReactoryClientAddRoute(clientId: String!, route: ClientRouteInput!): ReactoryClient!
+
+  """
+  Updates an existing route on the specified ReactoryClient. Restricted to ADMIN roles.
+  """
+  ReactoryClientUpdateRoute(clientId: String!, routeId: String!, route: ClientRouteInput!): ReactoryClient!
+
+  """
+  Deletes a route from the specified ReactoryClient. Restricted to ADMIN roles.
+  """
+  ReactoryClientDeleteRoute(clientId: String!, routeId: String!): ReactoryClient!
+
+  """
+  Reorders routes on the specified ReactoryClient by providing the desired order of route IDs. Restricted to ADMIN roles.
+  """
+  ReactoryClientReorderRoutes(clientId: String!, routeIds: [String!]!): ReactoryClient!
+
+  """
+  Replaces the menus for the specified ReactoryClient. Restricted to ADMIN roles.
+  """
+  ReactoryClientUpdateMenus(clientId: String!, menus: [MenuInput!]!): ReactoryClient!
+
+  """
+  Replaces the application roles for the specified ReactoryClient. Restricted to ADMIN roles.
+  """
+  ReactoryClientUpdateRoles(clientId: String!, roles: [String!]!): ReactoryClient!
+
+  """
+  Replaces the settings for the specified ReactoryClient. Restricted to ADMIN roles.
+  """
+  ReactoryClientUpdateSettings(clientId: String!, settings: [ReactoryClientSettingInput!]!): ReactoryClient!
 }

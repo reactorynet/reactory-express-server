@@ -249,6 +249,115 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
     setEditItemIndex(-1);
   };
 
+  const MenuItemsList = ({ items, menuIndex, depth, isAdmin: admin, onToggleEnabled, components: C }: any) => (
+    <C.List disablePadding sx={depth > 0 ? { pl: 3, borderLeft: '2px solid', borderColor: 'divider' } : {}}>
+      {items.map((item: any, itemIndex: number) => (
+        <React.Fragment key={item.id || itemIndex}>
+          <C.ListItem
+            divider
+            sx={{
+              opacity: item.enabled !== false ? 1 : 0.55,
+              py: 1,
+            }}
+            secondaryAction={
+              admin && (
+                <C.Box>
+                  <C.Tooltip
+                    title={item.enabled !== false ? 'Disable item' : 'Enable item'}
+                  >
+                    <C.IconButton
+                      size="small"
+                      onClick={() => onToggleEnabled(menuIndex, itemIndex)}
+                      color={item.enabled !== false ? 'success' : 'default'}
+                    >
+                      {item.enabled !== false ? (
+                        <C.ToggleOnIcon fontSize="small" />
+                      ) : (
+                        <C.ToggleOffIcon fontSize="small" />
+                      )}
+                    </C.IconButton>
+                  </C.Tooltip>
+                </C.Box>
+              )
+            }
+          >
+            <C.ListItemIcon sx={{ minWidth: 36 }}>
+              <C.LinkIcon fontSize="small" />
+            </C.ListItemIcon>
+            <C.ListItemText
+              primary={
+                <C.Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <C.Typography variant="body2">
+                    {item.label}
+                  </C.Typography>
+                  <C.Chip
+                    label={item.enabled !== false ? 'On' : 'Off'}
+                    size="small"
+                    color={item.enabled !== false ? 'success' : 'error'}
+                    variant="outlined"
+                    sx={{ height: 20, fontSize: 11 }}
+                  />
+                  {item.items?.length > 0 && (
+                    <C.Chip
+                      label={`${item.items.length} sub-item${item.items.length !== 1 ? 's' : ''}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{ height: 20, fontSize: 11 }}
+                    />
+                  )}
+                </C.Box>
+              }
+              secondary={
+                <C.Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                  <C.Typography variant="caption" fontFamily="monospace">
+                    {item.route}
+                  </C.Typography>
+                  {item.featureFlags?.length > 0 && (
+                    <C.Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                      {item.featureFlags.map((flag: string) => (
+                        <C.Chip
+                          key={flag}
+                          icon={<C.FlagIcon sx={{ fontSize: 12 }} />}
+                          label={flag}
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                          sx={{ height: 20, fontSize: 11 }}
+                        />
+                      ))}
+                    </C.Box>
+                  )}
+                  {item.roles?.length > 0 && (
+                    <C.Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                      {item.roles.map((role: string) => (
+                        <C.Chip
+                          key={role}
+                          label={role}
+                          size="small"
+                          sx={{ height: 20, fontSize: 11 }}
+                        />
+                      ))}
+                    </C.Box>
+                  )}
+                </C.Box>
+              }
+            />
+          </C.ListItem>
+          {item.items?.length > 0 && (
+            <MenuItemsList
+              items={item.items}
+              menuIndex={menuIndex}
+              depth={depth + 1}
+              isAdmin={admin}
+              onToggleEnabled={onToggleEnabled}
+              components={C}
+            />
+          )}
+        </React.Fragment>
+      ))}
+    </C.List>
+  );
+
   return (
     <Box sx={{ p: 2 }}>
       <Card>
@@ -416,159 +525,18 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
                         Menu Items
                       </Typography>
                       {menu.items?.length > 0 ? (
-                        <List disablePadding>
-                          {menu.items.map(
-                            (item: any, itemIndex: number) => (
-                              <ListItem
-                                key={item.id || itemIndex}
-                                divider
-                                sx={{
-                                  opacity:
-                                    item.enabled !== false ? 1 : 0.55,
-                                  py: 1,
-                                }}
-                                secondaryAction={
-                                  isAdmin && (
-                                    <Box>
-                                      <Tooltip
-                                        title={
-                                          item.enabled !== false
-                                            ? 'Disable item'
-                                            : 'Enable item'
-                                        }
-                                      >
-                                        <IconButton
-                                          size="small"
-                                          onClick={() =>
-                                            handleToggleItemEnabled(
-                                              menuIndex,
-                                              itemIndex,
-                                            )
-                                          }
-                                          color={
-                                            item.enabled !== false
-                                              ? 'success'
-                                              : 'default'
-                                          }
-                                        >
-                                          {item.enabled !== false ? (
-                                            <ToggleOnIcon fontSize="small" />
-                                          ) : (
-                                            <ToggleOffIcon fontSize="small" />
-                                          )}
-                                        </IconButton>
-                                      </Tooltip>
-                                    </Box>
-                                  )
-                                }
-                              >
-                                <ListItemIcon sx={{ minWidth: 36 }}>
-                                  <LinkIcon fontSize="small" />
-                                </ListItemIcon>
-                                <ListItemText
-                                  primary={
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1,
-                                      }}
-                                    >
-                                      <Typography variant="body2">
-                                        {item.label}
-                                      </Typography>
-                                      <Chip
-                                        label={
-                                          item.enabled !== false
-                                            ? 'On'
-                                            : 'Off'
-                                        }
-                                        size="small"
-                                        color={
-                                          item.enabled !== false
-                                            ? 'success'
-                                            : 'error'
-                                        }
-                                        variant="outlined"
-                                        sx={{ height: 20, fontSize: 11 }}
-                                      />
-                                    </Box>
-                                  }
-                                  secondary={
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 0.5,
-                                        mt: 0.5,
-                                      }}
-                                    >
-                                      <Typography
-                                        variant="caption"
-                                        fontFamily="monospace"
-                                      >
-                                        {item.route}
-                                      </Typography>
-                                      {item.featureFlags?.length > 0 && (
-                                        <Box
-                                          sx={{
-                                            display: 'flex',
-                                            gap: 0.5,
-                                            flexWrap: 'wrap',
-                                          }}
-                                        >
-                                          {item.featureFlags.map(
-                                            (flag: string) => (
-                                              <Chip
-                                                key={flag}
-                                                icon={
-                                                  <FlagIcon
-                                                    sx={{ fontSize: 12 }}
-                                                  />
-                                                }
-                                                label={flag}
-                                                size="small"
-                                                variant="outlined"
-                                                color="primary"
-                                                sx={{
-                                                  height: 20,
-                                                  fontSize: 11,
-                                                }}
-                                              />
-                                            ),
-                                          )}
-                                        </Box>
-                                      )}
-                                      {item.roles?.length > 0 && (
-                                        <Box
-                                          sx={{
-                                            display: 'flex',
-                                            gap: 0.5,
-                                            flexWrap: 'wrap',
-                                          }}
-                                        >
-                                          {item.roles.map(
-                                            (role: string) => (
-                                              <Chip
-                                                key={role}
-                                                label={role}
-                                                size="small"
-                                                sx={{
-                                                  height: 20,
-                                                  fontSize: 11,
-                                                }}
-                                              />
-                                            ),
-                                          )}
-                                        </Box>
-                                      )}
-                                    </Box>
-                                  }
-                                />
-                              </ListItem>
-                            ),
-                          )}
-                        </List>
+                        <MenuItemsList
+                          items={menu.items}
+                          menuIndex={menuIndex}
+                          depth={0}
+                          isAdmin={isAdmin}
+                          onToggleEnabled={handleToggleItemEnabled}
+                          components={{
+                            List, ListItem, ListItemIcon, ListItemText,
+                            Box, Typography, Chip, IconButton, Tooltip,
+                            LinkIcon, ToggleOnIcon, ToggleOffIcon, FlagIcon,
+                          }}
+                        />
                       ) : (
                         <Typography
                           variant="caption"
@@ -704,93 +672,133 @@ const ApplicationMenusPanel = (props: ApplicationMenusPanelProps) => {
               <Paper variant="outlined" sx={{ p: 1 }}>
                 <List dense>
                   {selectedMenu.items.map((item: any, idx: number) => (
-                    <ListItem
-                      key={item.id || idx}
-                      divider
-                      sx={{
-                        opacity: item.enabled !== false ? 1 : 0.55,
-                      }}
-                      secondaryAction={
-                        <Box>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditMenuItem(item, idx)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDeleteMenuItem(idx)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      }
-                    >
-                      <ListItemText
-                        primary={
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                            }}
-                          >
-                            <Typography variant="body2">
-                              {item.label}
-                            </Typography>
-                            <Chip
-                              label={
-                                item.enabled !== false ? 'On' : 'Off'
-                              }
-                              size="small"
-                              color={
-                                item.enabled !== false
-                                  ? 'success'
-                                  : 'error'
-                              }
-                              variant="outlined"
-                              sx={{ height: 20, fontSize: 11 }}
-                            />
-                          </Box>
-                        }
-                        secondary={
+                    <React.Fragment key={item.id || idx}>
+                      <ListItem
+                        divider
+                        sx={{
+                          opacity: item.enabled !== false ? 1 : 0.55,
+                        }}
+                        secondaryAction={
                           <Box>
-                            <Typography
-                              variant="caption"
-                              fontFamily="monospace"
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditMenuItem(item, idx)}
                             >
-                              {item.route}
-                            </Typography>
-                            {item.featureFlags?.length > 0 && (
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  gap: 0.5,
-                                  mt: 0.5,
-                                  flexWrap: 'wrap',
-                                }}
-                              >
-                                {item.featureFlags.map((flag: string) => (
-                                  <Chip
-                                    key={flag}
-                                    icon={
-                                      <FlagIcon sx={{ fontSize: 12 }} />
-                                    }
-                                    label={flag}
-                                    size="small"
-                                    variant="outlined"
-                                    color="primary"
-                                    sx={{ height: 20, fontSize: 11 }}
-                                  />
-                                ))}
-                              </Box>
-                            )}
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteMenuItem(idx)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
                           </Box>
                         }
-                      />
-                    </ListItem>
+                      >
+                        <ListItemText
+                          primary={
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
+                            >
+                              <Typography variant="body2">
+                                {item.label}
+                              </Typography>
+                              <Chip
+                                label={
+                                  item.enabled !== false ? 'On' : 'Off'
+                                }
+                                size="small"
+                                color={
+                                  item.enabled !== false
+                                    ? 'success'
+                                    : 'error'
+                                }
+                                variant="outlined"
+                                sx={{ height: 20, fontSize: 11 }}
+                              />
+                              {item.items?.length > 0 && (
+                                <Chip
+                                  label={`${item.items.length} sub-item${item.items.length !== 1 ? 's' : ''}`}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ height: 20, fontSize: 11 }}
+                                />
+                              )}
+                            </Box>
+                          }
+                          secondary={
+                            <Box>
+                              <Typography
+                                variant="caption"
+                                fontFamily="monospace"
+                              >
+                                {item.route}
+                              </Typography>
+                              {item.featureFlags?.length > 0 && (
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    gap: 0.5,
+                                    mt: 0.5,
+                                    flexWrap: 'wrap',
+                                  }}
+                                >
+                                  {item.featureFlags.map((flag: string) => (
+                                    <Chip
+                                      key={flag}
+                                      icon={
+                                        <FlagIcon sx={{ fontSize: 12 }} />
+                                      }
+                                      label={flag}
+                                      size="small"
+                                      variant="outlined"
+                                      color="primary"
+                                      sx={{ height: 20, fontSize: 11 }}
+                                    />
+                                  ))}
+                                </Box>
+                              )}
+                            </Box>
+                          }
+                        />
+                      </ListItem>
+                      {item.items?.length > 0 && (
+                        <List dense disablePadding sx={{ pl: 4, borderLeft: '2px solid', borderColor: 'divider' }}>
+                          {item.items.map((child: any, childIdx: number) => (
+                            <ListItem
+                              key={child.id || childIdx}
+                              divider
+                              sx={{ opacity: child.enabled !== false ? 1 : 0.55, py: 0.5 }}
+                            >
+                              <ListItemText
+                                primary={
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="caption">{child.label}</Typography>
+                                    <Chip
+                                      label={child.enabled !== false ? 'On' : 'Off'}
+                                      size="small"
+                                      color={child.enabled !== false ? 'success' : 'error'}
+                                      variant="outlined"
+                                      sx={{ height: 18, fontSize: 10 }}
+                                    />
+                                  </Box>
+                                }
+                                secondary={
+                                  <Typography variant="caption" fontFamily="monospace" sx={{ fontSize: 11 }}>
+                                    {child.route}
+                                  </Typography>
+                                }
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      )}
+                    </React.Fragment>
                   ))}
                 </List>
               </Paper>

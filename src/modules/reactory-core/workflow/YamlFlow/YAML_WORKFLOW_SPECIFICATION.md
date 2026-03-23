@@ -35,8 +35,7 @@ The current workflow system requires developers to write TypeScript classes (Ste
 ```mermaid
 graph TB
     subgraph "YAML Workflow System"
-        YWD[YAML Workflow<br/>Definition]
-        YWP[YAML Workflow<br/>Parser]
+        YWD[YAML Workflow<br/>Definition]        YWP[YAML Workflow<br/>Parser]
         YWB[YAML Workflow<br/>Builder]
         YSR[YAML Step<br/>Registry]
     end

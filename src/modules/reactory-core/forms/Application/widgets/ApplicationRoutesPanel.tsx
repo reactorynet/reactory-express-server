@@ -12,6 +12,45 @@ interface ApplicationRoutesPanelProps {
   mode?: 'view' | 'edit';
 }
 
+const ROUTE_FIELDS = `
+  id
+  key
+  path
+  title
+  exact
+  public
+  roles
+  componentFqn
+  componentProps
+`;
+
+const MUTATIONS = {
+  addRoute: `mutation ReactoryClientAddRoute($clientId: String!, $route: ClientRouteInput!) {
+    ReactoryClientAddRoute(clientId: $clientId, route: $route) {
+      id
+      routes { ${ROUTE_FIELDS} }
+    }
+  }`,
+  updateRoute: `mutation ReactoryClientUpdateRoute($clientId: String!, $routeId: String!, $route: ClientRouteInput!) {
+    ReactoryClientUpdateRoute(clientId: $clientId, routeId: $routeId, route: $route) {
+      id
+      routes { ${ROUTE_FIELDS} }
+    }
+  }`,
+  deleteRoute: `mutation ReactoryClientDeleteRoute($clientId: String!, $routeId: String!) {
+    ReactoryClientDeleteRoute(clientId: $clientId, routeId: $routeId) {
+      id
+      routes { ${ROUTE_FIELDS} }
+    }
+  }`,
+  reorderRoutes: `mutation ReactoryClientReorderRoutes($clientId: String!, $routeIds: [String!]!) {
+    ReactoryClientReorderRoutes(clientId: $clientId, routeIds: $routeIds) {
+      id
+      routes { ${ROUTE_FIELDS} }
+    }
+  }`,
+};
+
 const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
   const { reactory, formData, applicationId, mode = 'view' } = props;
 
@@ -23,15 +62,13 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
   const { useState } = React;
 
   const {
+    Alert,
     Card,
     CardContent,
     CardHeader,
     Box,
     Typography,
     Divider,
-    List,
-    ListItem,
-    ListItemText,
     Chip,
     Button,
     IconButton,
@@ -49,6 +86,8 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
     TableContainer,
     TableHead,
     TableRow,
+    CircularProgress,
+    Tooltip,
   } = Material.MaterialCore;
 
   const {
@@ -58,14 +97,32 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
     Delete: DeleteIcon,
     Lock: LockIcon,
     LockOpen: LockOpenIcon,
+    ArrowUpward: ArrowUpwardIcon,
+    ArrowDownward: ArrowDownwardIcon,
   } = Material.MaterialIcons;
 
-  const routes = formData?.routes || [];
-  const totalRoutes = formData?.totalRoutes || routes.length;
+  const isAdmin = reactory.hasRole(['ADMIN']);
 
+  const [routes, setRoutes] = useState<any[]>(formData?.routes || []);
+  const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  React.useEffect(() => {
+    if (formData?.routes) {
+      setRoutes(formData.routes);
+    }
+  }, [formData?.routes]);
+
+  const totalRoutes = formData?.totalRoutes || routes.length;
+
+  const updateRoutesFromResult = (result: any, mutationKey: string) => {
+    const data = result?.data?.[mutationKey];
+    if (data?.routes) {
+      setRoutes(data.routes);
+    }
+  };
 
   const handleAddRoute = () => {
     setSelectedRoute({
@@ -76,7 +133,7 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
       public: false,
       roles: [],
       componentFqn: '',
-      componentProps: {}
+      componentProps: {},
     });
     setIsEditing(false);
     setDialogOpen(true);
@@ -89,24 +146,105 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
   };
 
   const handleDeleteRoute = async (routeId: string) => {
-    if (confirm('Are you sure you want to delete this route?')) {
-      try {
-        // TODO: Implement delete mutation
-        reactory.log('Delete route:', routeId);
-      } catch (error) {
-        reactory.log('Error deleting route:', error);
-      }
+    if (!applicationId || !routeId) return;
+    if (!confirm('Are you sure you want to delete this route?')) return;
+    setLoading(true);
+    try {
+      const result = await reactory.graphqlMutation(MUTATIONS.deleteRoute, {
+        clientId: applicationId,
+        routeId,
+      });
+      updateRoutesFromResult(result, 'ReactoryClientDeleteRoute');
+    } catch (error) {
+      reactory.createNotification('Error deleting route', { type: 'error' });
+      reactory.log('Error deleting route:', error, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSaveRoute = async () => {
+    if (!applicationId) return;
+    setLoading(true);
     try {
-      // TODO: Implement save/update mutation
-      reactory.log(isEditing ? 'Update route:' : 'Create route:', selectedRoute);
+      const routeInput = {
+        key: selectedRoute.key,
+        path: selectedRoute.path,
+        title: selectedRoute.title,
+        exact: selectedRoute.exact,
+        public: selectedRoute.public,
+        roles: selectedRoute.roles,
+        componentFqn: selectedRoute.componentFqn,
+        componentProps: selectedRoute.componentProps,
+      };
+
+      if (isEditing && selectedRoute.id) {
+        const result = await reactory.graphqlMutation(MUTATIONS.updateRoute, {
+          clientId: applicationId,
+          routeId: selectedRoute.id,
+          route: routeInput,
+        });
+        updateRoutesFromResult(result, 'ReactoryClientUpdateRoute');
+      } else {
+        const result = await reactory.graphqlMutation(MUTATIONS.addRoute, {
+          clientId: applicationId,
+          route: routeInput,
+        });
+        updateRoutesFromResult(result, 'ReactoryClientAddRoute');
+      }
+
       setDialogOpen(false);
       setSelectedRoute(null);
     } catch (error) {
-      reactory.log('Error saving route:', error);
+      reactory.createNotification('Error saving route', { type: 'error' });
+      reactory.log('Error saving route:', error, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMoveRoute = async (index: number, direction: 'up' | 'down') => {
+    if (!applicationId) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= routes.length) return;
+
+    const reordered = [...routes];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(targetIndex, 0, moved);
+    const routeIds = reordered.map((r: any) => r.id);
+
+    setRoutes(reordered);
+    setLoading(true);
+    try {
+      const result = await reactory.graphqlMutation(MUTATIONS.reorderRoutes, {
+        clientId: applicationId,
+        routeIds,
+      });
+      updateRoutesFromResult(result, 'ReactoryClientReorderRoutes');
+    } catch (error) {
+      setRoutes(routes);
+      reactory.createNotification('Error reordering routes', { type: 'error' });
+      reactory.log('Error reordering routes:', error, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleAccess = async (route: any) => {
+    if (!applicationId || !isAdmin) return;
+    setLoading(true);
+    try {
+      const result = await reactory.graphqlMutation(MUTATIONS.updateRoute, {
+        clientId: applicationId,
+        routeId: route.id,
+        route: { public: !route.public },
+      });
+      updateRoutesFromResult(result, 'ReactoryClientUpdateRoute');
+    } catch (error) {
+      reactory.createNotification('Error updating route access', { type: 'error' });
+      reactory.log('Error toggling route access:', error, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -123,15 +261,16 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
     <Box sx={{ p: 2 }}>
       <Card>
         <CardHeader
-          avatar={<RouteIcon />}
+          avatar={loading ? <CircularProgress size={24} /> : <RouteIcon />}
           title="Application Routes"
           subheader={`Total: ${totalRoutes}`}
           action={
-            mode === 'edit' && (
+            isAdmin && (
               <Button
                 startIcon={<AddIcon />}
                 variant="contained"
                 onClick={handleAddRoute}
+                disabled={loading}
               >
                 Add Route
               </Button>
@@ -140,22 +279,56 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
         />
         <Divider />
         <CardContent>
+          {!isAdmin && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Only administrators can manage routes.
+            </Alert>
+          )}
           {routes.length > 0 ? (
             <TableContainer component={Paper} variant="outlined">
-              <Table>
+              <Table size="small">
                 <TableHead>
                   <TableRow>
+                    {isAdmin && <TableCell width={80}>Order</TableCell>}
                     <TableCell>Path</TableCell>
                     <TableCell>Title</TableCell>
                     <TableCell>Component</TableCell>
                     <TableCell>Access</TableCell>
                     <TableCell>Roles</TableCell>
-                    {mode === 'edit' && <TableCell align="right">Actions</TableCell>}
+                    {isAdmin && <TableCell align="right">Actions</TableCell>}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {routes.map((route: any) => (
+                  {routes.map((route: any, index: number) => (
                     <TableRow key={route.id || route.key}>
+                      {isAdmin && (
+                        <TableCell>
+                          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                            <Tooltip title="Move up">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleMoveRoute(index, 'up')}
+                                  disabled={index === 0 || loading}
+                                >
+                                  <ArrowUpwardIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                            <Tooltip title="Move down">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleMoveRoute(index, 'down')}
+                                  disabled={index === routes.length - 1 || loading}
+                                >
+                                  <ArrowDownwardIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      )}
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Typography variant="body2" fontFamily="monospace">
@@ -173,19 +346,24 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        {route.public ? (
-                          <Chip
-                            icon={<LockOpenIcon />}
-                            label="Public"
-                            size="small"
-                            color="success"
-                          />
+                        {isAdmin ? (
+                          <Tooltip title="Click to toggle access">
+                            <Chip
+                              icon={route.public ? <LockOpenIcon /> : <LockIcon />}
+                              label={route.public ? 'Public' : 'Private'}
+                              size="small"
+                              color={route.public ? 'success' : 'default'}
+                              onClick={() => handleToggleAccess(route)}
+                              disabled={loading}
+                              sx={{ cursor: 'pointer' }}
+                            />
+                          </Tooltip>
                         ) : (
                           <Chip
-                            icon={<LockIcon />}
-                            label="Private"
+                            icon={route.public ? <LockOpenIcon /> : <LockIcon />}
+                            label={route.public ? 'Public' : 'Private'}
                             size="small"
-                            color="default"
+                            color={route.public ? 'success' : 'default'}
                           />
                         )}
                       </TableCell>
@@ -202,21 +380,27 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
                           )}
                         </Box>
                       </TableCell>
-                      {mode === 'edit' && (
+                      {isAdmin && (
                         <TableCell align="right">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditRoute(route)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDeleteRoute(route.id)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                          <Tooltip title="Edit route">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditRoute(route)}
+                              disabled={loading}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete route">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteRoute(route.id)}
+                              disabled={loading}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </TableCell>
                       )}
                     </TableRow>
@@ -232,7 +416,6 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
         </CardContent>
       </Card>
 
-      {/* Route Edit/Create Dialog */}
       <Dialog open={dialogOpen} onClose={handleDialogClose} maxWidth="md" fullWidth>
         <DialogTitle>
           {isEditing ? 'Edit Route' : 'Add New Route'}
@@ -270,7 +453,15 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
             <TextField
               label="Roles"
               value={selectedRoute?.roles?.join(', ') || ''}
-              onChange={(e) => handleFieldChange('roles', e.target.value.split(',').map((r: string) => r.trim()))}
+              onChange={(e) =>
+                handleFieldChange(
+                  'roles',
+                  e.target.value
+                    .split(',')
+                    .map((r: string) => r.trim())
+                    .filter(Boolean)
+                )
+              }
               fullWidth
               helperText="Comma-separated list of required roles"
             />
@@ -297,9 +488,9 @@ const ApplicationRoutesPanel = (props: ApplicationRoutesPanelProps) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDialogClose}>Cancel</Button>
-          <Button onClick={handleSaveRoute} variant="contained">
-            {isEditing ? 'Update' : 'Create'}
+          <Button onClick={handleDialogClose} disabled={loading}>Cancel</Button>
+          <Button onClick={handleSaveRoute} variant="contained" disabled={loading}>
+            {loading ? <CircularProgress size={20} /> : isEditing ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -339,4 +530,3 @@ if (window && window.reactory) {
     component: ApplicationRoutesPanel,
   });
 }
-

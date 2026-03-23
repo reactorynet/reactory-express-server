@@ -250,6 +250,109 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     this.searchService = searchService;
   }
 
+  async addRoute(clientId: string, route: unknown): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findByIdAndUpdate(
+      clientId,
+      { $push: { routes: route } },
+      { new: true },
+    ).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+    return client;
+  }
+
+  async updateRoute(clientId: string, routeId: string, route: unknown): Promise<Reactory.Models.TReactoryClient> {
+    const setFields: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(route as Record<string, unknown>)) {
+      setFields[`routes.$.${key}`] = value;
+    }
+
+    const client = await ReactoryClient.findOneAndUpdate(
+      { _id: clientId, 'routes._id': routeId },
+      { $set: setFields },
+      { new: true },
+    ).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} or route ${routeId} not found`);
+    return client;
+  }
+
+  async deleteRoute(clientId: string, routeId: string): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findByIdAndUpdate(
+      clientId,
+      { $pull: { routes: { _id: routeId } } },
+      { new: true },
+    ).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+    return client;
+  }
+
+  async reorderRoutes(clientId: string, routeIds: string[]): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findById(clientId).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+
+    const routeMap = new Map<string, any>();
+    for (const route of (client as any).routes) {
+      routeMap.set(route._id.toString(), route);
+    }
+
+    const reordered = routeIds
+      .map(id => routeMap.get(id))
+      .filter(Boolean);
+
+    // Append any routes not included in the reorder list at the end
+    for (const route of (client as any).routes) {
+      if (!routeIds.includes(route._id.toString())) {
+        reordered.push(route);
+      }
+    }
+
+    (client as any).routes = reordered;
+    await (client as any).save();
+    return client;
+  }
+
+  async updateMenus(clientId: string, menus: unknown[]): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findById(clientId).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+
+    const menuIds: ObjectId[] = [];
+    for (const menuInput of menus as any[]) {
+      if (menuInput.id) {
+        await Menu.findByIdAndUpdate(menuInput.id, menuInput, { new: true }).exec();
+        menuIds.push(new ObjectId(menuInput.id));
+      } else {
+        const created = await Menu.create({ ...menuInput, client: clientId });
+        menuIds.push(created._id as unknown as ObjectId);
+      }
+    }
+
+    const updated = await ReactoryClient.findByIdAndUpdate(
+      clientId,
+      { $set: { menus: menuIds } },
+      { new: true },
+    ).exec();
+    return updated!;
+  }
+
+  async updateApplicationRoles(clientId: string, roles: string[]): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findByIdAndUpdate(
+      clientId,
+      { $set: { applicationRoles: roles } },
+      { new: true },
+    ).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+    return client;
+  }
+
+  async updateSettings(clientId: string, settings: unknown[]): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findByIdAndUpdate(
+      clientId,
+      { $set: { settings } },
+      { new: true },
+    ).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+    return client;
+  }
+
   static reactory: Reactory.Service.IReactoryServiceDefinition<SystemService> = {
     id: 'core.SystemService@1.0.0',
     nameSpace: 'core',
