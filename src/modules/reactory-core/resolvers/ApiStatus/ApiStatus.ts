@@ -392,7 +392,7 @@ class ApiStatus {
           context.log(`Result from profile refresh ${profile.fullNameWithEmail}, has ${uxmessages.length} messages`, {}, 'debug', 'ApiStatus.apiStatus()');
         }
       } catch (profileRefreshError) {
-        context.log(`Error refreshing profile data for user ${user.firstName}`, profileRefreshError, 'error');
+        context.error(`Error refreshing profile data for user ${user.firstName}`, profileRefreshError);
       }
     }
     
