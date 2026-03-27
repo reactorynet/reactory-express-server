@@ -119,7 +119,7 @@ const getDefaultWorkflows = (): IWorkflow[] => {
     if (isArray(reactoryModule.workflows)) {    
       reactoryModule.workflows.forEach((workflow: any) => {
         if (typeof workflow === 'object' && workflow.category === 'workflow') {
-          logger.debug(`🔀 Loading workflow for module ${reactoryModule.name}`, workflow);        
+          logger.debug(`🔀 Loading workflow for module ${reactoryModule.name} ${workflow.nameSpace}.${workflow.name}@${workflow.version} from ${workflow?.location || `${reactoryModule.name}/workflows`}`);        
           availableworkflows.push(workflow);
         } else {
           logger.warn(`Did not load workflow item - bad shape, expecting object with category "workflow" found ${typeof workflow}`, workflow);
