@@ -181,6 +181,22 @@ export abstract class BaseYamlStep implements IYamlStep {
         return String(context.env[variablePath]);
       }
       
+      // Try to resolve from inputs
+      const inputMatch = variablePath.match(/^(?:input|inputs)\.(.+)$/);
+      if (inputMatch) {
+        const [, inputPath] = inputMatch;
+        const keys = inputPath.split('.');
+        let current: any = context.inputs;
+        for (const key of keys) {
+          if (current && typeof current === 'object' && key in current) {
+            current = current[key];
+          } else {
+            return match; // Return original if not found
+          }
+        }
+        return String(current);
+      }
+      
       // Try to resolve from previous step results
       const stepResultMatch = variablePath.match(/^steps\.([^.]+)\.(.+)$/);
       if (stepResultMatch) {
