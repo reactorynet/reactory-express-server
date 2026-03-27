@@ -49,7 +49,10 @@ export const clientFor = async (context: Reactory.Server.IReactoryContext): Prom
   //   }).concat(httpLink),
   //   cache: new InMemoryCache(),
   // });
-  const token = Helpers.jwtTokenForUser(context.user);
+  const token = Helpers.jwtTokenForUser(context.user, {
+    exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour expiration
+    
+  });
   let persistedCache: any = null;
   let cache: ApolloCache<{}> = null;
   let persistor: ReactoryCachePersistor = null;
