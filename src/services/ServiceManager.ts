@@ -99,6 +99,11 @@ class ServiceManager {
     const serviceId = id;
     if (serviceRegister[serviceId]) {
       const svcDef = serviceRegister[serviceId];
+      // Resolve the effective lifecycle: prefer the service definition's lifeCycle
+      // over the caller's parameter, since the definition is the authoritative source.
+      // This ensures that services decorated with lifeCycle: "singleton" are always
+      // treated as singletons regardless of how getService is called.
+      const effectiveLifeCycle = svcDef.lifeCycle || lifeCycle;
       let $deps: any = {}; //holder for the dependencies.
 
       /**
@@ -145,7 +150,7 @@ class ServiceManager {
       if (
         context.state[request_key] !== null &&
         context.state[request_key] !== undefined &&
-        lifeCycle === "request"
+        effectiveLifeCycle === "request"
       ) {
         context.log(
           `Found Service Instance matching key ${request_key}`,
@@ -159,8 +164,7 @@ class ServiceManager {
        * that are for the entire life period of the service uptime.
        */
       const singleton_key = `svc_instance::${id}`;
-      if (instances[singleton_key] && lifeCycle === "singleton") {
-        context.log(`Service singleton instance found`);
+      if (instances[singleton_key] && effectiveLifeCycle === "singleton") {        
         return instances[singleton_key];
       }
 
@@ -223,7 +227,7 @@ class ServiceManager {
       if (
         context.state[request_key] === null &&
         context.state[request_key] === undefined &&
-        lifeCycle === "request"
+        effectiveLifeCycle === "request"
       ) {
         context.log(
           `Setting Request service key ${request_key}`,
@@ -234,7 +238,7 @@ class ServiceManager {
       }
 
       if (
-        lifeCycle === "singleton" &&
+        effectiveLifeCycle === "singleton" &&
         (null === instances[singleton_key] ||
           undefined === instances[singleton_key])
       ) {
@@ -298,6 +302,8 @@ class ServiceManager {
     try {
       let promises = [];
       for (const service of services) {
+        context.log(`Checking service ${service.id} for onStartup...`, {}, "info", "ServiceManager");
+        if (service.nameSpace === "reactor") debugger;
         const instance = getService<Reactory.Service.IReactoryDefaultService>(service.id, props, context);
         if (instance.onStartup && typeof instance.onStartup === "function") {
           await instance.onStartup(context);

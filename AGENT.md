@@ -164,6 +164,7 @@ REACTORY_PLUGINS   # Path to reactory-data/plugins
 - TDD plans are required before writing tests -- create `<testfile>_plan.md` alongside test files
 - Minimum 80% code coverage target for new code
 - Test file structure: `src/feature/__tests__/feature.test.ts` + `feature_plan.md`
+- ALWAYS Validate file typescript changes using by `npx tsc --noEmit`
 
 ## Dependencies on Other Projects
 

@@ -108,5 +108,15 @@
     "license": "commercial",
     "git": "git@github.com:reactorynet/reactory-socialeyes.git",
     "shop": "https://reactory.net/shop/modules/reactory-socialeyes"
+  },
+  {
+    "id": "reactory-pdf-manager",
+    "name": "Reactory PDF Manager",
+    "key": "reactory-pdf-manager",
+    "fqn": "pdf-manager.ReactoryPdfManager@1.0.0",
+    "moduleEntry": "reactory-pdf-manager/index.ts",
+    "license": "Apache-2.0",
+    "git": "git@github.com:reactorynet/reactory-pdf-manager.git",
+    "shop": "https://reactory.net/shop/modules/reactory-pdf-manager"
   }
 ]

@@ -55,38 +55,39 @@ export class ReactoryModelRegistry
 
   async onStartup(): Promise<void> {
     // load all models that are registered with the module in
-    const that = this;
     const { log } = this.context;
     log('Starting up ReactoryModelRegistry', {}, 'info', 'core.ReactoryModelRegistry')
-    let startupAwareModels: Promise<void>[] = [];
+    const startupAwareModels: Promise<void>[] = [];
     if (this.context && Array.isArray(this.context?.modules) === true) {
       this.context.modules.forEach((module) => {
-        module?.models?.forEach(async (model) => {
+        module?.models?.forEach((model) => {
           if (model === undefined || model === null) {
             log(`Model is undefined in module ${module.name}`, {}, 'error', 'core.ReactoryModelRegistry');
             return;
-          }             
+          }
+
+          let registered = false;
           try {
-            that.register(model);
+            this.register(model);
+            registered = true;
           } catch (error) {
             log(`Error registering model ${model?.name} - ${error.message}`, { error }, 'error', 'core.ReactoryModelRegistry');
           }
 
+          if (!registered) return;
+
           try {
             if (
-              (model as Reactory.Service.IReactoryStartupAwareService)
-                .onStartup &&
               typeof (model as Reactory.Service.IReactoryStartupAwareService)
                 .onStartup === "function"
             ) {
               log(`Running startup for model ${model.name}`, {}, 'debug', 'core.ReactoryModelRegistry');
-              (
-                model as Reactory.Service.IReactoryStartupAwareService
-              ).onStartup.bind(that);              
-              startupAwareModels.push(new Promise((resolve, reject) => { 
+              startupAwareModels.push(
                 // @ts-ignore
-                model.onStartup(that.context).then(resolve).catch(reject); 
-              }));
+                model.onStartup(this.context).catch((err: Error) => {
+                  log(`Startup failed for model ${model.name} - ${err.message}`, { error: err }, 'error', 'core.ReactoryModelRegistry');
+                })
+              );
             }
           } catch(e) {
             logger.error(`Error running startup for model ${model.name}`, { error: e });
@@ -95,10 +96,8 @@ export class ReactoryModelRegistry
       });
     }
 
-    // Run startup for all startup aware models
-    await Promise.all(startupAwareModels);
-
-    return Promise.resolve();
+    // Run startup for all startup aware models — allSettled ensures one failure doesn't abort the rest
+    await Promise.allSettled(startupAwareModels);
   }
 
   onShutdown(): Promise<void> {
