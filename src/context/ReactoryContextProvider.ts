@@ -31,6 +31,7 @@ colors.setTheme({
 
 const {
   USE_REDIS_CACHE = 'false',
+  EMIT_STACK_FRAME_GENERATION = 'true',
 } = process.env;
 
 export class ReactoryContext implements Reactory.Server.IReactoryContext {
@@ -109,7 +110,21 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 
   log(message: string, meta: any = null, type: Reactory.Service.LOG_TYPE = "debug", clazz: string = '') {
-    const logMessage = `[${Hash(this.id)}]${message} @ ${clazz ? clazz : this.constructor.name}`;
+    let callerFrame = '';
+    if (EMIT_STACK_FRAME_GENERATION === 'true') {
+      // Capture caller location from stack trace.
+      // When called via debug/warn/error/info, the actual caller is 3 frames deep;
+      // when called directly, it's 2 frames deep.
+      const stack = new Error().stack;
+      const frames = stack?.split('\n') || [];
+      callerFrame = frames[2]?.includes('ReactoryContext.debug') ||
+        frames[2]?.includes('ReactoryContext.warn') ||
+        frames[2]?.includes('ReactoryContext.error') ||
+        frames[2]?.includes('ReactoryContext.info')
+        ? frames[3]?.trim() || ''
+        : frames[2]?.trim() || '';
+    }
+    const logMessage = `[${Hash(this.id)}]${message} @ ${clazz ? clazz : this.constructor.name}${callerFrame ? ` (${callerFrame})` : ''}`;
     switch (type) {
       case "e":
       case "err":
