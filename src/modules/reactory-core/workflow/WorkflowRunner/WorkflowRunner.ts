@@ -18,6 +18,9 @@ import {
   WorkflowLifecycleManager,
   WorkflowStatus,
   WorkflowPriority,
+  WorkflowESStatus,
+  ExecutionPointerStatus,
+  WorkflowInstanceModel,
   type IWorkflowInstance,
   type IWorkflowDependency,
   type IWorkflowLifecycleStats
@@ -668,12 +671,82 @@ export class WorkflowRunner {
         }
       }
 
+      // Persist to MongoDB so the execution appears in history
+      await this.persistYamlExecution(instance, workflowId, result, data);
+
       return instance.id;
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this.lifecycleManager.failWorkflow(instance.id, err);
       logger.error(`YAML workflow ${workflowId} threw an exception (instance: ${instance.id})`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Persist a YAML workflow execution to MongoDB so it appears in execution history.
+   * Maps the in-memory instance + execution result to the workflow-es document schema.
+   */
+  private async persistYamlExecution(
+    instance: IWorkflowInstance,
+    workflowDefinitionId: string,
+    result: any,
+    inputData: any
+  ): Promise<void> {
+    try {
+      const statusMap: Record<string, WorkflowESStatus> = {
+        [WorkflowStatus.PENDING]: WorkflowESStatus.PENDING,
+        [WorkflowStatus.RUNNING]: WorkflowESStatus.RUNNABLE,
+        [WorkflowStatus.COMPLETED]: WorkflowESStatus.COMPLETE,
+        [WorkflowStatus.FAILED]: WorkflowESStatus.TERMINATED,
+        [WorkflowStatus.CANCELLED]: WorkflowESStatus.TERMINATED,
+        [WorkflowStatus.PAUSED]: WorkflowESStatus.SUSPENDED,
+        [WorkflowStatus.CLEANING_UP]: WorkflowESStatus.RUNNABLE,
+      };
+
+      const executionPointers = (result.executedSteps || []).map((step: any, idx: number) => ({
+        id: step.stepId || `pointer_${idx}`,
+        stepId: idx,
+        active: false,
+        sleepUntil: null,
+        persistenceData: step.outputs || null,
+        startTime: step.metadata?.startTime || null,
+        endTime: step.metadata?.endTime || null,
+        eventName: null,
+        eventKey: null,
+        eventPublished: false,
+        eventData: null,
+        retryCount: 0,
+        children: [],
+        contextItem: null,
+        predecessorId: null,
+        outcome: step.success ? (step.outputs || null) : null,
+        status: step.success
+          ? ExecutionPointerStatus.COMPLETE
+          : ExecutionPointerStatus.FAILED,
+        scope: [],
+      }));
+
+      await WorkflowInstanceModel.create({
+        id: instance.id,
+        workflowDefinitionId,
+        version: 1,
+        description: `YAML workflow execution`,
+        status: statusMap[instance.status] ?? WorkflowESStatus.PENDING,
+        data: inputData || {},
+        createTime: instance.startedAt,
+        completeTime: instance.completedAt || null,
+        executionPointers,
+      });
+
+      logger.debug(`Persisted YAML workflow execution to MongoDB: ${instance.id}`);
+    } catch (err) {
+      // Don't fail the workflow if persistence fails — log and continue
+      logger.warn(
+        `Failed to persist YAML workflow execution ${instance.id} to MongoDB: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
     }
   }
 

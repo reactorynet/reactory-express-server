@@ -695,6 +695,53 @@ class WorkflowResolver {
     return null;
   }
 
+  @property("WorkflowInstance", "name")
+  instanceName(obj: any) {
+    if (obj.name) return obj.name;
+    // In-memory instances have workflowId like "ns.Name@ver"
+    // History items have workflowDefinitionId like "ns.Name@ver"
+    const fqn = obj.workflowId || obj.workflowDefinitionId || '';
+    const [nsName] = fqn.split('@');
+    const parts = nsName.split('.');
+    return parts.length > 1 ? parts.slice(1).join('.') : parts[0] || '';
+  }
+
+  @property("WorkflowInstance", "nameSpace")
+  instanceNameSpace(obj: any) {
+    if (obj.nameSpace) return obj.nameSpace;
+    const fqn = obj.workflowId || obj.workflowDefinitionId || '';
+    const [nsName] = fqn.split('@');
+    const parts = nsName.split('.');
+    return parts.length > 1 ? parts[0] : '';
+  }
+
+  @property("WorkflowInstance", "version")
+  instanceVersion(obj: any) {
+    if (obj.version) return String(obj.version);
+    const fqn = obj.workflowId || obj.workflowDefinitionId || '';
+    const atIdx = fqn.lastIndexOf('@');
+    return atIdx > -1 ? fqn.substring(atIdx + 1) : '1.0.0';
+  }
+
+  @property("WorkflowInstance", "startTime")
+  instanceStartTime(obj: any) {
+    return obj.startTime || obj.startedAt || obj.createTime || null;
+  }
+
+  @property("WorkflowInstance", "endTime")
+  instanceEndTime(obj: any) {
+    return obj.endTime || obj.completedAt || obj.completeTime || null;
+  }
+
+  @property("WorkflowInstance", "duration")
+  instanceDuration(obj: any) {
+    if (obj.duration != null) return obj.duration;
+    const start = obj.startTime || obj.startedAt || obj.createTime;
+    const end = obj.endTime || obj.completedAt || obj.completeTime;
+    if (start && end) return new Date(end).getTime() - new Date(start).getTime();
+    return null;
+  }
+
   @property("WorkflowSchedule", "id")
   scheduleId(obj: any) {
     return obj._id || obj.id;
@@ -801,8 +848,35 @@ class WorkflowResolver {
   }
 
   @property("WorkflowInstance", "status")
-  async instanceStatus(obj: IWorkflowInstanceDocument, args: any, context: Reactory.Server.IReactoryContext) {
-    return WorkflowESStatus[obj.status] || WorkflowESStatus.PENDING
+  async instanceStatus(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
+    const status = obj.status;
+
+    // Numeric status from workflow-es MongoDB documents
+    if (typeof status === 'number') {
+      const numericMap: Record<number, string> = {
+        [WorkflowESStatus.PENDING]: 'PENDING',
+        [WorkflowESStatus.RUNNABLE]: 'RUNNING',
+        [WorkflowESStatus.COMPLETE]: 'COMPLETED',
+        [WorkflowESStatus.TERMINATED]: 'FAILED',
+        [WorkflowESStatus.SUSPENDED]: 'PAUSED',
+      };
+      return numericMap[status] || 'PENDING';
+    }
+
+    // String status from LifecycleManager (lowercase) or already uppercase
+    if (typeof status === 'string') {
+      const normalized = status.toUpperCase();
+      const validStatuses = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'PAUSED', 'CANCELLED'];
+      if (validStatuses.includes(normalized)) {
+        return normalized;
+      }
+      // Handle LifecycleManager's 'cleaning_up' → 'RUNNING'
+      if (normalized === 'CLEANING_UP') {
+        return 'RUNNING';
+      }
+    }
+
+    return 'PENDING';
   }
 
   @property("WorkflowSchedule", "workflow")
