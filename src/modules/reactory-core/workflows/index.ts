@@ -9,7 +9,7 @@ const WORKFLOW_FILES = [
     { filename: 'DefaultUserOnboarding.yaml', nameSpace: 'reactory-core', name: 'DefaultUserOnboarding', version: '1.0.0' },    
 ];
 const workflows: Reactory.Workflow.IWorkflow[] = WORKFLOW_FILES
-    .map(({ nameSpace, name, filename, version }) => loadYamlWorkflow(nameSpace, name, filename, version))
+    .map(({ nameSpace, name, filename, version }) => loadYamlWorkflow(nameSpace, name, filename, version, __dirname))
     .filter((w): w is Reactory.Workflow.IWorkflow => w !== null);
 
 workflows.push(CleanCacheWorkflow.meta);

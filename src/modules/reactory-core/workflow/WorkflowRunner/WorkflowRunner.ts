@@ -219,6 +219,11 @@ export class WorkflowRunner {
       // Discover and register workflow steps from all enabled modules
       this.discoverModuleSteps();
 
+      // Discover YAML workflows persisted in the catalog directory that are
+      // not yet registered (e.g. workflows created via the designer and saved
+      // to disk but not declared in a module definition).
+      await this.discoverCatalogWorkflows();
+
       // Set up AMQ event handlers
       await this.setupAmqEventHandlers();
       
@@ -683,6 +688,107 @@ export class WorkflowRunner {
   public async reloadSchedules(): Promise<void> {
     if (this.scheduler) {
       await this.scheduler.reloadSchedules();
+    }
+  }
+
+  /**
+   * Scan the YAML catalog directory for workflow definitions that are not
+   * yet registered in the runner.  The catalog layout is:
+   *   $REACTORY_DATA/workflows/catalog/<namespace>/<name>/<version>/<name>.yaml
+   *
+   * Any discovered workflow that does not already have a matching registration
+   * (by namespace + name + version) is added to the in-memory registry so it
+   * survives server restarts without requiring a module declaration.
+   */
+  private async discoverCatalogWorkflows(): Promise<void> {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+
+      const reactoryData = process.env.REACTORY_DATA;
+      if (!reactoryData) {
+        logger.debug('REACTORY_DATA not set — skipping catalog workflow discovery');
+        return;
+      }
+
+      const catalogRoot = path.join(reactoryData, 'workflows', 'catalog');
+      if (!fs.existsSync(catalogRoot)) {
+        logger.debug(`Catalog directory ${catalogRoot} does not exist — skipping discovery`);
+        return;
+      }
+
+      let discoveredCount = 0;
+      let skippedCount = 0;
+
+      // Level 1: namespace directories
+      const namespaceDirs = fs.readdirSync(catalogRoot, { withFileTypes: true })
+        .filter(d => d.isDirectory());
+
+      for (const nsDir of namespaceDirs) {
+        const nameSpace = nsDir.name;
+        const nsPath = path.join(catalogRoot, nameSpace);
+
+        // Level 2: workflow name directories
+        const nameDirs = fs.readdirSync(nsPath, { withFileTypes: true })
+          .filter(d => d.isDirectory());
+
+        for (const nameDir of nameDirs) {
+          const name = nameDir.name;
+          const namePath = path.join(nsPath, name);
+
+          // Level 3: version directories
+          const versionDirs = fs.readdirSync(namePath, { withFileTypes: true })
+            .filter(d => d.isDirectory());
+
+          for (const verDir of versionDirs) {
+            const version = verDir.name;
+            const yamlFile = path.join(namePath, version, `${name}.yaml`);
+            const ymlFile = path.join(namePath, version, `${name}.yml`);
+            const targetFile = fs.existsSync(yamlFile) ? yamlFile : (fs.existsSync(ymlFile) ? ymlFile : null);
+
+            if (!targetFile) continue;
+
+            // Skip if already registered (module-provisioned or previously discovered)
+            const existing = this.getWorkflowByName(nameSpace, name, version);
+            if (existing) {
+              skippedCount++;
+              continue;
+            }
+
+            try {
+              this.registerWorkflow({
+                nameSpace,
+                name,
+                version,
+                workflowType: 'YAML',
+                location: targetFile,
+                component: null,
+                category: 'catalog',
+                isActive: true,
+                props: {},
+              });
+              discoveredCount++;
+            } catch (regErr) {
+              logger.warn(
+                `Failed to register catalog workflow ${nameSpace}.${name}@${version}: ${
+                  regErr instanceof Error ? regErr.message : String(regErr)
+                }`
+              );
+            }
+          }
+        }
+      }
+
+      if (discoveredCount > 0 || skippedCount > 0) {
+        logger.info(
+          `Catalog workflow discovery complete: ${discoveredCount} registered, ${skippedCount} already known`
+        );
+      }
+    } catch (err) {
+      logger.error(
+        `Error during catalog workflow discovery: ${err instanceof Error ? err.message : String(err)}`,
+        err
+      );
     }
   }
 

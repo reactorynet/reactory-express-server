@@ -1890,6 +1890,38 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
         'info'
       );
 
+      // Ensure the workflow is registered in the runner so the load pipeline can find it.
+      // This handles both the "create new workflow" case (not yet in registry) and the
+      // "update existing workflow" case (already registered — no-op).
+      try {
+        const runner = await this.getWorkflowRunner();
+        const existing = runner.getWorkflowByName(nameSpace, name, version);
+        if (!existing) {
+          runner.registerWorkflow({
+            nameSpace,
+            name,
+            version,
+            workflowType: 'YAML',
+            location: targetFile,
+            component: null,
+            category: 'user',
+            isActive: true,
+            props: {},
+          });
+          this.context.log(
+            `Registered new workflow ${nameSpace}.${name}@${version} in runner registry`,
+            { targetFile },
+            'info'
+          );
+        }
+      } catch (regErr) {
+        this.context.log(
+          `Warning: could not register workflow ${nameSpace}.${name}@${version} after save: ${regErr instanceof Error ? regErr.message : String(regErr)}`,
+          { regErr },
+          'warn'
+        );
+      }
+
       // Return the definition through the standard load pipeline for consistency
       return this.getWorkflowYamlDefinition(nameSpace, name, version);
     } catch (err) {
