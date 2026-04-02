@@ -26,6 +26,7 @@ import { ConfigurationManager, IConfigurationStats, type IWorkflowConfig } from 
 import { ISecurityStats, SecurityManager, type IInputValidationResult } from '../SecurityManager/SecurityManager';
 import { YamlWorkflowExecutor } from '../YamlFlow/execution/YamlWorkflowExecutor';
 import { YamlStepRegistry } from '../YamlFlow/steps/registry/YamlStepRegistry';
+import { YamlFlowParser } from '../YamlFlow/YamlFlowParser';
 import type { YamlWorkflowDefinition } from '../YamlFlow/types/WorkflowDefinition';
 
 const {
@@ -603,7 +604,22 @@ export class WorkflowRunner {
     context?: Reactory.Server.IReactoryContext
   ): Promise<string> {
     const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
-    const definition = workflow.props as YamlWorkflowDefinition;
+    let definition = workflow.props as YamlWorkflowDefinition;
+
+    // Lazily parse the YAML file from disk when props has no steps (catalog-discovered workflows)
+    if ((!definition || !definition.steps) && workflow.location) {
+      const parser = new YamlFlowParser({ validateSchema: false });
+      const parseResult = parser.parseFromFile(workflow.location);
+      if (!parseResult.success || !parseResult.workflow || !parseResult.workflow.steps) {
+        const errMsgs = parseResult.errors.map(e => e.message).join(', ');
+        throw new Error(
+          `YAML workflow ${workflowId} could not be parsed from '${workflow.location}': ${errMsgs || 'unknown parse error'}`
+        );
+      }
+      definition = parseResult.workflow;
+      // Cache parsed definition back so subsequent runs avoid re-reading the file
+      workflow.props = definition;
+    }
 
     if (!definition || !definition.steps) {
       throw new Error(`YAML workflow ${workflowId} has no valid definition (missing steps). Check that 'props' contains the parsed YAML definition.`);
