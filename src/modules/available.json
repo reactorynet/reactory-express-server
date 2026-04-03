@@ -118,5 +118,15 @@
     "license": "Apache-2.0",
     "git": "git@github.com:reactorynet/reactory-pdf-manager.git",
     "shop": "https://reactory.net/shop/modules/reactory-pdf-manager"
+  },
+  {
+    "id": "reactory-google",
+    "name": "Reactory Google",
+    "key": "reactory-google",
+    "fqn": "google.ReactoryGoogle@1.0.0",
+    "moduleEntry": "reactory-google/index.ts",
+    "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-google.git",
+    "shop": "https://reactory.net/shop/modules/reactory-google"
   }
 ]
