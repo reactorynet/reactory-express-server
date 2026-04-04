@@ -119,7 +119,16 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# ── Export to tar ──────────────────────────────────────────────────────────────
+# ── Verify image is in local store ────────────────────────────────────────────
+# podman-compose requires the image to be findable as localhost/<tag>.
+# Confirm it before proceeding so failures surface here rather than at compose time.
+LOCAL_TAG="localhost/${IMAGE_TAG}"
+if $CONTAINER_CMD image exists "$LOCAL_TAG" 2>/dev/null || $CONTAINER_CMD image exists "$IMAGE_TAG" 2>/dev/null; then
+  echo "✅ Image registered in local store: $LOCAL_TAG"
+else
+  echo "❌ Image not found in local store after build — something went wrong"
+  exit 1
+fi
 echo "📦 Exporting image $IMAGE_TAG to $TARFILE"
 mkdir -p "$(dirname "$TARFILE")"
 

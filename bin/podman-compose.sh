@@ -92,5 +92,34 @@ if ! node -e "const yaml = require('yaml'); const fs = require('fs'); try { yaml
   exit 1
 fi
 
+# ── Local image preflight ─────────────────────────────────────────────────────
+# Verify that the reactory application images exist in the local podman store
+# before launching. Without this check podman-compose would attempt an HTTPS
+# pull from localhost (which is not a running registry) and produce a confusing
+# "connection refused" error.
+REQUIRED_IMAGES=(
+  "localhost/${REACTORY_CONFIG_ID:-reactory}/reactory-express-server:${BUILD_VERSION}"
+)
+MISSING_IMAGES=()
+for img in "${REQUIRED_IMAGES[@]}"; do
+  if ! podman image exists "$img" 2>/dev/null; then
+    MISSING_IMAGES+=("$img")
+  fi
+done
+
+if [ ${#MISSING_IMAGES[@]} -gt 0 ]; then
+  echo ""
+  echo "❌ The following images are not present in the local podman store:"
+  for img in "${MISSING_IMAGES[@]}"; do
+    echo "   • $img"
+  done
+  echo ""
+  echo "   Build them first with:"
+  echo "   bin/build-image.sh ${REACTORY_CONFIG_ID:-reactory} ${REACTORY_ENV_ID:-local}"
+  echo ""
+  exit 1
+fi
+echo "✅ All required images found in local podman store"
+
 echo "🚀 Launching podman for ${1:-reactory} ${2:-podman} configuration"
 podman-compose -f "$COMPOSE_FILE" -p "${PODMAN_COMPOSE_PROJECT_NAME:-reactory-fullstack}" --env-file "./config/${1:-reactory}/.env.${2:-local}" ${3:-up} -d
