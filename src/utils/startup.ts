@@ -6,7 +6,7 @@ import ReactoryClient from '@reactory/server-modules/reactory-core/models/Reacto
 import ReactoryContextProvider from '@reactory/server-core/context/ReactoryContextProvider';
 import Helpers from '@reactory/server-core/authentication/strategies/helpers';
 import { publishClientEnvFiles } from '@reactory/server-core/utils/publishClientEnvFiles';
-
+import User from '@reactory/server-modules/reactory-core/models/User';
 const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
   logger.info('Startup process initiated.');
   const {
@@ -16,10 +16,7 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
   try {
     const start = new Date().valueOf();
     let context = await ReactoryContextProvider(null).then();
-    await startServices({}, context);
-    // we login the system user here to ensure that the system user is available for the rest of the system
-    const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
-    let systemUser = await userService.findUserWithEmail(REACTORY_APPLICATION_EMAIL);
+    let systemUser = await User.findOne({ email: REACTORY_APPLICATION_EMAIL }).exec();
     if (!systemUser && REACTORY_APPLICATION_USER_AUTO_CREATE !== 'true') {
       context.error(`System user not found. Cannot continue startup process. 
         Use the bin/cli.sh InitializeSystemUser command to create the system user.`);
@@ -28,9 +25,10 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
       if (!systemUser) {
         context.log('System user not found. Creating system user...', {}, 'info');
         // @ts-ignore
-        systemUser = await userService.initializeSystemUser();
+        systemUser = await Helpers.initializeSystemUser();
       }
     }
+
     if(await systemUser.validatePassword(process.env.REACTORY_APPLICATION_PASSWORD)===false) {
       throw new Error('System user password is incorrect. Cannot continue startup process.');
     } else {
@@ -38,6 +36,9 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
     };
     context.user = systemUser;
     context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();    
+    
+    await startServices({}, context);
+        
     // Publish client env files if REACTORY_CLIENT is set
     if (process.env.REACTORY_CLIENT) {
       try {

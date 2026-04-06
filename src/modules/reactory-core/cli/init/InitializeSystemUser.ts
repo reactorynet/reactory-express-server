@@ -47,7 +47,20 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
   let user: Reactory.Models.IUserDocument = await ReactoryUser.findOne({ email: REACTORY_APPLICATION_EMAIL }).exec();
 
   if(user) {
-    log('Initial user already exists', {}, 'warning');
+    log('Initial user already exists', {}, 'warning');    
+    // set the password just in case it was changed
+    if(await user.validatePassword(REACTORY_APPLICATION_PASSWORD)===false) {
+      user.setPassword(REACTORY_APPLICATION_PASSWORD);      
+      log('System user password updated successfully', {}, 'info');
+    } else {
+      log('System user password is already correct', {}, 'info');
+    }
+    
+    user.memberships = user.memberships || [];
+    if (user.memberships.length === 0) {
+      user.addRole(reactoryClient._id.toString(),'SYSTEM');
+    }
+    await user.save();
     process.exit(0);
   }
 
@@ -57,7 +70,9 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
     password: "",
     firstName: 'Reactory',
     lastName: 'System',
-    memberships: [],
+    memberships: [{
+      roles: ['SYSTEM'],
+    }],
     username: 'reactory',
     salt: strongRandom(16),
     createdAt: new Date(),
