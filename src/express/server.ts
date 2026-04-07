@@ -71,7 +71,7 @@ const hideText = (text: string = '') => {
 export const ReactoryServer = async (): Promise<{ 
   app: Application, 
   server: http.Server,
-  workflowHost: WorkFlowRunner,
+  workflowHost: WorkflowRunner,
   stop: () => void
 }> => {
 
