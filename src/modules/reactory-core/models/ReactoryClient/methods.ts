@@ -130,6 +130,9 @@ const toClientEnv = function toClientEnv(options?: {
     || process.env.REACTORY_APPLICATION_PASSWORD
     || '';
 
+  const clientAnonUserEmail = process.env[`${upperKey}_ANONUSER_EMAIL`] || process.env.REACTORY_APPLICATION_ANONUSER_EMAIL || 'anon@reactor.local';
+  const clientAnonUserPassword = process.env[`${upperKey}_ANONUSER_PASSWORD`] || process.env.REACTORY_APPLICATION_ANONUSER_PASSWORD || 'anonymousepassword';
+
   // Extract primary color and background from the active theme
   let themePrimary = '#1a2049';
   let themeBg = '#464775';
@@ -170,6 +173,12 @@ const toClientEnv = function toClientEnv(options?: {
     ``,
     `# The client password`,
     `REACT_APP_CLIENT_PASSWORD=${clientPassword}`,
+    ``,
+    `# The anonymous user email`,
+    `REACTORY_APPLICATION_ANONUSER_EMAIL=${clientAnonUserEmail}`,
+    ``,
+    `# The anonymous user password`,
+    `REACTORY_APPLICATION_ANONUSER_PASSWORD=${clientAnonUserPassword}`,
     ``,
     `# The primary color for the theme`,
     `REACT_APP_THEME_PRIMARY=${themePrimary}`,
