@@ -31,7 +31,7 @@
     "url": "https://bitbucket.org/WernerWeber/reactory-server.git"
   },
   "scripts": {
-    "postinstall": "patch-package"
+    "postinstall": "test -f node_modules/.bin/patch-package && patch-package || true"
   },
   "dependencies": {
     "@apollo/client": "3.10.8",
