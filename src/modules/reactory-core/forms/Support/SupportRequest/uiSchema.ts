@@ -18,13 +18,19 @@ export default {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      request: { xs: 12, lg: 12 },
-      description: { xs: 12, lg: 12 },      
+      requestType: { xs: 12, lg: 6 },
+      request: { xs: 12, lg: 6 },
+    },
+    {
+      description: { xs: 12, lg: 12 },
     }
   ],
+  requestType: {
+    'ui:widget': 'SelectWidget',
+  },
   request: {},
   description: {
-    'ui:widget': 'FroalaWidget',
+    'ui:widget': 'RichEditor',
     'ui:title': null,
     'ui:options': {
       showLabel: false,

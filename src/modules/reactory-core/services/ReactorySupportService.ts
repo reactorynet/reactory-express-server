@@ -209,7 +209,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   }
 
   async createRequest(request: string, description: string, requestType?: string, meta?: any, formId?: string): Promise<Reactory.Models.IReactorySupportTicket> {
-    this.context.log('Creatig new Support Request', { request, description }, 'debug', ReactorySupportService.reactory.id);
+    this.context.log('Creating new Support Request', { request, description }, 'debug', 'core.ReactorySupportService@1.0.0');
     
     let ticket = new ReactorySupportTicketModel({
       request,
