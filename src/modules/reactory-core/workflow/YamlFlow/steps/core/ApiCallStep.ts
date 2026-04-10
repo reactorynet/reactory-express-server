@@ -441,8 +441,10 @@ export class ApiCallStep extends BaseYamlStep {
     // Required fields
     if (!config.url || typeof config.url !== 'string') {
       errors.push('url is required and must be a string');
-    } else {
-      // Basic URL validation
+    } else if (!/\$\{[^}]+\}/.test(config.url)) {
+      // Only validate URL format when it contains no unresolved template variables.
+      // Template strings like "${input.apiUrl}" are resolved at execution time via
+      // resolveTemplate() and cannot be validated statically.
       try {
         new URL(config.url);
       } catch {

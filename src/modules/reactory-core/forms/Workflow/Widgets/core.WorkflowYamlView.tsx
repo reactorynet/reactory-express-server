@@ -31,8 +31,34 @@ interface YamlLoadDeps {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Query definition (static – defined outside the component to avoid re-creation)
+// Query / mutation definitions (static – defined outside to avoid re-creation)
 // ────────────────────────────────────────────────────────────────────────────
+const SAVE_WORKFLOW_YAML_MUTATION = `
+  mutation SaveWorkflowYaml($input: SaveWorkflowYamlInput!) {
+    saveWorkflowYaml(input: $input) {
+      nameSpace
+      name
+      version
+      yamlSource
+      sourceType
+      location
+      loadStatus
+      errors {
+        stage
+        message
+        code
+        line
+        column
+      }
+      validationErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+`;
+
 const YAML_DEFINITION_QUERY = `
   query GetWorkflowYamlDefinition(
     $nameSpace: String!
@@ -165,6 +191,9 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
   const [copied, setCopied] = React.useState(false);
   const [errorsExpanded, setErrorsExpanded] = React.useState(true);
   const [validationExpanded, setValidationExpanded] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [saveSuccess, setSaveSuccess] = React.useState(false);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!workflow?.nameSpace || !workflow?.name) return;
@@ -211,7 +240,54 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
   const handleEditorChange = (value: string) => {
     if (!readonly && value !== yamlSource) {
       setYamlSource(value);
+      // Clear any previous save status when the user edits
+      setSaveSuccess(false);
+      setSaveError(null);
     }
+  };
+
+  const handleSave = () => {
+    if (!workflow?.nameSpace || !workflow?.name || !workflow?.version) return;
+    setSaving(true);
+    setSaveSuccess(false);
+    setSaveError(null);
+
+    reactory.graphqlMutation<{ saveWorkflowYaml: any }, any>(
+      SAVE_WORKFLOW_YAML_MUTATION,
+      {
+        input: {
+          nameSpace: workflow.nameSpace,
+          name: workflow.name,
+          version: workflow.version,
+          yamlContent: yamlSource,
+        },
+      }
+    ).then((response: any) => {
+      const def = response?.data?.saveWorkflowYaml;
+      if (!def) {
+        setSaveError('No response received from server');
+        return;
+      }
+      if (def.loadStatus === 'PARSE_ERROR' || def.loadStatus === 'NOT_FOUND') {
+        const firstError = def.errors?.[0];
+        setSaveError(firstError ? `[${firstError.code || firstError.stage}] ${firstError.message}` : 'Save failed');
+        return;
+      }
+      // Update component state with the freshly saved definition
+      setYamlSource(def.yamlSource || yamlSource);
+      setLoadStatus(def.loadStatus || 'SUCCESS');
+      setErrors(def.errors || []);
+      setValidationErrors(def.validationErrors || []);
+      setSourceType(def.sourceType || null);
+      setLocation(def.location || null);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    }).catch((err: any) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      setSaveError(msg);
+    }).finally(() => {
+      setSaving(false);
+    });
   };
 
   if (loading) {
@@ -298,15 +374,49 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
             </IconButton>
           </Tooltip>
         )}
+
+        {/* Save button (hidden in readonly mode) */}
+        {!readonly && (
+          <Tooltip title={saveSuccess ? 'Saved!' : 'Save YAML'}>
+            <span>
+              <IconButton
+                size="small"
+                onClick={handleSave}
+                disabled={saving || !yamlSource}
+                color={saveSuccess ? 'success' : 'default'}
+              >
+                {saving
+                  ? <CircularProgress size={18} />
+                  : <Icon sx={{ fontSize: 18 }}>{saveSuccess ? 'check' : 'save'}</Icon>
+                }
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
       </Box>
 
-      {/* ── File path info ───────────────────────────────────────────────── */}
+      {/* ── File path info ───────────────────────────────────────── */}
       {location && (
         <Box sx={{ px: 2, py: 0.5, bgcolor: 'action.hover', borderBottom: 1, borderColor: 'divider' }}>
           <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
             {location}
           </Typography>
         </Box>
+      )}
+
+      {/* ── Save error banner ────────────────────────────────────────────── */}
+      {saveError && (
+        <Alert
+          severity="error"
+          variant="standard"
+          onClose={() => setSaveError(null)}
+          sx={{ borderRadius: 0, borderBottom: 1, borderColor: 'divider' }}
+        >
+          <AlertTitle sx={{ fontSize: '0.8rem' }}>Save failed</AlertTitle>
+          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+            {saveError}
+          </Typography>
+        </Alert>
       )}
 
       {/* ── Error banners ─────────────────────────────────────────────────── */}

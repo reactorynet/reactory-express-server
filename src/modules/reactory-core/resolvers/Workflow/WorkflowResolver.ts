@@ -634,6 +634,30 @@ class WorkflowResolver {
   }
 
   @roles(["ADMIN", "WORKFLOW_ADMIN"], 'args.context')
+  @mutation("saveWorkflowYaml")
+  async saveWorkflowYaml(
+    obj: any,
+    params: { input: { nameSpace: string; name: string; version: string; yamlContent: string } },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      const { nameSpace, name, version, yamlContent } = params.input;
+      return await workflowService.saveWorkflowYaml(nameSpace, name, version, yamlContent);
+    } catch (error: any) {
+      context.log('Error saving raw YAML workflow', { error, params }, 'error', 'WorkflowResolver');
+      return {
+        nameSpace: params.input.nameSpace,
+        name: params.input.name,
+        version: params.input.version,
+        steps: [],
+        loadStatus: 'NOT_FOUND',
+        errors: [{ stage: 'FILE_RESOLVE', message: `Save failed: ${error.message}`, code: 'SAVE_ERROR' }],
+      };
+    }
+  }
+
+  @roles(["ADMIN", "WORKFLOW_ADMIN"], 'args.context')
   @mutation("deleteWorkflowDefinition")
   async deleteWorkflowDefinition(
     obj: any,

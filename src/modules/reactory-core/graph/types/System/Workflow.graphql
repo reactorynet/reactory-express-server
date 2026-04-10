@@ -998,6 +998,15 @@ input WorkflowStepInput {
   designer: StepDesignerMetadataInput
 }
 
+"""Input type for saving a raw YAML workflow file to the catalog."""
+input SaveWorkflowYamlInput {
+  nameSpace: String!
+  name: String!
+  version: String!
+  """Raw YAML source text to write verbatim to the catalog file."""
+  yamlContent: String!
+}
+
 """Input type for saving a workflow definition to the YAML catalog."""
 input WorkflowDefinitionInput {
   nameSpace: String!
@@ -1203,6 +1212,9 @@ extend type Mutation {
   # ─── Workflow Definition CRUD ──────────────────────────────────────────────
   """Save (create or update) a workflow definition to the YAML catalog."""
   saveWorkflowDefinition(definition: WorkflowDefinitionInput!): YamlWorkflowDefinition
+
+  """Save raw YAML text directly to the YAML catalog, preserving formatting and comments."""
+  saveWorkflowYaml(input: SaveWorkflowYamlInput!): YamlWorkflowDefinition
 
   """Delete a workflow definition from the YAML catalog."""
   deleteWorkflowDefinition(nameSpace: String!, name: String!, version: String): WorkflowOperationResult

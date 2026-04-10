@@ -545,6 +545,8 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
   // Workflow Definition CRUD
   /** Save (create or update) a workflow definition to the YAML catalog */
   saveWorkflowDefinition(definition: IWorkflowDefinitionInput): Promise<IYamlWorkflowDefinitionResult>;
+  /** Save raw YAML text verbatim to the YAML catalog, preserving formatting and comments */
+  saveWorkflowYaml(nameSpace: string, name: string, version: string, yamlContent: string): Promise<IYamlWorkflowDefinitionResult>;
   /** Delete a workflow definition from the YAML catalog */
   deleteWorkflowDefinition(nameSpace: string, name: string, version?: string): Promise<IWorkflowOperationResult>;
   /** Validate a workflow definition without saving it */

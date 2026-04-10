@@ -1945,6 +1945,110 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   }
 
   /**
+   * Save raw YAML text verbatim to the YAML catalog.
+   * Validates identifiers and YAML structure but does not validate step configs,
+   * so template-variable inputs (e.g. url: ${input.apiUrl}) are always accepted.
+   */
+  async saveWorkflowYaml(
+    nameSpace: string,
+    name: string,
+    version: string,
+    yamlContent: string
+  ): Promise<IYamlWorkflowDefinitionResult> {
+    const pathSegmentPattern = /^[a-zA-Z0-9_.\-]+$/;
+    for (const [field, value] of [['nameSpace', nameSpace], ['name', name], ['version', version]] as const) {
+      if (!value || !pathSegmentPattern.test(value)) {
+        return {
+          nameSpace,
+          name,
+          version,
+          steps: [],
+          loadStatus: 'PARSE_ERROR',
+          errors: [{ stage: 'VALIDATION' as const, message: `${field} contains invalid or missing characters. Only alphanumeric, dash, underscore, and dot are allowed.`, code: 'INVALID_CHARACTERS' }],
+        };
+      }
+    }
+
+    const reactoryData = process.env.REACTORY_DATA;
+    if (!reactoryData) {
+      return {
+        nameSpace, name, version, steps: [], loadStatus: 'NOT_FOUND',
+        errors: [{ stage: 'FILE_RESOLVE' as const, message: 'REACTORY_DATA environment variable is not set' }],
+      };
+    }
+
+    // Parse YAML to verify it is structurally valid before writing.
+    let parsed: any;
+    try {
+      const yaml = await import('js-yaml');
+      parsed = yaml.load(yamlContent);
+    } catch (parseErr: any) {
+      return {
+        nameSpace, name, version, steps: [], loadStatus: 'PARSE_ERROR',
+        errors: [{ stage: 'PARSE' as const, message: parseErr.message || String(parseErr), code: 'YAML_PARSE_ERROR' }],
+      };
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return {
+        nameSpace, name, version, steps: [], loadStatus: 'PARSE_ERROR',
+        errors: [{ stage: 'PARSE' as const, message: 'YAML content must be a valid workflow object', code: 'INVALID_CONTENT' }],
+      };
+    }
+
+    const path = await import('path');
+    const { writeFileSync, mkdirSync, existsSync } = await import('fs');
+
+    const targetDir = path.join(reactoryData, 'workflows', 'catalog', nameSpace, name, version);
+    const targetFile = path.join(targetDir, `${name}.yaml`);
+
+    try {
+      if (!existsSync(targetDir)) {
+        mkdirSync(targetDir, { recursive: true });
+      }
+      writeFileSync(targetFile, yamlContent, 'utf8');
+
+      this.context.log(
+        `Saved raw YAML for workflow ${nameSpace}.${name}@${version} to ${targetFile}`,
+        { targetFile }, 'info'
+      );
+
+      // Register in runner if not already present.
+      try {
+        const runner = await this.getWorkflowRunner();
+        const existing = runner.getWorkflowByName(nameSpace, name, version);
+        if (!existing) {
+          runner.registerWorkflow({
+            nameSpace, name, version,
+            workflowType: 'YAML',
+            location: targetFile,
+            component: null,
+            category: 'user',
+            isActive: true,
+            props: {},
+          });
+        }
+      } catch (regErr) {
+        this.context.log(
+          `Warning: could not register workflow ${nameSpace}.${name}@${version} after YAML save: ${regErr instanceof Error ? regErr.message : String(regErr)}`,
+          { regErr }, 'warn'
+        );
+      }
+
+      return this.getWorkflowYamlDefinition(nameSpace, name, version);
+    } catch (err) {
+      this.context.log(
+        `Failed to write raw YAML for ${nameSpace}.${name}@${version}: ${err instanceof Error ? err.message : String(err)}`,
+        { targetFile, err }, 'error'
+      );
+      return {
+        nameSpace, name, version, steps: [], loadStatus: 'NOT_FOUND',
+        errors: [{ stage: 'FILE_RESOLVE' as const, message: `Failed to write workflow file: ${err instanceof Error ? err.message : String(err)}` }],
+      };
+    }
+  }
+
+  /**
    * Delete a workflow definition from the YAML catalog.
    */
   async deleteWorkflowDefinition(
