@@ -12,16 +12,36 @@
 source ./bin/shared/shell-utils.sh
 check_env_vars
 check_meili_search
-copy_env_file ${1:-reactory} ${2:-local}
-# $3 - Use "no-nodemon" to run without nodemon (default: uses nodemon)
-USE_NODEMON=${3:-nodemon}
 
-echo "Starting Reactory Development Server key: [${1:-reactory}] target: ${2:-local} watch: ${USE_NODEMON}"
-sh ./bin/generate.sh ${1:-reactory} ${2:-local}
+# Parse arguments: support --no-nodemon flag anywhere in the args list
+USE_NODEMON="nodemon"
+POSITIONAL=()
+
+for arg in "$@"; do
+  case "$arg" in
+    --no-nodemon)
+      USE_NODEMON="no-nodemon"
+      ;;
+    --*)
+      # ignore other flags
+      ;;
+    *)
+      POSITIONAL+=("$arg")
+      ;;
+  esac
+done
+
+CLIENT_KEY="${POSITIONAL[0]:-reactory}"
+TARGET_ENV="${POSITIONAL[1]:-local}"
+
+copy_env_file "$CLIENT_KEY" "$TARGET_ENV"
+
+echo "Starting Reactory Development Server key: [${CLIENT_KEY}] target: ${TARGET_ENV} watch: ${USE_NODEMON}"
+sh ./bin/generate.sh "$CLIENT_KEY" "$TARGET_ENV"
 # TODO: Update the start script so that it checks the loaded modules
 # and runs any pre-start scripts that are available in the module.
 if [[ "$USE_NODEMON" == "no-nodemon" ]]; then
-  NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
+  NODE_PATH=./src env-cmd -f ./config/${CLIENT_KEY}/.env.${TARGET_ENV} npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
 else
-  NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx nodemon -e js,ts,tsx,graphql --exec npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
+  NODE_PATH=./src env-cmd -f ./config/${CLIENT_KEY}/.env.${TARGET_ENV} npx nodemon -e js,ts,tsx,graphql --ignore 'docker/**' --exec npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
 fi
