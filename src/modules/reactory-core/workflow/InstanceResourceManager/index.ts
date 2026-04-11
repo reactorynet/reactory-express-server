@@ -121,6 +121,7 @@ export class InstanceResourceManager {
     this.resourceDir = path.join(
       dataRoot,
       "workflows",
+      "catalog",
       this.safeNameSpace,
       this.safeName,
       this.safeVersion,

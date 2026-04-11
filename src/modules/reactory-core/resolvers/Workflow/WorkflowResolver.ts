@@ -19,6 +19,8 @@ import { IWorkflowInstanceDocument } from '@reactory/server-modules/reactory-cor
 import { IScheduleConfig, IScheduledWorkflow } from '@reactory/server-modules/reactory-core/workflow';
 import { YamlWorkflowExecutor } from '@reactory/server-modules/reactory-core/workflow/YamlFlow/execution/YamlWorkflowExecutor';
 import { YamlStepRegistry } from '@reactory/server-modules/reactory-core/workflow/YamlFlow/steps/registry/YamlStepRegistry';
+import { InstanceResourceManager } from '@reactory/server-modules/reactory-core/workflow/InstanceResourceManager';
+import safeUrl from '@reactory/server-core/utils/url/safeUrl';
 
 
 
@@ -207,6 +209,43 @@ class WorkflowResolver {
   ) {
     const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowHistoryById(params.instanceId);
+  }
+
+  @roles(["USER"], 'args.context')
+  @query("workflowInstanceLogFileUrl")
+  async getWorkflowInstanceLogFileUrl(
+    obj: any,
+    params: { instanceId: string },
+    context: Reactory.Server.IReactoryContext
+  ): Promise<string | null> {
+    const workflowService = getWorkflowService(context);
+    const instance = await workflowService.getWorkflowHistoryById(params.instanceId);
+    if (!instance) return null;
+
+    // workflowDefinitionId format: "namespace.Name@version"
+    const defId: string = (instance as any).workflowDefinitionId || '';
+    const atIdx = defId.lastIndexOf('@');
+    const version = atIdx !== -1 ? defId.substring(atIdx + 1) : '1.0.0';
+    const withoutVersion = atIdx !== -1 ? defId.substring(0, atIdx) : defId;
+    const dotIdx = withoutVersion.indexOf('.');
+    const nameSpace = dotIdx !== -1 ? withoutVersion.substring(0, dotIdx) : withoutVersion;
+    const name = dotIdx !== -1 ? withoutVersion.substring(dotIdx + 1) : withoutVersion;
+
+    const rm = new InstanceResourceManager(nameSpace, name, version, params.instanceId);
+    const logPath = rm.getLogFilePath();
+
+    const fs = await import('node:fs');
+    if (!fs.existsSync(logPath)) return null;
+
+    const dataRoot = process.env.REACTORY_DATA || process.env.APP_DATA_ROOT || '';
+    const path = await import('node:path');
+    const relPath = path.relative(dataRoot, logPath);
+    // path is protected so we need to add a jwt token for
+    // the authenticated user
+    // get the x-client-id from the request headers to include in the token for auditing purposes
+    const clientId = context?.request?.headers?.['x-client-id'] || '';
+    const clientKey = context?.request?.headers?.['x-client-key'] || '';    
+    return safeUrl([process.env.CDN_ROOT || 'http://localhost:4000/cdn', `${relPath}?x-client-id=${encodeURIComponent(clientId)}&x-client-key=${encodeURIComponent(clientKey)}`]);
   }
 
   @roles(["USER"], 'args.context')

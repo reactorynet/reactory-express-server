@@ -720,6 +720,11 @@ type WorkflowExecutionHistory {
   completedStepCount: Int!
   """Number of failed steps"""
   failedStepCount: Int!
+  """
+  CDN-relative URL to the per-instance log file produced by InstanceResourceManager.
+  Returns null when no log file exists for this instance.
+  """
+  logFileUrl: String
 }
 
 """
@@ -1094,6 +1099,14 @@ extend type Query {
   workflowExecutionHistoryById(
     instanceId: String!
   ): WorkflowExecutionHistory
+
+  """
+  Get the CDN URL for the log file of a specific workflow instance.
+  Returns null when no log file exists yet.
+  """
+  workflowInstanceLogFileUrl(
+    instanceId: String!
+  ): String
 
   """
   Get workflow execution history for a specific workflow definition.
