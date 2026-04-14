@@ -353,6 +353,41 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     return client;
   }
 
+  async addFeatureFlag(clientId: string, featureFlag: unknown): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findByIdAndUpdate(
+      clientId,
+      { $push: { featureFlags: featureFlag } },
+      { new: true },
+    ).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+    return client;
+  }
+
+  async updateFeatureFlag(clientId: string, feature: string, featureFlag: unknown): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findById(clientId).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+
+    const flags = (client as any).featureFlags || [];
+    const index = flags.findIndex((f: any) => f.feature === feature);
+    if (index === -1) throw new Error(`Feature flag "${feature}" not found on client ${clientId}`);
+
+    flags[index] = { ...flags[index].toObject?.() ?? flags[index], ...(featureFlag as any) };
+    (client as any).featureFlags = flags;
+    await (client as any).save();
+    return client;
+  }
+
+  async deleteFeatureFlag(clientId: string, feature: string): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findById(clientId).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+
+    (client as any).featureFlags = ((client as any).featureFlags || []).filter(
+      (f: any) => f.feature !== feature,
+    );
+    await (client as any).save();
+    return client;
+  }
+
   static reactory: Reactory.Service.IReactoryServiceDefinition<SystemService> = {
     id: 'core.SystemService@1.0.0',
     nameSpace: 'core',

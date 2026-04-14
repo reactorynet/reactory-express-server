@@ -108,6 +108,27 @@ export class ReactoryClientResolver {
     const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
     return systemService.updateSettings(params.clientId, params.settings);
   }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientAddFeatureFlag")
+  async addFeatureFlag(obj: any, params: { clientId: string, featureFlag: any }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+    return systemService.addFeatureFlag(params.clientId, params.featureFlag);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientUpdateFeatureFlag")
+  async updateFeatureFlag(obj: any, params: { clientId: string, feature: string, featureFlag: any }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+    return systemService.updateFeatureFlag(params.clientId, params.feature, params.featureFlag);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientDeleteFeatureFlag")
+  async deleteFeatureFlag(obj: any, params: { clientId: string, feature: string }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+    return systemService.deleteFeatureFlag(params.clientId, params.feature);
+  }
 }
 
 @resolver

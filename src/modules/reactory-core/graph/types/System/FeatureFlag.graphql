@@ -96,10 +96,42 @@ type FeatureFlagValue {
   enabled: Boolean
 }
 
+"""
+Input type for a feature flag value configuration
+"""
+input FeatureFlagValueInput {
+  feature: String!
+  partner: String
+  organization: String
+  businessUnit: String
+  regions: [String]
+  roles: [String]
+  timezones: [String]
+  value: Any
+  enabled: Boolean
+}
+
 extend type Query {
   """
   Returns all registered feature flag definitions from the catalogue
   (gathered from all modules).
   """
   ReactoryFeatureFlagCatalogue: [FeatureFlag]
+}
+
+extend type Mutation {
+  """
+  Adds a feature flag to the specified ReactoryClient. Restricted to ADMIN roles.
+  """
+  ReactoryClientAddFeatureFlag(clientId: String!, featureFlag: FeatureFlagValueInput!): ReactoryClient!
+
+  """
+  Updates an existing feature flag on the specified ReactoryClient, matched by feature key. Restricted to ADMIN roles.
+  """
+  ReactoryClientUpdateFeatureFlag(clientId: String!, feature: String!, featureFlag: FeatureFlagValueInput!): ReactoryClient!
+
+  """
+  Removes a feature flag from the specified ReactoryClient, matched by feature key. Restricted to ADMIN roles.
+  """
+  ReactoryClientDeleteFeatureFlag(clientId: String!, feature: String!): ReactoryClient!
 }

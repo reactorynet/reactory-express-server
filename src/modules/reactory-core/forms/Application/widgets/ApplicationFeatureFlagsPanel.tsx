@@ -53,6 +53,39 @@ const CATALOGUE_QUERY = `
   }
 `;
 
+const FEATURE_FLAG_FIELDS = `
+  feature
+  partner
+  organization
+  businessUnit
+  regions
+  roles
+  timezones
+  value
+  enabled
+`;
+
+const MUTATIONS = {
+  addFeatureFlag: `mutation ReactoryClientAddFeatureFlag($clientId: String!, $featureFlag: FeatureFlagValueInput!) {
+    ReactoryClientAddFeatureFlag(clientId: $clientId, featureFlag: $featureFlag) {
+      id
+      featureFlags { ${FEATURE_FLAG_FIELDS} }
+    }
+  }`,
+  updateFeatureFlag: `mutation ReactoryClientUpdateFeatureFlag($clientId: String!, $feature: String!, $featureFlag: FeatureFlagValueInput!) {
+    ReactoryClientUpdateFeatureFlag(clientId: $clientId, feature: $feature, featureFlag: $featureFlag) {
+      id
+      featureFlags { ${FEATURE_FLAG_FIELDS} }
+    }
+  }`,
+  deleteFeatureFlag: `mutation ReactoryClientDeleteFeatureFlag($clientId: String!, $feature: String!) {
+    ReactoryClientDeleteFeatureFlag(clientId: $clientId, feature: $feature) {
+      id
+      featureFlags { ${FEATURE_FLAG_FIELDS} }
+    }
+  }`,
+};
+
 const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) => {
   const { reactory, formData, onChange, applicationId, mode = 'view' } = props;
 
@@ -61,7 +94,7 @@ const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) 
     'material-ui.Material',
   ]);
 
-  const { useState, useEffect, useCallback } = React;
+  const { useState, useEffect, useCallback, useRef } = React;
 
   const {
     Card,
@@ -77,6 +110,7 @@ const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) 
     DialogContent,
     DialogActions,
     TextField,
+    CircularProgress,
     Paper,
     List,
     ListItem,
@@ -102,7 +136,16 @@ const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) 
     ToggleOff: ToggleOffIcon,
   } = Material.MaterialIcons;
 
-  const featureFlags: FeatureFlag[] = formData?.featureFlags || [];
+  const [flags, setFlags] = useState<FeatureFlag[]>(formData?.featureFlags || []);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (formData?.featureFlags) {
+      setFlags(formData.featureFlags);
+    }
+  }, [formData?.featureFlags]);
+
+  const featureFlags = flags;
   const totalFeatureFlags = formData?.totalFeatureFlags || featureFlags.length;
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -115,20 +158,35 @@ const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) 
   const [deleteIndex, setDeleteIndex] = useState<number>(-1);
 
   /**
-   * Propagate changes back to the parent form via onChange.
+   * Update local state and propagate to parent form after a mutation result.
    */
-  const propagateChange = useCallback(
-    (updatedFlags: FeatureFlag[]) => {
+  const updateFlagsFromResult = (result: any, mutationKey: string) => {
+    const data = result?.data?.[mutationKey];
+    if (data?.featureFlags) {
+      setFlags(data.featureFlags);
       if (typeof onChange === 'function') {
-        onChange({
-          ...formData,
-          featureFlags: updatedFlags,
-          totalFeatureFlags: updatedFlags.length,
-        });
+        onChange({ ...formData, featureFlags: data.featureFlags, totalFeatureFlags: data.featureFlags.length });
       }
-    },
-    [onChange, formData],
-  );
+    }
+  };
+
+  /**
+   * Strip __typename and build a clean input object for mutations.
+   */
+  const cleanFlagInput = (flag: FeatureFlag) => {
+    const cleaned = reactory.utils.omitDeep({ ...flag });
+    return {
+      feature: cleaned.feature,
+      partner: cleaned.partner || null,
+      organization: cleaned.organization || null,
+      businessUnit: cleaned.businessUnit || null,
+      regions: cleaned.regions || [],
+      roles: cleaned.roles || [],
+      timezones: cleaned.timezones || [],
+      value: cleaned.value ?? null,
+      enabled: cleaned.enabled ?? false,
+    };
+  };
 
   /**
    * Fetch feature flag catalogue from the server.
@@ -170,11 +228,24 @@ const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) 
   /**
    * Toggle enabled/disabled state inline for a specific flag.
    */
-  const handleToggleEnabled = (index: number) => {
-    const updated = featureFlags.map((f, i) =>
-      i === index ? { ...f, enabled: !f.enabled } : f,
-    );
-    propagateChange(updated);
+  const handleToggleEnabled = async (index: number) => {
+    if (!applicationId) return;
+    const flag = featureFlags[index];
+    if (!flag) return;
+    setSaving(true);
+    try {
+      const result = await reactory.graphqlMutation(MUTATIONS.updateFeatureFlag, {
+        clientId: applicationId,
+        feature: flag.feature,
+        featureFlag: cleanFlagInput({ ...flag, enabled: !flag.enabled }),
+      });
+      updateFlagsFromResult(result, 'ReactoryClientUpdateFeatureFlag');
+    } catch (err) {
+      reactory.log('Error toggling feature flag:', err, 'error');
+      reactory.createNotification('Error toggling feature flag', { type: 'error' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   /**
@@ -218,34 +289,61 @@ const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) 
   /**
    * Execute deletion after confirmation.
    */
-  const confirmDeleteFlag = () => {
-    if (deleteIndex >= 0) {
-      const updated = featureFlags.filter((_, i) => i !== deleteIndex);
-      propagateChange(updated);
+  const confirmDeleteFlag = async () => {
+    if (deleteIndex >= 0 && applicationId) {
+      const flag = featureFlags[deleteIndex];
+      if (flag) {
+        setSaving(true);
+        try {
+          const result = await reactory.graphqlMutation(MUTATIONS.deleteFeatureFlag, {
+            clientId: applicationId,
+            feature: flag.feature,
+          });
+          updateFlagsFromResult(result, 'ReactoryClientDeleteFeatureFlag');
+        } catch (err) {
+          reactory.log('Error deleting feature flag:', err, 'error');
+          reactory.createNotification('Error deleting feature flag', { type: 'error' });
+        } finally {
+          setSaving(false);
+        }
+      }
     }
     setDeleteConfirmOpen(false);
     setDeleteIndex(-1);
   };
 
   /**
-   * Save (add or update) a feature flag value and propagate.
+   * Save (add or update) a feature flag value via individual mutation.
    */
-  const handleSaveFlag = () => {
-    if (!selectedFlag?.feature) return;
-
-    let updated: FeatureFlag[];
-    if (isEditing && editIndex >= 0) {
-      updated = featureFlags.map((f, i) =>
-        i === editIndex ? { ...selectedFlag } : f,
-      );
-    } else {
-      updated = [...featureFlags, { ...selectedFlag }];
+  const handleSaveFlag = async () => {
+    if (!selectedFlag?.feature || !applicationId) return;
+    setSaving(true);
+    try {
+      const input = cleanFlagInput(selectedFlag);
+      if (isEditing && editIndex >= 0) {
+        const originalFeature = featureFlags[editIndex]?.feature;
+        const result = await reactory.graphqlMutation(MUTATIONS.updateFeatureFlag, {
+          clientId: applicationId,
+          feature: originalFeature,
+          featureFlag: input,
+        });
+        updateFlagsFromResult(result, 'ReactoryClientUpdateFeatureFlag');
+      } else {
+        const result = await reactory.graphqlMutation(MUTATIONS.addFeatureFlag, {
+          clientId: applicationId,
+          featureFlag: input,
+        });
+        updateFlagsFromResult(result, 'ReactoryClientAddFeatureFlag');
+      }
+      setDialogOpen(false);
+      setSelectedFlag(null);
+      setEditIndex(-1);
+    } catch (err) {
+      reactory.log('Error saving feature flag:', err, 'error');
+      reactory.createNotification('Error saving feature flag', { type: 'error' });
+    } finally {
+      setSaving(false);
     }
-
-    propagateChange(updated);
-    setDialogOpen(false);
-    setSelectedFlag(null);
-    setEditIndex(-1);
   };
 
   const handleDialogClose = () => {
@@ -280,16 +378,20 @@ const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) 
           title="Feature Flags"
           subheader={`${featureFlags.length} configured flag${featureFlags.length !== 1 ? 's' : ''}`}
           action={
-            isAdmin && (
-              <Button
-                startIcon={<AddIcon />}
-                variant="contained"
-                size="small"
-                onClick={handleAddFlag}
-              >
-                Add Flag
-              </Button>
-            )
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {saving && <CircularProgress size={20} />}
+              {isAdmin && (
+                <Button
+                  startIcon={<AddIcon />}
+                  variant="contained"
+                  size="small"
+                  onClick={handleAddFlag}
+                  disabled={saving}
+                >
+                  Add Flag
+                </Button>
+              )}
+            </Box>
           }
         />
         <Divider />
@@ -322,6 +424,7 @@ const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) 
                           size="small"
                           onClick={() => handleToggleEnabled(index)}
                           color={flag.enabled ? 'success' : 'default'}
+                          disabled={saving}
                         >
                           {flag.enabled ? (
                             <ToggleOnIcon />
@@ -635,9 +738,9 @@ const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) 
           <Button
             onClick={handleSaveFlag}
             variant="contained"
-            disabled={!selectedFlag?.feature}
+            disabled={!selectedFlag?.feature || saving}
           >
-            {isEditing ? 'Update' : 'Add'}
+            {saving ? <CircularProgress size={20} /> : isEditing ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
       </Dialog>
