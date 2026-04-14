@@ -136,7 +136,7 @@ const ApplicationFeatureFlagsPanel = (props: ApplicationFeatureFlagsPanelProps) 
   const fetchCatalogue = useCallback(async () => {
     setCatalogueLoading(true);
     try {
-      const result = await reactory.graphql(CATALOGUE_QUERY);
+      const result = await reactory.graphqlQuery(CATALOGUE_QUERY);
       if (result?.data?.ReactoryFeatureFlagCatalogue) {
         setCatalogue(result.data.ReactoryFeatureFlagCatalogue);
       }

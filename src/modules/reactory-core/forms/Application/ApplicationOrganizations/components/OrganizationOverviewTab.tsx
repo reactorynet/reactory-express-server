@@ -86,7 +86,7 @@ const OrganizationOverviewTab = (props: OrganizationOverviewTabProps) => {
 
       reactory.createNotification('Organization updated successfully', { showInAppNotification: true, type: 'success' });
       setIsEditing(false);
-      reactory.amq.raiseFormEvent('core.OrganizationUpdatedEvent', {}, 'core.OrganizationUpdatedEvent');
+      reactory.amq.$pub.def('core.OrganizationUpdatedEvent', {}, 'core.OrganizationUpdatedEvent');
       if (onRefresh) onRefresh();
     } catch (error: any) {
       reactory.createNotification(

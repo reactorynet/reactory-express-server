@@ -19,6 +19,7 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
           username
           email          
           theme
+          applicationRoles
           settings {
             name
             settingType

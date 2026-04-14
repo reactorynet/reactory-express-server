@@ -29,6 +29,7 @@ const TeamSchema = new mongoose.Schema<Reactory.Models.ITeam>({
     default: false,
   },
   createdAt: Date,
+  updatedAt: Date,
 });
 
 TeamSchema.statics.GetAllTeams = async function GetAllTeams() {

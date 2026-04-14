@@ -101,12 +101,11 @@ const OrganizationTeamsTab = (props: OrganizationTeamsTabProps) => {
             avatar
           }
           createdAt
-          updatedAt
         }
       }`;
       const result = await reactory.graphqlQuery(query, { id: organization.id });
       if (result?.data?.teamsForOrganization) {
-        setTeams(result.data.teamsForOrganization);
+        setTeams(result.data.teamsForOrganization.filter(Boolean));
       }
     } catch (error: any) {
       reactory.createNotification(

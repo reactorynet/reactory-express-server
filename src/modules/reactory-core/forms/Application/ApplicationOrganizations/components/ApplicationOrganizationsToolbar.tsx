@@ -141,7 +141,7 @@ const ApplicationOrganizationsToolbar = (props: ApplicationOrganizationsToolbarP
       setNewOrgCode('');
 
       // Emit event to refresh the table
-      reactory.amq.raiseFormEvent('core.OrganizationCreatedEvent', {}, 'core.OrganizationCreatedEvent');
+      reactory.amq.$pub.def('core.OrganizationCreatedEvent', {}, 'core.OrganizationCreatedEvent');
 
       if (onRefresh) {
         onRefresh();

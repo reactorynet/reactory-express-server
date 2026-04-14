@@ -283,6 +283,11 @@ type ReactoryClient {
   whitelist: [String]
 
   """
+  The available roles for the application
+  """
+  applicationRoles: [String]
+
+  """
   A list of plugins required by the application
   """
   plugins: [ApplicationPlugin]

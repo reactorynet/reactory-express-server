@@ -1,5 +1,4 @@
 import ApiStatus from './ApiStatus';
-import OrganizationResolver from './Organization/OrganizationResolver';
 import Organization from './Organization/Organization';
 import BusinessUnitResolver from './Organization/BusinessUnitResolver';
 import TeamResolver from './Organization/TeamResolver';
@@ -35,7 +34,6 @@ export default mergeGraphResolver([
   ReactoryClientResolver,
   ClientComponentResolver,
   ClientRouteResolver,
-  OrganizationResolver,
   BusinessUnitResolver,
   Resources,
   Statistics,

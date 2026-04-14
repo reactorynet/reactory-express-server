@@ -35,8 +35,8 @@ const ApplicationRolesPanel = (props: ApplicationRolesPanelProps) => {
 
   const { AdminPanelSettings: RolesIcon } = Material.MaterialIcons;
 
-  const roles = formData?.roles || [];
-  const totalRoles = formData?.totalRoles || 0;
+  const roles = formData?.applicationRoles || [];
+  const totalRoles = roles.length;
 
   return (
     <Box sx={{ p: 2 }}>

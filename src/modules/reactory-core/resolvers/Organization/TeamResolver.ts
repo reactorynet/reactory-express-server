@@ -52,6 +52,16 @@ class TeamResolver {
     return [];
   }
 
+  @property('Team', 'createdAt')
+  createdAt(team: any) {
+    return team.createdAt || Date.now();
+  }
+
+  @property('Team', 'updatedAt')
+  updatedAt(team: any) {
+    return team.updatedAt || team.createdAt || Date.now();
+  }
+
   @query('teamsForOrganization')
   async teamsForOrganization(parent: any, args: any) {
     const { id, searchString } = args;
