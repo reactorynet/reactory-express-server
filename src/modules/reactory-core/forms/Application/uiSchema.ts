@@ -112,6 +112,7 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
     "ui:props-map": {
       'formContext.props.applicationId': 'applicationId',
       'formContext.props.mode': 'mode',
+      'formContext.formData.overview.theme': 'activeTheme',
     },
   },
   statistics: {

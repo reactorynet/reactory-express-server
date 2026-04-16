@@ -67,6 +67,8 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             name
             version
             type
+            defaultThemeMode
+            description
           }
           featureFlags {
             feature
@@ -114,6 +116,7 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
       'themes': 'themes.themes',
       'featureFlags': 'featureFlags.featureFlags',
       'routes': 'routes.routes',
+      'applicationRoles': 'roles.applicationRoles',
       'users.users': 'users.users',
       'users.totalUsers': 'users.totalUsers',
       'users.paging': 'users.paging',

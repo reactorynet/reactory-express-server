@@ -10,10 +10,11 @@ interface ApplicationThemesPanelProps {
   formData?: any;
   applicationId?: string;
   mode?: 'view' | 'edit';
+  activeTheme?: string;
 }
 
 const ApplicationThemesPanel = (props: ApplicationThemesPanelProps) => {
-  const { reactory, formData, applicationId, mode = 'view' } = props;
+  const { reactory, formData, applicationId, mode = 'view', activeTheme } = props;
 
   const { React, Material } = reactory.getComponents<IComponentsImport>([
     'react.React',
@@ -35,7 +36,6 @@ const ApplicationThemesPanel = (props: ApplicationThemesPanelProps) => {
   const { Palette: PaletteIcon } = Material.MaterialIcons;
 
   const themes = formData?.themes || [];
-  const activeTheme = formData?.activeTheme;
 
   return (
     <Box sx={{ p: 2 }}>
@@ -61,37 +61,15 @@ const ApplicationThemesPanel = (props: ApplicationThemesPanelProps) => {
                     </Box>
 
                     <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                      <Chip label={theme.mode || 'light'} size="small" variant="outlined" />
+                      <Chip label={theme.defaultThemeMode || 'light'} size="small" variant="outlined" />
+                      {theme.type && <Chip label={theme.type} size="small" variant="outlined" />}
                     </Box>
 
-                    <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 1,
-                          bgcolor: theme.primaryColor || '#1976d2',
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      />
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 1,
-                          bgcolor: theme.secondaryColor || '#dc004e',
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      />
-                    </Box>
-
-                    <Box sx={{ mt: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Primary • Secondary
+                    {theme.description && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        {theme.description}
                       </Typography>
-                    </Box>
+                    )}
                   </Paper>
                 </Grid>
               ))}

@@ -27,23 +27,16 @@ const organizationSchema: Reactory.Schema.IObjectSchema = {
   }
 };
 
-const roleSchema: Reactory.Schema.IObjectSchema = {
-  type: "object",
-  properties: {
-    id: { type: "string", title: "Role ID" },
-    name: { type: "string", title: "Role Name" },
-    description: { type: "string", title: "Description" }
-  }
-};
-
 const themeSchema: Reactory.Schema.IObjectSchema = {
   type: "object",
   properties: {
     id: { type: "string", title: "Theme ID" },
+    nameSpace: { type: "string", title: "Namespace" },
     name: { type: "string", title: "Theme Name" },
-    mode: { type: "string", title: "Mode", enum: ["light", "dark"] },
-    primaryColor: { type: "string", title: "Primary Color" },
-    secondaryColor: { type: "string", title: "Secondary Color" }
+    version: { type: "string", title: "Version" },
+    type: { type: "string", title: "Theme Type" },
+    defaultThemeMode: { type: "string", title: "Default Mode" },
+    description: { type: "string", title: "Description" }
   }
 };
 
@@ -126,11 +119,10 @@ const schema: Reactory.Schema.IObjectSchema = {
     roles: {
       type: "object",
       properties: {
-        totalRoles: { type: "number", title: "Total Roles" },
-        roles: {
+        applicationRoles: {
           type: "array",
           title: "Roles",
-          items: roleSchema
+          items: { type: "string" }
         }
       }
     },

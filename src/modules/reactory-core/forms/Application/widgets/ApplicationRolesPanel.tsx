@@ -35,7 +35,7 @@ const ApplicationRolesPanel = (props: ApplicationRolesPanelProps) => {
 
   const { AdminPanelSettings: RolesIcon } = Material.MaterialIcons;
 
-  const roles = formData?.applicationRoles || [];
+  const roles: string[] = formData?.applicationRoles || [];
   const totalRoles = roles.length;
 
   return (
@@ -46,15 +46,14 @@ const ApplicationRolesPanel = (props: ApplicationRolesPanelProps) => {
         <CardContent>
           {roles.length > 0 ? (
             <List>
-              {roles.map((role: any) => (
-                <ListItem key={role.id}>
+              {roles.map((role: string) => (
+                <ListItem key={role}>
                   <ListItemText
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip label={role.name} color="primary" />
+                        <Chip label={role} color="primary" />
                       </Box>
                     }
-                    secondary={role.description}
                   />
                 </ListItem>
               ))}
