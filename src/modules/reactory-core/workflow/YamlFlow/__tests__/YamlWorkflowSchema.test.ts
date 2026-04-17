@@ -88,9 +88,9 @@ describe('YamlWorkflowSchema', () => {
 
     it('should validate step types', () => {
       const validStepTypes: any[] = [
-        'log', 'delay', 'validation', 'dataTransformation',
-        'apiCall', 'cliCommand', 'fileOperation', 'conditional',
-        'parallel', 'forEach', 'while', 'custom'
+        'log', 'delay', 'validation', 'data_transformation',
+        'api_call', 'cli_command', 'file_operation', 'condition',
+        'parallel', 'for_each', 'while', 'custom'
       ];
 
       for (const stepType of validStepTypes) {
@@ -282,7 +282,7 @@ steps:
       reason: "Wait before processing"
   - id: step3
     name: Conditional Step
-    type: conditional
+    type: condition
     dependsOn: step2
     config:
       condition: "\${input.inputParam} != ''"
@@ -465,7 +465,7 @@ steps:
           steps: [
             {
               id: 'apiStep',
-              type: 'apiCall',
+              type: 'api_call',
               config: {
                 url: 'https://api.example.com/data',
                 method: 'GET',
@@ -492,7 +492,7 @@ steps:
           steps: [
             {
               id: 'conditionalStep',
-              type: 'conditional',
+              type: 'condition',
               config: {
                 condition: '${input.shouldProcess} === true',
                 thenSteps: [

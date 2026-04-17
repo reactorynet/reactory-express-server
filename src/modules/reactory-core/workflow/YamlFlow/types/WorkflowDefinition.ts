@@ -11,6 +11,7 @@ export type WorkflowMetadata = Reactory.Workflow.IWorkflowMetadata;
 export type WorkflowStep = Reactory.Workflow.IYamlWorkflowStep;
 export type StepType = Reactory.Workflow.StepType;
 export type StepConfig = Reactory.Workflow.IStepConfig;
+export type StepCreationParams = Reactory.Workflow.IStepCreationParams;
 
 // Step-specific configurations
 export type LogStepConfig = Reactory.Workflow.ILogStepConfig;

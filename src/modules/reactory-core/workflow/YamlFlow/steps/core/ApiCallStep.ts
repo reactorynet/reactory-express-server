@@ -73,7 +73,7 @@ export interface ApiCallStepConfig {
  * Step for making HTTP API calls
  */
 export class ApiCallStep extends BaseYamlStep {
-  public readonly stepType = 'apiCall';
+  public readonly stepType = 'api_call';
   
   /**
    * Execute the API call step

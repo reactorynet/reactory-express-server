@@ -33,7 +33,7 @@ export interface DataTransformationStepConfig {
  * Step for transforming and manipulating data
  */
 export class DataTransformationStep extends BaseYamlStep {
-  public readonly stepType = 'dataTransformation';
+  public readonly stepType = 'data_transformation';
   
   /**
    * Execute the data transformation step

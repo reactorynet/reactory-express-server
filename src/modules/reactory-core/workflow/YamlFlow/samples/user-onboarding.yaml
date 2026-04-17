@@ -107,7 +107,7 @@ steps:
   # Step 3: Check for existing user
   - id: checkExistingUser
     name: Check Existing User
-    type: apiCall
+    type: api_call
     dependsOn: validateUserData
     condition: "${step.validateUserData.validationResult} === 'validationPassed'"
     config:
@@ -125,7 +125,7 @@ steps:
   # Step 4: Conditional user creation
   - id: conditionalUserCreation
     name: Create User If Not Exists
-    type: conditional
+    type: condition
     dependsOn: checkExistingUser
     config:
       condition: "${step.checkExistingUser.userExists} !== true"
@@ -133,7 +133,7 @@ steps:
         # Create new user
         - id: createUser
           name: Create New User
-          type: apiCall
+          type: api_call
           config:
             url: "${env.API_BASE_URL}/users"
             method: POST
@@ -153,7 +153,7 @@ steps:
         # Set up user permissions
         - id: setupPermissions
           name: Setup User Permissions
-          type: apiCall
+          type: api_call
           dependsOn: createUser
           config:
             url: "${env.API_BASE_URL}/users/${step.createUser.userId}/permissions"
@@ -193,7 +193,7 @@ steps:
           steps:
             - id: sendWelcomeEmail
               name: Send Welcome Email
-              type: apiCall
+              type: api_call
               condition: "${input.notificationPreferences.email} === true"
               config:
                 url: "${env.NOTIFICATION_API_URL}/email/send"
@@ -215,7 +215,7 @@ steps:
           steps:
             - id: sendWelcomeSMS
               name: Send Welcome SMS
-              type: apiCall
+              type: api_call
               condition: "${input.notificationPreferences.sms} === true && ${input.userData.phone} !== ''"
               config:
                 url: "${env.NOTIFICATION_API_URL}/sms/send"
@@ -233,7 +233,7 @@ steps:
   # Step 6: Create onboarding tasks
   - id: createOnboardingTasks
     name: Create Onboarding Tasks
-    type: forEach
+    type: for_each
     dependsOn: sendNotifications
     config:
       items: "${variables.onboardingTasks}"
@@ -243,7 +243,7 @@ steps:
       steps:
         - id: createTask
           name: Create Individual Task
-          type: apiCall
+          type: api_call
           config:
             url: "${env.API_BASE_URL}/tasks"
             method: POST

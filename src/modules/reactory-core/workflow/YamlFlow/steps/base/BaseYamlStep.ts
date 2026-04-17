@@ -21,8 +21,11 @@ export abstract class BaseYamlStep implements IYamlStep {
   /** Type of step - must be implemented by subclasses */
   public abstract readonly stepType: string;
   
-  /** Configuration for this step */
+  /** Static, step-type-specific configuration */
   public readonly config: Record<string, any>;
+
+  /** Dynamic input parameters with variable substitution support */
+  public readonly inputs: Record<string, any>;
   
   /** Whether this step is enabled */
   public readonly enabled: boolean;
@@ -30,11 +33,13 @@ export abstract class BaseYamlStep implements IYamlStep {
   /**
    * Constructor for base step
    * @param id - Unique identifier for this step instance
-   * @param config - Configuration object for the step
+   * @param config - Static configuration object for the step
+   * @param inputs - Dynamic input parameters (optional)
    */
-  constructor(id: string, config: Record<string, any>) {
+  constructor(id: string, config: Record<string, any>, inputs?: Record<string, any>) {
     this.id = id;
     this.config = config;
+    this.inputs = inputs || {};
     this.enabled = config.enabled !== false; // Default to true unless explicitly false
   }
   
@@ -129,12 +134,13 @@ export abstract class BaseYamlStep implements IYamlStep {
    * Get step information for debugging/logging
    * @returns Step information object
    */
-  public getStepInfo(): { id: string; type: string; enabled: boolean; config: Record<string, any> } {
+  public getStepInfo(): { id: string; type: string; enabled: boolean; config: Record<string, any>; inputs: Record<string, any> } {
     return {
       id: this.id,
       type: this.stepType,
       enabled: this.enabled,
-      config: this.config
+      config: this.config,
+      inputs: this.inputs
     };
   }
   
@@ -186,7 +192,7 @@ export abstract class BaseYamlStep implements IYamlStep {
       if (inputMatch) {
         const [, inputPath] = inputMatch;
         const keys = inputPath.split('.');
-        let current: any = context.inputs;
+        let current: any = context.workflowInputs;
         for (const key of keys) {
           if (current && typeof current === 'object' && key in current) {
             current = current[key];

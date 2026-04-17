@@ -64,7 +64,7 @@ export interface CliCommandStepConfig {
  * Step for executing command line operations
  */
 export class CliCommandStep extends BaseYamlStep {
-  public readonly stepType = 'cliCommand';
+  public readonly stepType = 'cli_command';
   
   /**
    * Execute the CLI command step

@@ -61,7 +61,7 @@ export interface FileOperationStepConfig {
  * Step for performing file system operations
  */
 export class FileOperationStep extends BaseYamlStep {
-  public readonly stepType = 'fileOperation';
+  public readonly stepType = 'file_operation';
   
   /**
    * Execute the file operation step

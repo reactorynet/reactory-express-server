@@ -12,7 +12,7 @@
 
 import { YamlWorkflowExecutor } from '../../execution/YamlWorkflowExecutor';
 import { YamlStepRegistry } from '../../steps/registry/YamlStepRegistry';
-import { YamlWorkflowDefinition, StepConfig } from '../../types/WorkflowDefinition';
+import { YamlWorkflowDefinition, StepCreationParams } from '../../types/WorkflowDefinition';
 import { 
   WorkflowExecutionResult, 
   WorkflowExecutionContext,

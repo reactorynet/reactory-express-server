@@ -311,7 +311,7 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
   }, {});
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 0 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 0, width: 0, minWidth: '100%', overflow: 'hidden' }}>
 
       {/* ── Header bar ──────────────────────────────────────────────────── */}
       <Box
@@ -529,7 +529,7 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
           </Box>
         ) : yamlSource.length > LARGE_CONTENT_THRESHOLD ? (
           /* Large content: plain <pre> to avoid rich-editor OOM / onChange loops */
-          <Box sx={{ height: editorHeight, display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ height: editorHeight, display: 'flex', flexDirection: 'column', maxWidth: '100%', overflowX: 'auto' }}>
             <Alert severity="info" sx={{ borderRadius: 0, flexShrink: 0 }}>
               YAML source is {(yamlSource.length / 1024).toFixed(0)} KB — displayed
               read-only for performance. Use the copy button to edit externally.
@@ -539,6 +539,7 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
               overflow: 'auto',
               bgcolor: 'grey.900',
               color: 'grey.100',
+              maxWidth: '100%',
             }}>
               <pre style={{
                 fontFamily: '"Courier New", Courier, monospace',
@@ -550,56 +551,54 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
                 wordBreak: 'normal',
                 overflowWrap: 'normal',
                 color: 'inherit',
+                minWidth: 'fit-content',
               }}>
                 {yamlSource}
               </pre>
             </Box>
           </Box>
         ) : RichEditorWidget ? (
-          <Box sx={{
-            height: editorHeight,
-            '& .fr-box': { height: '100%' },
-            '& .fr-wrapper': { height: 'calc(100% - 45px)', overflow: 'auto' },
-            '& > *': { height: '100%' },
-            '& .ql-editor': { minHeight: 0 },
-          }}>
+          <Box sx={{ height: editorHeight, overflow: 'hidden' }}>
             <RichEditorWidget
               idSchema={{ $id: 'workflow-yaml-editor' }}
               formData={yamlSource}
               format="yaml"
+              height={editorHeight}
               onChange={handleEditorChange}
             />
           </Box>
         ) : (
-          <TextField
-            multiline
-            fullWidth
-            value={yamlSource}
-            onChange={(e: any) => handleEditorChange(e.target.value)}
-            InputProps={{
-              readOnly: readonly,
-              style: {
-                fontFamily: '"Courier New", Courier, monospace',
-                fontSize: '0.8125rem',
-                lineHeight: 1.6,
-                padding: '12px 16px',
-              },
-              disableUnderline: true,
-            }}
-            variant="standard"
-            sx={{
-              height: editorHeight,
-              '& .MuiInputBase-root': {
-                height: '100%',
-                alignItems: 'flex-start',
-                bgcolor: 'grey.50',
-              },
-              '& .MuiInputBase-input': {
-                height: '100% !important',
-                overflowY: 'auto !important',
-              },
-            }}
-          />
+          <Box sx={{ height: editorHeight, maxWidth: '100%', overflowX: 'auto' }}>
+            <TextField
+              multiline
+              fullWidth
+              value={yamlSource}
+              onChange={(e: any) => handleEditorChange(e.target.value)}
+              InputProps={{
+                readOnly: readonly,
+                style: {
+                  fontFamily: '"Courier New", Courier, monospace',
+                  fontSize: '0.8125rem',
+                  lineHeight: 1.6,
+                  padding: '12px 16px',
+                },
+                disableUnderline: true,
+              }}
+              variant="standard"
+              sx={{
+                height: editorHeight,
+                '& .MuiInputBase-root': {
+                  height: '100%',
+                  alignItems: 'flex-start',
+                  bgcolor: 'grey.50',
+                },
+                '& .MuiInputBase-input': {
+                  height: '100% !important',
+                  overflowY: 'auto !important',
+                },
+              }}
+            />
+          </Box>
         )}
       </Box>
     </Box>

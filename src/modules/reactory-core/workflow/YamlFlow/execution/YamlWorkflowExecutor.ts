@@ -6,7 +6,7 @@
 
 import Reactory from '@reactorynet/reactory-core';
 import { YamlStepRegistry } from '../steps/registry/YamlStepRegistry';
-import { YamlWorkflowDefinition, StepConfig } from '../types/WorkflowDefinition';
+import { YamlWorkflowDefinition, StepCreationParams } from '../types/WorkflowDefinition';
 import { IYamlStep, StepExecutionContext } from '../steps/interfaces/IYamlStep';
 import {
   WorkflowExecutionResult,
@@ -114,13 +114,13 @@ export class YamlWorkflowExecutor {
         try {
           if (this.stepRegistry.hasStep(step.type)) {
             // Pass the full step object so the registry can resolve inputs → config
-            const stepConfig: StepConfig = {
+            const params: StepCreationParams = {
               id: step.id,
               type: step.type,
               config: this.resolveStepConfig(step),
               inputs: (step as any).inputs  // preserve raw inputs for registry fallback
             };
-            const stepInstance = this.stepRegistry.createStep(stepConfig);
+            const stepInstance = this.stepRegistry.createStep(params);
             const resolvedConfig = this.resolveStepConfig(step);
             const validation = stepInstance.validateConfig(resolvedConfig);
             if (!validation.valid) {
@@ -419,9 +419,9 @@ export class YamlWorkflowExecutor {
     const startTime = new Date();
     
     try {
-      // Convert WorkflowStep to StepConfig (resolving inputs JSON → config)
+      // Convert WorkflowStep to StepCreationParams (resolving inputs JSON → config)
       const resolvedConfig = this.resolveStepConfig(stepConfig);
-      const config: StepConfig = {
+      const params: StepCreationParams = {
         id: stepConfig.id,
         type: stepConfig.type,
         config: resolvedConfig,
@@ -429,11 +429,11 @@ export class YamlWorkflowExecutor {
       };
 
       // Create step instance
-      const step = this.stepRegistry.createStep(config);
+      const step = this.stepRegistry.createStep(params);
       
       if (dryRun) {
         // In dry run mode, just validate
-        const validation = step.validateConfig(config.config || {});
+        const validation = step.validateConfig(params.config || {});
         return {
           stepId: stepConfig.id,
           stepType: stepConfig.type,
@@ -453,7 +453,7 @@ export class YamlWorkflowExecutor {
       
       // Create step execution context
       const stepContext: StepExecutionContext = {
-        inputs: workflowContext.inputs,
+        workflowInputs: workflowContext.inputs,
         variables: {},
         env: workflowContext.environment,
         stepResults: {}, // Convert stepOutputs to stepResults format

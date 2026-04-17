@@ -9,21 +9,35 @@ import {
   StepMetadata, 
   StepRegistrationOptions 
 } from '../interfaces/IYamlStep';
-import { StepConfig } from '../../types/WorkflowDefinition';
+import { StepCreationParams } from '../../types/WorkflowDefinition';
 
 // Import core step implementations
-import { LogStep } from '../core/LogStep';
-import { DelayStep } from '../core/DelayStep';
-import { ValidationStep } from '../core/ValidationStep';
-import { DataTransformationStep } from '../core/DataTransformationStep';
 import { ApiCallStep } from '../core/ApiCallStep';
 import { CliCommandStep } from '../core/CliCommandStep';
-import { FileOperationStep } from '../core/FileOperationStep';
-import { StartStep } from '../core/StartStep';
-import { EndStep } from '../core/EndStep';
-import { ServiceInvokeStep } from '../core/ServiceInvokeStep';
 import { ConditionStep } from '../core/ConditionStep';
+import { DataTransformationStep } from '../core/DataTransformationStep';
+import { DelayStep } from '../core/DelayStep';
+import { EndStep } from '../core/EndStep';
+import { FileOperationStep } from '../core/FileOperationStep';
 import { ForEachStep } from '../core/ForEachStep';
+import { LogStep } from '../core/LogStep';
+import { MongoDbStep } from '../core/MongoDbStep';
+import { MSSQLStep } from '../core/MSSQLStep';
+import { MySQLStep } from '../core/MySQLStep';
+import { PostgresStep } from '../core/PostgresStep';
+import { ServiceCallStep } from '../core/ServiceCallStep';
+import { ServiceInvokeStep } from '../core/ServiceInvokeStep';
+import { TelemetryStep } from '../core/TelemetryStep';
+import { ValidationStep } from '../core/ValidationStep';
+import { StartStep } from '../core/StartStep';
+import { TaskStep } from '../core/TaskStep';
+import { ParallelStep } from '../core/ParallelStep';
+import { WhileStep } from '../core/WhileStep';
+import { CustomStep } from '../core/CustomStep';
+import { JoinStep } from '../core/JoinStep';
+import { GraphQLStep } from '../core/GraphQLStep';
+import { GRPCStep } from '../core/GRPCStep';
+import { UserActivityStep } from '../core/UserActivityStep';
 
 /**
  * Central registry for all YAML workflow step types
@@ -96,23 +110,22 @@ export class YamlStepRegistry {
   }
   
   /**
-   * Create a step instance from configuration.
+   * Create a step instance from creation parameters.
    *
-   * YAML-designer workflows store step configuration in the `inputs` field as
-   * a JSON string (YAML `>-` block scalar).  This method resolves that to an
-   * object so step implementations always receive a proper config dict.
+   * Resolves the effective `config` and `inputs` from the creation params,
+   * then instantiates the step class with both values.
    *
-   * @param stepConfig - Step configuration (may include raw `inputs` string)
+   * @param params - Step creation parameters
    * @returns Created step instance
    */
-  public createStep(stepConfig: StepConfig): IYamlStep {
-    const resolvedConfig = this.resolveConfig(stepConfig);
-    const StepClass = this.getStepClass(stepConfig.type);
-    const step = new StepClass(stepConfig.id, resolvedConfig);
+  public createStep(params: StepCreationParams): IYamlStep {
+    const { config, inputs } = this.resolveConfigAndInputs(params);
+    const StepClass = this.getStepClass(params.type);
+    const step = new StepClass(params.id, config, inputs);
 
     // Validate configuration if the step supports it
     if (typeof step.validateConfig === 'function') {
-      const validation = step.validateConfig(resolvedConfig);
+      const validation = step.validateConfig(config);
       if (!validation.valid) {
         throw new Error(
           `Step configuration validation failed: ${validation.errors.join(', ')}`
@@ -124,44 +137,60 @@ export class YamlStepRegistry {
   }
 
   /**
-   * Resolve the effective config for a step.
+   * Resolve the effective config and inputs for a step.
    *
-   * Priority:
-   *  1. `stepConfig.config` if it is a non-empty object
-   *  2. `stepConfig.inputs` parsed from JSON string → object
-   *  3. `stepConfig.inputs` if already an object
-   *  4. Empty object `{}`
+   * `config` = static, step-type-specific configuration
+   * `inputs` = dynamic parameters with variable substitution
+   *
+   * For backward compatibility, if only `inputs` is provided (e.g. from
+   * the YAML designer which stores config in the `inputs` field as a JSON
+   * string), it is treated as `config`.
    */
-  private resolveConfig(stepConfig: StepConfig): Record<string, any> {
-    // 1. Explicit config object with actual keys
+  private resolveConfigAndInputs(params: StepCreationParams): {
+    config: Record<string, any>;
+    inputs: Record<string, any>;
+  } {
+    let config: Record<string, any> = {};
+    let inputs: Record<string, any> = {};
+
+    // Resolve config
     if (
-      stepConfig.config &&
-      typeof stepConfig.config === 'object' &&
-      Object.keys(stepConfig.config).length > 0
+      params.config &&
+      typeof params.config === 'object' &&
+      Object.keys(params.config).length > 0
     ) {
-      return stepConfig.config;
+      config = params.config;
     }
 
-    // 2 & 3. Fall back to `inputs` (YAML designer stores config here)
-    const inputs = (stepConfig as any).inputs;
-    if (inputs != null) {
-      if (typeof inputs === 'string') {
+    // Resolve inputs
+    const rawInputs = params.inputs;
+    if (rawInputs != null) {
+      if (typeof rawInputs === 'string') {
         try {
-          const parsed = JSON.parse(inputs);
+          const parsed = JSON.parse(rawInputs);
           if (parsed && typeof parsed === 'object') {
-            return parsed;
+            // If config is empty, treat parsed inputs as config (backward compat)
+            if (Object.keys(config).length === 0) {
+              config = parsed;
+            } else {
+              inputs = parsed;
+            }
           }
         } catch {
-          // Not valid JSON — return as raw wrapper
-          return { raw: inputs };
+          // Not valid JSON — store as raw wrapper in inputs
+          inputs = { raw: rawInputs };
         }
-      }
-      if (typeof inputs === 'object') {
-        return inputs;
+      } else if (typeof rawInputs === 'object') {
+        // If config is empty, treat object inputs as config (backward compat)
+        if (Object.keys(config).length === 0) {
+          config = rawInputs;
+        } else {
+          inputs = rawInputs;
+        }
       }
     }
 
-    return {};
+    return { config, inputs };
   }
   
   /**
@@ -206,7 +235,7 @@ export class YamlStepRegistry {
     stepsByType: Record<string, number>;
   } {
     const allSteps = Array.from(this.steps.keys());
-    const coreSteps = ['log', 'delay', 'validation', 'dataTransformation', 'apiCall', 'cliCommand', 'fileOperation'];
+    const coreSteps = ['log', 'delay', 'validation', 'data_transformation', 'api_call', 'cli_command', 'file_operation'];
     
     return {
       totalSteps: allSteps.length,
@@ -240,23 +269,23 @@ export class YamlStepRegistry {
       version: '1.0.0'
     });
     
-    this.registerStep('dataTransformation', DataTransformationStep, {
+    this.registerStep('data_transformation', DataTransformationStep, {
       description: 'Transform and manipulate data',
       version: '1.0.0'
     });
     
     // External integration steps
-    this.registerStep('apiCall', ApiCallStep, {
+    this.registerStep('api_call', ApiCallStep, {
       description: 'Make HTTP API calls',
       version: '1.0.0'
     });
     
-    this.registerStep('cliCommand', CliCommandStep, {
+    this.registerStep('cli_command', CliCommandStep, {
       description: 'Execute command line operations',
       version: '1.0.0'
     });
     
-    this.registerStep('fileOperation', FileOperationStep, {
+    this.registerStep('file_operation', FileOperationStep, {
       description: 'Perform file system operations',
       version: '1.0.0'
     });
@@ -285,6 +314,60 @@ export class YamlStepRegistry {
     // Service integration steps
     this.registerStep('service_invoke', ServiceInvokeStep, {
       description: 'Invoke a Reactory service method',
+      version: '1.0.0'
+    });
+
+    // Task step
+    this.registerStep('task', TaskStep, {
+      description: 'Generic task execution',
+      version: '1.0.0'
+    });
+
+    // Parallel execution step
+    this.registerStep('parallel', ParallelStep, {
+      description: 'Execute branches concurrently',
+      version: '1.0.0'
+    });
+
+    // While loop step
+    this.registerStep('while', WhileStep, {
+      description: 'Loop with condition evaluation',
+      version: '1.0.0'
+    });
+
+    // Custom catch-all step
+    this.registerStep('custom', CustomStep, {
+      description: 'Custom user-defined step logic',
+      version: '1.0.0'
+    });
+
+    // Join step (parallel branch synchronization)
+    this.registerStep('join', JoinStep, {
+      description: 'Wait for parallel branches to complete',
+      version: '1.0.0'
+    });
+
+    // GraphQL step
+    this.registerStep('graphql', GraphQLStep, {
+      description: 'Execute GraphQL query or mutation',
+      version: '1.0.0'
+    });
+
+    // gRPC step
+    this.registerStep('grpc', GRPCStep, {
+      description: 'Execute gRPC service call',
+      version: '1.0.0'
+    });
+
+    // User activity step
+    this.registerStep('user_activity', UserActivityStep, {
+      description: 'Pause workflow for user interaction',
+      version: '1.0.0'
+    });
+
+    // Telemetry step
+    this.registerStep('telemetry', TelemetryStep, {
+      description: 'Emit metrics and trace data',
       version: '1.0.0'
     });
   }

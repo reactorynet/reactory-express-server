@@ -12,7 +12,7 @@
 import { YamlStepRegistry } from '../../steps/registry/YamlStepRegistry';
 import { IYamlStep, StepExecutionContext, StepExecutionResult } from '../../steps/interfaces/IYamlStep';
 import { BaseYamlStep } from '../../steps/base/BaseYamlStep';
-import { YamlWorkflowDefinition, StepConfig } from '../../types/WorkflowDefinition';
+import { YamlWorkflowDefinition, StepConfig, StepCreationParams } from '../../types/WorkflowDefinition';
 
 describe('YamlStepRegistry', () => {
   let registry: YamlStepRegistry;
@@ -129,10 +129,10 @@ describe('YamlStepRegistry', () => {
       expect(registeredSteps).toContain('log');
       expect(registeredSteps).toContain('delay');
       expect(registeredSteps).toContain('validation');
-      expect(registeredSteps).toContain('dataTransformation');
-      expect(registeredSteps).toContain('apiCall');
-      expect(registeredSteps).toContain('cliCommand');
-      expect(registeredSteps).toContain('fileOperation');
+      expect(registeredSteps).toContain('data_transformation');
+      expect(registeredSteps).toContain('api_call');
+      expect(registeredSteps).toContain('cli_command');
+      expect(registeredSteps).toContain('file_operation');
     });
   });
 
@@ -147,7 +147,7 @@ describe('YamlStepRegistry', () => {
 
       registry.registerStep('test', TestStep);
       
-      const stepConfig: StepConfig = {
+      const stepConfig: StepCreationParams = {
         id: 'test-step-1',
         type: 'test',
         config: { message: 'Hello World' }
@@ -162,7 +162,7 @@ describe('YamlStepRegistry', () => {
     });
 
     it('should throw error when creating step of unregistered type', () => {
-      const stepConfig: StepConfig = {
+      const stepConfig: StepCreationParams = {
         id: 'test-step-1',
         type: 'nonexistent',
         config: {}
@@ -194,7 +194,7 @@ describe('YamlStepRegistry', () => {
 
       registry.registerStep('test', TestStep);
       
-      const invalidConfig: StepConfig = {
+      const invalidConfig: StepCreationParams = {
         id: 'test-step-1',
         type: 'test',
         config: {} // Missing requiredField
@@ -224,7 +224,7 @@ describe('YamlStepRegistry', () => {
 
       registry.registerStep('test', TestStep);
       
-      const validConfig: StepConfig = {
+      const validConfig: StepCreationParams = {
         id: 'test-step-1',
         type: 'test',
         config: { requiredField: 'value' }
@@ -238,7 +238,7 @@ describe('YamlStepRegistry', () => {
   describe('Default Step Registration', () => {
     it('should register default core steps on instantiation', () => {
       // The registry should auto-register core step types
-      const defaultSteps = ['log', 'delay', 'validation', 'dataTransformation'];
+      const defaultSteps = ['log', 'delay', 'validation', 'data_transformation'];
       
       for (const stepType of defaultSteps) {
         expect(registry.hasStep(stepType)).toBe(true);
@@ -246,7 +246,7 @@ describe('YamlStepRegistry', () => {
     });
 
     it('should register external integration steps', () => {
-      const externalSteps = ['apiCall', 'cliCommand', 'fileOperation'];
+      const externalSteps = ['api_call', 'cli_command', 'file_operation'];
       
       for (const stepType of externalSteps) {
         expect(registry.hasStep(stepType)).toBe(true);
@@ -300,7 +300,7 @@ describe('BaseYamlStep', () => {
     public async executeStep(context: StepExecutionContext): Promise<StepExecutionResult> {
       return {
         success: true,
-        outputs: { processedValue: context.inputs?.value || 'default' },
+        outputs: { processedValue: context.workflowInputs?.value || 'default' },
         metadata: { executionTime: Date.now() }
       };
     }
@@ -336,7 +336,7 @@ describe('BaseYamlStep', () => {
           name: 'Test Workflow',
           version: '1.0.0'
         },
-        inputs: { value: 'test-input' },
+        workflowInputs: { value: 'test-input' },
         variables: {},
         env: {},
         stepResults: {},
@@ -360,7 +360,7 @@ describe('BaseYamlStep', () => {
           name: 'Test Workflow',
           version: '1.0.0'
         },
-        inputs: {},
+        workflowInputs: {},
         variables: {},
         env: {},
         stepResults: {},
@@ -391,7 +391,7 @@ describe('BaseYamlStep', () => {
           name: 'Test Workflow',
           version: '1.0.0'
         },
-        inputs: {},
+        workflowInputs: {},
         variables: {},
         env: {},
         stepResults: {},

@@ -128,26 +128,21 @@
             "log",
             "delay",
             "validation",
-            "dataTransformation",
-            "apiCall",
-            "cliCommand",
-            "fileOperation",
-            "conditional",
+            "data_transformation",
+            "api_call",
+            "cli_command",
+            "file_operation",
+            "condition",
             "parallel",
-            "forEach",
+            "for_each",
             "while",
             "custom",
             "start",
             "end",
             "service_invoke",
-            "condition",
-            "for_each",
-            "rest",
-            "data_transform",
-            "cli_command",
             "task"
           ],
-          "description": "Type of step to execute"
+          "description": "Type of step to execute (snake_case convention)"
         },
         "enabled": {
           "type": "boolean",
@@ -244,23 +239,23 @@
           "then": { "$ref": "#/definitions/ValidationStepConfig" }
         },
         {
-          "if": { "properties": { "type": { "const": "dataTransformation" } } },
+          "if": { "properties": { "type": { "const": "data_transformation" } } },
           "then": { "$ref": "#/definitions/DataTransformationStepConfig" }
         },
         {
-          "if": { "properties": { "type": { "const": "apiCall" } } },
+          "if": { "properties": { "type": { "const": "api_call" } } },
           "then": { "$ref": "#/definitions/ApiCallStepConfig" }
         },
         {
-          "if": { "properties": { "type": { "const": "cliCommand" } } },
+          "if": { "properties": { "type": { "const": "cli_command" } } },
           "then": { "$ref": "#/definitions/CliCommandStepConfig" }
         },
         {
-          "if": { "properties": { "type": { "const": "fileOperation" } } },
+          "if": { "properties": { "type": { "const": "file_operation" } } },
           "then": { "$ref": "#/definitions/FileOperationStepConfig" }
         },
         {
-          "if": { "properties": { "type": { "const": "conditional" } } },
+          "if": { "properties": { "type": { "const": "condition" } } },
           "then": { "$ref": "#/definitions/ConditionalStepConfig" }
         },
         {
@@ -268,7 +263,7 @@
           "then": { "$ref": "#/definitions/ParallelStepConfig" }
         },
         {
-          "if": { "properties": { "type": { "const": "forEach" } } },
+          "if": { "properties": { "type": { "const": "for_each" } } },
           "then": { "$ref": "#/definitions/ForEachStepConfig" }
         },
         {

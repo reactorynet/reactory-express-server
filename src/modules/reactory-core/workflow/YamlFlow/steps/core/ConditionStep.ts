@@ -61,7 +61,7 @@ export class ConditionStep extends BaseYamlStep {
         `"use strict"; try { return Boolean(${expression}); } catch { return false; }`
       );
       return fn(
-        context.inputs,
+        context.workflowInputs,
         context.variables,
         context.env,
         context.stepResults,
