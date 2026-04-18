@@ -592,7 +592,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     let resolvedSourceType: WorkflowSourceType = 'MODULE';
     let parsed: any;
 
-    const workflow = await this.yamlStageRegistryLookup(nameSpace, name, errors);
+    const workflow = await this.yamlStageRegistryLookup(nameSpace, name, version, errors);
     let loadStatus = this.yamlRegistryStatus(workflow, nameSpace, name, errors);
 
     if (loadStatus === 'SUCCESS') {
@@ -645,11 +645,15 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   private async yamlStageRegistryLookup(
     nameSpace: string,
     name: string,
+    version: string | undefined,
     errors: IYamlLoadError[]
   ): Promise<any> {
     try {
       const runner = await this.getWorkflowRunner();
-      return runner?.getWorkflowByName(nameSpace, name) ?? null;
+      if (!runner) return null;
+      // Prefer the exact-version registration when available, fall back to any matching name
+      const exact = version ? runner.getWorkflowByName(nameSpace, name, version) : null;
+      return exact ?? runner.getWorkflowByName(nameSpace, name) ?? null;
     } catch (err) {
       errors.push({
         stage: 'REGISTRY',
@@ -869,11 +873,19 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     // be present at the raw URI string; rely on the catalog search below.
     const isLegacyYamlUri = location?.startsWith('yaml:');
 
-    // 1. Explicit absolute path from the workflow registration
+    // 1. Explicit absolute path from the workflow registration.
+    //    Only use it when the path already corresponds to the requested version.
+    //    If a specific version was requested and the registered location points to
+    //    a different version directory, fall through to the catalog search (Step 2)
+    //    so the correct versioned file is returned.
     if (location && !isLegacyYamlUri && path.isAbsolute(location)) {
       searchedPaths.push(location);
       if (existsSync(location)) {
-        return { filePath: location, sourceType: this.inferSourceType(location) };
+        const locationMatchesVersion = !version || location.split(path.sep).includes(version);
+        if (locationMatchesVersion) {
+          return { filePath: location, sourceType: this.inferSourceType(location) };
+        }
+        // Location exists but is for a different version – fall through to catalog
       }
     }
 
