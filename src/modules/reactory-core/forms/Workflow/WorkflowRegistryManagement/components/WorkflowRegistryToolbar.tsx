@@ -108,8 +108,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     BulkDeactivateAction,
     BulkExecuteAction,
     BulkTagAction,
-    BulkDeleteAction,
-    ExportAction,
+    BulkDeleteAction,    
   } = reactory.getComponents<WorkflowRegistryToolbarDependencies>([
     'react.React',
     'material-ui.Material',
@@ -123,26 +122,10 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     'core.ExportAction',
   ]);
 
-  const { MaterialCore, MaterialIcons } = Material;
-  const { Box, Button, Icon, Toolbar, Badge, Divider, ButtonGroup, Tooltip, TextField, InputAdornment, IconButton } = MaterialCore;
-  const { Search: SearchIcon, Clear: ClearIcon } = MaterialIcons || {};
-
-  // If components aren't loaded, show loading state
-  if (!QuickFilters || !AdvancedFilterPanel) {
-    return (
-      <Toolbar sx={{ p: 2 }}>
-        <Box>Loading filters...</Box>
-      </Toolbar>
-    );
-  }
-
+  // ✅ All React hooks must be called unconditionally before any conditional returns
   const [advancedPanelOpen, setAdvancedPanelOpen] = React.useState(false);
   const [activeBulkAction, setActiveBulkAction] = React.useState<'activate' | 'deactivate' | 'execute' | 'tag' | 'delete' | 'export' | null>(null);
   const [searchInput, setSearchInput] = React.useState(queryVariables?.filter?.searchString || '');
-
-  // Get selected workflows
-  const selectedWorkflows = data.selected || [];
-  const hasSelection = selectedWorkflows.length > 0;
 
   // Count workflows for badges
   const counts = React.useMemo(() => {
@@ -162,7 +145,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
   }, [data]);
 
   // Quick Filter Definitions
-  const quickFilters: QuickFilterDefinition[] = [
+  const quickFilters: QuickFilterDefinition[] = React.useMemo(() => [
     {
       id: 'active',
       label: 'Active',
@@ -235,10 +218,10 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
       },
       badge: counts.recentlyUpdated,
     },
-  ];
+  ], [counts]);
 
   // Advanced Filter Field Definitions
-  const advancedFilterFields: AdvancedFilterField[] = [
+  const advancedFilterFields: AdvancedFilterField[] = React.useMemo(() => [
     {
       id: 'status',
       label: 'Status',
@@ -294,7 +277,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
       field: 'statistics.totalExecutions',
       type: 'boolean',
     },
-  ];
+  ], []);
 
   // Handle search input change (just update local state)
   const handleSearchInputChange = React.useCallback((event: any) => {
@@ -364,7 +347,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
       onQueryChange('registeredWorkflows', {
         ...queryVariables,
         filter: filterUpdates,
-        pagination: {
+        paging: {
           ...queryVariables?.paging,
           page: 1
         }
@@ -401,7 +384,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     onQueryChange('registeredWorkflows', {
       ...queryVariables,
       filter: filterUpdates,
-      pagination: {
+      paging: {
         ...queryVariables?.paging,
         page: 1 // Reset to first page when filtering
       }
@@ -421,7 +404,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
       onQueryChange('registeredWorkflows', {
         ...queryVariables,
         filter: filterUpdates,
-        pagination: {
+        paging: {
           ...queryVariables?.paging,
           page: 1
         }
@@ -467,7 +450,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     onQueryChange('registeredWorkflows', {
       ...queryVariables,
       filter: filterUpdates,
-      pagination: {
+      paging: {
         ...queryVariables?.paging,
         page: 1
       }
@@ -493,6 +476,21 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
   const handleExport = () => {
     setActiveBulkAction('export');
   };
+
+  // Guard: all hooks have been called above. Now safe to bail out if dependencies are missing.
+  if (!QuickFilters || !AdvancedFilterPanel || !Material) {
+    return (
+      <div style={{ padding: '16px' }}>Loading filters...</div>
+    );
+  }
+
+  const { MaterialCore, MaterialIcons } = Material;
+  const { Box, Button, Icon, Toolbar, Badge, Divider, ButtonGroup, Tooltip, TextField, InputAdornment, IconButton } = MaterialCore;
+  const { Search: SearchIcon, Clear: ClearIcon } = MaterialIcons || {};
+
+  // Derived values (not state)
+  const selectedWorkflows = data.selected || [];
+  const hasSelection = selectedWorkflows.length > 0;
 
   return (
     <>
@@ -546,17 +544,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
             >
               Filters
             </Button>
-          </Tooltip>
-          <Tooltip title="Export Data">
-            <Button
-              variant="outlined"
-              startIcon={<Icon>file_download</Icon>}
-              onClick={handleExport}
-              sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
-            >
-              Export
-            </Button>
-          </Tooltip>
+          </Tooltip>          
         </Box>
 
         {/* Quick Filters Row */}
@@ -636,6 +624,14 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
         fields={advancedFilterFields}
         onFilterChange={handleAdvancedFilterChange}
         showPresets
+        storageKey="core.WorkflowRegistryManagement"
+        initialFilters={(() => {
+          // Seed the panel from the currently-applied query filters on first mount.
+          const { searchString: _s, ...activeFields } = (queryVariables?.filter || {}) as any;
+          return Object.entries(activeFields)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([field, value]) => ({ field, value, operator: 'eq' }));
+        })()}
       />
 
       {/* Bulk Action Modals */}
@@ -680,15 +676,6 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
           reactory={reactory}
           selectedWorkflows={selectedWorkflows}
           onComplete={() => handleBulkActionComplete('delete')}
-          onCancel={handleBulkActionCancel}
-        />
-      )}
-
-      {activeBulkAction === 'export' && ExportAction && (
-        <ExportAction
-          reactory={reactory}
-          workflows={data?.data || []}
-          onComplete={() => handleBulkActionComplete('export')}
           onCancel={handleBulkActionCancel}
         />
       )}
