@@ -1,4 +1,5 @@
 import Reactory from "@reactorynet/reactory-core";
+import crypto from "crypto";
 import {
   resolver,
   property,
@@ -9,6 +10,8 @@ import { ObjectId } from "mongodb";
 import path from "path";
 import fs from "fs";
 import ApiError from "@reactory/server-core/exceptions";
+import type { ReactoryFileService } from "@reactory/server-modules/reactory-core/services/ReactoryFileService";
+import type { FileSSETransportManager } from "@reactory/server-modules/reactory-core/services/FileSSETransportManager";
 
 export type ReactoryUserFileLoadOptions = {
   __typename?: "ReactoryUserFileLoadOptions";
@@ -239,6 +242,83 @@ export type ReactoryRemoteSyncError = {
 export type ReactoryFileRemoteSyncResult =
   | ReactoryFileRemoteEntry
   | ReactoryRemoteSyncError;
+
+// ─── <File /> live editor types ─────────────────────────────────────────────
+
+export type ReactoryFileContent = {
+  __typename?: "ReactoryFileContent";
+  path: string;
+  content: string;
+  mimetype: string;
+  revision: string;
+  bytes: number;
+  modified: string;
+};
+
+export type ReactoryFileWriteSuccess = {
+  __typename?: "ReactoryFileWriteSuccess";
+  path: string;
+  revision: string;
+  savedAt: string;
+  bytesWritten: number;
+};
+
+export type ReactoryFileSession = {
+  __typename?: "ReactoryFileSession";
+  sessionId: string;
+  endpoint: string;
+  token: string;
+  expiry: string;
+  currentRevision: string;
+};
+
+export type ReactoryFileSessionCloseSuccess = {
+  __typename?: "ReactoryFileSessionCloseSuccess";
+  sessionId: string;
+};
+
+export type ReactoryFileError = {
+  __typename?: "ReactoryFileError";
+  code: string;
+  message: string;
+  details?: string;
+  currentRevision?: string;
+  maxBytes?: number;
+};
+
+export type ReactoryReadFileResult = ReactoryFileContent | ReactoryFileError;
+export type ReactoryWriteFileResult = ReactoryFileWriteSuccess | ReactoryFileError;
+export type ReactoryOpenFileSessionResult = ReactoryFileSession | ReactoryFileError;
+export type ReactoryCloseFileSessionResult =
+  | ReactoryFileSessionCloseSuccess
+  | ReactoryFileError;
+
+export type ReactoryFileScope = 'server' | 'user';
+
+export type ReactoryWriteFileInput = {
+  path: string;
+  content: string;
+  baseRevision?: string;
+  encoding?: string;
+  force?: boolean;
+  scope?: ReactoryFileScope;
+};
+
+/**
+ * Map an ApiError thrown by the file service / SSE manager to the typed
+ * `ReactoryFileError` union member. Unknown errors fall through as INTERNAL.
+ */
+function toFileError(err: any): ReactoryFileError {
+  const code = err?.meta?.code ?? "INTERNAL";
+  const out: ReactoryFileError = {
+    __typename: "ReactoryFileError",
+    code,
+    message: err?.message || "Unknown error",
+  };
+  if (err?.meta?.currentRevision) out.currentRevision = err.meta.currentRevision;
+  if (typeof err?.meta?.maxBytes === "number") out.maxBytes = err.meta.maxBytes;
+  return out;
+}
 
 //@ts-ignore
 @resolver
@@ -861,6 +941,161 @@ class ReactoryFile {
         error: "Move operation failed",
         message: error.message || "An unexpected error occurred.",
       };
+    }
+  }
+
+  // ─── <File /> live editor resolvers ───────────────────────────────────────
+
+  @query("ReactoryReadFile")
+  async readFile(
+    _obj: any,
+    params: { path: string; scope?: ReactoryFileScope },
+    context: Reactory.Server.IReactoryContext,
+  ): Promise<ReactoryReadFileResult> {
+    try {
+      const svc = context.getService(
+        "core.ReactoryFileService@1.0.0",
+      ) as unknown as ReactoryFileService;
+      const scope = params.scope ?? "server";
+      const result = await svc.readFileContent(params.path, scope);
+      return {
+        __typename: "ReactoryFileContent",
+        path: params.path,
+        content: result.content,
+        mimetype: result.mimetype,
+        revision: result.revision,
+        bytes: result.bytes,
+        modified: result.modified.toISOString(),
+      };
+    } catch (err: any) {
+      context.log("ReactoryReadFile failed", err, "warn", "ReactoryFile.ts");
+      return toFileError(err);
+    }
+  }
+
+  @mutation("ReactoryWriteFile")
+  async writeFile(
+    _obj: any,
+    params: { input: ReactoryWriteFileInput },
+    context: Reactory.Server.IReactoryContext,
+  ): Promise<ReactoryWriteFileResult> {
+    const { input } = params;
+    try {
+      const svc = context.getService(
+        "core.ReactoryFileService@1.0.0",
+      ) as unknown as ReactoryFileService;
+      const mgr = context.getService(
+        "core.FileSSETransportManager@1.0.0",
+      ) as unknown as FileSSETransportManager;
+
+      const scope = input.scope ?? "server";
+
+      // Pre-register the expected post-write revision so the originator's
+      // own save isn't surfaced as an external change via the SSE channel.
+      if (mgr && context.partner?.key) {
+        try {
+          const nextRevision = crypto
+            .createHash("sha256")
+            .update(Buffer.from(input.content, "utf-8"))
+            .digest("hex")
+            .slice(0, 16);
+          const sessionId = mgr.sessionIdFor(
+            context.partner.key,
+            input.path,
+            scope,
+            context.user,
+            context.partner,
+          );
+          mgr.noteLocalWrite(sessionId, nextRevision);
+        } catch {
+          // noteLocalWrite is best-effort; a miss just means the originator
+          // receives their own change event, which is harmless (buffer clean).
+        }
+      }
+
+      const result = await svc.writeFileContent(
+        input.path,
+        input.content,
+        input.baseRevision,
+        input.force === true,
+        scope,
+      );
+      return {
+        __typename: "ReactoryFileWriteSuccess",
+        path: input.path,
+        revision: result.revision,
+        savedAt: result.savedAt.toISOString(),
+        bytesWritten: result.bytesWritten,
+      };
+    } catch (err: any) {
+      context.log("ReactoryWriteFile failed", err, "warn", "ReactoryFile.ts");
+      return toFileError(err);
+    }
+  }
+
+  @mutation("ReactoryOpenFileSession")
+  async openFileSession(
+    _obj: any,
+    params: { path: string; scope?: ReactoryFileScope },
+    context: Reactory.Server.IReactoryContext,
+  ): Promise<ReactoryOpenFileSessionResult> {
+    try {
+      const scope = params.scope ?? "server";
+      if (scope === "server" && !context.hasRole("ADMIN") && !context.hasRole("DEVELOPER")) {
+        return {
+          __typename: "ReactoryFileError",
+          code: "ACCESS_DENIED",
+          message: "Admin or Developer role required.",
+        };
+      }
+      if (scope === "user" && !context.user?._id) {
+        return {
+          __typename: "ReactoryFileError",
+          code: "ACCESS_DENIED",
+          message: "Authentication required.",
+        };
+      }
+      const mgr = context.getService(
+        "core.FileSSETransportManager@1.0.0",
+      ) as unknown as FileSSETransportManager;
+      const session = await mgr.openSession({
+        path: params.path,
+        user: context.user,
+        partner: context.partner,
+        scope,
+      });
+      return {
+        __typename: "ReactoryFileSession",
+        sessionId: session.sessionId,
+        endpoint: session.endpoint,
+        token: session.token,
+        expiry: session.expiry.toISOString(),
+        currentRevision: session.currentRevision,
+      };
+    } catch (err: any) {
+      context.log("ReactoryOpenFileSession failed", err, "warn", "ReactoryFile.ts");
+      return toFileError(err);
+    }
+  }
+
+  @mutation("ReactoryCloseFileSession")
+  async closeFileSession(
+    _obj: any,
+    params: { sessionId: string },
+    context: Reactory.Server.IReactoryContext,
+  ): Promise<ReactoryCloseFileSessionResult> {
+    try {
+      const mgr = context.getService(
+        "core.FileSSETransportManager@1.0.0",
+      ) as unknown as FileSSETransportManager;
+      await mgr.closeSession(params.sessionId);
+      return {
+        __typename: "ReactoryFileSessionCloseSuccess",
+        sessionId: params.sessionId,
+      };
+    } catch (err: any) {
+      context.log("ReactoryCloseFileSession failed", err, "warn", "ReactoryFile.ts");
+      return toFileError(err);
     }
   }
 }

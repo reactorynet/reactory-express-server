@@ -9,9 +9,10 @@
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true,
       "esModuleInterop": true,
-      "allowJs": true,  
+      "allowJs": true,
       "target":"es2020",
       "baseUrl": "./",
+      "types": ["node", "jest"],
       "paths": {
         "*": ["src/*"],
         "@reactory/server-core/*": ["src/*"],

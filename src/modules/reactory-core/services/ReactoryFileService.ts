@@ -18,6 +18,9 @@ const { APP_DATA_ROOT, CDN_ROOT } = process.env;
 
 const writeFilePromise = promisify(writeFile);
 
+/** Upper bound on content size accepted by readFileContent / writeFileContent. */
+const MAX_EDITABLE_BYTES = 2 * 1024 * 1024; // 2 MB
+
 const getExtension = (filename: string) => {
   return filename.split(".").pop();
 };
@@ -467,6 +470,233 @@ export class ReactoryFileService
     } else {
       throw new ApiError(`File ${path} does not exists`);
     }
+  }
+
+  /**
+   * Compute the user's home folder — `${APP_DATA_ROOT}/profiles/{userId}/files/{partnerId}/home`.
+   * Mirrors the base path used by `getUserFiles`.
+   */
+  private userHomeRoot(): string {
+    const appDataRoot = process.env.APP_DATA_ROOT ?? APP_DATA_ROOT;
+    if (process.env.IS_DESKTOP_INSTALL === "true") {
+      const desktopRoot = process.env.REACTOR_DESKTOP_ROOT
+        ? path.join(os.homedir(), process.env.REACTOR_DESKTOP_ROOT)
+        : os.homedir();
+      return process.env.REACTOR_HOME_PATH || desktopRoot;
+    }
+    return path.join(
+      appDataRoot,
+      "profiles",
+      this.context.user._id.toString(),
+      "files",
+      this.context.partner._id.toString(),
+      "home",
+    );
+  }
+
+  /**
+   * Resolve a scoped path to an absolute filesystem path, confined to the
+   * scope's root. Shared by readFileContent and writeFileContent.
+   *
+   * - `server` scope: rooted at APP_DATA_ROOT; supports `${APP_DATA_ROOT}`
+   *   template expansion. ADMIN/DEVELOPER only (caller enforces).
+   * - `user` scope: rooted at the current user's home folder. No template
+   *   expansion — paths are always relative to the user's home.
+   */
+  private resolveContentPath(
+    inputPath: string,
+    scope: "server" | "user" = "server",
+  ): string {
+    const appDataRoot = process.env.APP_DATA_ROOT ?? APP_DATA_ROOT;
+
+    if (scope === "user") {
+      const rootAbs = path.resolve(this.userHomeRoot());
+
+      // Two accepted input forms:
+      //   1. "Absolute under home" — e.g. `/Users/wweber/foo.json` when home is
+      //      `/Users/wweber` (desktop mode). Use as-is.
+      //   2. "Home-relative" — e.g. `/docs/foo.txt` or `docs/foo.txt`. Strip a
+      //      leading slash and join under the home root.
+      //
+      // The `startsWith` home-confinement check at the end catches any path
+      // that escapes (e.g. `../../etc/passwd`).
+      let absolute: string;
+      const candidate = path.isAbsolute(inputPath) ? path.resolve(inputPath) : null;
+      if (candidate && (candidate === rootAbs || candidate.startsWith(rootAbs + path.sep))) {
+        absolute = candidate;
+      } else {
+        const relative = inputPath.replace(/^\/+/, "");
+        absolute = path.resolve(rootAbs, relative);
+      }
+
+      if (absolute !== rootAbs && !absolute.startsWith(rootAbs + path.sep)) {
+        throw new ApiError(
+          `Path ${inputPath} escapes the user's home folder`,
+          { code: "INVALID_PATH" },
+        );
+      }
+      return absolute;
+    }
+
+    let expanded = inputPath;
+    if (expanded.indexOf("${") >= 0) {
+      expanded = template(expanded)({
+        APP_DATA_ROOT: appDataRoot,
+        user_id: this.context.user._id,
+        partner_id: this.context.partner._id,
+      });
+    }
+
+    const rootAbs = path.resolve(appDataRoot);
+    const absolute = path.isAbsolute(expanded)
+      ? path.resolve(expanded)
+      : path.resolve(rootAbs, expanded);
+
+    if (absolute !== rootAbs && !absolute.startsWith(rootAbs + path.sep)) {
+      throw new ApiError(
+        `Path ${inputPath} escapes the allowed root`,
+        { code: "INVALID_PATH" },
+      );
+    }
+    return absolute;
+  }
+
+  /**
+   * Assert the caller has access for the given scope.
+   * - server: ADMIN/DEVELOPER only.
+   * - user: any authenticated user (confinement to their own home is enforced
+   *   by `resolveContentPath('user')`).
+   */
+  private assertContentAccess(scope: "server" | "user"): void {
+    if (scope === "user") {
+      if (!this.context.user?._id) {
+        throw new ApiError("Authentication required.", { code: "ACCESS_DENIED" });
+      }
+      return;
+    }
+    if (!this.context.hasRole("ADMIN") && !this.context.hasRole("DEVELOPER")) {
+      throw new ApiError("Access denied. Admin or Developer role required.", {
+        code: "ACCESS_DENIED",
+      });
+    }
+  }
+
+  /**
+   * Read a text file's contents plus a deterministic revision hash.
+   * Revision = sha256(content) first 16 hex chars.
+   *
+   * @param scope - 'server' (ADMIN/DEVELOPER, rooted at APP_DATA_ROOT) or
+   *   'user' (any authenticated user, rooted at their home folder).
+   */
+  async readFileContent(
+    inputPath: string,
+    scope: "server" | "user" = "server",
+  ): Promise<{
+    content: string;
+    revision: string;
+    mimetype: string;
+    bytes: number;
+    modified: Date;
+  }> {
+    this.assertContentAccess(scope);
+
+    const absolute = this.resolveContentPath(inputPath, scope);
+
+    if (!fs.existsSync(absolute)) {
+      throw new ApiError(`File not found: ${inputPath}`, {
+        code: "FILE_NOT_FOUND",
+      });
+    }
+
+    const stats = fs.statSync(absolute);
+    const buffer = fs.readFileSync(absolute);
+    const content = buffer.toString("utf-8");
+    const revision = crypto
+      .createHash("sha256")
+      .update(buffer)
+      .digest("hex")
+      .slice(0, 16);
+
+    const extension = path.extname(absolute).toLowerCase().replace(".", "");
+    const mimetype = extension === "txt" ? "text/plain" : this.getMimeType(extension);
+
+    return {
+      content,
+      revision,
+      mimetype,
+      bytes: stats.size,
+      modified: stats.mtime,
+    };
+  }
+
+  /**
+   * Write a text file's contents.
+   * Optimistic concurrency: if `baseRevision` is provided and the on-disk
+   * revision differs, throws STALE_REVISION unless `force === true`.
+   *
+   * @param scope - 'server' (ADMIN/DEVELOPER) or 'user' (owner-scoped).
+   */
+  async writeFileContent(
+    inputPath: string,
+    content: string,
+    baseRevision?: string,
+    force?: boolean,
+    scope: "server" | "user" = "server",
+  ): Promise<{ revision: string; savedAt: Date; bytesWritten: number }> {
+    this.assertContentAccess(scope);
+
+    const buffer = Buffer.from(content, "utf-8");
+    if (buffer.byteLength > MAX_EDITABLE_BYTES) {
+      throw new ApiError(
+        `Content exceeds maximum editable size (${MAX_EDITABLE_BYTES} bytes)`,
+        { code: "FILE_TOO_LARGE", maxBytes: MAX_EDITABLE_BYTES },
+      );
+    }
+
+    const absolute = this.resolveContentPath(inputPath, scope);
+
+    if (baseRevision && fs.existsSync(absolute) && force !== true) {
+      const currentBuffer = fs.readFileSync(absolute);
+      const currentRevision = crypto
+        .createHash("sha256")
+        .update(currentBuffer)
+        .digest("hex")
+        .slice(0, 16);
+      if (currentRevision !== baseRevision) {
+        throw new ApiError(
+          `Stale revision: on-disk revision ${currentRevision} does not match base ${baseRevision}`,
+          { code: "STALE_REVISION", currentRevision },
+        );
+      }
+    }
+
+    // Ensure the parent directory exists (user scope often writes to
+    // freshly-created subfolders — server scope rarely does but it's cheap).
+    const parent = path.dirname(absolute);
+    if (!fs.existsSync(parent)) {
+      fs.mkdirSync(parent, { recursive: true });
+    }
+
+    await writeFilePromise(absolute, buffer);
+    const revision = crypto
+      .createHash("sha256")
+      .update(buffer)
+      .digest("hex")
+      .slice(0, 16);
+
+    return {
+      revision,
+      savedAt: new Date(),
+      bytesWritten: buffer.byteLength,
+    };
+  }
+
+  /**
+   * Public helper so callers (e.g. FileSSETransportManager, resolvers) can
+   * resolve a scoped path to an absolute path without reaching into internals.
+   */
+  resolveScopedPath(inputPath: string, scope: "server" | "user"): string {
+    return this.resolveContentPath(inputPath, scope);
   }
 
   async downloadFile(

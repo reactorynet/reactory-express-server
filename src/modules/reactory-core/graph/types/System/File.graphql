@@ -263,6 +263,81 @@ union ReactoryUserFileResults = ReactoryUserFiles | ReactoryUserFilesErrorRespon
 union ReactoryServerFileResults = ReactoryServerFiles | ReactoryServerFilesErrorResponse
 union ReactoryServerFileReadResult = ReactoryServerFile | ReactoryServerFilesErrorResponse
 
+"""
+Content + metadata for a single text file. Powers the <File /> live editor.
+"""
+type ReactoryFileContent {
+  path: String!
+  content: String!
+  mimetype: String!
+  revision: String!
+  bytes: Int!
+  modified: String!
+}
+
+"""
+Successful write result for ReactoryWriteFile.
+"""
+type ReactoryFileWriteSuccess {
+  path: String!
+  revision: String!
+  savedAt: String!
+  bytesWritten: Int!
+}
+
+"""
+SSE session descriptor. The client connects to `endpoint` passing `token`.
+"""
+type ReactoryFileSession {
+  sessionId: String!
+  endpoint: String!
+  token: String!
+  expiry: String!
+  currentRevision: String!
+}
+
+type ReactoryFileSessionCloseSuccess {
+  sessionId: String!
+}
+
+"""
+Typed error for <File /> operations. `code` is machine-readable
+(ACCESS_DENIED, FILE_NOT_FOUND, INVALID_PATH, STALE_REVISION, FILE_TOO_LARGE,
+UNKNOWN_SESSION, UNAUTHORIZED, TOKEN_EXPIRED).
+"""
+type ReactoryFileError {
+  code: String!
+  message: String!
+  details: String
+  currentRevision: String
+  maxBytes: Int
+}
+
+union ReactoryReadFileResult = ReactoryFileContent | ReactoryFileError
+union ReactoryWriteFileResult = ReactoryFileWriteSuccess | ReactoryFileError
+union ReactoryOpenFileSessionResult = ReactoryFileSession | ReactoryFileError
+union ReactoryCloseFileSessionResult = ReactoryFileSessionCloseSuccess | ReactoryFileError
+
+"""
+Scope of a <File /> operation:
+- `server`: rooted at APP_DATA_ROOT. Requires ADMIN or DEVELOPER role.
+- `user`: rooted at the caller's home folder. Requires only authentication;
+  confinement to that user's home is enforced server-side.
+"""
+enum ReactoryFileScope {
+  server
+  user
+}
+
+input ReactoryWriteFileInput {
+  path: String!
+  content: String!
+  baseRevision: String
+  encoding: String = "utf-8"
+  force: Boolean = false
+  scope: ReactoryFileScope = server
+}
+
 type Query {
   """
   Fetches files for the current logged in user from their user home folder on the reactory server.
@@ -288,6 +363,14 @@ type Query {
   Returns detailed metadata about the file along with its content as a string.
   """
   ReactoryReadServerFile(path: String!): ReactoryServerFileReadResult
+
+  """
+  Reads a text file for the <File /> live editor.
+  `scope: server` (default) requires ADMIN/DEVELOPER; `scope: user` scopes the
+  path to the caller's home folder and requires only authentication.
+  Returns content + a sha256-based revision used for optimistic concurrency.
+  """
+  ReactoryReadFile(path: String!, scope: ReactoryFileScope = server): ReactoryReadFileResult
 }
 
 type Mutation {
@@ -298,4 +381,22 @@ type Mutation {
   ReactoryCreateFolder(name: String!, path: String!): ReactoryFolderCreateResult
   ReactoryDeleteFolder(path: String!): ReactoryFolderDeleteResult
   ReactoryMoveItem(itemPath: String!, newPath: String!, itemType: String!): ReactoryItemMoveResult
+
+  """
+  Writes a text file for the <File /> live editor. ADMIN/DEVELOPER only.
+  Supports optimistic concurrency via `baseRevision`; pass `force: true` to override.
+  """
+  ReactoryWriteFile(input: ReactoryWriteFileInput!): ReactoryWriteFileResult
+
+  """
+  Opens an SSE session for live file updates. Returns endpoint + token the
+  client passes on `GET /reactory/files/sse/:sessionId?token=...`.
+  `scope` mirrors ReactoryReadFile / ReactoryWriteFile.
+  """
+  ReactoryOpenFileSession(path: String!, scope: ReactoryFileScope = server): ReactoryOpenFileSessionResult
+
+  """
+  Explicit best-effort close of an SSE session. Safe to call on unmount.
+  """
+  ReactoryCloseFileSession(sessionId: String!): ReactoryCloseFileSessionResult
 }
