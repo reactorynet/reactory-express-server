@@ -112,6 +112,16 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
       feature: 'core.WorkflowAIAssistance@1.0.0',
       value: false,
       roles: ['ADMIN'],
+    },
+    {
+      // Forms-engine v5 adapter. Default off; flip value to true to opt
+      // every form (that does not pin itself via formDef.options.engine)
+      // onto the new engine. Per-form pin still wins over this flag.
+      // See reactory-pwa-client/src/components/reactory/docs/forms-engine
+      // for the full migration plan.
+      feature: 'core.FormsEngineV5@1.0.0',
+      value: false,
+      roles: ['ADMIN', 'DEVELOPER'],
     }
   ]
 };

@@ -117,6 +117,19 @@ extend type Query {
   (gathered from all modules).
   """
   ReactoryFeatureFlagCatalogue: [FeatureFlag]
+
+  """
+  Returns the feature flag values that apply to the currently
+  authenticated user, filtered by partner (current ReactoryClient),
+  the user's roles, and any other contextual filters declared on each
+  flag value (organization, businessUnit, regions, timezones).
+
+  Unlike ReactoryFeatureFlagCatalogue (which lists declarations) and
+  ReactoryClientWithId.featureFlags (which lists raw partner-scoped
+  values, ADMIN-only), this query returns the user's effective flags
+  and is callable by any authenticated user.
+  """
+  ReactoryEffectiveFeatureFlags: [FeatureFlagValue]
 }
 
 extend type Mutation {

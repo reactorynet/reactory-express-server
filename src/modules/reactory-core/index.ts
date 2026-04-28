@@ -123,6 +123,20 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
         admin: ['ADMIN']
       },
       form: 'core.WorkflowEditorFeatureFlagForm@1.0.0'
+    },
+    {
+      id: 'forms-engine-v5',
+      nameSpace: 'core',
+      name: 'FormsEngineV5',
+      version: '1.0.0',
+      title: 'Forms Engine v5',
+      description: 'Render forms via the new react-jsonschema-form v5 adapter (the "form-engine" track) instead of the legacy in-tree fork. Per-form override is also available via formDef.options.engine; this flag controls the global default for forms that do not pin themselves.',
+      permissions: {
+        viewer: ['USER', 'ADMIN', 'DEVELOPER'],
+        editor: ['ADMIN', 'DEVELOPER'],
+        admin: ['ADMIN']
+      },
+      form: 'core.WorkflowEditorFeatureFlagForm@1.0.0'
     }
   ]
 };
