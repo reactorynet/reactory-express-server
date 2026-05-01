@@ -133,6 +133,36 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
       ],
     },
     {
+      ordinal: 8,
+      title: 'reactory:reactory.menu.ai-admin',
+      link: '/admin/ai/budgets',
+      icon: 'admin_panel_settings',
+      roles: ['ADMIN', 'SUPERADMIN', 'DEVELOPER'],
+      items: [
+        {
+          ordinal: 1,
+          title: 'reactory:reactory.menu.ai-admin-budgets',
+          link: '/admin/ai/budgets',
+          icon: 'account_balance_wallet',
+          roles: ['ADMIN', 'SUPERADMIN', 'DEVELOPER'],
+        },
+        {
+          ordinal: 2,
+          title: 'reactory:reactory.menu.ai-admin-usage',
+          link: '/admin/ai/usage',
+          icon: 'query_stats',
+          roles: ['ADMIN', 'SUPERADMIN', 'DEVELOPER'],
+        },
+      ],
+    },
+    {
+      ordinal: 9,
+      title: 'reactory:reactory.menu.my-ai-usage',
+      link: '/profile/usage',
+      icon: 'speed',
+      roles: ['USER'],
+    },
+    {
       ordinal: 96,
       title: 'reactory:reactory.menu.workflows',
       link: '/workflows/registry',
