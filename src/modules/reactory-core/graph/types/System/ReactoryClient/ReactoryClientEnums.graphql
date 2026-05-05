@@ -115,4 +115,8 @@ enum ApplicationThemeAssetType {
   json data
   """
   json
+  """
+  Generic resource type that can be used when the asset type is not known or when the theme engine supports
+  """
+  resource
 }
