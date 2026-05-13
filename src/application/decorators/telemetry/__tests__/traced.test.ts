@@ -182,4 +182,24 @@ describe('@traced decorator', () => {
 
     expect(spanMock.end).toHaveBeenCalled();
   });
+
+  it('should handle non-Error exceptions', async () => {
+    class TestService {
+      @traced('test.operation', { recordException: true })
+      async testMethod() {
+        throw 'string error'; // Not an Error instance
+      }
+    }
+
+    const service = new TestService();
+    
+    await expect(service.testMethod()).rejects.toThrow('string error');
+
+    expect(spanMock.setStatus).toHaveBeenCalledWith({
+      code: SpanStatusCode.ERROR,
+      message: 'Unknown error',
+    });
+    expect(spanMock.recordException).not.toHaveBeenCalled(); // Should not record non-Error exceptions
+    expect(spanMock.end).toHaveBeenCalled();
+  });
 });
