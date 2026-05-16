@@ -183,3 +183,19 @@ progress_bar() {
         printf "\rProgress: ${color_start}[%s] %d%%${color_end}\n" "$bar" "$percent"
     fi
 }
+
+# Returns a newline-separated list of active module keys for a given client config.
+# Uses node (always available in this project) to parse the JSON — avoids a jq dependency.
+# Usage: get_active_module_keys <client_key> [modules_dir]
+get_active_module_keys() {
+  local client_key="${1:-reactory}"
+  local modules_dir="${2:-./src/modules}"
+  local enabled_file="${modules_dir}/enabled-${client_key}.json"
+
+  if [[ ! -f "$enabled_file" ]]; then
+    echo "Warning: enabled modules file not found: ${enabled_file}" >&2
+    return 1
+  fi
+
+  node -e "require('${enabled_file}').forEach(function(m){ console.log(m.key); })"
+}
