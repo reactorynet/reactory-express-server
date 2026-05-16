@@ -14,11 +14,11 @@ jest.mock('@reactory/server-core/logging', () => ({
   debug: jest.fn(),
 }));
 
-jest.mock('./helpers', () => ({
+jest.mock('../helpers', () => ({
   generateLoginToken: jest.fn(),
 }));
 
-jest.mock('./telemetry', () => ({
+jest.mock('../telemetry', () => ({
   recordAttempt: jest.fn(),
   recordFailure: jest.fn(),
   recordSuccess: jest.fn(),
@@ -71,17 +71,20 @@ describe('Local Strategy', () => {
   });
 
   describe('Authentication Context', () => {
-    it('should reject when context is missing', async () => {
+    it('should reject when context is missing', (done) => {
       mockRequest.context = null;
 
       const authenticateFunction = (LocalStrategy as any)._verify;
-      await authenticateFunction(mockRequest, 'user@example.com', 'password', mockDone);
+      authenticateFunction(mockRequest, 'user@example.com', 'password', mockDone);
 
-      expect(mockDone).toHaveBeenCalledWith(
-        expect.any(Error),
-        false
-      );
-      expect(mockDone.mock.calls[0][0].message).toBe('Authentication context is missing');
+      setImmediate(() => {
+        expect(mockDone).toHaveBeenCalledWith(
+          expect.any(Error),
+          false
+        );
+        expect(mockDone.mock.calls[0][0].message).toBe('Authentication context is missing');
+        done();
+      });
     });
   });
 
@@ -91,46 +94,55 @@ describe('Local Strategy', () => {
       User.findOne.mockResolvedValue(mockUser);
     });
 
-    it('should reject when user is not found', async () => {
+    it('should reject when user is not found', (done) => {
       const { User } = require('@reactory/server-modules/reactory-core/models');
       User.findOne.mockResolvedValue(null);
 
       const authenticateFunction = (LocalStrategy as any)._verify;
-      await authenticateFunction(mockRequest, 'nonexistent@example.com', 'password', mockDone);
+      authenticateFunction(mockRequest, 'nonexistent@example.com', 'password', mockDone);
 
-      expect(mockDone).toHaveBeenCalledWith(
-        null,
-        false,
-        { message: 'Incorrect Credentials Supplied' }
-      );
+      setImmediate(() => {
+        expect(mockDone).toHaveBeenCalledWith(
+          null,
+          false,
+          { message: 'Incorrect Credentials Supplied' }
+        );
+        done();
+      });
     });
 
-    it('should reject when password is invalid', async () => {
+    it('should reject when password is invalid', (done) => {
       mockUser.validatePassword.mockReturnValue(false);
 
       const authenticateFunction = (LocalStrategy as any)._verify;
-      await authenticateFunction(mockRequest, 'john@example.com', 'wrongpassword', mockDone);
+      authenticateFunction(mockRequest, 'john@example.com', 'wrongpassword', mockDone);
 
-      expect(mockDone).toHaveBeenCalledWith(
-        null,
-        false,
-        { message: 'Incorrect Credentials Supplied, If you have forgotten your password, use the forgot password link' }
-      );
+      setImmediate(() => {
+        expect(mockDone).toHaveBeenCalledWith(
+          null,
+          false,
+          { message: 'Incorrect Credentials Supplied, If you have forgotten your password, use the forgot password link' }
+        );
+        done();
+      });
     });
 
-    it('should authenticate valid user', async () => {
+    it('should authenticate valid user', (done) => {
       mockUser.validatePassword.mockReturnValue(true);
 
       const mockToken = { id: 'user123', token: 'jwt-token-123' };
-      const { generateLoginToken } = require('./helpers');
+      const { generateLoginToken } = require('../helpers');
       generateLoginToken.mockResolvedValue(mockToken);
 
       const authenticateFunction = (LocalStrategy as any)._verify;
-      await authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
+      authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
 
-      expect(mockDone).toHaveBeenCalledWith(null, mockToken);
-      expect(mockRequest.user).toBe(mockUser);
-      expect(mockRequest.context.user).toBe(mockUser);
+      setImmediate(() => {
+        expect(mockDone).toHaveBeenCalledWith(null, mockToken);
+        expect(mockRequest.user).toBe(mockUser);
+        expect(mockRequest.context.user).toBe(mockUser);
+        done();
+      });
     });
   });
 
@@ -141,58 +153,55 @@ describe('Local Strategy', () => {
       mockUser.validatePassword.mockReturnValue(true);
 
       const mockToken = { id: 'user123', token: 'jwt-token-123' };
-      const { generateLoginToken } = require('./helpers');
+      const { generateLoginToken } = require('../helpers');
       generateLoginToken.mockResolvedValue(mockToken);
     });
 
-    it('should update membership lastLogin when partner exists', async () => {
+    it('should update membership lastLogin when partner exists', (done) => {
       const authenticateFunction = (LocalStrategy as any)._verify;
-      await authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
+      authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
 
-      expect(mockUser.memberships[0].lastLogin).toBeInstanceOf(Date);
-      expect(mockUser.save).toHaveBeenCalled();
+      setImmediate(() => {
+        expect(mockUser.memberships[0].lastLogin).toBeInstanceOf(Date);
+        expect(mockUser.save).toHaveBeenCalled();
+        done();
+      });
     });
 
-    it('should handle missing memberships array', async () => {
+    it('should handle missing memberships array', (done) => {
       mockUser.memberships = null;
 
       const authenticateFunction = (LocalStrategy as any)._verify;
-      await authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
+      authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
 
-      expect(mockDone).toHaveBeenCalled(); // Should not crash
+      setImmediate(() => {
+        expect(mockDone).toHaveBeenCalled(); // Should not crash
+        done();
+      });
     });
 
-    it('should handle membership without matching clientId', async () => {
+    it('should handle membership without matching clientId', (done) => {
       mockUser.memberships = [{
         clientId: 'different-partner',
         lastLogin: null,
       }];
 
       const authenticateFunction = (LocalStrategy as any)._verify;
-      await authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
+      authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
 
-      expect(mockUser.memberships[0].lastLogin).toBeNull();
-      expect(mockUser.save).not.toHaveBeenCalled();
+      setImmediate(() => {
+        expect(mockUser.memberships[0].lastLogin).toBeNull();
+        expect(mockUser.save).not.toHaveBeenCalled();
+        done();
+      });
     });
   });
 
   describe('Error Handling', () => {
     it('should handle database errors', async () => {
       const { User } = require('@reactory/server-modules/reactory-core/models');
-      User.findOne.mockRejectedValue(new Error('Database connection failed'));
-
-      const authenticateFunction = (LocalStrategy as any)._verify;
-      await authenticateFunction(mockRequest, 'john@example.com', 'password', mockDone);
-
-      expect(mockDone).toHaveBeenCalledWith(
-        expect.any(Error),
-        false
-      );
-    });
-
-    it('should handle password validation errors', async () => {
-      mockUser.validatePassword.mockImplementation(() => {
-        throw new Error('Password validation failed');
+      User.findOne.mockReturnValue({
+        exec: jest.fn().mockRejectedValue(new Error('Database connection failed')),
       });
 
       const authenticateFunction = (LocalStrategy as any)._verify;
@@ -202,6 +211,23 @@ describe('Local Strategy', () => {
         expect.any(Error),
         false
       );
+    });
+
+    it('should handle password validation errors', (done) => {
+      mockUser.validatePassword.mockImplementation(() => {
+        throw new Error('Password validation failed');
+      });
+
+      const authenticateFunction = (LocalStrategy as any)._verify;
+      authenticateFunction(mockRequest, 'john@example.com', 'password', mockDone);
+
+      setImmediate(() => {
+        expect(mockDone).toHaveBeenCalledWith(
+          expect.any(Error),
+          false
+        );
+        done();
+      });
     });
   });
 
@@ -243,33 +269,44 @@ describe('Local Strategy', () => {
   });
 
   describe('Client Key Handling', () => {
-    it('should use partner key when available', async () => {
+    beforeEach(() => {
+      const { User } = require('@reactory/server-modules/reactory-core/models');
+      User.findOne.mockResolvedValue(mockUser);
+    });
+
+    it('should use partner key when available', (done) => {
       mockUser.validatePassword.mockReturnValue(true);
       const mockToken = { id: 'user123', token: 'jwt-token-123' };
-      const { generateLoginToken } = require('./helpers');
+      const { generateLoginToken } = require('../helpers');
       generateLoginToken.mockResolvedValue(mockToken);
 
       const authenticateFunction = (LocalStrategy as any)._verify;
-      await authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
+      authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
 
-      // Verify telemetry was called with correct client key
-      const { recordSuccess } = require('./telemetry');
-      expect(recordSuccess).toHaveBeenCalledWith('local', 'test-client', expect.any(Number), 'user123');
+      setImmediate(() => {
+        // Verify telemetry was called with correct client key
+        const { recordSuccess } = require('../telemetry');
+        expect(recordSuccess).toHaveBeenCalledWith('local', 'test-client', expect.any(Number), 'user123');
+        done();
+      });
     });
 
-    it('should default to "api" when no partner', async () => {
+    it('should default to "api" when no partner', (done) => {
       mockRequest.context.partner = null;
 
       mockUser.validatePassword.mockReturnValue(true);
       const mockToken = { id: 'user123', token: 'jwt-token-123' };
-      const { generateLoginToken } = require('./helpers');
+      const { generateLoginToken } = require('../helpers');
       generateLoginToken.mockResolvedValue(mockToken);
 
       const authenticateFunction = (LocalStrategy as any)._verify;
-      await authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
+      authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
 
-      const { recordSuccess } = require('./telemetry');
-      expect(recordSuccess).toHaveBeenCalledWith('local', 'api', expect.any(Number), 'user123');
+      setImmediate(() => {
+        const { recordSuccess } = require('../telemetry');
+        expect(recordSuccess).toHaveBeenCalledWith('local', 'api', expect.any(Number), 'user123');
+        done();
+      });
     });
   });
 });

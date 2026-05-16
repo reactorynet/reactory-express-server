@@ -8,6 +8,7 @@
 import logger from '@reactory/server-core/logging';
 import { v4 as uuid } from 'uuid';
 import moment from 'moment';
+import ApiError from '@reactory/server-core/exceptions';
 
 /**
  * State Management for OAuth Flows
@@ -151,30 +152,23 @@ export class ErrorSanitizer {
    * @returns Sanitized error message safe for client
    */
   static sanitizeError(error: any, context?: Record<string, any>): string {
-    // Log full error server-side
     logger.error('Authentication error', { error, context });
-
-    // Return generic message to client
     if (error?.message) {
-      // Check for known safe messages
-      const safeMessages = [
-        'Invalid credentials',
-        'Incorrect Credentials Supplied',
-        'User not found',
-        'Authentication failed',
-        'Invalid state',
-        'Token expired',
-      ];
-
+      const safeMessages = ['Invalid credentials', 'Incorrect Credentials Supplied', 'User not found', 'Authentication failed', 'Invalid state', 'Token expired'];
       for (const safeMsg of safeMessages) {
-        if (error.message.includes(safeMsg)) {
-          return safeMsg;
-        }
+        if (error.message.includes(safeMsg)) return safeMsg;
       }
     }
-
-    // Default generic message
     return 'Authentication failed';
+  }
+
+  static sanitizeWithGlobs(input: string, globs: string[] = ['**/*password*', '**/*token*', '**/*secret*'], replacement = '[REDACTED]'): string {
+    let out = input;
+    globs.forEach(g => {
+      const re = new RegExp(g.replace(/\*\*/g, '.*').replace(/\*/g, '.*?'), 'gi');
+      out = out.replace(re, replacement);
+    });
+    return out;
   }
 
   /**
@@ -464,17 +458,17 @@ export class InputValidator {
     return { isValid: true };
   }
 
-  /**
-   * Sanitize string input
-   * @param input String to sanitize
-   * @returns Sanitized string
-   */
   static sanitizeString(input: string): string {
-    // Remove potential script tags and dangerous characters
-    return input
+    const stripped = input
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       .replace(/[<>]/g, '')
       .trim();
+    
+    return ApiError.sanitizeToString(stripped);
+  }
+
+  static getRedactionPatterns(): string[] {
+    return ApiError.getRedactionPatterns();
   }
 }
 
