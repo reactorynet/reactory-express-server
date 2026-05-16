@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm";
 import Audit from "./Audit";
+import RateLimit from "./RateLimit";
 import Application from "./Application";
 import BusinessUnit from "./BusinessUnit";
 import ClientComponent from "./ClientComponent";
@@ -56,7 +57,8 @@ export const PostgresDataSource = new DataSource({
   database: process.env.REACTORY_POSTGRES_DB || "reactory",
   synchronize: true,
   entities: [
-    Audit, 
+    Audit,
+    RateLimit,
     ReactoryCalendar, 
     ReactoryCalendarEntry, 
     ReactoryCalendarParticipant, 

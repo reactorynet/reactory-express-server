@@ -46,6 +46,8 @@ certificates/*.crt
 !certificates/readme.md
 
 coverage/*
+coverage**/**
 coverage/lcov-report/*
 docker/*
 coverage-context/*
+coverage/coverage-final.json
