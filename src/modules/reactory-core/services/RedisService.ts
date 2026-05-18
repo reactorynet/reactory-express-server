@@ -32,6 +32,7 @@ export class RedisService implements Reactory.Service.IReactoryService {
 
   private client: Redis;
   private isConnected: boolean = false;
+  private isLeader: boolean = false;
 
   constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
@@ -361,6 +362,7 @@ export class RedisService implements Reactory.Service.IReactoryService {
       await this.client.connect();
       const isHealthy = await this.isHealthy();
       if (isHealthy) {
+        await this.tryAcquireLeadership();
         log('Redis service started successfully', {}, 'info', 'core.RedisService');
       } else {
         throw new Error('Redis health check failed after connection');
@@ -394,6 +396,15 @@ export class RedisService implements Reactory.Service.IReactoryService {
   toString(includeVersion?: boolean): string {
     return `${this.nameSpace}.${this.name}${includeVersion ? '@' + this.version : ''}`;
   }
+
+  async tryAcquireLeadership(leaseSeconds = 30): Promise<boolean> {
+    const leaderKey = 'reactory:leader:cache';
+    const acquired = await this.client.set(leaderKey, process.pid.toString(), 'EX', leaseSeconds, 'NX');
+    this.isLeader = acquired === 'OK';
+    return this.isLeader;
+  }
+
+  isCacheLeader(): boolean { return this.isLeader; }
 }
 
 export default RedisService;

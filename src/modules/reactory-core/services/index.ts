@@ -22,6 +22,7 @@ import ReactoryNLPService from './ReactoryNLPService';
 import ReactoryModelRegistry from "./ReactoryModelRegistryService";
 import ReactorySearchService from "./ReactorySearchService";
 import { RedisService } from "./RedisService";
+import RateLimiterService from './RateLimiterService';
 import { ReactoryAuditServiceDefinition } from './ReactoryAuditService';
 import ReactoryStatisticsService from './Statistics/StatisticsService';
 import { ReactoryCalendarService } from './ReactoryCalendarService';
@@ -56,6 +57,7 @@ const services = [
   ReactoryModelRegistry,
   ReactorySearchService,
   RedisService,
+  RateLimiterService,
   ReactoryAuditServiceDefinition,
   ReactoryStatisticsService,
   ReactoryCalendarService,

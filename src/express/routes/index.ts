@@ -7,6 +7,7 @@ import express from 'express';
 //import flash from 'connect-flash';
 import modules from '@reactory/server-core/modules';
 import CDNRouter from './CDNRouter';
+import HealthRouter from './HealthRouter';
 import logger from '@reactory/server-core/logging';
 
 const ConfigureRoutes = (app: express.Application) => {
@@ -16,7 +17,8 @@ const ConfigureRoutes = (app: express.Application) => {
     '/pdf': pdfRouter,
     '/resources': resourcesRouter,
     '/user': userAccountRouter,    
-    '/cdn': CDNRouter
+    '/cdn': CDNRouter,
+    '/health': HealthRouter
   };
 
   // app.use(flash());

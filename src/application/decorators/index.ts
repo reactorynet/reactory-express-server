@@ -5,3 +5,7 @@ export { metric, counter, histogram, gauge, traced } from './telemetry';
 export type { MetricDecoratorOptions, CounterOptions, HistogramOptions, GaugeOptions, TracingOptions } from './telemetry';
 export { cached } from './cache';
 export type { CachedOptions } from './cache';
+export { rateLimit } from './rateLimit';
+export type { RateLimitOptions, RateLimitKeySource } from './rateLimit';
+export { audit } from './audit';
+export type { AuditOptions, AuditTiming, ValueExtractor } from './audit';

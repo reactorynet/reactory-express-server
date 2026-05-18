@@ -1,101 +1,93 @@
 import { RedisService } from '../RedisService';
 import Redis from 'ioredis';
 
-// Mock Redis client
 jest.mock('ioredis');
 
+const mockRedisClient = {
+  on: jest.fn(),
+  ping: jest.fn(),
+  get: jest.fn(),
+  set: jest.fn(),
+  setex: jest.fn(),
+  del: jest.fn(),
+  exists: jest.fn(),
+  expire: jest.fn(),
+  ttl: jest.fn(),
+  incr: jest.fn(),
+  incrby: jest.fn(),
+  hset: jest.fn(),
+  hget: jest.fn(),
+  hgetall: jest.fn(),
+  hdel: jest.fn(),
+  keys: jest.fn(),
+  mget: jest.fn(),
+  mset: jest.fn(),
+  pipeline: jest.fn(),
+  connect: jest.fn(),
+  quit: jest.fn(),
+} as any;
+
+(Redis as jest.MockedClass<typeof Redis>).mockImplementation(() => mockRedisClient);
+
+const mockContext = {
+  log: jest.fn(),
+  error: jest.fn(),
+  colors: { green: (s: string) => s, red: (s: string) => s },
+} as any;
+
 describe('RedisService', () => {
-  let redisService: RedisService;
-  let mockRedisClient: jest.Mocked<Redis>;
-  let mockContext: any;
+  let service: RedisService;
 
   beforeEach(() => {
-    // Reset all mocks
     jest.clearAllMocks();
-
-    // Create mock Redis client
-    mockRedisClient = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      quit: jest.fn().mockResolvedValue('OK'),
-      ping: jest.fn().mockResolvedValue('PONG'),
-      get: jest.fn(),
-      set: jest.fn(),
-      setex: jest.fn(),
-      del: jest.fn(),
-      exists: jest.fn(),
-      expire: jest.fn(),
-      ttl: jest.fn(),
-      keys: jest.fn(),
-      mget: jest.fn(),
-      mset: jest.fn(),
-      incr: jest.fn(),
-      incrby: jest.fn(),
-      hset: jest.fn(),
-      hget: jest.fn(),
-      hgetall: jest.fn(),
-      hdel: jest.fn(),
-      pipeline: jest.fn(),
-      on: jest.fn(),
-    } as any;
-
-    // Mock Redis constructor
-    (Redis as jest.MockedClass<typeof Redis>).mockImplementation(() => mockRedisClient);
-
-    // Create mock context
-    mockContext = {
-      log: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    };
-
-    // Create service instance
-    redisService = new RedisService({}, mockContext);
+    mockRedisClient.on.mockReturnThis();
+    service = new RedisService({}, mockContext);
   });
 
-  describe('constructor', () => {
-    it('should create RedisService instance with correct configuration', () => {
-      expect(redisService).toBeInstanceOf(RedisService);
-      expect(redisService.name).toBe('RedisService');
-      expect(redisService.nameSpace).toBe('core');
-      expect(redisService.version).toBe('1.0.0');
+  describe('initialization', () => {
+    it('creates Redis client with default config', () => {
+      expect(Redis).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: 'localhost',
+          port: 6379,
+          password: 'reactory',
+          enableReadyCheck: true,
+          maxRetriesPerRequest: 3,
+          lazyConnect: true,
+        })
+      );
     });
 
-    it('should initialize Redis client with environment variables', () => {
-      expect(Redis).toHaveBeenCalledWith({
-        host: process.env.REACTORY_REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REACTORY_REDIS_PORT || '6379', 10),
-        password: process.env.REACTORY_REDIS_PASSWORD || 'reactory',
-        db: parseInt(process.env.REACTORY_REDIS_DB || '0', 10),
-        enableReadyCheck: true,
-        maxRetriesPerRequest: 3,
-        lazyConnect: true,
-      });
-    });
-
-    it('should setup event handlers', () => {
+    it('sets up event handlers', () => {
       expect(mockRedisClient.on).toHaveBeenCalledWith('connect', expect.any(Function));
       expect(mockRedisClient.on).toHaveBeenCalledWith('ready', expect.any(Function));
       expect(mockRedisClient.on).toHaveBeenCalledWith('error', expect.any(Function));
       expect(mockRedisClient.on).toHaveBeenCalledWith('close', expect.any(Function));
       expect(mockRedisClient.on).toHaveBeenCalledWith('reconnecting', expect.any(Function));
     });
+
+    it('initializes with correct service metadata', () => {
+      expect(service.name).toBe('RedisService');
+      expect(service.nameSpace).toBe('core');
+      expect(service.version).toBe('1.0.0');
+    });
   });
 
-  describe('isHealthy', () => {
-    it('should return true when ping succeeds', async () => {
+  describe('health check', () => {
+    it('returns true on successful ping', async () => {
       mockRedisClient.ping.mockResolvedValue('PONG');
-      
-      const result = await redisService.isHealthy();
-      
+
+      const result = await service.isHealthy();
+
       expect(result).toBe(true);
       expect(mockRedisClient.ping).toHaveBeenCalled();
     });
 
-    it('should return false when ping fails', async () => {
+    it('returns false on ping failure', async () => {
       mockRedisClient.ping.mockRejectedValue(new Error('Connection failed'));
-      
-      const result = await redisService.isHealthy();
-      
+
+      const result = await service.isHealthy();
+
       expect(result).toBe(false);
       expect(mockContext.error).toHaveBeenCalledWith(
         'Redis health check failed',
@@ -105,362 +97,336 @@ describe('RedisService', () => {
     });
   });
 
-  describe('get', () => {
-    it('should get value successfully', async () => {
-      const key = 'test-key';
-      const value = 'test-value';
-      mockRedisClient.get.mockResolvedValue(value);
+  describe('string operations', () => {
+    it('gets a value', async () => {
+      mockRedisClient.get.mockResolvedValue('test-value');
 
-      const result = await redisService.get(key);
+      const result = await service.get('test-key');
 
-      expect(result).toBe(value);
-      expect(mockRedisClient.get).toHaveBeenCalledWith(key);
+      expect(result).toBe('test-value');
+      expect(mockRedisClient.get).toHaveBeenCalledWith('test-key');
     });
 
-    it('should return null for non-existent key', async () => {
-      const key = 'non-existent-key';
-      mockRedisClient.get.mockResolvedValue(null);
-
-      const result = await redisService.get(key);
-
-      expect(result).toBeNull();
-      expect(mockRedisClient.get).toHaveBeenCalledWith(key);
-    });
-
-    it('should handle errors', async () => {
-      const key = 'test-key';
-      const error = new Error('Redis error');
-      mockRedisClient.get.mockRejectedValue(error);
-
-      await expect(redisService.get(key)).rejects.toThrow('Redis error');
-      expect(mockContext.error).toHaveBeenCalledWith(
-        `Failed to get key: ${key}`,
-        error,
-        'core.RedisService'
-      );
-    });
-  });
-
-  describe('getJSON', () => {
-    it('should get and parse JSON value successfully', async () => {
-      const key = 'test-json-key';
-      const value = { name: 'test', count: 42 };
-      mockRedisClient.get.mockResolvedValue(JSON.stringify(value));
-
-      const result = await redisService.getJSON(key);
-
-      expect(result).toEqual(value);
-      expect(mockRedisClient.get).toHaveBeenCalledWith(key);
-    });
-
-    it('should return null for non-existent key', async () => {
-      const key = 'non-existent-key';
-      mockRedisClient.get.mockResolvedValue(null);
-
-      const result = await redisService.getJSON(key);
-
-      expect(result).toBeNull();
-    });
-
-    it('should handle JSON parse errors', async () => {
-      const key = 'invalid-json-key';
-      mockRedisClient.get.mockResolvedValue('invalid json');
-
-      await expect(redisService.getJSON(key)).rejects.toThrow();
-      expect(mockContext.error).toHaveBeenCalledWith(
-        `Failed to get JSON key: ${key}`,
-        expect.any(Error),
-        'core.RedisService'
-      );
-    });
-  });
-
-  describe('set', () => {
-    it('should set value successfully without TTL', async () => {
-      const key = 'test-key';
-      const value = 'test-value';
+    it('sets a value', async () => {
       mockRedisClient.set.mockResolvedValue('OK');
 
-      const result = await redisService.set(key, value);
+      const result = await service.set('test-key', 'test-value');
 
       expect(result).toBe('OK');
-      expect(mockRedisClient.set).toHaveBeenCalledWith(key, value);
+      expect(mockRedisClient.set).toHaveBeenCalledWith('test-key', 'test-value');
     });
 
-    it('should set value successfully with TTL', async () => {
-      const key = 'test-key';
-      const value = 'test-value';
-      const ttl = 3600;
+    it('sets a value with TTL', async () => {
       mockRedisClient.setex.mockResolvedValue('OK');
 
-      const result = await redisService.set(key, value, ttl);
+      const result = await service.set('test-key', 'test-value', 60);
 
       expect(result).toBe('OK');
-      expect(mockRedisClient.setex).toHaveBeenCalledWith(key, ttl, value);
+      expect(mockRedisClient.setex).toHaveBeenCalledWith('test-key', 60, 'test-value');
     });
 
-    it('should handle errors', async () => {
-      const key = 'test-key';
-      const value = 'test-value';
-      const error = new Error('Redis error');
-      mockRedisClient.set.mockRejectedValue(error);
-
-      await expect(redisService.set(key, value)).rejects.toThrow('Redis error');
-      expect(mockContext.error).toHaveBeenCalledWith(
-        `Failed to set key: ${key}`,
-        error,
-        'core.RedisService'
-      );
-    });
-  });
-
-  describe('setJSON', () => {
-    it('should set JSON value successfully', async () => {
-      const key = 'test-json-key';
-      const value = { name: 'test', count: 42 };
-      const ttl = 3600;
-      mockRedisClient.setex.mockResolvedValue('OK');
-
-      const result = await redisService.setJSON(key, value, ttl);
-
-      expect(result).toBe('OK');
-      expect(mockRedisClient.setex).toHaveBeenCalledWith(key, ttl, JSON.stringify(value));
-    });
-  });
-
-  describe('del', () => {
-    it('should delete key successfully', async () => {
-      const key = 'test-key';
+    it('deletes a key', async () => {
       mockRedisClient.del.mockResolvedValue(1);
 
-      const result = await redisService.del(key);
+      const result = await service.del('test-key');
 
       expect(result).toBe(1);
-      expect(mockRedisClient.del).toHaveBeenCalledWith(key);
+      expect(mockRedisClient.del).toHaveBeenCalledWith('test-key');
     });
 
-    it('should handle errors', async () => {
-      const key = 'test-key';
-      const error = new Error('Redis error');
-      mockRedisClient.del.mockRejectedValue(error);
+    it('deletes multiple keys', async () => {
+      mockRedisClient.del.mockResolvedValue(2);
 
-      await expect(redisService.del(key)).rejects.toThrow('Redis error');
-      expect(mockContext.error).toHaveBeenCalledWith(
-        `Failed to delete key: ${key}`,
-        error,
-        'core.RedisService'
-      );
-    });
-  });
+      const result = await service.delMultiple(['key1', 'key2']);
 
-  describe('delMultiple', () => {
-    it('should delete multiple keys successfully', async () => {
-      const keys = ['key1', 'key2', 'key3'];
-      mockRedisClient.del.mockResolvedValue(3);
-
-      const result = await redisService.delMultiple(keys);
-
-      expect(result).toBe(3);
-      expect(mockRedisClient.del).toHaveBeenCalledWith(...keys);
+      expect(result).toBe(2);
+      expect(mockRedisClient.del).toHaveBeenCalledWith('key1', 'key2');
     });
 
-    it('should return 0 for empty keys array', async () => {
-      const result = await redisService.delMultiple([]);
-
-      expect(result).toBe(0);
-      expect(mockRedisClient.del).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('exists', () => {
-    it('should return true when key exists', async () => {
-      const key = 'existing-key';
+    it('checks key existence', async () => {
       mockRedisClient.exists.mockResolvedValue(1);
 
-      const result = await redisService.exists(key);
+      const result = await service.exists('test-key');
 
       expect(result).toBe(true);
-      expect(mockRedisClient.exists).toHaveBeenCalledWith(key);
+      expect(mockRedisClient.exists).toHaveBeenCalledWith('test-key');
+    });
+  });
+
+  describe('JSON operations', () => {
+    it('gets and parses JSON', async () => {
+      const jsonData = { message: 'hello', count: 42 };
+      mockRedisClient.get.mockResolvedValue(JSON.stringify(jsonData));
+
+      const result = await service.getJSON('json-key');
+
+      expect(result).toEqual(jsonData);
     });
 
-    it('should return false when key does not exist', async () => {
-      const key = 'non-existing-key';
-      mockRedisClient.exists.mockResolvedValue(0);
+    it('sets and stringifies JSON', async () => {
+      const jsonData = { message: 'hello', count: 42 };
+      mockRedisClient.setex.mockResolvedValue('OK');
 
-      const result = await redisService.exists(key);
+      const result = await service.setJSON('json-key', jsonData, 120);
 
-      expect(result).toBe(false);
-      expect(mockRedisClient.exists).toHaveBeenCalledWith(key);
+      expect(result).toBe('OK');
+      expect(mockRedisClient.setex).toHaveBeenCalledWith(
+        'json-key',
+        120,
+        JSON.stringify(jsonData)
+      );
+    });
+
+    it('handles null JSON value', async () => {
+      mockRedisClient.get.mockResolvedValue(null);
+
+      const result = await service.getJSON('non-existent');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('expiration', () => {
+    it('sets TTL for a key', async () => {
+      mockRedisClient.expire.mockResolvedValue(1);
+
+      const result = await service.expire('test-key', 60);
+
+      expect(result).toBe(true);
+      expect(mockRedisClient.expire).toHaveBeenCalledWith('test-key', 60);
+    });
+
+    it('gets TTL for a key', async () => {
+      mockRedisClient.ttl.mockResolvedValue(45);
+
+      const result = await service.ttl('test-key');
+
+      expect(result).toBe(45);
+      expect(mockRedisClient.ttl).toHaveBeenCalledWith('test-key');
+    });
+  });
+
+  describe('increment operations', () => {
+    it('increments a key', async () => {
+      mockRedisClient.incr.mockResolvedValue(5);
+
+      const result = await service.incr('counter');
+
+      expect(result).toBe(5);
+      expect(mockRedisClient.incr).toHaveBeenCalledWith('counter');
+    });
+
+    it('increments by specific amount', async () => {
+      mockRedisClient.incrby.mockResolvedValue(25);
+
+      const result = await service.incrby('counter', 20);
+
+      expect(result).toBe(25);
+      expect(mockRedisClient.incrby).toHaveBeenCalledWith('counter', 20);
     });
   });
 
   describe('hash operations', () => {
-    describe('hset', () => {
-      it('should set hash field successfully', async () => {
-        const key = 'hash-key';
-        const field = 'field1';
-        const value = 'value1';
-        mockRedisClient.hset.mockResolvedValue(1);
+    it('sets hash field', async () => {
+      mockRedisClient.hset.mockResolvedValue(1);
 
-        const result = await redisService.hset(key, field, value);
+      const result = await service.hset('hash-key', 'field', 'value');
 
-        expect(result).toBe(1);
-        expect(mockRedisClient.hset).toHaveBeenCalledWith(key, field, value);
-      });
+      expect(result).toBe(1);
+      expect(mockRedisClient.hset).toHaveBeenCalledWith('hash-key', 'field', 'value');
     });
 
-    describe('hget', () => {
-      it('should get hash field successfully', async () => {
-        const key = 'hash-key';
-        const field = 'field1';
-        const value = 'value1';
-        mockRedisClient.hget.mockResolvedValue(value);
+    it('gets hash field', async () => {
+      mockRedisClient.hget.mockResolvedValue('field-value');
 
-        const result = await redisService.hget(key, field);
+      const result = await service.hget('hash-key', 'field');
 
-        expect(result).toBe(value);
-        expect(mockRedisClient.hget).toHaveBeenCalledWith(key, field);
-      });
+      expect(result).toBe('field-value');
+      expect(mockRedisClient.hget).toHaveBeenCalledWith('hash-key', 'field');
     });
 
-    describe('hgetall', () => {
-      it('should get all hash fields successfully', async () => {
-        const key = 'hash-key';
-        const hashData = { field1: 'value1', field2: 'value2' };
-        mockRedisClient.hgetall.mockResolvedValue(hashData);
+    it('gets all hash fields', async () => {
+      const hashData = { field1: 'value1', field2: 'value2' };
+      mockRedisClient.hgetall.mockResolvedValue(hashData);
 
-        const result = await redisService.hgetall(key);
+      const result = await service.hgetall('hash-key');
 
-        expect(result).toEqual(hashData);
-        expect(mockRedisClient.hgetall).toHaveBeenCalledWith(key);
-      });
+      expect(result).toEqual(hashData);
+      expect(mockRedisClient.hgetall).toHaveBeenCalledWith('hash-key');
+    });
+
+    it('deletes hash field', async () => {
+      mockRedisClient.hdel.mockResolvedValue(1);
+
+      const result = await service.hdel('hash-key', 'field');
+
+      expect(result).toBe(1);
+      expect(mockRedisClient.hdel).toHaveBeenCalledWith('hash-key', 'field');
     });
   });
 
-  describe('pipeline', () => {
-    it('should execute pipeline commands successfully', async () => {
-      const commands: Array<[string, ...any[]]> = [
-        ['set', 'key1', 'value1'],
-        ['set', 'key2', 'value2'],
-        ['get', 'key1']
-      ];
+  describe('pattern operations', () => {
+    it('gets keys matching pattern', async () => {
+      const keys = ['key1', 'key2', 'key3'];
+      mockRedisClient.keys.mockResolvedValue(keys);
 
-      const mockPipeline = {
-        set: jest.fn().mockReturnThis(),
-        get: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue([
-          [null, 'OK'],
-          [null, 'OK'],
-          [null, 'value1']
-        ])
-      };
+      const result = await service.keys('key*');
 
-      mockRedisClient.pipeline.mockReturnValue(mockPipeline as any);
+      expect(result).toEqual(keys);
+      expect(mockRedisClient.keys).toHaveBeenCalledWith('key*');
+    });
 
-      const result = await redisService.pipeline(commands);
+    it('gets multiple values', async () => {
+      mockRedisClient.mget.mockResolvedValue(['value1', 'value2', null]);
 
-      expect(result).toEqual(['OK', 'OK', 'value1']);
-      expect(mockRedisClient.pipeline).toHaveBeenCalled();
-      expect(mockPipeline.set).toHaveBeenCalledWith('key1', 'value1');
-      expect(mockPipeline.set).toHaveBeenCalledWith('key2', 'value2');
-      expect(mockPipeline.get).toHaveBeenCalledWith('key1');
-      expect(mockPipeline.exec).toHaveBeenCalled();
+      const result = await service.mget(['key1', 'key2', 'key3']);
+
+      expect(result).toEqual(['value1', 'value2', null]);
+      expect(mockRedisClient.mget).toHaveBeenCalledWith('key1', 'key2', 'key3');
+    });
+
+    it('handles empty keys for mget', async () => {
+      const result = await service.mget([]);
+
+      expect(result).toEqual([]);
+      expect(mockRedisClient.mget).not.toHaveBeenCalled();
+    });
+
+    it('sets multiple key-value pairs', async () => {
+      mockRedisClient.mset.mockResolvedValue('OK');
+
+      const result = await service.mset({ key1: 'value1', key2: 'value2' });
+
+      expect(result).toBe('OK');
+      expect(mockRedisClient.mset).toHaveBeenCalledWith('key1', 'value1', 'key2', 'value2');
     });
   });
 
-  describe('lifecycle methods', () => {
-    describe('onStartup', () => {
-      it('should start service successfully', async () => {
-        mockRedisClient.connect.mockResolvedValue(undefined);
-        mockRedisClient.ping.mockResolvedValue('PONG');
+  describe('leader election', () => {
+    it('acquires leadership via set NX', async () => {
+      mockRedisClient.set.mockResolvedValue('OK');
 
-        await redisService.onStartup();
+      const acquired = await service.tryAcquireLeadership(30);
 
-        expect(mockRedisClient.connect).toHaveBeenCalled();
-        expect(mockRedisClient.ping).toHaveBeenCalled();
-        expect(mockContext.log).toHaveBeenCalledWith(
-          'Starting Redis service',
-          {},
-          'info',
-          'core.RedisService'
-        );
-        expect(mockContext.log).toHaveBeenCalledWith(
-          'Redis service started successfully',
-          {},
-          'info',
-          'core.RedisService'
-        );
-      });
-
-      it('should handle startup errors', async () => {
-        const error = new Error('Connection failed');
-        mockRedisClient.connect.mockRejectedValue(error);
-
-        await expect(redisService.onStartup()).rejects.toThrow('Connection failed');
-        expect(mockContext.error).toHaveBeenCalledWith(
-          'Failed to start Redis service',
-          error,
-          'core.RedisService'
-        );
-      });
+      expect(acquired).toBe(true);
+      expect(service.isCacheLeader()).toBe(true);
+      expect(mockRedisClient.set).toHaveBeenCalledWith(
+        'reactory:leader:cache',
+        expect.any(String),
+        'EX',
+        30,
+        'NX'
+      );
     });
 
-    describe('onShutdown', () => {
-      it('should shutdown service successfully', async () => {
-        mockRedisClient.quit.mockResolvedValue('OK');
+    it('fails to acquire leadership if already held', async () => {
+      mockRedisClient.set.mockResolvedValue(null);
 
-        await redisService.onShutdown();
+      const acquired = await service.tryAcquireLeadership(30);
 
-        expect(mockRedisClient.quit).toHaveBeenCalled();
-        expect(mockContext.log).toHaveBeenCalledWith(
-          'Shutting down Redis service',
-          {},
-          'info',
-          'core.RedisService'
-        );
-        expect(mockContext.log).toHaveBeenCalledWith(
-          'Redis service shut down successfully',
-          {},
-          'info',
-          'core.RedisService'
-        );
-      });
+      expect(acquired).toBe(false);
+      expect(service.isCacheLeader()).toBe(false);
+    });
 
-      it('should handle shutdown errors gracefully', async () => {
-        const error = new Error('Shutdown failed');
-        mockRedisClient.quit.mockRejectedValue(error);
+    it('reports leader status', async () => {
+      mockRedisClient.set.mockResolvedValue('OK');
+      await service.tryAcquireLeadership(30);
 
-        await redisService.onShutdown();
-
-        expect(mockContext.error).toHaveBeenCalledWith(
-          'Failed to shut down Redis service gracefully',
-          error,
-          'core.RedisService'
-        );
-      });
+      expect(service.isCacheLeader()).toBe(true);
     });
   });
 
-  describe('utility methods', () => {
-    it('should return Redis client instance', () => {
-      const client = redisService.getClient();
-      expect(client).toBe(mockRedisClient);
+  describe('error handling', () => {
+    it('catches and logs get errors', async () => {
+      const error = new Error('Get failed');
+      mockRedisClient.get.mockRejectedValue(error);
+
+      await expect(service.get('test-key')).rejects.toThrow('Get failed');
+      expect(mockContext.error).toHaveBeenCalled();
     });
 
-    it('should return execution context', () => {
-      const context = redisService.getExecutionContext();
-      expect(context).toBe(mockContext);
+    it('catches and logs set errors', async () => {
+      const error = new Error('Set failed');
+      mockRedisClient.setex.mockRejectedValue(error);
+
+      await expect(service.set('test-key', 'value', 60)).rejects.toThrow('Set failed');
+      expect(mockContext.error).toHaveBeenCalled();
     });
 
-    it('should set execution context', () => {
-      const newContext = { log: jest.fn(), error: jest.fn() };
-      redisService.setExecutionContext(newContext);
-      expect(redisService.getExecutionContext()).toBe(newContext);
+    it('catches and logs incr errors', async () => {
+      const error = new Error('Incr failed');
+      mockRedisClient.incr.mockRejectedValue(error);
+
+      await expect(service.incr('counter')).rejects.toThrow('Incr failed');
+      expect(mockContext.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('service lifecycle', () => {
+    it('connects on startup', async () => {
+      mockRedisClient.connect.mockResolvedValue(undefined);
+      mockRedisClient.ping.mockResolvedValue('PONG');
+
+      await service.onStartup();
+
+      expect(mockRedisClient.connect).toHaveBeenCalled();
+      expect(mockRedisClient.ping).toHaveBeenCalled();
     });
 
-    it('should return string representation', () => {
-      expect(redisService.toString()).toBe('core.RedisService');
-      expect(redisService.toString(true)).toBe('core.RedisService@1.0.0');
+    it('attempts leadership acquisition on successful startup', async () => {
+      mockRedisClient.connect.mockResolvedValue(undefined);
+      mockRedisClient.ping.mockResolvedValue('PONG');
+      mockRedisClient.set.mockResolvedValue('OK');
+
+      await service.onStartup();
+
+      expect(mockRedisClient.set).toHaveBeenCalledWith(
+        'reactory:leader:cache',
+        expect.any(String),
+        'EX',
+        expect.any(Number),
+        'NX'
+      );
+    });
+
+    it('throws on health check failure during startup', async () => {
+      mockRedisClient.connect.mockResolvedValue(undefined);
+      mockRedisClient.ping.mockRejectedValue(new Error('Ping failed'));
+
+      await expect(service.onStartup()).rejects.toThrow('Redis health check failed after connection');
+    });
+
+    it('disconnects on shutdown', async () => {
+      mockRedisClient.quit.mockResolvedValue(undefined);
+
+      await service.onShutdown();
+
+      expect(mockRedisClient.quit).toHaveBeenCalled();
+    });
+
+    it('logs errors on failed shutdown', async () => {
+      const error = new Error('Quit failed');
+      mockRedisClient.quit.mockRejectedValue(error);
+
+      await service.onShutdown();
+
+      expect(mockContext.error).toHaveBeenCalledWith(
+        'Failed to shut down Redis service gracefully',
+        error,
+        'core.RedisService'
+      );
+    });
+  });
+
+  describe('toString', () => {
+    it('returns service identifier', () => {
+      const identifier = service.toString();
+      expect(identifier).toBe('core.RedisService');
+    });
+
+    it('includes version when requested', () => {
+      const identifier = service.toString(true);
+      expect(identifier).toBe('core.RedisService@1.0.0');
     });
   });
 });
