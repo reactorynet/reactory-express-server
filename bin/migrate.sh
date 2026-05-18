@@ -117,7 +117,7 @@ make_module_config() {
   local module_key="$1"
   local migrations_dir="$2"
   local tmp
-  tmp=$(mktemp /tmp/migrate-mongo-XXXX.js)
+  tmp=$(mktemp -t migrate-mongo-config)
   cat > "$tmp" << JSEOF
 module.exports = {
   mongodb: {
