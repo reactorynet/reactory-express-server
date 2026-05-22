@@ -6,7 +6,7 @@ export default class RateLimitModel {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 255, nullable: false, unique: true })
+  @Column({ type: 'varchar', length: 255, nullable: false, unique: true })
   key: string;
 
   @Column({ type: 'int', default: 0 })
@@ -21,15 +21,15 @@ export default class RateLimitModel {
   @Column({ type: 'int', default: 0 })
   maxAttempts: number;
 
-  @Column({ length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   identifierType: string; // 'ip', 'user', 'email'
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   identifier: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 }
