@@ -1,0 +1,145 @@
+name: reactory-fullstack
+services:
+  reactory_mongodb:
+    image: mongo:${MONGO_VERSION:-latest}
+    container_name: reactory-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}      
+    ports:
+      - "${MONGO_PORT}:${MONGO_PORT}"
+    volumes:
+      - mongodb_data:/data/db
+      - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
+    networks:
+      - reactory-network
+
+  reactory_postgres:
+    image: postgres:latest
+    container_name: reactory-postgres
+    environment:
+      POSTGRES_USER: ${REACTORY_POSTGRES_USER:-reactory}
+      POSTGRES_PASSWORD: ${REACTORY_POSTGRES_PASSWORD:-reactory}
+      POSTGRES_DB: ${REACTORY_POSTGRES_DB:-reactory}      
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
+    networks:
+      - reactory-network
+  
+  reactory_meilisearch:
+    image: getmeili/meilisearch:latest
+    container_name: reactory-meilisearch
+    environment:
+      MASTER_KEY: ${MEILISEARCH_MASTER_KEY:-reactory}      
+    ports:
+      - "7700:7700"
+    volumes:
+      - meilisearch_data:/data.ms
+      - ${REACTORY_SERVER}/certs:/etc/ssl/certs
+    networks:
+      - reactory-network
+
+  reactory_redis:
+    image: redis:latest
+    container_name: 'reactory-redis'
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ${REACTORY_SERVER}/certificates:/etc/ssl/certs      
+    command: [ "redis-server", "--requirepass", "${REACTORY_REDIS_PASSWORD:-reactory}" ]
+    networks:
+      - reactory-network
+  
+  reactory_jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: reactory-jaeger
+    ports:
+      - '4318:4318'
+      - '16686:16686'
+    volumes:
+      - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
+    networks:
+      - reactory-network
+  
+  reactory_grafana:
+    image: grafana/grafana:latest
+    container_name: reactory-grafana
+    ports:
+      - '${REACTORY_GRAFANA_PORT:-3000}:3000'
+    volumes:
+      - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
+      - ${REACTORY_SERVER}/src/modules/reactory-telemetry/data/grafana/provisioning:/etc/grafana/provisioning
+      - ${REACTORY_SERVER}/src/modules/reactory-telemetry/data/grafana/models/dashboards:/etc/grafana/dashboards
+    environment:
+      - GF_SERVER_ROOT_CA_CERT=/etc/ssl/certs/ca-certificates.crt
+      - GF_SERVER_HTTP_PORT=3000
+      - GF_SECURITY_ADMIN_PASSWORD=${REACTORY_GRAFANA_ADMIN_PASSWORD:-reactory}
+    networks:
+      - reactory-network
+
+  reactory_grafana_loki:
+    image: grafana/loki:latest
+    container_name: reactory-grafana-loki
+    ports:
+      - '3100:3100'
+    volumes:
+      - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
+    networks:
+      - reactory-network
+
+  reactory_prometheus:
+    image: prom/prometheus:latest
+    container_name: reactory-prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ${REACTORY_SERVER}/src/modules/reactory-telemetry/data/prometheus:/etc/prometheus
+    networks:
+      - reactory-network
+
+  reactory_express_server:
+    image: localhost/${REACTORY_CONFIG_ID:-reactory}/reactory-express-server:${BUILD_VERSION:-latest}
+    pull_policy: never
+    container_name: ${REACTORY_CONFIG_ID:-reactory}-express-server
+    working_dir: /${REACTORY_CONFIG_ID:-reactory}/${REACTORY_CONFIG_ID:-reactory}-express-server
+    command: bin/run-otel.sh
+    ports:
+      - '4000:4000'
+      - '9464:9464'
+    volumes:
+      - ${REACTORY_DATA}:/reactory/reactory-data
+      - ${REACTORY_CLIENT}:/reactory/reactory-client
+      - ${REACTORY_SERVER}/config/${REACTORY_CONFIG_ID:-reactory}/.env.${REACTORY_ENV_ID:-podman}:/reactory/reactory-express-server/.env
+    environment:
+      - REACTORY_HOME=/reactory
+      - REACTORY_DATA=/reactory/reactory-data
+      - REACTORY_SERVER=/reactory/reactory-express-server
+      - REACTORY_CLIENT=/reactory/reactory-client
+      - REACTORY_PLUGINS=/reactory/reactory-data/plugins
+    networks:
+      - reactory-network
+
+  reactory_pwa_client:
+    image: localhost/${REACTORY_CONFIG_ID:-reactory}/reactory-pwa-client:${BUILD_VERSION:-latest}
+    pull_policy: never
+    container_name: reactory-pwa-client
+    ports:
+      - '9000:80'
+    volumes:
+      - ${REACTORY_CLIENT}/build/reactory:/usr/share/nginx/html
+    networks:
+      - reactory-network
+
+volumes:
+  postgres_data:
+  meilisearch_data:
+  mongodb_data:
+  redis-data:
+
+networks:
+  reactory-network:

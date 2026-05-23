@@ -12,11 +12,13 @@ yarn.lock
 
 .env*
 config/*
+!config/README.MD
+!config/reactory/
+config/reactory/*
 !config/reactory/.env.sample
 !config/reactory/.dockerignore
 !config/reactory/Dockerfile
 !config/reactory/pm2.sample.config.js
-!config/README.MD
 
 src/modules/*
 !src/modules/generate_index.ts
@@ -49,5 +51,11 @@ coverage/*
 coverage**/**
 coverage/lcov-report/*
 docker/*
+!docker/README.md
+!docker/config/
+docker/config/*
+!docker/config/Dockerfile
+!docker/config/docker-compose.yaml
+!docker/config/docker-compose-develop.yaml
 coverage-context/*
 coverage/coverage-final.json
