@@ -51,3 +51,4 @@ coverage/lcov-report/*
 docker/*
 coverage-context/*
 coverage/coverage-final.json
+.yarn/install-state.gz
