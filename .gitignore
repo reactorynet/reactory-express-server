@@ -54,3 +54,4 @@ docker/config/*
 !docker/config/docker-compose-develop.yaml
 coverage-context/*
 coverage/coverage-final.json
+.yarn/install-state.gz
