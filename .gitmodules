@@ -1,0 +1,3 @@
+[submodule "config/reactory"]
+	path = config/reactory
+	url = git@github.com:reactorynet/reactory-express-server-devops.git

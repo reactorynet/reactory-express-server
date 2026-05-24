@@ -14,11 +14,6 @@ yarn.lock
 config/*
 !config/README.MD
 !config/reactory/
-config/reactory/*
-!config/reactory/.env.sample
-!config/reactory/.dockerignore
-!config/reactory/Dockerfile
-!config/reactory/pm2.sample.config.js
 
 src/modules/*
 !src/modules/generate_index.ts
