@@ -399,19 +399,35 @@ setup_repos() {
         return 1
       fi
       
+      # Update submodules if any are registered
+      if [[ -f .gitmodules ]]; then
+        info "Updating submodules for $name..."
+        git submodule update --init --recursive || warn "Submodule update failed for $name"
+      fi
+
       popd > /dev/null
       return
     fi
     local url
     [[ "$USE_SSH" == "y" ]] && url="$ssh_url" || url="$https_url"
     info "Cloning $name..."
-    git clone "$url" "$dir"
+    git clone --recurse-submodules "$url" "$dir"
     success "$name cloned"
   }
 
   clone_repo "reactory-express-server" "$REACTORY_SERVER" \
     "git@github.com:${REACTORY_GITHUB_ORG}/reactory-express-server.git" \
     "https://github.com/${REACTORY_GITHUB_ORG}/reactory-express-server.git"
+
+  # Initialize and update submodules (e.g. config/reactory devops config)
+  info "Initializing submodules for reactory-express-server..."
+  pushd "$REACTORY_SERVER" > /dev/null || true
+  if git submodule update --init --recursive; then
+    success "Submodules initialized"
+  else
+    warn "Failed to initialize submodules — you may need to configure SSH access for the submodule repos"
+  fi
+  popd > /dev/null
 
   clone_repo "reactory-pwa-client" "$REACTORY_CLIENT" \
     "git@github.com:${REACTORY_GITHUB_ORG}/reactory-pwa-client.git" \
