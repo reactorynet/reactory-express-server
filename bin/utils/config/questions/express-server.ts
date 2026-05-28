@@ -12,7 +12,7 @@ export const DEFAULT_SERVER_CONFIG: IServerConfiguration = {
   environment: 'local',
   api_uri_root: 'http://localhost:4000',
   cdn_root: 'http://localhost:4000/cdn',
-  server_id: 'reactoory.local',
+  server_id: 'reactory.local',
   log_level: 'debug',
   mongo_password: strongRandom(),
   mongo_user: 'reactory',

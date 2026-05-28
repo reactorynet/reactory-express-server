@@ -93,23 +93,42 @@ if ! node -e "const yaml = require('yaml'); const fs = require('fs'); try { yaml
 fi
 
 # ── Local image preflight ─────────────────────────────────────────────────────
-# Verify that the reactory application images exist in the local podman store
-# before launching. Without this check podman-compose would attempt an HTTPS
-# pull from localhost (which is not a running registry) and produce a confusing
-# "connection refused" error.
-REQUIRED_IMAGES=(
-  "localhost/${REACTORY_CONFIG_ID:-reactory}/reactory-express-server:${BUILD_VERSION}"
-)
+# Dynamically extract images starting with "localhost/" from the compose file.
+# These are locally-built images that won't be available from a remote registry.
+# Without this check podman-compose would attempt an HTTPS pull from localhost
+# (which is not a running registry) and produce a confusing "connection refused"
+# error. If the compose file has no localhost/ images (e.g. a deps-only config),
+# this step is a no-op.
+LOCAL_IMAGES=$(node -e "
+const yaml = require('yaml');
+const fs = require('fs');
+const compose = yaml.parse(fs.readFileSync('$COMPOSE_FILE', 'utf8'));
+const services = compose.services || {};
+Object.values(services).forEach(svc => {
+  if (!svc.image) return;
+  // Resolve \${VAR:-default} and \${VAR} patterns using the current environment
+  const resolved = svc.image.replace(/\\\$\{([^}]+)\}/g, (_, expr) => {
+    const [name, fallback] = expr.split(':-');
+    return process.env[name] || fallback || '';
+  });
+  if (resolved.startsWith('localhost/')) {
+    console.log(resolved);
+  }
+});
+" 2>/dev/null)
+
 MISSING_IMAGES=()
-for img in "${REQUIRED_IMAGES[@]}"; do
-  if ! podman image exists "$img" 2>/dev/null; then
-    MISSING_IMAGES+=("$img")
-  fi
-done
+if [ -n "$LOCAL_IMAGES" ]; then
+  while IFS= read -r img; do
+    if ! podman image exists "$img" 2>/dev/null; then
+      MISSING_IMAGES+=("$img")
+    fi
+  done <<< "$LOCAL_IMAGES"
+fi
 
 if [ ${#MISSING_IMAGES[@]} -gt 0 ]; then
   echo ""
-  echo "❌ The following images are not present in the local podman store:"
+  echo "❌ The following local images are not present in the podman store:"
   for img in "${MISSING_IMAGES[@]}"; do
     echo "   • $img"
   done
@@ -119,7 +138,12 @@ if [ ${#MISSING_IMAGES[@]} -gt 0 ]; then
   echo ""
   exit 1
 fi
-echo "✅ All required images found in local podman store"
+
+if [ -n "$LOCAL_IMAGES" ]; then
+  echo "✅ All required local images found in podman store"
+else
+  echo "ℹ️  No local images required by this compose file"
+fi
 
 echo "🚀 Launching podman for ${1:-reactory} ${2:-podman} configuration"
 podman-compose -f "$COMPOSE_FILE" -p "${PODMAN_COMPOSE_PROJECT_NAME:-reactory-fullstack}" --env-file "./config/${1:-reactory}/.env.${2:-local}" ${3:-up} -d
