@@ -40,7 +40,7 @@ import {
   IWorkflowValidationError,
 } from './types';
 import { IScheduleConfig } from '@reactory/server-modules/reactory-core/workflow/Scheduler/Scheduler';
-import { IWorkflowInstance, IWorkflowLifecycleStats } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager';
+import { IWorkflowInstance, IWorkflowLifecycleStats, WorkflowStatus, WorkflowPriority } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager';
 import { IConfigurationStats } from '@reactory/server-modules/reactory-core/workflow/ConfigurationManager/ConfigurationManager';
 import { ISecurityStats } from '@reactory/server-modules/reactory-core/workflow/SecurityManager/SecurityManager';
 import { IScheduledWorkflow, ISchedulerStats } from 'modules/reactory-core/workflow/Scheduler/Scheduler';
@@ -989,11 +989,28 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     
       // Pass the full workflow ID (with namespace) to the runner
       const instanceId = await workflowRunner?.startWorkflow(workflowId, version, input, this.context);
-      const instance = await workflowRunner?.lifecycleManager.getWorkflowInstance(instanceId);
-      // the object here does not have the full details of the instance, so we need to fetch it again from the lifecycle manager to get all the details including status, start time, etc.
-      // get the regustered workflow 
 
-      return instance;
+      // Try the lifecycle manager first — populated for YAML workflows.
+      const lmInstance = workflowRunner?.getWorkflowInstance(instanceId);
+      if (lmInstance) {
+        return lmInstance;
+      }
+
+      // For workflow-es engine instances the LifecycleManager is never informed,
+      // so construct a minimal response from what we know.
+      return {
+        id: instanceId,
+        workflowId,
+        version,
+        status: WorkflowStatus.RUNNING,
+        priority: WorkflowPriority.NORMAL,
+        startedAt: new Date(),
+        updatedAt: new Date(),
+        dependencies: [],
+        dependents: [],
+        cleanupTasks: [],
+        resourceUsage: { memory: 0, cpu: 0, disk: 0 },
+      };
     } catch (error) {
       this.context.log('Error starting workflow', { error, workflowId, input }, 'error');
       throw error;
