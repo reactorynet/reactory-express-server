@@ -377,35 +377,31 @@ export class YamlWorkflowExecutor {
    * Resolve the effective configuration for a workflow step.
    * YAML-defined workflows store step config in the `inputs` field as a JSON string;
    * code-defined steps may use the `config` field directly.
+   * We may have both fields present, so we create a merged object from the two sources, with `config` taking precedence over `inputs`. This allows the YAML designer to store raw JSON in `inputs` while still supporting explicit config properties. The step registry can then use this resolved config when creating step instances. We also include error handling to catch JSON parsing issues and provide helpful debug information.
    */
   private resolveStepConfig(step: any): Record<string, any> {
-    // Prefer explicit config object
-    if (step.config && typeof step.config === 'object' && Object.keys(step.config).length > 0) {
-      return step.config;
-    }
-    // Fall back to inputs (YAML designer stores config here as a JSON string)
-    if (step.inputs != null) {
-      if (typeof step.inputs === 'string') {
-        try {
-          const parsed = JSON.parse(step.inputs);
-          return parsed;
-        } catch (e) {
-          console.error(
-            `[YamlWorkflowExecutor] Failed to parse inputs JSON for step "${step.id}": ` +
-            `${e instanceof Error ? e.message : e}\n  Raw inputs (first 200 chars): ${step.inputs.substring(0, 200)}`
-          );
-          return { raw: step.inputs };
-        }
+    let config: Record<string, any> = {};
+    // First, try to parse inputs if it's a string (YAML designer case)
+    if (step.inputs && typeof step.inputs === 'string') {
+      try {
+        config = JSON.parse(step.inputs);
+      } catch (e) {
+        console.error(
+          `[YamlWorkflowExecutor] Failed to parse inputs JSON for step "${step.id}": ` +
+          `${e instanceof Error ? e.message : e}\n  Raw inputs (first 200 chars): ${step.inputs.substring(0, 200)}`
+        );
+        config = {};
       }
-      if (typeof step.inputs === 'object') {
-        return step.inputs;
-      }
+    } else if (step.inputs && typeof step.inputs === 'object') {
+      config = step.inputs;
     }
-    console.warn(
-      `[YamlWorkflowExecutor] Step "${step.id}" (type: ${step.type}) has no config or inputs. ` +
-      `Available keys: [${Object.keys(step).join(', ')}]`
-    );
-    return {};
+
+    // check if step.config exists and is an object, and merge it with parsed config (config takes precedence)
+    if (step.config && typeof step.config === 'object') {
+      config = { ...config, ...step.config };
+    }
+
+    return config;
   }
 
   /**
