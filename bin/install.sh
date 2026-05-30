@@ -162,11 +162,11 @@ print_welcome() {
   info "This installer will guide you through setting up:"
   info "  1. System dependencies (git, build tools, libraries)"
   info "  2. Node.js via nvm (v${REACTORY_NODE_VERSION})"
-  info "  3. Git repositories (server, client, core, data)"
+  info "  3. Git repositories (server, client, core, data, workflow engine)"
   info "  4. Environment configuration"
   info "  5. Module and client configuration"
   info "  6. Reactory Core library build"
-  info "  7. Dependency installation (yarn)"
+  info "  7. Workflow engine build + dependency installation (yarn)"
   printf "\n"
 }
 
@@ -344,13 +344,15 @@ setup_repos() {
   REACTORY_DATA="$REACTORY_HOME/reactory-data"
   REACTORY_NATIVE="$REACTORY_HOME/reactory-native"
   REACTORY_PLUGINS="$REACTORY_DATA/plugins"
+  REACTORY_WORKFLOW="$REACTORY_HOME/reactory-workflow-es"
 
   printf "\n"
   info "Repository layout:"
-  info "  Server  -> ${REACTORY_SERVER}"
-  info "  Client  -> ${REACTORY_CLIENT}"
-  info "  Core    -> ${REACTORY_CORE}"
-  info "  Data    -> ${REACTORY_DATA}"
+  info "  Server         -> ${REACTORY_SERVER}"
+  info "  Client         -> ${REACTORY_CLIENT}"
+  info "  Core           -> ${REACTORY_CORE}"
+  info "  Data           -> ${REACTORY_DATA}"
+  info "  Workflow Eng.  -> ${REACTORY_WORKFLOW}"
   printf "\n"
 
   USE_SSH="y"
@@ -446,6 +448,11 @@ setup_repos() {
       "git@github.com:${REACTORY_GITHUB_ORG}/reactory-native.git" \
       "https://github.com/${REACTORY_GITHUB_ORG}/reactory-native.git"
   fi
+
+  # Clone the workflow engine fork — always required (server depends on it)
+  clone_repo "reactory-workflow-es" "$REACTORY_WORKFLOW" \
+    "git@github.com:${REACTORY_GITHUB_ORG}/reactory-workflow-es.git" \
+    "https://github.com/${REACTORY_GITHUB_ORG}/reactory-workflow-es.git"
 
   # Clone the reactory-azure module (currently a hard dependency)
   local modules_dir="$REACTORY_SERVER/src/modules"
@@ -548,15 +555,16 @@ setup_shell_env() {
         echo "export REACTORY_CLIENT=\"${REACTORY_CLIENT}\""
         echo "export REACTORY_NATIVE=\"${REACTORY_NATIVE}\""
         echo "export REACTORY_PLUGINS=\"${REACTORY_PLUGINS}\""
+        echo "export REACTORY_WORKFLOW=\"${REACTORY_WORKFLOW}\""
         echo "# --- End Reactory Environment ---"
       } >> "$shell_rc"
       success "Exports added to ${shell_rc}"
     fi
     # Source them for the rest of this script
-    export REACTORY_HOME REACTORY_DATA REACTORY_SERVER REACTORY_CLIENT REACTORY_NATIVE REACTORY_PLUGINS
+    export REACTORY_HOME REACTORY_DATA REACTORY_SERVER REACTORY_CLIENT REACTORY_NATIVE REACTORY_PLUGINS REACTORY_WORKFLOW
   else
     warn "Skipping shell exports — you will need to set them manually"
-    export REACTORY_HOME REACTORY_DATA REACTORY_SERVER REACTORY_CLIENT REACTORY_NATIVE REACTORY_PLUGINS
+    export REACTORY_HOME REACTORY_DATA REACTORY_SERVER REACTORY_CLIENT REACTORY_NATIVE REACTORY_PLUGINS REACTORY_WORKFLOW
   fi
 }
 
@@ -917,8 +925,93 @@ print(f"Wrote {len(installed)} installed module(s) to installed.json")
 PYEOF
   success "installed.json updated: ${installed_file}"
 }
+# ---------------------------------------------------------------------------
+# Build workflow engine, pack it, and update the server's package.json
+# file: reference to point at the freshly built artifact.
+# ---------------------------------------------------------------------------
+build_workflow_engine() {
+  local workflow_dir="${REACTORY_WORKFLOW:-${REACTORY_HOME}/reactory-workflow-es}"
+  local core_dir="$workflow_dir/core"
+
+  if [[ ! -d "$core_dir" ]]; then
+    warn "Workflow engine core directory not found: $core_dir"
+    warn "Skipping workflow engine build — server yarn install may fail if the artifact is missing."
+    return
+  fi
+
+  banner "Building Workflow Engine (@reactorynet/workflow-es)"
+
+  pushd "$core_dir" > /dev/null || { error "Cannot enter $core_dir"; return 1; }
+
+  info "Installing workflow engine dependencies..."
+  yarn install
+  success "Workflow engine dependencies installed"
+
+  info "Building and packing workflow engine..."
+  # build:pack runs 'npm run build && npm pack' which emits a .tgz in core/
+  yarn build:pack
+  success "Workflow engine built and packed"
+
+  # Find the newest .tgz — matches reactorynet-workflow-es-*.tgz
+  local tgz_file
+  tgz_file=$(ls -t reactorynet-workflow-es-*.tgz 2>/dev/null | head -1)
+
+  popd > /dev/null
+
+  if [[ -z "$tgz_file" ]]; then
+    warn "No .tgz artifact found after build — server may not install correctly."
+    warn "Expected: ${core_dir}/reactorynet-workflow-es-*.tgz"
+    return
+  fi
+
+  success "Workflow engine artifact: ${core_dir}/${tgz_file}"
+
+  # Update server package.json so the file: reference points to the fresh artifact.
+  local server_pkg="$REACTORY_SERVER/package.json"
+  if [[ ! -f "$server_pkg" ]]; then
+    warn "Server package.json not found at $server_pkg — skipping update"
+    return
+  fi
+
+  # Use node (guaranteed present after step 2) to update the JSON safely.
+  local tgz_ref="file:../reactory-workflow-es/core/${tgz_file}"
+  local tmp_js
+  tmp_js=$(mktemp /tmp/update-wf-pkg.XXXXXX.js)
+  cat > "$tmp_js" << 'JSEOF'
+const fs = require('fs');
+const [,, pkgFile, tgzRef] = process.argv;
+try {
+  const raw = fs.readFileSync(pkgFile, 'utf8');
+  const pkg = JSON.parse(raw);
+  const deps = pkg.dependencies || {};
+  if ('@reactorynet/workflow-es' in deps) {
+    deps['@reactorynet/workflow-es'] = tgzRef;
+    fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n');
+    process.stdout.write('Updated @reactorynet/workflow-es -> ' + tgzRef + '\n');
+  } else {
+    process.stderr.write('WARNING: @reactorynet/workflow-es not found in server dependencies\n');
+    process.exit(1);
+  }
+} catch (e) {
+  process.stderr.write('Error updating package.json: ' + e.message + '\n');
+  process.exit(1);
+}
+JSEOF
+  if node "$tmp_js" "$server_pkg" "$tgz_ref"; then
+    success "Server package.json updated: @reactorynet/workflow-es -> ${tgz_ref}"
+  else
+    warn "Could not update server package.json automatically."
+    warn "Please set \"@reactorynet/workflow-es\": \"${tgz_ref}\" in ${server_pkg} manually."
+  fi
+  rm -f "$tmp_js"
+}
+
 build_and_install() {
   banner "Step 7/7: Build & Install"
+
+  # --- Workflow engine: must be built before the server install so the
+  #     file: tarball reference in server/package.json can be resolved. ---
+  build_workflow_engine
 
   # --- Server ---
   if [[ -d "$REACTORY_SERVER" ]]; then
@@ -1029,11 +1122,12 @@ print_summary() {
   printf "${NC}\n"
 
   info "Project layout:"
-  printf "  ${BOLD}REACTORY_HOME${NC}    = %s\n" "$REACTORY_HOME"
-  printf "  ${BOLD}REACTORY_SERVER${NC}  = %s\n" "$REACTORY_SERVER"
-  printf "  ${BOLD}REACTORY_CLIENT${NC}  = %s\n" "$REACTORY_CLIENT"
-  printf "  ${BOLD}REACTORY_CORE${NC}    = %s\n" "$REACTORY_CORE"
-  printf "  ${BOLD}REACTORY_DATA${NC}    = %s\n" "$REACTORY_DATA"
+  printf "  ${BOLD}REACTORY_HOME${NC}      = %s\n" "$REACTORY_HOME"
+  printf "  ${BOLD}REACTORY_SERVER${NC}    = %s\n" "$REACTORY_SERVER"
+  printf "  ${BOLD}REACTORY_CLIENT${NC}    = %s\n" "$REACTORY_CLIENT"
+  printf "  ${BOLD}REACTORY_CORE${NC}      = %s\n" "$REACTORY_CORE"
+  printf "  ${BOLD}REACTORY_DATA${NC}      = %s\n" "$REACTORY_DATA"
+  printf "  ${BOLD}REACTORY_WORKFLOW${NC}  = %s\n" "${REACTORY_WORKFLOW:-${REACTORY_HOME}/reactory-workflow-es}"
   printf "\n"
   info "Configuration: ${BOLD}${CONFIG_NAME}${NC} / ${BOLD}${CONFIG_ENV}${NC}"
   info "Env file: ${BOLD}${REACTORY_SERVER}/config/${CONFIG_NAME}/.env.${CONFIG_ENV}${NC}"
