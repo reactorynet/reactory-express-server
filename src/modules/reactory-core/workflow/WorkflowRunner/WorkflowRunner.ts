@@ -4,7 +4,7 @@ import {
   IPersistenceProvider,
   ILogger,
   WorkflowHost,
-} from 'workflow-es';
+} from '@reactorynet/workflow-es';
 import { MongoDBPersistence } from 'workflow-es-mongodb';
 import { isArray } from 'lodash';
 import moment from 'moment';

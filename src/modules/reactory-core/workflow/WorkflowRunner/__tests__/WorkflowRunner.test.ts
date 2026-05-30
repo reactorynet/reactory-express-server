@@ -1,5 +1,5 @@
 import { WorkflowRunner, IWorkflow, IWorkflowState } from '../WorkflowRunner';
-import { WorkflowHost } from 'workflow-es';
+import { WorkflowHost } from '@reactorynet/workflow-es';
 import { MongoDBPersistence } from 'workflow-es-mongodb';
 
 // Mock dependencies

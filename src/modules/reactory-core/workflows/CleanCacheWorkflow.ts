@@ -1,4 +1,4 @@
-import { StepBody, ExecutionResult, WorkflowBase } from "workflow-es";
+import { StepBody, ExecutionResult, WorkflowBase } from '@reactorynet/workflow-es';
 import moment from "moment";
 import Cache from "@reactory/server-modules/reactory-core/models/CoreCache";
 import logger from "@reactory/server-core/logging";

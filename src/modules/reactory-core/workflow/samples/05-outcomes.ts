@@ -1,4 +1,4 @@
-import { WorkflowHost, WorkflowBuilder, WorkflowBase, StepBody, StepExecutionContext, ExecutionResult, WorkflowInstance, configureWorkflow, ConsoleLogger } from "workflow-es";
+import { WorkflowHost, WorkflowBuilder, WorkflowBase, StepBody, StepExecutionContext, ExecutionResult, WorkflowInstance, configureWorkflow, ConsoleLogger } from '@reactorynet/workflow-es';
 import { MongoDBPersistence } from "workflow-es-mongodb";
 import { SelectOutcome, TaskA, TaskB, TaskC, TaskD } from "./05-outcomes.steps";
 
