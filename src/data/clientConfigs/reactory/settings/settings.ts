@@ -19,8 +19,11 @@ export default [
     roles: ['ADMIN'],
   },
   {
+    title: 'Reactory Default Postgres Connection',
     name: 'reactory.postgres.connection',
     componentFqn: 'core.PostgresConnectionForm@1.0.0',
+    settingType: 'connection',
+    variant: 'postgres',
     data: {
       host: REACTORY_POSTGRES_HOST,
       port: parseInt(REACTORY_POSTGRES_PORT),
@@ -31,8 +34,11 @@ export default [
     roles: ['ADMIN'],
   },
   {
+    title: 'Reactory Default Prometheus Connection',
     name: 'reactory.prometheus.connection',
     componentFqn: 'reactory-telemetry.PrometheusConnectionForm@1.0.0',
+    settingType: 'connection',
+    variant: 'prometheus',
     data: {
       host: process.env.REACTORY_PROMETHEUS_HOST || 'localhost',
       port: parseInt(process.env.REACTORY_PROMETHEUS_PORT || '9090'),
@@ -43,6 +49,8 @@ export default [
   {
     name: 'reactory.redis.connection',
     componentFqn: 'reactory-cache.RedisConnectionForm@1.0.0',
+    settingType: 'connection',
+    variant: 'redis',
     data: {
       host: process.env.REACTORY_REDIS_HOST || 'localhost',
       port: parseInt(process.env.REACTORY_REDIS_PORT || '6379'),
@@ -53,6 +61,8 @@ export default [
   {
     name: 'reactory.loki.connection',
     componentFqn: 'reactory-telemetry.LokiConnectionForm@1.0.0',
+    settingType: 'connection',
+    variant: 'loki',
     data: {
       host: process.env.REACTORY_LOKI_HOST || 'localhost',
       port: parseInt(process.env.REACTORY_LOKI_PORT || '3100'),
@@ -63,6 +73,8 @@ export default [
   {
     name: 'reactory.jaeger.connection',
     componentFqn: 'reactory-telemetry.JaegerConnectionForm@1.0.0',
+    settingType: 'connection',
+    variant: 'jaeger',
     data: {
       host: process.env.REACTORY_JAEGER_HOST || 'localhost',
       port: parseInt(process.env.REACTORY_JAEGER_PORT || '6831'),
