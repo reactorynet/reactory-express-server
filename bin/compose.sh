@@ -71,40 +71,67 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
-# ── podman-compose specific: check required local images ─────────────────────
-# podman-compose will attempt an HTTPS pull from localhost if an image is missing.
-# Fail early with a helpful message instead.
-if [ "$COMPOSE_CMD" = "podman-compose" ]; then
-  REQUIRED_IMAGES=(
-    "localhost/${REACTORY_CONFIG_ID}/reactory-express-server:${BUILD_VERSION}"
-  )
-  MISSING_IMAGES=()
-  for img in "${REQUIRED_IMAGES[@]}"; do
-    if ! podman image exists "$img" 2>/dev/null; then
-      MISSING_IMAGES+=("$img")
+# ── Source env file so variable substitution works in the image preflight ─────
+set -a
+source "$ENV_FILE"
+set +a
+
+# ── Local image preflight ─────────────────────────────────────────────────────
+# Dynamically extract images starting with "localhost/" from the compose file.
+# These are locally-built images not available from a remote registry. Applies
+# to both podman-compose and docker so the failure is caught before either
+# runtime attempts a pull from a non-existent local registry.
+# When the compose file contains no localhost/ images (e.g. a deps-only config)
+# this step is a no-op.
+LOCAL_IMAGES=$(node -e "
+const yaml = require('yaml');
+const fs = require('fs');
+const compose = yaml.parse(fs.readFileSync('$COMPOSE_FILE', 'utf8'));
+const services = compose.services || {};
+Object.values(services).forEach(svc => {
+  if (!svc.image) return;
+  const resolved = svc.image.replace(/\\\$\{([^}]+)\}/g, (_, expr) => {
+    const [name, fallback] = expr.split(':-');
+    return process.env[name] || fallback || '';
+  });
+  if (resolved.startsWith('localhost/')) {
+    console.log(resolved);
+  }
+});
+" 2>/dev/null)
+
+MISSING_IMAGES=()
+if [ -n "$LOCAL_IMAGES" ]; then
+  while IFS= read -r img; do
+    if [ "$COMPOSE_CMD" = "podman-compose" ]; then
+      podman image exists "$img" 2>/dev/null || MISSING_IMAGES+=("$img")
+    else
+      docker image inspect "$img" >/dev/null 2>&1 || MISSING_IMAGES+=("$img")
     fi
+  done <<< "$LOCAL_IMAGES"
+fi
+
+if [ ${#MISSING_IMAGES[@]} -gt 0 ]; then
+  echo ""
+  echo "❌ The following local images are not present in the image store:"
+  for img in "${MISSING_IMAGES[@]}"; do
+    echo "   • $img"
   done
+  echo ""
+  echo "   Build them first with:"
+  echo "   bin/build-image.sh ${REACTORY_CONFIG_ID} ${REACTORY_ENV_ID}"
+  echo ""
+  exit 1
+fi
 
-  if [ ${#MISSING_IMAGES[@]} -gt 0 ]; then
-    echo ""
-    echo "❌ The following images are not present in the local podman store:"
-    for img in "${MISSING_IMAGES[@]}"; do
-      echo "   • $img"
-    done
-    echo ""
-    echo "   Build them first with:"
-    echo "   bin/build-image.sh ${REACTORY_CONFIG_ID} ${REACTORY_ENV_ID}"
-    echo ""
-    exit 1
-  fi
-  echo "✅ All required images found in local podman store"
+if [ -n "$LOCAL_IMAGES" ]; then
+  echo "✅ All required local images found"
+else
+  echo "ℹ️  No local images required by this compose file"
+fi
 
-  # Export BUILD_VERSION so podman-compose can resolve it in the compose file
-  set -a
-  source "$ENV_FILE"
-  set +a
-
-  # podman-compose uses -p for the project name
+# ── Launch ────────────────────────────────────────────────────────────────────
+if [ "$COMPOSE_CMD" = "podman-compose" ]; then
   PODMAN_COMPOSE_PROJECT_NAME=${PODMAN_COMPOSE_PROJECT_NAME:-reactory-fullstack}
   echo "🚀 Launching: $COMPOSE_CMD"
   $COMPOSE_CMD \

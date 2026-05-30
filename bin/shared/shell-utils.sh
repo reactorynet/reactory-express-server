@@ -199,3 +199,120 @@ get_active_module_keys() {
 
   node -e "require('${enabled_file}').forEach(function(m){ console.log(m.key); })"
 }
+
+# ── Tool installation helpers ──────────────────────────────────────────────────
+
+# Detect the available system package manager.
+# Prints one of: brew | apt | dnf | yum | unknown
+detect_package_manager() {
+  if has_command brew;    then echo "brew";    return; fi
+  if has_command apt-get; then echo "apt";     return; fi
+  if has_command dnf;     then echo "dnf";     return; fi
+  if has_command yum;     then echo "yum";     return; fi
+  echo "unknown"
+}
+
+# Install MongoDB Database Tools (mongodump, mongorestore, etc.)
+install_mongo_tools() {
+  local pkg_mgr
+  pkg_mgr="$(detect_package_manager)"
+  echo "Installing MongoDB database tools via: $pkg_mgr"
+  case "$pkg_mgr" in
+    brew)
+      brew install mongodb/brew/mongodb-database-tools
+      ;;
+    apt)
+      if apt-cache show mongodb-database-tools &>/dev/null 2>&1; then
+        sudo apt-get install -y mongodb-database-tools
+      else
+        echo "Adding MongoDB apt repository (7.0)..."
+        curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc \
+          | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg
+        echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] \
+https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" \
+          | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+        sudo apt-get update -qq
+        sudo apt-get install -y mongodb-database-tools
+      fi
+      ;;
+    dnf|yum)
+      sudo tee /etc/yum.repos.d/mongodb-org-7.0.repo > /dev/null <<'REPO'
+[mongodb-org-7.0]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/7.0/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-7.0.asc
+REPO
+      sudo "$pkg_mgr" install -y mongodb-database-tools
+      ;;
+    *)
+      echo -e "${RED}Cannot auto-install MongoDB tools: no supported package manager found.${NC}"
+      echo "Install manually: https://www.mongodb.com/docs/database-tools/installation/"
+      return 1
+      ;;
+  esac
+}
+
+# Install PostgreSQL client tools (pg_dump, pg_restore, psql)
+install_pg_client() {
+  local pkg_mgr
+  pkg_mgr="$(detect_package_manager)"
+  echo "Installing PostgreSQL client tools via: $pkg_mgr"
+  case "$pkg_mgr" in
+    brew)
+      brew install libpq
+      brew link --force libpq
+      ;;
+    apt)
+      sudo apt-get install -y postgresql-client
+      ;;
+    dnf)
+      sudo dnf install -y postgresql
+      ;;
+    yum)
+      sudo yum install -y postgresql
+      ;;
+    *)
+      echo -e "${RED}Cannot auto-install PostgreSQL client: no supported package manager found.${NC}"
+      echo "Install manually: https://www.postgresql.org/download/"
+      return 1
+      ;;
+  esac
+}
+
+# Ensure MongoDB tools are present; install if missing.
+# Returns 0 on success, 1 if tools could not be made available.
+ensure_mongo_tools() {
+  if has_command mongodump && has_command mongorestore; then
+    return 0
+  fi
+  echo -e "${YELLOW}MongoDB database tools not found. Attempting installation...${NC}"
+  if ! install_mongo_tools; then
+    echo -e "${RED}MongoDB tools installation failed. Skipping MongoDB operation.${NC}"
+    return 1
+  fi
+  if ! has_command mongodump; then
+    echo -e "${RED}MongoDB tools still not available after installation attempt.${NC}"
+    return 1
+  fi
+  echo -e "${GREEN}MongoDB tools ready.${NC}"
+}
+
+# Ensure PostgreSQL client tools are present; install if missing.
+# Returns 0 on success, 1 if tools could not be made available.
+ensure_pg_client() {
+  if has_command pg_dump && has_command pg_restore; then
+    return 0
+  fi
+  echo -e "${YELLOW}PostgreSQL client tools not found. Attempting installation...${NC}"
+  if ! install_pg_client; then
+    echo -e "${RED}PostgreSQL client tools installation failed. Skipping PostgreSQL operation.${NC}"
+    return 1
+  fi
+  if ! has_command pg_dump; then
+    echo -e "${RED}PostgreSQL client tools still not available after installation attempt.${NC}"
+    return 1
+  fi
+  echo -e "${GREEN}PostgreSQL client tools ready.${NC}"
+}
