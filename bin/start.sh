@@ -41,7 +41,7 @@ sh ./bin/generate.sh "$CLIENT_KEY" "$TARGET_ENV"
 # TODO: Update the start script so that it checks the loaded modules
 # and runs any pre-start scripts that are available in the module.
 if [[ "$USE_NODEMON" == "no-nodemon" ]]; then
-  NODE_PATH=./src env-cmd -f ./config/${CLIENT_KEY}/.env.${TARGET_ENV} npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
+  NODE_PATH=./src env-cmd -f ./config/${CLIENT_KEY}/.env.${TARGET_ENV} -- npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
 else
-  NODE_PATH=./src env-cmd -f ./config/${CLIENT_KEY}/.env.${TARGET_ENV} npx nodemon -e js,ts,tsx,graphql --ignore 'docker/**' --exec npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
+  NODE_PATH=./src env-cmd -f ./config/${CLIENT_KEY}/.env.${TARGET_ENV} -- npx nodemon -e js,ts,tsx,graphql --ignore 'docker/**' --exec npx babel-node ./src/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
 fi
