@@ -451,6 +451,19 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   },
 
   {
+    key: 'workflow-details-page',
+    title: 'Workflow Details',
+    path: '/workflows/registry/:workflowId',
+    exact: true,
+    public: false,
+    roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR'],
+    componentFqn: 'core.WorkflowDetails@1.0.0',
+    componentProps: {
+      workflowId: '${route.workflowId}',
+    },
+  },
+
+  {
     key: 'workflows-operations-dashboard',
     title: 'Workflows Operations Dashboard',
     path: '/workflows/operation-dashboard',

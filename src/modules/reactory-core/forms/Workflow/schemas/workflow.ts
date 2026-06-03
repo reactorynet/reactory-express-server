@@ -1,0 +1,108 @@
+const workflowSchema = {
+  type: "object",
+  title: "Workflow ${formData.nameSpace}.${formData.name}@${formData.version}",
+  properties: {
+    id: {
+      type: "string",
+      title: "ID",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    nameSpace: {
+      type: "string",
+      title: "Namespace",
+    },
+    version: {
+      type: "string",
+      title: "Version",
+    },
+    description: {
+      type: "string",
+      title: "Description",
+    },
+    isActive: {
+      type: "boolean",
+      title: "Active",
+    },
+    status: {
+      type: "string",
+      title: "Status",
+      enum: [
+        "INACTIVE",
+        "ACTIVE",
+        "PAUSED",
+        "CANCELLED",
+        "COMPLETED",
+        "FAILED",
+      ],
+    },
+    workflowType: {
+      type: "string",
+      title: "Workflow Type",
+      enum: ["YAML", "CODE"],
+      description:
+        "Whether this workflow is defined declaratively in YAML or programmatically in code.",
+    },
+    location: {
+      type: "string",
+      title: "Location",
+      description:
+        "File system path or source location of the workflow definition.",
+    },
+    tags: {
+      type: "array",
+      title: "Tags",
+      items: {
+        type: "string",
+      },
+    },
+    author: {
+      type: "string",
+      title: "Author",
+    },
+    createdAt: {
+      type: "string",
+      title: "Created At",
+      format: "date-time",
+    },
+    updatedAt: {
+      type: "string",
+      title: "Updated At",
+      format: "date-time",
+    },
+    dependencies: {
+      type: "array",
+      title: "Dependencies",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string", title: "Name" },
+          type: { type: "string", title: "Type" },
+          version: { type: "string", title: "Version" },
+          optional: { type: "boolean", title: "Optional" },
+          description: { type: "string", title: "Description" },
+        },
+      },
+    },
+    statistics: {
+      type: "object",
+      title: "Statistics",
+      properties: {
+        totalExecutions: { type: "number", title: "Total Executions" },
+        successfulExecutions: {
+          type: "number",
+          title: "Successful Executions",
+        },
+        failedExecutions: { type: "number", title: "Failed Executions" },
+        averageExecutionTime: {
+          type: "number",
+          title: "Average Execution Time",
+        },
+      },
+    },
+  },
+};
+
+export default workflowSchema;

@@ -3,13 +3,15 @@ import InstanceManagement from './InstanceManagement';
 import OperationsDashboard from './OperationsDashboard';
 import WorkflowRegistryManagement from './WorkflowRegistryManagement';
 import WorkflowScheduleManagement from './WorkflowScheduleManagement';
+import WorkflowDetails from './WorkflowDetails';
 
 export default [
   SystemDashboard,
   InstanceManagement,
   OperationsDashboard,  
   WorkflowRegistryManagement,
-  WorkflowScheduleManagement
+  WorkflowScheduleManagement,
+  WorkflowDetails
 ];
 
 export {
@@ -17,5 +19,6 @@ export {
   InstanceManagement,
   OperationsDashboard,  
   WorkflowRegistryManagement,
-  WorkflowScheduleManagement
+  WorkflowScheduleManagement,
+  WorkflowDetails
 };
