@@ -1,16 +1,17 @@
+import Reactory from '@reactorynet/reactory-core';
 
-const uiSchema: any = {
+const uiSchema: Reactory.Schema.IFormUISchema = {
   'ui:options': {
     showSubmit: false
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    { 
+    {
       message: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
       tickets: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }
     }
   ],
-  message: { 
+  message: {
     'ui:widget': 'StaticContent',
     'ui:title': '',
     'ui:options': {
@@ -21,33 +22,33 @@ const uiSchema: any = {
   tickets: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      columns: [        
-        { 
-          title: 'Status', 
-          field: 'status', 
+      columns: [
+        {
+          title: 'Status',
+          field: 'status',
           component: 'core.SupportTicketStatus@1.0.0',
           propsMap: {
             'rowData': 'ticket'
-          },
+          }
         },
-        { 
+        {
           title: 'Logged By',
           field: 'createdBy',
           component: 'core.UserLabel@1.0.0',
           propsMap: {
             'rowData.createdBy': 'user'
-          },
+          }
         },
-        { 
-          title: 'Assigned To', 
+        {
+          title: 'Assigned To',
           field: 'assignedTo',
           component: 'core.UserLabel@1.0.0',
           propsMap: {
             'rowData.assignedTo': 'user'
-          },
-         },
-        { 
-          title: 'Logged @', 
+          }
+        },
+        {
+          title: 'Logged @',
           field: 'createdDate',
           component: 'core.LabelComponent@1.0.0',
           props: {
@@ -56,13 +57,13 @@ const uiSchema: any = {
                 variant: 'body2',
                 format: '${reactory.utils.moment(rowData.createdDate).format("YYYY-MM-DD HH:mm")}'
               }
-            },
-          },
-        },
+            }
+          }
+        }
       ],
       remoteData: true,
       query: 'openTickets',
-      optios: {},
+      options: {},
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
@@ -72,7 +73,7 @@ const uiSchema: any = {
       variables: {
         'query.search': 'filter.searchString',
         'query.page': 'paging.page',
-        'query.pageSize': 'paging.pageSize',
+        'query.pageSize': 'paging.pageSize'
       }
     }
   }
