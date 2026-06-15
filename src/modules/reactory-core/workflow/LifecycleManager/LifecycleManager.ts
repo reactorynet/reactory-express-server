@@ -327,8 +327,15 @@ export class WorkflowLifecycleManager extends EventEmitter {
    */
   public async getWorkflowHistoryById(instanceId: string): Promise<IWorkflowHistoryItem | null> {
     try {
-      const doc = await WorkflowInstanceModel.findOne({ id: instanceId }).exec();
-      
+      // Match on the string `id` (YAML executions) OR the Mongo `_id`
+      // (workflow-es CODE executions, where the history list exposes `_id` as
+      // the row id — see transformToHistoryItem).
+      const or: any[] = [{ id: instanceId }];
+      if (/^[a-f0-9]{24}$/i.test(instanceId)) {
+        or.push({ _id: instanceId });
+      }
+      const doc = await WorkflowInstanceModel.findOne({ $or: or }).exec();
+
       if (!doc) {
         return null;
       }
@@ -779,7 +786,13 @@ export class WorkflowLifecycleManager extends EventEmitter {
     ).length;
 
     return {
-      id: doc.id,
+      // workflow-es' MongoDB provider stores the instance id as the Mongo `_id`
+      // (ObjectId) and does not persist a string `id` field, whereas YAML
+      // executions (persistYamlExecution) write an explicit `id`. The GraphQL
+      // WorkflowExecutionHistory.id is non-null, so fall back to `_id` when the
+      // string `id` is absent — otherwise CODE-workflow rows are dropped and the
+      // history appears empty.
+      id: doc.id || String(doc._id),
       workflowDefinitionId: doc.workflowDefinitionId,
       version: doc.version,
       status: doc.status,

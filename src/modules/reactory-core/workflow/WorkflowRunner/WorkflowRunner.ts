@@ -1,11 +1,14 @@
 import {
   configureWorkflow,
-  ConsoleLogger,
   IPersistenceProvider,
   ILogger,
+  LogLevel,
+  LogContext,
   WorkflowHost,
 } from '@reactorynet/workflow-es';
-import { MongoDBPersistence } from 'workflow-es-mongodb';
+import { MongoDBPersistence } from '@reactorynet/workflow-es-mongodb';
+import { RedisQueueProvider, RedisLockManager } from '@reactorynet/workflow-es-redis';
+import Redis from 'ioredis';
 import { isArray } from 'lodash';
 import moment from 'moment';
 import amq from '../../../../amq';
@@ -34,7 +37,21 @@ import type { YamlWorkflowDefinition } from '../YamlFlow/types/WorkflowDefinitio
 
 const {
   MONGOOSE,
+  // Persistence backend for the workflow-es host: 'mongo' (durable, default when
+  // MONGOOSE is set) or 'memory' (dev/test only — state lost on restart).
+  WORKFLOW_PERSISTENCE_PROVIDER = 'mongo',
+  // When 'true', wire a distributed Redis lock + reliable queue (REACTORY_REDIS_*)
+  // so the host is safe to run across multiple instances. When unset/false the
+  // host uses the in-process single-node lock/queue (single-instance only) and
+  // explicitly opts past the engine's multi-node safety guard.
+  WORKFLOW_CLUSTER_MODE,
+  REACTORY_REDIS_HOST = 'localhost',
+  REACTORY_REDIS_PORT = '6379',
+  REACTORY_REDIS_PASSWORD,
+  REACTORY_REDIS_DB = '0',
 } = process.env;
+
+const WORKFLOW_CLUSTER_ENABLED = String(WORKFLOW_CLUSTER_MODE).toLowerCase() === 'true';
 
 /**
  * Indicates the source type of a workflow definition.
@@ -104,16 +121,32 @@ const safeCallback = (cb: ((params: any) => void) | undefined, params: any): voi
   if (typeof cb === 'function') cb(params);
 };
 
+/**
+ * Adapter from workflow-es' structured ILogger (M4) onto the Reactory winston
+ * logger. The engine calls `log(level, message, context)`; we route by level and
+ * forward the correlation context (workflowId/stepId/tenantId/err/...) as meta.
+ */
 class Logger implements ILogger {
-  error(message?: any, ...optionalParams: any[]): void {
-    logger.error(message, optionalParams);
+  log(level: LogLevel, message: string, context?: LogContext): void {
+    const meta = context ?? {};
+    switch (level) {
+      case LogLevel.Error:
+        logger.error(message, meta);
+        break;
+      case LogLevel.Warn:
+        logger.warn(message, meta);
+        break;
+      case LogLevel.Debug:
+        logger.debug(message, meta);
+        break;
+      case LogLevel.Silent:
+        break;
+      case LogLevel.Info:
+      default:
+        logger.info(message, meta);
+        break;
+    }
   }
-  info(message?: any, ...optionalParams: any[]): void {
-    logger.info(message, optionalParams);
-  }
-  log(message?: any, ...optionalParams: any[]): void {
-    logger.debug(message, optionalParams);
-  } 
 }
 
 const getDefaultWorkflows = (): IWorkflow[] => {
@@ -141,7 +174,8 @@ let instance: WorkflowRunner | null = null;
  */
 export class WorkflowRunner {  
   private persistence: IPersistenceProvider | null = null;
-  private state: IWorkflowState;  
+  private redis: Redis | null = null;
+  private state: IWorkflowState;
   private _isInitialized: boolean = false;  
   private _isStarting: boolean = false;
   private scheduler: WorkflowScheduler | null = null;
@@ -439,13 +473,26 @@ export class WorkflowRunner {
    */
   private async getPersistenceProvider(): Promise<IPersistenceProvider | null> {
     try {
-      if (MONGOOSE) {
-        logger.debug('Using Mongoose for Workflow Persistence');
-        const mongoPersistence = new MongoDBPersistence(MONGOOSE);      
-        //await mongoPersistence.connect();
+      const provider = (WORKFLOW_PERSISTENCE_PROVIDER || 'mongo').toLowerCase();
+
+      if (provider === 'mongo' && MONGOOSE) {
+        logger.debug('Using MongoDB for Workflow Persistence');
+        const mongoPersistence = new MongoDBPersistence(MONGOOSE);
+        // The provider connects asynchronously; await it before the host starts
+        // so the first persist/query does not race the connection.
+        await mongoPersistence.connect;
         return mongoPersistence;
       }
-      logger.debug('Using In Memory for Workflow Persistence');
+
+      if (provider === 'mongo' && !MONGOOSE) {
+        logger.warn(
+          'WORKFLOW_PERSISTENCE_PROVIDER=mongo but MONGOOSE is not set — falling back to in-memory ' +
+          '(workflow state will NOT survive a restart). Set MONGOOSE or WORKFLOW_PERSISTENCE_PROVIDER=memory.'
+        );
+        return null;
+      }
+
+      logger.debug('Using in-memory Workflow Persistence (development/test only)');
       return null;
     } catch (error) {
       logger.error('Failed to get persistence provider', error);
@@ -479,12 +526,27 @@ export class WorkflowRunner {
         this.scheduler = null;
       }
 
+      // Gracefully drain the workflow host: stops intake on all workers, awaits
+      // in-flight executions up to gracefulShutdownTimeoutMs, and removes the
+      // engine's process signal handlers. Idempotent.
+      if (this.state.host) {
+        await this.state.host.stop();
+        this.setState({ host: null });
+      }
+
       if (this.persistence) {
-        if (MONGOOSE && this.persistence instanceof MongoDBPersistence) {
+        if (this.persistence instanceof MongoDBPersistence) {
           await this.persistence.close();
         }
-        this.persistence = null;      
+        this.persistence = null;
       }
+
+      // Close the Redis connection used for the distributed lock/queue (cluster mode).
+      if (this.redis) {
+        await this.redis.quit();
+        this.redis = null;
+      }
+
       this._isInitialized = false;
       logger.info('WorkflowRunner stopped');
     } catch (error) {
@@ -501,12 +563,32 @@ export class WorkflowRunner {
       const config = configureWorkflow();
       const { workflows } = this.state;
       config.useLogger(new Logger());
-      
+
       this.persistence = await this.getPersistenceProvider();
       if (this.persistence) {
         config.usePersistence(this.persistence);
       }
-      
+
+      // Lock + queue topology. The engine refuses to pair durable persistence with the
+      // in-process single-node lock/queue unless we opt in, because a second instance
+      // would double-execute workflows. WORKFLOW_CLUSTER_MODE=true wires a distributed
+      // Redis lock + reliable queue (safe to run many instances); otherwise we stay
+      // single-node and explicitly allow it (single-instance deployments).
+      if (WORKFLOW_CLUSTER_ENABLED) {
+        logger.info('Workflow host: cluster mode — using Redis distributed lock + queue');
+        this.redis = new Redis({
+          host: REACTORY_REDIS_HOST,
+          port: parseInt(REACTORY_REDIS_PORT, 10),
+          password: REACTORY_REDIS_PASSWORD,
+          db: parseInt(REACTORY_REDIS_DB, 10),
+        });
+        config.useQueueManager(new RedisQueueProvider(this.redis));
+        config.useLockManager(new RedisLockManager(this.redis));
+      } else {
+        logger.info('Workflow host: single-node mode (in-process lock + queue). Set WORKFLOW_CLUSTER_MODE=true for multi-instance.');
+        config.allowSingleNodeProviders(true);
+      }
+
       const host = config.getHost();
       const autoStart: IWorkflow[] = [];
       

@@ -6152,6 +6152,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ioredis/commands@npm:1.10.0":
+  version: 1.10.0
+  resolution: "@ioredis/commands@npm:1.10.0"
+  checksum: 10c0/baf91e62d0e64ef2b5f7ca4413dc2456fe250e87483beac4a1c8ef1fe5ad0d2fcdeb9b89d4556d8ef6c7455c64a964359d729601fdb06b2f4c76c35dd59afa99
+  languageName: node
+  linkType: hard
+
 "@ioredis/commands@npm:1.4.0":
   version: 1.4.0
   resolution: "@ioredis/commands@npm:1.4.0"
@@ -9002,6 +9009,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@reactory/reactory-google@workspace:src/modules/reactory-google":
+  version: 0.0.0-use.local
+  resolution: "@reactory/reactory-google@workspace:src/modules/reactory-google"
+  dependencies:
+    "@types/jest": "npm:^29.5.0"
+    google-auth-library: "npm:^9.14.1"
+    googleapis: "npm:^140.0.1"
+    jest: "npm:^29.7.0"
+    typescript: "npm:^5.5.0"
+  languageName: unknown
+  linkType: soft
+
 "@reactory/reactory-kb@workspace:src/modules/reactory-kb":
   version: 0.0.0-use.local
   resolution: "@reactory/reactory-kb@workspace:src/modules/reactory-kb"
@@ -9096,7 +9115,9 @@ __metadata:
     "@mui/styles": "npm:5.6.1"
     "@opendocsg/pdf2md": "npm:0.2.1"
     "@reactorynet/reactory-core": "npm:1.1.9"
-    "@reactorynet/workflow-es": "file:../reactory-workflow-es/core/reactorynet-workflow-es-2.3.6-reactory.2.tgz"
+    "@reactorynet/workflow-es": "file:../reactory-workflow-es/core/reactorynet-workflow-es-2.4.0-reactory.3.tgz"
+    "@reactorynet/workflow-es-mongodb": "file:../reactory-workflow-es/providers/workflow-es-mongodb/reactorynet-workflow-es-mongodb-1.0.0-reactory.3.tgz"
+    "@reactorynet/workflow-es-redis": "file:../reactory-workflow-es/providers/workflow-es-redis/reactorynet-workflow-es-redis-2.4.0-reactory.0.tgz"
     "@rollup/plugin-babel": "npm:6.0.3"
     "@rollup/plugin-commonjs": "npm:21.0.1"
     "@rollup/plugin-node-resolve": "npm:13.1.3"
@@ -9286,7 +9307,7 @@ __metadata:
     react: "npm:17.0.2  "
     react-dom: "npm:17.0.2"
     react-i18next: "npm:^11.15.3"
-    reflect-metadata: "npm:^0.1.13"
+    reflect-metadata: "npm:^0.2.0"
     restify: "npm:^8.3.3"
     rimraf: "npm:2.6.3"
     schema-inspector: "npm:^2.0.1"
@@ -9316,7 +9337,6 @@ __metadata:
     uuid: "npm:10.0.0"
     winston: "npm:3.13.0"
     winston-daily-rotate-file: "npm:5.0.0"
-    workflow-es-mongodb: "npm:2.1.2"
     ws: "npm:8.18.0"
     zip-folder: "npm:^1.0.0"
     zod: "npm:3.24.2"
@@ -9338,13 +9358,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reactorynet/workflow-es@file:../reactory-workflow-es/core/reactorynet-workflow-es-2.3.6-reactory.2.tgz::locator=%40reactory%2Fserver-core%40workspace%3A.":
-  version: 2.3.6-reactory.2
-  resolution: "@reactorynet/workflow-es@file:../reactory-workflow-es/core/reactorynet-workflow-es-2.3.6-reactory.2.tgz#../reactory-workflow-es/core/reactorynet-workflow-es-2.3.6-reactory.2.tgz::hash=09f79e&locator=%40reactory%2Fserver-core%40workspace%3A."
+"@reactorynet/workflow-es-mongodb@file:../reactory-workflow-es/providers/workflow-es-mongodb/reactorynet-workflow-es-mongodb-1.0.0-reactory.3.tgz::locator=%40reactory%2Fserver-core%40workspace%3A.":
+  version: 1.0.0-reactory.3
+  resolution: "@reactorynet/workflow-es-mongodb@file:../reactory-workflow-es/providers/workflow-es-mongodb/reactorynet-workflow-es-mongodb-1.0.0-reactory.3.tgz#../reactory-workflow-es/providers/workflow-es-mongodb/reactorynet-workflow-es-mongodb-1.0.0-reactory.3.tgz::hash=958b44&locator=%40reactory%2Fserver-core%40workspace%3A."
+  dependencies:
+    mongodb: "npm:^6.0.0"
+  peerDependencies:
+    "@reactorynet/workflow-es": ">=2.4.0-reactory.0"
+    reflect-metadata: ^0.2.0
+  checksum: 10c0/23573fd48295f144fb934f51d1cbf7b37d265dc00d7a92f3915cf42e60d039b28dc778574ed5173a94eab75974398120c8810fc537e4fdfc026d5f6610ac8944
+  languageName: node
+  linkType: hard
+
+"@reactorynet/workflow-es-redis@file:../reactory-workflow-es/providers/workflow-es-redis/reactorynet-workflow-es-redis-2.4.0-reactory.0.tgz::locator=%40reactory%2Fserver-core%40workspace%3A.":
+  version: 2.4.0-reactory.0
+  resolution: "@reactorynet/workflow-es-redis@file:../reactory-workflow-es/providers/workflow-es-redis/reactorynet-workflow-es-redis-2.4.0-reactory.0.tgz#../reactory-workflow-es/providers/workflow-es-redis/reactorynet-workflow-es-redis-2.4.0-reactory.0.tgz::hash=3b8ed1&locator=%40reactory%2Fserver-core%40workspace%3A."
+  dependencies:
+    ioredis: "npm:^5.4.0"
+    redlock: "npm:^5.0.0-beta.2"
+  peerDependencies:
+    "@reactorynet/workflow-es": ">=2.4.0-reactory.0"
+    inversify: ^6.0.0
+    reflect-metadata: ^0.2.0
+  checksum: 10c0/6be733fcf18811ddfb34b6f46be71a8fe3fa4b4db7e75905485bbf26f1a7daf5c7819e60a04c0c547888b4a767cf77c1109c26a3adcab9c1cb67d9f915447518
+  languageName: node
+  linkType: hard
+
+"@reactorynet/workflow-es@file:../reactory-workflow-es/core/reactorynet-workflow-es-2.4.0-reactory.3.tgz::locator=%40reactory%2Fserver-core%40workspace%3A.":
+  version: 2.4.0-reactory.3
+  resolution: "@reactorynet/workflow-es@file:../reactory-workflow-es/core/reactorynet-workflow-es-2.4.0-reactory.3.tgz#../reactory-workflow-es/core/reactorynet-workflow-es-2.4.0-reactory.3.tgz::hash=bef888&locator=%40reactory%2Fserver-core%40workspace%3A."
   dependencies:
     inversify: "npm:^6.0.0"
     reflect-metadata: "npm:^0.2.0"
-  checksum: 10c0/4a3597d961d420a68920ab6aee3721a34c72c6b2921c63be76db69accf02aae5362365b8b3fffd48ad621889d4681d0968bf1b081a23d5f8eaff20fc18dc4ea2
+  checksum: 10c0/2d5527ec737d792b515f436d6879b204d5e80e12ec899554466ba3dff53a33ae1f4aa9e5b95b0bc05530e832718163310b3243e14de08260c098398e6c50458f
   languageName: node
   linkType: hard
 
@@ -12582,18 +12628,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.7.0":
-  version: 1.16.1
-  resolution: "axios@npm:1.16.1"
-  dependencies:
-    follow-redirects: "npm:^1.16.0"
-    form-data: "npm:^4.0.5"
-    https-proxy-agent: "npm:^5.0.1"
-    proxy-from-env: "npm:^2.1.0"
-  checksum: 10c0/2f77e37e6552bbff8a772d058fb09500198e9188c6b20dc799d82dbe12a8cb506f6eed4e4e62a9ba612a35cbab496faa26d68f9bff14a53af6d15c3e136391a7
-  languageName: node
-  linkType: hard
-
 "axobject-query@npm:~3.1.1":
   version: 3.1.1
   resolution: "axobject-query@npm:3.1.1"
@@ -13151,16 +13185,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bl@npm:^2.2.1":
-  version: 2.2.1
-  resolution: "bl@npm:2.2.1"
-  dependencies:
-    readable-stream: "npm:^2.3.5"
-    safe-buffer: "npm:^5.1.1"
-  checksum: 10c0/37481260f1661755253b6205fcdd64b6d852147aaf61628947d2193fcdb78e625ee061dae0094ac16e7c7f10b12c90110fb2b08826815d47a28f9628bebb5a8f
-  languageName: node
-  linkType: hard
-
 "bl@npm:^4.0.3, bl@npm:^4.1.0":
   version: 4.1.0
   resolution: "bl@npm:4.1.0"
@@ -13442,13 +13466,6 @@ __metadata:
   version: 6.10.4
   resolution: "bson@npm:6.10.4"
   checksum: 10c0/6c6819ce642516901349f42c5d9d131d5a4e84352a3859c814d4abf6b2b9249e3685b57fc4cf7b5737fb5c71252f65900a41826c1429815a93e43f0f5bb3c173
-  languageName: node
-  linkType: hard
-
-"bson@npm:^1.1.4":
-  version: 1.1.6
-  resolution: "bson@npm:1.1.6"
-  checksum: 10c0/a45416578e09837d0341149ee4bf2f2704d2e4ec5cdacbc343600e0d3cf01efdf17d6b64f8fc2e664ec2f727ad6ad2bce05894d9e7e4d4a0a10342ddbb122163
   languageName: node
   linkType: hard
 
@@ -14368,6 +14385,13 @@ __metadata:
   version: 2.1.1
   resolution: "clsx@npm:2.1.1"
   checksum: 10c0/c4c8eb865f8c82baab07e71bfa8897c73454881c4f99d6bc81585aecd7c441746c1399d08363dc096c550cceaf97bd4ce1e8854e1771e9998d9f94c4fe075839
+  languageName: node
+  linkType: hard
+
+"cluster-key-slot@npm:1.1.1":
+  version: 1.1.1
+  resolution: "cluster-key-slot@npm:1.1.1"
+  checksum: 10c0/079b1ae86b20e2d53308a877b08de5e830722a45c07810569d0dab4955bed569da33ac9f79998289d014adf02cca7223a0647cb0ee6548a12ab3c4f9beac1377
   languageName: node
   linkType: hard
 
@@ -15696,7 +15720,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:4.x, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.3, debug@npm:^4.3.4, debug@npm:^4.3.5, debug@npm:^4.3.7, debug@npm:^4.4.0, debug@npm:^4.4.1, debug@npm:^4.4.3":
+"debug@npm:4, debug@npm:4.4.3, debug@npm:4.x, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.3, debug@npm:^4.3.4, debug@npm:^4.3.5, debug@npm:^4.3.7, debug@npm:^4.4.0, debug@npm:^4.4.1, debug@npm:^4.4.3":
   version: 4.4.3
   resolution: "debug@npm:4.4.3"
   dependencies:
@@ -16033,14 +16057,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"denque@npm:^1.4.1":
-  version: 1.5.1
-  resolution: "denque@npm:1.5.1"
-  checksum: 10c0/9e6fc1a63e1c9ded38325290302fef40e5ad28471ad8c66d68eaea623ef847bd25fc75a7c3f47396206dc967922615999066470a364e1786f2758d61337872b7
-  languageName: node
-  linkType: hard
-
-"denque@npm:^2.1.0":
+"denque@npm:2.1.0, denque@npm:^2.1.0":
   version: 2.1.0
   resolution: "denque@npm:2.1.0"
   checksum: 10c0/f9ef81aa0af9c6c614a727cb3bd13c5d7db2af1abf9e6352045b86e85873e629690f6222f4edd49d10e4ccf8f078bbeec0794fafaf61b659c0589d0c511ec363
@@ -18339,16 +18356,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.16.0":
-  version: 1.16.0
-  resolution: "follow-redirects@npm:1.16.0"
-  peerDependenciesMeta:
-    debug:
-      optional: true
-  checksum: 10c0/a1e2900163e6f1b4d1ed5c221b607f41decbab65534c63fe7e287e40a5d552a6496e7d9d7d976fa4ba77b4c51c11e5e9f683f10b43011ea11e442ff128d0e181
-  languageName: node
-  linkType: hard
-
 "fontkit@npm:^1.0.0, fontkit@npm:^1.8.1":
   version: 1.9.0
   resolution: "fontkit@npm:1.9.0"
@@ -18765,7 +18772,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gaxios@npm:^6.0.0, gaxios@npm:^6.1.1":
+"gaxios@npm:^6.0.0, gaxios@npm:^6.0.3, gaxios@npm:^6.1.1":
   version: 6.7.1
   resolution: "gaxios@npm:6.7.1"
   dependencies:
@@ -19181,7 +19188,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"google-auth-library@npm:^9.14.2":
+"google-auth-library@npm:^9.0.0, google-auth-library@npm:^9.14.1, google-auth-library@npm:^9.14.2, google-auth-library@npm:^9.7.0":
   version: 9.15.1
   resolution: "google-auth-library@npm:9.15.1"
   dependencies:
@@ -19216,6 +19223,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"googleapis-common@npm:^7.0.0":
+  version: 7.2.0
+  resolution: "googleapis-common@npm:7.2.0"
+  dependencies:
+    extend: "npm:^3.0.2"
+    gaxios: "npm:^6.0.3"
+    google-auth-library: "npm:^9.7.0"
+    qs: "npm:^6.7.0"
+    url-template: "npm:^2.0.8"
+    uuid: "npm:^9.0.0"
+  checksum: 10c0/cbbce900582a66c28bb8ccde631bc08202c6fb2e591932b981a23b437b074150051b966d3ad67bcb4b06b4ff5bbbfd8524ac5ca6f7b77b8790f417924bec1f3c
+  languageName: node
+  linkType: hard
+
 "googleapis-common@npm:^8.0.0":
   version: 8.0.1
   resolution: "googleapis-common@npm:8.0.1"
@@ -19226,6 +19247,16 @@ __metadata:
     qs: "npm:^6.7.0"
     url-template: "npm:^2.0.8"
   checksum: 10c0/ee939fdfcaea32c528e7be64621b3e6b35e612f2456c8d4aca835e0a01ccec52f4ea2ac9509b083128398631a6cd66512c400adb4d0375a4638c55888ccdea7f
+  languageName: node
+  linkType: hard
+
+"googleapis@npm:^140.0.1":
+  version: 140.0.1
+  resolution: "googleapis@npm:140.0.1"
+  dependencies:
+    google-auth-library: "npm:^9.0.0"
+    googleapis-common: "npm:^7.0.0"
+  checksum: 10c0/ed90e0d9bff7b35598fa0161cf0a2e3f874a6479dd4ecca89d6e5b8c3de886db33e9b73251acf2db5b931ec5ffea99e0c8751a26f0ef1297ad2ee0c5c89487d3
   languageName: node
   linkType: hard
 
@@ -19943,7 +19974,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"https-proxy-agent@npm:5.0.1, https-proxy-agent@npm:^5.0.0, https-proxy-agent@npm:^5.0.1":
+"https-proxy-agent@npm:5.0.1, https-proxy-agent@npm:^5.0.0":
   version: 5.0.1
   resolution: "https-proxy-agent@npm:5.0.1"
   dependencies:
@@ -20293,13 +20324,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"inversify@npm:^4.1.0":
-  version: 4.14.0
-  resolution: "inversify@npm:4.14.0"
-  checksum: 10c0/64096d82ec4e33c1f69cee4a63885434e9fdfd14de0651db4f6f16ef16bec09a470074cc7905d3842c1583d2ebd7b64db8dbe5073c0063875d02ac0d3a7dffde
-  languageName: node
-  linkType: hard
-
 "inversify@npm:^6.0.0, inversify@npm:^6.0.1":
   version: 6.2.2
   resolution: "inversify@npm:6.2.2"
@@ -20326,6 +20350,21 @@ __metadata:
     redis-parser: "npm:^3.0.0"
     standard-as-callback: "npm:^2.1.0"
   checksum: 10c0/4ed66444017150da027bce940a24bf726994691e2a7b3aa11d52f8aeb37f258068cc171af4d9c61247acafc28eb086fa8a7c79420b8e8d2907d2f74f39584465
+  languageName: node
+  linkType: hard
+
+"ioredis@npm:^5.4.0":
+  version: 5.11.1
+  resolution: "ioredis@npm:5.11.1"
+  dependencies:
+    "@ioredis/commands": "npm:1.10.0"
+    cluster-key-slot: "npm:1.1.1"
+    debug: "npm:4.4.3"
+    denque: "npm:2.1.0"
+    redis-errors: "npm:1.2.0"
+    redis-parser: "npm:3.0.0"
+    standard-as-callback: "npm:2.1.0"
+  checksum: 10c0/a8b27043cf2c045dfc93f40a32ce24cf9f8b57799a37f4234c4b925c365ccf131629590f94a512f546fda2ba8ed034009c94c4933ecd44c50bc166636d929fd6
   languageName: node
   linkType: hard
 
@@ -21634,7 +21673,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest@npm:^29.5.0":
+"jest@npm:^29.5.0, jest@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest@npm:29.7.0"
   dependencies:
@@ -23964,33 +24003,37 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mongodb@npm:^3.2.7":
-  version: 3.7.4
-  resolution: "mongodb@npm:3.7.4"
+"mongodb@npm:^6.0.0":
+  version: 6.21.0
+  resolution: "mongodb@npm:6.21.0"
   dependencies:
-    bl: "npm:^2.2.1"
-    bson: "npm:^1.1.4"
-    denque: "npm:^1.4.1"
-    optional-require: "npm:^1.1.8"
-    safe-buffer: "npm:^5.1.2"
-    saslprep: "npm:^1.0.0"
-  dependenciesMeta:
-    saslprep:
-      optional: true
+    "@mongodb-js/saslprep": "npm:^1.3.0"
+    bson: "npm:^6.10.4"
+    mongodb-connection-string-url: "npm:^3.0.2"
+  peerDependencies:
+    "@aws-sdk/credential-providers": ^3.188.0
+    "@mongodb-js/zstd": ^1.1.0 || ^2.0.0
+    gcp-metadata: ^5.2.0
+    kerberos: ^2.0.1
+    mongodb-client-encryption: ">=6.0.0 <7"
+    snappy: ^7.3.2
+    socks: ^2.7.1
   peerDependenciesMeta:
-    aws4:
+    "@aws-sdk/credential-providers":
       optional: true
-    bson-ext:
+    "@mongodb-js/zstd":
+      optional: true
+    gcp-metadata:
       optional: true
     kerberos:
       optional: true
     mongodb-client-encryption:
       optional: true
-    mongodb-extjson:
-      optional: true
     snappy:
       optional: true
-  checksum: 10c0/747da737df701344f804f18f2fe833873af2b5bcdb9c07f85e2c53c465f6dd6a0727860dde4ee4fdff0635040c88c9c1fea2a48c2afd3e89a5cbda8d7307056e
+    socks:
+      optional: true
+  checksum: 10c0/3269316bdba174139e10cb25a1f22a8445beb14f26987d61dba922ddd5784b35b4bec563554da4d1ab180a3c1ff77f092ba858cd3ae3da45e3aaf706ef27a460
   languageName: node
   linkType: hard
 
@@ -25262,15 +25305,6 @@ __metadata:
     minimist: "npm:~0.0.1"
     wordwrap: "npm:~0.0.2"
   checksum: 10c0/8cb417328121e732dbfb4d94d53bb39b1406446b55323ed4ce787decc52394927e051ba879eb3ffa3171fe22a35ce13b460114b60effcead77443ee87c2f9b0f
-  languageName: node
-  linkType: hard
-
-"optional-require@npm:^1.1.8":
-  version: 1.1.10
-  resolution: "optional-require@npm:1.1.10"
-  dependencies:
-    require-at: "npm:^1.0.6"
-  checksum: 10c0/3676df264280edbe20d19987618f5c37b3acae17cece7749c8ef5cbb77ebca7db7f95998a9f55a9c2739883af8d155e55aff3182916031e741f09c1df57a957f
   languageName: node
   linkType: hard
 
@@ -26830,13 +26864,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"proxy-from-env@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "proxy-from-env@npm:2.1.0"
-  checksum: 10c0/ed01729fd4d094eab619cd7e17ce3698b3413b31eb102c4904f9875e677cd207392795d5b4adee9cec359dfd31c44d5ad7595a3a3ad51c40250e141512281c58
-  languageName: node
-  linkType: hard
-
 "proxyquire@npm:^2.1.3":
   version: 2.1.3
   resolution: "proxyquire@npm:2.1.3"
@@ -27361,16 +27388,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"reactory-speech@workspace:src/modules/reactory-speech":
-  version: 0.0.0-use.local
-  resolution: "reactory-speech@workspace:src/modules/reactory-speech"
-  dependencies:
-    axios: "npm:^1.7.0"
-    multer: "npm:^1.4.5-lts.1"
-    ws: "npm:^8.18.0"
-  languageName: unknown
-  linkType: soft
-
 "reactory-telemetry@workspace:src/modules/reactory-telemetry":
   version: 0.0.0-use.local
   resolution: "reactory-telemetry@workspace:src/modules/reactory-telemetry"
@@ -27515,14 +27532,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redis-errors@npm:^1.0.0, redis-errors@npm:^1.2.0":
+"redis-errors@npm:1.2.0, redis-errors@npm:^1.0.0, redis-errors@npm:^1.2.0":
   version: 1.2.0
   resolution: "redis-errors@npm:1.2.0"
   checksum: 10c0/5b316736e9f532d91a35bff631335137a4f974927bb2fb42bf8c2f18879173a211787db8ac4c3fde8f75ed6233eb0888e55d52510b5620e30d69d7d719c8b8a7
   languageName: node
   linkType: hard
 
-"redis-parser@npm:^3.0.0":
+"redis-parser@npm:3.0.0, redis-parser@npm:^3.0.0":
   version: 3.0.0
   resolution: "redis-parser@npm:3.0.0"
   dependencies:
@@ -27542,6 +27559,15 @@ __metadata:
     "@redis/search": "npm:1.2.0"
     "@redis/time-series": "npm:1.1.0"
   checksum: 10c0/36fc11b7b305e73cafd0a32c5e7070aef72d3a33f2b34f609a1c295afb7d1a022d74eeda96e8d887ef596bbe8ce10811450d02b63175a338d2ff258ff34bd237
+  languageName: node
+  linkType: hard
+
+"redlock@npm:^5.0.0-beta.2":
+  version: 5.0.0-beta2
+  resolution: "redlock@npm:5.0.0-beta2"
+  dependencies:
+    node-abort-controller: "npm:^3.0.1"
+  checksum: 10c0/3a845b34d2a91869a21a3a4ab37011053d7374212b3aba0fe2be0f21980e49a23cef5958c1af29691df7e1d88435c07dea32c6729d281a97a123102185d69532
   languageName: node
   linkType: hard
 
@@ -27565,13 +27591,6 @@ __metadata:
   version: 0.1.13
   resolution: "reflect-metadata@npm:0.1.13"
   checksum: 10c0/728bff0b376b05639fd11ed80c648b61f7fe653c5b506d7ca118e58b6752b9b00810fe0c86227ecf02bd88da6251ab3eb19fd403aaf2e9ff5ef36a2fda643026
-  languageName: node
-  linkType: hard
-
-"reflect-metadata@npm:^0.1.10, reflect-metadata@npm:^0.1.13":
-  version: 0.1.14
-  resolution: "reflect-metadata@npm:0.1.14"
-  checksum: 10c0/3a6190c7f6cb224f26a012d11f9e329360c01c1945e2cbefea23976a8bacf9db6b794aeb5bf18adcb673c448a234fbc06fc41853c00a6c206b30f0777ecf019e
   languageName: node
   linkType: hard
 
@@ -27810,13 +27829,6 @@ __metadata:
     tunnel-agent: "npm:^0.6.0"
     uuid: "npm:^3.3.2"
   checksum: 10c0/0ec66e7af1391e51ad231de3b1c6c6aef3ebd0a238aa50d4191c7a792dcdb14920eea8d570c702dc5682f276fe569d176f9b8ebc6031a3cf4a630a691a431a63
-  languageName: node
-  linkType: hard
-
-"require-at@npm:^1.0.6":
-  version: 1.0.6
-  resolution: "require-at@npm:1.0.6"
-  checksum: 10c0/2497ef4e9630943337b3d3f37d9dc7509030a279dcf5614a06b07819c83ce7d811b9a4dba058a914cf8ee1ad9e8162c53af29e4004f3a450206a4e06b95e1acd
   languageName: node
   linkType: hard
 
@@ -28328,7 +28340,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"saslprep@npm:^1.0.0, saslprep@npm:^1.0.3":
+"saslprep@npm:^1.0.3":
   version: 1.0.3
   resolution: "saslprep@npm:1.0.3"
   dependencies:
@@ -29405,7 +29417,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"standard-as-callback@npm:^2.1.0":
+"standard-as-callback@npm:2.1.0, standard-as-callback@npm:^2.1.0":
   version: 2.1.0
   resolution: "standard-as-callback@npm:2.1.0"
   checksum: 10c0/012677236e3d3fdc5689d29e64ea8a599331c4babe86956bf92fc5e127d53f85411c5536ee0079c52c43beb0026b5ce7aa1d834dd35dd026e82a15d1bcaead1f
@@ -30895,7 +30907,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.0.0":
+"typescript@npm:^5.0.0, typescript@npm:^5.5.0":
   version: 5.9.3
   resolution: "typescript@npm:5.9.3"
   bin:
@@ -30915,7 +30927,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.0.0#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A^5.0.0#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.5.0#optional!builtin<compat/typescript>":
   version: 5.9.3
   resolution: "typescript@patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"
   bin:
@@ -31909,29 +31921,6 @@ __metadata:
   version: 6.2.1
   resolution: "workerpool@npm:6.2.1"
   checksum: 10c0/f0efd2d74eafd58eaeb36d7d85837d080f75c52b64893cff317b66257dd308e5c9f85ef0b12904f6c7f24ed2365bc3cfeba1f1d16aa736d84d6ef8156ae37c80
-  languageName: node
-  linkType: hard
-
-"workflow-es-mongodb@npm:2.1.2":
-  version: 2.1.2
-  resolution: "workflow-es-mongodb@npm:2.1.2"
-  dependencies:
-    inversify: "npm:^4.1.0"
-    json-stable-stringify: "npm:^1.0.1"
-    mongodb: "npm:^3.2.7"
-    reflect-metadata: "npm:^0.1.10"
-    workflow-es: "npm:^2.1.0"
-  checksum: 10c0/0f17b346ddbcf633b5b1b39f832fdf12e7f1da8967da0b854fe6c2e44cae9603df9ca5ad4d29d325488769972703e995d264e68e7c0f7e2714e90c7e2c3f0442
-  languageName: node
-  linkType: hard
-
-"workflow-es@npm:^2.1.0":
-  version: 2.3.5
-  resolution: "workflow-es@npm:2.3.5"
-  dependencies:
-    inversify: "npm:^4.1.0"
-    reflect-metadata: "npm:^0.1.10"
-  checksum: 10c0/c11859914941ac4de1e93c6bc22a76275e1e82dc9fe91e38506ebfca13eefd146d73b3e2f0dec8c0a2f080fffcc334ce5f9437a38efaee8365e1ac39e58a0829
   languageName: node
   linkType: hard
 
