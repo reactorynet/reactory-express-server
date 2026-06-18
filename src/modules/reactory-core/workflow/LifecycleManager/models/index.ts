@@ -1,13 +1,9 @@
-export { 
-  default as WorkflowInstanceModel,
+// M9 Phase 2: WorkflowInstanceModel (mongoose) has been retired.
+// Only the enum/helper types remain; they are used by LifecycleManager and
+// WorkflowRunner without any mongoose dependency.
+export {
   WorkflowESStatus,
   ExecutionPointerStatus,
   getStatusLabel,
   getExecutionPointerStatusLabel,
-  type IWorkflowInstanceDocument,
-  type IWorkflowInstanceFilter,
-  type IWorkflowInstancePagination,
-  type IPaginatedWorkflowInstances,
-  type IWorkflowInstanceModel,
-  type IExecutionPointer,
-} from './WorkflowInstanceModel';
+} from './workflow-enums';

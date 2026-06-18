@@ -5,6 +5,7 @@ import {
   LogLevel,
   LogContext,
   WorkflowHost,
+  WorkflowInstance,
 } from '@reactorynet/workflow-es';
 import { MongoDBPersistence } from '@reactorynet/workflow-es-mongodb';
 import { RedisQueueProvider, RedisLockManager } from '@reactorynet/workflow-es-redis';
@@ -14,7 +15,6 @@ import moment from 'moment';
 import amq from '../../../../amq';
 import reactoryModules from '../../..';
 import logger from '../../../../logging';
-import mongoose from 'mongoose';
 import { IScheduleConfig, WorkflowScheduler } from '../Scheduler/Scheduler';
 import { ErrorHandler, IErrorContext, ErrorCategory, ErrorSeverity, IWorkflowErrorStats } from '../ErrorHandler/ErrorHandler';
 import {
@@ -23,7 +23,6 @@ import {
   WorkflowPriority,
   WorkflowESStatus,
   ExecutionPointerStatus,
-  WorkflowInstanceModel,
   type IWorkflowInstance,
   type IWorkflowDependency,
   type IWorkflowLifecycleStats
@@ -37,9 +36,20 @@ import type { YamlWorkflowDefinition } from '../YamlFlow/types/WorkflowDefinitio
 
 const {
   MONGOOSE,
-  // Persistence backend for the workflow-es host: 'mongo' (durable, default when
-  // MONGOOSE is set) or 'memory' (dev/test only — state lost on restart).
+  // Persistence backend for the workflow-es host:
+  //   'mongo'    — MongoDBPersistence (requires MONGOOSE env var)
+  //   'sqlite'   — SqlitePersistence  (requires WORKFLOW_SQLITE_PATH or defaults under APP_DATA_ROOT)
+  //   'postgres' — PostgresPersistence (requires WORKFLOW_POSTGRES_URL or falls back to REACTORY_POSTGRES_* / POSTGRES_*)
+  //   'memory'   — in-process only, no durability (default when no provider matched)
   WORKFLOW_PERSISTENCE_PROVIDER = 'mongo',
+  // SQLite: absolute path to the database file.
+  // Defaults to $APP_DATA_ROOT/workflows/workflow.db when APP_DATA_ROOT is set.
+  WORKFLOW_SQLITE_PATH,
+  APP_DATA_ROOT,
+  // Postgres: connection URL. Falls back to REACTORY_POSTGRES_URL then POSTGRES_URL.
+  WORKFLOW_POSTGRES_URL,
+  REACTORY_POSTGRES_URL,
+  POSTGRES_URL,
   // When 'true', wire a distributed Redis lock + reliable queue (REACTORY_REDIS_*)
   // so the host is safe to run across multiple instances. When unset/false the
   // host uses the in-process single-node lock/queue (single-instance only) and
@@ -273,9 +283,11 @@ export class WorkflowRunner {
       await this.scheduler.initialize();
       
 
-      // Initialize lifecycle manager
+      // Initialize lifecycle manager — pass the active persistence provider so
+      // history reads / stats / deletes go through the provider (M9 Phase 2).
       await this.lifecycleManager.initialize({
         host,
+        persistence: this.persistence,
       });
 
       // Initialize configuration manager
@@ -469,29 +481,81 @@ export class WorkflowRunner {
   }
 
   /**
-   * Get persistence provider
+   * Get persistence provider.
+   *
+   * Reads WORKFLOW_PERSISTENCE_PROVIDER (mongo | sqlite | postgres | memory).
+   *
+   * mongo    — MongoDBPersistence; requires MONGOOSE connection string.
+   * sqlite   — SqlitePersistence; uses WORKFLOW_SQLITE_PATH or
+   *             $APP_DATA_ROOT/workflows/workflow.db.
+   * postgres — PostgresPersistence; uses WORKFLOW_POSTGRES_URL,
+   *             REACTORY_POSTGRES_URL, or POSTGRES_URL (first non-empty wins).
+   * memory   — returns null (no durability; history unavailable).
    */
   private async getPersistenceProvider(): Promise<IPersistenceProvider | null> {
     try {
       const provider = (WORKFLOW_PERSISTENCE_PROVIDER || 'mongo').toLowerCase();
 
-      if (provider === 'mongo' && MONGOOSE) {
+      // ── Mongo ──────────────────────────────────────────────────────────────
+      if (provider === 'mongo') {
+        if (!MONGOOSE) {
+          logger.warn(
+            'WORKFLOW_PERSISTENCE_PROVIDER=mongo but MONGOOSE is not set — falling back to in-memory ' +
+            '(workflow state will NOT survive a restart). Set MONGOOSE or WORKFLOW_PERSISTENCE_PROVIDER=memory.'
+          );
+          return null;
+        }
         logger.debug('Using MongoDB for Workflow Persistence');
         const mongoPersistence = new MongoDBPersistence(MONGOOSE);
-        // The provider connects asynchronously; await it before the host starts
-        // so the first persist/query does not race the connection.
         await mongoPersistence.connect;
         return mongoPersistence;
       }
 
-      if (provider === 'mongo' && !MONGOOSE) {
-        logger.warn(
-          'WORKFLOW_PERSISTENCE_PROVIDER=mongo but MONGOOSE is not set — falling back to in-memory ' +
-          '(workflow state will NOT survive a restart). Set MONGOOSE or WORKFLOW_PERSISTENCE_PROVIDER=memory.'
-        );
-        return null;
+      // ── SQLite ─────────────────────────────────────────────────────────────
+      if (provider === 'sqlite') {
+        const { SqlitePersistence } = await import('@reactorynet/workflow-es-sqlite');
+        let dbPath = WORKFLOW_SQLITE_PATH;
+        if (!dbPath) {
+          if (APP_DATA_ROOT) {
+            const path = await import('path');
+            const fs = await import('fs');
+            const dir = path.join(APP_DATA_ROOT, 'workflows');
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir, { recursive: true });
+            }
+            dbPath = path.join(dir, 'workflow.db');
+          } else {
+            logger.warn(
+              'WORKFLOW_PERSISTENCE_PROVIDER=sqlite but neither WORKFLOW_SQLITE_PATH nor APP_DATA_ROOT ' +
+              'is set — falling back to in-memory SQLite (:memory:). Set WORKFLOW_SQLITE_PATH for durability.'
+            );
+            dbPath = ':memory:';
+          }
+        }
+        logger.debug(`Using SQLite for Workflow Persistence: ${dbPath}`);
+        const sqlitePersistence = new SqlitePersistence(dbPath);
+        await sqlitePersistence.connect;
+        return sqlitePersistence;
       }
 
+      // ── Postgres ───────────────────────────────────────────────────────────
+      if (provider === 'postgres') {
+        const connectionString = WORKFLOW_POSTGRES_URL || REACTORY_POSTGRES_URL || POSTGRES_URL;
+        if (!connectionString) {
+          logger.warn(
+            'WORKFLOW_PERSISTENCE_PROVIDER=postgres but no connection URL found. ' +
+            'Set WORKFLOW_POSTGRES_URL (or REACTORY_POSTGRES_URL / POSTGRES_URL) — falling back to in-memory.'
+          );
+          return null;
+        }
+        const { PostgresPersistence } = await import('@reactorynet/workflow-es-postgres');
+        logger.debug('Using PostgreSQL for Workflow Persistence');
+        const postgresPersistence = new PostgresPersistence(connectionString);
+        await postgresPersistence.connect;
+        return postgresPersistence;
+      }
+
+      // ── Memory / default ───────────────────────────────────────────────────
       logger.debug('Using in-memory Workflow Persistence (development/test only)');
       return null;
     } catch (error) {
@@ -535,8 +599,10 @@ export class WorkflowRunner {
       }
 
       if (this.persistence) {
-        if (this.persistence instanceof MongoDBPersistence) {
-          await this.persistence.close();
+        // MongoDBPersistence exposes a close() method; other providers (SQLite,
+        // Postgres, memory) do not, so we only call it when present.
+        if (typeof (this.persistence as any).close === 'function') {
+          await (this.persistence as any).close();
         }
         this.persistence = null;
       }
@@ -766,8 +832,11 @@ export class WorkflowRunner {
   }
 
   /**
-   * Persist a YAML workflow execution to MongoDB so it appears in execution history.
-   * Maps the in-memory instance + execution result to the workflow-es document schema.
+   * Persist a YAML workflow execution through the active IPersistenceProvider
+   * so it appears in execution history for any configured store (M9 Phase 2).
+   *
+   * If no persistence provider is configured, the execution is skipped/logged
+   * (same tolerant behaviour as before).
    */
   private async persistYamlExecution(
     instance: IWorkflowInstance,
@@ -775,22 +844,32 @@ export class WorkflowRunner {
     result: any,
     inputData: any
   ): Promise<void> {
+    if (!this.persistence) {
+      logger.debug(
+        `persistYamlExecution: no persistence provider — skipping history record for ${instance.id}`
+      );
+      return;
+    }
+
     try {
-      const statusMap: Record<string, WorkflowESStatus> = {
-        [WorkflowStatus.PENDING]: WorkflowESStatus.PENDING,
-        [WorkflowStatus.RUNNING]: WorkflowESStatus.RUNNABLE,
-        [WorkflowStatus.COMPLETED]: WorkflowESStatus.COMPLETE,
-        [WorkflowStatus.FAILED]: WorkflowESStatus.TERMINATED,
-        [WorkflowStatus.CANCELLED]: WorkflowESStatus.TERMINATED,
-        [WorkflowStatus.PAUSED]: WorkflowESStatus.SUSPENDED,
-        [WorkflowStatus.CLEANING_UP]: WorkflowESStatus.RUNNABLE,
+      // Map in-memory WorkflowStatus → engine numeric status
+      // engine: Runnable=0, Suspended=1, Complete=2, Terminated=3
+      const statusMap: Record<string, number> = {
+        [WorkflowStatus.PENDING]:     0, // Runnable
+        [WorkflowStatus.RUNNING]:     0, // Runnable
+        [WorkflowStatus.COMPLETED]:   2, // Complete
+        [WorkflowStatus.FAILED]:      3, // Terminated
+        [WorkflowStatus.CANCELLED]:   3, // Terminated
+        [WorkflowStatus.PAUSED]:      1, // Suspended
+        [WorkflowStatus.CLEANING_UP]: 0, // Runnable
       };
 
+      // PointerStatus: Complete=3, Failed=6
       const executionPointers = (result.executedSteps || []).map((step: any, idx: number) => ({
         id: step.stepId || `pointer_${idx}`,
         stepId: idx,
         active: false,
-        sleepUntil: null,
+        sleepUntil: 0,
         persistenceData: step.outputs || null,
         startTime: step.metadata?.startTime || null,
         endTime: step.metadata?.endTime || null,
@@ -803,29 +882,32 @@ export class WorkflowRunner {
         contextItem: null,
         predecessorId: null,
         outcome: step.success ? (step.outputs || null) : null,
-        status: step.success
-          ? ExecutionPointerStatus.COMPLETE
-          : ExecutionPointerStatus.FAILED,
+        status: step.success ? 3 : 6, // Complete=3, Failed=6
         scope: [],
+        stepName: step.stepId || `step_${idx}`,
       }));
 
-      await WorkflowInstanceModel.create({
-        id: instance.id,
-        workflowDefinitionId,
-        version: 1,
-        description: `YAML workflow execution`,
-        status: statusMap[instance.status] ?? WorkflowESStatus.PENDING,
-        data: inputData || {},
-        createTime: instance.startedAt,
-        completeTime: instance.completedAt || null,
-        executionPointers,
-      });
+      const wi = new WorkflowInstance();
+      wi.id = instance.id;
+      wi.workflowDefinitionId = workflowDefinitionId;
+      wi.version = 1;
+      wi.description = 'YAML workflow execution';
+      wi.status = statusMap[instance.status] ?? 0;
+      wi.data = inputData || {};
+      wi.createTime = instance.startedAt;
+      wi.completeTime = instance.completedAt || (null as any);
+      wi.executionPointers = executionPointers as any;
+      wi.nextExecution = 0;
+      wi.tenantId = 'default';
 
-      logger.debug(`Persisted YAML workflow execution to MongoDB: ${instance.id}`);
+      await this.persistence.createNewWorkflow(wi);
+      await this.persistence.persistWorkflow(wi);
+
+      logger.debug(`Persisted YAML workflow execution via provider: ${instance.id}`);
     } catch (err) {
       // Don't fail the workflow if persistence fails — log and continue
       logger.warn(
-        `Failed to persist YAML workflow execution ${instance.id} to MongoDB: ${
+        `Failed to persist YAML workflow execution ${instance.id}: ${
           err instanceof Error ? err.message : String(err)
         }`
       );
