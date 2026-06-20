@@ -26,6 +26,11 @@ const BaseUISchema: Reactory.Schema.IFormUISchema = {
     },
   ],
   "workflow": {
-    "ui:widget": "WorkflowDetailsWidget",
+    "ui:widget": "core.WorkflowDetailsPanel@1.0.0",
+    "ui:props-map": {
+      "formData": "workflow"
+    }
   }
 };
+
+export default BaseUISchema;

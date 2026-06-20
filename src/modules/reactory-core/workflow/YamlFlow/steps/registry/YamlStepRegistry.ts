@@ -21,11 +21,7 @@ import { EndStep } from '../core/EndStep';
 import { FileOperationStep } from '../core/FileOperationStep';
 import { ForEachStep } from '../core/ForEachStep';
 import { LogStep } from '../core/LogStep';
-import { MongoDbStep } from '../core/MongoDbStep';
-import { MSSQLStep } from '../core/MSSQLStep';
-import { MySQLStep } from '../core/MySQLStep';
-import { PostgresStep } from '../core/PostgresStep';
-import { ServiceCallStep } from '../core/ServiceCallStep';
+import { GraphQLMutationStep } from '../core/GraphQLMutationStep';
 import { ServiceInvokeStep } from '../core/ServiceInvokeStep';
 import { TelemetryStep } from '../core/TelemetryStep';
 import { ValidationStep } from '../core/ValidationStep';
@@ -38,6 +34,27 @@ import { JoinStep } from '../core/JoinStep';
 import { GraphQLStep } from '../core/GraphQLStep';
 import { GRPCStep } from '../core/GRPCStep';
 import { UserActivityStep } from '../core/UserActivityStep';
+import { GraphQLQueryStep } from '../core/GraphQLQueryStep';
+import { EmailStep } from '../core/EmailStep';
+import { TodoStep } from '../core/TodoStep';
+import { SearchStep } from '../core/SearchStep';
+import { SetVariableStep } from '../core/SetVariableStep';
+import { MongoQueryStep } from '../core/MongoQueryStep';
+import { MongoWriteStep } from '../core/MongoWriteStep';
+import { UserLookupStep } from '../core/UserLookupStep';
+import { MySqlStep } from '../core/MySqlStep';
+import { PostgresSQLStep } from '../core/PostgresSQLStep';
+import { MSSQLStep } from '../core/MSSQLStep';
+import {
+  IWorkflowStepDesignerDefinition,
+  IWorkflowStepCatalogEntry,
+} from '../../types/StepDesignerDefinition';
+
+/** Registry metadata extended with the optional designer definition + source. */
+type RegisteredStepMetadata = StepMetadata & {
+  definition?: IWorkflowStepDesignerDefinition;
+  source?: 'core' | 'module';
+};
 
 /**
  * Central registry for all YAML workflow step types
@@ -45,7 +62,7 @@ import { UserActivityStep } from '../core/UserActivityStep';
  */
 export class YamlStepRegistry {
   /** Map of step type to metadata */
-  private steps: Map<string, StepMetadata> = new Map();
+  private steps: Map<string, RegisteredStepMetadata> = new Map();
   
   /**
    * Constructor - automatically registers default core steps
@@ -61,22 +78,43 @@ export class YamlStepRegistry {
    * @param options - Registration options
    */
   public registerStep(
-    stepType: string, 
-    constructor: StepConstructor, 
-    options: StepRegistrationOptions = {}
+    stepType: string,
+    constructor: StepConstructor,
+    options: StepRegistrationOptions = {},
+    definition?: IWorkflowStepDesignerDefinition,
+    source: 'core' | 'module' = 'core'
   ): void {
     if (this.steps.has(stepType) && !options.force) {
       throw new Error(`Step type "${stepType}" is already registered`);
     }
-    
-    const metadata: StepMetadata = {
+
+    const metadata: RegisteredStepMetadata = {
       stepType,
       constructor,
       options,
-      registeredAt: new Date()
+      registeredAt: new Date(),
+      definition,
+      source,
     };
-    
+
     this.steps.set(stepType, metadata);
+  }
+
+  /**
+   * Return the catalog of all registered step types, including any designer
+   * definitions modules contributed. Surfaced to the Visual Workflow Designer
+   * via the `workflowStepCatalog` GraphQL query so module steps render in the UI.
+   */
+  public getStepCatalog(): IWorkflowStepCatalogEntry[] {
+    return Array.from(this.steps.values())
+      .map((m) => ({
+        stepType: m.stepType,
+        description: m.options?.description,
+        version: m.options?.version,
+        source: m.source || 'core',
+        definition: m.definition,
+      }))
+      .sort((a, b) => a.stepType.localeCompare(b.stepType));
   }
   
   /**
@@ -120,7 +158,13 @@ export class YamlStepRegistry {
    */
   public createStep(params: StepCreationParams): IYamlStep {
     const { config, inputs } = this.resolveConfigAndInputs(params);
-    const StepClass = this.getStepClass(params.type);
+    // BaseYamlStep accepts an optional third `inputs` argument; the published
+    // IStepConstructor type only declares (id, config), so widen it here.
+    const StepClass = this.getStepClass(params.type) as new (
+      id: string,
+      config: Record<string, any>,
+      inputs?: Record<string, any>
+    ) => IYamlStep;
     const step = new StepClass(params.id, config, inputs);
 
     // Validate configuration if the step supports it
@@ -353,6 +397,16 @@ export class YamlStepRegistry {
       version: '1.0.0'
     });
 
+    this.registerStep('graphql_mutate', GraphQLMutationStep, {
+      description: 'Executes a GraphqlQL Mutation',
+      version: '1.0.0'
+    });
+
+    this.registerStep('graphql_query', GraphQLQueryStep, {
+      description: 'Execute a graphql Query',
+      version: '1.0.0',
+    });    
+
     // gRPC step
     this.registerStep('grpc', GRPCStep, {
       description: 'Execute gRPC service call',
@@ -368,6 +422,63 @@ export class YamlStepRegistry {
     // Telemetry step
     this.registerStep('telemetry', TelemetryStep, {
       description: 'Emit metrics and trace data',
+      version: '1.0.0'
+    });
+
+    // Variable management step
+    this.registerStep('set_variable', SetVariableStep, {
+      description: 'Set, get or delete workflow-scoped variables',
+      version: '1.0.0'
+    });
+
+    // Notification step
+    this.registerStep('email', EmailStep, {
+      description: 'Send email via the Reactory email service',
+      version: '1.0.0'
+    });
+
+    // Todo / task tracking step
+    this.registerStep('todo', TodoStep, {
+      description: 'Create, update and query workflow to-do items',
+      version: '1.0.0'
+    });
+
+    // Search step (MeiliSearch)
+    this.registerStep('search', SearchStep, {
+      description: 'Search, index and manage MeiliSearch indexes',
+      version: '1.0.0'
+    });
+
+    // MongoDB data-access steps
+    this.registerStep('mongo_query', MongoQueryStep, {
+      description: 'Query MongoDB (find / findOne / aggregate / count)',
+      version: '1.0.0'
+    });
+
+    this.registerStep('mongo_write', MongoWriteStep, {
+      description: 'Write to MongoDB (insert / update / delete)',
+      version: '1.0.0'
+    });
+
+    // User lookup step
+    this.registerStep('user_lookup', UserLookupStep, {
+      description: 'Look up a Reactory user by id, email or username',
+      version: '1.0.0'
+    });
+
+    // Relational database steps (via core.ReactorySQLService)
+    this.registerStep('mysql', MySqlStep, {
+      description: 'Execute a MySQL query',
+      version: '1.0.0'
+    });
+
+    this.registerStep('postgres', PostgresSQLStep, {
+      description: 'Execute a PostgreSQL query',
+      version: '1.0.0'
+    });
+
+    this.registerStep('mssql', MSSQLStep, {
+      description: 'Execute a Microsoft SQL Server query',
       version: '1.0.0'
     });
   }

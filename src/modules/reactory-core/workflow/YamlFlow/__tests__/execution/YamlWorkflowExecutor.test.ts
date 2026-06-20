@@ -116,4 +116,57 @@ describe('YamlWorkflowExecutor', () => {
       expect(result.executedSteps[0].success).toBe(true);
     });
   });
+
+  describe('Inter-step data flow', () => {
+    // Regression test for the executor data-flow fix: each step must share a
+    // single persistent `variables` map, and prior step outputs must be exposed
+    // via `stepResults` so later steps can read upstream results.
+    it('should persist variables and propagate step outputs across steps', async () => {
+      const workflow: YamlWorkflowDefinition = {
+        nameSpace: 'testNamespace',
+        name: 'data-flow',
+        version: '1.0.0',
+        steps: [
+          // Step 1: set a variable from a literal value
+          {
+            id: 'set-greeting',
+            type: 'set_variable',
+            config: { action: 'set', key: 'greeting', value: 'hello', source: 'literal' },
+          },
+          // Step 2: read step 1's OUTPUT (proves stepResults propagation) and
+          //         store it in another variable
+          {
+            id: 'copy-from-output',
+            type: 'set_variable',
+            dependsOn: ['set-greeting'],
+            config: {
+              action: 'set',
+              key: 'copied',
+              source: 'step_output',
+              sourcePath: 'set-greeting.outputs.value',
+            },
+          },
+          // Step 3: read the variable set in step 2 (proves variable persistence)
+          {
+            id: 'read-copied',
+            type: 'set_variable',
+            dependsOn: ['copy-from-output'],
+            config: { action: 'get', key: 'copied' },
+          },
+        ],
+      } as YamlWorkflowDefinition;
+
+      const result = await executor.executeWorkflow(workflow);
+
+      expect(result.success).toBe(true);
+      expect(result.executedSteps).toHaveLength(3);
+
+      const readStep = result.executedSteps.find((s) => s.stepId === 'read-copied');
+      expect(readStep?.success).toBe(true);
+      // Value originated in step 1, flowed through step 2's stepResults read,
+      // and survived as a persisted variable into step 3.
+      expect(readStep?.outputs.exists).toBe(true);
+      expect(readStep?.outputs.value).toBe('hello');
+    });
+  });
 });

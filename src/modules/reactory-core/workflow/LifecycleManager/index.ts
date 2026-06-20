@@ -6,7 +6,6 @@ export {
   ExecutionPointerStatus,
   getStatusLabel,
   getExecutionPointerStatusLabel,
-  WorkflowInstanceModel,
   type IWorkflowInstance,
   type IWorkflowDependency,
   type IWorkflowLifecycleConfig,
@@ -18,9 +17,4 @@ export {
   type IExecutionPointerSummary,
   type IStepExecutionError,
   type IWorkflowExecutionStats,
-  type IWorkflowInstanceDocument,
-  type IWorkflowInstanceFilter,
-  type IWorkflowInstancePagination,
-  type IPaginatedWorkflowInstances,
-  type IExecutionPointer,
 } from './LifecycleManager';

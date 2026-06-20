@@ -1,14 +1,23 @@
 name: ${PODMAN_COMPOSE_PROJECT_NAME:-reactory-develop}
 services:
   reactory_mongodb:
-    image: mongo:${MONGO_VERSION:-latest}
+    image: mongo:${MONGO_VERSION:-7.0}
+    command: ["--wiredTigerCacheSizeGB", "1"]   # stop WT from grabbing 3.16 GB
+    mem_limit: 2g #hard ceiling to prevent OOM issues, WT will use up to 1.5 GB of this
     container_name: reactory-mongodb
+    restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_DB}      
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     ports:
-      - "${MONGO_PORT}:${MONGO_PORT}"
+      - "${MONGO_PORT:-27017}:27017"
     volumes:
       - ${REACTORY_SERVER}/docker/${PODMAN_COMPOSE_PROJECT_NAME:-reactory-develop}/mongodb:/data/db
       - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
@@ -16,14 +25,21 @@ services:
       - reactory-network
 
   reactory_postgres:
-    image: postgres:latest
+    image: postgres:${POSTGRES_VERSION:-17}
     container_name: reactory-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${REACTORY_POSTGRES_USER:-reactory}
       POSTGRES_PASSWORD: ${REACTORY_POSTGRES_PASSWORD:-reactory}
-      POSTGRES_DB: ${REACTORY_POSTGRES_DB:-reactory}      
+      POSTGRES_DB: ${REACTORY_POSTGRES_DB:-reactory}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${REACTORY_POSTGRES_USER:-reactory}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - ${REACTORY_SERVER}/docker/${PODMAN_COMPOSE_PROJECT_NAME:-reactory-develop}/postgres:/var/lib/postgresql/data
       - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
@@ -31,44 +47,60 @@ services:
       - reactory-network
   
   reactory_meilisearch:
-    image: getmeili/meilisearch:latest
+    image: getmeili/meilisearch:${MEILISEARCH_VERSION:-v1.13}
     container_name: reactory-meilisearch
+    restart: unless-stopped
     environment:
-      MASTER_KEY: ${MEILISEARCH_MASTER_KEY:-reactory}      
+      MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:-reactory}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     ports:
-      - "7700:7700"
+      - "${MEILISEARCH_PORT:-7700}:7700"
     volumes:
-      - ${REACTORY_SERVER}/docker/${PODMAN_COMPOSE_PROJECT_NAME:-reactory-develop}/meilisearch:/data.ms
-      - ${REACTORY_SERVER}/certs:/etc/ssl/certs
+      - ${REACTORY_SERVER}/docker/${PODMAN_COMPOSE_PROJECT_NAME:-reactory-develop}/meilisearch:/meili_data
+      - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
     networks:
       - reactory-network
 
   reactory_redis:
-    image: redis:latest
-    container_name: 'reactory-redis'
+    image: redis:${REDIS_VERSION:-7.4}
+    container_name: reactory-redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REACTORY_REDIS_PASSWORD:-reactory}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - ${REACTORY_SERVER}/docker/${PODMAN_COMPOSE_PROJECT_NAME:-reactory-develop}/redis:/data
-      - ${REACTORY_SERVER}/certificates:/etc/ssl/certs      
-    command: [ "redis-server", "--requirepass", "${REACTORY_REDIS_PASSWORD:-reactory}" ]
+      - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
+    command: ["redis-server", "--requirepass", "${REACTORY_REDIS_PASSWORD:-reactory}"]
     networks:
       - reactory-network
   
   reactory_jaeger:
-    image: jaegertracing/all-in-one:latest
+    image: jaegertracing/all-in-one:${JAEGER_VERSION:-1.76.0}
     container_name: reactory-jaeger
+    restart: unless-stopped
     ports:
-      - '4318:4318'
-      - '16686:16686'
+      - '${JAEGER_OTLP_HTTP_PORT:-4318}:4318'
+      - '${JAEGER_UI_PORT:-16686}:16686'
     volumes:
       - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
     networks:
       - reactory-network
   
   reactory_grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:${GRAFANA_VERSION:-12.4.4}
     container_name: reactory-grafana
+    restart: unless-stopped
     ports:
       - '${REACTORY_GRAFANA_PORT:-3000}:3000'
     volumes:
@@ -83,24 +115,26 @@ services:
       - reactory-network
 
   reactory_grafana_loki:
-    image: grafana/loki:latest
+    image: grafana/loki:${LOKI_VERSION:-3.7.2}
     container_name: reactory-grafana-loki
+    restart: unless-stopped
     ports:
-      - '3100:3100'
+      - '${LOKI_PORT:-3100}:3100'
     volumes:
       - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
     networks:
       - reactory-network
 
   reactory_prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:${PROMETHEUS_VERSION:-v3.12.0}
     container_name: reactory-prometheus
+    restart: unless-stopped
     ports:
-      - '9090:9090'
+      - '${PROMETHEUS_PORT:-9090}:9090'
     volumes:
       - ${REACTORY_SERVER}/src/modules/reactory-telemetry/data/prometheus:/etc/prometheus
     networks:
-      - reactory-network  
+      - reactory-network
 
 volumes:
   postgres_data:

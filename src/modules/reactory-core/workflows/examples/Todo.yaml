@@ -1,0 +1,21 @@
+# Engine smoke test: todo step (create + list, persisted in workflow variables).
+nameSpace: reactory-examples
+name: Todo
+version: 1.0.0
+description: todo — create a to-do item then list the list.
+tags: [example, smoke]
+steps:
+  - id: create
+    type: todo
+    config:
+      action: create
+      listId: smoke
+      title: "Verify the engine"
+      description: "Created by the Todo smoke-test workflow"
+      status: pending
+  - id: list
+    type: todo
+    dependsOn: create
+    config:
+      action: list
+      listId: smoke

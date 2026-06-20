@@ -204,7 +204,12 @@ export class YamlWorkflowExecutor {
       const context = this.createExecutionContext(workflow, executionId, startTime, options);
       // Attach Reactory context from options or constructor
       context.reactoryContext = options.reactoryContext || this.reactoryContext;
-      
+
+      // Persistent, workflow-scoped variable store, shared by reference with
+      // every step's execution context. This is what lets set_variable / todo
+      // steps persist state and lets later steps read variables set earlier.
+      const variables: Record<string, any> = {};
+
       // Execute steps in order
       const executedSteps: StepExecutionRecord[] = [];
       const errors: Array<{ stepId: string; message: string; stack?: string; code?: string }> = [];
@@ -231,7 +236,7 @@ export class YamlWorkflowExecutor {
         });
         
         try {
-          const stepResult = await this.executeStep(stepConfig, context, options.dryRun);
+          const stepResult = await this.executeStep(stepConfig, context, variables, options.dryRun);
           executedSteps.push(stepResult);
           
           if (stepResult.success) {
@@ -410,6 +415,7 @@ export class YamlWorkflowExecutor {
   private async executeStep(
     stepConfig: any, // WorkflowStep from YamlWorkflowDefinition
     workflowContext: WorkflowExecutionContext,
+    variables: Record<string, any>,
     dryRun: boolean = false
   ): Promise<StepExecutionRecord> {
     const startTime = new Date();
@@ -447,12 +453,22 @@ export class YamlWorkflowExecutor {
         };
       }
       
+      // Surface prior step outputs as stepResults so steps — and template
+      // resolution via ${steps.<id>.<path>} — can read upstream results.
+      const stepResults: Record<string, any> = {};
+      for (const [priorStepId, outputs] of Object.entries(workflowContext.stepOutputs || {})) {
+        stepResults[priorStepId] = { success: true, outputs, metadata: {} };
+      }
+
       // Create step execution context
       const stepContext: StepExecutionContext = {
+        // `inputs` satisfies the IStepExecutionContext contract; `workflowInputs`
+        // is retained for steps/templates that reference the legacy field name.
+        inputs: workflowContext.inputs,
         workflowInputs: workflowContext.inputs,
-        variables: {},
+        variables, // shared, persists across every step in this workflow run
         env: workflowContext.environment,
-        stepResults: {}, // Convert stepOutputs to stepResults format
+        stepResults,
         logger: {
           log: (message: string, ...args: any[]) => console.log(message, ...args),
           error: (message: string, ...args: any[]) => console.error(message, ...args),
@@ -468,8 +484,8 @@ export class YamlWorkflowExecutor {
           version: workflowContext.workflow.version
         },
         reactoryContext: workflowContext.reactoryContext,
-      };
-      
+      } as StepExecutionContext;
+
       // Execute step
       const result = await step.execute(stepContext);
       const endTime = new Date();

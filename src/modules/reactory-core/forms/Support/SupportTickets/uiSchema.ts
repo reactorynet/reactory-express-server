@@ -24,7 +24,7 @@ const ListUIOptions: Reactory.Client.Components.IMaterialListWidgetOptions = {
     resultMap: {
       'paging.page': 'paging.page',
       'paging.total': 'paging.totalCount',
-      'paging.pageSize': 'paing.pageSize',
+      'paging.pageSize': 'paging.pageSize',
       'tickets': 'data'
     },
     variables: {

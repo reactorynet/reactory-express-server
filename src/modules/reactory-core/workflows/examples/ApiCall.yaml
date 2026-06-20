@@ -1,0 +1,16 @@
+# Step example: api_call.
+# Requires: outbound network access. Calls a public test endpoint.
+nameSpace: reactory-examples
+name: ApiCall
+version: 1.0.0
+description: api_call — perform an HTTP GET and capture the response.
+tags: [example, api]
+steps:
+  - id: fetch
+    type: api_call
+    config:
+      url: "https://httpbin.org/get"
+      method: GET
+      headers:
+        Accept: application/json
+      expectedStatusCodes: [200]

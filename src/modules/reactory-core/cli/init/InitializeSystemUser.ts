@@ -58,9 +58,10 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
     
     user.memberships = user.memberships || [];
     if (user.memberships.length === 0) {
-      user.addRole(reactoryClient._id.toString(),'SYSTEM');
+      await user.addRole(reactoryClient._id.toString(), 'SYSTEM');
+    } else {
+      await user.save();
     }
-    await user.save();
     process.exit(0);
   }
 
@@ -82,8 +83,7 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
   });
 
   user.setPassword(REACTORY_APPLICATION_PASSWORD);
-  user.addRole(reactoryClient._id.toString(),'SYSTEM');
-  await user.save();
+  await user.addRole(reactoryClient._id.toString(), 'SYSTEM');
 
   log(`System user initialized successfully`, {}, 'info');
 }

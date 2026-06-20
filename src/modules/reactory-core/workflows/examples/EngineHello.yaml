@@ -1,0 +1,19 @@
+# Engine smoke test: start → log → end.
+# The simplest possible workflow — verifies the YAML→engine bridge runs at all.
+nameSpace: reactory-examples
+name: EngineHello
+version: 1.0.0
+description: Minimal engine smoke test (start, log, end).
+tags: [example, smoke, engine]
+steps:
+  - id: start
+    type: start
+  - id: greet
+    type: log
+    dependsOn: start
+    config:
+      message: "Hello from the YAML workflow engine"
+      level: info
+  - id: done
+    type: end
+    dependsOn: greet

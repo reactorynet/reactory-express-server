@@ -1,3 +1,4 @@
+import Reactory from '@reactorynet/reactory-core';
 
 export interface StatusWidgetDependencies {
   React: Reactory.React,
@@ -16,7 +17,7 @@ export interface StatusWidgetProps {
   style: any
 }
 
-export interface ISupportTicketWorkflowModule {  
+export interface ISupportTicketWorkflowModule {
   openTicket(args: ISupportTickeArgs): Promise<Reactory.Models.IReactorySupportTicket>
   closeTicket(args: ISupportTickeArgs): Promise<boolean>
   commentTicket(args: ISupportTickeArgs): Promise<Reactory.Models.IReactorySupportTicket>
@@ -24,9 +25,8 @@ export interface ISupportTicketWorkflowModule {
   deleteTicket(args: ISupportTicketDeleteArgs): Promise<void>
 }
 
-
 export interface ISupportTicketWorkflowProps {
-  reactory: Reactory.Client.IReactoryApi, 
+  reactory: Reactory.Client.IReactoryApi,
 }
 
 export interface ISupportTicketOpenMutationResult {

@@ -1,14 +1,14 @@
-import { 
-  fqn, 
+import {
+  fqn,
   title,
-  description, 
-  min, 
-  max, 
-  id, 
+  description,
+  min,
+  max,
+  id,
   type,
   ref,
   format,
-  nullable, 
+  nullable,
   defaultValue,
   store,
   enumType,
@@ -35,23 +35,23 @@ const FroalaOptions = (context: Reactory.Server.IReactoryContext) => ({
   videoUploadURL: `${API_ROOT}/froala/upload/video`,
   imageUploadURL: `${API_ROOT}/froala/upload/image`,
   requestHeaders: {
-    'x-client-key': `${context.partner.key}`,
-    'x-client-pwd': `${context.partner.password}`,
-  }
+     'x-client-key': `${context.partner.key}`,
+     'x-client-pwd': `${context.partner.password}`,
+    }
 });
 
 @fqn("core.SupportTicketDocumentViewModel@1.0.0")
-class SupportTicketDocument { 
+class SupportTicketDocument {
   @id(true)
   id: string;
 
   @title("reactory:support-ticket-document.filename.title")
   filename: string
 
-  constructor(props: Partial<SupportTicketDocument> = {}) { 
+  constructor(props: Partial<SupportTicketDocument> = {}) {
     this.id = props.id || new ObjectId().toHexString();
     this.filename = props.filename || "";
-  }
+   }
 }
 
 
@@ -65,14 +65,14 @@ class UserBio {
   @title("reactory:support-ticket.model.createdBy.title")
   firstName: string;
 
-  @title("reactory:support-ticket.model.createdBy.title")
+  @title("reactory:support-ticket.model.lastName.title")
   lastName: string;
 
   constructor(props: Partial<UserBio> = {}) {
     this.id = props.id || new ObjectId().toHexString();
     this.firstName = props.firstName || "";
     this.lastName = props.lastName || "";
-  }
+   }
 }
 
 @fqn("core.SupportTicketCommentViewModel@1.0.0")
@@ -94,64 +94,66 @@ class SupportTicketComment {
   createdBy: UserBio;
 
 
-  constructor(props: Partial<SupportTicketComment> = {}) { 
+  constructor(props: Partial<SupportTicketComment> = {}) {
     this.id = props.id || new ObjectId().toHexString();
-    this.user = props.user || {
-      id: new ObjectId().toHexString(),
-      firstName: 'Not',
-      lastName: 'Set',
-    };
+    this.user = props.user;
     this.comment = props.comment || "";
     this.createdAt = props.createdAt || new Date();
-    this.createdBy = props.createdBy || {
-      id: new ObjectId().toHexString(),
-      firstName: 'Not',
-      lastName: 'Set',
-    };
-  };
+    this.createdBy = props.createdBy;
+   };
 }
 
-export enum SupportTicketStatus { 
+export enum SupportTicketStatus {
   new = 'new',
   open = 'open',
-  closed = 'closed',
+  inProgress = 'in-progress',
+  pending = 'pending',
   resolved = 'resolved',
+  closed = 'closed',
+  onHold = 'on-hold',
   withdrawn = 'withdrawn',
-  rejected = 'rejected',   
+  rejected = 'rejected',
 }
 
-export namespace SupportTicketStatus { 
+export namespace SupportTicketStatus {
   export function isEnum(value: any): value is SupportTicketStatus {
-    return Object.values(SupportTicketStatus).includes(value);
-  }
+    const values = Object.values(SupportTicketStatus).map(v => v as string);
+    return values.includes(value);
+   }
 
-  export function getKey(value: SupportTicketStatus): string { 
+  export function getKey(value: SupportTicketStatus): string {
     switch (value) {
       case SupportTicketStatus.new: return "reactory:support-ticket.model.status.new";
       case SupportTicketStatus.open: return "reactory:support-ticket.model.status.open";
-      case SupportTicketStatus.closed: return "reactory:support-ticket.model.status.closed";
+      case SupportTicketStatus.inProgress: return "reactory:support-ticket.model.status.in-progress";
+      case SupportTicketStatus.pending: return "reactory:support-ticket.model.status.pending";
       case SupportTicketStatus.resolved: return "reactory:support-ticket.model.status.resolved";
+      case SupportTicketStatus.closed: return "reactory:support-ticket.model.status.closed";
+      case SupportTicketStatus.onHold: return "reactory:support-ticket.model.status.on-hold";
       case SupportTicketStatus.withdrawn: return "reactory:support-ticket.model.status.withdrawn";
       case SupportTicketStatus.rejected: return "reactory:support-ticket.model.status.rejected";
-    }
-  }
+      }
+   }
 
-  export function getValues(): {key: string, value: SupportTicketStatus, label: string}[] {   
+  export function getValues(): { key: string, value: SupportTicketStatus, label: string }[] {
     return [
-      { key: "new", value: SupportTicketStatus.new, label: getKey(SupportTicketStatus.new) },
-      { key: "open", value: SupportTicketStatus.open, label: getKey(SupportTicketStatus.open) },
-      { key: "closed", value: SupportTicketStatus.closed, label: getKey(SupportTicketStatus.closed) },
-      { key: "rejected", value: SupportTicketStatus.rejected, label: getKey(SupportTicketStatus.rejected) },
-      { key: "resolved", value: SupportTicketStatus.resolved, label: getKey(SupportTicketStatus.resolved) },
-      { key: "withdrawn", value: SupportTicketStatus.withdrawn, label: getKey(SupportTicketStatus.withdrawn) },
-    ]
-  }
-  
+        { key: "new", value: SupportTicketStatus.new, label: getKey(SupportTicketStatus.new) },
+        { key: "open", value: SupportTicketStatus.open, label: getKey(SupportTicketStatus.open) },
+        { key: "in-progress", value: SupportTicketStatus.inProgress, label: getKey(SupportTicketStatus.inProgress) },
+        { key: "pending", value: SupportTicketStatus.pending, label: getKey(SupportTicketStatus.pending) },
+        { key: "resolved", value: SupportTicketStatus.resolved, label: getKey(SupportTicketStatus.resolved) },
+        { key: "closed", value: SupportTicketStatus.closed, label: getKey(SupportTicketStatus.closed) },
+        { key: "on-hold", value: SupportTicketStatus.onHold, label: getKey(SupportTicketStatus.onHold) },
+        { key: "withdrawn", value: SupportTicketStatus.withdrawn, label: getKey(SupportTicketStatus.withdrawn) },
+        { key: "rejected", value: SupportTicketStatus.rejected, label: getKey(SupportTicketStatus.rejected) },
+      ]
+   }
+
   export function translate(value: SupportTicketStatus, context: Reactory.Server.IReactoryContext): string {
     const { i18n } = context;
     const key = SupportTicketStatus.getKey(value);
     return i18n.t(key);
-  }
+   }
 };
 
 export type SupportTicketModelConstructorArgs = {
@@ -171,17 +173,17 @@ export type SupportTicketModelConstructorArgs = {
 }
 
 /**
- * Support Ticket View Model. This class is used to create a new instance of a support ticket.
- */
+* Support Ticket View Model. This class is used to create a new instance of a support ticket.
+*/
 @fqn("core.SupportTicketViewModel@1.0.0")
 @store(
-  "graphql", 
-  "core.ReactorySupportTicketModelMapper@1.0.0")
-@uiSchema('grid', 
+   "graphql",
+   "core.ReactorySupportTicketModelMapper@1.0.0")
+@uiSchema('grid',
   GridUISchema,
   'gridview',
-  'reactory:support-ticket.gridviewschema.title', 
-  'reactory:support-ticket.gridviewschema.description', 'grid')
+   'reactory:support-ticket.gridviewschema.title',
+   'reactory:support-ticket.gridviewschema.description', 'grid')
 @title("reactory:support-ticket.model.title")
 @description("reactory:support-ticket.model.description")
 class SupportTicketModel {
@@ -228,7 +230,7 @@ class SupportTicketModel {
   @nullable()
   @type(UserBio)
   @widget('UserBioWidget', {})
-  createdBy: UserBio;
+  createdBy?: UserBio;
 
   @title("reactory:support-ticket.model.createdDate.title")
   @description("reactory:support-ticket.model.createdDate.description")
@@ -238,7 +240,7 @@ class SupportTicketModel {
 
   @title("reactory:support-ticket.model.updatedDate.title")
   @description("reactory:support-ticket.model.updatedDate.description")
-  updatedDate: Date;
+  updatedDate?: Date;
 
   @title("reactory:support-ticket.model.assignedTo.title")
   @description("reactory:support-ticket.model.assignedTo.description")
@@ -247,12 +249,12 @@ class SupportTicketModel {
   @ref("UserBio")
   @widget('UserBioWidget', {})
   @roles(['ADMIN', 'USER'])
-  assignedTo: UserBio;
+  assignedTo?: UserBio;
 
   @title("reactory:support-ticket.model.formId.title")
   @description("reactory:support-ticket.model.formId.description")
   @nullable()
-  formId: string;
+  formId?: string;
 
   @title("reactory:support-ticket.model.comments.title")
   @description("reactory:support-ticket.model.comments.description")
@@ -266,9 +268,8 @@ class SupportTicketModel {
   documents: SupportTicketDocument[];
 
   /**
-   * Default constructor. It is important to note that the default values are set for the createdBy and assignedTo properties.
-   * In order for reflection to work correctly, the default values must be set in the constructor to ensure the object is created correctly.
-   * @param props - Partial<SupportTicketModelConstructorArgs>
+    * Default constructor. Empty arrays and undefined for optional fields — no dummy data.
+    * @param props - Partial<SupportTicketModelConstructorArgs>
    */
   constructor(props: Partial<SupportTicketModelConstructorArgs> = {}) {
     this.id = props.id || new ObjectId().toHexString();
@@ -276,85 +277,58 @@ class SupportTicketModel {
     this.requestType = props.requestType || "";
     this.description = props.description || "";
     this.reference = props.reference || "";
-    this.status = SupportTicketStatus.isEnum(props.status) 
-      ? props.status 
-      : SupportTicketStatus.new;
-    this.createdBy = props.createdBy || {
-      id: new ObjectId().toHexString(),
-      firstName: 'Not',
-      lastName: 'Set',
-    };
-    this.createdDate = new Date();
-    this.assignedTo = {
-      id: new ObjectId().toHexString(),
-      firstName: 'Not',
-      lastName: 'Set',
-    };
-    this.formId = "";
-    this.comments = [{
-      id: new ObjectId().toHexString(),
-      user: {
-        id: new ObjectId().toHexString(),
-        firstName: 'Not',
-        lastName: 'Set',
-      },
-      comment: "",
-      createdAt: new Date(),
-      createdBy: {
-        id: new ObjectId().toHexString(),
-        firstName: 'Not',
-        lastName: 'Set',
-      }
-    }];
-    this.documents = [
-      {
-        filename: "file.txt",
-        id: new ObjectId().toHexString()
-      }
-    ];
-    this.updatedDate = new Date();
-  }
-  
-  static fromModel(model: Reactory.Models.ReactorySupportDocument, context: Reactory.Server.IReactoryContext): SupportTicketModel { 
+    this.status = SupportTicketStatus.isEnum(props.status)
+        ? props.status
+        : SupportTicketStatus.new;
+    this.createdBy = props.createdBy;
+    this.createdDate = props.createdDate || new Date();
+    this.assignedTo = props.assignedTo;
+    this.formId = props.formId;
+    this.comments = props.comments ?? [];
+    this.documents = props.documents ?? [];
+    this.updatedDate = props.updatedDate || new Date();
+   }
+
+  static fromModel(model: Reactory.Models.ReactorySupportDocument, context: Reactory.Server.IReactoryContext): SupportTicketModel {
     const { utils } = context;
     const props: Partial<SupportTicketModelConstructorArgs> = utils.objectMapper.merge(model, {
-      '_id': { target: 'id', transform: (value: any) => value.toHexString() },
-      'request': 'request',
-      'requestType': 'requestType',
-      'description': 'description',
-      'status': 'status',
-      'reference': 'reference',
-      'createdBy': 'createdBy',
-      'createdDate': 'createdDate',
-      'updatedDate': 'updatedDate',
-      'assignedTo': 'assignedTo',
-      'formId': 'formId',
-      'comments': 'comments',
-      'documents': 'documents',
-    });
+       '_id': { target: 'id', transform: (value: any) => value.toHexString() },
+       'request': 'request',
+       'requestType': 'requestType',
+       'description': 'description',
+       'status': 'status',
+       'reference': 'reference',
+       'createdBy': 'createdBy',
+       'createdDate': 'createdDate',
+       'updatedDate': 'updatedDate',
+       'assignedTo': 'assignedTo',
+       'formId': 'formId',
+       'comments': 'comments',
+       'documents': 'documents',
+     });
     return new SupportTicketModel(props);
-  }
+   }
 
-  static toModel(viewModel: SupportTicketModel, context: Reactory.Server.IReactoryContext): Reactory.Models.ReactorySupportDocument { 
+  static toModel(viewModel: SupportTicketModel, context: Reactory.Server.IReactoryContext): Reactory.Models.ReactorySupportDocument {
     const { utils } = context;
     const props: Partial<SupportTicketModelConstructorArgs> = utils.objectMapper.merge(viewModel, {
-      'id': '_id',
-      'request': 'request',
-      'requestType': 'requestType',
-      'description': 'description',
-      'status': 'status',
-      'reference': 'reference',
-      'createdBy': 'createdBy',
-      'createdDate': 'createdDate',
-      'updatedDate': 'updatedDate',
-      'assignedTo': 'assignedTo',
-      'formId': 'formId',
-      'comments': 'comments',
-      'documents': 'documents',
-    });
+       'id': '_id',
+       'request': 'request',
+       'requestType': 'requestType',
+       'description': 'description',
+       'status': 'status',
+       'reference': 'reference',
+       'createdBy': 'createdBy',
+       'createdDate': 'createdDate',
+       'updatedDate': 'updatedDate',
+       'assignedTo': 'assignedTo',
+       'formId': 'formId',
+       'comments': 'comments',
+       'documents': 'documents',
+     });
 
     return new ReactorySupportTicketModel(props);
-  }
+   }
 }
 
 export default SupportTicketModel;

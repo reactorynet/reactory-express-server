@@ -1,0 +1,12 @@
+# Engine smoke test: custom step (pass-through / catch-all).
+nameSpace: reactory-examples
+name: Custom
+version: 1.0.0
+description: custom — generic pass-through step echoing its config.
+tags: [example, smoke]
+steps:
+  - id: echo
+    type: custom
+    config:
+      action: noop
+      note: "custom step smoke test"

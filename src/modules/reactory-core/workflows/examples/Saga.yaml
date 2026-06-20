@@ -1,0 +1,25 @@
+# Engine smoke test: saga (happy path — body runs, no compensation triggered).
+# On a step failure inside the saga body, the compensate steps run instead.
+nameSpace: reactory-examples
+name: Saga
+version: 1.0.0
+description: saga — transactional body with compensation on failure.
+tags: [example, smoke, control-flow]
+steps:
+  - id: tx
+    type: saga
+    config:
+      steps:
+        - id: work
+          type: set_variable
+          config:
+            action: set
+            key: sagaRan
+            value: true
+      compensate:
+        - id: undo
+          type: set_variable
+          config:
+            action: set
+            key: compensated
+            value: true

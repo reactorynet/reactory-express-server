@@ -18,7 +18,7 @@ type ModuleContext = Reactory.Server.IReactoryContext & {};
   dependencies: [
     {
       alias: "templateService",
-      id: "core.TemplateService",
+      id: "core.TemplateService@1.0.0",
     },
   ],
   secondaryTypes: [

@@ -1,8 +1,9 @@
 import Reactory from '@reactorynet/reactory-core';
 import { service } from '@reactory/server-core/application/decorators';
-import { 
-  WorkflowRunner,  
+import {
+  WorkflowRunner,
 } from 'modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
+import { collectAndStripDesigner, reattachDesigner } from './designerMetadata';
 import { 
   IReactoryWorkflowService,
   IWorkflowSystemStatus,
@@ -43,7 +44,7 @@ import { IScheduleConfig } from '@reactory/server-modules/reactory-core/workflow
 import { IWorkflowInstance, IWorkflowLifecycleStats, WorkflowStatus, WorkflowPriority } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager';
 import { IConfigurationStats } from '@reactory/server-modules/reactory-core/workflow/ConfigurationManager/ConfigurationManager';
 import { ISecurityStats } from '@reactory/server-modules/reactory-core/workflow/SecurityManager/SecurityManager';
-import { IScheduledWorkflow, ISchedulerStats } from 'modules/reactory-core/workflow/Scheduler/Scheduler';
+import { IScheduledWorkflow, ISchedulerStats } from '@reactory/server-modules/reactory-core/workflow/Scheduler/Scheduler';
 
 @service({
   name: "ReactoryWorkflowService",
@@ -631,6 +632,8 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       outputs: parsed?.outputs,
       variables: parsed?.variables,
       steps: parsed?.steps || [],
+      // Back-compat default: embedded designer (legacy YAML). Overridden below by
+      // the sibling .design.yaml when present.
       designer: parsed?.metadata?.designer || null,
       yamlSource,
       sourceType: resolvedSourceType,
@@ -638,6 +641,37 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       loadStatus,
       errors: hasErrors ? errors : undefined,
     };
+
+    // Merge the sibling <name>.design.yaml back into the response so the designer
+    // receives the same shape (workflow-level `designer` + per-step `designer`).
+    if (resolvedFilePath) {
+      try {
+        const dir = path.dirname(resolvedFilePath);
+        // saveWorkflowDefinition writes the sidecar as `<name>.design.yaml`. Derive
+        // the path from the workflow name (canonical) rather than the resolved YAML
+        // basename, which may carry a source-file prefix (e.g. 01-EngineHello.yaml
+        // from module provisioning). Fall back to the basename-derived path.
+        const candidates = [
+          path.join(dir, `${result.name}.design.yaml`),
+          resolvedFilePath.replace(/\.(ya?ml)$/i, '.design.yaml'),
+        ];
+        const designPath = candidates.find((p) => p !== resolvedFilePath && existsSync(p));
+        if (designPath) {
+          const designParsed: any = yaml.load(readFileSync(designPath, 'utf8'));
+          if (designParsed?.designer) result.designer = designParsed.designer;
+          if (designParsed?.steps && result.steps?.length) {
+            reattachDesigner(result.steps, designParsed.steps);
+          }
+        }
+      } catch (err) {
+        this.context.log(
+          `Failed to merge designer sidecar for ${nameSpace}.${name}: ${err instanceof Error ? err.message : String(err)}`,
+          { err },
+          'warn'
+        );
+      }
+    }
+
     return result;
   }
 
@@ -1844,7 +1878,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       };
     }
 
-    const { writeFileSync, mkdirSync, existsSync } = await import('fs');
+    const { writeFileSync, mkdirSync, existsSync, unlinkSync } = await import('fs');
     const path = await import('path');
     const yaml = await import('js-yaml');
 
@@ -1895,10 +1929,11 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       return yamlStep;
     });
 
-    // Store designer metadata under metadata.designer (matches read pipeline)
-    if (definition.designer) {
-      yamlObject.metadata = { designer: definition.designer };
-    }
+    // Separate ALL per-step designer metadata (incl. nested control-flow children)
+    // out of the executable YAML and into a sibling <name>.design.yaml. This keeps
+    // the workflow definition lean; the designer load pipeline merges it back.
+    const stepDesigner: Record<string, any> = {};
+    collectAndStripDesigner(yamlObject.steps, stepDesigner);
 
     try {
       if (!existsSync(targetDir)) {
@@ -1913,9 +1948,31 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       });
       writeFileSync(targetFile, yamlContent, 'utf8');
 
+      // Persist designer metadata to a sibling <name>.design.yaml (or remove a
+      // stale sidecar when there is no designer data). The executable YAML above
+      // is kept free of any position/size/canvas/connection-geometry bloat.
+      const designFile = path.join(targetDir, `${name}.design.yaml`);
+      const hasDesigner = !!definition.designer || Object.keys(stepDesigner).length > 0;
+      if (hasDesigner) {
+        const designObject = {
+          nameSpace,
+          name,
+          version,
+          designer: definition.designer || null,
+          steps: stepDesigner,
+        };
+        writeFileSync(
+          designFile,
+          yaml.dump(designObject, { indent: 2, lineWidth: 120, noRefs: true, sortKeys: false }),
+          'utf8'
+        );
+      } else if (existsSync(designFile)) {
+        unlinkSync(designFile);
+      }
+
       this.context.log(
         `Saved workflow definition ${nameSpace}.${name}@${version} to ${targetFile}`,
-        { targetFile },
+        { targetFile, designFile: hasDesigner ? designFile : undefined },
         'info'
       );
 
@@ -2121,6 +2178,12 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
     try {
       unlinkSync(targetFile);
+
+      // Remove the designer sidecar (<name>.design.yaml) if present.
+      const designFile = path.join(targetDir, `${name}.design.yaml`);
+      if (existsSync(designFile)) {
+        unlinkSync(designFile);
+      }
 
       // Clean up empty version directory
       if (existsSync(targetDir) && readdirSync(targetDir).length === 0) {

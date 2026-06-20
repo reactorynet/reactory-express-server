@@ -40,6 +40,15 @@ REACTORY_ENV_ID=${2:-local}
 COMPOSE_VARIANT=${3:-}         # empty = default file; any other value = -<variant> suffix
 COMPOSE_COMMAND=${4:-up -d}
 
+# Ensure 'up' always runs detached so the containers keep running after this
+# script exits and the console returns to the caller. If an 'up' command was
+# passed without -d/--detach (e.g. `... develop up`), append -d.
+if [[ " $COMPOSE_COMMAND " == *" up "* ]] \
+   && [[ "$COMPOSE_COMMAND" != *"-d"* ]] \
+   && [[ "$COMPOSE_COMMAND" != *"--detach"* ]]; then
+  COMPOSE_COMMAND="$COMPOSE_COMMAND -d"
+fi
+
 export REACTORY_CONFIG_ID
 export REACTORY_ENV_ID
 export BUILD_VERSION=$(node -p "require('./package.json').version")

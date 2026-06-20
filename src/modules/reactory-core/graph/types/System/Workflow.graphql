@@ -1053,6 +1053,52 @@ input WorkflowInput {
 }
 
 # Queries
+"""
+A port on a step's designer definition (control/data input or output).
+"""
+type WorkflowStepDesignerPort {
+  name: String!
+  type: String!
+  dataType: String
+  required: Boolean
+  description: String
+}
+
+"""
+Designer rendering/config definition a module attaches to a contributed step,
+mirroring the PWA designer's StepDefinition. Schema/uiSchema/rendering are opaque
+JSON passed through to the designer.
+"""
+type WorkflowStepDesignerDefinition {
+  id: String
+  name: String
+  category: String
+  description: String
+  icon: String
+  color: String
+  inputPorts: [WorkflowStepDesignerPort!]
+  outputPorts: [WorkflowStepDesignerPort!]
+  propertySchema: JSON
+  uiSchema: JSON
+  inputsSchema: JSON
+  inputsUiSchema: JSON
+  defaultProperties: JSON
+  tags: [String!]
+  rendering: JSON
+}
+
+"""
+One entry in the workflow step catalog: a registered engine step type plus any
+designer definition its contributor provided.
+"""
+type WorkflowStepCatalogEntry {
+  stepType: String!
+  description: String
+  version: String
+  source: String!
+  definition: WorkflowStepDesignerDefinition
+}
+
 extend type Query {
   # System Status
   workflowSystemStatus: SystemStatus
@@ -1168,6 +1214,13 @@ extend type Query {
     name: String!
     version: String
   ): YamlWorkflowDefinition!
+
+  """
+  Catalog of all registered workflow step types, including designer definitions
+  contributed by modules. Used by the Visual Workflow Designer to render module
+  steps and stay aligned with the engine's registered steps.
+  """
+  workflowStepCatalog: [WorkflowStepCatalogEntry!]!
 
   # Legacy compatibility
   workflowStatus(name: String!): WorkflowResult

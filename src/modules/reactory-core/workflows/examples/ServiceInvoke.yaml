@@ -1,0 +1,15 @@
+# Step example: service_invoke.
+# Requires: the named Reactory service to be registered. Adjust service/method/params
+# to a real method available in your deployment.
+nameSpace: reactory-examples
+name: ServiceInvoke
+version: 1.0.0
+description: service_invoke — call a method on a registered Reactory service.
+tags: [example, service]
+steps:
+  - id: invoke
+    type: service_invoke
+    config:
+      service: "core.SystemService@1.0.0"
+      method: "getReactoryServices"
+      params: {}
