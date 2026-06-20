@@ -344,7 +344,7 @@ class ReactoryModuleCompilerService
 
     try {
       const { stdout, stderr, error } = await exec(
-        `${nvmPrefix()}npx rollup --config rollup.${module.id}.js`,
+        `${nvmPrefix()} ./build.sh rollup.${module.id}.js`,
         { cwd: runtimeBase, encoding: "utf8", shell: "/bin/bash" },
       );
 

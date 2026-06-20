@@ -1,0 +1,19 @@
+# Step example: email.
+# Requires: a configured email transport (core.EmailService).
+nameSpace: reactory-examples
+name: Email
+version: 1.0.0
+description: email — send an email via the Reactory email service.
+tags: [example, notification]
+inputs:
+  to:
+    type: string
+    required: true
+    description: Recipient email address
+steps:
+  - id: send
+    type: email
+    config:
+      to: "${input.to}"
+      subject: "YamlFlow smoke test"
+      body: "This email was sent by the Email example workflow."

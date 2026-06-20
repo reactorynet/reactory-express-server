@@ -17,6 +17,7 @@ import { setContext } from "@apollo/client/link/context";
 import { getMainDefinition } from '@apollo/client/utilities';
 
 import gql from 'graphql-tag';
+import moment from 'moment';
 import Helpers from '@reactory/server-core/authentication/strategies/helpers';
 import Reactory from '@reactorynet/reactory-core';
 import { getCache, ReactoryCachePersistor } from './ReactoryApolloCache';
@@ -50,9 +51,13 @@ export const clientFor = async (context: Reactory.Server.IReactoryContext): Prom
   //   cache: new InMemoryCache(),
   // });
   const token = Helpers.jwtTokenForUser(context.user, {
-    exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour expiration
-    
+    exp: moment().add(1, 'hour').valueOf(),
   });
+  // This is a server-internal, server-to-server token minted from an already
+  // authenticated context. Drop the random `refresh` claim so the JWT strategy
+  // does not run it through user-session (sessionInfo[] / Redis) revocation
+  // checks, which would reject it with a 401 because the uuid was never persisted.
+  delete (token as any).refresh;
   let persistedCache: any = null;
   let cache: ApolloCache<{}> = null;
   let persistor: ReactoryCachePersistor = null;

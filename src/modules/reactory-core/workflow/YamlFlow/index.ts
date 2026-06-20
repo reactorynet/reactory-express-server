@@ -16,9 +16,30 @@ export { ParameterSubstitution } from './parsers/ParameterSubstitution';
 // Type definitions
 export * from './types/WorkflowDefinition';
 
-// Placeholder exports for components to be implemented in Phase 2-4
-// export { YamlFlowRegistry } from './YamlFlowRegistry';
-// export { YamlFlowBuilder } from './YamlFlowBuilder';
+// Step registry and base step
+export { YamlStepRegistry } from './steps/registry/YamlStepRegistry';
+export { BaseYamlStep } from './steps/base/BaseYamlStep';
+
+// YAML → workflow-es bridge. This is the active execution path: YAML workflows
+// are translated into workflow-es WorkflowBase classes and run on the durable
+// engine (control flow, persistence, replay, scheduling).
+export {
+  buildYamlWorkflowClass,
+  engineWorkflowId,
+  engineWorkflowMajorVersion,
+} from './YamlFlowBuilder';
+export { YamlStepBody, NoOpStepBody } from './execution/YamlStepBody';
+export type { YamlWorkflowData } from './execution/YamlStepBody';
+export {
+  configureYamlFlowRuntime,
+  createWorkflowContext,
+  getYamlStepRegistry,
+} from './execution/YamlFlowRuntime';
+
+// NOTE: YamlWorkflowExecutor (the former standalone flat-topological runner) is
+// retained only for design-time validation (used by the GraphQL resolver). The
+// runtime execution path is the engine bridge above.
+export { YamlWorkflowExecutor } from './execution/YamlWorkflowExecutor';
 
 /**
  * Version information

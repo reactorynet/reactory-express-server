@@ -1,0 +1,33 @@
+# Engine smoke test: conditional branching (condition → .if/.else).
+# Expression scope: input, inputs, variables, env, steps, stepResults, workflow.
+nameSpace: reactory-examples
+name: Condition
+version: 1.0.0
+description: condition — runs the then-branch when the expression is true, else-branch otherwise.
+tags: [example, smoke, control-flow]
+steps:
+  - id: seed
+    type: set_variable
+    config:
+      action: set
+      key: n
+      value: 7
+  - id: branch
+    type: condition
+    dependsOn: seed
+    config:
+      condition: "variables.n > 3"
+      thenSteps:
+        - id: big
+          type: set_variable
+          config:
+            action: set
+            key: size
+            value: big
+      elseSteps:
+        - id: small
+          type: set_variable
+          config:
+            action: set
+            key: size
+            value: small

@@ -1,0 +1,17 @@
+# Step example: user_lookup.
+# Requires: a user to exist. Look up by email, id, or username.
+nameSpace: reactory-examples
+name: UserLookup
+version: 1.0.0
+description: user_lookup — resolve a Reactory user by email.
+tags: [example, user]
+steps:
+  - id: lookup
+    type: user_lookup
+    config:
+      email: "${input.email}"
+inputs:
+  email:
+    type: string
+    required: true
+    description: Email address to look up

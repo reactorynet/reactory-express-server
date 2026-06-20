@@ -1,0 +1,20 @@
+# Step example: search (MeiliSearch via core.ReactorySearchService).
+# Requires: a configured MeiliSearch instance and an existing index.
+nameSpace: reactory-examples
+name: Search
+version: 1.0.0
+description: search — query a MeiliSearch index.
+tags: [example, search]
+steps:
+  - id: search
+    type: search
+    config:
+      operation: search
+      indexName: products
+      query: "${input.q}"
+      limit: 10
+inputs:
+  q:
+    type: string
+    required: true
+    description: Search query string

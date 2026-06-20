@@ -1,0 +1,28 @@
+# Engine smoke test: variable persistence + reading a prior step's output.
+# Verifies the Phase 1 data-flow fix end to end on the engine.
+nameSpace: reactory-examples
+name: Variables
+version: 1.0.0
+description: set_variable — set, read a step output, and read back a persisted variable.
+tags: [example, smoke, data-flow]
+steps:
+  - id: setGreeting
+    type: set_variable
+    config:
+      action: set
+      key: greeting
+      value: hello
+  - id: copyFromOutput
+    type: set_variable
+    dependsOn: setGreeting
+    config:
+      action: set
+      key: copied
+      source: step_output
+      sourcePath: setGreeting.outputs.value
+  - id: readBack
+    type: set_variable
+    dependsOn: copyFromOutput
+    config:
+      action: get
+      key: copied

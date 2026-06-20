@@ -1,0 +1,20 @@
+# Engine smoke test: file_operation (write then read a file).
+# Uses an absolute /tmp path so it needs no env/config.
+nameSpace: reactory-examples
+name: FileRoundTrip
+version: 1.0.0
+description: file_operation — write a file then read it back.
+tags: [example, smoke, io]
+steps:
+  - id: write
+    type: file_operation
+    config:
+      operation: write
+      path: /tmp/reactory-yamlflow-smoke.txt
+      content: "written by the FileRoundTrip smoke test"
+  - id: read
+    type: file_operation
+    dependsOn: write
+    config:
+      operation: read
+      path: /tmp/reactory-yamlflow-smoke.txt

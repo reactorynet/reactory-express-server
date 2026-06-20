@@ -18,7 +18,7 @@ import {
 import { IWorkflowInstanceDocument } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager';
 import { IScheduleConfig, IScheduledWorkflow } from '@reactory/server-modules/reactory-core/workflow';
 import { YamlWorkflowExecutor } from '@reactory/server-modules/reactory-core/workflow/YamlFlow/execution/YamlWorkflowExecutor';
-import { YamlStepRegistry } from '@reactory/server-modules/reactory-core/workflow/YamlFlow/steps/registry/YamlStepRegistry';
+import { WorkflowRunner } from '@reactory/server-modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
 import { InstanceResourceManager } from '@reactory/server-modules/reactory-core/workflow/InstanceResourceManager';
 import safeUrl from '@reactory/server-core/utils/url/safeUrl';
 
@@ -124,6 +124,22 @@ class WorkflowResolver {
   ) {
     const workflowService = getWorkflowService(context);
     return workflowService.getWorkflowYamlDefinition(params.nameSpace, params.name, params.version);
+  }
+
+  @query("workflowStepCatalog")
+  async workflowStepCatalog(
+    obj: any,
+    _params: any,
+    context: Reactory.Server.IReactoryContext
+  ) {
+    try {
+      // The runner's shared registry has core defaults + module-discovered steps.
+      const registry = WorkflowRunner.getInstance({}, context).getStepRegistry();
+      return registry.getStepCatalog();
+    } catch (error) {
+      context.log('Error building workflow step catalog', { error }, 'error', 'WorkflowResolver');
+      return [];
+    }
   }
 
   // Workflow Instance Queries
@@ -982,7 +998,10 @@ class WorkflowResolver {
     }
 
     try {
-      const stepRegistry = new YamlStepRegistry();
+      // Use the WorkflowRunner's shared registry so that module-registered
+      // steps (discovered at startup) are recognised during validation — not
+      // just the hardcoded core defaults.
+      const stepRegistry = WorkflowRunner.getInstance({}, context).getStepRegistry();
       const executor = new YamlWorkflowExecutor(stepRegistry, context);
 
       const result = await executor.validateWorkflow({
