@@ -735,6 +735,8 @@ type ExecutionPointerSummary {
   id: String!
   """Step identifier within the workflow definition"""
   stepId: Int!
+  """Human-readable step name — the YAML step id for bridged workflows"""
+  stepName: String
   """Status of the step"""
   status: Int!
   """Human-readable status label"""

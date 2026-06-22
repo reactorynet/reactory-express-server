@@ -44,6 +44,7 @@ const EXAMPLE_NAMES: string[] = [
   'WaitEvent',
   'AgentConversation',
   'AgentResearch',
+  'WeeklyWeatherForecast',
   'Postgres',
   'Email',
   'Search',

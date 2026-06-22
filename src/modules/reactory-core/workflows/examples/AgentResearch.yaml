@@ -33,7 +33,7 @@ steps:
   - id: research
     type: agent_conversation
     config:
-      personaId: reactor
+      personaId: ReactorAIPersona
       instructions: >-
         You are a meticulous research assistant. Use the available tools to
         gather accurate, current information before answering, and cite sources.
@@ -58,7 +58,7 @@ steps:
     type: agent_conversation
     dependsOn: keepSession
     config:
-      personaId: reactor
+      personaId: ReactorAIPersona
       sessionId: "${conversationId}"
       message: "Summarise your findings as three concise bullet points."
       toolApprovalMode: auto

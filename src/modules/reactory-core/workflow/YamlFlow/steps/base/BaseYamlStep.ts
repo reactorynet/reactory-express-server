@@ -82,8 +82,15 @@ export abstract class BaseYamlStep implements IYamlStep {
         executionTime: Date.now() - startTime
       };
       
-      context.logger.debug(`Step ${this.id} completed successfully in ${Date.now() - startTime}ms`);
-      
+      if (result.success === false) {
+        context.logger.debug(
+          `Step ${this.id} returned a failure result in ${Date.now() - startTime}ms` +
+          (result.error ? `: ${result.error}` : '')
+        );
+      } else {
+        context.logger.debug(`Step ${this.id} completed successfully in ${Date.now() - startTime}ms`);
+      }
+
       return result;
       
     } catch (error) {

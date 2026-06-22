@@ -64,14 +64,23 @@ Each file is named `<Name>.yaml` and registered as id `reactory-examples.<Name>@
 | GraphQLQuery.yaml | graphql_query | Reactory GraphQL endpoint |
 | WaitEvent.yaml | wait_event, log | an external event (see below) |
 | AgentConversation.yaml | agent_conversation, set_variable | reactor AI stack + a persona |
+| AgentResearch.yaml | agent_conversation (multi-turn resume), set_variable, log | reactor AI stack + a persona |
+| WeeklyWeatherForecast.yaml | api_call ×2, agent_conversation, file_operation, log | network (Open-Meteo) + reactor AI stack |
 | Postgres.yaml | postgres | a Postgres connection |
 | Email.yaml | email | configured email transport |
 | Search.yaml | search | MeiliSearch + an index |
 
 The first 13 examples (EngineHello … Saga) are self‑contained (no external
 services) and are the core engine/control‑flow smoke tests. The rest exercise
-integration steps and require the
-relevant service/connection.
+integration steps and require the relevant service/connection.
+
+**End‑to‑end showcase:** `WeeklyWeatherForecast.yaml` chains several steps into a
+real task — geocode a city and fetch its 7‑day forecast from Open‑Meteo (free, no
+API key), hand the raw JSON to an AI agent to write a markdown forecast, then save
+that markdown to disk. It demonstrates passing one step's output into the next
+(`${steps.<id>.<path>}`, including the raw API response body), using an
+`agent_conversation` to transform data, and persisting the result via
+`file_operation`.
 
 ## Verifying without a server
 

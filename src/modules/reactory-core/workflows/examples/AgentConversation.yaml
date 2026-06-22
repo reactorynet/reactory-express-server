@@ -20,7 +20,7 @@ steps:
   - id: ask
     type: agent_conversation
     config:
-      personaId: reactor
+      personaId: ReactorAIPersona
       instructions: "You are a concise technical assistant. Answer in two sentences."
       message: "Give me a short overview of ${input.topic}."
       toolApprovalMode: auto

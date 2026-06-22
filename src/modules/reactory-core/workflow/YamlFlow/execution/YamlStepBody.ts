@@ -181,6 +181,27 @@ function makeLogger(context: StepExecutionContext, data: YamlWorkflowData) {
   };
 }
 
+/**
+ * Coerce a step output into JSON-serializable, durable-safe data. Step outputs
+ * are persisted into the workflow instance; a non-BSON-serializable value (a
+ * mongoose document, a circular structure, functions, etc.) breaks persistence,
+ * which silently discards the step advance and causes the engine to re-run the
+ * step forever. Round-tripping through JSON drops the unsafe parts; on failure
+ * (circular refs) we fall back to a stringified form.
+ */
+function toSerializable(value: any): any {
+  if (value === null || value === undefined) return value;
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    try {
+      return { value: String(value) };
+    } catch {
+      return {};
+    }
+  }
+}
+
 /** Race a step execution against a timeout (ms). */
 async function withTimeout<T>(p: Promise<T>, ms: number, stepId: string): Promise<T> {
   let timer: NodeJS.Timeout;
@@ -203,7 +224,8 @@ async function withTimeout<T>(p: Promise<T>, ms: number, stepId: string): Promis
  * a real step. The builder uses this as the entry anchor.
  */
 export class NoOpStepBody extends StepBody {
-  public run(_context: StepExecutionContext): Promise<ExecutionResult> {
+  public run(context: StepExecutionContext): Promise<ExecutionResult> {
+    if ((context as any).pointer) (context as any).pointer.stepName = '(start)';
     return ExecutionResult.next();
   }
 }
@@ -241,6 +263,7 @@ async function closeInstanceManager(
  */
 export class FinalizeStepBody extends StepBody {
   public async run(context: StepExecutionContext): Promise<ExecutionResult> {
+    if ((context as any).pointer) (context as any).pointer.stepName = '(finalize)';
     await closeInstanceManager((context as any).workflow?.id, 'Workflow instance completed', 'info');
     return ExecutionResult.next();
   }
@@ -306,67 +329,97 @@ export class YamlStepBody extends StepBody {
       return ExecutionResult.next();
     }
 
+    // Label the engine execution pointer with the YAML step id so the instance
+    // inspector shows meaningful step names instead of "Step <n>".
+    if ((context as any).pointer) {
+      (context as any).pointer.stepName = def.name || def.id;
+    }
+
     // Expose the current foreach element (and index, when known) as variables.
     if (context.item !== undefined && context.item !== null && this.itemVariable) {
       data.variables[this.itemVariable] = context.item;
     }
 
+    // Build the logger up front so setup failures (config validation, etc.) are
+    // also captured in the instance log, not just step-execution failures.
+    const logger = makeLogger(context, data);
     const reactoryContext = await createWorkflowContext(data.__identity);
     const registry = getYamlStepRegistry();
 
-    const params: StepCreationParams = {
-      id: def.id,
-      type: def.type,
-      config: resolveStepConfig(def),
-      inputs: def.inputs,
-    };
+    // Marker so the catch-all below doesn't double-log a failure already logged
+    // and rethrown by the !result.success branch.
+    const thrownPrefix = `[${def.id}] `;
 
-    const step = registry.createStep(params);
+    try {
+      const params: StepCreationParams = {
+        id: def.id,
+        type: def.type,
+        config: resolveStepConfig(def),
+        inputs: def.inputs,
+      };
 
-    const stepCtx: any = {
-      inputs: data.inputs,
-      // legacy field name still read by BaseYamlStep.resolveTemplate
-      workflowInputs: data.inputs,
-      variables: data.variables, // by reference → variable mutations persist into TData
-      env: data.env,
-      stepResults: data.stepResults,
-      logger: makeLogger(context, data),
-      workflow: data.__workflow || {
-        id: '',
-        instanceId: context.workflow?.id || '',
-        nameSpace: '',
-        name: '',
-        version: '',
-      },
-      reactoryContext,
-    };
+      const step = registry.createStep(params);
 
-    const timeoutMs = typeof def.timeout === 'number' && def.timeout > 0 ? def.timeout : 0;
-    const execution = step.execute(stepCtx);
-    const result = timeoutMs > 0 ? await withTimeout(execution, timeoutMs, def.id) : await execution;
+      const stepCtx: any = {
+        inputs: data.inputs,
+        // legacy field name still read by BaseYamlStep.resolveTemplate
+        workflowInputs: data.inputs,
+        variables: data.variables, // by reference → variable mutations persist into TData
+        env: data.env,
+        stepResults: data.stepResults,
+        logger,
+        workflow: data.__workflow || {
+          id: '',
+          instanceId: context.workflow?.id || '',
+          nameSpace: '',
+          name: '',
+          version: '',
+        },
+        reactoryContext,
+      };
 
-    // Record outputs into the (serializable) workflow data.
-    data.stepResults[def.id] = {
-      success: result.success,
-      outputs: result.outputs || {},
-      metadata: result.metadata || {},
-    };
-    data.outputs[def.id] = result.outputs || {};
+      const timeoutMs = typeof def.timeout === 'number' && def.timeout > 0 ? def.timeout : 0;
+      const execution = step.execute(stepCtx);
+      const result = timeoutMs > 0 ? await withTimeout(execution, timeoutMs, def.id) : await execution;
 
-    if (!result.success) {
-      const message = result.error || 'Step execution failed';
-      data.__errors = data.__errors || [];
-      data.__errors.push({ stepId: def.id, message });
+      // Record outputs into the workflow data — sanitized to JSON-serializable
+      // form so a step returning non-serializable data can never break the
+      // durable instance persistence (which would loop the step forever).
+      const safeOutputs = toSerializable(result.outputs || {});
+      data.stepResults[def.id] = {
+        success: result.success,
+        outputs: safeOutputs,
+        metadata: toSerializable(result.metadata || {}),
+      };
+      data.outputs[def.id] = safeOutputs;
 
-      // continueOnError: record and proceed; otherwise throw so the engine's
-      // configured error handling (retry / suspend / terminate / compensate)
-      // takes over.
-      if (def.continueOnError === true) {
-        return ExecutionResult.next();
+      if (!result.success) {
+        const message = result.error || 'Step execution failed';
+        data.__errors = data.__errors || [];
+        data.__errors.push({ stepId: def.id, message });
+
+        // continueOnError: record + log a warning and proceed; otherwise log the
+        // error and throw so the engine's error handling (retry / suspend /
+        // terminate / compensate) takes over.
+        if (def.continueOnError === true) {
+          logger.warn(`Step "${def.id}" (${def.type}) failed (continueOnError): ${message}`);
+          return ExecutionResult.next();
+        }
+        logger.error(`Step "${def.id}" (${def.type}) failed: ${message}`);
+        throw new Error(`${thrownPrefix}${message}`);
       }
-      throw new Error(`[${def.id}] ${message}`);
-    }
 
-    return ExecutionResult.next();
+      return ExecutionResult.next();
+    } catch (err) {
+      // Catch-all so setup/timeout/unexpected exceptions are logged to the
+      // instance log too. Skip the !result.success path (already logged above).
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!msg.startsWith(thrownPrefix)) {
+        data.__errors = data.__errors || [];
+        data.__errors.push({ stepId: def.id, message: msg });
+        logger.error(`Step "${def.id}" (${def.type}) error: ${msg}`);
+      }
+      throw err;
+    }
   }
 }

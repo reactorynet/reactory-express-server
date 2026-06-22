@@ -38,6 +38,23 @@ const NO_INFRA_EXAMPLES = [
   'Saga.yaml',
 ];
 
+// Integration examples — require external services to RUN, but must still parse
+// and pass schema validation so they stay loadable via the module path.
+const INFRA_EXAMPLES = [
+  'ApiCall.yaml',
+  'ServiceInvoke.yaml',
+  'MongoQuery.yaml',
+  'UserLookup.yaml',
+  'GraphQLQuery.yaml',
+  'WaitEvent.yaml',
+  'AgentConversation.yaml',
+  'AgentResearch.yaml',
+  'WeeklyWeatherForecast.yaml',
+  'Postgres.yaml',
+  'Email.yaml',
+  'Search.yaml',
+];
+
 async function runToCompletion(
   persistence: MemoryPersistenceProvider,
   id: string,
@@ -95,8 +112,9 @@ describe('YAML example workflows (engine smoke tests)', () => {
 
   // Guards that examples remain loadable via the module path (loadYamlWorkflow
   // parses with schema validation ON). If this fails, a step type is likely
-  // missing from WorkflowSchema.json's enum.
-  it.each(NO_INFRA_EXAMPLES)('passes schema validation: %s', (file) => {
+  // missing from WorkflowSchema.json's enum. Covers BOTH groups — schema
+  // validation needs no external services.
+  it.each([...NO_INFRA_EXAMPLES, ...INFRA_EXAMPLES])('passes schema validation: %s', (file) => {
     const parser = new YamlFlowParser({ validateSchema: true });
     const parsed = parser.parseFromFile(path.join(EXAMPLES_DIR, file));
     if (!parsed.success) {
@@ -105,5 +123,11 @@ describe('YAML example workflows (engine smoke tests)', () => {
       );
     }
     expect(parsed.success).toBe(true);
+  });
+
+  it('found all example files on disk (incl. integration examples)', () => {
+    for (const file of [...NO_INFRA_EXAMPLES, ...INFRA_EXAMPLES]) {
+      expect(fs.existsSync(path.join(EXAMPLES_DIR, file))).toBe(true);
+    }
   });
 });

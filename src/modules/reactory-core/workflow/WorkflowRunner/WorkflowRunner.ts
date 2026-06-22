@@ -1250,10 +1250,31 @@ export class WorkflowRunner {
   }
 
   /**
-   * Cancel a workflow instance
+   * Cancel (abort/stop) a workflow instance.
+   *
+   * YAML and code workflows execute on the workflow-es host, so we terminate the
+   * running engine instance (sets it to Terminated, stopping further step
+   * execution / any runaway loop). We also notify the in-memory lifecycle manager
+   * for any non-engine/legacy instance it tracks (best-effort).
    */
-  public cancelWorkflowInstance(instanceId: string, reason?: string): void {
-    this.lifecycleManager.cancelWorkflow(instanceId, reason);
+  public async cancelWorkflowInstance(instanceId: string, reason?: string): Promise<void> {
+    let terminated = false;
+    if (this.state.host) {
+      try {
+        terminated = await this.state.host.terminateWorkflow(instanceId);
+        logger.info(`Terminated workflow instance ${instanceId} (engine): ${terminated}`);
+      } catch (err) {
+        logger.warn(
+          `Failed to terminate engine workflow instance ${instanceId}: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    }
+    // Best-effort lifecycle-manager update (no-op / not-found for engine instances).
+    try {
+      this.lifecycleManager.cancelWorkflow(instanceId, reason);
+    } catch {
+      /* engine-only instance not tracked by the lifecycle manager */
+    }
   }
 
   /**

@@ -1,0 +1,94 @@
+# Example: a concrete multi-step workflow.
+#
+# Geocode a city → fetch its 7-day forecast from Open-Meteo (free, no API key) →
+# have an AI agent turn the raw forecast JSON into a friendly markdown forecast →
+# save that markdown to a file.
+#
+# Steps & types:
+#   geocode        (api_call)            city name → latitude/longitude
+#   fetchWeather   (api_call)            Open-Meteo 7-day daily forecast (raw text)
+#   forecast       (agent_conversation)  produce a markdown weekly forecast
+#   saveForecast   (file_operation)      persist the agent's markdown to disk
+#   report         (log)                 confirm where it was saved
+#
+# Requires: outbound network (api.open-meteo.com) AND the reactor AI stack
+# (reactor.ReactorConversationService@1.0.0 + the `reactor` persona).
+#
+# Run (GraphQL): startWorkflow(workflowId: "reactory-examples.WeeklyWeatherForecast@1.0.0",
+#   input: { input: { city: "London" } })
+#
+# Template reference:
+#   ${input.X}                workflow input
+#   ${steps.<id>.<path>}      a prior step's output (nested paths + array indices ok)
+nameSpace: reactory-examples
+name: WeeklyWeatherForecast
+version: 1.0.0
+description: Fetch weather from Open-Meteo, have an AI agent write a weekly forecast, and save it as markdown.
+tags: [example, ai, agent, api, weather, end-to-end]
+inputs:
+  city:
+    type: string
+    required: true
+    description: City to forecast (must be geocodable by Open-Meteo, e.g. "London")
+
+steps:
+  # 1. Resolve the city name to coordinates via Open-Meteo's geocoding API.
+  - id: geocode
+    type: api_call
+    config:
+      url: "https://geocoding-api.open-meteo.com/v1/search?name=${input.city}&count=1&format=json"
+      method: GET
+      headers:
+        Accept: application/json
+
+  # 2. Fetch the 7-day daily forecast for the resolved coordinates. Request the
+  #    body as TEXT so the raw JSON can be handed to the agent verbatim.
+  - id: fetchWeather
+    type: api_call
+    dependsOn: geocode
+    config:
+      url: "https://api.open-meteo.com/v1/forecast?latitude=${steps.geocode.response.body.results.0.latitude}&longitude=${steps.geocode.response.body.results.0.longitude}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&timezone=auto&forecast_days=7"
+      method: GET
+      headers:
+        Accept: application/json
+      response:
+        bodyType: text
+
+  # 3. Turn the raw Open-Meteo JSON into a human-friendly markdown forecast.
+  - id: forecast
+    type: agent_conversation
+    dependsOn: fetchWeather
+    config:
+      personaId: ReactorAIPersona
+      instructions: >-
+        You are a professional meteorologist. You translate raw Open-Meteo daily
+        forecast JSON into a clear, friendly weekly forecast. Convert WMO
+        weather_code values into plain-language conditions. Respond with GitHub-
+        flavoured MARKDOWN only — no preamble, no code fences around the whole doc.
+      message: |-
+        Write a 7-day weather forecast for ${input.city}. Use a level-1 heading,
+        a one-paragraph summary, then a table with columns:
+        Date | Conditions | High °C | Low °C | Precip mm | Max wind km/h.
+
+        Open-Meteo daily forecast JSON:
+
+        ${steps.fetchWeather.response.body}
+      toolApprovalMode: auto
+      maxToolIterations: 5
+
+  # 4. Persist the agent's markdown forecast to disk.
+  - id: saveForecast
+    type: file_operation
+    dependsOn: forecast
+    config:
+      operation: write
+      path: "/tmp/forecast-${input.city}.md"
+      content: "${steps.forecast.content}"
+
+  # 5. Confirm where it landed.
+  - id: report
+    type: log
+    dependsOn: saveForecast
+    config:
+      level: info
+      message: "Saved the ${input.city} weekly forecast to /tmp/forecast-${input.city}.md"

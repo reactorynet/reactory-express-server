@@ -143,6 +143,8 @@ export interface IStepExecutionError {
 export interface IExecutionPointerSummary {
   id: string;
   stepId: number;
+  /** Human-readable step name (the YAML step id for bridged workflows), if set. */
+  stepName?: string | null;
   status: ExecutionPointerStatus;
   statusLabel: string;
   startTime?: Date | null;
@@ -283,6 +285,9 @@ function transformToHistoryItem(instance: WorkflowInstance): IWorkflowHistoryIte
     return {
       id: pointer.id,
       stepId: pointer.stepId,
+      // The YAML→engine bridge sets pointer.stepName to the YAML step id so the
+      // inspector can show meaningful names instead of "Step <n>".
+      stepName: (pointer as any).stepName || null,
       status: mapPointerStatus(pointer.status),
       statusLabel: getExecutionPointerStatusLabel(mapPointerStatus(pointer.status)),
       startTime,
