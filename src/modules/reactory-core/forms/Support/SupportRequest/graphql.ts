@@ -26,7 +26,7 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
       onSuccessMethod: ["notification", "redirect"],
       notification: {
         inAppNotification: true,
-        title: 'support-ticket.notification.onCreated',
+        title: 'reactory:support-ticket.notification.onCreated',
         props: {
           timeOut: 3000,
           canDismiss: true,

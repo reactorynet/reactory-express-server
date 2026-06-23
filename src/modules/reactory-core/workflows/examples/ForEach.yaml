@@ -1,0 +1,26 @@
+# Engine smoke test: iteration (for_each → .foreach).
+# The current item is exposed as the configured itemVariable each iteration.
+nameSpace: reactory-examples
+name: ForEach
+version: 1.0.0
+description: for_each — iterate a list, exposing each element as a variable.
+tags: [example, smoke, control-flow]
+steps:
+  - id: seed
+    type: set_variable
+    config:
+      action: set
+      key: numbers
+      value: [10, 20, 30]
+  - id: loop
+    type: for_each
+    dependsOn: seed
+    config:
+      items: "variables.numbers"
+      itemVariable: currentItem
+      steps:
+        - id: logItem
+          type: log
+          config:
+            message: "processing item ${currentItem}"
+            level: debug

@@ -1,0 +1,28 @@
+# Engine smoke test: concurrent branches (parallel → .parallel().join()).
+# Both branches run; execution rejoins before the workflow completes.
+nameSpace: reactory-examples
+name: Parallel
+version: 1.0.0
+description: parallel — run two branches concurrently and join.
+tags: [example, smoke, control-flow]
+steps:
+  - id: fork
+    type: parallel
+    config:
+      branches:
+        - name: a
+          steps:
+            - id: setA
+              type: set_variable
+              config:
+                action: set
+                key: a
+                value: 1
+        - name: b
+          steps:
+            - id: setB
+              type: set_variable
+              config:
+                action: set
+                key: b
+                value: 2

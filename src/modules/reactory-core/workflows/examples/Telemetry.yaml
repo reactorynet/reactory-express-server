@@ -1,0 +1,15 @@
+# Engine smoke test: telemetry step (emits a metric; degrades gracefully if no telemetry backend).
+nameSpace: reactory-examples
+name: Telemetry
+version: 1.0.0
+description: telemetry — emit a counter metric.
+tags: [example, smoke]
+steps:
+  - id: emit
+    type: telemetry
+    config:
+      metricName: "yamlflow.smoke.runs"
+      metricType: counter
+      value: 1
+      labels:
+        source: smoke-test

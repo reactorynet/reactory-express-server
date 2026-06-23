@@ -1,0 +1,19 @@
+# Engine smoke test: validation step (rule-based validation that passes).
+nameSpace: reactory-examples
+name: Validation
+version: 1.0.0
+description: validation — validate values against rules.
+tags: [example, smoke]
+steps:
+  - id: check
+    type: validation
+    config:
+      stopOnFirstError: false
+      rules:
+        - field: "hello@example.com"
+          type: pattern
+          value: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$"
+          message: "must be a valid email"
+        - field: "present"
+          type: required
+          message: "value is required"

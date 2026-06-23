@@ -1,0 +1,15 @@
+# Step example: postgres (relational SQL via core.ReactorySQLService).
+# Requires: a Postgres connection. Set POSTGRES_URL / REACTORY_POSTGRES_URL, or
+# pass connectionId / connection / connectionString in config.
+# Placeholders: Postgres uses $1..$n.  (mysql uses ?, mssql uses @p0..@pn)
+nameSpace: reactory-examples
+name: Postgres
+version: 1.0.0
+description: postgres — run a parameterized SQL query.
+tags: [example, data, sql]
+steps:
+  - id: query
+    type: postgres
+    config:
+      sql: "SELECT $1::text AS greeting, now() AS at"
+      parameters: ["hello"]

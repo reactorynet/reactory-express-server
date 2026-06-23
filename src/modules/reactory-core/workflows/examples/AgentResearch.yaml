@@ -1,0 +1,73 @@
+# Example: a durable, MULTI-TURN AI agent conversation (agent_conversation step).
+#
+# Demonstrates the agent_conversation step (provided by the reactory-reactor
+# module) used as a real, durable, retryable part of a workflow:
+#   1. Start a conversation with specific instructions + AUTO tool approval, so
+#      the agent can use tools without human prompts (bounded by maxToolIterations).
+#   2. Persist the returned sessionId — feeding it back as `sessionId` on a retry
+#      resumes the SAME conversation instead of starting over (idempotent retries).
+#   3. Send a FOLLOW-UP turn by resuming that session (the agent keeps prior context).
+#   4. Use the agent's text response (`content`) in a downstream step.
+#
+# Requires: the reactor AI stack — `reactor.ReactorConversationService@1.0.0`
+# and a registered persona (here `reactor`).
+#
+# Template reference:
+#   ${input.X}            → workflow input
+#   ${myVar}              → a workflow variable (BARE key, not ${variables.myVar})
+#   ${steps.<id>.<field>} → an output field of a prior step
+nameSpace: reactory-examples
+name: AgentResearch
+version: 1.0.0
+description: Multi-turn, durable AI agent conversation — research a subject then summarise.
+tags: [example, ai, agent, durable, multi-turn]
+inputs:
+  subject:
+    type: string
+    required: true
+    description: The subject for the agent to research
+
+steps:
+  # 1. Ask the agent to research the subject. Tools execute automatically (auto),
+  #    capped by maxToolIterations so this durable step can't loop forever.
+  - id: research
+    type: agent_conversation
+    config:
+      personaId: ReactorAIPersona
+      instructions: >-
+        You are a meticulous research assistant. Use the available tools to
+        gather accurate, current information before answering, and cite sources.
+      message: "Research this subject and gather the key facts: ${input.subject}"
+      toolApprovalMode: auto
+      maxToolIterations: 25
+
+  # 2. Persist the conversation id so an engine retry (or a later turn) resumes
+  #    the SAME conversation. set_variable reads the prior step's output.
+  - id: keepSession
+    type: set_variable
+    dependsOn: research
+    config:
+      action: set
+      key: conversationId
+      source: step_output
+      sourcePath: research.outputs.sessionId
+
+  # 3. Follow-up turn on the SAME conversation (note the resumed sessionId). The
+  #    agent retains the context from the research turn.
+  - id: summarise
+    type: agent_conversation
+    dependsOn: keepSession
+    config:
+      personaId: ReactorAIPersona
+      sessionId: "${conversationId}"
+      message: "Summarise your findings as three concise bullet points."
+      toolApprovalMode: auto
+
+  # 4. Use the agent's response. Here we just log it; in a real workflow you might
+  #    store it (mongo_write), email it (email), or branch on it (condition).
+  - id: report
+    type: log
+    dependsOn: summarise
+    config:
+      level: info
+      message: "Research summary for '${input.subject}':\n${steps.summarise.content}"

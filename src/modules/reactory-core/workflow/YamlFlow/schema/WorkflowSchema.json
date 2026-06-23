@@ -140,9 +140,29 @@
             "start",
             "end",
             "service_invoke",
-            "task"
+            "task",
+            "join",
+            "graphql",
+            "graphql_query",
+            "graphql_mutate",
+            "grpc",
+            "user_activity",
+            "telemetry",
+            "set_variable",
+            "email",
+            "todo",
+            "search",
+            "mongo_query",
+            "mongo_write",
+            "user_lookup",
+            "mysql",
+            "postgres",
+            "mssql",
+            "saga",
+            "wait_event",
+            "agent_conversation"
           ],
-          "description": "Type of step to execute (snake_case convention)"
+          "description": "Type of step to execute (snake_case convention). NOTE: this enum must stay in sync with the step types registered in YamlStepRegistry; the executor's validateWorkflow() is the authoritative check against the live registry (including module-contributed steps)."
         },
         "enabled": {
           "type": "boolean",

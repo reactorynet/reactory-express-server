@@ -39,8 +39,8 @@ echo "Starting Reactory Development Server (OTEL) key: [${1:-reactory}] target: 
 sh ./bin/generate.sh ${1:-reactory} ${2:-local}
 # Start the application with OpenTelemetry configuration
 if [[ "$USE_NODEMON" == "no-nodemon" ]]; then
-  NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx babel-node --extensions '.js,.ts' -r ./src/modules/reactory-telemetry/reactory.inst.otlp.ts ./src/index.ts --presets @babel/env --max_old_space_size=2000000
+  NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} -- npx babel-node --extensions '.js,.ts' -r ./src/modules/reactory-telemetry/reactory.inst.otlp.ts ./src/index.ts --presets @babel/env --max_old_space_size=2000000
 else
-  NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx nodemon -e js,ts,tsx,graphql --exec "babel-node --extensions '.js,.ts' -r ./src/modules/reactory-telemetry/reactory.inst.otlp.ts ./src/index.ts" --presets @babel/env --max_old_space_size=2000000
+  NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} -- npx nodemon -e js,ts,tsx,graphql --exec "babel-node --extensions '.js,.ts' -r ./src/modules/reactory-telemetry/reactory.inst.otlp.ts ./src/index.ts" --presets @babel/env --max_old_space_size=2000000
 fi
  

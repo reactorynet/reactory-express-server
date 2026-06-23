@@ -1,0 +1,12 @@
+# Engine smoke test: delay step (in-step wait).
+nameSpace: reactory-examples
+name: Delay
+version: 1.0.0
+description: delay — pause for a fixed duration.
+tags: [example, smoke]
+steps:
+  - id: wait
+    type: delay
+    config:
+      duration: 200
+      reason: "smoke test pause"

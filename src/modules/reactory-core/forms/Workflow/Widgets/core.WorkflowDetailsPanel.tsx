@@ -39,10 +39,6 @@ interface DetailPanelDependencies {
 const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
   const { reactory, workflow, useCase = 'grid', rowData } = props;
   
-  if (!workflow) {
-    return <div>No workflow data available</div>;
-  }
-
   const { 
     React, 
     Material,
@@ -72,6 +68,10 @@ const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
     'core.WorkflowDesigner',
     'core.WorkflowYamlView',
   ]);
+
+  if (!workflow) {
+    return <div>No workflow data available</div>;
+  }
 
   const { MaterialCore } = Material;
   const {

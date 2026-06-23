@@ -23,6 +23,9 @@ const WorkflowDetails: Reactory.Forms.IReactoryForm = {
   description: 'View detailed information about a specific workflow, including its configuration, steps, and execution history.',
   backButton: true,
   uiSupport: ['material'],
+  widgetMap: [
+    { componentFqn: 'core.WorkflowDetailsPanel@1.0.0', widget: 'WorkflowDetailsPanel' }
+  ],
   modules,
   graphql,
   roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR'] 

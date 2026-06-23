@@ -1,0 +1,27 @@
+# Engine smoke test: looping (while → .while).
+# The body must eventually make the condition false (here it flips a flag once).
+nameSpace: reactory-examples
+name: While
+version: 1.0.0
+description: while — loop while a condition holds, then terminate.
+tags: [example, smoke, control-flow]
+steps:
+  - id: seed
+    type: set_variable
+    config:
+      action: set
+      key: done
+      value: false
+  - id: loop
+    type: while
+    dependsOn: seed
+    config:
+      condition: "variables.done !== true"
+      maxIterations: 10
+      steps:
+        - id: finish
+          type: set_variable
+          config:
+            action: set
+            key: done
+            value: true

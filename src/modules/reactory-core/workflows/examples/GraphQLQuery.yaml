@@ -1,0 +1,13 @@
+# Step example: graphql_query.
+# Requires: the Reactory GraphQL endpoint (resolved from the Reactory context).
+nameSpace: reactory-examples
+name: GraphQLQuery
+version: 1.0.0
+description: graphql_query — execute a GraphQL query.
+tags: [example, graphql]
+steps:
+  - id: query
+    type: graphql_query
+    config:
+      query: "query { apiStatus { when status } }"
+      variables: {}

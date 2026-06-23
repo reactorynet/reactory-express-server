@@ -1,0 +1,15 @@
+# Step example: mongo_query.
+# Requires: a MongoDB connection (the default Reactory mongoose connection).
+nameSpace: reactory-examples
+name: MongoQuery
+version: 1.0.0
+description: mongo_query — read documents from a MongoDB collection.
+tags: [example, data, mongo]
+steps:
+  - id: query
+    type: mongo_query
+    config:
+      collection: users
+      operation: find
+      filter: {}
+      limit: 5

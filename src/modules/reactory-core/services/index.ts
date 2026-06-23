@@ -31,6 +31,7 @@ import { ReactoryCalendarIntegrationService } from './ReactoryCalendarIntegratio
 //custom services to be expressed here
 import GeneratorServices from './generators';
 import SecurityService from './SecurityService';
+import ReactorySQLService from './ReactorySQLService';
 
 
 const services = [
@@ -56,6 +57,7 @@ const services = [
   ReactoryNLPService,
   ReactoryModelRegistry,
   ReactorySearchService,
+  ReactorySQLService.reactory,
   RedisService,
   RateLimiterService,
   ReactoryAuditServiceDefinition,

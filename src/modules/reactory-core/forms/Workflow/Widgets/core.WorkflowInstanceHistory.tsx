@@ -91,6 +91,10 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
   const [deleteTargetId, setDeleteTargetId] = React.useState(null);
   const [deleting, setDeleting] = React.useState(false);
 
+  // Stop/abort confirmation dialog state
+  const [stopTargetId, setStopTargetId] = React.useState(null);
+  const [stopping, setStopping] = React.useState(false);
+
   // Instance inspector modal state
   const [inspectorInstanceId, setInspectorInstanceId] = React.useState(null);
   const [inspectorOpen, setInspectorOpen] = React.useState(false);
@@ -440,6 +444,41 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
     }
   };
 
+  // Stop (abort/terminate) a running workflow instance via the cancelWorkflowInstance
+  // mutation. This terminates the durable engine instance — it cannot resume afterwards.
+  const handleStopConfirm = async () => {
+    if (!stopTargetId) return;
+    setStopping(true);
+    try {
+      const result = await reactory.graphqlMutation(`
+        mutation CancelWorkflowInstance($instanceId: String!) {
+          cancelWorkflowInstance(instanceId: $instanceId) {
+            success
+            message
+          }
+        }
+      `, { instanceId: stopTargetId });
+
+      const operationResult = (result?.data as any)?.cancelWorkflowInstance;
+      if (operationResult?.success) {
+        reactory.createNotification(operationResult?.message || 'Workflow instance stopped', { type: 'success' });
+        setLocalRefreshKey((prev: number) => prev + 1);
+      } else {
+        reactory.createNotification(operationResult?.message || 'Failed to stop workflow instance', { type: 'error' });
+      }
+    } catch (error: any) {
+      reactory.log('Error stopping workflow instance', error, 'error');
+      reactory.createNotification(`Error: ${error.message}`, { type: 'error' });
+    } finally {
+      setStopping(false);
+      setStopTargetId(null);
+    }
+  };
+
+  // An instance can be stopped only while it is non-terminal:
+  // 0 PENDING, 1 RUNNING, 4 SUSPENDED (not 2 COMPLETE / 3 TERMINATED).
+  const isStoppableStatus = (status: any) => [0, 1, 4].includes(Number(status));
+
   // Count running instances for badge
   const runningCount = activeInstances.filter((i: any) => 
     i.status === 'RUNNING' || i.status === 'PENDING'
@@ -606,17 +645,33 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
-                  <Tooltip title="View details">
-                    <IconButton 
-                      size="small"
-                      onClick={(e: any) => {
-                        e.stopPropagation();
-                        viewInstance(instance.id);
-                      }}
-                    >
-                      <Icon sx={{ fontSize: 18 }}>visibility</Icon>
-                    </IconButton>
-                  </Tooltip>
+                  <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                    <Tooltip title="View details">
+                      <IconButton
+                        size="small"
+                        onClick={(e: any) => {
+                          e.stopPropagation();
+                          viewInstance(instance.id);
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 18 }}>visibility</Icon>
+                      </IconButton>
+                    </Tooltip>
+                    {isStoppableStatus(instance.status) && (
+                      <Tooltip title="Stop / abort this running instance">
+                        <IconButton
+                          size="small"
+                          color="warning"
+                          onClick={(e: any) => {
+                            e.stopPropagation();
+                            setStopTargetId(instance.id);
+                          }}
+                        >
+                          <Icon sx={{ fontSize: 18 }}>stop_circle</Icon>
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
@@ -781,8 +836,22 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                             <Icon sx={{ fontSize: 18 }}>visibility</Icon>
                           </IconButton>
                         </Tooltip>
+                        {isStoppableStatus(execution.status) && (
+                          <Tooltip title="Stop / abort this running instance">
+                            <IconButton
+                              size="small"
+                              color="warning"
+                              onClick={(e: any) => {
+                                e.stopPropagation();
+                                setStopTargetId(execution.id);
+                              }}
+                            >
+                              <Icon sx={{ fontSize: 18 }}>stop_circle</Icon>
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         <Tooltip title="Delete">
-                          <IconButton 
+                          <IconButton
                             size="small"
                             color="error"
                             onClick={(e: any) => {
@@ -948,6 +1017,39 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
             startIcon={deleting ? <CircularProgress size={16} /> : <Icon>delete</Icon>}
           >
             {deleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Stop / Abort Confirmation Dialog */}
+      <Dialog
+        open={!!stopTargetId}
+        onClose={() => !stopping && setStopTargetId(null)}
+        aria-labelledby="stop-dialog-title"
+        aria-describedby="stop-dialog-description"
+      >
+        <DialogTitle id="stop-dialog-title">
+          Stop workflow instance?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="stop-dialog-description">
+            This will terminate the running workflow instance. The instance cannot be
+            resumed afterwards — any in-progress steps will be abandoned. This does not
+            delete the instance history.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStopTargetId(null)} disabled={stopping}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleStopConfirm}
+            color="warning"
+            variant="contained"
+            disabled={stopping}
+            startIcon={stopping ? <CircularProgress size={16} /> : <Icon>stop_circle</Icon>}
+          >
+            {stopping ? 'Stopping...' : 'Stop instance'}
           </Button>
         </DialogActions>
       </Dialog>

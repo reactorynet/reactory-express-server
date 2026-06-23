@@ -1,0 +1,27 @@
+# Step example: wait_event (durable suspend/resume).
+# The workflow SUSPENDS at wait_event until a matching event is published:
+#   host.publishEvent("approval", "<requestId>", { approved: true }, new Date())
+# The event payload is captured into the `approval` variable.
+nameSpace: reactory-examples
+name: WaitEvent
+version: 1.0.0
+description: wait_event — pause until an external event arrives, then continue.
+tags: [example, durable, events]
+inputs:
+  requestId:
+    type: string
+    required: true
+    description: Correlation key the published event must match
+steps:
+  - id: awaitApproval
+    type: wait_event
+    config:
+      eventName: approval
+      eventKey: "input.requestId"
+      outputVariable: approval
+  - id: logResult
+    type: log
+    dependsOn: awaitApproval
+    config:
+      message: "approval received: ${approval}"
+      level: info

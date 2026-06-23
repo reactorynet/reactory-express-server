@@ -42,6 +42,7 @@ const QUERY = `
       executionPointers {
         id
         stepId
+        stepName
         status
         statusLabel
         startTime
@@ -114,6 +115,12 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
     TableContainer,
     Tabs,
     Tab,
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
   } = MaterialCore;
 
   const theme = reactory.muiTheme;
@@ -137,6 +144,11 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
   const [logLoading, setLogLoading] = React.useState(false);
   const [logError, setLogError] = React.useState<string | null>(null);
   const [logFetched, setLogFetched] = React.useState(false);
+
+  // ---- Stop / abort state ----
+  const [stopConfirmOpen, setStopConfirmOpen] = React.useState(false);
+  const [stopping, setStopping] = React.useState(false);
+  const [refreshKey, setRefreshKey] = React.useState(0);
 
   // ---- Fetch main instance ----
   React.useEffect(() => {
@@ -171,7 +183,7 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
       fetchInstance();
     }
     return () => { cancelled = true; };
-  }, [instanceId]);
+  }, [instanceId, refreshKey]);
 
   // ---- Fetch log when Logs tab is first activated ----
   React.useEffect(() => {
@@ -334,6 +346,39 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
     setLogError(null);
   };
 
+  // An instance can be stopped only while it is non-terminal:
+  // 0 PENDING, 1 RUNNING, 4 SUSPENDED (not 2 COMPLETE / 3 TERMINATED).
+  const isStoppable = [0, 1, 4].includes(Number(inst.status));
+
+  // Stop (abort/terminate) this running instance via cancelWorkflowInstance.
+  const handleStopConfirm = async () => {
+    setStopping(true);
+    try {
+      const result = await reactory.graphqlMutation(`
+        mutation CancelWorkflowInstance($instanceId: String!) {
+          cancelWorkflowInstance(instanceId: $instanceId) {
+            success
+            message
+          }
+        }
+      `, { instanceId });
+
+      const operationResult = (result?.data as any)?.cancelWorkflowInstance;
+      if (operationResult?.success) {
+        reactory.createNotification(operationResult?.message || 'Workflow instance stopped', { type: 'success' });
+        setRefreshKey((prev: number) => prev + 1);
+      } else {
+        reactory.createNotification(operationResult?.message || 'Failed to stop workflow instance', { type: 'error' });
+      }
+    } catch (err: any) {
+      reactory.log(`Error stopping workflow instance: ${err?.message}`, { err }, 'error');
+      reactory.createNotification(`Error: ${err?.message}`, { type: 'error' });
+    } finally {
+      setStopping(false);
+      setStopConfirmOpen(false);
+    }
+  };
+
   // ---- Tab panel helper ----
   const TabPanel = ({ index, children }: { index: number; children: any }) => (
     <Box role="tabpanel" hidden={activeTab !== index} sx={{ flex: 1, overflow: 'auto' }}>
@@ -364,11 +409,27 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
             </Typography>
           )}
         </Box>
-        {onClose && (
-          <IconButton onClick={onClose} size="small" sx={{ mt: -0.5 }}>
-            <Icon>close</Icon>
-          </IconButton>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {isStoppable && (
+            <Tooltip title="Stop / abort this running instance">
+              <Button
+                onClick={() => setStopConfirmOpen(true)}
+                color="warning"
+                size="small"
+                variant="outlined"
+                startIcon={<Icon sx={{ fontSize: 18 }}>stop_circle</Icon>}
+                sx={{ mt: -0.5 }}
+              >
+                Stop
+              </Button>
+            </Tooltip>
+          )}
+          {onClose && (
+            <IconButton onClick={onClose} size="small" sx={{ mt: -0.5 }}>
+              <Icon>close</Icon>
+            </IconButton>
+          )}
+        </Box>
       </Box>
 
       {/* ========== Compact Tabs ========== */}
@@ -477,7 +538,7 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          Step {pointer.stepId}
+                          {pointer.stepName || `Step ${pointer.stepId}`}
                         </Typography>
                         <Chip
                           label={pointer.statusLabel || stepStatus.label}
@@ -754,6 +815,39 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
           )}
         </Box>
       </TabPanel>
+
+      {/* ========== Stop / Abort Confirmation Dialog ========== */}
+      <Dialog
+        open={stopConfirmOpen}
+        onClose={() => !stopping && setStopConfirmOpen(false)}
+        aria-labelledby="inspector-stop-dialog-title"
+        aria-describedby="inspector-stop-dialog-description"
+      >
+        <DialogTitle id="inspector-stop-dialog-title">
+          Stop workflow instance?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="inspector-stop-dialog-description">
+            This will terminate the running workflow instance. The instance cannot be
+            resumed afterwards — any in-progress steps will be abandoned. This does not
+            delete the instance history.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStopConfirmOpen(false)} disabled={stopping}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleStopConfirm}
+            color="warning"
+            variant="contained"
+            disabled={stopping}
+            startIcon={stopping ? <CircularProgress size={16} /> : <Icon>stop_circle</Icon>}
+          >
+            {stopping ? 'Stopping...' : 'Stop instance'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

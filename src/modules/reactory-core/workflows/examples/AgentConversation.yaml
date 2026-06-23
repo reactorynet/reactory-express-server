@@ -1,0 +1,35 @@
+# Step example: agent_conversation (reactory-reactor module step).
+# Requires: the reactor AI stack (reactor.ReactorConversationService + a persona).
+#
+# Runs a durable conversation with an AI agent: creates a conversation with
+# specific instructions and auto tool approval, sends a message, and captures the
+# response. The returned sessionId is persisted to a variable so that an engine
+# retry resumes the SAME conversation instead of starting a new one (idempotent).
+nameSpace: reactory-examples
+name: AgentConversation
+version: 1.0.0
+description: agent_conversation — execute an AI agent turn as a durable workflow step.
+tags: [example, ai, durable]
+inputs:
+  topic:
+    type: string
+    required: false
+    default: "the Reactory workflow engine"
+    description: What to ask the agent about
+steps:
+  - id: ask
+    type: agent_conversation
+    config:
+      personaId: ReactorAIPersona
+      instructions: "You are a concise technical assistant. Answer in two sentences."
+      message: "Give me a short overview of ${input.topic}."
+      toolApprovalMode: auto
+      maxToolIterations: 10
+  - id: rememberSession
+    type: set_variable
+    dependsOn: ask
+    config:
+      action: set
+      key: conversationId
+      source: step_output
+      sourcePath: ask.outputs.sessionId

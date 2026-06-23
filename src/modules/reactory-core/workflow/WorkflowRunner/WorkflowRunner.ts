@@ -1,17 +1,20 @@
 import {
   configureWorkflow,
-  ConsoleLogger,
   IPersistenceProvider,
   ILogger,
+  LogLevel,
+  LogContext,
   WorkflowHost,
+  IWorkflowHost,
 } from '@reactorynet/workflow-es';
-import { MongoDBPersistence } from 'workflow-es-mongodb';
+import { MongoDBPersistence } from '@reactorynet/workflow-es-mongodb';
+import { RedisQueueProvider, RedisLockManager } from '@reactorynet/workflow-es-redis';
+import Redis from 'ioredis';
 import { isArray } from 'lodash';
 import moment from 'moment';
 import amq from '../../../../amq';
 import reactoryModules from '../../..';
 import logger from '../../../../logging';
-import mongoose from 'mongoose';
 import { IScheduleConfig, WorkflowScheduler } from '../Scheduler/Scheduler';
 import { ErrorHandler, IErrorContext, ErrorCategory, ErrorSeverity, IWorkflowErrorStats } from '../ErrorHandler/ErrorHandler';
 import {
@@ -20,21 +23,51 @@ import {
   WorkflowPriority,
   WorkflowESStatus,
   ExecutionPointerStatus,
-  WorkflowInstanceModel,
   type IWorkflowInstance,
   type IWorkflowDependency,
   type IWorkflowLifecycleStats
 } from '../LifecycleManager/LifecycleManager';
 import { ConfigurationManager, IConfigurationStats, type IWorkflowConfig } from '../ConfigurationManager/ConfigurationManager';
 import { ISecurityStats, SecurityManager, type IInputValidationResult } from '../SecurityManager/SecurityManager';
-import { YamlWorkflowExecutor } from '../YamlFlow/execution/YamlWorkflowExecutor';
 import { YamlStepRegistry } from '../YamlFlow/steps/registry/YamlStepRegistry';
 import { YamlFlowParser } from '../YamlFlow/YamlFlowParser';
 import type { YamlWorkflowDefinition } from '../YamlFlow/types/WorkflowDefinition';
+import {
+  buildYamlWorkflowClass,
+  engineWorkflowId,
+  engineWorkflowMajorVersion,
+} from '../YamlFlow/YamlFlowBuilder';
+import { configureYamlFlowRuntime } from '../YamlFlow/execution/YamlFlowRuntime';
+import { finalizeInstanceIfTerminal } from '../YamlFlow/execution/YamlStepBody';
 
 const {
   MONGOOSE,
+  // Persistence backend for the workflow-es host:
+  //   'mongo'    — MongoDBPersistence (requires MONGOOSE env var)
+  //   'sqlite'   — SqlitePersistence  (requires WORKFLOW_SQLITE_PATH or defaults under APP_DATA_ROOT)
+  //   'postgres' — PostgresPersistence (requires WORKFLOW_POSTGRES_URL or falls back to REACTORY_POSTGRES_* / POSTGRES_*)
+  //   'memory'   — in-process only, no durability (default when no provider matched)
+  WORKFLOW_PERSISTENCE_PROVIDER = 'mongo',
+  // SQLite: absolute path to the database file.
+  // Defaults to $APP_DATA_ROOT/workflows/workflow.db when APP_DATA_ROOT is set.
+  WORKFLOW_SQLITE_PATH,
+  APP_DATA_ROOT,
+  // Postgres: connection URL. Falls back to REACTORY_POSTGRES_URL then POSTGRES_URL.
+  WORKFLOW_POSTGRES_URL,
+  REACTORY_POSTGRES_URL,
+  POSTGRES_URL,
+  // When 'true', wire a distributed Redis lock + reliable queue (REACTORY_REDIS_*)
+  // so the host is safe to run across multiple instances. When unset/false the
+  // host uses the in-process single-node lock/queue (single-instance only) and
+  // explicitly opts past the engine's multi-node safety guard.
+  WORKFLOW_CLUSTER_MODE,
+  REACTORY_REDIS_HOST = 'localhost',
+  REACTORY_REDIS_PORT = '6379',
+  REACTORY_REDIS_PASSWORD,
+  REACTORY_REDIS_DB = '0',
 } = process.env;
+
+const WORKFLOW_CLUSTER_ENABLED = String(WORKFLOW_CLUSTER_MODE).toLowerCase() === 'true';
 
 /**
  * Indicates the source type of a workflow definition.
@@ -104,16 +137,32 @@ const safeCallback = (cb: ((params: any) => void) | undefined, params: any): voi
   if (typeof cb === 'function') cb(params);
 };
 
+/**
+ * Adapter from workflow-es' structured ILogger (M4) onto the Reactory winston
+ * logger. The engine calls `log(level, message, context)`; we route by level and
+ * forward the correlation context (workflowId/stepId/tenantId/err/...) as meta.
+ */
 class Logger implements ILogger {
-  error(message?: any, ...optionalParams: any[]): void {
-    logger.error(message, optionalParams);
+  log(level: LogLevel, message: string, context?: LogContext): void {
+    const meta = context ?? {};
+    switch (level) {
+      case LogLevel.Error:
+        logger.error(message, meta);
+        break;
+      case LogLevel.Warn:
+        logger.warn(message, meta);
+        break;
+      case LogLevel.Debug:
+        logger.debug(message, meta);
+        break;
+      case LogLevel.Silent:
+        break;
+      case LogLevel.Info:
+      default:
+        logger.info(message, meta);
+        break;
+    }
   }
-  info(message?: any, ...optionalParams: any[]): void {
-    logger.info(message, optionalParams);
-  }
-  log(message?: any, ...optionalParams: any[]): void {
-    logger.debug(message, optionalParams);
-  } 
 }
 
 const getDefaultWorkflows = (): IWorkflow[] => {
@@ -141,7 +190,8 @@ let instance: WorkflowRunner | null = null;
  */
 export class WorkflowRunner {  
   private persistence: IPersistenceProvider | null = null;
-  private state: IWorkflowState;  
+  private redis: Redis | null = null;
+  private state: IWorkflowState;
   private _isInitialized: boolean = false;  
   private _isStarting: boolean = false;
   private scheduler: WorkflowScheduler | null = null;
@@ -151,6 +201,12 @@ export class WorkflowRunner {
   private readonly securityManager: SecurityManager;   
   private readonly context: Reactory.Server.IReactoryContext;
   private stepRegistry: YamlStepRegistry;
+  /** Engine ids of YAML workflows already registered with the host (idempotency guard). */
+  private readonly registeredYamlIds: Set<string> = new Set();
+  /** Engine instance ids of running YAML workflows awaiting log finalization. */
+  private readonly yamlFinalizeWatch: Set<string> = new Set();
+  /** Shared interval that finalizes instance logs once a YAML run reaches a terminal state. */
+  private yamlFinalizeTimer: NodeJS.Timeout | null = null;
 
   constructor(props: IWorkflowRunnerProps, context: Reactory.Server.IReactoryContext) {
     this.state = {
@@ -223,6 +279,10 @@ export class WorkflowRunner {
       // Discover and register workflow steps from all enabled modules
       this.discoverModuleSteps();
 
+      // Share the registry + system context with the YAML→engine bridge so YAML
+      // steps can resolve services and rehydrate a context at run time.
+      configureYamlFlowRuntime({ registry: this.stepRegistry, systemContext: this.context });
+
       // Discover YAML workflows persisted in the catalog directory that are
       // not yet registered (e.g. workflows created via the designer and saved
       // to disk but not declared in a module definition).
@@ -239,9 +299,11 @@ export class WorkflowRunner {
       await this.scheduler.initialize();
       
 
-      // Initialize lifecycle manager
+      // Initialize lifecycle manager — pass the active persistence provider so
+      // history reads / stats / deletes go through the provider (M9 Phase 2).
       await this.lifecycleManager.initialize({
         host,
+        persistence: this.persistence,
       });
 
       // Initialize configuration manager
@@ -283,7 +345,9 @@ export class WorkflowRunner {
           this.stepRegistry.registerStep(
             stepProvider.stepType,
             stepProvider.constructor as any,
-            stepProvider.options || {}
+            stepProvider.options || {},
+            (stepProvider as any).definition,
+            'module'
           );
           registeredCount++;
           logger.debug(
@@ -399,7 +463,9 @@ export class WorkflowRunner {
         return false;
       }
       if (workflow.workflowType === 'YAML') {
-        return !!(workflow.props);
+        // YAML workflows are valid if they carry a parsed definition (props) or
+        // a source file (location) we can lazily parse and bridge to the engine.
+        return !!(workflow.props || workflow.location);
       }
       return !!(workflow.component);
     } catch (error) {
@@ -418,8 +484,13 @@ export class WorkflowRunner {
       }
 
       if (workflow.workflowType === 'YAML') {
-        // YAML workflows don't register with workflow-es host
+        // YAML workflows are bridged into the workflow-es host as generated
+        // workflow classes (durable engine execution). Registration is lazy-safe:
+        // if the host isn't up yet, start() will register on host start.
         logger.debug(`Adding YAML workflow ${workflow.nameSpace}.${workflow.name}@${workflow.version} to registry`);
+        if (this.state.host) {
+          this.registerYamlWorkflowOnHost(workflow, this.state.host);
+        }
         this.setState({ workflows: [...this.state.workflows, workflow] });
       } else if (this.state.host) {
         logger.debug('Adding workflow to host', workflow);
@@ -435,17 +506,82 @@ export class WorkflowRunner {
   }
 
   /**
-   * Get persistence provider
+   * Get persistence provider.
+   *
+   * Reads WORKFLOW_PERSISTENCE_PROVIDER (mongo | sqlite | postgres | memory).
+   *
+   * mongo    — MongoDBPersistence; requires MONGOOSE connection string.
+   * sqlite   — SqlitePersistence; uses WORKFLOW_SQLITE_PATH or
+   *             $APP_DATA_ROOT/workflows/workflow.db.
+   * postgres — PostgresPersistence; uses WORKFLOW_POSTGRES_URL,
+   *             REACTORY_POSTGRES_URL, or POSTGRES_URL (first non-empty wins).
+   * memory   — returns null (no durability; history unavailable).
    */
   private async getPersistenceProvider(): Promise<IPersistenceProvider | null> {
     try {
-      if (MONGOOSE) {
-        logger.debug('Using Mongoose for Workflow Persistence');
-        const mongoPersistence = new MongoDBPersistence(MONGOOSE);      
-        //await mongoPersistence.connect();
+      const provider = (WORKFLOW_PERSISTENCE_PROVIDER || 'mongo').toLowerCase();
+
+      // ── Mongo ──────────────────────────────────────────────────────────────
+      if (provider === 'mongo') {
+        if (!MONGOOSE) {
+          logger.warn(
+            'WORKFLOW_PERSISTENCE_PROVIDER=mongo but MONGOOSE is not set — falling back to in-memory ' +
+            '(workflow state will NOT survive a restart). Set MONGOOSE or WORKFLOW_PERSISTENCE_PROVIDER=memory.'
+          );
+          return null;
+        }
+        logger.debug('Using MongoDB for Workflow Persistence');
+        const mongoPersistence = new MongoDBPersistence(MONGOOSE);
+        await mongoPersistence.connect;
         return mongoPersistence;
       }
-      logger.debug('Using In Memory for Workflow Persistence');
+
+      // ── SQLite ─────────────────────────────────────────────────────────────
+      if (provider === 'sqlite') {
+        const { SqlitePersistence } = await import('@reactorynet/workflow-es-sqlite');
+        let dbPath = WORKFLOW_SQLITE_PATH;
+        if (!dbPath) {
+          if (APP_DATA_ROOT) {
+            const path = await import('path');
+            const fs = await import('fs');
+            const dir = path.join(APP_DATA_ROOT, 'workflows');
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir, { recursive: true });
+            }
+            dbPath = path.join(dir, 'workflow.db');
+          } else {
+            logger.warn(
+              'WORKFLOW_PERSISTENCE_PROVIDER=sqlite but neither WORKFLOW_SQLITE_PATH nor APP_DATA_ROOT ' +
+              'is set — falling back to in-memory SQLite (:memory:). Set WORKFLOW_SQLITE_PATH for durability.'
+            );
+            dbPath = ':memory:';
+          }
+        }
+        logger.debug(`Using SQLite for Workflow Persistence: ${dbPath}`);
+        const sqlitePersistence = new SqlitePersistence(dbPath);
+        await sqlitePersistence.connect;
+        return sqlitePersistence;
+      }
+
+      // ── Postgres ───────────────────────────────────────────────────────────
+      if (provider === 'postgres') {
+        const connectionString = WORKFLOW_POSTGRES_URL || REACTORY_POSTGRES_URL || POSTGRES_URL;
+        if (!connectionString) {
+          logger.warn(
+            'WORKFLOW_PERSISTENCE_PROVIDER=postgres but no connection URL found. ' +
+            'Set WORKFLOW_POSTGRES_URL (or REACTORY_POSTGRES_URL / POSTGRES_URL) — falling back to in-memory.'
+          );
+          return null;
+        }
+        const { PostgresPersistence } = await import('@reactorynet/workflow-es-postgres');
+        logger.debug('Using PostgreSQL for Workflow Persistence');
+        const postgresPersistence = new PostgresPersistence(connectionString);
+        await postgresPersistence.connect;
+        return postgresPersistence;
+      }
+
+      // ── Memory / default ───────────────────────────────────────────────────
+      logger.debug('Using in-memory Workflow Persistence (development/test only)');
       return null;
     } catch (error) {
       logger.error('Failed to get persistence provider', error);
@@ -479,12 +615,36 @@ export class WorkflowRunner {
         this.scheduler = null;
       }
 
-      if (this.persistence) {
-        if (MONGOOSE && this.persistence instanceof MongoDBPersistence) {
-          await this.persistence.close();
-        }
-        this.persistence = null;      
+      // Stop the YAML log-finalize sweeper
+      if (this.yamlFinalizeTimer) {
+        clearInterval(this.yamlFinalizeTimer);
+        this.yamlFinalizeTimer = null;
       }
+      this.yamlFinalizeWatch.clear();
+
+      // Gracefully drain the workflow host: stops intake on all workers, awaits
+      // in-flight executions up to gracefulShutdownTimeoutMs, and removes the
+      // engine's process signal handlers. Idempotent.
+      if (this.state.host) {
+        await this.state.host.stop();
+        this.setState({ host: null });
+      }
+
+      if (this.persistence) {
+        // MongoDBPersistence exposes a close() method; other providers (SQLite,
+        // Postgres, memory) do not, so we only call it when present.
+        if (typeof (this.persistence as any).close === 'function') {
+          await (this.persistence as any).close();
+        }
+        this.persistence = null;
+      }
+
+      // Close the Redis connection used for the distributed lock/queue (cluster mode).
+      if (this.redis) {
+        await this.redis.quit();
+        this.redis = null;
+      }
+
       this._isInitialized = false;
       logger.info('WorkflowRunner stopped');
     } catch (error) {
@@ -501,21 +661,42 @@ export class WorkflowRunner {
       const config = configureWorkflow();
       const { workflows } = this.state;
       config.useLogger(new Logger());
-      
+
       this.persistence = await this.getPersistenceProvider();
       if (this.persistence) {
         config.usePersistence(this.persistence);
       }
-      
+
+      // Lock + queue topology. The engine refuses to pair durable persistence with the
+      // in-process single-node lock/queue unless we opt in, because a second instance
+      // would double-execute workflows. WORKFLOW_CLUSTER_MODE=true wires a distributed
+      // Redis lock + reliable queue (safe to run many instances); otherwise we stay
+      // single-node and explicitly allow it (single-instance deployments).
+      if (WORKFLOW_CLUSTER_ENABLED) {
+        logger.info('Workflow host: cluster mode — using Redis distributed lock + queue');
+        this.redis = new Redis({
+          host: REACTORY_REDIS_HOST,
+          port: parseInt(REACTORY_REDIS_PORT, 10),
+          password: REACTORY_REDIS_PASSWORD,
+          db: parseInt(REACTORY_REDIS_DB, 10),
+        });
+        config.useQueueManager(new RedisQueueProvider(this.redis));
+        config.useLockManager(new RedisLockManager(this.redis));
+      } else {
+        logger.info('Workflow host: single-node mode (in-process lock + queue). Set WORKFLOW_CLUSTER_MODE=true for multi-instance.');
+        config.allowSingleNodeProviders(true);
+      }
+
       const host = config.getHost();
       const autoStart: IWorkflow[] = [];
       
       for (const workflow of workflows) {
         try {
           if (workflow.workflowType === 'YAML') {
-            // YAML workflows are executed via YamlWorkflowExecutor, not the workflow-es host.
-            // They don't have a component class to register.
-            logger.debug(`Registered YAML workflow ${workflow.nameSpace}.${workflow.name}@${workflow.version} (skipping workflow-es host)`);
+            // YAML workflows are bridged to the workflow-es host via a generated
+            // workflow class (see YamlFlowBuilder), so they run through the same
+            // durable engine as code workflows.
+            this.registerYamlWorkflowOnHost(workflow, host);
           } else {
             logger.debug(`Registering workflow ${workflow.nameSpace}.${workflow.name}@${workflow.version} in host`, { __type: typeof workflow });
             host.registerWorkflow(workflow.component);
@@ -549,7 +730,7 @@ export class WorkflowRunner {
     });
 
     if (workflow?.workflowType === 'YAML') {
-      return this.executeYamlWorkflow(workflow, data, context);
+      return this.startYamlWorkflow(workflow, data, context);
     }
 
     const errorContext: IErrorContext = {
@@ -597,15 +778,10 @@ export class WorkflowRunner {
   }
 
   /**
-   * Execute a YAML workflow via YamlWorkflowExecutor with full lifecycle tracking.
-   * Creates a lifecycle instance, runs the YAML definition through the executor,
-   * and updates the instance status on completion or failure.
+   * Resolve the parsed YAML definition for a workflow, lazily parsing it from
+   * disk (workflow.location) when props has no steps, and caching it back.
    */
-  private async executeYamlWorkflow(
-    workflow: IWorkflow,
-    data: any,
-    context?: Reactory.Server.IReactoryContext
-  ): Promise<string> {
+  private resolveYamlDefinition(workflow: IWorkflow): YamlWorkflowDefinition {
     const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
     let definition = workflow.props as YamlWorkflowDefinition;
 
@@ -625,128 +801,151 @@ export class WorkflowRunner {
     }
 
     if (!definition || !definition.steps) {
-      throw new Error(`YAML workflow ${workflowId} has no valid definition (missing steps). Check that 'props' contains the parsed YAML definition.`);
+      throw new Error(
+        `YAML workflow ${workflowId} has no valid definition (missing steps). Check that 'props' contains the parsed YAML definition.`
+      );
     }
+    return definition;
+  }
 
-    // Create a lifecycle instance so the execution is tracked
-    const instance = this.lifecycleManager.createWorkflowInstance(
-      workflowId,
-      workflow.version,
-      WorkflowPriority.NORMAL,
-      [],
-      { workflowType: 'YAML', input: data }
-    );
+  /**
+   * Build the generated workflow-es class for a YAML workflow and register it
+   * with the host. Idempotent — safe to call from both host start and dynamic
+   * (post-start) registration.
+   */
+  private registerYamlWorkflowOnHost(workflow: IWorkflow, host: IWorkflowHost): void {
+    const definition = this.resolveYamlDefinition(workflow);
+    const engineId = engineWorkflowId(definition);
+    if (this.registeredYamlIds.has(engineId)) {
+      return;
+    }
+    const WorkflowClass = buildYamlWorkflowClass(definition);
+    host.registerWorkflow(WorkflowClass as any);
+    this.registeredYamlIds.add(engineId);
+    logger.debug(`Bridged YAML workflow ${engineId} onto the workflow-es host`);
+  }
 
-    // Transition to RUNNING
-    await this.lifecycleManager.startWorkflow(instance.id);
+  /**
+   * Build the initial engine workflow data (TData) for a YAML run. Everything
+   * here must be JSON-serializable: identity is carried so a Reactory context
+   * can be rebuilt per step at run time (durable-safe).
+   */
+  private buildYamlWorkflowData(
+    definition: YamlWorkflowDefinition,
+    input: any,
+    ctx: Reactory.Server.IReactoryContext,
+  ): Record<string, any> {
+    return {
+      inputs: input || {},
+      variables: {},
+      stepResults: {},
+      env: {},
+      outputs: {},
+      __identity: {
+        userEmail: (ctx?.user as any)?.email,
+        partnerKey: (ctx?.partner as any)?.key,
+      },
+      __workflow: {
+        id: engineWorkflowId(definition),
+        instanceId: '',
+        nameSpace: definition.nameSpace,
+        name: definition.name,
+        version: definition.version,
+      },
+    };
+  }
 
-    const reactoryCtx = context || this.context;
-    const executor = new YamlWorkflowExecutor(this.stepRegistry, reactoryCtx);
+  /**
+   * Start a YAML workflow through the workflow-es durable engine.
+   *
+   * Replaces the former standalone YamlWorkflowExecutor path: the YAML
+   * definition is bridged to a generated workflow class (see YamlFlowBuilder),
+   * so control flow, persistence, replay and scheduling are handled natively by
+   * the engine — exactly like code workflows. Returns the engine instance id.
+   */
+  private async startYamlWorkflow(
+    workflow: IWorkflow,
+    data: any,
+    context?: Reactory.Server.IReactoryContext,
+  ): Promise<string> {
+    if (!this.state.host) {
+      throw new Error('Workflow host not initialized');
+    }
+    const definition = this.resolveYamlDefinition(workflow);
+    this.registerYamlWorkflowOnHost(workflow, this.state.host);
 
-    try {
-      const result = await executor.executeWorkflow(definition, {
-        inputs: data,
-        reactoryContext: reactoryCtx,
-      });
+    const engineId = engineWorkflowId(definition);
+    const version = engineWorkflowMajorVersion(definition.version);
+    const ctx = context || this.context;
+    const tenantId = (ctx?.partner as any)?.key || undefined;
 
-      if (result.success) {
-        this.lifecycleManager.completeWorkflow(instance.id, result.outputs);
-        logger.info(`YAML workflow ${workflowId} completed successfully (instance: ${instance.id})`);
-      } else {
-        // Aggregate all errors for better diagnostics
-        const allErrors = result.errors || (result.error ? [result.error] : []);
-        const errorSummary = allErrors.map(
-          (e: any) => `[${e.stepId || 'workflow'}] ${e.message}`
-        ).join('\n  ');
-        const error = new Error(
-          `YAML workflow ${workflowId} failed:\n  ${errorSummary}`
-        );
-        this.lifecycleManager.failWorkflow(instance.id, error);
-        logger.error(`YAML workflow ${workflowId} failed (instance: ${instance.id}):\n  ${errorSummary}`);
-        if (result.executedSteps) {
-          const failedSteps = result.executedSteps.filter((s: any) => !s.success);
-          for (const fs of failedSteps) {
-            logger.error(`  Step '${fs.stepId}' (${fs.stepType}): ${fs.error?.message || 'unknown error'}`);
-          }
-        }
+    // The GraphQL startWorkflow mutation wraps the caller payload inside
+    // WorkflowExecutionInput.input. Unwrap it so a workflow's `${input.X}`
+    // references resolve naturally. Direct/AMQ callers pass the payload as-is.
+    const payload =
+      data && typeof data === 'object' && !Array.isArray(data) && data.input !== undefined
+        ? data.input
+        : data;
+    const tdata = this.buildYamlWorkflowData(definition, payload, ctx);
+
+    const instanceId = await this.state.host.startWorkflow(engineId, version, tdata, tenantId);
+    logger.info(`YAML workflow ${engineId} started via engine (instance: ${instanceId})`);
+
+    // Ensure the per-instance log manager is finalized when the run ends —
+    // including failures (the in-graph FinalizeStepBody only covers success).
+    this.scheduleYamlFinalize(instanceId);
+
+    return instanceId;
+  }
+
+  /**
+   * Watch a running YAML instance and finalize/close its InstanceResourceManager
+   * once it reaches a terminal state (Complete or Terminated). This guarantees the
+   * log manager is always closed — on success and on step failure — without
+   * wrapping the workflow graph (which would break suspend/resume semantics).
+   *
+   * Requires a durable persistence provider to read instance status; in
+   * in-memory mode the success path is still closed in-graph by FinalizeStepBody.
+   */
+  private scheduleYamlFinalize(instanceId: string): void {
+    if (!this.persistence || !instanceId) {
+      return;
+    }
+    this.yamlFinalizeWatch.add(instanceId);
+    if (!this.yamlFinalizeTimer) {
+      this.yamlFinalizeTimer = setInterval(() => {
+        void this.sweepYamlFinalize();
+      }, 5000);
+      // Don't keep the event loop alive solely for this sweeper.
+      if (typeof this.yamlFinalizeTimer.unref === 'function') {
+        this.yamlFinalizeTimer.unref();
       }
-
-      // Persist to MongoDB so the execution appears in history
-      await this.persistYamlExecution(instance, workflowId, result, data);
-
-      return instance.id;
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      this.lifecycleManager.failWorkflow(instance.id, err);
-      logger.error(`YAML workflow ${workflowId} threw an exception (instance: ${instance.id})`, error);
-      throw error;
     }
   }
 
   /**
-   * Persist a YAML workflow execution to MongoDB so it appears in execution history.
-   * Maps the in-memory instance + execution result to the workflow-es document schema.
+   * Sweep watched YAML instances; finalize the log manager for any that have
+   * reached a terminal state and drop them from the watch set. Stops the timer
+   * when nothing remains to watch.
    */
-  private async persistYamlExecution(
-    instance: IWorkflowInstance,
-    workflowDefinitionId: string,
-    result: any,
-    inputData: any
-  ): Promise<void> {
-    try {
-      const statusMap: Record<string, WorkflowESStatus> = {
-        [WorkflowStatus.PENDING]: WorkflowESStatus.PENDING,
-        [WorkflowStatus.RUNNING]: WorkflowESStatus.RUNNABLE,
-        [WorkflowStatus.COMPLETED]: WorkflowESStatus.COMPLETE,
-        [WorkflowStatus.FAILED]: WorkflowESStatus.TERMINATED,
-        [WorkflowStatus.CANCELLED]: WorkflowESStatus.TERMINATED,
-        [WorkflowStatus.PAUSED]: WorkflowESStatus.SUSPENDED,
-        [WorkflowStatus.CLEANING_UP]: WorkflowESStatus.RUNNABLE,
-      };
+  private async sweepYamlFinalize(): Promise<void> {
+    if (this.yamlFinalizeWatch.size === 0) {
+      if (this.yamlFinalizeTimer) {
+        clearInterval(this.yamlFinalizeTimer);
+        this.yamlFinalizeTimer = null;
+      }
+      return;
+    }
 
-      const executionPointers = (result.executedSteps || []).map((step: any, idx: number) => ({
-        id: step.stepId || `pointer_${idx}`,
-        stepId: idx,
-        active: false,
-        sleepUntil: null,
-        persistenceData: step.outputs || null,
-        startTime: step.metadata?.startTime || null,
-        endTime: step.metadata?.endTime || null,
-        eventName: null,
-        eventKey: null,
-        eventPublished: false,
-        eventData: null,
-        retryCount: 0,
-        children: [],
-        contextItem: null,
-        predecessorId: null,
-        outcome: step.success ? (step.outputs || null) : null,
-        status: step.success
-          ? ExecutionPointerStatus.COMPLETE
-          : ExecutionPointerStatus.FAILED,
-        scope: [],
-      }));
-
-      await WorkflowInstanceModel.create({
-        id: instance.id,
-        workflowDefinitionId,
-        version: 1,
-        description: `YAML workflow execution`,
-        status: statusMap[instance.status] ?? WorkflowESStatus.PENDING,
-        data: inputData || {},
-        createTime: instance.startedAt,
-        completeTime: instance.completedAt || null,
-        executionPointers,
-      });
-
-      logger.debug(`Persisted YAML workflow execution to MongoDB: ${instance.id}`);
-    } catch (err) {
-      // Don't fail the workflow if persistence fails — log and continue
-      logger.warn(
-        `Failed to persist YAML workflow execution ${instance.id} to MongoDB: ${
-          err instanceof Error ? err.message : String(err)
-        }`
-      );
+    for (const instanceId of Array.from(this.yamlFinalizeWatch)) {
+      try {
+        const finalized = await finalizeInstanceIfTerminal(this.persistence, instanceId);
+        if (finalized) {
+          this.yamlFinalizeWatch.delete(instanceId);
+        }
+      } catch (err) {
+        logger.debug(`YAML finalize sweep error for ${instanceId}: ${err instanceof Error ? err.message : err}`);
+      }
     }
   }
 
@@ -1051,10 +1250,31 @@ export class WorkflowRunner {
   }
 
   /**
-   * Cancel a workflow instance
+   * Cancel (abort/stop) a workflow instance.
+   *
+   * YAML and code workflows execute on the workflow-es host, so we terminate the
+   * running engine instance (sets it to Terminated, stopping further step
+   * execution / any runaway loop). We also notify the in-memory lifecycle manager
+   * for any non-engine/legacy instance it tracks (best-effort).
    */
-  public cancelWorkflowInstance(instanceId: string, reason?: string): void {
-    this.lifecycleManager.cancelWorkflow(instanceId, reason);
+  public async cancelWorkflowInstance(instanceId: string, reason?: string): Promise<void> {
+    let terminated = false;
+    if (this.state.host) {
+      try {
+        terminated = await this.state.host.terminateWorkflow(instanceId);
+        logger.info(`Terminated workflow instance ${instanceId} (engine): ${terminated}`);
+      } catch (err) {
+        logger.warn(
+          `Failed to terminate engine workflow instance ${instanceId}: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    }
+    // Best-effort lifecycle-manager update (no-op / not-found for engine instances).
+    try {
+      this.lifecycleManager.cancelWorkflow(instanceId, reason);
+    } catch {
+      /* engine-only instance not tracked by the lifecycle manager */
+    }
   }
 
   /**

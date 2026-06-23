@@ -26,7 +26,7 @@ class ReactorySearchService implements Reactory.Service.ISearchService {
     this.context = context;
     this.client = new MeiliSearch({
       host: process.env.MEILISEARCH_HOST || 'http://localhost:7700',
-      apiKey: process.env.MEILISEARCH_MASTER_KEY || 'masterKey',
+      apiKey: process.env.MEILISEARCH_MASTER_KEY || 'reactory-local',
     });
   }
   
