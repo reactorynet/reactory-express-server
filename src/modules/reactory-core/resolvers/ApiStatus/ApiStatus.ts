@@ -327,14 +327,11 @@ class ApiStatus {
   @query("apiStatus")
   async getApiStatus(obj: any, args: { theme: string }, context: Reactory.Server.IReactoryContext) {
     const { user, partner } = context;
-
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
-
 
     let skipResfresh = false;
     let isAnon: boolean = false;
     let uxmessages: any[] = [];
-
     
     const { roles, alt_roles } = await getRoles(context).then()    
 
@@ -342,60 +339,6 @@ class ApiStatus {
       skipResfresh = true;
       isAnon = true;
     }
-
-
-    if (skipResfresh === false && isAnon === false) {
-      context.log(`apiStatus called for ${user.firstName} ${user.lastName}, performing profile refresh`, {});
-      try {
-        const refreshResult: any = await systemService.query(`
-          query RefreshProfile($id:String, $skipImage: Boolean) {
-            refreshProfileData(id: $id, skipImage: $skipImage) {
-              user {
-                id
-                fullNameWithEmail
-                avatar 
-                authentications {
-                  id
-                  provider
-                  props
-                }      
-              }
-              messages {
-                id
-                title
-                text
-                data
-                via
-                icon
-                actions {
-                  id
-                  action
-                  title
-                  icon
-                  componentFqn
-                  componentProps
-                  modal
-                  modalSize
-                  priority
-                }                
-              }
-            }
-          }
-        `, {
-          id: user.id,
-          skipImage: true,
-        }).then();
-
-        if (refreshResult && refreshResult.data && refreshResult.data.refreshProfileData) {
-          const { user: profile, messages } = refreshResult.data.refreshProfileData;
-          uxmessages = [...uxmessages, ...messages];
-          context.log(`Result from profile refresh ${profile.fullNameWithEmail}, has ${uxmessages.length} messages`, {}, 'debug', 'ApiStatus.apiStatus()');
-        }
-      } catch (profileRefreshError) {
-        context.error(`Error refreshing profile data for user ${user.firstName}`, profileRefreshError);
-      }
-    }
-    
 
     let navigationComponents: any[] = [];
     const settingKey = `navigation_components/${process.env.MODE}`;
