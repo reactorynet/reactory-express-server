@@ -910,8 +910,10 @@ export class ReactoryFileService
 
   @roles(["ADMIN", "${arguments[0].owner._id === context.user._id}"])
   async getFileModel(id: string): Promise<Reactory.Models.IReactoryFileModel> {
+    if (!id || !ObjectId.isValid(id)) return null;
+    const oid = ObjectId.createFromHexString(id);
     return await ReactoryFileModel.findOne({
-      id: ObjectId.createFromHexString(id),
+      $or: [{ _id: oid }, { id: oid }],
     }).exec();
   }
   sync(): Promise<Reactory.Models.IReactoryFileModel[]> {
