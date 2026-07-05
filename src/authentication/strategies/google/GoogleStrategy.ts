@@ -138,7 +138,7 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
 
     await user.save();
     
-    Helpers.generateLoginToken(user).then((loginToken) => { 
+    Helpers.generateLoginToken(user, req.ip, clientKey).then((loginToken) => {
       const duration = (Date.now() - startTime) / 1000;
       AuthTelemetry.recordSuccess('google', clientKey, duration, user._id.toString());
       return done(null, loginToken);

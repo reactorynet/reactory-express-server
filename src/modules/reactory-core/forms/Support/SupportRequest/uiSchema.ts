@@ -44,16 +44,16 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
      'ui:options': {
       showLabel: true,
       selectOptions: [
-         { key: 'general', value: 'general', label: 'General', icon: 'question-circle' },
-         { key: 'bug', value: 'bug', label: 'Bug / Error', icon: 'bug' },
+         { key: 'general', value: 'general', label: 'General', icon: 'help' },
+         { key: 'bug', value: 'bug', label: 'Bug / Error', icon: 'pest-control' },
          { key: 'feature-request', value: 'feature-request', label: 'Feature Request', icon: 'lightbulb' },
          { key: 'billing', value: 'billing', label: 'Billing', icon: 'money' },
-         { key: 'account', value: 'account', label: 'Account & Access', icon: 'user' },
-         { key: 'performance', value: 'performance', label: 'Performance', icon: 'dial' },
-         { key: 'integration', value: 'integration', label: 'Integration', icon: 'puzzle-piece' },
+         { key: 'account', value: 'account', label: 'Account & Access', icon: 'manage-accounts' },
+         { key: 'performance', value: 'performance', label: 'Performance', icon: 'speed' },
+         { key: 'integration', value: 'integration', label: 'Integration', icon: 'import-export' },
          { key: 'documentation', value: 'documentation', label: 'Documentation', icon: 'book' },
          { key: 'security', value: 'security', label: 'Security', icon: 'shield' },
-         { key: 'other', value: 'other', label: 'Other', icon: 'ellipsis-h' },
+         { key: 'other', value: 'other', label: 'Other', icon: 'abc' },
         ],
      }
     },

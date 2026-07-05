@@ -117,7 +117,13 @@ export default class Helpers {
   }
 
   static addSession = async (user: Reactory.Models.IUserDocument, token: any, ip = '-', clientId = 'not-set') => {
-    user.sessionInfo = [];
+    // Reactory is a multitenant host: a single user can hold concurrent
+    // sessions against several partner applications. Only replace the
+    // session belonging to the client being logged into - leave every
+    // other partner's session untouched so logging into one app doesn't
+    // log the user out of another.
+    const existingSessions = Array.isArray(user.sessionInfo) ? user.sessionInfo : [];
+    user.sessionInfo = existingSessions.filter((session: any) => session.client !== clientId);
     user.sessionInfo.push({
       id: uuid(),
       host: ip,
@@ -125,7 +131,7 @@ export default class Helpers {
       jwtPayload: token,
     });
 
-    try { 
+    try {
       await user.save();
     } catch (err) {
       logger.error(`Error saving user session info`, err);
@@ -134,18 +140,18 @@ export default class Helpers {
     return user;
   }
 
-  static generateLoginToken = async (user: Reactory.Models.IUserDocument, ip = 'none'): Promise<{
+  static generateLoginToken = async (user: Reactory.Models.IUserDocument, ip = 'none', clientId = 'not-set'): Promise<{
     id: string,
     firstName: string,
     lastName: string,
     token: string,
   }> => {
     logger.info(`generating Login token for user ${user.firstName} ${user.lastName}`);
-    
+
     try {
       user.lastLogin = moment().valueOf(); // eslint-disable-line
       const jwtPayload = Helpers.jwtTokenForUser(user);
-      await Helpers.addSession(user, jwtPayload, ip);
+      await Helpers.addSession(user, jwtPayload, ip, clientId);
       
       const token = Helpers.jwtMake(jwtPayload);
       

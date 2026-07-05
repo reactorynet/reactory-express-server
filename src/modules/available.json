@@ -128,5 +128,15 @@
     "license": "commercial",
     "git": "git@github.com:reactorynet/reactory-google.git",
     "shop": "https://reactory.net/shop/modules/reactory-google"
-  }
+  },
+  {
+    "id": "reactory-zepz-quotes",
+    "name": "Reactory Zepz Quotes",
+    "key": "reactory-zepz-quotes",
+    "fqn": "zepz.ReactoryZepzQuotes@1.0.0",
+    "moduleEntry": "reactory-zepz-quotes/index.ts",
+    "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-zepz-quotes.git",
+    "shop": "https://reactory.net/shop/modules/reactory-zepz-quotes"
+  } 
 ]

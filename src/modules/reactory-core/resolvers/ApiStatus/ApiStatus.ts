@@ -11,80 +11,95 @@ const packageJson = require(path.join(process.cwd(), 'package.json'));
 /***
  * Helper function to return roles for a user from the context object
  */
-const getRoles = async (context: Reactory.Server.IReactoryContext): Promise <{ roles: string[], alt_roles: string[] }> => {  
+const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ roles: string[], alt_roles: string[] }> => {
   const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
 
   const { user, partner } = context;
 
   let isAnon: boolean = false;
 
-  if (user.anon === true) {   
+  if (user.anon === true) {
     isAnon = true;
   }
 
-  const roles: any[] = [];
-  const alt_roles: any[] = [];
+  const roles: string[] = [];
+  const alt_roles: string[] = [];
   const memberships: any[] = isArray(user.memberships) === true ? user.memberships : [];
 
-  if(isAnon === false) {
+  if (isAnon === false) {
+    try {
+      const login_partner_keys_setting = partner.getSetting("login_partner_keys", {
+        partner_keys: [partner.key, 'reactory'],
+        defaultAction: 'add_default_membership',
+        organization_excludes: [],
+        organization_includes: [],
+      }, true, "core.ReactoryPartnerKeysConfig");
 
-  const login_partner_keys_setting = partner.getSetting("login_partner_keys", {
-    partner_keys: [partner.key, 'reactory'],
-    defaultAction: 'add_default_membership',
-    organization_excludes: [],
-    organization_includes: [],
-  }, true, "core.ReactoryPartnerKeysConfig");
+      const login_partner_keys = login_partner_keys_setting.data;
 
-  const login_partner_keys = login_partner_keys_setting.data;
+      //get a list of all partner / cross partner logins allowed
+      const partnerLogins: Reactory.Models.IReactoryClientDocument[] = await systemService.getReactoryClients({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
 
-  //get a list of all partner / cross partner logins allowed
-  const partnerLogins: Reactory.Models.IReactoryClientDocument[] = await systemService.getReactoryClients({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
-
-  let root_partner_memberships: any[] = [];
-  memberships.forEach((membership) => {
-    if(membership.clientId.toString() === partner._id.toString()) {
-      root_partner_memberships.push(membership);
-    }
-  });
-
-  root_partner_memberships.forEach((membership) => {
-    if (isArray(membership.roles)) {
-      membership.roles.forEach((r: string) => {
-        roles.push(r);
-      });
-    }
-  });
-
-
-  partnerLogins.forEach((alt_partner) => {
-    const alt_partner_memberships = filter(memberships, { clientId: alt_partner._id });
-
-    alt_partner_memberships.forEach((alt_partner_membership) => {
-      if (isArray(alt_partner_membership.roles)) {
-
-        if (roles.length === 0) {
-          context.log(`${user.fullName} did not have a membership for ${partner.name} - assigning default roles`);
-          //we have no roles in the primary partner, 
-          //but we have one or more roles on the alt_partner
-          //so we create our OWN PARTNER default role for the user and add the membership.
-          let _default_roles = partner.getSetting('new_user_roles', ['USER'], true, 'core.SecurityNewUserRolesForReactoryClient');
-          roles.push(_default_roles || 'USER');
-          _default_roles.data.forEach((r: string) => user.addRole(partner._id, r, null, null));
+      let root_partner_memberships: any[] = [];
+      memberships.forEach((membership) => {
+        if (membership.clientId.toString() === partner._id.toString()) {
+          root_partner_memberships.push(membership);
         }
+      });
 
-        alt_partner_membership.roles.forEach((r: string) => {
-          alt_roles.push(`${r}:${alt_partner._id.toString()}:${alt_partner_membership.clientId}:${alt_partner_membership.organizationId || '*'}:${alt_partner_membership.businessUnitId || '*'}`);
-        });
+      root_partner_memberships.forEach((membership) => {
+        if (isArray(membership.roles)) {
+          membership.roles.forEach((r: string) => {
+            roles.push(r);
+          });
+        }
+      });
+
+      // Process partner logins sequentially to avoid parallel save errors
+      for (const alt_partner of partnerLogins) {
+        const alt_partner_memberships = filter(memberships, { clientId: alt_partner._id });
+
+        for (const alt_partner_membership of alt_partner_memberships) {
+          if (isArray(alt_partner_membership.roles)) {
+
+            if (roles.length === 0) {
+              context.log(`${user.fullName()} did not have a membership for ${partner.name} - assigning default roles`, {}, 'debug', 'ApiStatus:getRoles');
+              //we have no roles in the primary partner,
+              //but we have one or more roles on the alt_partner
+              //so we create our OWN PARTNER default role for the user and add the membership.
+              const _default_roles_setting = partner.getSetting('new_user_roles', ['USER'], true, 'core.SecurityNewUserRolesForReactoryClient');
+              const _default_roles: string[] = _default_roles_setting?.data || ['USER'];
+
+              // Add default roles to the roles array
+              _default_roles.forEach((r: string) => roles.push(r));
+
+              // Sequentially add roles to avoid parallel save errors on the user document
+              for (const r of _default_roles) {
+                try {
+                  await user.addRole(partner._id, r, null, null, context);
+                } catch (addRoleError) {
+                  context.log(`Failed to add role ${r} to user ${user.fullName()}: ${addRoleError.message}`, { error: addRoleError }, 'error', 'ApiStatus:getRoles');
+                  // Continue processing other roles even if one fails
+                }
+              }
+            }
+
+            alt_partner_membership.roles.forEach((r: string) => {
+              alt_roles.push(`${r}:${alt_partner._id.toString()}:${alt_partner_membership.clientId}:${alt_partner_membership.organizationId || '*'}:${alt_partner_membership.businessUnitId || '*'}`);
+            });
+          }
+        }
       }
-    });
-  });
+    } catch (error) {
+      context.log(`Error in getRoles for user ${user.fullName()}: ${error.message}`, { error }, 'error', 'ApiStatus:getRoles');
+      // Return empty roles on error - don't expose internal details to client
+      return { roles: [], alt_roles: [] };
+    }
+  } else {
+    roles.push('ANON');
+  }
 
-} else {
-  roles.push('ANON');
-}
-
-return { roles: uniq(roles), alt_roles: uniq(alt_roles) };
-
+  return { roles: uniq(roles), alt_roles: uniq(alt_roles) };
 }
 
 const DEFAULT_MATERIAL_THEME = {  

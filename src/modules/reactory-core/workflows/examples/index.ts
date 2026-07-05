@@ -35,6 +35,7 @@ const EXAMPLE_NAMES: string[] = [
   'FileRoundTrip',
   'Validation',
   'Saga',
+  'CollectAgentContext',
   // Integration steps (require the relevant service / connection)
   'ApiCall',
   'ServiceInvoke',

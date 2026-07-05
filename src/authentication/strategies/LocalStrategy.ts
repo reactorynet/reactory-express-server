@@ -35,7 +35,7 @@ const authenticate: BasicVerifyFunctionWithRequest = async (req: Reactory.Server
 
     // @ts-ignore
     if (user.validatePassword(password) === true) {
-      const loginToken = await Helpers.generateLoginToken(user);
+      const loginToken = await Helpers.generateLoginToken(user, req.ip, clientKey);
       req.user = user;
       req.context.user = user;
       
