@@ -23,6 +23,9 @@ const DARK_PALETTE: Reactory.UX.ITheme = {
     background: {
       paper: '#424242',
       default: '#424242'
+    },
+    text: {
+      primary: '#ffffff'
     }
   },
 }
