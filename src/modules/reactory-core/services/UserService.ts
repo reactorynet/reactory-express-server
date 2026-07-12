@@ -131,6 +131,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
           logger.info("User not found creating");
           foundUser = new User({
             ...user,
+            username: user.username || user.email,
             createdAt: new Date(),
             updatedAt: new Date(),
           });

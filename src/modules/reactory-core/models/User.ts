@@ -40,13 +40,13 @@ const UserSchema = new mongoose.Schema({
   id: ObjectIdSchema,
   username: {
     type: String,
-    required: true,
+    required: false,
     unique: true,
     lowercase: true,
     trim: true,
     index: true,
     validate: {
-      validator: (v: string) => /^[a-z0-9_]{3,50}$/.test(v),
+      validator: (v: string) => /^[a-z0-9_]{3,50}$/.test(v) || /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(v),
       message: (props: { value: string }) => `${props.value} is not a valid username`,
     }
   },
