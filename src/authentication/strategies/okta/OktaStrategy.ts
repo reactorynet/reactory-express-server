@@ -184,7 +184,7 @@ const OktaStrategy = new OpenIDStrategy({
     }
 
     // Generate login token
-    const loginToken = await Helpers.generateLoginToken(user);
+    const loginToken = await Helpers.generateLoginToken(user, req.ip, clientKey);
     
     const duration = (Date.now() - startTime) / 1000;
     AuthTelemetry.recordSuccess('okta', clientKey, duration, user._id.toString());

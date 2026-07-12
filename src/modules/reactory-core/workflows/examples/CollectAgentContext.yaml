@@ -1,0 +1,234 @@
+# CollectAgentContext
+# Discovers agent instruction files (AGENTS.md, AGENT.md, CLAUDE.md,
+# copilot-instructions.md, .cursorrules, etc.) under one or more roots,
+# reads them, concatenates with clear source headers, and normalizes
+# non-essential whitespace (trim lines, collapse multiple blank lines).
+#
+# Uses only core steps: set_variable, cli_command, file_operation, log.
+#
+# Run (GraphQL):
+#   startWorkflow(
+#     workflowId: "reactory-examples.CollectAgentContext@1.0.0",
+#     input: { input: { root: "/Users/wweber/Source/reactory", outputPath: "/tmp/agent-context.txt" } }
+#   )
+#
+# Outputs:
+#   context   - the final aggregated text block
+#   sources   - array of absolute file paths that contributed
+#   count     - number of files included
+#   writtenTo - path where the bundle was written (if any)
+
+nameSpace: reactory-examples
+name: CollectAgentContext
+version: 1.0.0
+description: "Collect and aggregate agent instruction files (AGENTS.md, CLAUDE.md, copilot-instructions, etc.) into a single normalized text block."
+author: "WorkflowWill"
+tags: ["agent", "context", "instructions", "aggregation", "io"]
+metadata:
+  timeout: 120000
+  retryPolicy:
+    maxAttempts: 1
+
+inputs:
+  root:
+    type: string
+    required: false
+    default: "/Users/wweber/Source/reactory"
+    description: "Root directory to search recursively for agent instruction files."
+  outputPath:
+    type: string
+    required: false
+    default: "/tmp/reactory-collected-agent-context.txt"
+    description: "Optional. Where to write the aggregated result. Always writes to a default if omitted."
+
+# The patterns we treat as agent/copilot/claude instruction sources.
+# Order here affects header order only if we later sort; find output is sorted for determinism.
+variables:
+  patterns:
+    - "AGENTS.md"
+    - "AGENT.md"
+    - "CLAUDE.md"
+    - "copilot-instructions.md"
+    - ".cursorrules"
+
+steps:
+  # 1. Record the search root for downstream visibility and logging.
+  - id: recordRoot
+    type: set_variable
+    config:
+      action: set
+      key: searchRoot
+      value: "${input.root}"
+
+  # 2. Discover files using cli_command + find.
+  #    We search only for exact basenames listed above to avoid picking up
+  #    unrelated docs. We de-duplicate and sort for stable output.
+  - id: discover
+    type: cli_command
+    dependsOn: recordRoot
+    config:
+      command: |
+        set -e
+        ROOT="${input.root}"
+        : > /tmp/agent-instruction-files.txt
+        for name in AGENTS.md AGENT.md CLAUDE.md copilot-instructions.md .cursorrules; do
+          find "$ROOT" -type f -name "$name" -print 2>/dev/null >> /tmp/agent-instruction-files.txt || true
+        done
+        sort -u /tmp/agent-instruction-files.txt > /tmp/agent-instruction-files.sorted.txt
+        cat /tmp/agent-instruction-files.sorted.txt
+      shell: true
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  # 3. Read the sorted unique manifest produced by discovery. Using file_operation
+  #    here gives us a structured file read in the graph and a reliable list we can
+  #    both log and expose via outputs.
+  - id: readManifest
+    type: file_operation
+    dependsOn: discover
+    config:
+      operation: read
+      path: /tmp/agent-instruction-files.sorted.txt
+      encoding: utf8
+
+  # 4. Log a short summary. We compute the list and count via small cli steps to
+  #    stay compatible with the current output source validator while still using
+  #    core file and cli primitives.
+  - id: logDiscovery
+    type: log
+    dependsOn: readManifest
+    config:
+      level: info
+      message: "CollectAgentContext: discovered files under ${variables.searchRoot}. See aggregate output and manifest for the list."
+
+  # 5. The aggregation step: read each discovered file, emit a labeled section,
+  #    and apply whitespace normalization so the final block is compact and
+  #    consistent. We do the heavy lifting here with a single cli_command so
+  #    the workflow remains portable even if for_each child execution semantics
+  #    change. The command consumes the sorted manifest produced by discover.
+  - id: aggregate
+    type: cli_command
+    dependsOn: discover
+    config:
+      command: |
+        set -e
+        MANIFEST=/tmp/agent-instruction-files.sorted.txt
+        if [ ! -s "$MANIFEST" ]; then
+          echo "# No agent instruction files found."
+          exit 0
+        fi
+        normalize() {
+          # Trim leading/trailing whitespace on every line.
+          # Squeeze multiple blank lines down to a single blank line (cat -s).
+          # Drop leading blank lines and any trailing blank line.
+          sed 's/[[:space:]]*$//; s/^[[:space:]]*//' "$1" \
+            | cat -s \
+            | sed '/./,$!d; ${/^$/d}'
+        }
+        while IFS= read -r f; do
+          [ -f "$f" ] || continue
+          echo "===== BEGIN FILE: $f ====="
+          normalize "$f" || true
+          echo
+          echo "===== END FILE: $f ====="
+          echo
+        done < "$MANIFEST"
+      shell: true
+      output:
+        captureStdout: true
+        captureStderr: true
+        maxOutputSize: 10485760  # 10MB to accommodate large aggregated contexts
+
+  # 6. Optionally persist the result to disk. We always write to the provided
+  #    outputPath (or the documented default). Using file_operation keeps the
+  #    write concern visible in the workflow graph.
+  - id: persist
+    type: file_operation
+    dependsOn: aggregate
+    config:
+      operation: write
+      path: "${input.outputPath}"
+      content: "${steps.aggregate.outputs.stdout}"
+      options:
+        createParents: true
+        overwrite: true
+
+  # 7. Emit a JSON array of sources (as text) and also a plain count. Two small
+  #    cli steps keep us inside core steps and produce structured outputs the
+  #    validator accepts.
+  - id: emitSources
+    type: cli_command
+    dependsOn: readManifest
+    config:
+      command: |
+        node -e '
+          const fs = require("fs");
+          const p = "/tmp/agent-instruction-files.sorted.txt";
+          let arr = [];
+          try {
+            const s = fs.readFileSync(p, "utf8").trim();
+            arr = s ? s.split(/\r?\n/).filter(Boolean) : [];
+          } catch (e) {}
+          console.log(JSON.stringify(arr));
+        '
+      shell: true
+      output:
+        captureStdout: true
+
+  - id: emitCount
+    type: cli_command
+    dependsOn: readManifest
+    config:
+      command: |
+        node -e '
+          const fs = require("fs");
+          const p = "/tmp/agent-instruction-files.sorted.txt";
+          try {
+            const s = fs.readFileSync(p, "utf8").trim();
+            const n = s ? s.split(/\r?\n/).filter(Boolean).length : 0;
+            console.log(n);
+          } catch (e) { console.log(0); }
+        '
+      shell: true
+      output:
+        captureStdout: true
+
+  - id: storeCount
+    type: set_variable
+    dependsOn: emitCount
+    config:
+      action: set
+      key: fileCount
+      source: step_output
+      sourcePath: emitCount.outputs.stdout
+
+  # 8. Final log for traceability.
+  - id: report
+    type: log
+    dependsOn: persist
+    config:
+      level: info
+      message: "CollectAgentContext complete. ${variables.fileCount} file(s) aggregated. Written to ${input.outputPath}."
+
+# Public outputs consumable by callers (e.g. an agent_conversation step or another workflow).
+outputs:
+  context:
+    type: string
+    source: "step.aggregate.stdout"
+    description: "The aggregated agent instruction text with source headers and normalized whitespace."
+
+  sources:
+    type: array
+    source: "step.emitSources.stdout"
+    description: "Array of absolute paths to the files that were included in the aggregation (JSON encoded in stdout)."
+
+  count:
+    type: number
+    source: "variables.fileCount"
+    description: "Number of instruction files included."
+
+  writtenTo:
+    type: string
+    source: "input.outputPath"
+    description: "Filesystem path where the aggregated context was written."

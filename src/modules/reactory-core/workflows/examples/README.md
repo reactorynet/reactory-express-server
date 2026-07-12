@@ -69,6 +69,7 @@ Each file is named `<Name>.yaml` and registered as id `reactory-examples.<Name>@
 | Postgres.yaml | postgres | a Postgres connection |
 | Email.yaml | email | configured email transport |
 | Search.yaml | search | MeiliSearch + an index |
+| CollectAgentContext.yaml | cli_command, file_operation, set_variable, log | filesystem read access under the provided root |
 
 The first 13 examples (EngineHello … Saga) are self‑contained (no external
 services) and are the core engine/control‑flow smoke tests. The rest exercise

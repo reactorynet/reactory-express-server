@@ -53,6 +53,7 @@ const INFRA_EXAMPLES = [
   'Postgres.yaml',
   'Email.yaml',
   'Search.yaml',
+  'CollectAgentContext.yaml',
 ];
 
 async function runToCompletion(

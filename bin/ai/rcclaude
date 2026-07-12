@@ -1,0 +1,472 @@
+#!/bin/bash
+#
+# rcclaude - Run Claude with a configurable AI provider
+#
+# Usage:
+#   rcclaude [provider] [url] [api_key] [model]
+#
+# If no arguments: loads ~/.reactor/providers.yaml and prompts to select
+# If no providers.yaml: runs claude with default settings
+#
+# Environment variables set:
+#   ANTHROPIC_BASE_URL (or ANTHROPIC_ENDPOINT)
+#   ANTHROPIC_API_KEY
+#   ANTHROPIC_MODEL
+#
+set -e
+
+# --- Colors ---
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log_info()  { echo -e "${GREEN}[rcclaude]${NC} $*"; }
+log_warn()  { echo -e "${YELLOW}[rcclaude]${NC} $*" >&2; }
+log_error() { echo -e "${RED}[rcclaude]${NC} $*" >&2; }
+
+# --- Argument parsing ---
+PROVIDER_ID=""
+PROVIDER_NAME=""
+PROVIDER_URL=""
+PROVIDER_API_KEY=""
+PROVIDER_MODEL=""
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -p|--provider) PROVIDER_ID="$2"; shift 2 ;;
+        -n|--name)     PROVIDER_NAME="$2"; shift 2 ;;
+        -l|--list)
+            list_providers
+            exit 0
+            ;;
+        -h|--help) show_help; exit 0 ;;
+        --help)    show_help; exit 0 ;;
+        --)
+            shift; POSITIONAL_ARGS+=("$@"); break ;;
+        *)
+            if [[ "$1" == -* ]]; then
+                log_error "Unknown option: $1"; echo "Run 'rcclaude --help' for usage." >&2; exit 1
+            fi
+            POSITIONAL_ARGS+=("$1"); shift ;;
+    esac
+done
+
+# --- Functions ---
+
+show_help() {
+    cat << 'EOF'
+rcclaude - Run Claude with a configurable AI provider
+
+USAGE:
+    rcclaude [OPTIONS] [provider] [url] [api_key] [model]
+
+OPTIONS:
+    -p, --provider <id>       Select provider by its id
+    -n, --name <name>         Select provider by its display name
+    -l, --list                List available providers from providers.yaml
+    -h, --help                Show this help message
+
+PROVIDER ARGUMENTS:
+    provider    Provider id (e.g., Anthropic, Ollama, OpenAI)
+    url         API endpoint URL (e.g., https://api.anthropic.com)
+    api_key     API key for authentication
+    model       Model id (e.g., claude-sonnet-4-20250514, m5)
+
+EXAMPLES:
+    rcclaude                              # Interactive: select provider
+    rcclaude Anthropic                    # Use Anthropic with defaults
+    rcclaude Ollama http://localhost:11434 api-key m5
+    rcclaude -p Anthropic                 # Select by provider id
+    rcclaude -n "Ollama M5"               # Select by provider name
+    rcclaude -l                           # List available providers
+    rcclaude run m5                       # Ollama-specific: run a model
+
+ENVIRONMENT VARIABLES SET:
+    ANTHROPIC_BASE_URL    (or ANTHROPIC_ENDPOINT) - API endpoint
+    ANTHROPIC_API_KEY     - API key for authentication
+    ANTHROPIC_MODEL       - Model to use
+
+NOTES:
+    - If no providers.yaml exists, runs claude with default settings
+    - Provider selection falls back to providers.yaml if not specified
+    - Environment variables are set only for the duration of the claude session
+    - Provider URLs support ${VAR_NAME:-default} syntax for env var interpolation
+EOF
+}
+
+list_providers() {
+    local yaml_file="$HOME/.reactor/providers.yaml"
+    local default_file="$HOME/.reactor/default/providers.yaml"
+
+    if [[ ! -f "$yaml_file" ]] && [[ ! -f "$default_file" ]]; then
+        echo -e "${YELLOW}No providers.yaml found.${NC}"
+        echo "Create $HOME/.reactor/providers.yaml to configure providers."
+        echo ""
+        echo "Example providers.yaml:"
+        echo "providers:"
+        echo "  - id: Ollama"
+        echo "    name: Ollama"
+        echo "    endpointUrl: \"http://localhost:11434\""
+        echo "    defaultModel: m5"
+        echo "    credentialRequirements: []"
+        echo "    credentialEnvVars: {}"
+        echo "    models:"
+        echo "      - id: m5"
+        echo "        name: M5"
+        echo "        supportsStreaming: true"
+        return 0
+    fi
+
+    # Use python3 to parse YAML
+    python3 -c "
+import yaml, json, sys
+
+yaml_file = sys.argv[1]
+default_file = sys.argv[2]
+
+if not yaml_file and default_file:
+    yaml_file = default_file
+
+with open(yaml_file, 'r') as f:
+    data = yaml.safe_load(f)
+
+if not data or 'providers' not in data:
+    print('No providers found in ' + yaml_file)
+    sys.exit(0)
+
+providers = data['providers']
+if not providers:
+    print('No providers configured')
+    sys.exit(0)
+
+for i, p in enumerate(providers, 1):
+    print(f'{i}. {p.get(\"name\", \"Unknown\")} (id: {p.get(\"id\", \"unknown\")})')
+    print(f'   URL: {p.get(\"endpointUrl\", \"(default)\")}')
+    print(f'   Default Model: {p.get(\"defaultModel\", \"(none)\")}')
+    creds = p.get('credentialRequirements', [])
+    if creds:
+        print(f'   Credentials: {\", \".join(creds)}')
+    else:
+        print(f'   Credentials: None required')
+    print()
+" "$yaml_file" "$default_file"
+}
+
+# Get provider info from providers.yaml using python3
+# Outputs a fixed format:
+#   MATCH
+#   provider_id
+#   provider_name
+#   endpoint_url
+#   credential_env_vars (JSON)
+#   models (JSON)
+get_provider_info() {
+    local yaml_file="$1"
+    local provider_id="$2"
+    local provider_name="$3"
+
+    python3 -c "
+import yaml, json, sys
+
+yaml_file = sys.argv[1]
+provider_id = sys.argv[2]
+provider_name = sys.argv[3]
+
+with open(yaml_file, 'r') as f:
+    data = yaml.safe_load(f)
+
+if not data or 'providers' not in data:
+    sys.exit(1)
+
+providers = data['providers']
+for p in providers:
+    pid = p.get('id', '')
+    pname = p.get('name', '')
+    if provider_name and pname.lower() == provider_name.lower():
+        print('MATCH')
+        print(pid)
+        print(pname)
+        print(p.get('endpointUrl', ''))
+        print(json.dumps(p.get('credentialEnvVars', {})))
+        print(json.dumps(p.get('models', [])))
+        sys.exit(0)
+    if pid == provider_id:
+        print('MATCH')
+        print(pid)
+        print(pname)
+        print(p.get('endpointUrl', ''))
+        print(json.dumps(p.get('credentialEnvVars', {})))
+        print(json.dumps(p.get('models', [])))
+        sys.exit(0)
+
+sys.exit(1)
+" "$yaml_file" "$provider_id" "$provider_name"
+}
+
+# Get API key from credentials or environment
+get_api_key() {
+    local credentials_json="$1"
+    local provider_id="$2"
+
+    # Try to extract api_key from credentialEnvVars
+    if [[ -n "$credentials_json" && "$credentials_json" != "{}" ]]; then
+        local key_name
+        key_name=$(python3 -c "
+import json, sys
+try:
+    creds = json.loads(sys.stdin.read())
+    for k, v in creds.items():
+        if 'key' in k.lower():
+            print(k)
+            sys.exit(0)
+except:
+    pass
+sys.exit(1)
+" <<< "$credentials_json" 2>/dev/null) || true
+
+        if [[ -n "$key_name" ]]; then
+            local env_value="${!key_name:-}"
+            if [[ -n "$env_value" ]]; then
+                echo "$env_value"
+                return 0
+            fi
+        fi
+    fi
+
+    # Check for ANTHROPIC_API_KEY env var
+    local anthropic_key="${ANTHROPIC_API_KEY:-}"
+    if [[ -n "$anthropic_key" ]]; then
+        echo "$anthropic_key"
+        return 0
+    fi
+
+    # Check for OPENAI_API_KEY env var
+    local openai_key="${OPENAI_API_KEY:-}"
+    if [[ -n "$openai_key" ]]; then
+        echo "$openai_key"
+        return 0
+    fi
+
+    # Check for OPENAI_AUTHORIZATION env var
+    local auth_header="${OPENAI_AUTHORIZATION:-}"
+    if [[ -n "$auth_header" ]]; then
+        echo "${auth_header#Bearer }"
+        return 0
+    fi
+
+    return 1
+}
+
+# Get default model from provider
+get_default_model() {
+    local models_json="$1"
+    local provider_id="$2"
+
+    if [[ -n "$models_json" && "$models_json" != "[]" ]]; then
+        local model_id
+        model_id=$(python3 -c "
+import json, sys
+try:
+    models = json.loads(sys.stdin.read())
+    if models:
+        print(models[0].get('id', ''))
+    else:
+        sys.exit(1)
+except:
+    sys.exit(1)
+" <<< "$models_json" 2>/dev/null) || true
+        if [[ -n "$model_id" ]]; then
+            echo "$model_id"
+            return 0
+        fi
+    fi
+
+    # Fallback: check for defaultModel in provider config
+    local yaml_file="$HOME/.reactor/providers.yaml"
+    if [[ -f "$yaml_file" ]]; then
+        local default_model
+        default_model=$(python3 -c "
+import yaml
+with open('$yaml_file', 'r') as f:
+    data = yaml.safe_load(f)
+if data and 'providers' in data:
+    for p in data['providers']:
+        if p.get('id') == '$provider_id':
+            print(p.get('defaultModel', ''))
+            break
+" 2>/dev/null) || true
+        if [[ -n "$default_model" ]]; then
+            echo "$default_model"
+            return 0
+        fi
+    fi
+fi
+
+    return 1
+}
+
+# Get the URL for the provider
+get_provider_url() {
+    local provider_id="$1"
+
+    # If URL was explicitly provided, use it
+    if [[ -n "$PROVIDER_URL" ]]; then
+        echo "$PROVIDER_URL"
+        return 0
+    fi
+
+    # Try to get URL from providers.yaml
+    local yaml_file="$HOME/.reactor/providers.yaml"
+    if [[ -f "$yaml_file" ]]; then
+        local url
+        url=$(python3 -c "
+import yaml
+with open('$yaml_file', 'r') as f:
+    data = yaml.safe_load(f)
+if data and 'providers' in data:
+    for p in data['providers']:
+        if p.get('id') == '$provider_id':
+            print(p.get('endpointUrl', ''))
+            break
+" 2>/dev/null) || true
+        if [[ -n "$url" ]]; then
+            echo "$url"
+            return 0
+        fi
+    fi
+fi
+
+    return 1
+}
+
+# Interpolate environment variables in a URL
+interpolate_url() {
+    local url="$1"
+    echo "$url" | sed 's|\${\([A-Za-z_][A-Za-z0-9_]*\):\([^}]*\)}|: "${!1:-${2}}" |g'
+}
+
+# --- Main logic ---
+
+# If no provider was explicitly selected, try to select one
+if [[ -z "$PROVIDER_ID" && -z "$PROVIDER_NAME" ]]; then
+    select_provider
+fi
+
+# Determine provider ID from name
+if [[ -n "$PROVIDER_NAME" && -z "$PROVIDER_ID" ]]; then
+    yaml_file="$HOME/.reactor/providers.yaml"
+    if [[ -f "$yaml_file" ]]; then
+        PROVIDER_INFO=$(get_provider_info "$yaml_file" "" "$PROVIDER_NAME")
+        if [[ "$PROVIDER_INFO" == "MATCH"* ]]; then
+            PROVIDER_ID=$(echo "$PROVIDER_INFO" | sed -n '2p')
+        fi
+    fi
+fi
+
+# If we still don't have a provider ID, check if it's an ollama "run" command
+if [[ -z "$PROVIDER_ID" && "${POSITIONAL_ARGS[0]:-}" == "run" ]]; then
+    PROVIDER_ID="Ollama"
+    PROVIDER_URL="${POSITIONAL_ARGS[1]:-}"
+    PROVIDER_API_KEY="${POSITIONAL_ARGS[2]:-}"
+    PROVIDER_MODEL="${POSITIONAL_ARGS[3]:-}"
+fi
+
+# If we still don't have a provider, try to load from providers.yaml
+if [[ -z "$PROVIDER_ID" ]]; then
+    log_info "No provider specified. Attempting to load from ~/.reactor/providers.yaml"
+    select_provider
+fi
+
+# If we still don't have a provider ID, use defaults
+if [[ -z "$PROVIDER_ID" ]]; then
+    log_info "No provider configured. Running claude with default settings."
+    exec claude "$@"
+fi
+
+# --- Resolve provider details ---
+
+# Determine yaml file
+yaml_file="$HOME/.reactor/providers.yaml"
+if [[ ! -f "$yaml_file" ]]; then
+    yaml_file="$HOME/.reactor/default/providers.yaml"
+fi
+
+# Get provider info
+PROVIDER_INFO=$(get_provider_info "$yaml_file" "$PROVIDER_ID" "$PROVIDER_NAME")
+if [[ "$PROVIDER_INFO" != "MATCH"* ]]; then
+    log_warn "Could not find provider '$PROVIDER_ID' in providers.yaml"
+    log_warn "Running claude with default settings."
+    exec claude "$@"
+fi
+
+# Extract fields from PROVIDER_INFO (MATCH\nid\nname\nurl\ncredentials\nmodels)
+PROVIDER_NAME=$(echo "$PROVIDER_INFO" | sed -n '3p')
+PROVIDER_URL=$(echo "$PROVIDER_INFO" | sed -n '4p')
+PROVIDER_CREDENTIALS=$(echo "$PROVIDER_INFO" | sed -n '5p')
+PROVIDER_MODELS=$(echo "$PROVIDER_INFO" | sed -n '6p')
+
+log_info "Selected provider: $PROVIDER_NAME ($PROVIDER_ID)"
+
+# Get URL
+if [[ -n "$PROVIDER_URL" ]]; then
+    PROVIDER_URL=$(interpolate_url "$PROVIDER_URL")
+fi
+
+# Get API key
+API_KEY=$(get_api_key "$PROVIDER_CREDENTIALS" "$PROVIDER_ID")
+if [[ -z "$API_KEY" ]]; then
+    log_warn "No API key found for provider '$PROVIDER_ID'"
+    log_warn "Set ANTHROPIC_API_KEY or OPENAI_API_KEY environment variable"
+fi
+
+# Get model
+if [[ -n "$PROVIDER_MODEL" ]]; then
+    MODEL="$PROVIDER_MODEL"
+elif [[ -n "$PROVIDER_MODELS" ]]; then
+    MODEL=$(get_default_model "$PROVIDER_MODELS" "$PROVIDER_ID")
+    if [[ -z "$MODEL" ]]; then
+        log_warn "No default model found for provider '$PROVIDER_ID'"
+    else
+        log_info "Using default model: $MODEL"
+    fi
+else
+    MODEL=$(python3 -c "
+import yaml
+with open('$yaml_file', 'r') as f:
+    data = yaml.safe_load(f)
+if data and 'providers' in data:
+    for p in data['providers']:
+        if p.get('id') == '$PROVIDER_ID':
+            print(p.get('defaultModel', ''))
+            break
+" 2>/dev/null) || true
+    if [[ -n "$MODEL" ]]; then
+        log_info "Using default model: $MODEL"
+    else
+        log_warn "No model specified for provider '$PROVIDER_ID'"
+    fi
+fi
+
+# --- Set environment variables and launch claude ---
+
+log_info "Launching claude with provider: $PROVIDER_ID"
+[[ -n "$PROVIDER_URL" ]] && log_info "  URL: $PROVIDER_URL"
+[[ -n "$API_KEY" ]] && log_info "  API Key: [SET]"
+[[ -n "$MODEL" ]] && log_info "  Model: $MODEL"
+
+# Build the claude command
+if [[ -n "$PROVIDER_URL" ]]; then
+    export ANTHROPIC_BASE_URL="$PROVIDER_URL"
+    export ANTHROPIC_API_KEY="$API_KEY"
+    export ANTHROPIC_MODEL="$MODEL"
+    export ANTHROPIC_USE_VERTEX_AI=false
+    exec claude "$@"
+else
+    export ANTHROPIC_API_KEY="$API_KEY"
+    export ANTHROPIC_MODEL="$MODEL"
+    export ANTHROPIC_USE_VERTEX_AI=false
+    exec claude "$@"
+fi

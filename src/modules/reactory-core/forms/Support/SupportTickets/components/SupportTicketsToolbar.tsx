@@ -54,12 +54,23 @@ interface SupportTicketsToolbarProps {
     },
     selected?: Partial<Reactory.Models.IReactorySupportTicket>[] | null;    
   };
+  queryVariables?: {
+    filter?: {
+      searchString?: string;
+      [key: string]: any;
+    };
+    paging?: {
+      page: number;
+      pageSize: number;
+    };
+  };
   onDataChange?: (filteredData: any[]) => void;
   onPagingChange?: (paging: {
     page: number;
     pageSize: number;
   }) => void;
   onSelectedChange?: (selected: Partial<Reactory.Models.IReactorySupportTicket>[] | null) => void;
+  onQueryChange?: (queryName: string, variables: any) => void;
   searchText?: string;
   onSearchChange?: (text: string) => void;
   onFilterChange?: (filters: any[]) => void;
@@ -84,6 +95,8 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
     searchText = '',
     onSearchChange,
     onFilterChange,
+    queryVariables,
+    onQueryChange,
   } = props;
 
   // Get dependencies from registry
@@ -126,6 +139,7 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
   const [advancedPanelOpen, setAdvancedPanelOpen] = React.useState(false);
   const [originalData] = React.useState(data);
   const [activeBulkAction, setActiveBulkAction] = React.useState<'status' | 'assign' | 'tag' | 'delete' | 'export' | null>(null);
+  const [searchInput, setSearchInput] = React.useState(queryVariables?.filter?.searchString || searchText || '');
 
   const currentUser = reactory.getUser();
   const userId = currentUser?.loggedIn?.user?.id;
@@ -302,26 +316,25 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
       onSearchChange(text);
     }
 
-    if (!text.trim()) {
-      onDataChange(originalData);
-      return;
+    // Update the query variables with the search string if onQueryChange is provided
+    if (onQueryChange) {
+      // Only call onQueryChange if the search text actually changed
+      const currentSearchString = queryVariables?.filter?.searchString || '';
+      if (text !== currentSearchString) {
+        onQueryChange('supportTickets', {
+          ...queryVariables,
+          filter: {
+            ...queryVariables?.filter,
+            searchString: text
+          },
+          paging: {
+            ...queryVariables?.paging,
+            page: 1 // Reset to first page on new search
+          }
+        });
+      }
     }
-
-    const searchLower = text.toLowerCase();
-    const filtered = originalData?.data.filter((ticket: Partial<Reactory.Models.IReactorySupportTicket>) => {
-      return (
-        ticket.reference?.toLowerCase().includes(searchLower) ||
-        ticket.request?.toLowerCase().includes(searchLower) ||
-        ticket.description?.toLowerCase().includes(searchLower) ||
-        (ticket.createdBy as Reactory.Models.IUser)?.firstName?.toLowerCase().includes(searchLower) ||
-        (ticket.createdBy as Reactory.Models.IUser)?.lastName?.toLowerCase().includes(searchLower) ||
-        (ticket.assignedTo as Reactory.Models.IUser)?.firstName?.toLowerCase().includes(searchLower) ||
-        (ticket.assignedTo as Reactory.Models.IUser)?.lastName?.toLowerCase().includes(searchLower)
-      );
-    });
-
-    onDataChange(filtered);
-  }, [originalData, onDataChange, onSearchChange]);
+  }, [queryVariables, onQueryChange, onSearchChange]);
 
   const handleQuickFilterChange = React.useCallback((activeFilters: string[]) => {
     if (activeFilters.length === 0) {
@@ -441,7 +454,7 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
           <SearchBar
             placeholder="Search tickets by reference, title, or assignee..."
             onSearch={handleSearch}
-            initialValue={searchText}
+            initialValue={searchInput}
             debounceDelay={300}
             showHelpTooltip
             helpText='Search in reference, title, description, and assignee names'

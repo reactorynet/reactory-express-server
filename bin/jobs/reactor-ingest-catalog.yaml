@@ -3,7 +3,7 @@ version: 1.0.0
 
 # specify the reactory client and user
 # for the cli
-partner: zepz-engineer
+partner: zepz-quotes
 user: werner.weber@gmail.com
 password: Password123!
 
