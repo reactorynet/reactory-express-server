@@ -83,6 +83,7 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
     onDataChange,
     searchText = '',
     onSearchChange,
+    onFilterChange,
   } = props;
 
   // Get dependencies from registry
@@ -325,6 +326,7 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
   const handleQuickFilterChange = React.useCallback((activeFilters: string[]) => {
     if (activeFilters.length === 0) {
       onDataChange(originalData);
+      if (onFilterChange) onFilterChange([]);
       return;
     }
 
@@ -368,11 +370,16 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
     });
 
     onDataChange(filtered);
-  }, [originalData, onDataChange, quickFilters]);
+    if (onFilterChange) {
+      const serverFilters = activeFilterDefs.map(f => f.filter);
+      onFilterChange(serverFilters);
+    }
+  }, [originalData, onDataChange, quickFilters, onFilterChange]);
 
   const handleAdvancedFilterChange = React.useCallback((filters: any[]) => {
     if (filters.length === 0) {
       onDataChange(originalData);
+      if (onFilterChange) onFilterChange([]);
       return;
     }
 
@@ -397,7 +404,8 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
     });
 
     onDataChange(filtered);
-  }, [originalData, onDataChange]);
+    if (onFilterChange) onFilterChange(filters);
+  }, [originalData, onDataChange, onFilterChange]);
 
   // Bulk action handlers
   const handleBulkActionComplete = (actionType: string) => {
