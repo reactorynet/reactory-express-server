@@ -1,23 +1,26 @@
 /**
- * SearchStep - Executes MeiliSearch operations
+ * SearchStep - Executes backend-agnostic search operations through the
+ * `core.ReactorySearchService` facade (MeiliSearch, ElasticSearch, ...).
  *
  * Config shape (from YAML `inputs` JSON):
  *   operation:              "search"            (required — one of search, index, createIndex, deleteIndex)
- *   indexName:              "products"           (required — the MeiliSearch index name)
- *   query:                  "search term"        (for search — the search query string)
+ *   indexName:              "products"           (required — the index name)
+ *   query:                  "search term"        (for search — the free-text query string)
+ *   fields:                 [ "title", "body" ]  (for search — restrict the free-text match to these fields)
  *   documents:              [ { ... }, ... ]     (for index — documents to add/update)
  *   searchableAttributes:   [ "title", "body" ]  (for createIndex — attributes that can be searched)
  *   filterableAttributes:   [ "genre", "year" ]  (for createIndex — attributes used for filtering)
  *   sortableAttributes:     [ "price", "date" ]  (for createIndex — attributes used for sorting)
- *   filters:                "genre = 'action'"   (for search — filter expression)
+ *   filters:                [ { field, op, value } ]  (for search — structured, backend-agnostic filters)
+ *   sort:                   [ { field, direction } ]  (for search — structured sort directives)
  *   limit:                  20                   (for search — maximum hits to return)
  *   offset:                 0                    (for search — offset for pagination)
  *
  * Output:
- *   search:      { hits, estimatedTotalHits, processingTimeMs }
- *   index:       { taskUid, status }
- *   createIndex: { taskUid, status }
- *   deleteIndex: { taskUid, status }
+ *   search:      { hits, results, total, offset, limit }   (hits === results, for backward compatibility)
+ *   index:       { id, success, error }
+ *   createIndex: { id, success, error }
+ *   deleteIndex: { deleted }
  */
 
 import { BaseYamlStep } from '@reactory/server-modules/reactory-core/workflow/YamlFlow/steps/base/BaseYamlStep';
@@ -26,6 +29,12 @@ import {
   StepExecutionResult,
   ValidationResult,
 } from '@reactory/server-modules/reactory-core/workflow/YamlFlow/steps/interfaces/IYamlStep';
+import {
+  IReactorySearchServiceExt,
+  SearchFilter,
+  SearchQuery,
+  SearchSort,
+} from '@reactory/server-modules/reactory-core/services/search/types';
 
 /** Valid search operations */
 type SearchOperation = 'search' | 'index' | 'createIndex' | 'deleteIndex';
@@ -40,8 +49,11 @@ export interface SearchStepConfig {
   /** MeiliSearch index name */
   indexName: string;
 
-  /** Search query string (for search operation) */
+  /** Free-text search query string (for search operation) */
   query?: string;
+
+  /** Restrict the free-text match to these fields (for search) */
+  fields?: string[];
 
   /** Documents to add/update (for index operation) */
   documents?: Record<string, any>[];
@@ -55,8 +67,11 @@ export interface SearchStepConfig {
   /** Sortable attributes (for createIndex) */
   sortableAttributes?: string[];
 
-  /** Filter expression (for search) */
-  filters?: string;
+  /** Structured, backend-agnostic filters (for search) */
+  filters?: SearchFilter[];
+
+  /** Structured sort directives (for search) */
+  sort?: SearchSort[];
 
   /** Maximum number of hits to return (for search) */
   limit?: number;
@@ -95,15 +110,18 @@ export class SearchStep extends BaseYamlStep {
     const resolvedQuery = config.query
       ? this.resolveTemplate(config.query, context)
       : undefined;
-    const resolvedFilters = config.filters
-      ? this.resolveTemplate(config.filters, context)
+    const resolvedFilters: SearchFilter[] | undefined = config.filters
+      ? (this.resolveParams(config.filters, context) as SearchFilter[])
+      : undefined;
+    const resolvedSort: SearchSort[] | undefined = config.sort
+      ? (this.resolveParams(config.sort, context) as SearchSort[])
       : undefined;
     const resolvedDocuments = config.documents
       ? this.resolveParams(config.documents, context)
       : undefined;
 
     context.logger.info(
-      `Executing MeiliSearch ${config.operation} on index "${resolvedIndexName}"`,
+      `Executing search ${config.operation} on index "${resolvedIndexName}"`,
     );
 
     try {
@@ -112,7 +130,7 @@ export class SearchStep extends BaseYamlStep {
       if (!searchService) {
         return {
           success: false,
-          error: 'MeiliSearch service not available in the Reactory context',
+          error: 'Search service (core.ReactorySearchService) not available in the Reactory context',
           outputs: {},
           metadata: { indexName: resolvedIndexName, operation: config.operation },
         };
@@ -131,30 +149,32 @@ export class SearchStep extends BaseYamlStep {
             };
           }
 
-          const searchParams: Record<string, any> = {};
-          if (resolvedFilters) searchParams.filter = resolvedFilters;
-          if (config.limit !== undefined) searchParams.limit = config.limit;
-          if (config.offset !== undefined) searchParams.offset = config.offset;
+          // Build a backend-agnostic structured query so filters/sort/paging
+          // work identically across MeiliSearch, ElasticSearch, etc.
+          const query: SearchQuery = { q: resolvedQuery };
+          if (config.fields) query.fields = config.fields;
+          if (resolvedFilters) query.filters = resolvedFilters;
+          if (resolvedSort) query.sort = resolvedSort;
+          if (config.limit !== undefined) query.limit = config.limit;
+          if (config.offset !== undefined) query.offset = config.offset;
 
-          if (typeof searchService.search === 'function') {
-            result = await searchService.search(resolvedIndexName, resolvedQuery, searchParams);
-          } else {
-            const index = searchService.index(resolvedIndexName);
-            result = await index.search(resolvedQuery, searchParams);
-          }
+          result = await searchService.search(resolvedIndexName, query);
 
           return {
             success: true,
             outputs: {
-              hits: result.hits || [],
-              estimatedTotalHits: result.estimatedTotalHits || result.nbHits || 0,
-              processingTimeMs: result.processingTimeMs || 0,
+              // `hits` is retained as an alias of `results` for backward compatibility.
+              hits: result.results || [],
+              results: result.results || [],
+              total: result.total || 0,
+              offset: result.offset || 0,
+              limit: result.limit || 0,
             },
             metadata: {
               indexName: resolvedIndexName,
               operation: config.operation,
               query: resolvedQuery,
-              hitCount: result.hits?.length || 0,
+              hitCount: result.results?.length || 0,
             },
           };
         }
@@ -169,18 +189,15 @@ export class SearchStep extends BaseYamlStep {
             };
           }
 
-          if (typeof searchService.addDocuments === 'function') {
-            result = await searchService.addDocuments(resolvedIndexName, resolvedDocuments);
-          } else {
-            const index = searchService.index(resolvedIndexName);
-            result = await index.addDocuments(resolvedDocuments);
-          }
+          result = await searchService.index(resolvedIndexName, resolvedDocuments);
 
           return {
-            success: true,
+            success: result.success !== false,
+            error: result.error,
             outputs: {
-              taskUid: result.taskUid || result.uid || null,
-              status: result.status || 'enqueued',
+              id: result.id ?? resolvedIndexName,
+              success: result.success !== false,
+              error: result.error,
             },
             metadata: {
               indexName: resolvedIndexName,
@@ -191,34 +208,21 @@ export class SearchStep extends BaseYamlStep {
         }
 
         case 'createIndex': {
-          if (typeof searchService.createIndex === 'function') {
-            result = await searchService.createIndex(resolvedIndexName);
-          } else {
-            result = { taskUid: null, status: 'created' };
-          }
-
-          // Configure index attributes if provided
-          const index = typeof searchService.index === 'function'
-            ? searchService.index(resolvedIndexName)
-            : null;
-
-          if (index) {
-            if (config.searchableAttributes) {
-              await index.updateSearchableAttributes(config.searchableAttributes);
-            }
-            if (config.filterableAttributes) {
-              await index.updateFilterableAttributes(config.filterableAttributes);
-            }
-            if (config.sortableAttributes) {
-              await index.updateSortableAttributes(config.sortableAttributes);
-            }
-          }
+          // Attribute configuration is applied atomically by the facade's
+          // createIndex when supported by the active provider.
+          result = await searchService.createIndex(resolvedIndexName, {
+            searchableAttributes: config.searchableAttributes,
+            filterableAttributes: config.filterableAttributes,
+            sortableAttributes: config.sortableAttributes,
+          });
 
           return {
-            success: true,
+            success: result.success !== false,
+            error: result.error,
             outputs: {
-              taskUid: result.taskUid || result.uid || null,
-              status: result.status || 'created',
+              id: result.id ?? resolvedIndexName,
+              success: result.success !== false,
+              error: result.error,
             },
             metadata: {
               indexName: resolvedIndexName,
@@ -231,18 +235,12 @@ export class SearchStep extends BaseYamlStep {
         }
 
         case 'deleteIndex': {
-          if (typeof searchService.deleteIndex === 'function') {
-            result = await searchService.deleteIndex(resolvedIndexName);
-          } else {
-            const index = searchService.index(resolvedIndexName);
-            result = await index.delete();
-          }
+          const deleted = await searchService.deleteIndex(resolvedIndexName);
 
           return {
-            success: true,
+            success: deleted,
             outputs: {
-              taskUid: result?.taskUid || result?.uid || null,
-              status: result?.status || 'deleted',
+              deleted,
             },
             metadata: {
               indexName: resolvedIndexName,
@@ -261,7 +259,7 @@ export class SearchStep extends BaseYamlStep {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      context.logger.error(`MeiliSearch operation failed: ${message}`);
+      context.logger.error(`Search operation failed: ${message}`);
       return {
         success: false,
         error: message,
@@ -303,8 +301,14 @@ export class SearchStep extends BaseYamlStep {
       if (config.offset !== undefined && (typeof config.offset !== 'number' || config.offset < 0)) {
         errors.push('offset must be a non-negative number');
       }
-      if (config.filters && typeof config.filters !== 'string') {
-        errors.push('filters must be a string');
+      if (config.filters !== undefined && !Array.isArray(config.filters)) {
+        errors.push('filters must be an array of { field, op, value } objects');
+      }
+      if (config.sort !== undefined && !Array.isArray(config.sort)) {
+        errors.push('sort must be an array of { field, direction } objects');
+      }
+      if (config.fields !== undefined && !Array.isArray(config.fields)) {
+        errors.push('fields must be an array of strings');
       }
     }
 
@@ -336,11 +340,11 @@ export class SearchStep extends BaseYamlStep {
    * @param context - Execution context
    * @returns MeiliSearch service or null
    */
-  private getSearchService(context: StepExecutionContext): Reactory.Service.ISearchService | null {
+  private getSearchService(context: StepExecutionContext): IReactorySearchServiceExt | null {
     try {
       const svc = context.reactoryContext.getService(
         'core.ReactorySearchService@1.0.0',
-      ) as any;
+      ) as unknown as IReactorySearchServiceExt;
       if (svc) return svc;
     } catch {
       // Service not available
