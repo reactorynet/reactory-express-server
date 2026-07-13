@@ -21,6 +21,7 @@ interface OrganizationBusinessUnitsTabProps {
  * - Create new business unit
  * - View members of each business unit
  * - Expand/collapse business unit details
+ * - Add/Remove members
  */
 const OrganizationBusinessUnitsTab = (props: OrganizationBusinessUnitsTabProps) => {
   const { reactory, organization, onRefresh } = props;
@@ -55,6 +56,7 @@ const OrganizationBusinessUnitsTab = (props: OrganizationBusinessUnitsTabProps) 
     DialogTitle,
     DialogContent,
     DialogActions,
+    CircularProgress,
   } = Material.MaterialCore;
 
   const {
@@ -64,6 +66,8 @@ const OrganizationBusinessUnitsTab = (props: OrganizationBusinessUnitsTabProps) 
     AccountTree: AccountTreeIcon,
     People: PeopleIcon,
     Delete: DeleteIcon,
+    Search: SearchIcon,
+    Close: CloseIcon,
   } = Material.MaterialIcons;
 
   const [businessUnits, setBusinessUnits] = useState(organization.businessUnits || []);
@@ -73,6 +77,14 @@ const OrganizationBusinessUnitsTab = (props: OrganizationBusinessUnitsTabProps) 
   const [newBUDescription, setNewBUDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // User search dialog state
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [selectedBUForAdd, setSelectedBUForAdd] = useState<string | null>(null);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userSearchResults, setUserSearchResults] = useState<any[]>([]);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [isAddingUser, setIsAddingUser] = useState(false);
 
   // Fetch business units from server
   const fetchBusinessUnits = useCallback(async () => {
@@ -161,6 +173,88 @@ const OrganizationBusinessUnitsTab = (props: OrganizationBusinessUnitsTabProps) 
     }
   }, [newBUName, newBUDescription, organization.id, reactory, fetchBusinessUnits, onRefresh]);
 
+  const searchUsers = useCallback(async (searchString: string) => {
+    if (!searchString || searchString.length < 3) {
+      setUserSearchResults([]);
+      return;
+    }
+    setIsSearchingUsers(true);
+    try {
+      const query = `query ReactoryUsers($filter: ReactoryUserFilterInput, $paging: PagingRequest) {
+        ReactoryUsers(filter: $filter, paging: $paging) {
+          ... on PagedUserResults {
+            users {
+              id
+              firstName
+              lastName
+              email
+              avatar
+            }
+          }
+          ... on ReactoryUserQueryFailed {
+            message
+          }
+        }
+      }`;
+      const result = await reactory.graphqlQuery(query, { 
+        filter: { searchString }, 
+        paging: { page: 1, pageSize: 20 } 
+      });
+      
+      if (result?.data?.ReactoryUsers?.users) {
+        setUserSearchResults(result.data.ReactoryUsers.users);
+      } else if (result?.data?.ReactoryUsers?.message) {
+        reactory.createNotification(`User search failed: ${result.data.ReactoryUsers.message}`, { type: 'error' });
+      }
+    } catch (error: any) {
+      reactory.createNotification(`User search failed: ${error.message}`, { type: 'error' });
+    } finally {
+      setIsSearchingUsers(false);
+    }
+  }, [reactory]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (userSearchQuery) searchUsers(userSearchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [userSearchQuery, searchUsers]);
+
+  const handleAddMember = async (userId: string) => {
+    if (!selectedBUForAdd) return;
+    setIsAddingUser(true);
+    try {
+      const mutation = `mutation addMemberToBusinessUnit($id: String!, $memberId: String!) {
+        addMemberToBusinessUnit(id: $id, memberId: $memberId)
+      }`;
+      await reactory.graphqlMutation(mutation, { id: selectedBUForAdd, memberId: userId });
+      reactory.createNotification('Member added successfully', { type: 'success' });
+      setAddUserDialogOpen(false);
+      setUserSearchQuery('');
+      setUserSearchResults([]);
+      await fetchBusinessUnits();
+      if (onRefresh) onRefresh();
+    } catch (error: any) {
+      reactory.createNotification(`Failed to add member: ${error.message}`, { type: 'error' });
+    } finally {
+      setIsAddingUser(false);
+    }
+  };
+
+  const handleRemoveMember = async (buId: string, userId: string) => {
+    try {
+      const mutation = `mutation removeMemberFromBusinessUnit($id: String!, $memberId: String!) {
+        removeMemberFromBusinessUnit(id: $id, memberId: $memberId)
+      }`;
+      await reactory.graphqlMutation(mutation, { id: buId, memberId: userId });
+      reactory.createNotification('Member removed successfully', { type: 'success' });
+      await fetchBusinessUnits();
+      if (onRefresh) onRefresh();
+    } catch (error: any) {
+      reactory.createNotification(`Failed to remove member: ${error.message}`, { type: 'error' });
+    }
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Card variant="outlined">
@@ -245,9 +339,23 @@ const OrganizationBusinessUnitsTab = (props: OrganizationBusinessUnitsTabProps) 
                           </Box>
                         </Box>
                       )}
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                        Members ({bu.members?.length || 0})
-                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, mt: 2 }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          Members ({bu.members?.length || 0})
+                        </Typography>
+                        <Button 
+                          size="small" 
+                          startIcon={<AddIcon fontSize="small" />}
+                          onClick={() => {
+                            setSelectedBUForAdd(bu.id);
+                            setAddUserDialogOpen(true);
+                          }}
+                        >
+                          Add Member
+                        </Button>
+                      </Box>
+
                       {bu.members && bu.members.length > 0 ? (
                         <List dense disablePadding>
                           {bu.members.map((member: any) => (
@@ -263,6 +371,13 @@ const OrganizationBusinessUnitsTab = (props: OrganizationBusinessUnitsTabProps) 
                                 primaryTypographyProps={{ variant: 'body2' }}
                                 secondaryTypographyProps={{ variant: 'caption' }}
                               />
+                              <ListItemSecondaryAction>
+                                <Tooltip title="Remove Member">
+                                  <IconButton edge="end" size="small" onClick={() => handleRemoveMember(bu.id, member.id)}>
+                                    <CloseIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </ListItemSecondaryAction>
                             </ListItem>
                           ))}
                         </List>
@@ -344,6 +459,78 @@ const OrganizationBusinessUnitsTab = (props: OrganizationBusinessUnitsTabProps) 
           >
             {isCreating ? 'Creating...' : 'Create'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add User Dialog */}
+      <Dialog
+        open={addUserDialogOpen}
+        onClose={() => {
+          setAddUserDialogOpen(false);
+          setUserSearchQuery('');
+          setUserSearchResults([]);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add Member to Business Unit</DialogTitle>
+        <DialogContent sx={{ minHeight: 300 }}>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Search Users"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={userSearchQuery}
+            onChange={(e: any) => setUserSearchQuery(e.target.value)}
+            placeholder="Type at least 3 characters to search by name or email"
+            InputProps={{
+              startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
+              endAdornment: isSearchingUsers ? <CircularProgress color="inherit" size={20} /> : null
+            }}
+          />
+          <List sx={{ mt: 2 }}>
+            {userSearchResults.map((user: any) => (
+              <ListItem 
+                key={user.id} 
+                sx={{ 
+                  border: '1px solid', 
+                  borderColor: 'divider', 
+                  mb: 1, 
+                  borderRadius: 1 
+                }}
+              >
+                <ListItemAvatar>
+                  <Avatar src={user.avatar}>
+                    {user.firstName?.[0]}{user.lastName?.[0]}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={`${user.firstName} ${user.lastName}`}
+                  secondary={user.email}
+                />
+                <ListItemSecondaryAction>
+                  <Button 
+                    variant="contained" 
+                    size="small" 
+                    onClick={() => handleAddMember(user.id)}
+                    disabled={isAddingUser}
+                  >
+                    Add
+                  </Button>
+                </ListItemSecondaryAction>
+              </ListItem>
+            ))}
+            {userSearchQuery.length >= 3 && userSearchResults.length === 0 && !isSearchingUsers && (
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>
+                No users found matching "{userSearchQuery}"
+              </Typography>
+            )}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddUserDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

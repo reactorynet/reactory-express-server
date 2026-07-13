@@ -22,6 +22,7 @@ interface OrganizationTeamsTabProps {
  * - View members of each team
  * - Expand/collapse team details
  * - Delete team capability
+ * - Add/Remove members
  */
 const OrganizationTeamsTab = (props: OrganizationTeamsTabProps) => {
   const { reactory, organization, onRefresh } = props;
@@ -56,6 +57,7 @@ const OrganizationTeamsTab = (props: OrganizationTeamsTabProps) => {
     DialogTitle,
     DialogContent,
     DialogActions,
+    CircularProgress,
   } = Material.MaterialCore;
 
   const {
@@ -65,6 +67,8 @@ const OrganizationTeamsTab = (props: OrganizationTeamsTabProps) => {
     Groups: GroupsIcon,
     People: PeopleIcon,
     Delete: DeleteIcon,
+    Search: SearchIcon,
+    Close: CloseIcon,
   } = Material.MaterialIcons;
 
   const [teams, setTeams] = useState<any[]>([]);
@@ -75,6 +79,14 @@ const OrganizationTeamsTab = (props: OrganizationTeamsTabProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // User search dialog state
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [selectedTeamForAdd, setSelectedTeamForAdd] = useState<string | null>(null);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userSearchResults, setUserSearchResults] = useState<any[]>([]);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [isAddingUser, setIsAddingUser] = useState(false);
 
   // Fetch teams from server
   const fetchTeams = useCallback(async () => {
@@ -184,6 +196,85 @@ const OrganizationTeamsTab = (props: OrganizationTeamsTabProps) => {
     }
   }, [reactory, fetchTeams, onRefresh]);
 
+  const searchUsers = useCallback(async (searchString: string) => {
+    if (!searchString || searchString.length < 3) {
+      setUserSearchResults([]);
+      return;
+    }
+    setIsSearchingUsers(true);
+    try {
+      const query = `query ReactoryUsers($searchString: String!, $sort: String) {
+        ReactoryUsers(searchString: $searchString, sort: $sort) {
+          ... on PagedUserResults {
+            users {
+              id
+              firstName
+              lastName
+              email
+              avatar
+            }
+          }
+          ... on ReactoryUserQueryFailed {
+            message
+          }
+        }
+      }`;
+      const result = await reactory.graphqlQuery(query, { searchString, sort: 'firstName' });
+      
+      if (result?.data?.ReactoryUsers?.users) {
+        setUserSearchResults(result.data.ReactoryUsers.users);
+      } else if (result?.data?.ReactoryUsers?.message) {
+        reactory.createNotification(`User search failed: ${result.data.ReactoryUsers.message}`, { type: 'error' });
+      }
+    } catch (error: any) {
+      reactory.createNotification(`User search failed: ${error.message}`, { type: 'error' });
+    } finally {
+      setIsSearchingUsers(false);
+    }
+  }, [reactory]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (userSearchQuery) searchUsers(userSearchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [userSearchQuery, searchUsers]);
+
+  const handleAddMember = async (userId: string) => {
+    if (!selectedTeamForAdd) return;
+    setIsAddingUser(true);
+    try {
+      const mutation = `mutation addMemberToTeam($id: String!, $memberId: String!) {
+        addMemberToTeam(id: $id, memberId: $memberId)
+      }`;
+      await reactory.graphqlMutation(mutation, { id: selectedTeamForAdd, memberId: userId });
+      reactory.createNotification('Member added successfully', { type: 'success' });
+      setAddUserDialogOpen(false);
+      setUserSearchQuery('');
+      setUserSearchResults([]);
+      await fetchTeams();
+      if (onRefresh) onRefresh();
+    } catch (error: any) {
+      reactory.createNotification(`Failed to add member: ${error.message}`, { type: 'error' });
+    } finally {
+      setIsAddingUser(false);
+    }
+  };
+
+  const handleRemoveMember = async (teamId: string, userId: string) => {
+    try {
+      const mutation = `mutation removeMemberFromTeam($id: String!, $memberId: String!) {
+        removeMemberFromTeam(id: $id, memberId: $memberId)
+      }`;
+      await reactory.graphqlMutation(mutation, { id: teamId, memberId: userId });
+      reactory.createNotification('Member removed successfully', { type: 'success' });
+      await fetchTeams();
+      if (onRefresh) onRefresh();
+    } catch (error: any) {
+      reactory.createNotification(`Failed to remove member: ${error.message}`, { type: 'error' });
+    }
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Card variant="outlined">
@@ -278,9 +369,23 @@ const OrganizationTeamsTab = (props: OrganizationTeamsTabProps) => {
                           </Box>
                         </Box>
                       )}
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                        Members ({team.members?.length || 0})
-                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, mt: 2 }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          Members ({team.members?.length || 0})
+                        </Typography>
+                        <Button 
+                          size="small" 
+                          startIcon={<AddIcon fontSize="small" />}
+                          onClick={() => {
+                            setSelectedTeamForAdd(team.id);
+                            setAddUserDialogOpen(true);
+                          }}
+                        >
+                          Add Member
+                        </Button>
+                      </Box>
+
                       {team.members && team.members.length > 0 ? (
                         <List dense disablePadding>
                           {team.members.map((member: any) => (
@@ -296,6 +401,13 @@ const OrganizationTeamsTab = (props: OrganizationTeamsTabProps) => {
                                 primaryTypographyProps={{ variant: 'body2' }}
                                 secondaryTypographyProps={{ variant: 'caption' }}
                               />
+                              <ListItemSecondaryAction>
+                                <Tooltip title="Remove Member">
+                                  <IconButton edge="end" size="small" onClick={() => handleRemoveMember(team.id, member.id)}>
+                                    <CloseIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </ListItemSecondaryAction>
                             </ListItem>
                           ))}
                         </List>
@@ -305,7 +417,7 @@ const OrganizationTeamsTab = (props: OrganizationTeamsTabProps) => {
                         </Typography>
                       )}
                       {team.createdAt && (
-                        <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 1 }}>
+                        <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 2 }}>
                           Created: {new Date(team.createdAt).toLocaleDateString()}
                         </Typography>
                       )}
@@ -407,6 +519,78 @@ const OrganizationTeamsTab = (props: OrganizationTeamsTabProps) => {
           >
             Delete
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add User Dialog */}
+      <Dialog
+        open={addUserDialogOpen}
+        onClose={() => {
+          setAddUserDialogOpen(false);
+          setUserSearchQuery('');
+          setUserSearchResults([]);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add Member to Team</DialogTitle>
+        <DialogContent sx={{ minHeight: 300 }}>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Search Users"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={userSearchQuery}
+            onChange={(e: any) => setUserSearchQuery(e.target.value)}
+            placeholder="Type at least 3 characters to search by name or email"
+            InputProps={{
+              startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
+              endAdornment: isSearchingUsers ? <CircularProgress color="inherit" size={20} /> : null
+            }}
+          />
+          <List sx={{ mt: 2 }}>
+            {userSearchResults.map((user: any) => (
+              <ListItem 
+                key={user.id} 
+                sx={{ 
+                  border: '1px solid', 
+                  borderColor: 'divider', 
+                  mb: 1, 
+                  borderRadius: 1 
+                }}
+              >
+                <ListItemAvatar>
+                  <Avatar src={user.avatar}>
+                    {user.firstName?.[0]}{user.lastName?.[0]}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={`${user.firstName} ${user.lastName}`}
+                  secondary={user.email}
+                />
+                <ListItemSecondaryAction>
+                  <Button 
+                    variant="contained" 
+                    size="small" 
+                    onClick={() => handleAddMember(user.id)}
+                    disabled={isAddingUser}
+                  >
+                    Add
+                  </Button>
+                </ListItemSecondaryAction>
+              </ListItem>
+            ))}
+            {userSearchQuery.length >= 3 && userSearchResults.length === 0 && !isSearchingUsers && (
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>
+                No users found matching "{userSearchQuery}"
+              </Typography>
+            )}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddUserDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -78,6 +78,11 @@ class BusinessUnitResolver {
 
   @mutation('addMemberToBussinessUnit')
   async addMemberToBussinessUnit(parent: any, args: { id: any, memberId: any }) {
+    return this.addMemberToBusinessUnit(parent, args);
+  }
+
+  @mutation('addMemberToBusinessUnit')
+  async addMemberToBusinessUnit(parent: any, args: { id: any, memberId: any }) {
     const { id, memberId } = args;
     const businessUnit = await BusinessUnit.findById(id).then();
     const user = await User.findById(memberId).then();
@@ -87,6 +92,14 @@ class BusinessUnitResolver {
         organigram.businessUnit = businessUnit.id;
         await organigram.save().then();
       }
+      
+      // Update business unit members array
+      if (!businessUnit.members) businessUnit.members = [];
+      if (!businessUnit.members.includes(user.id) && !businessUnit.members.includes(user._id)) {
+        businessUnit.members.push(user._id);
+        await businessUnit.save().then();
+      }
+      
       return true;
     } else {
       throw new RecordNotFoundError('Could not find the member or business unit');
@@ -104,6 +117,13 @@ class BusinessUnitResolver {
         organigram.businessUnit = null;
         await organigram.save().then();
       }
+      
+      // Update business unit members array
+      if (businessUnit.members) {
+        businessUnit.members = businessUnit.members.filter((m: any) => m.toString() !== user.id.toString());
+        await businessUnit.save().then();
+      }
+      
       return true;
     } else {
       throw new RecordNotFoundError('Could not find the member or business unit');

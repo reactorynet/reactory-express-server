@@ -83,5 +83,6 @@ extend type Mutation {
   createBusinessUnit(input: BusinessUnitInput!): BusinessUnit,
   updateBusinessUnit(id: String!, input: BusinessUnitInput): BusinessUnit,
   addMemberToBussinessUnit(id: String!, memberId: String!): Boolean,
+  addMemberToBusinessUnit(id: String!, memberId: String!): Boolean,
   removeMemberFromBusinessUnit(id: String!, memberId: String!): Boolean,
 }
