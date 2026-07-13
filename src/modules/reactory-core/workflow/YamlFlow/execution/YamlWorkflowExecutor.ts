@@ -484,6 +484,7 @@ export class YamlWorkflowExecutor {
           version: workflowContext.workflow.version
         },
         reactoryContext: workflowContext.reactoryContext,
+        utils: workflowContext.reactoryContext?.utils,
       } as StepExecutionContext;
 
       // Execute step

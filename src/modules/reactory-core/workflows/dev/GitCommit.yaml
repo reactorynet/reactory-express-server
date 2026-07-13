@@ -1,0 +1,172 @@
+# dev/GitCommit — Intelligent git commit workflow.
+#
+# Checks for staged and unstaged changes before committing.
+# If unstaged changes are present the workflow suspends at the user_activity
+# step and waits for the engineer to approve (or decline) staging them.
+# If there is nothing to commit after staging decisions, the workflow logs
+# that fact and exits cleanly.
+#
+# Inputs:
+#   message  (required) — the commit message
+#   workdir  (optional) — the working directory; defaults to the server's cwd
+#   paths    (optional) — space-separated list of paths to stage (default ".")
+nameSpace: reactory-dev
+name: GitCommit
+version: 1.0.0
+description: "Stage changes intelligently and create a git commit."
+tags: [dev, git, commit]
+metadata:
+  timeout: 120000
+inputs:
+  message:
+    type: string
+    required: true
+    description: "Commit message."
+  workdir:
+    type: string
+    required: false
+    description: "Working directory for git commands. Defaults to the server process cwd."
+  paths:
+    type: string
+    required: false
+    default: "."
+    description: "Space-separated paths to stage when staging is approved."
+
+steps:
+  # ── 1. Initialise: assume staging is pre-approved (no unstaged changes yet) ─
+  - id: initApproval
+    type: set_variable
+    config:
+      action: set
+      key: stagingApproved
+      value: true
+
+  # ── 2. Capture a human-readable status summary ────────────────────────────
+  - id: getStatus
+    type: cli_command
+    dependsOn: initApproval
+    config:
+      command: "git status --short"
+      cwd: "${input.workdir}"
+      failOnError: false
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  # ── 3. Detect unstaged changes (exit 1 = dirty, exit 0 = clean) ──────────
+  - id: checkUnstaged
+    type: cli_command
+    dependsOn: getStatus
+    config:
+      command: "git diff --quiet"
+      cwd: "${input.workdir}"
+      expectedExitCodes: [0, 1]
+      failOnError: false
+      output:
+        captureStdout: false
+        captureStderr: false
+
+  # ── 4. If unstaged changes exist: ask the engineer ───────────────────────
+  #      The user_activity step emits requiresUserInput: true which tells the
+  #      executor to SUSPEND here.  When the user responds, the workflow
+  #      resumes with their `approved` decision in the step output.
+  - id: handleUnstaged
+    type: condition
+    dependsOn: checkUnstaged
+    config:
+      condition: "steps.checkUnstaged.outputs.exitCode !== 0"
+      thenSteps:
+        - id: confirmStaging
+          type: user_activity
+          config:
+            activityType: approval
+            message: "Unstaged changes detected. Stage all changes before committing?"
+            fqn: "reactor.GitStagingApproval@1.0.0"
+            props:
+              title: "Unstaged Changes"
+              confirmLabel: "Stage & commit"
+              cancelLabel: "Abort"
+            propsMap:
+              statusSummary: "steps.getStatus.outputs.stdout"
+              commitMessage: "input.message"
+        - id: captureApproval
+          type: set_variable
+          dependsOn: confirmStaging
+          config:
+            action: set
+            key: stagingApproved
+            source: step_output
+            sourcePath: confirmStaging.outputs.approved
+
+  # ── 5. Stage files if engineer approved (or if there were no unstaged) ────
+  - id: stageIfApproved
+    type: condition
+    dependsOn: handleUnstaged
+    config:
+      condition: "variables.stagingApproved === true && steps.checkUnstaged.outputs.exitCode !== 0"
+      thenSteps:
+        - id: stageFiles
+          type: cli_command
+          config:
+            command: "git add ${input.paths}"
+            cwd: "${input.workdir}"
+
+  # ── 6. Abort if staging was declined ──────────────────────────────────────
+  - id: abortIfDeclined
+    type: condition
+    dependsOn: stageIfApproved
+    config:
+      condition: "variables.stagingApproved === false"
+      thenSteps:
+        - id: logAbort
+          type: log
+          config:
+            level: warn
+            message: "Commit aborted: engineer declined to stage unstaged changes."
+        - id: endAbort
+          type: end
+          dependsOn: logAbort
+          config:
+            reason: aborted
+
+  # ── 7. Verify there is something staged to commit ─────────────────────────
+  - id: checkStaged
+    type: cli_command
+    dependsOn: abortIfDeclined
+    config:
+      command: "git diff --cached --quiet"
+      cwd: "${input.workdir}"
+      expectedExitCodes: [0, 1]
+      failOnError: false
+      output:
+        captureStdout: false
+        captureStderr: false
+
+  # ── 8. Commit or report nothing to commit ────────────────────────────────
+  - id: commitOrSkip
+    type: condition
+    dependsOn: checkStaged
+    config:
+      condition: "steps.checkStaged.outputs.exitCode !== 0"
+      thenSteps:
+        - id: createCommit
+          type: cli_command
+          config:
+            command: "git commit"
+            args: ["-m", "${input.message}"]
+            cwd: "${input.workdir}"
+            output:
+              captureStdout: true
+              captureStderr: true
+        - id: logCommitSuccess
+          type: log
+          dependsOn: createCommit
+          config:
+            level: info
+            message: "Committed: ${input.message}"
+      elseSteps:
+        - id: logNothingToCommit
+          type: log
+          config:
+            level: warn
+            message: "Nothing to commit — working tree is clean."

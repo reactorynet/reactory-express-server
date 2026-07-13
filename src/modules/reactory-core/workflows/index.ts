@@ -1,6 +1,7 @@
 import CleanCacheWorkflow from './CleanCacheWorkflow';
 import { loadYamlWorkflow } from '@reactory/server-modules/reactory-core/workflow/YamlFlow/YamlToWorkflow';
 import exampleWorkflows from './examples';
+import devWorkflows from './dev';
 
 // ─────────────────────────────────────────────
 // Load all YAML workflow definitions
@@ -17,6 +18,9 @@ workflows.push(CleanCacheWorkflow.meta);
 
 // Example / smoke-test workflows (reactory-examples namespace)
 workflows.push(...exampleWorkflows);
+
+// Development utility workflows (reactory-dev namespace)
+workflows.push(...devWorkflows);
 
 export default workflows;
 

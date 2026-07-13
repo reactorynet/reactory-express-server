@@ -376,6 +376,7 @@ export class YamlStepBody extends StepBody {
           version: '',
         },
         reactoryContext,
+        utils: reactoryContext?.utils,
       };
 
       const timeoutMs = typeof def.timeout === 'number' && def.timeout > 0 ? def.timeout : 0;
