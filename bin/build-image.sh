@@ -40,7 +40,7 @@ fi
 
 # ── Certificate preflight check ───────────────────────────────────────────────
 # Ensure the certificates/ directory exists so the Dockerfile COPY never fails.
-# Detect .crt files and tell the Dockerfile whether to run cert verification.
+# Detect .crt/.pem files and tell the Dockerfile whether to run cert verification.
 CERTS_DIR="./certificates"
 HAS_CUSTOM_CERTS=false
 NODE_EXTRA_CA_CERTS_VALUE=""
@@ -50,9 +50,12 @@ if [ ! -d "$CERTS_DIR" ]; then
   mkdir -p "$CERTS_DIR"
 fi
 
-if ls "${CERTS_DIR}"/*.crt >/dev/null 2>&1; then
+if ls "${CERTS_DIR}"/*.crt >/dev/null 2>&1 || ls "${CERTS_DIR}"/*.pem >/dev/null 2>&1; then
   HAS_CUSTOM_CERTS=true
-  NODE_EXTRA_CA_CERTS_VALUE="/usr/local/share/ca-certificates/ca-certificates.crt"
+  # /etc/ssl/certs/ca-certificates.crt is the combined trust bundle that
+  # update-ca-certificates writes inside the image (system CAs + our custom
+  # ones from ${CERTIFICATES_PATH}) — that's what Node should trust at runtime.
+  NODE_EXTRA_CA_CERTS_VALUE="/etc/ssl/certs/ca-certificates.crt"
   echo "🔐 Custom certificates found in ${CERTS_DIR} — cert verification enabled"
 else
   echo "ℹ️  No .crt files in ${CERTS_DIR} — custom cert steps will be skipped inside the image"

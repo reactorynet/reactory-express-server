@@ -19,6 +19,12 @@ const {
   MICROSOFT_CLIENT_SECRET = 'MICROSOFT_CLIENT_SECRET',
   MICROSOFT_TENANT_ID = 'common', // 'common' for multi-tenant, specific ID for single-tenant
   OAUTH_REDIRECT_URI = 'http://localhost:4000/auth/microsoft/openid/complete/',
+  // Distinct from NODE_ENV on purpose: NODE_ENV elsewhere in this codebase
+  // means "am I running the compiled build" (src/ vs app/), not "is this a
+  // real internet-facing deployment with TLS" — conflating the two here
+  // would force every non-dev deployment (including internal/test podman
+  // deployments using a plain-HTTP redirect) to also be a real HTTPS one.
+  MICROSOFT_OAUTH_ALLOW_HTTP_REDIRECT,
 } = process.env;
 
 /**
@@ -31,7 +37,7 @@ const MicrosoftOIDCStrategy = new OIDCStrategy({
   responseType: 'code id_token',
   responseMode: 'form_post',
   redirectUrl: OAUTH_REDIRECT_URI,
-  allowHttpForRedirectUrl: process.env.NODE_ENV !== 'production', // Only allow HTTP in dev
+  allowHttpForRedirectUrl: MICROSOFT_OAUTH_ALLOW_HTTP_REDIRECT === 'true',
   clientSecret: MICROSOFT_CLIENT_SECRET,
   validateIssuer: false, // Set to true for production with specific tenant
   passReqToCallback: true,

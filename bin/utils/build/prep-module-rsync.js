@@ -36,7 +36,8 @@ if (fs.existsSync(modulesFilePath)) {
 + /helpers/
 + /helpers/**
 ${rsyncEntries}
-- *`;
+- *
+`;
 
     // write the sync file to disc
     fs.writeFileSync(target, rsyncFilterContent);

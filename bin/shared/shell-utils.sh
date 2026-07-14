@@ -1,13 +1,19 @@
 #!/bin/bash
 
 # Checks the environment variables
+# Usage: check_env_vars [dev|prd]  (default: dev)
 check_env_vars(){
   echo "Checking environment variables"
   dev_vars=("REACTORY_HOME" "REACTORY_DATA" "REACTORY_SERVER" "REACTORY_CLIENT" "REACTORY_PLUGINS")
   prd_vars=("REACTORY_HOME" "REACTORY_DATA" "REACTORY_SERVER")
+  local mode="${1:-dev}"
+  local vars_to_check=("${dev_vars[@]}")
+  if [ "$mode" = "prd" ]; then
+    vars_to_check=("${prd_vars[@]}")
+  fi
   do_exit=0
   # Loop over each environment variable and check if it is set and points to a valid directory
-  for var in ${env_vars[@]}; do
+  for var in "${vars_to_check[@]}"; do
     name="${!var}"
     if [[ -z "${!var}" ]]; then
       echo -e "$var is not set"

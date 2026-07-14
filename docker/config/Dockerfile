@@ -29,13 +29,23 @@ ENV NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS_VALUE}
 # so this COPY is always safe even when no custom certs are provided.
 COPY certificates/ ${CERTIFICATES_PATH}/
 
+# update-ca-certificates only picks up files ending in .crt — normalize any
+# .pem certs (e.g. a corporate root CA exported as .pem) to .crt first so
+# they actually get added to the trust store instead of silently ignored.
+RUN for pem in ${CERTIFICATES_PATH}/*.pem; do \
+		[ -f "$pem" ] && cp "$pem" "${pem%.pem}.crt"; \
+	done; \
+	true
+
 # Update the system trust store, then conditionally verify the custom cert bundle.
 # The verify step is skipped when HAS_CUSTOM_CERTS is not "true", preventing a build
 # failure when no custom certificates are present.
 RUN update-ca-certificates && \
 	if [ "${HAS_CUSTOM_CERTS}" = "true" ]; then \
 		echo "🔐 Verifying custom certificate bundle..." && \
-		openssl verify -CAfile /etc/ssl/certs/ca-certificates.crt "${CERTIFICATES_PATH}/ca-certificates.crt" && \
+		for cert in ${CERTIFICATES_PATH}/*.crt; do \
+			openssl verify -CAfile /etc/ssl/certs/ca-certificates.crt "$cert" || exit 1; \
+		done && \
 		echo "✅ Custom certificate bundle verified"; \
 	else \
 		echo "ℹ️  HAS_CUSTOM_CERTS is not set — skipping custom certificate verification"; \
@@ -74,9 +84,10 @@ WORKDIR ${WORKDIR_PATH}
 
 COPY build/server/${CONFIG_ID}/${BUILD_TAR_FILE} ${WORKDIR_PATH}
 
-RUN tar -xvzf ${BUILD_TAR_FILE} > /dev/null 2>&1 && \
+RUN corepack enable && \
+	tar -xvzf ${BUILD_TAR_FILE} > /dev/null 2>&1 && \
 	rm ${BUILD_TAR_FILE} && \
-	yarn install --production && \
-	yarn global add env-cmd && \
+	yarn workspaces focus --all --production && \
+	npm install -g env-cmd && \
 	yarn cache clean && \
 	rm -rf /tmp/*

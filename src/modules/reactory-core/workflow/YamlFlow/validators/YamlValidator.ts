@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 import yaml from 'yaml';
 import { 
  readFileSync
@@ -22,11 +23,12 @@ export class YamlValidator {
   private schema: any;
 
   constructor() {
-    this.ajv = new Ajv({ 
-      allErrors: true, 
+    this.ajv = new Ajv({
+      allErrors: true,
       verbose: true
     });
-    
+    addFormats(this.ajv);
+
     // Load and compile schema
     this.loadSchema();
   }

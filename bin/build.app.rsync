@@ -15,4 +15,6 @@
 + *.txt
 + modules/**/forms/*.ts
 + modules/**/forms/*.tsx
++ modules/**/forms/**/*.ts
++ modules/**/forms/**/*.tsx
 - *

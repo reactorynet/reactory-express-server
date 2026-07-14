@@ -1898,6 +1898,14 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     const targetDir = path.join(reactoryData, 'workflows', 'catalog', nameSpace, name, version);
     const targetFile = path.join(targetDir, `${name}.yaml`);
 
+    // Defensively parse any field that arrived as a JSON string instead of a
+    // native object. The GraphQL JSON scalar accepts both; older clients may
+    // have stringified the value before sending it.
+    const tryParseJson = (value: any): any => {
+      if (typeof value !== 'string') return value;
+      try { return JSON.parse(value); } catch { return value; }
+    };
+
     // Build the YAML object structure matching the expected parse format
     const yamlObject: Record<string, any> = {
       nameSpace,
@@ -1907,9 +1915,9 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     if (definition.description) yamlObject.description = definition.description;
     if (definition.author) yamlObject.author = definition.author;
     if (definition.tags && definition.tags.length > 0) yamlObject.tags = definition.tags;
-    if (definition.inputs) yamlObject.inputs = definition.inputs;
-    if (definition.outputs) yamlObject.outputs = definition.outputs;
-    if (definition.variables) yamlObject.variables = definition.variables;
+    if (definition.inputs) yamlObject.inputs = tryParseJson(definition.inputs);
+    if (definition.outputs) yamlObject.outputs = tryParseJson(definition.outputs);
+    if (definition.variables) yamlObject.variables = tryParseJson(definition.variables);
 
     // Build steps, separating designer metadata from step definitions
     yamlObject.steps = definition.steps.map((step) => {
@@ -1919,11 +1927,11 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       if (step.enabled !== undefined) yamlStep.enabled = step.enabled;
       if (step.continueOnError !== undefined) yamlStep.continueOnError = step.continueOnError;
       if (step.timeout !== undefined) yamlStep.timeout = step.timeout;
-      if (step.inputs) yamlStep.inputs = step.inputs;
-      if (step.outputs) yamlStep.outputs = step.outputs;
+      if (step.inputs) yamlStep.inputs = tryParseJson(step.inputs);
+      if (step.outputs) yamlStep.outputs = tryParseJson(step.outputs);
       if (step.condition) yamlStep.condition = step.condition;
-      if (step.dependsOn) yamlStep.dependsOn = step.dependsOn;
-      if (step.config) yamlStep.config = step.config;
+      if (step.dependsOn) yamlStep.dependsOn = tryParseJson(step.dependsOn);
+      if (step.config) yamlStep.config = tryParseJson(step.config);
       if (step.steps) yamlStep.steps = step.steps;
       if (step.designer) yamlStep.designer = step.designer;
       return yamlStep;

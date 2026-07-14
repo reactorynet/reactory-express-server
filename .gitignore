@@ -8,6 +8,8 @@ yarn.lock
 build/*
 lib/*
 !lib/readme.md
+!lib/workflow-es/
+!lib/workflow-es/*.tgz
 yarn.lock
 
 .env*

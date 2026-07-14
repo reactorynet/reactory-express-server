@@ -17,6 +17,6 @@ source ./bin/shared/shell-utils.sh
 check_env_vars
 check_node
 NODE_PATH=./app env-cmd -f ./.env node ./app/modules/reactory-telemetry/reactory.inst.otlp.js && \
-env-cmd -f ./.env node ./app/index.js
+NODE_PATH=./app env-cmd -f ./.env node ./app/index.js
 
  

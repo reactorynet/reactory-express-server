@@ -487,19 +487,35 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
       },
     });
 
-    rl.on('close', () => {
-      console.log(colors.green(t('cli:common.goodbye', 'Goodbye.')))
+    const interactive = Boolean(process.stdin.isTTY);
+    let shuttingDown = false;
+    const shutdown = () => {
+      if (shuttingDown) return;
+      shuttingDown = true;
+      console.log(colors.green(t('cli:common.goodbye', 'Goodbye.')));
       process.exit(0);
-    });
+    };
 
-    rl.prompt(true);
+    // Only wire readline 'close' to terminate the process for an interactive
+    // (TTY) session, where closing the REPL (Ctrl-D / quit) is the user's exit
+    // signal. A non-TTY stdin (pipe, CI, background job, `sleep | cli.sh ...`)
+    // hits EOF and emits 'close' immediately; wiring that to process.exit would
+    // kill the process before the jobs finish. Non-interactive runs instead
+    // terminate explicitly once MultiStageJobRunner has completed below.
+    if (interactive) {
+      rl.on('close', shutdown);
+      rl.prompt(true);
+    }
 
-  
     context.readline = rl;
 
     await MultiStageJobRunner(config, context);
 
+    // Jobs are complete: tear down the readline and exit. This is the sole exit
+    // path for non-interactive runs, and also covers interactive runs whose
+    // jobs return without the user closing the REPL.
     rl.close();
+    shutdown();
   } catch (error) {
     console.error('Error occurred in main:', error);
     process.exit(1);

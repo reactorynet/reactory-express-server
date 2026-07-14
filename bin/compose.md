@@ -59,10 +59,16 @@ Services whose `image:` value starts with `localhost/` are locally-built images 
 
 If the compose file contains no `localhost/` images (e.g. `docker-compose-develop.yaml`) this check is skipped automatically.
 
-When an image is missing, build it first:
+When an image is missing, build it first. `bin/build-image.sh` in this repo only
+builds the **server** image — the `reactory-pwa-client` image must be built from
+that sibling repo separately (see its own build docs):
 
 ```bash
+# server image (this repo)
 bin/build-image.sh <config-id> <env-id>
+
+# client image (from the reactory-pwa-client checkout)
+bin/podman-build.sh <config-id> <env-id>
 ```
 
 ## Common Workflows
@@ -84,8 +90,11 @@ bin/start.sh reactory local
 ### Full stack in containers (podman)
 
 ```bash
-# Build the server and/or client images first
+# Build the server image (this repo)
 bin/build-image.sh reactory podman
+
+# Build the client image (from the reactory-pwa-client checkout)
+bin/podman-build.sh reactory podman
 
 # Start everything
 bin/compose.sh reactory podman

@@ -119,14 +119,62 @@ export class MeiliSearchProvider implements ISearchProvider {
     };
   }
 
+  /**
+   * MeiliSearch rejects any request body above ~95 MiB. Large document sets
+   * (e.g. cataloguing thousands of source files) must therefore be split into
+   * multiple addDocuments calls, bounded by both cumulative byte size (well
+   * under the hard limit, to leave room for HTTP overhead) and a document
+   * count cap.
+   */
+  private static readonly MAX_BATCH_BYTES = 40 * 1024 * 1024; // 40 MiB
+  private static readonly MAX_BATCH_DOCS = 1000;
+
+  /** Split documents into batches that each stay under the Meili payload limit. */
+  private static chunkForIndexing<T>(data: T[]): T[][] {
+    const batches: T[][] = [];
+    let current: T[] = [];
+    let currentBytes = 0;
+    for (const doc of data) {
+      const size = Buffer.byteLength(JSON.stringify(doc ?? {}), 'utf8');
+      const exceeds =
+        current.length > 0 &&
+        (currentBytes + size > MeiliSearchProvider.MAX_BATCH_BYTES ||
+          current.length >= MeiliSearchProvider.MAX_BATCH_DOCS);
+      if (exceeds) {
+        batches.push(current);
+        current = [];
+        currentBytes = 0;
+      }
+      current.push(doc);
+      currentBytes += size;
+    }
+    if (current.length) batches.push(current);
+    return batches;
+  }
+
   async index<T>(index: string, data: T[]): Promise<Reactory.Service.ISearchIndexResult> {
+    if (!data || data.length === 0) {
+      return { id: index, success: true };
+    }
+    const taskIsOkay = (status: TaskStatus): boolean =>
+      status === TaskStatus.TASK_PROCESSING ||
+      status === TaskStatus.TASK_SUCCEEDED ||
+      status === TaskStatus.TASK_ENQUEUED;
     try {
-      const task = await this.client.index(index).addDocuments(data as any[]);
-      const taskIsOkay = (): boolean =>
-        task.status === TaskStatus.TASK_PROCESSING ||
-        task.status === TaskStatus.TASK_SUCCEEDED ||
-        task.status === TaskStatus.TASK_ENQUEUED;
-      return { id: task.indexUid, success: taskIsOkay() };
+      const batches = MeiliSearchProvider.chunkForIndexing(data as any[]);
+      let indexUid: string = index;
+      for (const batch of batches) {
+        const task = await this.client.index(index).addDocuments(batch);
+        indexUid = task.indexUid ?? indexUid;
+        if (!taskIsOkay(task.status)) {
+          return {
+            id: indexUid,
+            success: false,
+            error: `addDocuments returned task status '${task.status}'`,
+          };
+        }
+      }
+      return { id: indexUid, success: true };
     } catch (ex) {
       this.context.error(ex.message);
       return { id: '', success: false, error: ex.message };

@@ -102,19 +102,27 @@ export const ReactoryServer = async (): Promise<{
   err: ${error.message}
   ################################################
   `));
+    if (process.env.REACTORY_RUNTIME === 'electron') {
+      throw new Error('Could not connect to MongoDB');
+    }
     process.exit(0);
   }
 
   process.on('unhandledRejection', (error) => {
     // Will print "unhandledRejection err is not defined"
     logger.error('unhandledRejection', error);
-    process.exit(0);
+    // Electron manages the process lifecycle itself — don't exit under it.
+    if (process.env.REACTORY_RUNTIME !== 'electron') {
+      process.exit(0);
+    }
   });
 
   process.on('SIGINT', () => {
     workflowRunner.stop();
     logger.info('Shutting Down Reactory Server');
-    process.exit(0);
+    if (process.env.REACTORY_RUNTIME !== 'electron') {
+      process.exit(0);
+    }
   });
 
   let asciilogo = `Reactory Server version : ${packageJson.version} - start ${moment().format('YYYY-MM-dd HH:mm:ss')}`;
@@ -146,20 +154,25 @@ Environment Settings:
     logger.error(`Application reported error`);
   });
 
-  process.once('SIGUSR2', function () {
-    if (httpServer) {
-      logger.debug(colors.magenta('Interrupt Received, restarting'));
-      httpServer.close(() => {
-        process.kill(process.pid, 'SIGUSR2')
-      })
-    }
-  })
+  // nodemon restart signal — not applicable when Electron owns the process lifecycle.
+  if (process.env.REACTORY_RUNTIME !== 'electron') {
+    process.once('SIGUSR2', function () {
+      if (httpServer) {
+        logger.debug(colors.magenta('Interrupt Received, restarting'));
+        httpServer.close(() => {
+          process.kill(process.pid, 'SIGUSR2')
+        })
+      }
+    })
+  }
 
   process.on("SIGINT", () => {
     if (httpServer) {
       console.log('Shutting down server');
       httpServer.close(() => {
-        process.exit(0);
+        if (process.env.REACTORY_RUNTIME !== 'electron') {
+          process.exit(0);
+        }
       })
     }
   });
@@ -213,9 +226,12 @@ Environment Settings:
       await startExpressServer();
     } catch (error) {
       logger.error(colors.red('Could not start the express server'), error);
+      if (process.env.REACTORY_RUNTIME === 'electron') {
+        throw error;
+      }
       process.exit(-1);
     }
-    
+
     return { 
       app: reactoryExpress,
       server: httpServer,
@@ -224,6 +240,9 @@ Environment Settings:
     }
   } catch (startupError) {
     logger.error(colors.red('Server was unable to start successfully.'), startupError);
+    if (process.env.REACTORY_RUNTIME === 'electron') {
+      throw startupError;
+    }
     process.exit(-1);
   }
 }

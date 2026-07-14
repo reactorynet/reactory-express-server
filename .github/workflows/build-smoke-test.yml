@@ -1,0 +1,80 @@
+name: Build smoke test
+
+# Exercises the same path bin/bic.sh drives locally: compile the server,
+# build its container image. This is the check that would have caught the
+# rsync-filter-trailing-newline, Dockerfile cert-verification, Yarn 4
+# migration, and sibling-repo file: dependency bugs fixed in July 2026 —
+# none of them were caught automatically before this workflow existed.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "bin/**"
+      - "src/**"
+      - "lib/**"
+      - "config/reactory"
+      - "package.json"
+      - "yarn.lock"
+      - ".github/workflows/build-smoke-test.yml"
+  pull_request:
+    paths:
+      - "bin/**"
+      - "src/**"
+      - "lib/**"
+      - "config/reactory"
+      - "package.json"
+      - "yarn.lock"
+      - ".github/workflows/build-smoke-test.yml"
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # config/reactory is a submodule (reactory-express-server-devops) —
+          # the Dockerfile actually being built lives there, not in this repo.
+          submodules: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+
+      - name: Set up Reactory environment variables
+        # check_env_vars (bin/shared/shell-utils.sh) requires these to be set
+        # and to point at existing directories. reactory-data/-client/-plugins
+        # aren't needed for the build itself, so throwaway dirs are enough.
+        run: |
+          mkdir -p /tmp/reactory-data /tmp/reactory-client /tmp/reactory-plugins
+          echo "REACTORY_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
+          echo "REACTORY_DATA=/tmp/reactory-data" >> "$GITHUB_ENV"
+          echo "REACTORY_SERVER=${{ github.workspace }}" >> "$GITHUB_ENV"
+          echo "REACTORY_CLIENT=/tmp/reactory-client" >> "$GITHUB_ENV"
+          echo "REACTORY_PLUGINS=/tmp/reactory-plugins" >> "$GITHUB_ENV"
+
+      - name: Generate a throwaway self-signed CA cert
+        # Forces HAS_CUSTOM_CERTS=true so the Dockerfile's custom-cert
+        # verification RUN step actually executes in CI — otherwise that
+        # branch (previously broken: hardcoded nonexistent filename) only
+        # ever runs on a dev machine that happens to have real certs locally.
+        run: |
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+            -keyout /tmp/ci-test-ca.key -out ./certificates/ci-test-ca.crt \
+            -subj "/CN=reactory-ci-test-ca"
+
+      - name: Build server
+        run: bin/build.sh reactory podman
+
+      - name: Build server image
+        run: bin/build-image.sh reactory podman

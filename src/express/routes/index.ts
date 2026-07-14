@@ -9,6 +9,7 @@ import modules from '@reactory/server-core/modules';
 import CDNRouter from './CDNRouter';
 import HealthRouter from './HealthRouter';
 import logger from '@reactory/server-core/logging';
+import configureElectronClientServing from './ElectronClientServing';
 
 const ConfigureRoutes = (app: express.Application) => {
   
@@ -35,6 +36,10 @@ const ConfigureRoutes = (app: express.Application) => {
     logger.debug(`🔀 route handler: ${route} configured`);
     app.use(route, routes[route]);
   });
+
+  // Must be registered after all API routes — its SPA fallback otherwise
+  // shadows them. No-op unless REACTORY_RUNTIME=electron.
+  configureElectronClientServing(app);
 }
 
 export default ConfigureRoutes;

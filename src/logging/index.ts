@@ -42,7 +42,10 @@ export const getLogging = () => {
   );
 
   const consolelogger = new transports.Console({
-    level: "debug",
+    // Honour LOG_LEVEL for the console (was hard-coded to "debug", which drowned
+    // CLI/server output in per-service registration and workflow-load lines
+    // regardless of configuration). Default stays "debug" for parity.
+    level: process.env.LOG_LEVEL || "debug",
     format: format.simple(),
   });
 

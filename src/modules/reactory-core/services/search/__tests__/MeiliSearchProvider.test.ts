@@ -163,6 +163,33 @@ describe('MeiliSearchProvider', () => {
       expect(res).toEqual({ id: '', success: false, error: 'boom' });
       expect(mockContext.error).toHaveBeenCalledWith('boom');
     });
+
+    it('short-circuits an empty batch without calling the client', async () => {
+      const res = await makeProvider().index('articles', []);
+      expect(res).toEqual({ id: 'articles', success: true });
+      expect(mockIndex.addDocuments).not.toHaveBeenCalled();
+    });
+
+    it('splits large document sets into multiple addDocuments calls (payload limit)', async () => {
+      mockIndex.addDocuments.mockResolvedValue({ indexUid: 'articles', status: 'enqueued' });
+      // 2500 docs exceeds the 1000-doc batch cap -> expect 3 batches.
+      const docs = Array.from({ length: 2500 }, (_, i) => ({ id: i, name: `doc-${i}` }));
+      const res = await makeProvider().index('articles', docs);
+      expect(res).toEqual({ id: 'articles', success: true });
+      expect(mockIndex.addDocuments).toHaveBeenCalledTimes(3);
+      const total = mockIndex.addDocuments.mock.calls.reduce((n, c) => n + c[0].length, 0);
+      expect(total).toBe(2500);
+      expect(mockIndex.addDocuments.mock.calls.every((c) => c[0].length <= 1000)).toBe(true);
+    });
+
+    it('stops and reports failure when a batch task fails', async () => {
+      mockIndex.addDocuments
+        .mockResolvedValueOnce({ indexUid: 'articles', status: 'enqueued' })
+        .mockResolvedValueOnce({ indexUid: 'articles', status: 'failed' });
+      const docs = Array.from({ length: 1500 }, (_, i) => ({ id: i }));
+      const res = await makeProvider().index('articles', docs);
+      expect(res.success).toBe(false);
+    });
   });
 
   describe('deleteIndex', () => {

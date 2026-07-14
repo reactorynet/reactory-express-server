@@ -97,7 +97,7 @@ rsync -av --filter='merge ./bin/build.lib.rsync' ./lib/ $BUILD_PATH/lib --quiet
 
 DATA_RSYNC_INCLUDE=$REACTORY_SERVER/src/config/$REACTORY_CONFIG_ID/build.data.rsync_inc.$REACTORY_ENV_ID
 
-if [ $PACKAGE_DATA_FOLDER = "true" ]; then
+if [ "${PACKAGE_DATA_FOLDER:-false}" = "true" ]; then
   if [ ! -f $DATA_RSYNC_INCLUDE ]; then  
     echo "🔁 Synchronising Reactory Data [build.data.rsync_inc]"
     rsync -av --filter='dir-merge ./bin/build.data.rsync' $REACTORY_DATA/ $BUILD_PATH/data --quiet
@@ -147,13 +147,44 @@ if [ -f "./config/$REACTORY_CONFIG_ID/pm2.$REACTORY_ENV_ID.config.js" ]; then
   cp "./config/$REACTORY_CONFIG_ID/pm2.$REACTORY_ENV_ID.config.js" $BUILD_PATH/pm2.config.js
 fi
 
+# Copy .yarnrc.yml
+# Without this, Yarn 4 has no nodeLinker config in the build output and
+# defaults to Plug'n'Play — it generates .pnp.cjs instead of a conventional
+# node_modules tree, so the compiled server (a plain `node index.js`/fork(),
+# no PnP loader hooked in) can't resolve ANY dependency at runtime.
+if [ -f ./.yarnrc.yml ]; then
+  echo "Copying .yarnrc.yml"
+  cp ./.yarnrc.yml $BUILD_PATH
+fi
+
 # Copy package.json
 echo "Copying package.json"
 cp ./package.json $BUILD_PATH
+# Rewrite "workspaces" globs from src/modules/* to app/modules/*, matching
+# where the compiled modules actually land in this build output. Without
+# this, `yarn workspaces focus` (used when building the container image)
+# resolves zero workspace members here and silently drops their
+# dependencies — e.g. reactory-telemetry's @opentelemetry/* packages.
+node -e "
+  const fs = require('fs');
+  const path = '$BUILD_PATH/package.json';
+  const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+  if (Array.isArray(pkg.workspaces)) {
+    pkg.workspaces = pkg.workspaces.map((w) => w.replace(/^src\//, 'app/'));
+  }
+  fs.writeFileSync(path, JSON.stringify(pkg, null, 2));
+"
 
 # Copy package-lock.json
 echo "Copying yarn.lock"
 cp ./yarn.lock $BUILD_PATH
+# yarn.lock's workspace locators are keyed to the source path (e.g.
+# "reactory-telemetry@workspace:src/modules/reactory-telemetry"). Rewrite
+# them to app/modules/* to match the package.json rewrite above — otherwise
+# the lockfile entry for every module workspace no longer matches its
+# on-disk location, and yarn silently treats those modules' dependencies as
+# unresolved instead of installing them.
+sed -i.bak 's#@workspace:src/modules/#@workspace:app/modules/#g' $BUILD_PATH/yarn.lock && rm -f $BUILD_PATH/yarn.lock.bak
 
 # Copy jsconfig.json
 echo "Copying jsconfig.json"
@@ -165,7 +196,7 @@ cd $BUILD_PATH
 sed 's/src/app/g' jsconfig.json > jsconfig_temp.json && mv jsconfig_temp.json jsconfig.json
 cd $WORKING_FOLDER
 
-if [ $INCLUDE_ENV = "true" ] && [ -f $ENV_FILE ]; then
+if [ "${INCLUDE_ENV:-false}" = "true" ] && [ -f "$ENV_FILE" ]; then
   # Copy .env file
   echo "Copying .env file"
   cp $ENV_FILE $BUILD_PATH/.env
@@ -188,7 +219,7 @@ fi
 # Create archive for deployment
 echo "Creating archive for deployment"
 cd $BUILD_PATH
-if [ $INCLUDE_DATA_WITH_IMAGE = "true" ]; then
+if [ "${INCLUDE_DATA_WITH_IMAGE:-false}" = "true" ]; then
   echo "Including data folder in archive"
   tar -czf ../$REACTORY_CONFIG_ID-server-${REACTORY_ENV_ID}-${BUILD_VERSION}.tar.gz .
 else

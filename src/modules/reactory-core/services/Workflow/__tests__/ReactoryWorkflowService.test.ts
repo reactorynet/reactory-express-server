@@ -47,6 +47,10 @@ jest.mock('../../../../../logging', () => ({
   error: jest.fn(),
 }));
 
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import yaml from 'js-yaml';
 import ReactoryWorkflowService from '../ReactoryWorkflowService';
 import { WorkflowRunner } from '../../../workflow/WorkflowRunner/WorkflowRunner';
 import { 
@@ -1079,6 +1083,108 @@ describe('ReactoryWorkflowService', () => {
 
         expect(mockLifecycleManager.getRecentWorkflowExecutions).toHaveBeenCalledWith(10);
       });
+    });
+  });
+
+  // ─── saveWorkflowDefinition: JSON string vs native object serialization ───
+
+  describe('saveWorkflowDefinition', () => {
+    let tmpDir: string;
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reactory-wf-test-'));
+      process.env = { ...originalEnv, REACTORY_DATA: tmpDir };
+
+      jest.spyOn(service, 'validateWorkflowDefinition').mockResolvedValue({ isValid: true });
+      jest.spyOn(service, 'getWorkflowYamlDefinition').mockResolvedValue({
+        nameSpace: 'test', name: 'TestWF', version: '1.0.0',
+        steps: [], loadStatus: 'SUCCESS' as any,
+      });
+
+      mockRunnerInstance.getWorkflowByName.mockReturnValue(null);
+      mockRunnerInstance.registerWorkflow = jest.fn();
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+      try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* no-op */ }
+    });
+
+    const yamlFilePath = (base: string) =>
+      path.join(base, 'workflows', 'catalog', 'test', 'TestWF', '1.0.0', 'TestWF.yaml');
+
+    it('writes config, inputs, and variables as YAML objects when client sends JSON-stringified values', async () => {
+      const configObj  = { url: 'https://example.com', method: 'GET', headers: { Accept: 'application/json' } };
+      const inputsObj  = { prompt: 'hello', maxTokens: 100 };
+      const variablesObj = { patterns: ['AGENTS.md', 'CLAUDE.md'] };
+
+      await service.saveWorkflowDefinition({
+        nameSpace: 'test',
+        name: 'TestWF',
+        version: '1.0.0',
+        description: 'test',
+        variables: JSON.stringify(variablesObj) as any,
+        steps: [{
+          id: 'step1',
+          type: 'api_call',
+          config: JSON.stringify(configObj) as any,
+          inputs: JSON.stringify(inputsObj) as any,
+        }],
+      });
+
+      const written = yaml.load(fs.readFileSync(yamlFilePath(tmpDir), 'utf8')) as any;
+
+      expect(typeof written.variables).toBe('object');
+      expect(written.variables.patterns).toEqual(['AGENTS.md', 'CLAUDE.md']);
+
+      const step = written.steps[0];
+      expect(typeof step.config).toBe('object');
+      expect(step.config.url).toBe('https://example.com');
+      expect(step.config.method).toBe('GET');
+
+      expect(typeof step.inputs).toBe('object');
+      expect(step.inputs.prompt).toBe('hello');
+      expect(step.inputs.maxTokens).toBe(100);
+    });
+
+    it('writes config, inputs, and variables as YAML objects when given native objects', async () => {
+      const configObj    = { url: 'https://example.com', method: 'POST' };
+      const variablesObj = { retryCount: 3 };
+
+      await service.saveWorkflowDefinition({
+        nameSpace: 'test',
+        name: 'TestWF',
+        version: '1.0.0',
+        variables: variablesObj,
+        steps: [{ id: 'step1', type: 'api_call', config: configObj }],
+      });
+
+      const written = yaml.load(fs.readFileSync(yamlFilePath(tmpDir), 'utf8')) as any;
+
+      expect(typeof written.variables).toBe('object');
+      expect(written.variables.retryCount).toBe(3);
+
+      expect(typeof written.steps[0].config).toBe('object');
+      expect(written.steps[0].config.method).toBe('POST');
+    });
+
+    it('does not produce a JSON-string literal in the written YAML', async () => {
+      const configObj = { url: 'https://example.com' };
+
+      await service.saveWorkflowDefinition({
+        nameSpace: 'test',
+        name: 'TestWF',
+        version: '1.0.0',
+        steps: [{ id: 'step1', type: 'api_call', config: JSON.stringify(configObj) as any }],
+      });
+
+      const rawYaml = fs.readFileSync(yamlFilePath(tmpDir), 'utf8');
+
+      // The raw YAML text must NOT contain a JSON object literal as a string value
+      expect(rawYaml).not.toMatch(/config:\s+['"]?\{.*"url"/);
+      // It should instead contain a proper YAML mapping key
+      expect(rawYaml).toMatch(/url:/);
     });
   });
 });

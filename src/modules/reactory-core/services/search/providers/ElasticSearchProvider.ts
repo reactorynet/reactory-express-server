@@ -178,22 +178,28 @@ export class ElasticSearchProvider implements ISearchProvider {
       return { id: index, success: true };
     }
     try {
-      const operations = data.flatMap((doc: any) => {
-        const action =
-          doc && doc.id !== undefined && doc.id !== null
-            ? { index: { _id: String(doc.id) } }
-            : { index: {} };
-        return [action, doc];
-      });
+      // ElasticSearch caps the bulk request body (http.max_content_length,
+      // 100mb by default). Split large document sets into byte/count-bounded
+      // batches so cataloguing thousands of files indexes reliably.
+      const batches = ElasticSearchProvider.chunkForIndexing(data as any[]);
+      for (const batch of batches) {
+        const operations = batch.flatMap((doc: any) => {
+          const action =
+            doc && doc.id !== undefined && doc.id !== null
+              ? { index: { _id: String(doc.id) } }
+              : { index: {} };
+          return [action, doc];
+        });
 
-      const response: any = await this.client.bulk({ index, operations, refresh: false });
+        const response: any = await this.client.bulk({ index, operations, refresh: false });
 
-      if (response?.errors) {
-        const firstError = (response.items || [])
-          .map((item: any) => item.index?.error?.reason || item.create?.error?.reason)
-          .find(Boolean);
-        this.context.error(`ElasticSearch bulk index reported errors: ${firstError || 'unknown'}`);
-        return { id: index, success: false, error: firstError || 'bulk index errors' };
+        if (response?.errors) {
+          const firstError = (response.items || [])
+            .map((item: any) => item.index?.error?.reason || item.create?.error?.reason)
+            .find(Boolean);
+          this.context.error(`ElasticSearch bulk index reported errors: ${firstError || 'unknown'}`);
+          return { id: index, success: false, error: firstError || 'bulk index errors' };
+        }
       }
 
       return { id: index, success: true };
@@ -201,6 +207,32 @@ export class ElasticSearchProvider implements ISearchProvider {
       this.context.error(ex.message);
       return { id: index, success: false, error: ex.message };
     }
+  }
+
+  /** Batch documents to stay under the bulk request body size limit. */
+  private static readonly MAX_BATCH_BYTES = 40 * 1024 * 1024; // 40 MiB
+  private static readonly MAX_BATCH_DOCS = 1000;
+
+  private static chunkForIndexing<T>(data: T[]): T[][] {
+    const batches: T[][] = [];
+    let current: T[] = [];
+    let currentBytes = 0;
+    for (const doc of data) {
+      const size = Buffer.byteLength(JSON.stringify(doc ?? {}), 'utf8');
+      const exceeds =
+        current.length > 0 &&
+        (currentBytes + size > ElasticSearchProvider.MAX_BATCH_BYTES ||
+          current.length >= ElasticSearchProvider.MAX_BATCH_DOCS);
+      if (exceeds) {
+        batches.push(current);
+        current = [];
+        currentBytes = 0;
+      }
+      current.push(doc);
+      currentBytes += size;
+    }
+    if (current.length) batches.push(current);
+    return batches;
   }
 
   async createIndex(
