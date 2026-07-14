@@ -87,24 +87,28 @@ describe('YamlWorkflowSchema', () => {
     });
 
     it('should validate step types', () => {
-      const validStepTypes: any[] = [
-        'log', 'delay', 'validation', 'data_transformation',
-        'api_call', 'cli_command', 'file_operation', 'condition',
-        'parallel', 'for_each', 'while', 'custom'
-      ];
+      // Minimal valid config for each step type that enforces required config fields.
+      const stepTypeConfigs: Record<string, object> = {
+        log:                { message: 'test' },
+        delay:              { duration: 1000 },
+        validation:         { rules: [] },
+        data_transformation:{ transformations: [] },
+        api_call:           { url: 'http://example.com', method: 'GET' },
+        cli_command:        { command: 'echo test' },
+        file_operation:     { operation: 'read', source: '/tmp/test.txt' },
+        condition:          { condition: 'true', thenSteps: [] },
+        parallel:           {},
+        for_each:           { items: 'variables.list', steps: [] },
+        while:              { condition: 'false', steps: [] },
+        custom:             {},
+      };
 
-      for (const stepType of validStepTypes) {
+      for (const [stepType, config] of Object.entries(stepTypeConfigs)) {
         const workflow: YamlWorkflowDefinition = {
           nameSpace: 'testNameSpace',
           name: 'testWorkflow',
           version: '1.0.0',
-          steps: [
-            {
-              id: 'step1',
-              type: stepType,
-              config: stepType === 'log' ? { message: 'test' } : {}
-            }
-          ]
+          steps: [{ id: 'step1', type: stepType, config }]
         };
 
         const result = validator.validateSchema(workflow);

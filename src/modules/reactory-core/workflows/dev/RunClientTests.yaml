@@ -1,0 +1,166 @@
+# reactory-dev.RunClientTests@1.0.0
+#
+# Runs the Jest test suite for reactory-pwa-client.
+#
+# bin/test.sh only forwards $1 (client) and $2 (env) — it does NOT pass a
+# file pattern to the underlying test runner.  For scoped runs this workflow
+# therefore constructs an env-cmd + npx jest invocation directly so that
+# --testPathPattern can be forwarded cleanly.
+#
+# Full-suite run (no pattern):
+#   env-cmd -f ./config/env/reactory/.env.local npx jest --no-coverage
+#
+# Scoped run (with pattern):
+#   env-cmd -f ./config/env/reactory/.env.local \
+#     npx jest --testPathPattern="<pattern>" --no-coverage
+#
+# Inputs:
+#   pattern   (optional) — Jest testPathPattern for scoped runs.
+#   coverage  (optional) — "true" to generate an LCOV coverage report.
+#   workdir   (optional) — path to reactory-pwa-client root.
+#                          Defaults to $REACTORY_CLIENT env var at runtime.
+#   client    (optional) — client config key (default: reactory).
+#   env       (optional) — environment config key (default: local).
+nameSpace: reactory-dev
+name: RunClientTests
+version: 1.0.0
+description: "Run the reactory-pwa-client Jest test suite. Accepts an optional file-pattern for scoped runs."
+tags: [dev, test, jest, client, pwa]
+metadata:
+  timeout: 600000
+
+inputs:
+  pattern:
+    type: string
+    required: false
+    description: "Jest testPathPattern — e.g. 'ReactoryForm', 'form-engine', or 'widgets'."
+  coverage:
+    type: string
+    required: false
+    default: "false"
+    description: "Set to 'true' to generate a coverage report."
+  workdir:
+    type: string
+    required: false
+    description: "Absolute path to reactory-pwa-client root. Defaults to $REACTORY_CLIENT."
+  client:
+    type: string
+    required: false
+    default: "reactory"
+    description: "Client config key used by env-cmd (default: reactory)."
+  env:
+    type: string
+    required: false
+    default: "local"
+    description: "Environment config key used by env-cmd (default: local)."
+
+steps:
+  # ── 0. Resolve effective workdir ─────────────────────────────────────────
+  - id: resolveWorkdir
+    type: cli_command
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const wd = process.env.WD;
+          const fallback = process.env.REACTORY_CLIENT || process.cwd();
+          process.stdout.write((wd && !wd.startsWith('${')) ? wd : fallback);
+      env:
+        WD: "${input.workdir}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setWorkdir
+    type: set_variable
+    dependsOn: resolveWorkdir
+    config:
+      action: set
+      key: testDir
+      source: step_output
+      sourcePath: resolveWorkdir.outputs.stdout
+
+  # ── 1. Build the env-cmd + npx jest invocation ───────────────────────────
+  # Constructs the full command string respecting the optional pattern and
+  # coverage inputs, avoiding any unresolved template tokens in the args.
+  - id: buildCommand
+    type: cli_command
+    dependsOn: setWorkdir
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const pattern  = process.env.PATTERN;
+          const coverage = process.env.COVERAGE;
+          const client   = process.env.CLIENT || 'reactory';
+          const env      = process.env.ENV    || 'local';
+          const envFile  = `./config/env/${client}/.env.${env}`;
+          const hasPattern  = pattern  && !pattern.startsWith('${');
+          const hasCoverage = coverage && !coverage.startsWith('${') && coverage === 'true';
+          const parts = [
+            'env-cmd', '-f', envFile,
+            'npx', 'jest',
+            '--testEnvironment=jsdom',
+          ];
+          if (hasPattern) parts.push(`--testPathPattern=${JSON.stringify(pattern)}`);
+          parts.push(hasCoverage ? '--coverage' : '--no-coverage');
+          process.stdout.write(parts.join(' '));
+      env:
+        PATTERN:  "${input.pattern}"
+        COVERAGE: "${input.coverage}"
+        CLIENT:   "${input.client}"
+        ENV:      "${input.env}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setCommand
+    type: set_variable
+    dependsOn: buildCommand
+    config:
+      action: set
+      key: testCommand
+      source: step_output
+      sourcePath: buildCommand.outputs.stdout
+
+  - id: logStart
+    type: log
+    dependsOn: setCommand
+    config:
+      level: info
+      message: "Running client tests — command: ${variables.testCommand}"
+
+  # ── 2. Execute tests ──────────────────────────────────────────────────────
+  - id: runTests
+    type: cli_command
+    dependsOn: logStart
+    config:
+      command: "bash"
+      args: ["-c", "${variables.testCommand}"]
+      cwd: "${variables.testDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  # ── 3. Report results ─────────────────────────────────────────────────────
+  - id: reportResults
+    type: condition
+    dependsOn: runTests
+    config:
+      condition: "steps.runTests.exitCode === 0"
+      thenSteps:
+        - id: logPass
+          type: log
+          config:
+            level: info
+            message: "Client tests PASSED."
+      elseSteps:
+        - id: logFail
+          type: log
+          config:
+            level: error
+            message: "Client tests FAILED — review output above for details."

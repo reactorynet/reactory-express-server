@@ -280,7 +280,7 @@ export class YamlValidator {
       case 'type':
         return `Invalid type at ${path}: expected ${error.params?.type}, got ${typeof error.data}`;
       case 'enum':
-        return `Invalid value at ${path}: must be one of [${error.params?.allowedValues?.join(', ')}]`;
+        return `Invalid value '${error.data}' at ${path}: must be one of [${error.params?.allowedValues?.join(', ')}]`;
       case 'pattern':
         return `Invalid format at ${path}: does not match pattern ${error.params?.pattern}`;
       case 'minItems':

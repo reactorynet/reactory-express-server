@@ -1,0 +1,155 @@
+# reactory-dev.RunServerTests@1.0.0
+#
+# Runs the Jest test suite for reactory-express-server via bin/jest.sh.
+#
+# bin/jest.sh takes: [client] [environment] [file-pattern] [jest-options...]
+# It loads config/env/<client>/.env.<environment> via env-cmd so that all
+# service/database environment variables are available to integration tests.
+#
+# Inputs:
+#   pattern   (optional) — test file path pattern forwarded as the 3rd arg.
+#                          Omit to run the entire suite.
+#   coverage  (optional) — set to "true" to generate an LCOV coverage report.
+#                          Defaults to no-coverage for speed.
+#   workdir   (optional) — path to the server repo root.
+#                          Defaults to $REACTORY_SERVER env var at runtime.
+#   client    (optional) — client config key (default: reactory).
+#   env       (optional) — environment config key (default: local).
+nameSpace: reactory-dev
+name: RunServerTests
+version: 1.0.0
+description: "Run the reactory-express-server Jest test suite. Accepts an optional file-pattern for scoped runs."
+tags: [dev, test, jest, server]
+metadata:
+  timeout: 600000
+
+inputs:
+  pattern:
+    type: string
+    required: false
+    description: "Jest testPathPattern — e.g. 'YamlFlow', 'UserActivityStep', or '**/*.test.ts'."
+  coverage:
+    type: string
+    required: false
+    default: "false"
+    description: "Set to 'true' to generate a coverage report."
+  workdir:
+    type: string
+    required: false
+    description: "Absolute path to reactory-express-server root. Defaults to $REACTORY_SERVER."
+  client:
+    type: string
+    required: false
+    default: "reactory"
+    description: "Client config key used by env-cmd (default: reactory)."
+  env:
+    type: string
+    required: false
+    default: "local"
+    description: "Environment config key used by env-cmd (default: local)."
+
+steps:
+  # ── 0. Resolve effective workdir ─────────────────────────────────────────
+  - id: resolveWorkdir
+    type: cli_command
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const wd = process.env.WD;
+          const fallback = process.env.REACTORY_SERVER || process.cwd();
+          process.stdout.write((wd && !wd.startsWith('${')) ? wd : fallback);
+      env:
+        WD: "${input.workdir}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setWorkdir
+    type: set_variable
+    dependsOn: resolveWorkdir
+    config:
+      action: set
+      key: testDir
+      source: step_output
+      sourcePath: resolveWorkdir.outputs.stdout
+
+  # ── 1. Build the jest.sh invocation ──────────────────────────────────────
+  # Assembles: bash bin/jest.sh <client> <env> [pattern] [--coverage|--no-coverage]
+  # Pattern and coverage flags are only appended when their inputs are resolved.
+  - id: buildCommand
+    type: cli_command
+    dependsOn: setWorkdir
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const pattern  = process.env.PATTERN;
+          const coverage = process.env.COVERAGE;
+          const client   = process.env.CLIENT || 'reactory';
+          const env      = process.env.ENV    || 'local';
+          const hasPattern  = pattern  && !pattern.startsWith('${');
+          const hasCoverage = coverage && !coverage.startsWith('${') && coverage === 'true';
+          const parts = ['bash', 'bin/jest.sh', client, env];
+          if (hasPattern)  parts.push(JSON.stringify(pattern));
+          parts.push(hasCoverage ? '--coverage' : '--no-coverage');
+          process.stdout.write(parts.join(' '));
+      env:
+        PATTERN:  "${input.pattern}"
+        COVERAGE: "${input.coverage}"
+        CLIENT:   "${input.client}"
+        ENV:      "${input.env}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setCommand
+    type: set_variable
+    dependsOn: buildCommand
+    config:
+      action: set
+      key: testCommand
+      source: step_output
+      sourcePath: buildCommand.outputs.stdout
+
+  - id: logStart
+    type: log
+    dependsOn: setCommand
+    config:
+      level: info
+      message: "Running server tests — command: ${variables.testCommand}"
+
+  # ── 2. Execute tests ──────────────────────────────────────────────────────
+  - id: runTests
+    type: cli_command
+    dependsOn: logStart
+    config:
+      command: "bash"
+      args: ["-c", "${variables.testCommand}"]
+      cwd: "${variables.testDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  # ── 3. Report results ─────────────────────────────────────────────────────
+  - id: reportResults
+    type: condition
+    dependsOn: runTests
+    config:
+      condition: "steps.runTests.exitCode === 0"
+      thenSteps:
+        - id: logPass
+          type: log
+          config:
+            level: info
+            message: "Server tests PASSED."
+      elseSteps:
+        - id: logFail
+          type: log
+          config:
+            level: error
+            message: "Server tests FAILED — review output above for details."
