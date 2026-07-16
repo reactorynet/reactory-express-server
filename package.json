@@ -339,7 +339,8 @@
   },
   "resolutions": {
     "string-width": "4.2.3",
-    "node-gyp": "11.5.0"
+    "node-gyp": "11.5.0",
+    "ajv": "8.20.0"
   },
   "nodemonConfig": {
     "ignore": [

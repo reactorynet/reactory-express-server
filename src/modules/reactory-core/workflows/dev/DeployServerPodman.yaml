@@ -1,0 +1,226 @@
+# reactory-dev.DeployServerPodman@1.0.0
+#
+# Builds the reactory-express-server tar, builds + tags its podman
+# container image, and (re)deploys it via the podman-compose stack.
+#
+# NOTE: this runs bin/build.sh / bin/build-image.sh / podman / bin/compose.sh
+# as child processes of the express-server itself, so it must be triggered
+# against a server running directly on the host (bin/start.sh / bin/dev.sh)
+# — a server running inside its own podman container has no podman-in-podman
+# access and cannot build or manage other containers from within itself.
+#
+# Underlying commands (run from $REACTORY_SERVER, i.e. this repo's root):
+#   bin/build.sh <config> <env>                        — always
+#   bin/build-image.sh <config> <env>                  — always, after a
+#                                                         successful server build
+#   podman rm -f <config>-express-server               — only when recreate=true
+#   bin/compose.sh <config> <env> "" "up -d"           — only when deploy=true
+#
+# recreate defaults to true because `podman-compose up -d` alone does NOT
+# reliably recreate a container just because its underlying image changed —
+# confirmed empirically while building this pipeline. Skipping the recreate
+# step risks silently redeploying a stale image.
+#
+# Inputs:
+#   config    (optional) — REACTORY_CONFIG_ID / server install identity
+#                           (default: reactory).
+#   env       (optional) — REACTORY_ENV_ID (default: podman).
+#   recreate  (optional) — "true" to force-remove the existing
+#                           <config>-express-server container before
+#                           deploying, guaranteeing the new image is used
+#                           (default: true).
+#   deploy    (optional) — "true" to run bin/compose.sh ... up -d after the
+#                           image builds. Set to "false" to only build the
+#                           server + image without touching running
+#                           containers (default: true).
+#   workdir   (optional) — path to reactory-express-server root.
+#                           Defaults to $REACTORY_SERVER env var at runtime.
+nameSpace: reactory-dev
+name: DeployServerPodman
+version: 1.0.0
+description: "Build the reactory-express-server tar + podman image, then (re)deploy it via podman-compose."
+tags: [dev, build, deploy, server, podman]
+metadata:
+  timeout: 900000
+
+inputs:
+  config:
+    type: string
+    required: false
+    default: "reactory"
+    description: "Server install identity / REACTORY_CONFIG_ID (default: reactory)."
+  env:
+    type: string
+    required: false
+    default: "podman"
+    description: "Environment config key / REACTORY_ENV_ID (default: podman)."
+  recreate:
+    type: string
+    required: false
+    default: "true"
+    description: "Set to 'true' to force-remove the existing <config>-express-server container before deploying, so the new image is actually used."
+  deploy:
+    type: string
+    required: false
+    default: "true"
+    description: "Set to 'false' to only build the server + image, without running podman-compose up -d."
+  workdir:
+    type: string
+    required: false
+    description: "Absolute path to reactory-express-server root. Defaults to $REACTORY_SERVER."
+
+steps:
+  # ── 0. Resolve effective workdir ─────────────────────────────────────────
+  - id: resolveWorkdir
+    type: cli_command
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const wd = process.env.WD;
+          const fallback = process.env.REACTORY_SERVER || process.cwd();
+          process.stdout.write((wd && !wd.startsWith('${')) ? wd : fallback);
+      env:
+        WD: "${input.workdir}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setWorkdir
+    type: set_variable
+    dependsOn: resolveWorkdir
+    config:
+      action: set
+      key: serverDir
+      source: step_output
+      sourcePath: resolveWorkdir.outputs.stdout
+
+  - id: logStart
+    type: log
+    dependsOn: setWorkdir
+    config:
+      level: info
+      message: "Building + deploying server '${input.config}' (${input.env}) from ${variables.serverDir}"
+
+  # ── 1. Build the server (compiles src/ -> app/, packages the tar) ────────
+  - id: buildServer
+    type: cli_command
+    dependsOn: logStart
+    config:
+      command: "bash"
+      args: ["bin/build.sh", "${input.config}", "${input.env}"]
+      cwd: "${variables.serverDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: reportBuildResult
+    type: condition
+    dependsOn: buildServer
+    config:
+      condition: "steps.buildServer.outputs.exitCode === 0"
+      thenSteps:
+        - id: logBuildPass
+          type: log
+          config:
+            level: info
+            message: "Server build PASSED."
+      elseSteps:
+        - id: logBuildFail
+          type: log
+          config:
+            level: error
+            message: "Server build FAILED — review output above. Image build will be skipped since bin/build-image.sh requires the tar this step produces."
+
+  # ── 2. Build + tag the podman image (build-image.sh itself checks for the
+  #      tar and fails fast if step 1 didn't produce one, so no explicit
+  #      abort is needed here) ──────────────────────────────────────────────
+  - id: buildImage
+    type: cli_command
+    dependsOn: reportBuildResult
+    config:
+      command: "bash"
+      args: ["bin/build-image.sh", "${input.config}", "${input.env}"]
+      cwd: "${variables.serverDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: reportImageResult
+    type: condition
+    dependsOn: buildImage
+    config:
+      condition: "steps.buildImage.outputs.exitCode === 0"
+      thenSteps:
+        - id: logImagePass
+          type: log
+          config:
+            level: info
+            message: "Server image build PASSED — tagged localhost/${input.config}/reactory-express-server."
+      elseSteps:
+        - id: logImageFail
+          type: log
+          config:
+            level: error
+            message: "Server image build FAILED — review output above. Deploy will be skipped since podman-compose would just find the same (stale or missing) image."
+
+  # ── 3. Force-remove the existing container so the new image is actually
+  #      used (see the workflow-level note on why recreate defaults true) ──
+  - id: maybeRecreate
+    type: condition
+    dependsOn: reportImageResult
+    config:
+      condition: "input.recreate === 'true' && steps.buildImage.outputs.exitCode === 0"
+      thenSteps:
+        - id: removeExistingContainer
+          type: cli_command
+          config:
+            command: "podman"
+            args: ["rm", "-f", "${input.config}-express-server"]
+            cwd: "${variables.serverDir}"
+            failOnError: false
+            expectedExitCodes: [0, 1]
+            output:
+              captureStdout: true
+              captureStderr: true
+
+  # ── 4. Deploy via podman-compose ──────────────────────────────────────────
+  - id: maybeDeploy
+    type: condition
+    dependsOn: maybeRecreate
+    config:
+      condition: "input.deploy === 'true' && steps.buildImage.outputs.exitCode === 0"
+      thenSteps:
+        - id: deployStack
+          type: cli_command
+          config:
+            command: "bash"
+            args: ["bin/compose.sh", "${input.config}", "${input.env}", "", "up -d"]
+            cwd: "${variables.serverDir}"
+            failOnError: false
+            expectedExitCodes: [0, 1]
+            output:
+              captureStdout: true
+              captureStderr: true
+        - id: reportDeployResult
+          type: condition
+          dependsOn: deployStack
+          config:
+            condition: "steps.deployStack.outputs.exitCode === 0"
+            thenSteps:
+              - id: logDeployPass
+                type: log
+                config:
+                  level: info
+                  message: "Deploy PASSED — ${input.config}-express-server is up on ${input.env}."
+            elseSteps:
+              - id: logDeployFail
+                type: log
+                config:
+                  level: error
+                  message: "Deploy FAILED — check that all required local images exist (bin/compose.sh reports missing ones by name)."
