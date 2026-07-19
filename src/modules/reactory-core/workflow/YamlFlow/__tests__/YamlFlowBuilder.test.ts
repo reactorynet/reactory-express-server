@@ -19,6 +19,7 @@ import {
   buildYamlWorkflowClass,
   engineWorkflowId,
   engineWorkflowMajorVersion,
+  applyYamlInputDefaults,
 } from '../YamlFlowBuilder';
 import { InstanceResourceManager } from '../../InstanceResourceManager';
 import { finalizeInstanceIfTerminal } from '../execution/YamlStepBody';
@@ -60,6 +61,50 @@ describe('YamlFlowBuilder (engine bridge)', () => {
       expect(engineWorkflowMajorVersion('2.3.1')).toBe(2);
       expect(engineWorkflowMajorVersion('1.0.0')).toBe(1);
       expect(engineWorkflowMajorVersion('')).toBe(1);
+    });
+  });
+
+  describe('applyYamlInputDefaults (workflow input default binding)', () => {
+    const inputsSchema = {
+      client: { type: 'string', required: false, default: 'reactory' },
+      env: { type: 'string', required: false, default: 'podman' },
+      workdir: { type: 'string', required: false },
+    };
+
+    it('fills in declared defaults when no input is provided', () => {
+      expect(applyYamlInputDefaults(inputsSchema, undefined)).toEqual({
+        client: 'reactory',
+        env: 'podman',
+      });
+    });
+
+    it('fills in declared defaults when an empty input object is provided', () => {
+      expect(applyYamlInputDefaults(inputsSchema, {})).toEqual({
+        client: 'reactory',
+        env: 'podman',
+      });
+    });
+
+    it('lets caller-provided values override the declared defaults', () => {
+      expect(applyYamlInputDefaults(inputsSchema, { client: 'zepz-quotes', env: 'local' })).toEqual({
+        client: 'zepz-quotes',
+        env: 'local',
+      });
+    });
+
+    it('merges a partial input payload with the remaining defaults', () => {
+      expect(applyYamlInputDefaults(inputsSchema, { env: 'local' })).toEqual({
+        client: 'reactory',
+        env: 'local',
+      });
+    });
+
+    it('does not fabricate a value for an input with no declared default', () => {
+      expect('workdir' in applyYamlInputDefaults(inputsSchema, {})).toBe(false);
+    });
+
+    it('handles a workflow definition with no inputs schema', () => {
+      expect(applyYamlInputDefaults(undefined, { client: 'reactory' })).toEqual({ client: 'reactory' });
     });
   });
 

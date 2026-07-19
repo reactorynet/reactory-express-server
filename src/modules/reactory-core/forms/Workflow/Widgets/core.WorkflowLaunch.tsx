@@ -9,9 +9,12 @@ import { WorkflowLaunchProps } from './types';
 const WorkflowLaunch = (props: WorkflowLaunchProps) => {
   const { reactory, workflow } = props;
 
-  const { React, Material } = reactory.getComponents<any>([
-    'react.React',
+  const { Material, React } = reactory.getComponents<{
+    Material: Reactory.Client.Web.IMaterialModule,
+    React: Reactory.React
+  }>([
     'material-ui.Material',
+    'react.React',
   ]);
 
   const { MaterialCore } = Material;
@@ -22,6 +25,8 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
   const [result, setResult] = React.useState<any>(null);
   const [error, setError] = React.useState<string | null>(null);
 
+  const targetWorkflowFormInputId: string = `${workflow.nameSpace}.${workflow.name}InputForm@${workflow.version}`;
+  const InputForm = reactory.getComponent(targetWorkflowFormInputId);
   const executeWorkflow = async () => {
     setExecuting(true);
     setError(null);
@@ -76,105 +81,114 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
     }
   };
 
-  return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-        <Icon>play_circle</Icon>
-        <Typography variant="h6">
-          Launch Workflow
-        </Typography>
+  if(InputForm) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <InputForm reactory={reactory} workflow={workflow} />
       </Box>
-
-      <Alert severity="info" sx={{ mb: 3 }}>
-        Execute this workflow with custom input parameters. The workflow will run asynchronously.
-      </Alert>
-
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-          Workflow ID
-        </Typography>
-        <Typography 
-          variant="body2" 
-          sx={{ 
-            p: 1.5,             
-            fontFamily: 'monospace',
-            borderRadius: 1
-          }}
-        >
-          {workflow.nameSpace}.{workflow.name}@{workflow.version}
-        </Typography>
-      </Box>
-
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-          Input Parameters (JSON)
-        </Typography>
-        <TextField
-          fullWidth
-          multiline
-          rows={10}
-          value={inputData}
-          onChange={(e) => setInputData(e.target.value)}
-          placeholder='{\n  "key": "value"\n}'
-          variant="outlined"
-          sx={{ 
-            fontFamily: 'monospace',
-            '& textarea': { fontFamily: 'monospace' }
-          }}
-        />
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-          Enter workflow input as JSON. Leave empty for no input parameters.
-        </Typography>
-      </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {result && (
-        <Alert 
-          severity="success" 
-          sx={{ mb: 2 }}
-          action={
-            <Button color="inherit" size="small" onClick={viewInstance}>
-              View
-            </Button>
-          }
-        >
-          <Typography variant="subtitle2">Workflow Started</Typography>
-          <Typography variant="caption" display="block">
-            Instance ID: {result.id}
+    );
+  } else {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+          <Icon>play_circle</Icon>
+          <Typography variant="h6">
+            Launch Workflow
           </Typography>
-          <Typography variant="caption" display="block">
-            Status: {result.status}
-          </Typography>
+        </Box>
+  
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Execute this workflow with custom input parameters. The workflow will run asynchronously.
         </Alert>
-      )}
-
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={executing ? <CircularProgress size={20} /> : <Icon>play_arrow</Icon>}
-          onClick={executeWorkflow}
-          disabled={executing}
-        >
-          {executing ? 'Starting...' : 'Start Workflow'}
-        </Button>
-
-        {result && (
-          <Button
-            variant="outlined"
-            startIcon={<Icon>visibility</Icon>}
-            onClick={viewInstance}
+  
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Workflow ID
+          </Typography>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              p: 1.5,             
+              fontFamily: 'monospace',
+              borderRadius: 1
+            }}
           >
-            View Instance
-          </Button>
+            {workflow.nameSpace}.{workflow.name}@{workflow.version}
+          </Typography>
+        </Box>
+  
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Input Parameters (JSON)
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={10}
+            value={inputData}
+            onChange={(e) => setInputData(e.target.value)}
+            placeholder='{\n  "key": "value"\n}'
+            variant="outlined"
+            sx={{ 
+              fontFamily: 'monospace',
+              '& textarea': { fontFamily: 'monospace' }
+            }}
+          />
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+            Enter workflow input as JSON. Leave empty for no input parameters.
+          </Typography>
+        </Box>
+  
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
         )}
+  
+        {result && (
+          <Alert 
+            severity="success" 
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={viewInstance}>
+                View
+              </Button>
+            }
+          >
+            <Typography variant="subtitle2">Workflow Started</Typography>
+            <Typography variant="caption" display="block">
+              Instance ID: {result.id}
+            </Typography>
+            <Typography variant="caption" display="block">
+              Status: {result.status}
+            </Typography>
+          </Alert>
+        )}
+  
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={executing ? <CircularProgress size={20} /> : <Icon>play_arrow</Icon>}
+            onClick={executeWorkflow}
+            disabled={executing}
+          >
+            {executing ? 'Starting...' : 'Start Workflow'}
+          </Button>
+  
+          {result && (
+            <Button
+              variant="outlined"
+              startIcon={<Icon>visibility</Icon>}
+              onClick={viewInstance}
+            >
+              View Instance
+            </Button>
+          )}
+        </Box>
       </Box>
-    </Box>
-  );
+    );
+  }
+
 };
 
 const Definition: any = {

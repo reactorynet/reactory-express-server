@@ -63,6 +63,28 @@ export function engineWorkflowMajorVersion(version: string): number {
   return Number.isNaN(major) ? 1 : major;
 }
 
+/**
+ * Fill in a YAML workflow's declared `inputs.<key>.default` values for any key
+ * the caller's start payload didn't supply (or supplied as undefined).
+ * Caller-provided values always win. Without this, a workflow started with no
+ * (or a partial) input payload never sees the defaults declared in its own
+ * `inputs:` schema.
+ */
+export function applyYamlInputDefaults(
+  definitionInputs: Record<string, { default?: any }> | undefined,
+  input: any,
+): Record<string, any> {
+  const provided = input && typeof input === 'object' ? input : {};
+  const schema = definitionInputs || {};
+  const withDefaults: Record<string, any> = { ...provided };
+  for (const [key, param] of Object.entries(schema)) {
+    if (withDefaults[key] === undefined && param && param.default !== undefined) {
+      withDefaults[key] = param.default;
+    }
+  }
+  return withDefaults;
+}
+
 // ── Expression evaluation ────────────────────────────────────────────────────
 
 function stepsAccessor(data: YamlWorkflowData): Record<string, any> {

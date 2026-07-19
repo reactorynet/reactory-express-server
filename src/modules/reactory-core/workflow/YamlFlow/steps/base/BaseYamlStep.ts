@@ -184,11 +184,27 @@ export abstract class BaseYamlStep implements IYamlStep {
     }
     
     return template.replace(/\$\{([^}]+)\}/g, (match, variablePath) => {
-      // Try to resolve from variables first
+      // Try to resolve from variables first — supports both the bare `${myVar}`
+      // form and the `${variables.myVar}` dotted form (matching the `${input.x}`
+      // / `${steps.x.y}` conventions used below), including nested paths.
       if (variablePath in context.variables) {
         return String(context.variables[variablePath]);
       }
-      
+      const variablesMatch = variablePath.match(/^variables\.(.+)$/);
+      if (variablesMatch) {
+        const [, variableSubPath] = variablesMatch;
+        const keys = variableSubPath.split('.');
+        let current: any = context.variables;
+        for (const key of keys) {
+          if (current && typeof current === 'object' && key in current) {
+            current = current[key];
+          } else {
+            return match; // Return original if not found
+          }
+        }
+        return String(current);
+      }
+
       // Try to resolve from environment
       if (variablePath in context.env) {
         return String(context.env[variablePath]);
@@ -210,22 +226,37 @@ export abstract class BaseYamlStep implements IYamlStep {
         return String(current);
       }
       
-      // Try to resolve from previous step results
+      // Try to resolve from previous step results.
+      // Step results are stored as { success, outputs, metadata }. Resolve the
+      // path against the full step-result object first so the explicit
+      // "${steps.X.outputs.Y}" convention used across the YAML workflows works
+      // (as well as "${steps.X.metadata.Z}" / "${steps.X.success}"), then fall
+      // back to the step's outputs for the "${steps.X.Y}" shorthand.
       const stepResultMatch = variablePath.match(/^steps\.([^.]+)\.(.+)$/);
       if (stepResultMatch) {
         const [, stepId, outputPath] = stepResultMatch;
         const stepResult = context.stepResults[stepId];
-        if (stepResult && stepResult.outputs) {
+        if (stepResult) {
           const keys = outputPath.split('.');
-          let current: any = stepResult.outputs;
-          for (const key of keys) {
-            if (current && typeof current === 'object' && key in current) {
-              current = current[key];
-            } else {
-              return match; // Return original if not found
+          const walk = (root: any): any => {
+            let current: any = root;
+            for (const key of keys) {
+              if (current && typeof current === 'object' && key in current) {
+                current = current[key];
+              } else {
+                return undefined;
+              }
             }
+            return current;
+          };
+          let value = walk(stepResult);
+          if (value === undefined) {
+            value = walk(stepResult.outputs);
           }
-          return String(current);
+          if (value !== undefined) {
+            return String(value);
+          }
+          return match; // Return original if not found
         }
       }
       

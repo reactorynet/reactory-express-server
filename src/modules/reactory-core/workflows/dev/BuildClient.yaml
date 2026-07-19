@@ -107,7 +107,7 @@ steps:
     type: condition
     dependsOn: buildBundle
     config:
-      condition: "steps.buildBundle.outputs.exitCode === 0"
+      condition: "stepResults.buildBundle.outputs.exitCode === 0"
       thenSteps:
         - id: logBundlePass
           type: log
@@ -143,7 +143,7 @@ steps:
           type: condition
           dependsOn: buildImage
           config:
-            condition: "steps.buildImage.outputs.exitCode === 0"
+            condition: "stepResults.buildImage.outputs.exitCode === 0"
             thenSteps:
               - id: logImagePass
                 type: log
