@@ -393,6 +393,9 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     public: false,
     roles: ['USER'],
     componentFqn: 'reactor.UsageDashboardForm@1.0.0',
+    componentProps: {
+      userId: '${reactory.user.id}',
+    },
   },
   {
     key: 'organizations',

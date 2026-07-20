@@ -557,11 +557,19 @@ type ReactoryForm {
     """
     title: String
     """
+    The icon identifier associated with the form
+    """
+    icon: String
+    """
+    The avatar / image url associated with the form
+    """
+    avatar: String
+    """
     The tags that are associated with this form
     """
     tags: [String]
     """
-    If set to false the form will be hidden, this is 
+    If set to false the form will be hidden, this is
     useful in forms where it serves as a service loader
     component for other components.
     """
@@ -572,12 +580,12 @@ type ReactoryForm {
     """
     className: String
     """
-    The JSS style type stylesheet that is used 
+    The JSS style type stylesheet that is used
     inside the form
     """
     style: Any
     """
-    A string array of help topics key names that is associated 
+    A string array of help topics key names that is associated
     with the form
     """
     helpTopics: [String]
@@ -586,7 +594,7 @@ type ReactoryForm {
     """
     schema: Any,
     """
-    The santization schema that is applied to the 
+    The santization schema that is applied to the
     form data so that it is normalized
     """
     sanitizeSchema: Any,
@@ -595,7 +603,7 @@ type ReactoryForm {
     """
     uiSchema: Any,
     """
-    A list of menu items that can be used to switch the UI 
+    A list of menu items that can be used to switch the UI
     schema using a schema switcher
     """
     uiSchemas: [ReactoryUISchemaMenuItem]
@@ -799,11 +807,19 @@ input ReactoryFormInput {
     """
     title: String
     """
+    The icon identifier associated with the form
+    """
+    icon: String
+    """
+    The avatar / image url associated with the form
+    """
+    avatar: String
+    """
     The tags that are associated with this form
     """
     tags: [String]
     """
-    If set to false the form will be hidden, this is 
+    If set to false the form will be hidden, this is
     useful in forms where it serves as a service loader
     component for other components.
     """
@@ -814,12 +830,12 @@ input ReactoryFormInput {
     """
     className: String
     """
-    The JSS style type stylesheet that is used 
+    The JSS style type stylesheet that is used
     inside the form
     """
     style: Any
     """
-    A string array of help topics key names that is associated 
+    A string array of help topics key names that is associated
     with the form
     """
     helpTopics: [String]
