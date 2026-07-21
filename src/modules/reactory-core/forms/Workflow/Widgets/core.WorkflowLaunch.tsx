@@ -27,7 +27,7 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
 
   const targetWorkflowFormInputId: string = `${workflow.nameSpace}.${workflow.name}InputForm@${workflow.version}`;
   const InputForm = reactory.getComponent(targetWorkflowFormInputId);
-  const executeWorkflow = async () => {
+  const executeWorkflow = async (data: any) => {
     setExecuting(true);
     setError(null);
     setResult(null);
@@ -36,7 +36,7 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
       // Parse input JSON
       let parsedInput = {};
       try {
-        parsedInput = JSON.parse(inputData);
+        parsedInput = JSON.parse(data || inputData || '{}');
       } catch (e) {
         throw new Error('Invalid JSON input');
       }
@@ -84,7 +84,9 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
   if(InputForm) {
     return (
       <Box sx={{ p: 3 }}>
-        <InputForm reactory={reactory} workflow={workflow} />
+        <InputForm reactory={reactory} workflow={workflow} onSubmit={(formData: any) =>{          
+          executeWorkflow(JSON.stringify(formData));
+        }} />
       </Box>
     );
   } else {
