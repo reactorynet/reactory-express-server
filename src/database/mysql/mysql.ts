@@ -12,6 +12,7 @@ import {
   QueryStringResultWithCount,
 } from '../types';
 import Reactory from '@reactorynet/reactory-core'
+import ConnectionFactory from './ConnectionFactory';
 
 let pool: mysql.Pool = null;
 
@@ -79,9 +80,8 @@ export const getConnection = (connectionId = 'mysql.default', context: Reactory.
     multipleStatements: true
   }, true);
 
-  // logger.debug('Creating connection with configuration', setting.data);
   context.log(`Creating Connection Pool with connection: ${connectionId}}`, { setting }, 'debug', 'mysql');
-  return getPoolWithObject(setting.data);
+  return ConnectionFactory.getInstance().getPoolForSettings(connectionId, setting.data);
 };
 
 export const testConnection = (tenant = 'plc') => {
