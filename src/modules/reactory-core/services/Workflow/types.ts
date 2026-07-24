@@ -331,6 +331,7 @@ export interface IYamlWorkflowDefinitionResult {
   inputs?: Record<string, any>;
   outputs?: Record<string, any>;
   variables?: Record<string, any>;
+  metadata?: any;
   steps: any[];
   designer?: any;
   /** The raw YAML source text (present even when there are parse errors, so the UI can display it) */
@@ -449,6 +450,7 @@ export interface IWorkflowDefinitionInput {
   inputs?: any;
   outputs?: any;
   variables?: any;
+  metadata?: any;
   steps: IWorkflowStepInput[];
   designer?: IDesignerMetadataInput;
 }

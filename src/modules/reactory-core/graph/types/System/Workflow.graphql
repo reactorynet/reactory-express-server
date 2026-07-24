@@ -238,6 +238,7 @@ type YamlWorkflowDefinition {
   inputs: JSON
   outputs: JSON
   variables: JSON
+  metadata: JSON
   steps: [YamlWorkflowStep!]!
   designer: DesignerMetadata
   """The raw YAML source text."""
@@ -1025,6 +1026,7 @@ input WorkflowDefinitionInput {
   inputs: JSON
   outputs: JSON
   variables: JSON
+  metadata: JSON
   steps: [WorkflowStepInput!]!
   designer: DesignerMetadataInput
 }
