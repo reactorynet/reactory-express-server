@@ -1,4 +1,5 @@
 import Reactory from "@reactorynet/reactory-core";
+import mongoose from "mongoose";
 import logger from "@reactory/server-core/logging";
 import CoreData from "@reactory/server-core/data";
 import { ReactoryClientValidationError } from "@reactory/server-core/exceptions";
@@ -303,6 +304,10 @@ const upsertFromConfig = async (
     const input = { ...clientConfig };
     delete input.menus;
     delete input.password;
+    // The stored salt pairs with the stored password hash — assigning the
+    // config's placeholder salt (e.g. 'generate') over it breaks
+    // validatePassword and locks every client out with 401s.
+    delete (input as { salt?: string }).salt;
     delete input.routes; // We'll handle routes separately
 
     // Find existing client
@@ -320,6 +325,12 @@ const upsertFromConfig = async (
           ...input,
           updatedAt: new Date(),
         });
+
+        // Keep the stored credential in sync with the configured secret —
+        // setPassword() re-salts and re-hashes as a pair.
+        if (clientConfig.password && clientConfig.password !== 'generate') {
+          reactoryClient.setPassword(clientConfig.password);
+        }
 
         // Explicitly mark complex/mixed fields as modified to ensure Mongoose saves them
         if (input.themes) reactoryClient.markModified('themes');
@@ -411,11 +422,29 @@ const upsertFromConfig = async (
     const menuRefs = [];
     logger.info(`Synchronizing ${menuDefs.length} menus for ${reactoryClient.name}`);
 
+    // Menu entries in config files use human-readable string ids
+    // (id: pricing-fees) while MenuEntrySchema.id is an ObjectId — passing
+    // them through makes the whole entry fail its embedded cast and the menu
+    // silently keeps its previous state. Strip non-ObjectId ids recursively.
+    const sanitizeMenuEntries = (entries: any[] = []): any[] =>
+      entries.map((entry) => {
+        const { id, items, ...rest } = entry || {};
+        return {
+          ...rest,
+          ...(id && mongoose.isValidObjectId(id) ? { id } : {}),
+          ...(Array.isArray(items) ? { items: sanitizeMenuEntries(items) } : {}),
+        };
+      });
+
     for (const menuDef of menuDefs) {
       try {
         const menuFound = await Menu.findOneAndUpdate(
           { client: reactoryClient._id, key: menuDef.key },
-          { ...menuDef, client: reactoryClient._id },
+          {
+            ...menuDef,
+            entries: sanitizeMenuEntries((menuDef as any).entries),
+            client: reactoryClient._id,
+          },
           { upsert: true, new: true }
         );
 

@@ -36,7 +36,8 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
       // Parse input JSON
       let parsedInput = {};
       try {
-        parsedInput = JSON.parse(data || inputData || '{}');
+        const jsonString = typeof data === 'string' ? data : (inputData && inputData.trim() ? inputData : '{}');
+        parsedInput = JSON.parse(jsonString);
       } catch (e) {
         throw new Error('Invalid JSON input');
       }

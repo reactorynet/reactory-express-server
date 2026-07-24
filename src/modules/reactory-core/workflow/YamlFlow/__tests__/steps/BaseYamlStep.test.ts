@@ -102,4 +102,29 @@ describe('BaseYamlStep.resolveTemplate', () => {
       step.resolve("Building client '${input.client}' (${input.env}) in ${variables.clientDir}", context),
     ).toBe("Building client 'reactory' (local) in /repo/client");
   });
+
+  it('resolves logical OR (||) expressions with literals and variables', () => {
+    const context = makeContext({
+      workflowInputs: { model: 'gpt-4' },
+      env: { MY_TEST_UNIQUE_ENV_VAR_THAT_DOES_NOT_EXIST: 'gemini-2.5-pro' }
+    } as any);
+
+    // 1. Resolves first truthy operand
+    expect(step.resolve('${input.model || env.MY_TEST_UNIQUE_ENV_VAR_THAT_DOES_NOT_EXIST || "claude-3-5-sonnet"}', context)).toBe('gpt-4');
+
+    // 2. Falls back to second operand when first is missing
+    const contextNoModel = makeContext({
+      workflowInputs: {},
+      env: { MY_TEST_UNIQUE_ENV_VAR_THAT_DOES_NOT_EXIST: 'gemini-2.5-pro' }
+    } as any);
+    expect(step.resolve('${input.model || env.MY_TEST_UNIQUE_ENV_VAR_THAT_DOES_NOT_EXIST || "claude-3-5-sonnet"}', contextNoModel)).toBe('gemini-2.5-pro');
+
+    // 3. Falls back to literal when first and second are missing
+    const contextEmpty = makeContext({
+      workflowInputs: {},
+      env: {}
+    } as any);
+    expect(step.resolve('${input.model || env.MY_TEST_UNIQUE_ENV_VAR_THAT_DOES_NOT_EXIST || "claude-3-5-sonnet"}', contextEmpty)).toBe('claude-3-5-sonnet');
+    expect(step.resolve("${input.model || env.MY_TEST_UNIQUE_ENV_VAR_THAT_DOES_NOT_EXIST || 'claude-3-5-sonnet'}", contextEmpty)).toBe('claude-3-5-sonnet');
+  });
 });
