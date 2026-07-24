@@ -35,9 +35,33 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
       context.state.auth_token = await Helpers.generateLoginToken(systemUser);
     };
     context.user = systemUser;
-    context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();    
-    
+    context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();
+
     await startServices({}, context);
+
+    // Synchronize enabled client configs (routes, menus, settings, themes)
+    // into the database. Without this, config files drift from the persisted
+    // ReactoryClient/Menu documents — clients were previously only upserted
+    // on first creation (CLI init), so menu changes never reached the UI.
+    // Disable with REACTORY_SYNC_CLIENT_CONFIGS=false.
+    if (process.env.REACTORY_SYNC_CLIENT_CONFIGS !== 'false') {
+      try {
+        // Deferred import: loading the client configs triggers env interpolation.
+        const { clients: clientConfigs } = await import('@reactory/server-core/data');
+        for (const clientConfig of clientConfigs as Reactory.Server.IReactoryClientConfig[]) {
+          try {
+            // @ts-ignore upsertFromConfig is a model static
+            await ReactoryClient.upsertFromConfig(clientConfig, context);
+            logger.debug(`Client config synchronized: ${clientConfig.key}`);
+          } catch (clientError) {
+            logger.warn(`Failed to synchronize client config '${clientConfig.key}'`, clientError);
+          }
+        }
+        logger.info(`Synchronized ${(clientConfigs as unknown[]).length} client config(s) to the database`);
+      } catch (syncError) {
+        logger.warn('Client config synchronization failed', syncError);
+      }
+    }
         
     // Publish client env files if REACTORY_CLIENT is set
     if (process.env.REACTORY_CLIENT) {
