@@ -621,6 +621,24 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       );
     }
 
+    const steps = parsed?.steps || [];
+    if (steps.length > 0) {
+      if (!steps.some((s: any) => s.type === 'start' || s.id === '__start__')) {
+        steps.unshift({
+          id: '__start__',
+          name: 'Start',
+          type: 'start',
+        });
+      }
+      if (!steps.some((s: any) => s.type === 'end' || s.id === '__end__')) {
+        steps.push({
+          id: '__end__',
+          name: 'End',
+          type: 'end',
+        });
+      }
+    }
+
     const result = {
       nameSpace: parsed?.nameSpace || nameSpace,
       name: parsed?.name || name,
@@ -631,7 +649,8 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       inputs: parsed?.inputs,
       outputs: parsed?.outputs,
       variables: parsed?.variables,
-      steps: parsed?.steps || [],
+      metadata: parsed?.metadata,
+      steps,
       // Back-compat default: embedded designer (legacy YAML). Overridden below by
       // the sibling .design.yaml when present.
       designer: parsed?.metadata?.designer || null,
@@ -658,10 +677,24 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
         const designPath = candidates.find((p) => p !== resolvedFilePath && existsSync(p));
         if (designPath) {
           const designParsed: any = yaml.load(readFileSync(designPath, 'utf8'));
+          const connectionCount = designParsed?.designer?.connections?.length || 0;
+          const stepCount = Object.keys(designParsed?.steps || {}).length;
+          this.context.log(
+            `[WorkflowDesigner Load] Merging designer sidecar for ${nameSpace}.${name}: ` +
+            `found ${connectionCount} connections, ${stepCount} step positions in ${designPath}`,
+            { nameSpace, name, connectionCount, stepCount, designPath },
+            'info'
+          );
           if (designParsed?.designer) result.designer = designParsed.designer;
           if (designParsed?.steps && result.steps?.length) {
             reattachDesigner(result.steps, designParsed.steps);
           }
+        } else {
+          this.context.log(
+            `[WorkflowDesigner Load] No designer sidecar found for ${nameSpace}.${name} (checked: ${candidates.join(', ')})`,
+            { nameSpace, name },
+            'info'
+          );
         }
       } catch (err) {
         this.context.log(
@@ -999,7 +1032,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   async getWorkflowInstance(instanceId: string): Promise<IWorkflowInstance> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
-      const instance = await workflowRunner?.lifecycleManager.getWorkflowInstance(instanceId);
+      const instance = await workflowRunner?.getLifecycleManager()?.getWorkflowInstance(instanceId);
       
       if (!instance) {
         throw new Error(`Workflow instance ${instanceId} not found`);
@@ -1878,9 +1911,9 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       };
     }
 
-    const { writeFileSync, mkdirSync, existsSync, unlinkSync } = await import('fs');
+    const { writeFileSync, mkdirSync, existsSync, unlinkSync, readFileSync } = await import('fs');
     const path = await import('path');
-    const yaml = await import('js-yaml');
+    const YAML = await import('yaml');
 
     const reactoryData = process.env.REACTORY_DATA;
     if (!reactoryData) {
@@ -1906,21 +1939,8 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       try { return JSON.parse(value); } catch { return value; }
     };
 
-    // Build the YAML object structure matching the expected parse format
-    const yamlObject: Record<string, any> = {
-      nameSpace,
-      name,
-      version,
-    };
-    if (definition.description) yamlObject.description = definition.description;
-    if (definition.author) yamlObject.author = definition.author;
-    if (definition.tags && definition.tags.length > 0) yamlObject.tags = definition.tags;
-    if (definition.inputs) yamlObject.inputs = tryParseJson(definition.inputs);
-    if (definition.outputs) yamlObject.outputs = tryParseJson(definition.outputs);
-    if (definition.variables) yamlObject.variables = tryParseJson(definition.variables);
-
     // Build steps, separating designer metadata from step definitions
-    yamlObject.steps = definition.steps.map((step) => {
+    const cleanSteps = definition.steps.map((step) => {
       const yamlStep: Record<string, any> = { id: step.id, type: step.type };
       if (step.name) yamlStep.name = step.name;
       if (step.description) yamlStep.description = step.description;
@@ -1941,19 +1961,101 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     // out of the executable YAML and into a sibling <name>.design.yaml. This keeps
     // the workflow definition lean; the designer load pipeline merges it back.
     const stepDesigner: Record<string, any> = {};
-    collectAndStripDesigner(yamlObject.steps, stepDesigner);
+    collectAndStripDesigner(cleanSteps, stepDesigner);
+
+    // Filter out synthesized __start__ and __end__ steps from the executable YAML
+    const executableSteps = cleanSteps.filter((s: any) => s.id !== '__start__' && s.id !== '__end__');
 
     try {
       if (!existsSync(targetDir)) {
         mkdirSync(targetDir, { recursive: true });
       }
 
-      const yamlContent = yaml.dump(yamlObject, {
-        indent: 2,
-        lineWidth: 120,
-        noRefs: true,
-        sortKeys: false,
-      });
+      let doc: any;
+      if (existsSync(targetFile)) {
+        try {
+          const originalContent = readFileSync(targetFile, 'utf8');
+          doc = YAML.parseDocument(originalContent);
+        } catch (err) {
+          doc = new YAML.Document();
+        }
+      } else {
+        doc = new YAML.Document();
+      }
+
+      // Update top-level fields in AST to preserve comments and layout
+      doc.set('nameSpace', nameSpace);
+      doc.set('name', name);
+      doc.set('version', version);
+
+      if (definition.description) doc.set('description', definition.description);
+      else doc.delete('description');
+
+      if (definition.author) doc.set('author', definition.author);
+      else doc.delete('author');
+
+      if (definition.tags && definition.tags.length > 0) doc.set('tags', definition.tags);
+      else doc.delete('tags');
+
+      if (definition.inputs) doc.set('inputs', tryParseJson(definition.inputs));
+      else doc.delete('inputs');
+
+      if (definition.outputs) doc.set('outputs', tryParseJson(definition.outputs));
+      else doc.delete('outputs');
+
+      if (definition.variables) doc.set('variables', tryParseJson(definition.variables));
+      else doc.delete('variables');
+
+      if (definition.metadata) doc.set('metadata', tryParseJson(definition.metadata));
+      else doc.delete('metadata');
+
+      // Smart steps merge to preserve step-level comments
+      let stepsSeq = doc.get('steps');
+      if (!stepsSeq || stepsSeq.type !== 'SEQ') {
+        doc.set('steps', executableSteps);
+      } else {
+        const existingMap = new Map<string, any>();
+        stepsSeq.items.forEach((item: any) => {
+          if (item && item.type === 'MAP') {
+            const id = item.get('id');
+            if (id) existingMap.set(id, item);
+          }
+        });
+
+        const mergedItems: any[] = [];
+        executableSteps.forEach((newStep) => {
+          const existingStep = existingMap.get(newStep.id);
+          if (existingStep) {
+            const newKeys = Object.keys(newStep);
+            const existingKeys = existingStep.items.map((pair: any) => pair.key.value);
+
+            // Delete keys that are no longer present
+            existingKeys.forEach((key: string) => {
+              if (!newKeys.includes(key)) {
+                existingStep.delete(key);
+              }
+            });
+
+            // Set/update keys
+            newKeys.forEach((key) => {
+              existingStep.set(key, (newStep as any)[key]);
+            });
+
+            // Re-emit the (updated) existing node so its comments/layout survive.
+            // Without this push the pre-existing step is dropped from the rebuilt
+            // sequence — wiping every step that was already in the file on re-save.
+            mergedItems.push(existingStep);
+          } else {
+            mergedItems.push(YAML.createNode(newStep));
+          }
+        });
+
+        // mergedItems is ordered by executableSteps, so steps the user removed in
+        // the designer are naturally absent (never pushed) and dropped here.
+        stepsSeq.items = mergedItems;
+      }
+      // Serialize AST back to YAML text
+      const yamlContent = doc.toString();
       writeFileSync(targetFile, yamlContent, 'utf8');
 
       // Persist designer metadata to a sibling <name>.design.yaml (or remove a
@@ -1969,9 +2071,18 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
           designer: definition.designer || null,
           steps: stepDesigner,
         };
+        const connectionCount = definition.designer?.connections?.length || 0;
+        const stepCount = Object.keys(stepDesigner).length;
+        this.context.log(
+          `[WorkflowDesigner Save] Saving designer sidecar for ${nameSpace}.${name}: ` +
+          `writing ${connectionCount} connections, ${stepCount} step positions to ${designFile}`,
+          { nameSpace, name, connectionCount, stepCount, designFile },
+          'info'
+        );
+        const jsYaml = await import('js-yaml');
         writeFileSync(
           designFile,
-          yaml.dump(designObject, { indent: 2, lineWidth: 120, noRefs: true, sortKeys: false }),
+          jsYaml.dump(designObject, { indent: 2, lineWidth: 120, noRefs: true, sortKeys: false }),
           'utf8'
         );
       } else if (existsSync(designFile)) {

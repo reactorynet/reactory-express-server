@@ -86,9 +86,10 @@ const LOG_URL_QUERY = `
 const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
   const { reactory, instanceId, onClose } = props;
 
-  const { React, Material } = reactory.getComponents<any>([
+  const { React, Material, WorkflowDataViewer } = reactory.getComponents<any>([
     'react.React',
     'material-ui.Material',
+    'core.WorkflowDataViewer',
   ]);
 
   const { MaterialCore } = Material;
@@ -245,6 +246,27 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
     return `${hours}h ${remainingMinutes}m`;
   };
 
+  /**
+   * Convert a step id / name of any casing convention — camelCase, PascalCase,
+   * snake_case, kebab-case, or already-UPPER acronyms — into separate,
+   * upper-cased words (e.g. "resolveWorkdir" / "resolve_workdir" both become
+   * "RESOLVE WORKDIR"). Synthetic anchor names like "(start)"/"(finalize)"
+   * are left untouched since they aren't real step ids.
+   */
+  const formatStepName = (raw: string | null | undefined): string => {
+    if (!raw) return '';
+    if (/^\(.*\)$/.test(raw)) return raw;
+
+    const words = raw
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+      .replace(/[_-]+/g, ' ')
+      .trim()
+      .split(/\s+/);
+
+    return words.map((word) => word.toUpperCase()).join(' ');
+  };
+
   const getWorkflowStatus = (status: number) =>
     WORKFLOW_STATUS[status] || WORKFLOW_STATUS[0];
 
@@ -328,17 +350,6 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
   const wfStatus = getWorkflowStatus(inst.status);
   const pointers: any[] = inst.executionPointers || [];
   const sortedPointers = [...pointers].sort((a, b) => a.stepId - b.stepId);
-
-  const handleDownloadData = () => {
-    const json = JSON.stringify(inst, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `workflow-${inst.id || 'instance'}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const handleRefreshLog = () => {
     setLogFetched(false);
@@ -522,6 +533,13 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
                 const hasOutcome = pointer.outcome && (typeof pointer.outcome !== 'object' || Object.keys(pointer.outcome).length > 0);
                 const isFailed = pointer.status === 6;
                 const stepErrors: any[] = pointer.errors || [];
+                // stepResults is keyed by the YAML step id. The engine sets
+                // pointer.stepName to that id (def.name || def.id), whereas
+                // pointer.stepId is the numeric execution index -- so look up
+                // by stepName, falling back to stepId for legacy data.
+                const stepResultData =
+                  inst?.data?.stepResults?.[pointer.stepName] ??
+                  inst?.data?.stepResults?.[pointer.stepId];
 
                 return (
                   <Step key={pointer.id} active expanded>
@@ -538,7 +556,7 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {pointer.stepName || `Step ${pointer.stepId}`}
+                          {formatStepName(pointer.stepName || `Step ${pointer.stepId}`)}
                         </Typography>
                         <Chip
                           label={pointer.statusLabel || stepStatus.label}
@@ -651,6 +669,17 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
                               </Table>
                             </TableContainer>
 
+                            <Box sx={{ mt: 1.5 }}>
+                              <WorkflowDataViewer
+                                reactory={reactory}
+                                data={stepResultData}
+                                title="Step Data"
+                                emptyMessage="No step result data captured yet."
+                                downloadFileName={`step-${pointer.stepName || pointer.stepId}`}
+                                maxHeight={300}
+                              />
+                            </Box>
+
                             {hasPersistenceData && renderJsonBlock('Persistence Data', pointer.persistenceData)}
                             {hasOutcome && renderJsonBlock('Outcome', pointer.outcome)}
                             {hasEventData && renderJsonBlock('Event Data', pointer.eventData)}
@@ -721,41 +750,13 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
       {/* --- Data --- */}
       <TabPanel index={2}>
         <Box sx={{ p: 3 }}>
-          {(!inst.data || Object.keys(inst.data).length === 0) ? (
-            <Alert severity="info">No workflow data available.</Alert>
-          ) : (
-            <>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, flex: 1 }}>
-                  Workflow Data
-                </Typography>
-                <Tooltip title="Download as JSON">
-                  <IconButton size="small" onClick={handleDownloadData}>
-                    <Icon sx={{ fontSize: 18 }}>download</Icon>
-                  </IconButton>
-                </Tooltip>
-              </Box>
-              <Box
-                component="pre"
-                sx={{
-                  p: 2,
-                  borderRadius: 1,
-                  bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  fontSize: '0.8rem',
-                  fontFamily: 'monospace',
-                  overflow: 'auto',
-                  maxHeight: 600,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  m: 0,
-                }}
-              >
-                {JSON.stringify(inst.data, null, 2)}
-              </Box>
-            </>
-          )}
+          <WorkflowDataViewer
+            reactory={reactory}
+            data={inst.data}
+            title="Workflow Data"
+            emptyMessage="No workflow data available."
+            downloadFileName={`workflow-${inst.id || 'instance'}`}
+          />
         </Box>
       </TabPanel>
 

@@ -331,7 +331,19 @@ export class CliCommandStep extends BaseYamlStep {
     if (config.env) {
       resolved.env = {};
       for (const [key, value] of Object.entries(config.env)) {
-        resolved.env[key] = this.resolveTemplate(value, context);
+        const valueResolved = this.resolveTemplate(value, context);
+        if (valueResolved !== undefined) {
+          if (Object.keys(valueResolved).length === 0 && typeof valueResolved === 'object') {
+            // If resolved value is an empty object, skip setting it
+            continue;
+          }
+          if (typeof valueResolved === 'object' || Array.isArray(valueResolved)) {
+            // If resolved value is an object, convert to JSON string
+            resolved.env[key] = JSON.stringify(valueResolved);
+          } else {
+            resolved.env[key] = valueResolved;
+          }
+        }
       }
     }
     

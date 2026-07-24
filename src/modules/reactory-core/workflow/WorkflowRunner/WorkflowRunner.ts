@@ -36,6 +36,7 @@ import {
   buildYamlWorkflowClass,
   engineWorkflowId,
   engineWorkflowMajorVersion,
+  applyYamlInputDefaults,
 } from '../YamlFlow/YamlFlowBuilder';
 import { configureYamlFlowRuntime } from '../YamlFlow/execution/YamlFlowRuntime';
 import { finalizeInstanceIfTerminal } from '../YamlFlow/execution/YamlStepBody';
@@ -836,7 +837,7 @@ export class WorkflowRunner {
     ctx: Reactory.Server.IReactoryContext,
   ): Record<string, any> {
     return {
-      inputs: input || {},
+      inputs: applyYamlInputDefaults(definition.inputs as any, input),
       variables: {},
       stepResults: {},
       env: {},

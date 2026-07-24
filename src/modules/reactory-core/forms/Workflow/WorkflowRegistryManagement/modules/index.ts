@@ -2,119 +2,47 @@ import Reactory from '@reactorynet/reactory-core';
 import { fileAsString } from '@reactory/server-core/utils/io';
 import path from 'path';
 
+/**
+ * Build a form module definition from a source file on disk.
+ *
+ * The absolute path is passed through to the compiler as
+ * `compilerOptions.sourcePath` so the module compiler can resolve the entry
+ * file's local import graph (e.g. `./types`) and ship those includes alongside
+ * the entry when it bundles the module.
+ */
+const widgetModule = (
+  id: string,
+  relativePath: string,
+  fileType: 'tsx' | 'ts' = 'tsx',
+): Reactory.Forms.IReactoryFormModule => {
+  const sourcePath = path.resolve(__dirname, relativePath);
+  return {
+    id,
+    src: fileAsString(sourcePath),
+    compiler: 'rollup',
+    fileType,
+    compilerOptions: { sourcePath },
+  };
+};
+
 const modules: Reactory.Forms.IReactoryFormModule[] = [
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowDetailsPanel@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowDetailsPanel.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowOverview@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowOverview.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowInstanceHistory@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowInstanceHistory.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowInstanceInspector@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowInstanceInspector.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowErrors@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowErrors.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowSchedule@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowSchedule.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowLaunch@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowLaunch.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowConfiguration@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowConfiguration.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowYamlView@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.WorkflowYamlView.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowManager@1.0.0',
-    src: fileAsString(require.resolve('../../Widgets/core.WorkflowManager.ts')),
-    compiler: 'rollup',
-    fileType: 'ts'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.WorkflowRegistryToolbar@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../components/WorkflowRegistryToolbar.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.BulkActivateAction@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkActivateAction.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.BulkDeactivateAction@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkDeactivateAction.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.BulkExecuteAction@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkExecuteAction.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.BulkTagAction@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkTagAction.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  },
-  {
-    compilerOptions: {},
-    id: 'core.BulkDeleteAction@1.0.0',
-    src: fileAsString(path.resolve(__dirname, `../../Widgets/core.BulkDeleteAction.tsx`)),
-    compiler: 'rollup',
-    fileType: 'tsx'
-  }
+  widgetModule('core.WorkflowDetailsPanel@1.0.0', '../../Widgets/core.WorkflowDetailsPanel.tsx'),
+  widgetModule('core.WorkflowOverview@1.0.0', '../../Widgets/core.WorkflowOverview.tsx'),
+  widgetModule('core.WorkflowInstanceHistory@1.0.0', '../../Widgets/core.WorkflowInstanceHistory.tsx'),
+  widgetModule('core.WorkflowDataViewer@1.0.0', '../../Widgets/core.WorkflowDataViewer.tsx'),
+  widgetModule('core.WorkflowInstanceInspector@1.0.0', '../../Widgets/core.WorkflowInstanceInspector.tsx'),
+  widgetModule('core.WorkflowErrors@1.0.0', '../../Widgets/core.WorkflowErrors.tsx'),
+  widgetModule('core.WorkflowSchedule@1.0.0', '../../Widgets/core.WorkflowSchedule.tsx'),
+  widgetModule('core.WorkflowLaunch@1.0.0', '../../Widgets/core.WorkflowLaunch.tsx'),
+  widgetModule('core.WorkflowConfiguration@1.0.0', '../../Widgets/core.WorkflowConfiguration.tsx'),
+  widgetModule('core.WorkflowYamlView@1.0.0', '../../Widgets/core.WorkflowYamlView.tsx'),
+  widgetModule('core.WorkflowManager@1.0.0', '../../Widgets/core.WorkflowManager.ts', 'ts'),
+  widgetModule('core.WorkflowRegistryToolbar@1.0.0', '../components/WorkflowRegistryToolbar.tsx'),
+  widgetModule('core.BulkActivateAction@1.0.0', '../../Widgets/core.BulkActivateAction.tsx'),
+  widgetModule('core.BulkDeactivateAction@1.0.0', '../../Widgets/core.BulkDeactivateAction.tsx'),
+  widgetModule('core.BulkExecuteAction@1.0.0', '../../Widgets/core.BulkExecuteAction.tsx'),
+  widgetModule('core.BulkTagAction@1.0.0', '../../Widgets/core.BulkTagAction.tsx'),
+  widgetModule('core.BulkDeleteAction@1.0.0', '../../Widgets/core.BulkDeleteAction.tsx'),
 ];
 
 export default modules;

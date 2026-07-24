@@ -1,4 +1,3 @@
-import { name } from 'ejs';
 import { WorkflowScheduleProps } from './types';
 
 interface WorkflowScheduleQueryResult {  

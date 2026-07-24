@@ -41,6 +41,7 @@
     "@azure/msal-browser": "3.19.0",
     "@azure/storage-blob": "12.23.0",
     "@azure/storage-file-share": "12.23.0",
+    "@databricks/sql": "^1.8.4",
     "@elastic/elasticsearch": "^8.19.2",
     "@emotion/react": "11.8.1",
     "@emotion/styled": "11.8.1",
@@ -297,6 +298,8 @@
     "@types/passport-twitter": "^1.0.37",
     "@types/pdfmake": "^0.1.19",
     "@types/pngjs": "^6.0.1",
+    "@types/react": "^17.0.52",
+    "@types/react-dom": "^17.0.17",
     "@types/sha1": "^1.1.2",
     "@types/supertest": "^6.0.3",
     "@types/swagger-jsdoc": "6.0.4",
@@ -339,7 +342,8 @@
   },
   "resolutions": {
     "string-width": "4.2.3",
-    "node-gyp": "11.5.0"
+    "node-gyp": "11.5.0",
+    "ajv": "8.20.0"
   },
   "nodemonConfig": {
     "ignore": [

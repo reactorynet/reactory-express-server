@@ -109,12 +109,21 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 
 export default {
   input: "${options.inputFile}",
+  // 'external' is a top-level (input) option -- placing it under 'output'
+  // is silently ignored by rollup and emits an "Unknown output options"
+  // warning. Keeping react/react-dom external avoids inlining a copy of
+  // React into every plugin bundle.
+  external: ['react', 'react-dom'],
   output: {
     file: "${options.outputFile}",
     name: "${options.moduleName}",
     format: "umd",
-    external: ['react', 'react-dom'],
-    globals: ['React', 'window'],
+    // 'globals' maps external module ids to the browser globals the UMD
+    // wrapper reads them from. It must be an object, not an array.
+    globals: {
+      react: 'React',
+      'react-dom': 'ReactDOM'
+    },
     sourcemap: true
   },
 
@@ -161,6 +170,178 @@ export default {
 };
 `;
 
+/**
+ * Compiler options a module may declare via its `compilerOptions` field.
+ *
+ * `sourcePath` is the absolute path to the module's entry file on the server
+ * source tree.  When present, the compiler resolves the module's local import
+ * graph and copies every referenced local file into the module's runtime
+ * folder so relative imports (./types, ../shared) resolve during bundling.
+ */
+interface IRollupCompilerOptions {
+  sourcePath?: string;
+}
+
+/**
+ * File extensions the import-graph walker will try when resolving a relative
+ * import specifier to a file on disk, in priority order.
+ */
+const RESOLVABLE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json"];
+
+/** Extensions whose contents we parse for further relative imports. */
+const CODE_EXTENSION_RE = /\.(ts|tsx|js|jsx|mjs|cjs)$/i;
+
+/** Upper bound on files pulled into a single module bundle graph (runaway guard). */
+const MAX_GRAPH_FILES = 500;
+
+/**
+ * Extract relative (./ or ../) import/export/require specifiers from a source
+ * file.  Bare specifiers (react, @mui/..., @reactory/...) are intentionally
+ * ignored -- those are resolved from node_modules / rollup externals and must
+ * not be copied into the module folder.
+ */
+export const parseRelativeImports = (source: string): string[] => {
+  const specifiers = new Set<string>();
+  const patterns = [
+    // import ... from './x'  AND  import './x'
+    /\bimport\s+(?:[^'";]*?\sfrom\s+)?['"](\.[^'"]+)['"]/g,
+    // export ... from './x'  AND  export * from './x'
+    /\bexport\s+[^'";]*?\sfrom\s+['"](\.[^'"]+)['"]/g,
+    // require('./x')
+    /\brequire\(\s*['"](\.[^'"]+)['"]\s*\)/g,
+    // import('./x')  (dynamic)
+    /\bimport\(\s*['"](\.[^'"]+)['"]\s*\)/g,
+  ];
+  patterns.forEach((re) => {
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(source)) !== null) {
+      specifiers.add(match[1]);
+    }
+  });
+  return Array.from(specifiers);
+};
+
+/**
+ * Resolve a relative import specifier to an actual file on disk, trying the
+ * common TypeScript/JavaScript extension and index-file conventions.  Returns
+ * the absolute path, or null when nothing matches.
+ */
+export const resolveRelativeImport = (fromDir: string, specifier: string): string | null => {
+  const base = path.resolve(fromDir, specifier);
+  const candidates: string[] = [base];
+  RESOLVABLE_EXTENSIONS.forEach((ext) => candidates.push(`${base}${ext}`));
+  RESOLVABLE_EXTENSIONS.forEach((ext) => candidates.push(path.join(base, `index${ext}`)));
+  for (const candidate of candidates) {
+    try {
+      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+        return candidate;
+      }
+    } catch {
+      /* ignore and keep trying */
+    }
+  }
+  return null;
+};
+
+/**
+ * Compute the deepest directory that is a common ancestor of every path
+ * provided.  Used to preserve relative import structure when copying a
+ * module's local file graph into its runtime folder.
+ */
+export const commonAncestorDir = (filePaths: string[]): string => {
+  if (filePaths.length === 0) return "";
+  const segmentLists = filePaths.map((p) => path.dirname(p).split(path.sep));
+  const first = segmentLists[0];
+  let commonLength = first.length;
+  for (const segments of segmentLists.slice(1)) {
+    let i = 0;
+    while (i < commonLength && i < segments.length && segments[i] === first[i]) {
+      i += 1;
+    }
+    commonLength = i;
+  }
+  return first.slice(0, commonLength).join(path.sep) || path.sep;
+};
+
+export interface IModuleFileGraph {
+  /** Absolute source path -> file contents. */
+  files: Map<string, string>;
+  /** Absolute path of the entry file within the graph. */
+  entry: string;
+  /** Deepest common ancestor directory of all files in the graph. */
+  baseDir: string;
+  /** Relative import specifiers that could not be resolved to a file. */
+  unresolved: string[];
+}
+
+/**
+ * Walk the local (relative) import graph starting at an entry file and collect
+ * every reachable local source file.  Bare / node_modules imports are
+ * deliberately left out -- rollup resolves those separately.
+ *
+ * Returns null when the entry file itself cannot be read.
+ */
+export const buildModuleFileGraph = (entryPath: string): IModuleFileGraph | null => {
+  const entry = path.resolve(entryPath);
+  if (!fs.existsSync(entry)) return null;
+
+  const files = new Map<string, string>();
+  const unresolved: string[] = [];
+  const queue: string[] = [entry];
+
+  while (queue.length > 0 && files.size < MAX_GRAPH_FILES) {
+    const current = path.resolve(queue.shift()!);
+    if (files.has(current)) continue;
+
+    let content: string;
+    try {
+      content = fs.readFileSync(current, "utf8");
+    } catch {
+      continue;
+    }
+    files.set(current, content);
+
+    // Only follow imports out of code files -- .json / assets are leaves.
+    if (!CODE_EXTENSION_RE.test(current)) continue;
+
+    for (const specifier of parseRelativeImports(content)) {
+      const resolved = resolveRelativeImport(path.dirname(current), specifier);
+      if (resolved) {
+        if (!files.has(path.resolve(resolved))) queue.push(resolved);
+      } else {
+        unresolved.push(`${specifier} (from ${current})`);
+      }
+    }
+  }
+
+  return {
+    files,
+    entry,
+    baseDir: commonAncestorDir(Array.from(files.keys())),
+    unresolved,
+  };
+};
+
+/**
+ * Compute a stable SHA-1 checksum across every file in a module graph.  The
+ * relative path and content of each file are folded in (sorted by relative
+ * path) so that a change to ANY included file -- not just the entry point --
+ * triggers a recompile.
+ */
+export const checksumForGraph = (graph: IModuleFileGraph): string => {
+  const entries = Array.from(graph.files.entries())
+    .map(([abs, content]) => [path.relative(graph.baseDir, abs), content] as [string, string])
+    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  const hash = crypto.createHash("sha1");
+  for (const [rel, content] of entries) {
+    hash.update(rel);
+    hash.update("\0");
+    hash.update(content, "utf8");
+    hash.update("\0");
+  }
+  return hash.digest("hex");
+};
+
 class ReactoryModuleCompilerService
   implements Reactory.Service.IReactoryModuleCompilerService
 {
@@ -190,10 +371,7 @@ class ReactoryModuleCompilerService
   async compileModule(
     module: Reactory.Forms.IReactoryFormModule
   ): Promise<Reactory.Forms.IReactoryFormResource> {
-    const that = this;
-
     const runtimeBase = path.join(process.env.APP_DATA_ROOT, "plugins", "__runtime__");
-    const sourceFile = path.join(runtimeBase, `src/source_${module.id}.${module.fileType}`);
     const compiledFile = path.join(runtimeBase, `lib/${module.id}.min.js`);
 
     // ---------------------------------------------------------------
@@ -205,7 +383,7 @@ class ReactoryModuleCompilerService
     await lock.ready;
 
     try {
-      return await this.doCompileModule(module, sourceFile, compiledFile, runtimeBase);
+      return await this.doCompileModule(module, runtimeBase, compiledFile);
     } catch (fatalError) {
       this.context.log(
         `Fatal error compiling module ${module.id}`,
@@ -221,44 +399,96 @@ class ReactoryModuleCompilerService
 
   /**
    * Internal compilation logic, called under the per-module lock.
+   *
+   * Each module is bundled from its own folder under `src/<module-id>/`.  When
+   * the module declares a `sourcePath` in its compilerOptions, the entry file's
+   * local import graph is resolved and every referenced local file is copied
+   * into that folder (mirroring the original relative layout) so imports like
+   * `./types` or `../shared/util` resolve during bundling.  Modules without a
+   * sourcePath fall back to a single entry file synthesised from `module.src`.
    */
   private async doCompileModule(
     module: Reactory.Forms.IReactoryFormModule,
-    sourceFile: string,
-    compiledFile: string,
     runtimeBase: string,
+    compiledFile: string,
   ): Promise<Reactory.Forms.IReactoryFormResource> {
     const that = this;
 
+    const opts = (module.compilerOptions ?? {}) as IRollupCompilerOptions;
+    // The '@' in a module id is a valid directory-name character; only path
+    // separators need neutralising so the id maps to a single folder.
+    const moduleDirName = module.id.replace(/[\\/]/g, "_");
+    const moduleDir = path.join(runtimeBase, "src", moduleDirName);
+    const checksumFile = path.join(moduleDir, ".reactory-checksum");
+    const fileType = module.fileType || "tsx";
+
+    // ---------------------------------------------------------------
+    // Resolve the set of files that make up this module.  With a
+    // sourcePath we walk the local import graph; otherwise we fall back
+    // to a single inline entry file from module.src.
+    // ---------------------------------------------------------------
+    let graph: IModuleFileGraph | null = null;
+    if (opts.sourcePath) {
+      graph = buildModuleFileGraph(opts.sourcePath);
+      if (!graph) {
+        this.context.log(
+          `sourcePath for module ${module.id} could not be read (${opts.sourcePath}); falling back to inline src`,
+          { sourcePath: opts.sourcePath },
+          "warning",
+          ReactoryModuleCompilerService.reactory.id,
+        );
+      } else if (graph.unresolved.length > 0) {
+        this.context.log(
+          `Some relative imports for module ${module.id} could not be resolved to files`,
+          { unresolved: graph.unresolved },
+          "warning",
+          ReactoryModuleCompilerService.reactory.id,
+        );
+      }
+    }
+
+    let entryRelative: string;
+    const filesToWrite: Array<{ relative: string; content: string }> = [];
+    let newChecksum: string;
+
+    if (graph) {
+      entryRelative = path.relative(graph.baseDir, graph.entry);
+      for (const [abs, content] of graph.files.entries()) {
+        filesToWrite.push({ relative: path.relative(graph.baseDir, abs), content });
+      }
+      newChecksum = checksumForGraph(graph);
+    } else {
+      entryRelative = `entry.${fileType}`;
+      filesToWrite.push({ relative: entryRelative, content: module.src });
+      newChecksum = checksumFromString(module.src, "sha1");
+    }
+
+    const entryFile = path.join(moduleDir, entryRelative);
+
+    // ---------------------------------------------------------------
+    // Decide whether a recompile is needed.  The stored checksum covers
+    // every file in the graph, so a change to any include (not just the
+    // entry) triggers a rebuild.
+    // ---------------------------------------------------------------
     let doCompile = false;
-    let checksum = "";
-
-    // ---------------------------------------------------------------
-    // Compute the incoming source checksum in-memory -- no temp file
-    // needed and no ReadStream race condition possible.
-    // ---------------------------------------------------------------
-    const newChecksum = checksumFromString(module.src, "sha1");
-
-    if (!fs.existsSync(sourceFile) || !fs.existsSync(compiledFile)) {
+    if (!fs.existsSync(compiledFile) || !fs.existsSync(entryFile)) {
       doCompile = true;
     } else {
-      // The existing source file IS on disk, so use the fileService
-      // ReadStream-based checksum -- but wrap it with a .catch so an
-      // unhandled error event cannot crash the process.
+      let existingChecksum = "";
       try {
-        checksum = await this.fileService
-          .generateFileChecksum(sourceFile, "sha1");
+        if (fs.existsSync(checksumFile)) {
+          existingChecksum = fs.readFileSync(checksumFile, "utf8").trim();
+        }
       } catch (checksumErr) {
         this.context.log(
-          `Could not checksum existing source ${sourceFile}, will recompile`,
+          `Could not read checksum for module ${module.id}, will recompile`,
           { checksumErr },
           "warning",
-          ReactoryModuleCompilerService.reactory.id
+          ReactoryModuleCompilerService.reactory.id,
         );
-        checksum = "";
+        existingChecksum = "";
       }
-
-      if (newChecksum !== checksum) {
+      if (existingChecksum !== newChecksum) {
         doCompile = true;
       }
     }
@@ -267,9 +497,27 @@ class ReactoryModuleCompilerService
     // Compile with rollup if the source has changed
     // ---------------------------------------------------------------
     if (doCompile) {
-      const result = await this.compileWithRollup(module, sourceFile, compiledFile, runtimeBase);
+      const result = await this.compileWithRollup(
+        module,
+        moduleDir,
+        entryFile,
+        filesToWrite,
+        compiledFile,
+        runtimeBase,
+      );
 
-      if (!result.success) {
+      if (result.success) {
+        try {
+          durableWriteFile(checksumFile, newChecksum);
+        } catch (writeErr) {
+          that.context.log(
+            `Failed to persist checksum for module ${module.id}`,
+            { writeErr },
+            "warning",
+            ReactoryModuleCompilerService.reactory.id,
+          );
+        }
+      } else {
         const notification = `$reactory.createNotification("Compilation error on module ${module.id}, see console log for details", { type: 'warning' });`;
         const errorLogs = result.messages.map((msg) => {
           that.context.log("Error compiling module", { message: msg }, "error");
@@ -295,16 +543,14 @@ class ReactoryModuleCompilerService
           );
         }
       }
-
-      checksum = newChecksum;
     }
 
     return {
       name: module.id,
       type: "script",
-      uri: safeCDNUrl(`plugins/__runtime__/lib/${module.id}.min.js?cs=${checksum}`),
+      uri: safeCDNUrl(`plugins/__runtime__/lib/${module.id}.min.js?cs=${newChecksum}`),
       id: module.id,
-      signature: checksum,
+      signature: newChecksum,
       signatureMethod: "sha1",
       crossOrigin: false,
       signed: true,
@@ -315,24 +561,47 @@ class ReactoryModuleCompilerService
   }
 
   /**
-   * Run rollup to bundle a module.
-   * Uses durableWriteFile to guarantee the source and config are fully
-   * flushed to disk before rollup is spawned.
+   * Run rollup to bundle a module from its own runtime folder.
+   *
+   * The module folder is wiped and rewritten on every compile so stale
+   * includes from a previous build (e.g. an import that was since removed)
+   * never linger.  Uses durableWriteFile to guarantee the source files and
+   * config are fully flushed to disk before rollup is spawned.
    */
   private async compileWithRollup(
     module: Reactory.Forms.IReactoryFormModule,
-    sourceFile: string,
+    moduleDir: string,
+    entryFile: string,
+    filesToWrite: Array<{ relative: string; content: string }>,
     compiledFile: string,
     runtimeBase: string,
   ): Promise<{ success: boolean; messages: string[] }> {
     const result = { success: false, messages: [] as string[] };
 
-    // Write the source file durably (open → write → fsync → close)
-    durableWriteFile(sourceFile, module.src);
+    // Start from a clean module folder so removed includes do not persist.
+    try {
+      if (fs.existsSync(moduleDir)) {
+        fs.rmSync(moduleDir, { recursive: true, force: true });
+      }
+    } catch (rmErr) {
+      this.context.log(
+        `Could not clean module folder for ${module.id}`,
+        { rmErr, moduleDir },
+        "warning",
+        ReactoryModuleCompilerService.reactory.id,
+      );
+    }
+    fs.mkdirSync(moduleDir, { recursive: true });
+
+    // Write the entry file plus every resolved local include, preserving
+    // their relative layout (open → write → fsync → close per file).
+    filesToWrite.forEach((file) => {
+      durableWriteFile(path.join(moduleDir, file.relative), file.content);
+    });
 
     const $config = DefaultRollupOptions({
       enviroment: process.env.NODE_ENV || "development",
-      inputFile: sourceFile,
+      inputFile: entryFile,
       outputFile: compiledFile,
       moduleName: `reactory-plugin-${module.id
         .replace(".", "-")
@@ -357,14 +626,17 @@ class ReactoryModuleCompilerService
 
       if (fs.existsSync(compiledFile)) {
         result.success = true;
+      } else {
+        result.messages.push(stderr || stdout || "rollup produced no output");
       }
-    } catch (execErr) {
+    } catch (execErr: any) {
       this.context.log(
         `Error executing rollup for module ${module.id}`,
         { execErr },
         "error",
         ReactoryModuleCompilerService.reactory.id,
       );
+      result.messages.push(execErr?.stderr || execErr?.message || String(execErr));
     }
 
     return result;

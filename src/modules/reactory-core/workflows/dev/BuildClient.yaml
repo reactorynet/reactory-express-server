@@ -1,0 +1,158 @@
+# reactory-dev.BuildClient@1.0.0
+#
+# Builds the reactory-pwa-client static bundle for a specific client/config
+# and environment, and optionally builds + tags its podman container image.
+#
+# NOTE: this runs bin/build.sh (and optionally bin/podman-build.sh) as child
+# processes of the express-server itself, so it must be triggered against a
+# server running directly on the host (bin/start.sh / bin/dev.sh) — a server
+# running inside its own podman container has no podman-in-podman access and
+# cannot build images from within itself.
+#
+# Underlying commands (run from $REACTORY_CLIENT, i.e. the reactory-pwa-client
+# checkout):
+#   bin/build.sh <client> <env>          — always
+#   bin/podman-build.sh <client> <env>   — only when buildImage=true
+#
+# Each client (reactory, zepz-quotes, booktutor, ...) has its own env files
+# under config/env/<client>/ in reactory-pwa-client, and its own Dockerfile +
+# nginx.conf there too if buildImage is used — see reactory-pwa-client's
+# config/env/<client>/ directory for what's already set up.
+#
+# Inputs:
+#   client      (optional) — client config key (default: reactory).
+#   env         (optional) — environment config key (default: podman).
+#   buildImage  (optional) — "true" to also build + tag the podman image
+#                             after the static bundle succeeds (default: false).
+#   workdir     (optional) — path to reactory-pwa-client root.
+#                             Defaults to $REACTORY_CLIENT env var at runtime.
+nameSpace: reactory-dev
+name: BuildClient
+version: 1.0.0
+description: "Build the reactory-pwa-client static bundle for a given client/config + environment, and optionally build its podman image."
+tags: [dev, build, client, pwa, podman]
+metadata:
+  timeout: 600000
+
+inputs:
+  client:
+    type: string
+    required: false
+    default: "reactory"
+    description: "Client config key — e.g. 'reactory', 'zepz-quotes', 'booktutor'."
+  env:
+    type: string
+    required: false
+    default: "podman"
+    description: "Environment config key — e.g. 'local', 'podman', 'electron'."
+  buildImage:
+    type: string
+    required: false
+    default: "false"
+    description: "Set to 'true' to also build + tag the podman container image after the bundle build succeeds."
+  workdir:
+    type: string
+    required: false
+    description: "Absolute path to reactory-pwa-client root. Defaults to $REACTORY_CLIENT."
+
+steps:
+  # ── 0. Resolve effective workdir ─────────────────────────────────────────
+  - id: resolveWorkdir
+    type: cli_command
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const wd = process.env.WD;
+          const fallback = process.env.REACTORY_CLIENT || process.cwd();
+          process.stdout.write((wd && !wd.startsWith('${')) ? wd : fallback);
+      env:
+        WD: "${input.workdir}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setWorkdir
+    type: set_variable
+    dependsOn: resolveWorkdir
+    config:
+      action: set
+      key: clientDir
+      source: step_output
+      sourcePath: resolveWorkdir.outputs.stdout
+
+  - id: logStart
+    type: log
+    dependsOn: setWorkdir
+    config:
+      level: info
+      message: "Building client '${input.client}' (${input.env}) in ${variables.clientDir}"
+
+  # ── 1. Build the static bundle ───────────────────────────────────────────
+  - id: buildBundle
+    type: cli_command
+    dependsOn: logStart
+    config:
+      command: "bash"
+      args: ["bin/build.sh", "${input.client}", "${input.env}"]
+      cwd: "${variables.clientDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: reportBundleResult
+    type: condition
+    dependsOn: buildBundle
+    config:
+      condition: "stepResults.buildBundle.outputs.exitCode === 0"
+      thenSteps:
+        - id: logBundlePass
+          type: log
+          config:
+            level: info
+            message: "Client bundle build PASSED — output in build/${input.client}/${input.env}/"
+      elseSteps:
+        - id: logBundleFail
+          type: log
+          config:
+            level: error
+            message: "Client bundle build FAILED — review output above for details."
+
+  # ── 2. Optionally build + tag the podman image ───────────────────────────
+  - id: maybeBuildImage
+    type: condition
+    dependsOn: reportBundleResult
+    config:
+      condition: "input.buildImage === 'true' && steps.buildBundle.outputs.exitCode === 0"
+      thenSteps:
+        - id: buildImage
+          type: cli_command
+          config:
+            command: "bash"
+            args: ["bin/podman-build.sh", "${input.client}", "${input.env}"]
+            cwd: "${variables.clientDir}"
+            failOnError: false
+            expectedExitCodes: [0, 1]
+            output:
+              captureStdout: true
+              captureStderr: true
+        - id: reportImageResult
+          type: condition
+          dependsOn: buildImage
+          config:
+            condition: "stepResults.buildImage.outputs.exitCode === 0"
+            thenSteps:
+              - id: logImagePass
+                type: log
+                config:
+                  level: info
+                  message: "Client image build PASSED — tagged reactory/${input.client}-pwa-client."
+            elseSteps:
+              - id: logImageFail
+                type: log
+                config:
+                  level: error
+                  message: "Client image build FAILED — review output above for details."

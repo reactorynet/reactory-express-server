@@ -111,14 +111,29 @@ class ReactoryFormResolver {
   async reactoryFormSave(obj: any, args: IReactoryFormSaveArgs, context: Reactory.Server.IReactoryContext): Promise<Reactory.Forms.IReactoryForm> {
 
     const formSvc: Reactory.Service.IReactoryFormService = context.getService("core.ReactoryFormService@1.0.0") as Reactory.Service.IReactoryFormService;
-    const { 
+    const {
       form,
       git = null,
       module = '__runtime__',
       publish = false
     } = args;
 
-    return formSvc.save(form, { git, module, publish });    
+    if (!form) {
+      throw new ApiError("form input is required", { where: "ReactoryFormSave resolver" });
+    }
+
+    try {
+      // storage defaults to the file system YAML overlay. Publishing to a module
+      // (writing the source form) is intentionally out of scope here.
+      return await formSvc.save(form, { git, module, publish, storage: 'fs' });
+    } catch (error) {
+      context.log(
+        `Error saving form ${form?.nameSpace}.${form?.name}@${form?.version}: ${error.message}`,
+        { error, form }, 'error', 'ReactoryFormResolver');
+      throw error instanceof ApiError
+        ? error
+        : new ApiError(`Failed to save form: ${error.message}`, { where: "ReactoryFormSave resolver", error });
+    }
   }
 
 }

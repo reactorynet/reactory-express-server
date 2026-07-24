@@ -30,7 +30,7 @@ if (!REACTORY_APPLICATION_PASSWORD) {
 
 const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   key: 'reactory',
-  name: 'reactory:reactory.application.title',
+  name: 'Reactory Management Client',
   username: REACTORY_APPLICATION_USERNAME,
   email: REACTORY_APPLICATION_EMAIL,
   salt: 'generate',

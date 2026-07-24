@@ -1,5 +1,48 @@
 import Reactory from '@reactorynet/reactory-core';
 
+/**
+ * Database variants for which the core application provides
+ * connection factory providers. Mirrors the variants supported by the
+ * reactory-reactor AI data macros so a single client-config connection
+ * setting serves both.
+ */
+export type ReactoryDatabaseVariant = 'mongo' | 'mysql' | 'postgres' | 'mssql' | 'databricks';
+
+/**
+ * Shape of the `data` block of a client setting with
+ * `settingType: 'connection'`. Authored per client in
+ * `src/data/clientConfigs/<client>/settings` (TS or YAML) — see
+ * `clientConfigs/reactory/settings/settings.ts` for the canonical example.
+ */
+export interface IDatabaseConnectionSettings {
+  variant: ReactoryDatabaseVariant;
+  host?: string;
+  port?: number;
+  database?: string;
+  username?: string;
+  password?: string;
+  /** Full connection URL override (e.g. mongodb+srv://...). Takes precedence over host/port. */
+  url?: string;
+  /** Databricks: SQL warehouse HTTP path (e.g. /sql/1.0/warehouses/<id>) */
+  path?: string;
+  /** Databricks: personal access / OAuth token */
+  token?: string;
+  /** Driver-specific options passed through to the underlying client */
+  options?: Record<string, any>;
+}
+
+/**
+ * Common contract implemented by every connection factory in
+ * `src/database/<variant>/ConnectionFactory.ts`. `TConnection` is the
+ * driver-native handle (pool/client) — callers use the driver API directly.
+ */
+export interface IReactoryConnectionProvider<TConnection = unknown> {
+  variant: ReactoryDatabaseVariant;
+  getConnection(connectionId: string, context: Reactory.Server.IReactoryContext): Promise<TConnection>;
+  testConnection(connectionId: string, context: Reactory.Server.IReactoryContext): Promise<boolean>;
+  closeConnection(connectionId: string): Promise<void>;
+  closeAll(): Promise<void>;
+}
 
 export enum Operator {
   EQ = " == ",

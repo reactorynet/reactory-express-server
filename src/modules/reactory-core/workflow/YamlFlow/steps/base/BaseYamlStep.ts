@@ -173,7 +173,28 @@ export abstract class BaseYamlStep implements IYamlStep {
   }
   
   /**
-   * Helper method to resolve variable substitutions in strings
+   * Helper method to safely convert any value to string.
+   * If the value is an object or array, it is serialized to a JSON string
+   * to prevent "[object Object]" leaking into downstream templates.
+   * @param val - Value to stringify
+   * @returns String representation of the value
+   */
+  protected stringifyValue(val: any): string {
+    if (val === null || val === undefined) {
+      return '';
+    }
+    if (typeof val === 'object' || Array.isArray(val)) {
+      try {
+        return JSON.stringify(val);
+      } catch (e) {
+        return String(val);
+      }
+    }
+    return String(val);
+  }
+
+  /**
+   * Helper method to resolve variable substitutions in strings with support for logical OR (||) and literals
    * @param template - String template with ${variable} syntax
    * @param context - Execution context containing variables
    * @returns Resolved string
@@ -182,54 +203,118 @@ export abstract class BaseYamlStep implements IYamlStep {
     if (typeof template !== 'string') {
       return template;
     }
-    
-    return template.replace(/\$\{([^}]+)\}/g, (match, variablePath) => {
-      // Try to resolve from variables first
-      if (variablePath in context.variables) {
-        return String(context.variables[variablePath]);
+
+    const resolveSingleExpression = (expr: string): any => {
+      const trimmed = expr.trim();
+      if (!trimmed) return undefined;
+
+      // Check if it's a string literal
+      if (
+        (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+        (trimmed.startsWith('"') && trimmed.endsWith('"'))
+      ) {
+        return trimmed.slice(1, -1);
       }
-      
-      // Try to resolve from environment
-      if (variablePath in context.env) {
-        return String(context.env[variablePath]);
+
+      // Check if it's a boolean or number literal
+      if (trimmed === 'true') return true;
+      if (trimmed === 'false') return false;
+      if (trimmed === 'null') return null;
+      if (!isNaN(Number(trimmed)) && trimmed !== '') return Number(trimmed);
+
+      // Resolve from environment variables (process.env.VAR or env.VAR)
+      const envMatch = trimmed.match(/^(?:process\.)?env\.(.+)$/);
+      if (envMatch) {
+        const varName = envMatch[1];
+        if (context.env && varName in context.env) {
+          return context.env[varName];
+        }
+        if (typeof process !== 'undefined' && process.env && varName in process.env) {
+          return process.env[varName];
+        }
+        return undefined;
       }
-      
-      // Try to resolve from inputs
-      const inputMatch = variablePath.match(/^(?:input|inputs)\.(.+)$/);
+
+      // Resolve from inputs
+      const inputMatch = trimmed.match(/^(?:input|inputs)\.(.+)$/);
       if (inputMatch) {
-        const [, inputPath] = inputMatch;
+        const inputPath = inputMatch[1];
         const keys = inputPath.split('.');
         let current: any = context.workflowInputs;
         for (const key of keys) {
           if (current && typeof current === 'object' && key in current) {
             current = current[key];
           } else {
-            return match; // Return original if not found
+            return undefined;
           }
         }
-        return String(current);
+        return current;
       }
-      
-      // Try to resolve from previous step results
-      const stepResultMatch = variablePath.match(/^steps\.([^.]+)\.(.+)$/);
+
+      // Resolve from steps
+      const stepResultMatch = trimmed.match(/^steps\.([^.]+)\.(.+)$/);
       if (stepResultMatch) {
         const [, stepId, outputPath] = stepResultMatch;
         const stepResult = context.stepResults[stepId];
-        if (stepResult && stepResult.outputs) {
+        if (stepResult) {
           const keys = outputPath.split('.');
-          let current: any = stepResult.outputs;
-          for (const key of keys) {
-            if (current && typeof current === 'object' && key in current) {
-              current = current[key];
-            } else {
-              return match; // Return original if not found
+          const walk = (root: any): any => {
+            let current: any = root;
+            for (const key of keys) {
+              if (current && typeof current === 'object' && key in current) {
+                current = current[key];
+              } else {
+                return undefined;
+              }
             }
+            return current;
+          };
+          let value = walk(stepResult);
+          if (value === undefined) {
+            value = walk(stepResult.outputs);
           }
-          return String(current);
+          return value;
+        }
+        return undefined;
+      }
+
+      // Resolve from variables (explicit variables.VAR or bare VAR)
+      if (context.variables && trimmed in context.variables) {
+        return context.variables[trimmed];
+      }
+      const variablesMatch = trimmed.match(/^variables\.(.+)$/);
+      if (variablesMatch) {
+        const variableSubPath = variablesMatch[1];
+        const keys = variableSubPath.split('.');
+        let current: any = context.variables;
+        for (const key of keys) {
+          if (current && typeof current === 'object' && key in current) {
+            current = current[key];
+          } else {
+            return undefined;
+          }
+        }
+        return current;
+      }
+
+      return undefined;
+    };
+
+    return template.replace(/\$\{([^}]+)\}/g, (match, expression) => {
+      // Split the expression by logical OR (||)
+      const parts = expression.split('||');
+      for (const part of parts) {
+        const resolved = resolveSingleExpression(part);
+        if (resolved !== undefined && resolved !== null && resolved !== '') {
+          return this.stringifyValue(resolved);
         }
       }
-      
-      // Return original if no resolution found
+      // If none of the parts resolved, try to resolve the first part as a fallback
+      // or return the original match if even that fails.
+      const firstPartResolved = resolveSingleExpression(parts[0]);
+      if (firstPartResolved !== undefined) {
+        return this.stringifyValue(firstPartResolved);
+      }
       return match;
     });
   }
