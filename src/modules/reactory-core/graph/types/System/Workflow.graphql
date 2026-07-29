@@ -758,6 +758,10 @@ type ExecutionPointerSummary {
   eventData: JSON
   """Event name if the step is waiting for an event"""
   eventName: String
+  """Event correlation key the step is waiting on (used to publish/signal the event)"""
+  eventKey: String
+  """Whether the awaited event has already been published/consumed"""
+  eventPublished: Boolean
   """Outcome data from the step"""
   outcome: JSON
   """The most recent error message from the last failed execution of this step"""
@@ -1242,6 +1246,18 @@ extend type Mutation {
   pauseWorkflowInstance(instanceId: String!): WorkflowOperationResult
   resumeWorkflowInstance(instanceId: String!): WorkflowOperationResult
   cancelWorkflowInstance(instanceId: String!): WorkflowOperationResult
+
+  # Event signalling (continue steps waiting for an event)
+  publishWorkflowEvent(
+    eventName: String!
+    eventKey: String!
+    eventData: JSON
+  ): WorkflowOperationResult
+  signalWorkflowInstance(
+    instanceId: String!
+    stepId: String
+    eventData: JSON
+  ): WorkflowOperationResult
 
   # Schedule Management
   createWorkflowSchedule(

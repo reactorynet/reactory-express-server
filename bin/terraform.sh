@@ -5,16 +5,28 @@
 # Usage:
 #   bin/terraform.sh <terraform args...> [options]
 #
-# Targets are addressed as <environment>/<layer>, or by an explicit path:
+# Targets are addressed as <cloud>/<environment>/<layer>, or by a shorter form
+# where it is unambiguous:
 #
-#   bootstrap                account-level: state backend + shared ECR
-#   dev/cluster              AWS resources for dev  (VPC, EKS, Valkey, secrets)
-#   dev/workload             Kubernetes objects + the application
-#   staging/cluster          ... and the same pair for staging
-#   staging/workload
-#   production/cluster
-#   production/workload
-#   minikube                 local development
+#   aws/bootstrap                 state backend + shared ECR (once per account)
+#   aws/dev/cluster               AWS resources  (VPC, EKS, Valkey, secrets)
+#   aws/dev/workload              Kubernetes objects + the application
+#   aws/staging/... aws/production/...
+#
+#   digitalocean/bootstrap        Spaces bucket for state
+#   digitalocean/small/cluster    DOKS + VPC (+ managed databases at medium/large)
+#   digitalocean/small/workload   Kubernetes objects + the application
+#   digitalocean/medium/... digitalocean/large/...
+#
+#   linode/bootstrap              Object Storage bucket for state
+#   linode/small/cluster          LKE + VPC (+ managed PostgreSQL at medium/large)
+#   linode/small/workload
+#   linode/medium/... linode/large/...
+#
+#   minikube                      local development
+#
+# `dev/cluster` still resolves to aws/dev/cluster; the AWS environment names do
+# not collide with the DigitalOcean and Linode tier names.
 #
 # Apply order is bootstrap -> <env>/cluster -> <env>/workload. The workload layer
 # reads the cluster layer's state, so applying it first fails with a clear error.
@@ -41,10 +53,11 @@
 # aws/bootstrap's outputs after the first apply.
 #
 # Examples:
-#   bin/terraform.sh apply --target=bootstrap        --reactory-env=dev
-#   bin/terraform.sh plan  --target=dev/cluster      --reactory-env=dev
-#   bin/terraform.sh apply --target=dev/workload     --reactory-env=dev --image-tag=1.1.0
-#   bin/terraform.sh plan  --target=production/cluster --reactory-env=production
+#   bin/terraform.sh apply --target=aws/bootstrap             --reactory-env=dev
+#   bin/terraform.sh plan  --target=aws/dev/cluster           --reactory-env=dev
+#   bin/terraform.sh apply --target=aws/dev/workload          --reactory-env=dev --image-tag=1.1.0
+#   bin/terraform.sh apply --target=digitalocean/small/cluster  --reactory-env=dev
+#   bin/terraform.sh apply --target=linode/medium/workload      --reactory-env=qa --image-tag=1.1.0
 #
 # Exits non-zero on any failure so callers (bin/bit.sh) can react.
 
@@ -97,7 +110,7 @@ TF_ROOT="./config/${REACTORY_CONFIG}/terraform"
 list_targets() {
   find "$TF_ROOT" -name main.tf \
     -not -path "*/.terraform/*" -not -path "*/modules/*" 2>/dev/null \
-    | sed -e "s|$TF_ROOT/||" -e 's|/main.tf$||' -e 's|^aws/environments/||' -e 's|^aws/||' \
+    | sed -e "s|$TF_ROOT/||" -e 's|/main.tf$||' -e 's|/environments/|/|' \
     | sort
 }
 
@@ -126,7 +139,9 @@ TARGET_DIR=""
 for candidate in \
   "$TF_ROOT/$TARGET" \
   "$TF_ROOT/aws/environments/$TARGET" \
-  "$TF_ROOT/aws/$TARGET"; do
+  "$TF_ROOT/aws/$TARGET" \
+  "$TF_ROOT/digitalocean/environments/${TARGET#digitalocean/}" \
+  "$TF_ROOT/linode/environments/${TARGET#linode/}"; do
   if [ -f "$candidate/main.tf" ]; then
     TARGET_DIR="$candidate"
     break
@@ -188,6 +203,9 @@ fi
 if [ -n "${TF_STATE_REGION:-}" ]; then
   export TF_VAR_state_bucket_region="${TF_VAR_state_bucket_region:-$TF_STATE_REGION}"
 fi
+if [ -n "${TF_STATE_ENDPOINT:-}" ]; then
+  export TF_VAR_state_endpoint="${TF_VAR_state_endpoint:-$TF_STATE_ENDPOINT}"
+fi
 
 TF_EXTRA_ARGS=()
 for vf in "${VAR_FILES[@]}"; do
@@ -231,16 +249,23 @@ build_backend_args() {
   if [ -z "${TF_STATE_BUCKET:-}" ] && [ ${#BACKEND_CONFIGS[@]} -eq 0 ]; then
     die "$(printf '%s\n' \
       "${TARGET_DIR#./} uses a partial S3 backend but TF_STATE_BUCKET is not set." \
-      "   Add these to $ENV_FILE, from 'terraform -chdir=$TF_ROOT/aws/bootstrap output':" \
+      "   Add these to $ENV_FILE, from the matching bootstrap layer's output:" \
       "     TF_STATE_BUCKET=<state_bucket_name>" \
-      "     TF_STATE_REGION=<state_bucket_region>" \
-      "     TF_STATE_LOCK_TABLE=<lock_table_name>" \
+      "     TF_STATE_REGION=<state_bucket_region>      # AWS only" \
+      "     TF_STATE_LOCK_TABLE=<lock_table_name>      # AWS only" \
+      "     TF_STATE_ENDPOINT=<s3 endpoint>            # DigitalOcean / Linode" \
       "   Or pass --backend-config=bucket=... explicitly.")"
   fi
 
   [ -n "${TF_STATE_BUCKET:-}" ] && BACKEND_ARGS+=("-backend-config=bucket=$TF_STATE_BUCKET")
   [ -n "${TF_STATE_REGION:-}" ] && BACKEND_ARGS+=("-backend-config=region=$TF_STATE_REGION")
   [ -n "${TF_STATE_LOCK_TABLE:-}" ] && BACKEND_ARGS+=("-backend-config=dynamodb_table=$TF_STATE_LOCK_TABLE")
+
+  # Spaces and Linode Object Storage are S3-compatible but not S3, so they need
+  # an explicit endpoint. Only AWS omits this.
+  if [ -n "${TF_STATE_ENDPOINT:-}" ]; then
+    BACKEND_ARGS+=("-backend-config=endpoints={s3=\"$TF_STATE_ENDPOINT\"}")
+  fi
 
   for bc in "${BACKEND_CONFIGS[@]}"; do
     BACKEND_ARGS+=("-backend-config=$bc")

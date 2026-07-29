@@ -22,10 +22,11 @@ const WORKFLOW_ES_STATUS: Record<number, { label: string; color: string; icon: s
 const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
   const { reactory, workflow, refreshKey } = props;
 
-  const { React, Material, WorkflowInstanceInspector } = reactory.getComponents<any>([
+  const { React, Material, WorkflowInstanceInspector, WorkflowDesigner } = reactory.getComponents<any>([
     'react.React',
     'material-ui.Material',
     'core.WorkflowInstanceInspector',
+    'core.WorkflowDesigner',
   ]);
 
   const { MaterialCore } = Material;  
@@ -98,6 +99,13 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
   // Instance inspector modal state
   const [inspectorInstanceId, setInspectorInstanceId] = React.useState(null);
   const [inspectorOpen, setInspectorOpen] = React.useState(false);
+
+  // Instance designer (visual inspector) modal state
+  const [designerInstanceId, setDesignerInstanceId] = React.useState(null);
+  const [designerOpen, setDesignerOpen] = React.useState(false);
+
+  // The visual designer can only render a graph for YAML workflows.
+  const isYamlWorkflow = workflow.workflowType === 'YAML' && !!WorkflowDesigner;
 
   // Refresh trigger
   const [localRefreshKey, setLocalRefreshKey] = React.useState(0);
@@ -332,6 +340,16 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
   const closeInspector = () => {
     setInspectorOpen(false);
     setInspectorInstanceId(null);
+  };
+
+  const openInDesigner = (instanceId: string) => {
+    setDesignerInstanceId(instanceId);
+    setDesignerOpen(true);
+  };
+
+  const closeDesigner = () => {
+    setDesignerOpen(false);
+    setDesignerInstanceId(null);
   };
 
   const handleTabChange = (_event: any, newValue: number) => {
@@ -657,6 +675,19 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                         <Icon sx={{ fontSize: 18 }}>visibility</Icon>
                       </IconButton>
                     </Tooltip>
+                    {isYamlWorkflow && (
+                      <Tooltip title="Open in designer">
+                        <IconButton
+                          size="small"
+                          onClick={(e: any) => {
+                            e.stopPropagation();
+                            openInDesigner(instance.id);
+                          }}
+                        >
+                          <Icon sx={{ fontSize: 18 }}>account_tree</Icon>
+                        </IconButton>
+                      </Tooltip>
+                    )}
                     {isStoppableStatus(instance.status) && (
                       <Tooltip title="Stop / abort this running instance">
                         <IconButton
@@ -826,7 +857,7 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                     <TableCell align="right">
                       <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
                         <Tooltip title="View details">
-                          <IconButton 
+                          <IconButton
                             size="small"
                             onClick={(e: any) => {
                               e.stopPropagation();
@@ -836,6 +867,19 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                             <Icon sx={{ fontSize: 18 }}>visibility</Icon>
                           </IconButton>
                         </Tooltip>
+                        {isYamlWorkflow && (
+                          <Tooltip title="Open in designer">
+                            <IconButton
+                              size="small"
+                              onClick={(e: any) => {
+                                e.stopPropagation();
+                                openInDesigner(execution.id);
+                              }}
+                            >
+                              <Icon sx={{ fontSize: 18 }}>account_tree</Icon>
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         {isStoppableStatus(execution.status) && (
                           <Tooltip title="Stop / abort this running instance">
                             <IconButton
@@ -1076,6 +1120,35 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
             <WorkflowInstanceInspector
               reactory={reactory}
               instanceId={inspectorInstanceId}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Instance Visual Designer (instance-viewer mode) */}
+      <Dialog
+        open={designerOpen}
+        onClose={closeDesigner}
+        fullScreen
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Icon>account_tree</Icon>
+            <Typography variant="h6">Instance Designer</Typography>
+          </Box>
+          <IconButton onClick={closeDesigner} size="small">
+            <Icon>close</Icon>
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {designerOpen && designerInstanceId && WorkflowDesigner && (
+            <WorkflowDesigner
+              reactory={reactory}
+              workflow={workflow}
+              workflowId={workflowDefinitionId}
+              mode="instance"
+              instanceId={designerInstanceId}
+              readonly
             />
           )}
         </DialogContent>

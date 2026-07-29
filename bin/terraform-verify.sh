@@ -2,6 +2,8 @@
 #
 # terraform-verify.sh — validate every deployment target without deploying.
 #
+# Covers every cloud in the tree: aws, digitalocean, linode and minikube.
+#
 # Runs:
 #   1. terraform fmt                     canonical formatting (.tf only)
 #   2. terraform init -backend=false
@@ -11,7 +13,7 @@
 #   4. check-secret-refs.py              every secret_key_ref resolves to a key
 #                                        the secrets pipeline projects
 #   5. layer contract check              cluster layers expose the outputs their
-#                                        workload layer consumes
+#                                        workload layer consumes, per cloud
 #
 # -backend=false means no S3 bucket, no state and no AWS credentials are touched,
 # so this is safe on any checkout and in CI.
@@ -42,7 +44,6 @@ for arg in "$@"; do
 done
 
 TF_ROOT="./config/${REACTORY_CONFIG_ID}/terraform"
-AWS_ROOT="${TF_ROOT}/aws"
 FAILURES=0
 
 # Per-target TF_DATA_DIR keeps each target's module cache isolated, but without a
@@ -107,7 +108,10 @@ while IFS= read -r main_tf; do
   # module cache is target-specific.
   export TF_DATA_DIR="$VERIFY_DATA_DIR/$(echo "$T_NAME" | tr '/' '_')"
 
-  if ! OUTPUT=$(terraform -chdir="$T_DIR" init -backend=false -input=false 2>&1); then
+  # -upgrade so a bumped version constraint does not fail against a lock file
+  # written under the old one. Verification is not authoritative for locks —
+  # see the readme on generating multi-platform locks deliberately.
+  if ! OUTPUT=$(terraform -chdir="$T_DIR" init -backend=false -input=false -upgrade 2>&1); then
     fail "$T_NAME — init failed"
     echo "$OUTPUT" | tail -15 | sed 's/^/      /'
     continue
@@ -156,8 +160,8 @@ fi
 # 4. Secret reference cross-check
 # ---------------------------------------------------------------------------
 step "Secret references"
-if [ -d "$AWS_ROOT" ] && [ -f bin/utils/check-secret-refs.py ]; then
-  if OUTPUT=$(python3 bin/utils/check-secret-refs.py "$AWS_ROOT" 2>&1); then
+if [ -f bin/utils/check-secret-refs.py ]; then
+  if OUTPUT=$(python3 bin/utils/check-secret-refs.py "$TF_ROOT" 2>&1); then
     ok "all secret_key_ref entries resolve"
     echo "$OUTPUT" | grep -E "^\s+note:" | sed 's/^/   /'
   else
@@ -165,15 +169,15 @@ if [ -d "$AWS_ROOT" ] && [ -f bin/utils/check-secret-refs.py ]; then
     echo "$OUTPUT" | sed 's/^/      /'
   fi
 else
-  echo "   (skipped — no aws targets or checker missing)"
+  echo "   (skipped — checker missing)"
 fi
 
 # ---------------------------------------------------------------------------
 # 5. Layer contract
 # ---------------------------------------------------------------------------
 step "Layer contract"
-if [ -d "$AWS_ROOT/environments" ] && [ -f bin/utils/check-layer-contract.py ]; then
-  if OUTPUT=$(python3 bin/utils/check-layer-contract.py "$AWS_ROOT/environments" 2>&1); then
+if [ -f bin/utils/check-layer-contract.py ]; then
+  if OUTPUT=$(python3 bin/utils/check-layer-contract.py "$TF_ROOT" 2>&1); then
     ok "every workload layer's cluster references are satisfied"
     echo "$OUTPUT" | grep -E "^\s+note:" | sed 's/^/   /'
   else
@@ -181,7 +185,7 @@ if [ -d "$AWS_ROOT/environments" ] && [ -f bin/utils/check-layer-contract.py ]; 
     echo "$OUTPUT" | sed 's/^/      /'
   fi
 else
-  echo "   (skipped — no environments directory or checker missing)"
+  echo "   (skipped — checker missing)"
 fi
 
 # ---------------------------------------------------------------------------

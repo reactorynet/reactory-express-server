@@ -477,16 +477,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   },
 
   {
-    key: 'workflows-instances-management',
-    title: 'Workflows Instances Management',
-    path: '/workflows/instances-management',
-    exact: true,
-    public: false,
-    roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR'],
-    componentFqn: 'core.WorkflowInstanceManagement@1.0.0',
-  },
-
-  {
     key: "admin-workflow-editor",
     title: "Admin Workflow",
     path: "/workflows/editor",
@@ -498,27 +488,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       workflowId: "${route.workflowId}",
     },
   },
-  {
-    key: "admin-workflow-system-dashboard",
-    title: "Admin Workflow",
-    path: "/workflows/system-dashboard",
-    exact: true,
-    public: false,
-    roles: ["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"],
-    componentFqn: "core.WorkflowSystemDashboard@1.0.0",    
-  },
-  {
-    key: "workflows-launch-workflow",
-    title: "Launch Workflow",
-    path: "/workflows/launch",
-    exact: false,
-    public: false,
-    roles: ["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"],
-    componentFqn: "core.WorkflowLauncher@1.0.0",
-    componentProps: {
-      mode: 'new'
-    },
-  }
 ]
 
 

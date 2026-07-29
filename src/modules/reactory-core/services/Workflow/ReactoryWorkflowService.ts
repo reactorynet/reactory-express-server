@@ -1139,6 +1139,83 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   }
 
   // ============================================
+  // Workflow Events (signal / continue waiting steps)
+  // ============================================
+
+  async publishWorkflowEvent(
+    eventName: string,
+    eventKey: string,
+    eventData?: any
+  ): Promise<IWorkflowOperationResult> {
+    try {
+      if (!eventName || !eventKey) {
+        return { success: false, message: 'publishWorkflowEvent requires both eventName and eventKey' };
+      }
+      const workflowRunner = await this.getWorkflowRunner();
+      await workflowRunner?.publishEvent(eventName, eventKey, eventData ?? {});
+      return {
+        success: true,
+        message: `Published event '${eventName}' (key: ${eventKey})`,
+        data: { eventName, eventKey },
+      };
+    } catch (error) {
+      this.context.log('Error publishing workflow event', { error, eventName, eventKey }, 'error');
+      return { success: false, message: `Failed to publish event: ${error.message}` };
+    }
+  }
+
+  async signalWorkflowInstance(
+    instanceId: string,
+    eventData?: any,
+    stepId?: string
+  ): Promise<IWorkflowOperationResult> {
+    try {
+      const instance = await this.getWorkflowHistoryById(instanceId);
+      if (!instance) {
+        return { success: false, message: `Workflow instance not found: ${instanceId}` };
+      }
+
+      // A step waiting for an event has an eventName set and has not yet had that
+      // event published/consumed. Optionally narrow to a single step.
+      const waiting = (instance.executionPointers || []).filter((p) => {
+        const isWaiting = !!p.eventName && !p.eventPublished;
+        if (!isWaiting) return false;
+        if (!stepId) return true;
+        return p.stepName === stepId || String(p.stepId) === stepId;
+      });
+
+      if (waiting.length === 0) {
+        return {
+          success: false,
+          message: stepId
+            ? `No step waiting for an event matched '${stepId}' on instance ${instanceId}`
+            : `Instance ${instanceId} has no steps waiting for an event`,
+        };
+      }
+
+      const workflowRunner = await this.getWorkflowRunner();
+      const signalled: Array<{ stepName: string | null; eventName: string; eventKey: string }> = [];
+
+      for (const p of waiting) {
+        // The correlation key defaults to the instance id when the engine did
+        // not record an explicit event key (the common single-waiter case).
+        const eventKey = p.eventKey || instanceId;
+        await workflowRunner?.publishEvent(p.eventName as string, eventKey, eventData ?? {});
+        signalled.push({ stepName: p.stepName ?? null, eventName: p.eventName as string, eventKey });
+      }
+
+      return {
+        success: true,
+        message: `Signalled ${signalled.length} waiting step(s) on instance ${instanceId}`,
+        data: { instanceId, signalled },
+      };
+    } catch (error) {
+      this.context.log('Error signalling workflow instance', { error, instanceId, stepId }, 'error');
+      return { success: false, message: `Failed to signal workflow instance: ${error.message}` };
+    }
+  }
+
+  // ============================================
   // Workflow History (MongoDB Persistence)
   // ============================================
 

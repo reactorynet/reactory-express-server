@@ -53,6 +53,8 @@ const QUERY = `
         persistenceData
         eventData
         eventName
+        eventKey
+        eventPublished
         outcome
         errorMessage
         errorStack
@@ -122,6 +124,7 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
     DialogContent,
     DialogContentText,
     DialogActions,
+    TextField,
   } = MaterialCore;
 
   const theme = reactory.muiTheme;
@@ -150,6 +153,11 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
   const [stopConfirmOpen, setStopConfirmOpen] = React.useState(false);
   const [stopping, setStopping] = React.useState(false);
   const [refreshKey, setRefreshKey] = React.useState(0);
+
+  // ---- Signal / continue-waiting-step state ----
+  const [signalTarget, setSignalTarget] = React.useState<any>(null);
+  const [signalData, setSignalData] = React.useState<string>('{}');
+  const [signalling, setSignalling] = React.useState(false);
 
   // ---- Fetch main instance ----
   React.useEffect(() => {
@@ -390,6 +398,74 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
     }
   };
 
+  // Open the signal dialog for a waiting execution pointer.
+  const openSignalDialog = (pointer: any) => {
+    setSignalTarget(pointer);
+    setSignalData('{}');
+  };
+
+  // Re-fetch the instance in place, without toggling the full-screen loading
+  // state (used to poll for the async resume after signalling an event).
+  const silentRefresh = async () => {
+    try {
+      const result = await reactory.graphqlQuery(QUERY, { instanceId });
+      const data: any = result?.data;
+      if (data?.workflowExecutionHistoryById) {
+        setInstance(data.workflowExecutionHistoryById);
+      }
+    } catch (err: any) {
+      reactory.log(`Silent refresh failed: ${err?.message}`, { err }, 'debug');
+    }
+  };
+
+  // Publish the awaited event for the selected waiting step, continuing it.
+  const handleSignalConfirm = async () => {
+    if (!signalTarget) return;
+    setSignalling(true);
+    try {
+      let parsedData: any = {};
+      if (signalData && signalData.trim().length > 0) {
+        try {
+          parsedData = JSON.parse(signalData);
+        } catch (e: any) {
+          reactory.createNotification(`Invalid JSON event data: ${e.message}`, { type: 'error' });
+          setSignalling(false);
+          return;
+        }
+      }
+
+      const stepId = signalTarget.stepName || String(signalTarget.stepId);
+      const result = await reactory.graphqlMutation(`
+        mutation SignalWorkflowInstance($instanceId: String!, $stepId: String, $eventData: JSON) {
+          signalWorkflowInstance(instanceId: $instanceId, stepId: $stepId, eventData: $eventData) {
+            success
+            message
+          }
+        }
+      `, { instanceId, stepId, eventData: parsedData });
+
+      const op = (result?.data as any)?.signalWorkflowInstance;
+      if (op?.success) {
+        reactory.createNotification(op?.message || 'Event published', { type: 'success' });
+        setSignalTarget(null);
+        // The event is published, but the engine resumes the suspended step
+        // asynchronously (typically a few seconds). A single immediate refresh
+        // would still show the step "waiting", so poll a few times (silently, to
+        // avoid a full-screen loading flicker) to reflect the resumption.
+        [0, 1500, 3000, 5000, 8000].forEach((delay) => {
+          setTimeout(() => { void silentRefresh(); }, delay);
+        });
+      } else {
+        reactory.createNotification(op?.message || 'Failed to publish event', { type: 'error' });
+      }
+    } catch (err: any) {
+      reactory.log(`Error signalling workflow step: ${err?.message}`, { err }, 'error');
+      reactory.createNotification(`Error: ${err?.message}`, { type: 'error' });
+    } finally {
+      setSignalling(false);
+    }
+  };
+
   // ---- Tab panel helper ----
   const TabPanel = ({ index, children }: { index: number; children: any }) => (
     <Box role="tabpanel" hidden={activeTab !== index} sx={{ flex: 1, overflow: 'auto' }}>
@@ -532,6 +608,9 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
                 const hasEventData = pointer.eventData && Object.keys(pointer.eventData).length > 0;
                 const hasOutcome = pointer.outcome && (typeof pointer.outcome !== 'object' || Object.keys(pointer.outcome).length > 0);
                 const isFailed = pointer.status === 6;
+                // A step is waiting to be continued when it subscribed to an
+                // event that has not yet been published/consumed.
+                const isWaiting = Boolean(pointer.eventName) && !pointer.eventPublished;
                 const stepErrors: any[] = pointer.errors || [];
                 // stepResults is keyed by the YAML step id. The engine sets
                 // pointer.stepName to that id (def.name || def.id), whereas
@@ -581,6 +660,15 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
                             label={pointer.eventName}
                             size="small"
                             variant="outlined"
+                            color={isWaiting ? 'info' : 'default'}
+                          />
+                        )}
+                        {isWaiting && (
+                          <Chip
+                            icon={<Icon sx={{ fontSize: '14px !important' }}>hourglass_top</Icon>}
+                            label="Waiting"
+                            size="small"
+                            color="info"
                           />
                         )}
                         <Icon
@@ -604,6 +692,34 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
                           ? ` (${formatDuration(pointer.duration)})`
                           : ''}
                       </Typography>
+
+                      {isWaiting && (
+                        <Alert
+                          severity="info"
+                          variant="outlined"
+                          icon={<Icon>hourglass_top</Icon>}
+                          sx={{ mt: 1, '& .MuiAlert-message': { width: '100%' } }}
+                          action={
+                            <Button
+                              size="small"
+                              variant="contained"
+                              color="info"
+                              startIcon={<Icon sx={{ fontSize: 18 }}>bolt</Icon>}
+                              onClick={() => openSignalDialog(pointer)}
+                            >
+                              Continue
+                            </Button>
+                          }
+                        >
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            Waiting for event: {pointer.eventName}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Publish this event to continue the step.
+                            {pointer.eventKey ? ` (key: ${pointer.eventKey})` : ''}
+                          </Typography>
+                        </Alert>
+                      )}
 
                       {isFailed && pointer.errorMessage && (
                         <Alert severity="error" variant="outlined" sx={{ mt: 1, '& .MuiAlert-message': { width: '100%' } }}>
@@ -846,6 +962,50 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
             startIcon={stopping ? <CircularProgress size={16} /> : <Icon>stop_circle</Icon>}
           >
             {stopping ? 'Stopping...' : 'Stop instance'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ========== Continue / Publish Event Dialog ========== */}
+      <Dialog
+        open={!!signalTarget}
+        onClose={() => !signalling && setSignalTarget(null)}
+        maxWidth="sm"
+        fullWidth
+        aria-labelledby="inspector-signal-dialog-title"
+      >
+        <DialogTitle id="inspector-signal-dialog-title">
+          Continue waiting step
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Publish the event <strong>{signalTarget?.eventName}</strong>
+            {signalTarget?.stepName ? <> for step <strong>{formatStepName(signalTarget.stepName)}</strong></> : null} to
+            continue execution. Provide an optional JSON payload delivered to the resumed step.
+          </DialogContentText>
+          <TextField
+            label="Event data (JSON)"
+            value={signalData}
+            onChange={(e: any) => setSignalData(e.target.value)}
+            multiline
+            minRows={4}
+            fullWidth
+            disabled={signalling}
+            InputProps={{ sx: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSignalTarget(null)} disabled={signalling}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSignalConfirm}
+            color="info"
+            variant="contained"
+            disabled={signalling}
+            startIcon={signalling ? <CircularProgress size={16} /> : <Icon>bolt</Icon>}
+          >
+            {signalling ? 'Publishing...' : 'Publish event'}
           </Button>
         </DialogActions>
       </Dialog>

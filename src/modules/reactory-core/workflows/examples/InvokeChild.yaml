@@ -1,0 +1,26 @@
+# Workflow composition example: invoke_workflow.
+# The parent starts the WaitEvent child (fire-and-forget) and logs its instance id.
+nameSpace: reactory-examples
+name: InvokeChild
+version: 1.0.0
+description: Demonstrates workflow composition via the invoke_workflow step.
+inputs:
+  requestId:
+    type: string
+    required: false
+    default: child-req-1
+    description: Correlation key handed to the child WaitEvent workflow
+steps:
+  - id: startChild
+    type: invoke_workflow
+    config:
+      workflowId: "reactory-examples.WaitEvent@1.0.0"
+      waitForCompletion: false
+      input:
+        requestId: "${input.requestId}"
+  - id: logChild
+    type: log
+    dependsOn: startChild
+    config:
+      message: "started child instance: ${steps.startChild.instanceId}"
+      level: info

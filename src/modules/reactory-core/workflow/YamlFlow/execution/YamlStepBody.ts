@@ -231,6 +231,63 @@ export class NoOpStepBody extends StepBody {
 }
 
 /**
+ * Lightweight named marker step.
+ *
+ * The structural combinators (condition/for_each/while/parallel/saga/join) are
+ * built with native workflow-es primitives whose bodies never set
+ * `pointer.stepName`. Prepending this marker before such a combinator stamps a
+ * mapped, human-readable name onto the container step's entry pointer, so the
+ * inspectors and visual designer can identify it (leaf steps get their name via
+ * YamlStepBody). It completes immediately and continues to the combinator.
+ */
+export class NamedMarkerStepBody extends StepBody {
+  /** The YAML step id, stamped onto the pointer for identification. */
+  public stepName: string;
+
+  public run(context: StepExecutionContext): Promise<ExecutionResult> {
+    const pointer: any = (context as any).pointer;
+    if (pointer && this.stepName) pointer.stepName = this.stepName;
+    return ExecutionResult.next();
+  }
+}
+
+/**
+ * Durable "wait for event" step body.
+ *
+ * workflow-es ships a native `WaitFor` primitive, but its body never sets
+ * `pointer.stepName`, so a suspended wait_event pointer carries no step name and
+ * cannot be mapped back to its YAML step id by the inspectors / visual designer.
+ * This body replicates the native suspend/resume semantics exactly, and
+ * additionally stamps the pointer with the YAML step id so the waiting step is
+ * identifiable everywhere (CLI, inspector, visual inspector, event signalling).
+ */
+export class WaitForEventStepBody extends StepBody {
+  /** Event name to subscribe to (set via an input expression). */
+  public eventName: string;
+  /** Resolved correlation key (set via an input expression). */
+  public eventKey: string;
+  /** Effective-date threshold for matching events (set via an input expression). */
+  public effectiveDate: Date;
+  /** The YAML step id, stamped onto the pointer for identification. */
+  public stepName: string;
+  /** Captured event payload, exposed to the step's output expression. */
+  public eventData: any;
+
+  public run(context: StepExecutionContext): Promise<ExecutionResult> {
+    const pointer: any = (context as any).pointer;
+    if (pointer && this.stepName) pointer.stepName = this.stepName;
+
+    if (!pointer?.eventPublished) {
+      const eff = this.effectiveDate || new Date(2000, 1, 1);
+      return ExecutionResult.waitForEvent(this.eventName, this.eventKey, eff);
+    }
+
+    this.eventData = pointer.eventData;
+    return ExecutionResult.next();
+  }
+}
+
+/**
  * Flush + close the instance log manager and unregister it. Idempotent: a second
  * call is a no-op (forInstance returns null once unregistered), so it is safe to
  * invoke from both the success and compensation (failure) paths.
