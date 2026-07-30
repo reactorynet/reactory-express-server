@@ -10,37 +10,85 @@ setupTestEnvironment();
  * Test Helpers for Reactory Classroom Module
  */
 const classroomTestHelpers = {
-  createMockCourse: () => ({
-    _id: 'course-123',
+  // NOTE: classroom entities are TypeORM (Postgres) - resolvers read `obj.id`,
+  // not `obj._id` (that's the KB/Mongoose convention below). `overrides` was
+  // previously silently ignored on 4 of these 5 helpers, which is why so many
+  // classroom tests that called e.g. createMockCourse({ id: 'course-123' })
+  // always got the same hardcoded id back regardless of what they asked for.
+  // These mirror the TypeORM entities field-for-field. Fields that are non-null in the
+  // GraphQL schema (Course.code, Assignment.assignmentType, ...) must be present, or
+  // resolver tests fail with "Cannot return null for non-nullable field" - a schema-shape
+  // problem that reads as a resolver bug.
+  createMockCourse: (overrides: any = {}) => ({
+    id: 'course-123',
     title: 'Test Course',
     description: 'A test course',
+    code: 'TEST-101',
     status: 'published',
     instructorId: 'instructor-123',
+    organizationId: null,
+    courseType: 'standard',
+    maxStudents: 30,
+    currentStudents: 0,
+    startDate: null,
+    endDate: null,
+    settings: {},
+    thumbnailUrl: null,
+    tags: [],
+    prerequisites: [],
     createdAt: new Date(),
     updatedAt: new Date(),
+    createdBy: 'instructor-123',
+    updatedBy: 'instructor-123',
+    ...overrides,
   }),
 
-  createMockEnrollment: () => ({
-    _id: 'enrollment-123',
+  createMockEnrollment: (overrides: any = {}) => ({
+    id: 'enrollment-123',
     courseId: 'course-123',
     studentId: 'student-123',
     status: 'active',
+    enrollmentType: 'self_enrolled',
     enrolledAt: new Date(),
-    role: 'student',
-    progress: 0,
+    approvedAt: null,
     completedAt: null,
+    withdrawnAt: null,
+    metadata: {},
+    notes: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    createdBy: 'student-123',
+    updatedBy: 'student-123',
+    ...overrides,
   }),
 
-  createMockAssignment: () => ({
-    _id: 'assignment-123',
+  createMockAssignment: (overrides: any = {}) => ({
+    id: 'assignment-123',
     courseId: 'course-123',
     title: 'Test Assignment',
     description: 'A test assignment',
+    // 'active' is not a member of ReactoryClassroomAssignmentStatus
+    // (draft/published/closed/archived) - it was never a valid value here.
+    assignmentType: 'essay',
+    status: 'draft',
+    requirements: {},
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-    points: 100,
-    status: 'active',
+    maxPoints: 100,
+    gradingRubric: null,
+    allowLateSubmissions: true,
+    latePenaltyPercentage: 0,
+    maxLateDays: 0,
+    isRequired: true,
+    orderIndex: 0,
+    attachments: [],
+    calendarEventId: null,
+    publishedAt: null,
+    autoPublishAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    createdBy: 'instructor-123',
+    updatedBy: 'instructor-123',
+    ...overrides,
   }),
 
   createMockUser: (overrides?: any) => ({
@@ -54,17 +102,60 @@ const classroomTestHelpers = {
     ...overrides,
   }),
 
-  createMockProgress: () => ({
-    _id: 'progress-123',
-    enrollmentId: 'enrollment-123',
-    courseId: 'course-123',
-    studentId: 'student-123',
-    percentComplete: 45,
-    lastAccessedAt: new Date(),
-    assignmentsCompleted: 3,
-    assignmentsTotal: 8,
-    status: 'in-progress',
-  }),
+  /**
+   * Mirrors the real ReactoryClassroomProgress entity.
+   *
+   * The previous shape used field names that exist on no entity (`percentComplete`,
+   * `assignmentsCompleted`, `assignmentsTotal`, `status`), so services reading
+   * `progressPercentage` / `activitiesCompleted` / `totalActivities` / `isCompleted` saw
+   * undefined throughout. It also returned a bare object, while the service calls the
+   * entity's own `recordActivity()` - which failed with "is not a function".
+   */
+  createMockProgress: (overrides: any = {}) => {
+    const progress: any = {
+      id: 'progress-123',
+      enrollmentId: 'enrollment-123',
+      progressPercentage: 45,
+      activitiesCompleted: 3,
+      totalActivities: 8,
+      timeSpentMinutes: 120,
+      lastActivityAt: new Date(),
+      completedAt: null,
+      isCompleted: false,
+      metrics: { activities: [] },
+      certificateUrl: null,
+      certificateIssuedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: 'student-123',
+      updatedBy: 'student-123',
+      ...overrides,
+    };
+
+    progress.calculateProgressPercentage = function calculateProgressPercentage() {
+      this.progressPercentage = this.totalActivities > 0
+        ? (this.activitiesCompleted / this.totalActivities) * 100
+        : 0;
+      if (this.progressPercentage >= 100 && !this.isCompleted) {
+        this.isCompleted = true;
+        this.completedAt = new Date();
+      }
+    };
+
+    progress.recordActivity = function recordActivity(activityType: string, activityData: any = {}) {
+      this.activitiesCompleted += 1;
+      this.lastActivityAt = new Date();
+      if (!this.metrics) this.metrics = {};
+      if (!this.metrics.activities) this.metrics.activities = [];
+      this.metrics.activities.push({ type: activityType, data: activityData, timestamp: new Date() });
+      if (activityData?.timeSpentMinutes) {
+        this.timeSpentMinutes += activityData.timeSpentMinutes;
+      }
+      this.calculateProgressPercentage();
+    };
+
+    return progress;
+  },
 };
 
 // Attach test helpers to global object
