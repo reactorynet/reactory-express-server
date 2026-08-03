@@ -356,6 +356,19 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     componentFqn: 'reactor.ReactorChat@1.0.0',
   },
   {
+    key: 'reactor-graph-explorer-node',
+    title: 'Reactory Reactor Graph Explorer Node',
+    path: '/reactor/graph/:projectId?/:nodeId?',
+    exact: true,
+    public: false,
+    roles: ['USER'],
+    componentFqn: 'core.GraphExplorer@1.0.0',
+    componentProps: {
+      projectId: '${route?.projectId}',
+      nodeId: '${route?.nodeId}',
+    },
+  },
+  {
     key: 'admin-ai-budgets',
     title: 'AI Usage Budgets',
     path: '/admin/ai/budgets',
