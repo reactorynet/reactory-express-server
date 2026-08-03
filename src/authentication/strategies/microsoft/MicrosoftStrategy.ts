@@ -14,11 +14,15 @@ import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 import { StateManager, ErrorSanitizer, AuthAuditLogger } from '../security';
 import AuthTelemetry from '../telemetry';
 
+const { 
+  MICROSOFT_OAUTH_REDIRECT_URI = 'https://localhost:4000/auth/microsoft/openid/complete/',
+} = process.env;
+
 const {
   MICROSOFT_CLIENT_ID = 'MICROSOFT_CLIENT_ID',
   MICROSOFT_CLIENT_SECRET = 'MICROSOFT_CLIENT_SECRET',
   MICROSOFT_TENANT_ID = 'common', // 'common' for multi-tenant, specific ID for single-tenant
-  OAUTH_REDIRECT_URI = 'http://localhost:4000/auth/microsoft/openid/complete/',
+  OAUTH_REDIRECT_URI = MICROSOFT_OAUTH_REDIRECT_URI || 'http://localhost:4000/auth/microsoft/openid/complete/',
   // Distinct from NODE_ENV on purpose: NODE_ENV elsewhere in this codebase
   // means "am I running the compiled build" (src/ vs app/), not "is this a
   // real internet-facing deployment with TLS" — conflating the two here
