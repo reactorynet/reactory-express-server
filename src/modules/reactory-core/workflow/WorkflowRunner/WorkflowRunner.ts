@@ -193,8 +193,10 @@ export class WorkflowRunner {
   private persistence: IPersistenceProvider | null = null;
   private redis: Redis | null = null;
   private state: IWorkflowState;
-  private _isInitialized: boolean = false;  
+  private _isInitialized: boolean = false;
   private _isStarting: boolean = false;
+  /** In-flight initialization, shared so concurrent callers don't double-init. */
+  private _initPromise: Promise<void> | null = null;
   private scheduler: WorkflowScheduler | null = null;
   private readonly errorHandler: ErrorHandler;
   private readonly lifecycleManager: WorkflowLifecycleManager;
@@ -266,16 +268,32 @@ export class WorkflowRunner {
    */
   public async initialize(): Promise<void> {
     if (this._isInitialized) {
-      logger.warn('WorkflowRunner already initialized');
       return;
     }
+    // Coalesce concurrent initialize() calls onto a single in-flight init.
+    // Without this, two callers racing at boot (both seeing isInitialized()===
+    // false) would each build and start a host — re-introducing the very
+    // registration/sweep race this ordering fixes.
+    if (this._initPromise) {
+      return this._initPromise;
+    }
+    this._initPromise = this._doInitialize();
+    try {
+      await this._initPromise;
+    } catch (err) {
+      // Clear so a later caller can retry after a failed initialization.
+      this._initPromise = null;
+      throw err;
+    }
+  }
 
+  private async _doInitialize(): Promise<void> {
     try {
       this._isStarting = true;
+      // start() configures the host and registers all code + declared workflows,
+      // but does NOT start the worker yet (see the note there).
       const { host, autoStart } = await this.start();
       this.setState({ host });
-      this._isInitialized = true;
-      this._isStarting = false;
 
       // Discover and register workflow steps from all enabled modules
       this.discoverModuleSteps();
@@ -286,8 +304,16 @@ export class WorkflowRunner {
 
       // Discover YAML workflows persisted in the catalog directory that are
       // not yet registered (e.g. workflows created via the designer and saved
-      // to disk but not declared in a module definition).
+      // to disk but not declared in a module definition), and bridge them onto
+      // the (not-yet-started) host.
       await this.discoverCatalogWorkflows();
+
+      // Every definition is now registered on the host — it is finally safe to
+      // start the worker, which resumes any persisted runnable instances without
+      // racing definition registration.
+      await host.start();
+      this._isInitialized = true;
+      this._isStarting = false;
 
       // Set up AMQ event handlers
       await this.setupAmqEventHandlers();
@@ -647,6 +673,8 @@ export class WorkflowRunner {
       }
 
       this._isInitialized = false;
+      // Clear the coalesced init promise so a subsequent initialize() re-runs.
+      this._initPromise = null;
       logger.info('WorkflowRunner stopped');
     } catch (error) {
       logger.error('Failed to stop WorkflowRunner', error);
@@ -711,7 +739,14 @@ export class WorkflowRunner {
         }
       }
       
-      await host.start();
+      // NOTE: host.start() is deliberately NOT called here. Starting the host
+      // begins the worker, which resumes persisted *runnable* instances. Those
+      // instances may be backed by catalog YAML workflows that are only bridged
+      // later in initialize() (discoverCatalogWorkflows). Starting the worker now
+      // would race that registration and dead-letter such instances with
+      // "definition not registered on load". initialize() starts the host only
+      // after every definition (code, declared YAML, and catalog YAML) is
+      // registered.
       return { host, autoStart };
     } catch (error) {
       logger.error('Error starting workflow', error);
@@ -1276,6 +1311,29 @@ export class WorkflowRunner {
     } catch {
       /* engine-only instance not tracked by the lifecycle manager */
     }
+  }
+
+  /**
+   * Publish an event to the workflow engine, waking any step that is waiting on
+   * the given (eventName, eventKey) pair. This is the low-level signal primitive
+   * that lets an operator continue a suspended WaitEvent step.
+   *
+   * @param eventName - The event name the waiting step subscribed to
+   * @param eventKey  - The correlation key the waiting step subscribed with
+   * @param eventData - Arbitrary payload delivered to the resumed step
+   * @param eventTime - Effective event time (defaults to now)
+   */
+  public async publishEvent(
+    eventName: string,
+    eventKey: string,
+    eventData: any,
+    eventTime?: Date
+  ): Promise<void> {
+    if (!this.state.host) {
+      throw new Error('Workflow host not initialized');
+    }
+    await this.state.host.publishEvent(eventName, eventKey, eventData, eventTime || new Date());
+    logger.info(`Published workflow event '${eventName}' (key: ${eventKey})`);
   }
 
   /**

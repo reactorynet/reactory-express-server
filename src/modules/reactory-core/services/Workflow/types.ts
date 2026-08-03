@@ -490,6 +490,20 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
   pauseWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
   resumeWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
   cancelWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
+
+  // Workflow Events (signal / continue steps that are waiting for an event)
+  /**
+   * Publish a raw event to the workflow engine, waking any step waiting on the
+   * given (eventName, eventKey) pair.
+   */
+  publishWorkflowEvent(eventName: string, eventKey: string, eventData?: any): Promise<IWorkflowOperationResult>;
+  /**
+   * Resolve the event(s) an instance is currently waiting on and publish them,
+   * continuing the suspended step(s). When `stepId` is supplied only the
+   * matching waiting step is signalled; otherwise every waiting step is.
+   * The operation result `data` contains the list of signalled events.
+   */
+  signalWorkflowInstance(instanceId: string, eventData?: any, stepId?: string): Promise<IWorkflowOperationResult>;
   
   // Workflow History (MongoDB persistence)
   getWorkflowHistory(

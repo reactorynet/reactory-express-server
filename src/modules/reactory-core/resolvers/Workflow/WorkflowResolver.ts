@@ -473,6 +473,44 @@ class WorkflowResolver {
     }
   }
 
+  @roles(["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
+  @mutation("publishWorkflowEvent")
+  async publishWorkflowEvent(
+    obj: any,
+    params: { eventName: string; eventKey: string; eventData?: any },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      return await workflowService.publishWorkflowEvent(params.eventName, params.eventKey, params.eventData);
+    } catch (error) {
+      context.log('Error publishing workflow event', { error, params }, 'error', 'WorkflowResolver');
+      return {
+        success: false,
+        message: `Failed to publish workflow event: ${error.message}`
+      };
+    }
+  }
+
+  @roles(["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
+  @mutation("signalWorkflowInstance")
+  async signalWorkflowInstance(
+    obj: any,
+    params: { instanceId: string; stepId?: string; eventData?: any },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      return await workflowService.signalWorkflowInstance(params.instanceId, params.eventData, params.stepId);
+    } catch (error) {
+      context.log('Error signalling workflow instance', { error, params }, 'error', 'WorkflowResolver');
+      return {
+        success: false,
+        message: `Failed to signal workflow instance: ${error.message}`
+      };
+    }
+  }
+
   // Schedule Management Mutations
   @roles(["ADMIN", "WORKFLOW_ADMIN"], 'args.context')
   @mutation("createWorkflowSchedule")

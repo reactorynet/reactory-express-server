@@ -6,15 +6,15 @@ import { ReactoryCalendarEntryService } from '../services/ReactoryCalendarEntryS
 import { ReactoryCalendarIntegrationService } from '../services/ReactoryCalendarIntegrationService';
 
 const getCalendarService = (context: Reactory.Server.IReactoryContext): ReactoryCalendarService => {
-  return context.getService<ReactoryCalendarService>("core.ReactoryCalendarService@1.0.0");
+  return context.getService<ReactoryCalendarService>("reactory.CalendarService@1.0.0");
 }
 
 const getCalendarEntryService = (context: Reactory.Server.IReactoryContext): ReactoryCalendarEntryService => {
-  return context.getService<ReactoryCalendarEntryService>("core.ReactoryCalendarEntryService@1.0.0");
+  return context.getService<ReactoryCalendarEntryService>("reactory.CalendarEntryService@1.0.0");
 }
 
 const getCalendarIntegrationService = (context: Reactory.Server.IReactoryContext): ReactoryCalendarIntegrationService => {
-  return context.getService<ReactoryCalendarIntegrationService>("core.ReactoryCalendarIntegrationService@1.0.0");
+  return context.getService<ReactoryCalendarIntegrationService>("reactory.CalendarIntegrationService@1.0.0");
 }
 
 //@ts-ignore

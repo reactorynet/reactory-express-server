@@ -30,7 +30,7 @@
  */
 
 import { WorkflowBase, WorkflowBuilder, WorkflowErrorHandling } from '@reactorynet/workflow-es';
-import { YamlStepBody, NoOpStepBody, FinalizeStepBody, YamlWorkflowData } from './execution/YamlStepBody';
+import { YamlStepBody, NoOpStepBody, FinalizeStepBody, WaitForEventStepBody, NamedMarkerStepBody, YamlWorkflowData } from './execution/YamlStepBody';
 
 type AnyChain = any;
 type AnyStep = any;
@@ -228,6 +228,17 @@ function attachLeaf(chain: AnyChain, step: AnyStep, opts: ScopeOpts): AnyChain {
   return sb;
 }
 
+/**
+ * Prepend a named marker step so a structural combinator's container node is
+ * identifiable (the native combinator bodies don't set pointer.stepName). The
+ * combinator then attaches to the returned chain.
+ */
+function markNamed(chain: AnyChain, step: AnyStep): AnyChain {
+  return chain.then(NamedMarkerStepBody, (b: AnyChain) => {
+    b.input((s: NamedMarkerStepBody) => { s.stepName = step.name || step.id; });
+  });
+}
+
 /** Attach a single step (leaf or structural) to the chain; returns the new chain. */
 function attach(chain: AnyChain, step: AnyStep, opts: ScopeOpts): AnyChain {
   const type = step.type;
@@ -237,11 +248,18 @@ function attach(chain: AnyChain, step: AnyStep, opts: ScopeOpts): AnyChain {
   }
 
   const config = stepConfig(step);
+  // Stamp the container node's entry pointer with the YAML step id so the
+  // inspectors / visual designer can map the structural step to its node.
+  // wait_event is excluded: its WaitForEventStepBody already stamps the name.
+  if (type !== 'wait_event') {
+    chain = markNamed(chain, step);
+  }
 
   switch (type) {
     case 'join':
       // Parallel already synchronises; a standalone join is a structural no-op.
-      return chain.then(NoOpStepBody);
+      // The named marker above provides the passthrough (and a mapped name).
+      return chain;
 
     case 'condition': {
       const cond = config.condition;
@@ -302,14 +320,19 @@ function attach(chain: AnyChain, step: AnyStep, opts: ScopeOpts): AnyChain {
       const eventKeyExpr = config.eventKey;
       const timeoutMs = typeof config.timeout === 'number' ? config.timeout : undefined;
       const outputVariable = config.outputVariable;
-      let w = chain.waitFor(
-        String(eventName),
-        (data: YamlWorkflowData) => {
+      // Use the Reactory WaitForEventStepBody (rather than the native
+      // chain.waitFor primitive) so the suspended pointer is stamped with the
+      // YAML step id — native WaitFor leaves pointer.stepName unset, which makes
+      // the waiting step unidentifiable to the inspectors and visual designer.
+      let w = chain.then(WaitForEventStepBody, (b: AnyChain) => {
+        b.input((s: WaitForEventStepBody, data: YamlWorkflowData) => {
+          s.eventName = String(eventName);
           const key = eventKeyExpr != null ? evalExpression(eventKeyExpr, data) : undefined;
-          return key == null ? '' : String(key);
-        },
-        timeoutMs != null ? (_data: YamlWorkflowData) => new Date(nowMs() + timeoutMs) : undefined,
-      );
+          s.eventKey = key == null ? '' : String(key);
+          s.effectiveDate = timeoutMs != null ? new Date(nowMs() + timeoutMs) : new Date();
+          s.stepName = step.name || step.id;
+        });
+      });
       if (outputVariable) {
         w = w.output((s: any, data: YamlWorkflowData) => {
           data.variables[outputVariable] = s.eventData;

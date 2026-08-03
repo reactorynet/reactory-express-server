@@ -1,0 +1,93 @@
+nameSpace: reactory-core
+name: EtlDemo
+version: 1.0.0
+description: "A demonstration workflow showing persistent cross-instance state (watermarks) and Python transformations in an ETL pipeline."
+tags: [etl, demo, python, persistent-variables]
+
+steps:
+  # 1. Retrieve the last processed watermark (workflow-scoped)
+  - id: getWatermark
+    type: cross_instance_variable
+    config:
+      action: get
+      scope: workflow
+      key: last_processed_date
+
+  # 2. Run Python script to transform data using the watermark
+  - id: runTransformation
+    type: python_script
+    config:
+      pythonPath: python3
+      timeout: 30000
+    inputs:
+      # Pass the retrieved watermark as input (defaults to '1970-01-01' if not set yet)
+      watermark: "${variables.last_processed_date || '1970-01-01'}"
+      batch_size: 100
+      script: |
+        import os
+        import json
+        from datetime import datetime
+
+        # Load inputs injected by the Reactory runner
+        with open(os.environ['REACTORY_INPUT_FILE'], 'r') as f:
+            inputs = json.load(f)
+
+        watermark = inputs.get('watermark')
+        batch_size = inputs.get('batch_size')
+
+        print(f"Python processing data since watermark: {watermark} with batch size {batch_size}")
+
+        # Simulate fetching and transforming data
+        mock_raw_data = [
+            {"id": 1, "name": "User A", "updated_at": "2026-07-25T12:00:00Z"},
+            {"id": 2, "name": "User B", "updated_at": "2026-07-28T10:30:00Z"},
+            {"id": 3, "name": "User C", "updated_at": "2026-07-28T15:45:00Z"}
+        ]
+
+        # Filter and transform
+        transformed_records = []
+        new_watermark = watermark
+
+        watermark_dt = datetime.fromisoformat(watermark.replace('Z', '+00:00')) if 'T' in watermark else datetime.strptime(watermark, "%Y-%m-%d")
+
+        for record in mock_raw_data:
+            record_dt = datetime.fromisoformat(record['updated_at'].replace('Z', '+00:00'))
+            # If the record is newer than our watermark, process it
+            if record_dt.timestamp() > watermark_dt.timestamp():
+                transformed_records.append({
+                    "id": record["id"],
+                    "upper_name": record["name"].upper(),
+                    "processed_at": datetime.utcnow().isoformat() + "Z"
+                })
+                # Keep track of the latest timestamp seen
+                if record["updated_at"] > new_watermark:
+                    new_watermark = record["updated_at"]
+
+        # Prepare outputs to send back to Reactory
+        outputs = {
+            "processed_count": len(transformed_records),
+            "records": transformed_records,
+            "next_watermark": new_watermark,
+            "status": "SUCCESS"
+        }
+
+        # Write outputs to the designated file path
+        with open(os.environ['REACTORY_OUTPUT_FILE'], 'w') as f:
+            json.dump(outputs, f, indent=2)
+
+  # 3. Log the Python step outputs
+  - id: logResults
+    type: log
+    config:
+      level: info
+      message: "Python transformed ${steps.runTransformation.outputs.processed_count} records. New watermark is: ${steps.runTransformation.outputs.next_watermark}"
+
+  # 4. Save the new watermark back to persistent storage for the next run
+  - id: saveWatermark
+    type: cross_instance_variable
+    config:
+      action: set
+      scope: workflow
+      key: last_processed_date
+      source: step_output
+      sourcePath: steps.runTransformation.outputs.next_watermark

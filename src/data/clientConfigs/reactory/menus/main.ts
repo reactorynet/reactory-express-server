@@ -175,42 +175,6 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
           link: '/workflows/editor',
           icon: 'edit_document',
           roles: ['USER'],
-        },
-        {
-          ordinal: 2,
-          title: 'reactory:reactory.menu.workflows-system-dashboard',
-          link: '/workflows/system-dashboard',
-          icon: 'dashboard',
-          roles: ['ADMIN'],
-        },
-        {
-          ordinal: 3,
-          title: 'reactory:reactory.menu.workflows-operations-dashboard',
-          link: '/workflows/operation-dashboard',
-          icon: 'rocket_launch',
-          roles: ['USER'],
-        },
-        {
-          ordinal: 4,
-          title: 'reactory:reactory.menu.workflows-instances-management',
-          link: '/workflows/instances-management',
-          icon: 'zoom_in_map',
-          roles: ['USER'],
-        },
-        {
-          ordinal: 5,
-          title: 'reactory:reactory.menu.workflows-launch-workflow',
-          link: '/workflows/launch',
-          icon: 'view_list',
-          roles: ['USER'],
-        },
-        {
-          ordinal: 6,
-          title: 'reactory:reactory.menu.workflow-editor-beta',
-          link: '/workflows/editor-beta',
-          icon: 'edit_note',
-          roles: ['ADMIN', 'DEVELOPER'],
-          featureFlags: ['core.WorkflowEditorBetaUI@1.0.0']
         }
       ],
     },
