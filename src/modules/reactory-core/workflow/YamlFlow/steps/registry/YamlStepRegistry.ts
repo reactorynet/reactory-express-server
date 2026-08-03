@@ -23,6 +23,7 @@ import { ForEachStep } from '../core/ForEachStep';
 import { LogStep } from '../core/LogStep';
 import { GraphQLMutationStep } from '../core/GraphQLMutationStep';
 import { ServiceInvokeStep } from '../core/ServiceInvokeStep';
+import { InvokeWorkflowStep } from '../core/InvokeWorkflowStep';
 import { TelemetryStep } from '../core/TelemetryStep';
 import { ValidationStep } from '../core/ValidationStep';
 import { StartStep } from '../core/StartStep';
@@ -45,6 +46,8 @@ import { UserLookupStep } from '../core/UserLookupStep';
 import { MySqlStep } from '../core/MySqlStep';
 import { PostgresSQLStep } from '../core/PostgresSQLStep';
 import { MSSQLStep } from '../core/MSSQLStep';
+import { CrossInstanceVariableStep } from '../core/CrossInstanceVariableStep';
+import { PythonScriptStep } from '../core/PythonScriptStep';
 import {
   IWorkflowStepDesignerDefinition,
   IWorkflowStepCatalogEntry,
@@ -361,6 +364,12 @@ export class YamlStepRegistry {
       version: '1.0.0'
     });
 
+    // Workflow composition — invoke another workflow
+    this.registerStep('invoke_workflow', InvokeWorkflowStep, {
+      description: 'Start (and optionally await) another workflow',
+      version: '1.0.0'
+    });
+
     // Task step
     this.registerStep('task', TaskStep, {
       description: 'Generic task execution',
@@ -479,6 +488,17 @@ export class YamlStepRegistry {
 
     this.registerStep('mssql', MSSQLStep, {
       description: 'Execute a Microsoft SQL Server query',
+      version: '1.0.0'
+    });
+
+    // ETL steps
+    this.registerStep('cross_instance_variable', CrossInstanceVariableStep, {
+      description: 'Set, get or delete persistent cross-instance variables (global or workflow scoped)',
+      version: '1.0.0'
+    });
+
+    this.registerStep('python_script', PythonScriptStep, {
+      description: 'Execute inline Python scripts or external Python files with ETL JSON data integration',
       version: '1.0.0'
     });
   }

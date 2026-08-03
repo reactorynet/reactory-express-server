@@ -11,6 +11,21 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 /**
+ * Minimal shell-output publisher used to echo cli_command output to a
+ * WorkflowDesigner console. Kept inline (rather than importing the reactor
+ * module's ShellStreamPublisher) so the core workflow engine does not depend on
+ * the reactory-reactor module. Resolves the streaming transport by service id
+ * and emits `shell` StreamingEvents; a no-op when no context/transport exists.
+ */
+interface StepShellPublisher {
+  active: boolean;
+  start: (command: string, cwd?: string, pid?: number) => void;
+  stdout: (chunk: string) => void;
+  stderr: (chunk: string) => void;
+  exit: (exitCode: number, timedOut?: boolean) => void;
+}
+
+/**
  * Configuration interface for CliCommandStep
  */
 export interface CliCommandStepConfig {
@@ -55,7 +70,14 @@ export interface CliCommandStepConfig {
   
   /** Input to pipe to command stdin */
   stdin?: string;
-  
+
+  /**
+   * Streaming channel id to publish live stdout/stderr onto as `shell` events
+   * (consumed by the WorkflowDesigner terminal echo). Defaults to
+   * `variables.__shellChannelId` then the workflow instanceId.
+   */
+  streamChannelId?: string;
+
   /** Whether step is enabled */
   enabled?: boolean;
 }
@@ -158,11 +180,57 @@ export class CliCommandStep extends BaseYamlStep {
    * @param context - Execution context
    * @returns Execution result
    */
+  /**
+   * Build a shell-stream publisher for live output echo. Resolves the channel
+   * from config → workflow variables → workflow instanceId, and uses a stable
+   * per-step terminal id so the designer renders one terminal pane per step.
+   * Returns a no-op publisher when no Reactory context / transport is available.
+   */
+  private resolvePublisher(config: CliCommandStepConfig, context: StepExecutionContext): StepShellPublisher {
+    const channelId =
+      config.streamChannelId ||
+      (context.variables && (context.variables.__shellChannelId as string)) ||
+      context.workflow?.instanceId ||
+      '';
+    const shellSessionId = `${context.workflow?.instanceId || 'wf'}:${(this as any).id || context.workflow?.name || 'cli'}`;
+
+    let tm: any;
+    try {
+      tm = context.reactoryContext?.getService?.('reactor.StreamingTransportManager@1.0.0');
+    } catch {
+      tm = undefined;
+    }
+
+    const isActive = (): boolean =>
+      !!tm && !!channelId && typeof tm.hasActiveTransportForChat === 'function' && tm.hasActiveTransportForChat(channelId);
+
+    const emit = (data: Record<string, any>): void => {
+      if (!isActive()) return;
+      const event = {
+        type: 'shell',
+        timestamp: new Date(),
+        sessionId: channelId,
+        conversationId: channelId,
+        messageId: '',
+        data: { shellSessionId, source: 'workflow', ...data },
+      };
+      try { void tm.sendEventToSession(channelId, event); } catch { /* best-effort */ }
+    };
+
+    return {
+      active: isActive(),
+      start: (command, cwd, pid) => emit({ phase: 'start', command, cwd, pid }),
+      stdout: (chunk) => { if (chunk) emit({ phase: 'stdout', chunk }); },
+      stderr: (chunk) => { if (chunk) emit({ phase: 'stderr', chunk }); },
+      exit: (exitCode, timedOut = false) => emit({ phase: 'exit', exitCode, timedOut }),
+    };
+  }
+
   private async executeCommand(
-    config: CliCommandStepConfig, 
+    config: CliCommandStepConfig,
     context: StepExecutionContext
   ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-    
+
     // Prepare environment
     const env = {
       ...process.env,
@@ -194,14 +262,19 @@ export class CliCommandStep extends BaseYamlStep {
     const captureStderr = config.output?.captureStderr !== false; // Default true
     const streamOutput = config.output?.streamOutput || false;
     const maxOutputSize = config.output?.maxOutputSize || 1024 * 1024; // 1MB default
-    
+
+    // Live terminal echo to the WorkflowDesigner (no-op when nobody is watching).
+    const publisher = this.resolvePublisher(config, context);
+    const shellStreaming = publisher.active;
+
     return new Promise((resolve, reject) => {
       let stdout = '';
       let stderr = '';
       let outputSize = 0;
-      
-      // Use exec for simple commands, spawn for more control
-      if (!streamOutput && !config.stdin) {
+
+      // Use exec for simple commands, spawn for more control / live streaming.
+      // Force the spawn path when a client is watching so we can stream chunks.
+      if (!streamOutput && !config.stdin && !shellStreaming) {
         // Simple execution with exec
         execAsync(fullCommand, options)
           .then(({ stdout: out, stderr: err }) => {
@@ -224,16 +297,19 @@ export class CliCommandStep extends BaseYamlStep {
           ...options,
           stdio: ['pipe', 'pipe', 'pipe']
         });
-        
+
+        publisher.start(fullCommand, config.cwd, child.pid);
+
         // Handle stdout
         if (child.stdout) {
           child.stdout.on('data', (data: Buffer) => {
             const chunk = data.toString();
-            
+
             if (streamOutput) {
               context.logger.info(`[STDOUT] ${chunk.trim()}`);
             }
-            
+            publisher.stdout(chunk);
+
             if (captureStdout) {
               outputSize += chunk.length;
               if (outputSize <= maxOutputSize) {
@@ -253,7 +329,8 @@ export class CliCommandStep extends BaseYamlStep {
             if (streamOutput) {
               context.logger.warn(`[STDERR] ${chunk.trim()}`);
             }
-            
+            publisher.stderr(chunk);
+
             if (captureStderr) {
               outputSize += chunk.length;
               if (outputSize <= maxOutputSize) {
@@ -273,21 +350,24 @@ export class CliCommandStep extends BaseYamlStep {
         
         // Handle process completion
         child.on('close', (code: number | null) => {
+          publisher.exit(code || 0);
           resolve({
             exitCode: code || 0,
             stdout,
             stderr
           });
         });
-        
+
         child.on('error', (error: Error) => {
+          publisher.exit(1);
           reject(error);
         });
-        
+
         // Handle timeout
         if (config.timeout) {
           setTimeout(() => {
             child.kill('SIGTERM');
+            publisher.exit(124, true);
             reject(new Error(`Command timed out after ${config.timeout}ms`));
           }, config.timeout);
         }

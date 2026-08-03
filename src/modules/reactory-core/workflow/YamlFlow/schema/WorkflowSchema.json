@@ -160,6 +160,7 @@
             "mssql",
             "saga",
             "wait_event",
+            "invoke_workflow",
             "agent_conversation"
           ],
           "description": "Type of step to execute (snake_case convention). NOTE: this enum must stay in sync with the step types registered in YamlStepRegistry; the executor's validateWorkflow() is the authoritative check against the live registry (including module-contributed steps)."

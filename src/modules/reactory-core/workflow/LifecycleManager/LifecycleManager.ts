@@ -155,6 +155,10 @@ export interface IExecutionPointerSummary {
   persistenceData?: any;
   eventData?: any;
   eventName?: string | null;
+  /** Event correlation key the step is waiting on (used to publish/signal the event). */
+  eventKey?: string | null;
+  /** Whether the awaited event has already been published/consumed. */
+  eventPublished?: boolean;
   outcome?: any;
   /** The most recent error message from the last failed execution of this step */
   errorMessage?: string | null;
@@ -298,6 +302,8 @@ function transformToHistoryItem(instance: WorkflowInstance): IWorkflowHistoryIte
       persistenceData: pointer.persistenceData || null,
       eventData: pointer.eventData || null,
       eventName: pointer.eventName || null,
+      eventKey: (pointer as any).eventKey || null,
+      eventPublished: (pointer as any).eventPublished ?? false,
       outcome: pointer.outcome || null,
       errorMessage: lastError?.message || null,
       errorStack: lastError?.stack || null,

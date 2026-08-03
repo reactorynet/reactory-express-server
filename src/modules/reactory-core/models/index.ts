@@ -48,13 +48,18 @@ import { encoder, strongRandom } from "@reactory/server-core/utils";
 import Hash from "@reactory/server-core/utils/hash";
 
 
+// The REACTORY_POSTGRES_* names are the documented overrides, but the env files the
+// server actually ships (config/<client>/.env.*) define the POSTGRES_* names. Without
+// falling through to those, this DataSource authenticates with the literal default
+// "reactory" password and startup fails with `password authentication failed`, taking
+// the calendar entities (and everything else Postgres-backed) down with it.
 export const PostgresDataSource = new DataSource({
   type: "postgres",
-  host: process.env.REACTORY_POSTGRES_HOST || "localhost",
-  port: parseInt(process.env.REACTORY_POSTGRES_PORT || "5432"),
-  username: process.env.REACTORY_POSTGRES_USER || "reactory",
-  password: process.env.REACTORY_POSTGRES_PASSWORD || "reactory",
-  database: process.env.REACTORY_POSTGRES_DB || "reactory",
+  host: process.env.REACTORY_POSTGRES_HOST || process.env.POSTGRES_DB_HOST || "localhost",
+  port: parseInt(process.env.REACTORY_POSTGRES_PORT || process.env.POSTGRES_DB_PORT || "5432"),
+  username: process.env.REACTORY_POSTGRES_USER || process.env.POSTGRES_USER || "reactory",
+  password: process.env.REACTORY_POSTGRES_PASSWORD || process.env.POSTGRES_PASSWORD || "reactory",
+  database: process.env.REACTORY_POSTGRES_DB || process.env.POSTGRES_DB || "reactory",
   synchronize: true,
   entities: [
     Audit,

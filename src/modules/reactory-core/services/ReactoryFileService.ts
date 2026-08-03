@@ -86,14 +86,8 @@ export class ReactoryFileService
       "home"
     );
 
-    // [DESKTOP OVERRIDE]: If running in local desktop mode, bypass CDN folder
-    if (process.env.IS_DESKTOP_INSTALL === "true") {
-      const desktopRoot = process.env.REACTOR_DESKTOP_ROOT ? path.join(os.homedir(), process.env.REACTOR_DESKTOP_ROOT) : os.homedir();
-      rootFolder = process.env.REACTOR_HOME_PATH || desktopRoot;
-    }
-
     let _rootPath = rootPath;
-    if (rootPath.indexOf("${") && this.context.hasRole("DEVELOPER") || this.context.hasRole("ADMIN")) {
+    if (rootPath.indexOf("${") !== -1 && (this.context.hasRole("DEVELOPER") || this.context.hasRole("ADMIN"))) {
       // check if the root path is a template
       _rootPath = template(rootPath)({
         user_id: userId,
@@ -102,8 +96,30 @@ export class ReactoryFileService
       });
     }
 
-    if (_rootPath) {
-      rootFolder = path.join(rootFolder, _rootPath);
+    // [DESKTOP OVERRIDE]: If running in local desktop mode, bypass CDN folder
+    if (process.env.IS_DESKTOP_INSTALL === "true") {
+      const desktopRoot = process.env.REACTOR_DESKTOP_ROOT ? path.join(os.homedir(), process.env.REACTOR_DESKTOP_ROOT) : os.homedir();
+      const homeRoot = process.env.REACTOR_HOME_PATH || desktopRoot;
+      
+      let resolvedFolder = homeRoot;
+      if (_rootPath && _rootPath !== "/") {
+        if (path.isAbsolute(_rootPath)) {
+          if (_rootPath.startsWith(homeRoot)) {
+            resolvedFolder = _rootPath;
+          } else {
+            resolvedFolder = path.join(homeRoot, _rootPath);
+          }
+        } else {
+          resolvedFolder = path.join(homeRoot, _rootPath);
+        }
+      }
+      rootFolder = resolvedFolder;
+      _rootPath = resolvedFolder; // Set _rootPath to the absolute resolved path so folders and files are returned with absolute paths!
+      logger.info(`ReactoryFileService.getUserFiles: Running in desktop mode, using root folder ${rootFolder}`);
+    } else {
+      if (_rootPath) {
+        rootFolder = path.join(rootFolder, _rootPath);
+      }
     }
 
     if (fs.existsSync(rootFolder) === false) {
