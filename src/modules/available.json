@@ -110,6 +110,16 @@
     "shop": "https://reactory.net/shop/modules/reactory-socialeyes"
   },
   {
+    "id": "reactory-speech",
+    "name": "Reactory Speech",
+    "key": "reactory-speech",
+    "fqn": "speech.ReactorySpeech@1.0.0",
+    "moduleEntry": "reactory-speech/index.ts",
+    "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-speech.git",
+    "shop": "https://reactory.net/shop/modules/reactory-speech"
+  },
+  {
     "id": "reactory-pdf-manager",
     "name": "Reactory PDF Manager",
     "key": "reactory-pdf-manager",
