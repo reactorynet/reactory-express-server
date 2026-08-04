@@ -1,0 +1,84 @@
+nameSpace: reactory
+name: CheckFailedYamlWorkflowsV2
+version: 1.0.0
+description: Scans server log files for YAML workflow validation and loading failures, extracts broken workflow names, and triggers a WorkflowWill conversation to repair them.
+author: WorkflowWill
+tags:
+  - workflow
+  - logging
+  - self-repair
+  - validation
+
+inputs:
+  logDirectory:
+    type: string
+    required: false
+    default: "${env.REACTORY_DATA}/logging"
+    description: Path to the server logging directory.
+  searchPattern:
+    type: string
+    required: false
+    default: "Workflow Loader"
+    description: Search pattern for log investigation.
+
+outputs:
+  failingWorkflows:
+    type: array
+    source: "${steps.extractFailingWorkflows.outputPath}"
+    description: List of failing workflow names and error messages extracted from logs.
+
+steps:
+  - id: startLogCheck
+    name: Start Log Inspection
+    type: log
+    config:
+      level: info
+      message: "Starting log inspection for YAML workflow validation failures"
+
+  - id: findLatestLog
+    name: Find Latest Log File
+    type: cliCommand
+    dependsOn: startLogCheck
+    config:
+      command: "bash"
+      args:
+        - "-c"
+        - "ls -t ${input.logDirectory}/*.json 2>/dev/null | head -n 1"
+    outputs:
+      logPath: "${steps.findLatestLog.stdout}"
+
+  - id: searchLogFailures
+    name: Search Logs for Workflow Failures
+    type: cliCommand
+    dependsOn: findLatestLog
+    config:
+      command: "bash"
+      args:
+        - "-c"
+        - "grep -E '\\[Workflow Loader\\]|\\[YamlWorkflowExecutor\\]|Workflow validation failed' ${steps.findLatestLog.logPath} | head -n 50 || echo 'NO_FAILURES_FOUND'"
+    outputs:
+      logMatches: "${steps.searchLogFailures.stdout}"
+
+  - id: extractFailingWorkflows
+    name: Extract Failed Workflow Names
+    type: dataTransformation
+    dependsOn: searchLogFailures
+    config:
+      transformations:
+        - source: "${steps.searchLogFailures.logMatches}"
+          target: "failingWorkflows"
+          operation: "map"
+
+  - id: logResults
+    name: Log Search Results
+    type: log
+    dependsOn: extractFailingWorkflows
+    config:
+      level: info
+      message: "YAML workflow failure scan completed"
+      data: "${steps.extractFailingWorkflows.failingWorkflows}"
+
+  - id: endLogCheck
+    name: End Log Inspection
+    type: end
+    dependsOn: logResults

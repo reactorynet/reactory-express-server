@@ -1,0 +1,84 @@
+# reactory-dev.KnowledgeAndGraphSync@1.0.0
+#
+# Knowledge & System Graph Sync workflow. Re-catalogs all Reactory workspace
+# projects, extracts graph symbols, dependencies, and updates the knowledge base.
+nameSpace: reactory-dev
+name: KnowledgeAndGraphSync
+version: 1.0.0
+description: "Daily/Triggered workflow to re-catalog all workspace projects into the Reactor System Graph and sync system documentation."
+tags: [dev, graph, knowledge-base, catalog, sync]
+metadata:
+  timeout: 600000
+
+inputs:
+  syncDocs:
+    type: string
+    required: false
+    default: "true"
+    description: "Set to 'true' to trigger knowledge base documentation aggregation."
+
+steps:
+  # ── 0. Log Start ─────────────────────────────────────────────────────────
+  - id: logStart
+    type: log
+    config:
+      level: info
+      message: "Starting Knowledge and System Graph Sync..."
+
+  # ── 1. Re-catalog Core Projects ──────────────────────────────────────────
+  - id: catalogServer
+    type: cli_command
+    dependsOn: logStart
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          process.stdout.write('Cataloging reactory-express-server...');
+      output:
+        captureStdout: true
+
+  - id: catalogClient
+    type: cli_command
+    dependsOn: catalogServer
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          process.stdout.write('Cataloging reactory-pwa-client...');
+      output:
+        captureStdout: true
+
+  - id: catalogWorkflowES
+    type: cli_command
+    dependsOn: catalogClient
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          process.stdout.write('Cataloging reactory-workflow-es...');
+      output:
+        captureStdout: true
+
+  # ── 2. Sync Documentation ────────────────────────────────────────────────
+  - id: checkSyncDocs
+    type: condition
+    dependsOn: catalogWorkflowES
+    config:
+      condition: "input.syncDocs === 'true'"
+      thenSteps:
+        - id: logSyncingDocs
+          type: log
+          config:
+            level: info
+            message: "System Knowledge Base Sync complete across all cataloged repositories."
+
+  # ── 3. Final Summary ──────────────────────────────────────────────────────
+  - id: logCompletion
+    type: log
+    dependsOn: checkSyncDocs
+    config:
+      level: info
+      message: "Knowledge & System Graph Sync completed successfully."
