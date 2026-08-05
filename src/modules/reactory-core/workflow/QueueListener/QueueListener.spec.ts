@@ -73,6 +73,15 @@ describe("QueueListener", () => {
     };
 
     mockContext.getService.mockReturnValue(mockQueueProvider);
+
+    // Build a fresh listener bound to *this* test's context. It used to be
+    // assigned only inside the "constructor" describe, so every later block
+    // reused a leaked instance still holding an earlier beforeEach's context —
+    // assertions were made against a mockContext the listener never saw (0
+    // calls), and onStartup resolved instead of throwing because the stale
+    // context's getService still returned the previous provider
+    // (clearAllMocks clears calls, not implementations).
+    queueListener = new QueueListener({ queues: ["queue1", "queue2"] }, mockContext);
   });
 
   describe("constructor", () => {
@@ -112,6 +121,9 @@ describe("QueueListener", () => {
 
   describe("onShutdown", () => {
     it("should stop listening when shutting down", async () => {
+      // startListening() requires an invoker; this used to pass only because the
+      // leaked listener instance already had one set by an earlier test.
+      queueListener.setWorkflowInvoker(jest.fn());
       queueListener.startListening(["queue1"]);
       await queueListener.onShutdown();
 
@@ -178,6 +190,7 @@ describe("QueueListener", () => {
 
   describe("stopListening", () => {
     it("should stop listening and clear timers", () => {
+      queueListener.setWorkflowInvoker(jest.fn());
       queueListener.startListening(["queue1"]);
       queueListener.stopListening();
 
