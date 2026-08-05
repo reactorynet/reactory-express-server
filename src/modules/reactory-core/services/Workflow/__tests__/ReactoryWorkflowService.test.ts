@@ -19,7 +19,11 @@ const mockRunnerInstance = {
   getConfigurationManager: jest.fn(),
   getSecurityManager: jest.fn(),
   getScheduler: jest.fn(),
-  getRegisteredWorkflows: jest.fn().mockResolvedValue([]),
+  // WorkflowRunner.getRegisteredWorkflows() is synchronous — it returns
+  // IWorkflow[]. Mocking it with mockResolvedValue handed the service a
+  // Promise, which it then tried to iterate: "workflows is not iterable",
+  // failing 59 tests across this suite and WorkflowResolver's.
+  getRegisteredWorkflows: jest.fn().mockReturnValue([]),
   getWorkflowByName: jest.fn(),
   getWorkflowWithId: jest.fn(),
   getWorkflowInstance: jest.fn(),
@@ -27,7 +31,12 @@ const mockRunnerInstance = {
   pauseWorkflowInstance: jest.fn(),
   resumeWorkflowInstance: jest.fn(),
   cancelWorkflowInstance: jest.fn(),
-  getWorkflowStats: jest.fn().mockReturnValue({ status: 'running' })
+  getWorkflowStats: jest.fn().mockReturnValue({ status: 'running' }),
+  // Also reached by the service; without these the calls threw
+  // "... is not a function".
+  getConfiguration: jest.fn().mockReturnValue({ enabled: true }),
+  getAllWorkflowInstances: jest.fn().mockReturnValue([]),
+  publishEvent: jest.fn().mockResolvedValue(undefined)
 };
 
 // Mock WorkflowRunner BEFORE importing
@@ -113,9 +122,18 @@ describe('ReactoryWorkflowService', () => {
       getWorkflowHistoryById: jest.fn(),
       getWorkflowHistoryByDefinitionId: jest.fn(),
       getWorkflowHistoryByStatus: jest.fn(),
-      getWorkflowExecutionStats: jest.fn(),
+      getWorkflowExecutionStats: jest.fn().mockResolvedValue({
+        total: 0, pending: 0, runnable: 0, complete: 0, terminated: 0, suspended: 0,
+        averageCompletionTime: 0,
+        byWorkflowDefinition: [],
+      }),
       searchWorkflowHistory: jest.fn(),
-      getRecentWorkflowExecutions: jest.fn()
+      getRecentWorkflowExecutions: jest.fn(),
+      // The service also calls these; without them it failed with
+      // "getInstancesWithFailedSteps is not a function" etc.
+      getWorkflowInstance: jest.fn().mockReturnValue(undefined),
+      getInstancesWithFailedSteps: jest.fn().mockResolvedValue({}),
+      getWorkflowErrorDetails: jest.fn().mockResolvedValue([])
     });
     mockRunnerInstance.getAllErrorStats.mockReturnValue(new Map());
     mockRunnerInstance.getConfigurationStats.mockReturnValue({
@@ -155,8 +173,11 @@ describe('ReactoryWorkflowService', () => {
     mockRunnerInstance.getScheduler.mockReturnValue({
       getSchedules: jest.fn().mockReturnValue([]),
       getSchedule: jest.fn(),
-      addSchedule: jest.fn(),
-      updateSchedule: jest.fn(),
+      // Scheduler's API is createSchedule/updateScheduleConfig — the mock named
+      // them addSchedule/updateSchedule, so the service hit
+      // "scheduler.updateScheduleConfig is not a function".
+      createSchedule: jest.fn().mockResolvedValue({}),
+      updateScheduleConfig: jest.fn().mockResolvedValue({}),
       removeSchedule: jest.fn(),
       startSchedule: jest.fn(),
       stopSchedule: jest.fn(),
@@ -170,7 +191,7 @@ describe('ReactoryWorkflowService', () => {
         lastExecution: null
       })
     });
-    mockRunnerInstance.getRegisteredWorkflows.mockResolvedValue([]);
+    mockRunnerInstance.getRegisteredWorkflows.mockReturnValue([]);
     mockRunnerInstance.getWorkflowByName.mockReturnValue([]);
     mockRunnerInstance.getWorkflowWithId.mockReturnValue(null);
     mockRunnerInstance.getWorkflowInstance.mockReturnValue(null);
@@ -192,14 +213,26 @@ describe('ReactoryWorkflowService', () => {
   });
 
   describe('onStartup', () => {
-    it('should initialize workflow runner on startup', async () => {
+    it('should reuse an already-initialized workflow runner', async () => {
+      // isInitialized() is stubbed true, so onStartup must not re-initialize —
+      // this previously asserted initialize() *was* called and failed.
+      getMockRunner().isInitialized.mockReturnValue(true);
+
       await service.onStartup();
 
       expect(WorkflowRunner.getInstance).toHaveBeenCalled();
-      expect(getMockRunner().initialize).toHaveBeenCalled();
+      expect(getMockRunner().initialize).not.toHaveBeenCalled();
       expect(mockContext.log).toHaveBeenCalledWith(
         expect.stringContaining('Workflow service startup')
       );
+    });
+
+    it('should initialize the workflow runner when it is not yet initialized', async () => {
+      getMockRunner().isInitialized.mockReturnValue(false);
+
+      await service.onStartup();
+
+      expect(getMockRunner().initialize).toHaveBeenCalled();
     });
   });
 
@@ -279,7 +312,7 @@ describe('ReactoryWorkflowService', () => {
         { id: 'workflow1', name: 'Test Workflow 1' },
         { id: 'workflow2', name: 'Test Workflow 2' }
       ];
-      getMockRunner().getRegisteredWorkflows.mockResolvedValue(mockWorkflows);
+      getMockRunner().getRegisteredWorkflows.mockReturnValue(mockWorkflows);
     });
 
     it('should return paginated workflows', async () => {
@@ -388,7 +421,10 @@ describe('ReactoryWorkflowService', () => {
   describe('getWorkflowInstance', () => {
     beforeEach(async () => {
       await service.onStartup();
-      getMockRunner().getWorkflowInstance.mockReturnValue({
+      // The service resolves instances through the lifecycle manager
+      // (workflowRunner.getLifecycleManager().getWorkflowInstance), not off the
+      // runner — stubbing the runner had no effect.
+      getMockRunner().getLifecycleManager().getWorkflowInstance.mockReturnValue({
         id: 'instance-123',
         workflowId: 'workflow-1',
         status: 'running'
@@ -399,11 +435,12 @@ describe('ReactoryWorkflowService', () => {
       const instance = await service.getWorkflowInstance('instance-123');
 
       expect(instance).toHaveProperty('id', 'instance-123');
-      expect(getMockRunner().getWorkflowInstance).toHaveBeenCalledWith('instance-123');
+      expect(getMockRunner().getLifecycleManager().getWorkflowInstance)
+        .toHaveBeenCalledWith('instance-123');
     });
 
     it('should throw error for non-existent instance', async () => {
-      getMockRunner().getWorkflowInstance.mockReturnValue(null);
+      getMockRunner().getLifecycleManager().getWorkflowInstance.mockReturnValue(null);
 
       await expect(service.getWorkflowInstance('non-existent'))
         .rejects.toThrow('Workflow instance non-existent not found');
@@ -420,12 +457,16 @@ describe('ReactoryWorkflowService', () => {
         input: { testData: 'value' }
       });
 
-      expect(result).toHaveProperty('instanceId');
-      // The service parses "core.TestWorkflow@1.0.0" by splitting at first '.'
-      // nameSpace = 'core', nameVersion = 'TestWorkflow@1.0.0'
-      // Then splits nameVersion by '@': name = 'TestWorkflow@1', version = '0.0' (bug in implementation!)
-      // This is why it passes 'TestWorkflow@1' and '0' - the split logic needs fixing in the service
-      expect(getMockRunner().startWorkflow).toHaveBeenCalled();
+      // startWorkflow resolves an IWorkflowInstance, whose identifier is `id`.
+      expect(result).toHaveProperty('id');
+      // The version is taken with lastIndexOf('@'), so "core.TestWorkflow@1.0.0"
+      // yields version "1.0.0" and the full id is passed through to the runner.
+      expect(getMockRunner().startWorkflow).toHaveBeenCalledWith(
+        'core.TestWorkflow@1.0.0',
+        '1.0.0',
+        expect.anything(),
+        expect.anything()
+      );
     });
   });
 
@@ -546,42 +587,51 @@ describe('ReactoryWorkflowService', () => {
 
     describe('createWorkflowSchedule', () => {
       it('should create a new schedule', async () => {
+        // IScheduleConfigInput nests the workflow and schedule descriptors; the
+        // flat workflowName/cronExpression shape this used predates that, and the
+        // service threw reading `config.workflow.nameSpace`.
         const config: IScheduleConfigInput = {
-          workflowName: 'TestWorkflow',
-          nameSpace: 'core',
-          cronExpression: '0 * * * *',
-          timezone: 'UTC',
-          enabled: true
+          name: 'TestWorkflow hourly',
+          workflow: { id: 'TestWorkflow', version: '1.0.0', nameSpace: 'core' },
+          schedule: { cron: '0 * * * *', timezone: 'UTC', enabled: true },
+        } as unknown as IScheduleConfigInput;
+
+        // createSchedule resolves IScheduledWorkflow — the config nested under
+        // `config`, with runtime counters alongside.
+        const mockSchedule = {
+          config: { id: 'new-schedule', ...config },
+          task: null, runCount: 0, errorCount: 0, isRunning: false,
         };
+        mockScheduler.createSchedule.mockResolvedValue(mockSchedule);
 
-        const mockSchedule = { id: 'new-schedule', ...config };
-        mockScheduler.addSchedule.mockResolvedValue(mockSchedule);
+        // createWorkflowSchedule awaits getWorkflowRunner(); this used to be
+        // written as a try/catch asserting it threw, with a note calling the
+        // missing await a bug. The await is there, so assert it succeeds.
+        const result = await service.createWorkflowSchedule(config);
 
-        // Note: createWorkflowSchedule in the service does not await getWorkflowRunner
-        // This appears to be a bug but we'll test the actual behavior
-        try {
-          await service.createWorkflowSchedule(config);
-        } catch (error) {
-          // Expected to fail due to getWorkflowRunner not being awaited in service
-          expect(error).toBeDefined();
-        }
+        expect(mockScheduler.createSchedule).toHaveBeenCalled();
+        expect(result).toMatchObject({ id: 'new-schedule', runCount: 0, errorCount: 0 });
       });
     });
 
     describe('updateWorkflowSchedule', () => {
       it('should update an existing schedule', async () => {
         const updates: IUpdateScheduleInput = {
-          cronExpression: '0 0 * * *',
-          enabled: false
+          schedule: { cron: '0 0 * * *', enabled: false },
+        } as unknown as IUpdateScheduleInput;
+
+        const mockSchedule = {
+          config: { id: 'schedule-123', ...updates },
+          task: null, runCount: 0, errorCount: 0, isRunning: false,
         };
+        mockScheduler.updateScheduleConfig.mockResolvedValue(mockSchedule);
 
-        const mockSchedule = { id: 'schedule-123', ...updates };
-        mockScheduler.updateSchedule.mockResolvedValue(mockSchedule);
-
+        // The service flattens IScheduledWorkflow into the config plus its
+        // runtime counters, so compare against that projection.
         const result = await service.updateWorkflowSchedule('schedule-123', updates);
 
-        expect(result).toEqual(mockSchedule);
-        expect(mockScheduler.updateSchedule).toHaveBeenCalledWith(
+        expect(result).toMatchObject({ id: 'schedule-123', runCount: 0, errorCount: 0 });
+        expect(mockScheduler.updateScheduleConfig).toHaveBeenCalledWith(
           'schedule-123',
           expect.objectContaining(updates)
         );
@@ -647,10 +697,23 @@ describe('ReactoryWorkflowService', () => {
 
     describe('getWorkflowSchedulesForWorkflowId', () => {
       it('should return schedules for a specific workflow ID', async () => {
-        const mockSchedules = [
-          { id: 'schedule1', workflowId: 'core.TestWorkflow@1.0.0' },
-          { id: 'schedule2', workflowId: 'core.TestWorkflow@1.0.0' }
-        ];
+        // getSchedulesForWorkflow resolves IScheduledWorkflow[]: the schedule
+        // config nested under `config`, with runtime counters alongside. The
+        // fixtures used to be flat, so the service threw reading
+        // `schedule.config.schedule`.
+        const scheduledWorkflow = (id: string) => ({
+          config: {
+            id,
+            name: id,
+            workflow: { id: 'TestWorkflow', version: '1.0.0', nameSpace: 'core' },
+            schedule: { cron: '0 * * * *', timezone: 'UTC', enabled: true },
+          },
+          task: null,
+          runCount: 0,
+          errorCount: 0,
+          isRunning: false,
+        });
+        const mockSchedules = [scheduledWorkflow('schedule1'), scheduledWorkflow('schedule2')];
         mockScheduler.getSchedulesForWorkflow.mockReturnValue(mockSchedules);
 
         const result = await service.getWorkflowSchedulesForWorkflowId('core.TestWorkflow@1.0.0');
@@ -776,12 +839,33 @@ describe('ReactoryWorkflowService', () => {
     });
 
     describe('getWorkflowStatus', () => {
-      it('should return workflow status', async () => {
+      // Resolves IWorkflowStatusResponse. This used to expect `{ name, result }`
+      // from a getWorkflowStats() call — an older shape the method no longer
+      // returns and a call it no longer makes.
+      it('should return the status response for a registered workflow', async () => {
+        mockRunnerInstance.getWorkflowWithId.mockReturnValue({
+          nameSpace: 'core', name: 'TestWorkflow', version: '1.0.0',
+          errors: [], dependencies: ['core.Other@1.0.0'],
+        });
+
         const result = await service.getWorkflowStatus('TestWorkflow');
 
-        expect(result).toHaveProperty('name', 'TestWorkflow');
-        expect(result).toHaveProperty('result');
-        expect(mockRunnerInstance.getWorkflowStats).toHaveBeenCalledWith('TestWorkflow');
+        expect(result).toHaveProperty('status');
+        expect(result).toHaveProperty('statistics');
+        expect(result.dependencies).toEqual(['core.Other@1.0.0']);
+        expect(mockRunnerInstance.getWorkflowWithId).toHaveBeenCalledWith('TestWorkflow');
+      });
+
+      it('should report an unregistered workflow as INACTIVE rather than throwing', async () => {
+        // getWorkflowWithId returns null for an unknown id; the method used to
+        // dereference it and throw "Cannot read properties of null".
+        mockRunnerInstance.getWorkflowWithId.mockReturnValue(null);
+
+        const result = await service.getWorkflowStatus('core.NotRegistered@1.0.0');
+
+        expect(result.status).toBe('INACTIVE');
+        expect(result.dependencies).toEqual([]);
+        expect(result.errors).toEqual([]);
       });
     });
 
