@@ -44,7 +44,10 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
     // ReactoryClient/Menu documents — clients were previously only upserted
     // on first creation (CLI init), so menu changes never reached the UI.
     // Disable with REACTORY_SYNC_CLIENT_CONFIGS=false.
-    if (process.env.REACTORY_SYNC_CLIENT_CONFIGS !== 'false') {
+    if (
+      process.env.REACTORY_SYNC_CLIENT_CONFIGS !== 'false' &&
+      context.state.isClientConfigurationMaster === true
+    ) {
       try {
         // Deferred import: loading the client configs triggers env interpolation.
         const { clients: clientConfigs } = await import('@reactory/server-core/data');
@@ -61,6 +64,8 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
       } catch (syncError) {
         logger.warn('Client config synchronization failed', syncError);
       }
+    } else if (process.env.REACTORY_SYNC_CLIENT_CONFIGS !== 'false') {
+      logger.info('Skipping client config synchronization because this pod is not the startup master');
     }
         
     // Publish client env files if REACTORY_CLIENT is set

@@ -15,6 +15,7 @@ import ConfigureRoutes from '@reactory/server-core/express/routes';
 import ConfigureViews from '@reactory/server-core/express/views';
 import colors from 'colors/safe';
 import http from 'http';
+import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
 
 // set theme
 colors.setTheme({
@@ -79,6 +80,30 @@ export const ReactoryServer = async (): Promise<{
   const httpServer: http.Server = http.createServer(reactoryExpress);
   
   let mongoose_result = null;
+  let stopServer: (() => Promise<void>) | null = null;
+  let isStopping = false;
+
+  const stopForSignal = async (signal: NodeJS.Signals, restart = false) => {
+    if (isStopping) {
+      return;
+    }
+
+    isStopping = true;
+    logger.info(`Received ${signal}; shutting down Reactory Server`);
+    try {
+      await stopServer?.();
+    } catch (error) {
+      logger.error('Graceful server shutdown failed', error);
+    }
+
+    if (process.env.REACTORY_RUNTIME !== 'electron') {
+      if (restart) {
+        process.kill(process.pid, 'SIGUSR2');
+      } else {
+        process.exit(0);
+      }
+    }
+  };
 
   const ca = sslrootcas.create();
   https.globalAgent.options.ca = ca;
@@ -117,13 +142,8 @@ export const ReactoryServer = async (): Promise<{
     }
   });
 
-  process.on('SIGINT', () => {
-    workflowRunner.stop();
-    logger.info('Shutting Down Reactory Server');
-    if (process.env.REACTORY_RUNTIME !== 'electron') {
-      process.exit(0);
-    }
-  });
+  process.once('SIGINT', () => void stopForSignal('SIGINT'));
+  process.once('SIGTERM', () => void stopForSignal('SIGTERM'));
 
   let asciilogo = `Reactory Server version : ${packageJson.version} - start ${moment().format('YYYY-MM-dd HH:mm:ss')}`;
 
@@ -159,23 +179,10 @@ Environment Settings:
     process.once('SIGUSR2', function () {
       if (httpServer) {
         logger.debug(colors.magenta('Interrupt Received, restarting'));
-        httpServer.close(() => {
-          process.kill(process.pid, 'SIGUSR2')
-        })
+        void stopForSignal('SIGUSR2', true);
       }
     })
   }
-
-  process.on("SIGINT", () => {
-    if (httpServer) {
-      console.log('Shutting down server');
-      httpServer.close(() => {
-        if (process.env.REACTORY_RUNTIME !== 'electron') {
-          process.exit(0);
-        }
-      })
-    }
-  });
       
   
   configureMiddleWare(reactoryExpress, httpServer);
@@ -187,7 +194,7 @@ Environment Settings:
   }
 
   try {
-    await startup();
+    const context = await startup();
     ConfigureAuthentication(reactoryExpress);
     ConfigureRoutes(reactoryExpress);
     ConfigureViews(reactoryExpress);
@@ -206,18 +213,27 @@ Environment Settings:
       });
     };
 
-    const stopServer = () => { 
-      if(httpServer) { 
-        httpServer.close(() => {
-          logger.info('Express Server Stopped');
-        });
+    stopServer = async () => {
+      try {
+        // @ts-ignore onShutdown is a model static
+        await ReactoryClient.onShutdown(context);
+      } catch (error) {
+        logger.error('Client configuration shutdown failed', error);
       }
       if(workflowRunner) {
-        workflowRunner.stop();
+        await workflowRunner.stop();
         logger.info('Workflow Host Stopped');
       }
+      if(httpServer) {
+        await new Promise<void>((resolve) => {
+          httpServer.close(() => {
+            logger.info('Express Server Stopped');
+            resolve();
+          });
+        });
+      }
       if(mongoose_result) {
-        mongoose_result.connection.close();
+        await mongoose_result.connection.close();
         logger.info('Mongoose Connection Closed');
       }
     };

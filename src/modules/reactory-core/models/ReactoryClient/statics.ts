@@ -10,8 +10,18 @@ import ClientComponent from "../ClientComponent";
 import User from "../User";
 import { strongRandom } from "@reactory/server-core/utils";
 import { ObjectId } from "mongodb";
+import { acquireMasterLock, MasterLock } from "../../utils/MasterLock";
 
 const { clients } = CoreData;
+const CLIENT_CONFIGURATION_LOCK = "reactory-client-configuration-startup";
+let clientConfigurationMasterLock: MasterLock | null = null;
+const clientLifecycleHooks = new Map<
+  string,
+  {
+    config: Reactory.Server.IReactoryClientConfig;
+    client: Reactory.Models.ReactoryClientDocument;
+  }
+>();
 
 /**
  * Telemetry metrics for client configuration operations
@@ -309,6 +319,8 @@ const upsertFromConfig = async (
     // validatePassword and locks every client out with 401s.
     delete (input as { salt?: string }).salt;
     delete input.routes; // We'll handle routes separately
+    delete (input as { onStartup?: unknown }).onStartup;
+    delete (input as { onShutdown?: unknown }).onShutdown;
 
     // Find existing client
     let reactoryClient: Reactory.Models.ReactoryClientDocument =
@@ -516,6 +528,27 @@ const upsertFromConfig = async (
 };
 
 const onStartup = async (context: Reactory.Server.IReactoryContext) => {
+  if (clientConfigurationMasterLock?.isActive) {
+    context.state.isClientConfigurationMaster = true;
+    logger.warn("Client configuration startup has already acquired the master lock");
+    return { clientsLoaded: [], clientsFailed: [] };
+  }
+
+  const masterLock = await acquireMasterLock(CLIENT_CONFIGURATION_LOCK, {
+    leaseDurationMs: Number.parseInt(
+      process.env.REACTORY_CLIENT_CONFIGURATION_LOCK_TTL_MS || "300000",
+      10
+    ),
+  });
+
+  if (!masterLock) {
+    context.state.isClientConfigurationMaster = false;
+    logger.info("Another pod is the client configuration startup master; skipping seed data");
+    return { clientsLoaded: [], clientsFailed: [] };
+  }
+
+  clientConfigurationMasterLock = masterLock;
+  context.state.isClientConfigurationMaster = true;
   const startupStartTime = Date.now();
   const telemetry = initializeTelemetry(context);
 
@@ -931,6 +964,17 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
           );
         }
 
+        if (typeof clientConfig.onStartup === "function") {
+          await clientConfig.onStartup(context, reactoryClient);
+        }
+
+        if (typeof clientConfig.onShutdown === "function") {
+          clientLifecycleHooks.set(clientConfig.key, {
+            config: clientConfig,
+            client: reactoryClient,
+          });
+        }
+
         const clientDuration = (Date.now() - clientStartTime) / 1000;
         logger.info(
           `Client ${reactoryClient.name} configured successfully in ${clientDuration.toFixed(2)}s`
@@ -974,7 +1018,33 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
   }
 };
 
+const onShutdown = async (context: Reactory.Server.IReactoryContext) => {
+  if (!clientConfigurationMasterLock) {
+    return;
+  }
+
+  try {
+    const hooks = [...clientLifecycleHooks.values()].reverse();
+    for (const { config, client } of hooks) {
+      if (typeof config.onShutdown !== "function") {
+        continue;
+      }
+
+      try {
+        await config.onShutdown(context, client);
+      } catch (error) {
+        logger.error(`Client shutdown hook failed for ${config.key}`, error);
+      }
+    }
+  } finally {
+    clientLifecycleHooks.clear();
+    await clientConfigurationMasterLock.release();
+    clientConfigurationMasterLock = null;
+  }
+};
+
 export default {
   onStartup,
+  onShutdown,
   upsertFromConfig,
 };
