@@ -103,7 +103,10 @@ describe('YAML example workflows (engine smoke tests)', () => {
     } finally {
       await host.stop();
     }
-  });
+    // These boot the workflow engine, register a generated workflow class, run
+    // it to completion and poll persistence — comfortably past Jest's 5s
+    // default, which is what failed here rather than the workflows themselves.
+  }, 30000);
 
   it('found all example files on disk', () => {
     for (const file of NO_INFRA_EXAMPLES) {

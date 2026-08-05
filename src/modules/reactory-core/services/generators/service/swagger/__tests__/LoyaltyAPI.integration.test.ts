@@ -1,8 +1,18 @@
 import { SwaggerGeneratorFactory } from '../index';
 import path from 'path';
+import fs from 'fs';
 
-describe('Loyalty API Swagger Integration', () => {
-  const swaggerPath = path.join(__dirname, '../../../../../../zepz-engineer/services/quotes/loyalty/loyalty-api/swagger.json');
+const LOYALTY_API_SWAGGER = path.join(__dirname, '../../../../../../zepz-engineer/services/quotes/loyalty/loyalty-api/swagger.json');
+
+/**
+ * The specification lives in the optional `zepz-engineer` module, which is not
+ * present in every checkout; without it every test here failed on a missing
+ * file. Skipped unless the fixture is actually available.
+ */
+const describeSwagger = fs.existsSync(LOYALTY_API_SWAGGER) ? describe : describe.skip;
+
+describeSwagger('Loyalty API Swagger Integration', () => {
+  const swaggerPath = LOYALTY_API_SWAGGER;
 
   it('should detect OpenAPI 3.0.1 version', async () => {
     const version = await SwaggerGeneratorFactory.detectVersion({ file: swaggerPath });
