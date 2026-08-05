@@ -30,14 +30,26 @@ export class ReactoryClientResolver {
     return userService.getUsersByClientMembership(clientId, args.paging);
   }
 
-    @property("ReactoryClient", "menus")
-    menus(partner: Reactory.Models.ReactoryClientDocument, __: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.UX.IReactoryMenuConfig[]> {
-      const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
-      return systemService.getMenusForClient(partner)    
-    };
+  // The two resolvers below annotate `partner` with the *interface*
+  // IReactoryClientDocument, not the ReactoryClientDocument class.
+  //
+  // `emitDecoratorMetadata` is enabled, so tsc serializes a decorated method's
+  // parameter types into a `design:paramtypes` reflection call. A class is a
+  // value in the type system, so naming one emits a real runtime reference —
+  // here `Reactory.Models.ReactoryClientDocument`. The Reactory namespace is
+  // ambient (declared in .d.ts, types only) and does not exist at runtime, so
+  // simply importing this module threw "Cannot read properties of undefined
+  // (reading 'ReactoryClientDocument')", taking down every test suite that
+  // pulls in the module registry. Interfaces serialize to `Object` and carry no
+  // runtime reference, so never name a declared class in a decorated signature.
+  @property("ReactoryClient", "menus")
+  menus(partner: Reactory.Models.IReactoryClientDocument, __: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.UX.IReactoryMenuConfig[]> {
+    const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
+    return systemService.getMenusForClient(partner)
+  };
 
   @property("ReactoryClient", "featureFlags")
-  featureFlags(partner: Reactory.Models.ReactoryClientDocument, __: any, context: Reactory.Server.IReactoryContext): Reactory.Server.IReactoryFeatureFlagValue<unknown>[] {
+  featureFlags(partner: Reactory.Models.IReactoryClientDocument, __: any, context: Reactory.Server.IReactoryContext): Reactory.Server.IReactoryFeatureFlagValue<unknown>[] {
     // Return the feature flags from the client configuration
     if (partner?.featureFlags && Array.isArray(partner.featureFlags)) {
       return partner.featureFlags;

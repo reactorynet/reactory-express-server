@@ -94,7 +94,16 @@ export default async (): Promise<JestConfigWithTsJest> => {
       '^@reactory/server-modules/(.*)$': '<rootDir>/src/modules/$1',
       '^test/(.*)$': '<rootDir>/test/$1',
     },
-    testPathIgnorePatterns: ['/node_modules/', '/__tests__/support/'],
+    // Jest's default testMatch collects everything under __tests__/, including
+    // files that are not test suites. `support/` holds shared fixtures and
+    // `manual/` holds scripts meant to be run by hand, so both are excluded —
+    // otherwise they are reported as suites that "must contain at least one
+    // test".
+    testPathIgnorePatterns: [
+      '/node_modules/',
+      '/__tests__/support/',
+      '/__tests__/manual/',
+    ],
     setupFilesAfterEnv: ['<rootDir>/test/setup/init.ts'],
     // Coverage configuration
     collectCoverage: false, // Enable with --coverage flag
