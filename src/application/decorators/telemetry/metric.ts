@@ -54,8 +54,25 @@ export function metric(metricName: string, options: MetricDecoratorOptions = {})
       // Extract context
       const context = extractContext(args, this, contextSource);
       
-      if (!context || !context.telemetry) {
-        logger.warn(`No telemetry context available for ${metricName}`);
+      // Check for the capabilities actually used below, not merely that a
+      // `telemetry` property exists. A partial telemetry object — a test mock
+      // with `telemetry: {}`, or a provider implementing only part of the
+      // interface — passed a presence-only check and then threw
+      // "context.telemetry.increment is not a function" from inside the
+      // instrumentation. Being an uncaught async throw, that did not merely
+      // fail the decorated call: it aborted the entire Jest process partway
+      // through a repo-wide run. Instrumentation must never be able to break
+      // the method it wraps.
+      const telemetry = context?.telemetry as
+        | { increment?: unknown; startTimer?: unknown }
+        | undefined;
+      const telemetryUsable =
+        !!telemetry &&
+        typeof telemetry.increment === 'function' &&
+        typeof telemetry.startTimer === 'function';
+
+      if (!telemetryUsable) {
+        logger.warn(`No usable telemetry context available for ${metricName}`);
         return originalMethod.apply(this, args);
       }
 
