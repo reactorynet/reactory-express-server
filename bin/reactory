@@ -39,7 +39,7 @@ Options:
   --cenv=<env>            Configuration environment (default: local)
   --debug                 Enable debug mode
   --watch                 Enable watch mode
-  --verbose               Enable verbose output
+  --verbose, -v           Enable verbose logging (silent by default)
   -h, --help              Show help message
 
 Environment Variables:
@@ -62,14 +62,16 @@ Examples:
 EOF
 }
 
-# Command name mapping (hyphenated to PascalCase)
-declare -A COMMAND_MAP=(
-  ["service-gen"]="ServiceGen"
-  ["module-gen"]="ModuleGen"
-  ["schema-gen"]="SchemaGen"
-  ["csv2json"]="Csv2Json"
-  ["init-system"]="InitializeSystemUser"
-)
+map_command() {
+  case $1 in
+    service-gen) echo "ServiceGen" ;;
+    module-gen) echo "ModuleGen" ;;
+    schema-gen) echo "SchemaGen" ;;
+    csv2json) echo "Csv2Json" ;;
+    init-system) echo "InitializeSystemUser" ;;
+    *) echo "$1" ;;
+  esac
+}
 
 # Parse arguments
 SHOW_REACTORY_HELP=false
@@ -98,20 +100,20 @@ while [[ $# -gt 0 ]]; do
       WATCH_MODE=true
       shift
       ;;
-    --verbose)
+    --verbose|-v)
       VERBOSE=true
+      shift
+      ;;
+    --silent)
+      # explicit silent mode - already default but allow override
+      VERBOSE=false
       shift
       ;;
     *)
       # If we haven't captured a command yet, this is it
       if [ -z "$COMMAND" ]; then
         RAW_COMMAND="$1"
-        # Check if this command needs mapping
-        if [ -n "${COMMAND_MAP[$1]}" ]; then
-          COMMAND="${COMMAND_MAP[$1]}"
-        else
-          COMMAND="$1"
-        fi
+        COMMAND=$(map_command "$1")
         shift
       else
         # Everything else goes to KWARGS
@@ -169,6 +171,12 @@ if [ "$VERBOSE" = true ]; then
   echo "Project Root: $PROJECT_ROOT"
 fi
 
+# Pass --silent to Node if not in verbose mode so core logger can be suppressed
+CLI_ARGS="$COMMAND $KWARGS"
+if [ "$VERBOSE" != true ]; then
+  CLI_ARGS="--silent $CLI_ARGS"
+fi
+
 # Execute the CLI
 cd "$PROJECT_ROOT" || exit 1
 
@@ -179,20 +187,22 @@ if [ "$WATCH_MODE" = true ]; then
     --presets @babel/env \
     --extensions ".js,.ts" \
     $NODE_OPTIONS \
-    -- $COMMAND $KWARGS
+    -- $CLI_ARGS
 else
   NODE_PATH=./src env-cmd -f "$ENV_FILE" npx babel-node "$CLI_SCRIPT" \
     --presets @babel/env \
     --extensions ".js,.ts" \
     $NODE_OPTIONS \
-    -- $COMMAND $KWARGS
+    -- $CLI_ARGS
 fi
 
 # Capture exit code
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then
-  [ "$VERBOSE" = true ] && echo "Command completed successfully"
+  if [ "$VERBOSE" = true ]; then
+    echo "Command completed successfully"
+  fi
   exit 0
 else
   echo "Error: Command failed with exit code $EXIT_CODE"

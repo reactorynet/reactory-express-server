@@ -19,8 +19,10 @@ const getImportName = (clientName: string) => {
 const configImportFactory = () => {
   const { MODULES_ENABLED, CLIENTS_ENABLED } = process.env;
 
-  logger.debug(`♻ src/data/clientConfig/__index.ts generator executing for module / client spec ${CLIENTS_ENABLED || MODULES_ENABLED || 'enabled'}`);
-  const filename = `${CLIENTS_ENABLED || MODULES_ENABLED || 'enabled'}.json`
+  let filename = `${CLIENTS_ENABLED || MODULES_ENABLED || 'enabled'}.json`;
+  if (!fs.existsSync(`./src/data/clientConfigs/${filename}`) && fs.existsSync('./src/data/clientConfigs/enabled-clients.reactory.json')) {
+    filename = 'enabled-clients.reactory.json';
+  }
 
   let enabled: string[] = []
   if (fs.existsSync(`./src/data/clientConfigs/${filename}`) === true) {
