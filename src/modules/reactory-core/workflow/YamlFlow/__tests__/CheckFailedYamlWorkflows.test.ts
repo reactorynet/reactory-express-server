@@ -38,12 +38,6 @@ describe('Dogfooding CheckFailedYamlWorkflows', () => {
       }
 
       if (stepDef.type === 'cli_command') {
-        const stepInstance = registry.createStep({
-          id: stepDef.id,
-          type: stepDef.type,
-          config: stepDef.config,
-        });
-
         const resolvedConfig = JSON.parse(JSON.stringify(stepDef.config));
         if (resolvedConfig.args) {
           resolvedConfig.args = resolvedConfig.args.map((arg: string) => {
@@ -53,10 +47,19 @@ describe('Dogfooding CheckFailedYamlWorkflows', () => {
           });
         }
 
-        const result = await (stepInstance as any).executeStep({
-          ...context,
-          config: resolvedConfig
+        // The step must be constructed *with* the resolved config: executeStep
+        // reads `this.config`, not `context.config`. Passing the resolved
+        // config through the context left the step running the raw template —
+        // `ls -t ${input.logDirectory}/*.json` matched nothing, logPath came out
+        // empty, and the next step became a bare `grep -E '...'` with no file
+        // argument, which reads stdin and blocked until the 180s timeout.
+        const stepInstance = registry.createStep({
+          id: stepDef.id,
+          type: stepDef.type,
+          config: resolvedConfig,
         });
+
+        const result = await (stepInstance as any).executeStep(context);
 
         context.outputs[stepDef.id] = result.outputs;
       }

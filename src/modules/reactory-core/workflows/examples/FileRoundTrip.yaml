@@ -12,6 +12,10 @@ steps:
       operation: write
       path: /tmp/reactory-yamlflow-smoke.txt
       content: "written by the FileRoundTrip smoke test"
+      # Without this the step refuses to write over the file it left behind on
+      # the previous run, so the example succeeds once on a clean machine and
+      # fails on every run after that.
+      overwrite: true
   - id: read
     type: file_operation
     dependsOn: write
