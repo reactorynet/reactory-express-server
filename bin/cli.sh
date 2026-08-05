@@ -4,6 +4,7 @@
 CONFIG_NAME="reactory"
 CONFIG_ENV="local"
 WATCH_MODE=false
+VERBOSE=false
 
 KWARGS=
 # Loop through the arguments
@@ -13,6 +14,7 @@ for arg in "$@"; do
       --cname=*) CONFIG_NAME="${arg#*=}" ;;
       --cenv=*) CONFIG_ENV="${arg#*=}" ;;
       --debug) DEBUG=true ;;
+      --verbose|-v) VERBOSE=true ;;
       *) KWARGS="$KWARGS $arg" ;;
   esac
 done
@@ -64,7 +66,9 @@ fi
 
 # Check the exit status of the script
 if [ $? -eq 0 ]; then
-  echo "Script completed successfully"
+  if [ "$VERBOSE" = true ]; then
+    echo "Script completed successfully"
+  fi
 else
   echo "Error: Script did not complete successfully"
   exit 1

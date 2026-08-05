@@ -67,32 +67,29 @@ const getReadline = ({
 const getCLI = (name: string): Reactory.IReactoryComponentDefinition<TCLI> => { 
   let found: Reactory.IReactoryComponentDefinition<TCLI> = null;
 
-  if(name.indexOf('@') > 0 || name.indexOf('.') > 0) { 
-    // uses regex to find the cli. name, could be in the following formats:
-    // reactory.ReactorCLI@1.0.0
-    // reactory.ReactorCLI
-    // ReactorCLI
-    const regex = /([a-zA-Z0-9]+)\.([a-zA-Z0-9]+)@?([0-9\.]*)/;
-    const matches: Reactory.IReactoryComponentDefinition<TCLI>[] = []
-    ALL_COMMANDS.forEach((cli) => {
-      const fqn = `${cli.nameSpace}.${cli.name}@${cli.version}`;
-      const match = fqn.match(regex);
-      if(match) {
-        matches.push(cli);
-      }
+  if (name.indexOf('@') > 0 || name.indexOf('.') > 0) { 
+    const searchLower = name.toLowerCase();
+    const matches = ALL_COMMANDS.filter((cli) => {
+      const fqn = `${cli.nameSpace}.${cli.name}@${cli.version}`.toLowerCase();
+      const nameSpaceAndName = `${cli.nameSpace}.${cli.name}`.toLowerCase();
+      return fqn === searchLower || nameSpaceAndName === searchLower;
     });
-    
-    if(matches.length > 1) {
+
+    if (matches.length > 1) {
       throw new Error(`Multiple matches found for ${name}. Please specify the full name of the cli.`);
     }
 
-    if(matches.length === 1) {
+    if (matches.length === 1) {
       found = matches[0];
     }
   } else {
-    //find the cli by name
+    // find the cli by name, stem, or feature action
     ALL_COMMANDS.forEach((cli) => {
-      if(cli.name.toLowerCase() === name.toLowerCase()) {
+      if (
+        cli.name.toLowerCase() === name.toLowerCase() ||
+        cli.stem?.toLowerCase() === name.toLowerCase() ||
+        cli.features?.some(f => f.action?.includes(name.toLowerCase()) || f.stem?.toLowerCase() === name.toLowerCase())
+      ) {
         found = cli;
       }
     });
@@ -328,10 +325,9 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
 
     
 
-    // TODO: this needs to change once compiled and the additional args 
-    // from babel is removed.
-    // copy the vargs to a new array as we will be potentially modifying it.
-    let cargs: string[] = [...vargs.slice(4)];
+    // Find actual command arguments (strip babel args before '--' if present)
+    const dashDashIndex = vargs.indexOf('--');
+    let cargs: string[] = dashDashIndex >= 0 ? vargs.slice(dashDashIndex + 1) : vargs;
     // check for config first
     if(cargs[0] && cargs[0].indexOf('.yaml') !== -1 && fs.existsSync(cargs[0]) === true){ 
       //we will process the yaml file.

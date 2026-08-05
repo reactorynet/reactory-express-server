@@ -439,12 +439,16 @@ export class ReactoryFileService
     filePath: string
   ): Promise<Reactory.Models.IReactoryFileModel> {
     let file = await ReactoryFileModel.findOne({
-      path: filePath,
-      owner: this.context.user._id,
+      $or: [
+        { path: filePath, owner: this.context.user._id },
+        { filename: path.basename(filePath), path: path.dirname(filePath), owner: this.context.user._id }
+      ]
     }).exec();
     if (!file) {
-      // check if the file exists in the root folder
-      let resolvedPath = path.join(APP_DATA_ROOT, filePath);
+      let resolvedPath = filePath;
+      if (fs.existsSync(resolvedPath) === false) {
+        resolvedPath = path.join(APP_DATA_ROOT, filePath);
+      }
       if (fs.existsSync(resolvedPath) === false) {
         return null;
       }
@@ -456,7 +460,7 @@ export class ReactoryFileService
         owner: this.context.user._id,
         partner: this.context.partner._id,
         filename: path.basename(filePath),
-        mimetype: "application/octet-stream",
+        mimetype: this.getMimeType(path.extname(filePath)),
         alias: path.basename(filePath),
       });
     }
@@ -1150,9 +1154,9 @@ export class ReactoryFileService
       filename: $filename,
       mimetype,
       alias: alias || $filename,
-      partner: partner ? partner._id : this.context.partner._id,
-      owner: owner ? owner._id : this.context.user._id,
-      uploadedBy: owner ? owner._id : this.context.user._id,
+      partner: partner ? partner._id : this.context.partner?._id,
+      owner: owner ? owner._id : this.context.user?._id,
+      uploadedBy: owner ? owner._id : this.context.user?._id,
       size: fileStats.size,
       hash: Hash(link),
       link: link,
