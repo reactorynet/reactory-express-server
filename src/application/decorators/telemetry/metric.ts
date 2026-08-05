@@ -45,7 +45,19 @@ export function metric(metricName: string, options: MetricDecoratorOptions = {})
   ) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    /**
+     * Wrapper is deliberately **not** `async`.
+     *
+     * It used to be, which quietly turned every decorated synchronous method
+     * into one returning a Promise. Callers of e.g.
+     * `ProviderRegistry.registerProvider(provider): void` neither awaited it nor
+     * could catch its throw synchronously: the error surfaced as an unhandled
+     * rejection, which in Node terminates the process — it was aborting the
+     * whole Jest run mid-suite. Instrumentation must not change the signature
+     * of what it instruments, so the result is only chained when the wrapped
+     * method actually returns a thenable.
+     */
+    descriptor.value = function (...args: any[]) {
       // Sampling decision
       if (Math.random() > samplingRate) {
         return originalMethod.apply(this, args);
@@ -121,11 +133,7 @@ export function metric(metricName: string, options: MetricDecoratorOptions = {})
         );
       }
 
-      try {
-        // Execute original method
-        const result = await originalMethod.apply(this, args);
-
-        // Record success
+      const recordSuccess = () => {
         if (type === 'counter' || type === 'all') {
           context.telemetry.increment(
             `${metricName}.success`,
@@ -137,42 +145,70 @@ export function metric(metricName: string, options: MetricDecoratorOptions = {})
             }
           );
         }
+      };
 
-        return result;
+      const recordError = (error: unknown) => {
+        if (!trackErrors) return;
+        const errorType = errorClassifier(error as Error);
+
+        context.telemetry.increment(
+          `${metricName}.errors`,
+          1,
+          { ...customAttributes, errorType },
+          {
+            description: `${description} - errors`,
+            persist,
+          }
+        );
+
+        // Track by error type
+        context.telemetry.increment(
+          `${metricName}.errors.${errorType}`,
+          1,
+          customAttributes,
+          {
+            description: `${description} - ${errorType} errors`,
+            persist,
+          }
+        );
+      };
+
+      const endDuration = () => {
+        if (endTimer) endTimer();
+      };
+
+      let result: any;
+      try {
+        // Execute original method
+        result = originalMethod.apply(this, args);
       } catch (error) {
-        // Track errors
-        if (trackErrors) {
-          const errorType = errorClassifier(error as Error);
-          
-          context.telemetry.increment(
-            `${metricName}.errors`,
-            1,
-            { ...customAttributes, errorType },
-            {
-              description: `${description} - errors`,
-              persist,
-            }
-          );
-
-          // Track by error type
-          context.telemetry.increment(
-            `${metricName}.errors.${errorType}`,
-            1,
-            customAttributes,
-            {
-              description: `${description} - ${errorType} errors`,
-              persist,
-            }
-          );
-        }
-
+        // Synchronous throw — record and rethrow synchronously so callers can
+        // still catch it with try/catch (and expect(...).toThrow()).
+        recordError(error);
+        endDuration();
         throw error;
-      } finally {
-        // End duration tracking
-        if (endTimer) {
-          endTimer();
-        }
       }
+
+      // Asynchronous method: chain onto its promise, keeping the same rejection.
+      if (result && typeof result.then === 'function') {
+        return result.then(
+          (value: any) => {
+            recordSuccess();
+            endDuration();
+            return value;
+          },
+          (error: unknown) => {
+            recordError(error);
+            endDuration();
+            throw error;
+          }
+        );
+      }
+
+      // Synchronous success — return the original value, not a promise.
+      recordSuccess();
+      endDuration();
+      return result;
     };
 
     return descriptor;

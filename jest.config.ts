@@ -103,6 +103,7 @@ export default async (): Promise<JestConfigWithTsJest> => {
       '/node_modules/',
       '/__tests__/support/',
       '/__tests__/manual/',
+      '/__tests__/helpers/',
     ],
     setupFilesAfterEnv: ['<rootDir>/test/setup/init.ts'],
     // Coverage configuration
