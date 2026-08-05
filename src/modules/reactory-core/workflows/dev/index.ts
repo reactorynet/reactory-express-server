@@ -22,6 +22,9 @@ const DEV_WORKFLOW_NAMES: string[] = [
   'RunWorkflowESTests',
   'BuildClient',
   'DeployServerPodman',
+  'SystemHealthMonitor',
+  'SelfHealingOrchestrator',
+  'KnowledgeAndGraphSync',
 ];
 
 const devWorkflows: Reactory.Workflow.IWorkflow[] = DEV_WORKFLOW_NAMES

@@ -10,7 +10,7 @@ import {
 } from '../ErrorHandler';
 
 // Mock dependencies
-jest.mock('../../../logging', () => ({
+jest.mock('../../../../../logging', () => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),

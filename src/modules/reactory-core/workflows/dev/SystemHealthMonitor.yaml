@@ -1,0 +1,136 @@
+# reactory-dev.SystemHealthMonitor@1.0.0
+#
+# Continuous platform health monitor workflow. Runs unit/integration test suites
+# across server, client, and workflow-es subsystems, summarizes pass/fail metrics,
+# and logs diagnostic reports.
+nameSpace: reactory-dev
+name: SystemHealthMonitor
+version: 1.0.0
+description: "Monitors overall Reactory platform health by invoking test suites across backend, client, and workflow engine."
+tags: [dev, test, health, monitor, automation]
+metadata:
+  timeout: 900000
+
+inputs:
+  autoHeal:
+    type: string
+    required: false
+    default: "true"
+    description: "Set to 'true' to automatically trigger the self-healing orchestrator on failure."
+  clientPattern:
+    type: string
+    required: false
+    description: "Optional test pattern for reactory-pwa-client tests."
+  serverPattern:
+    type: string
+    required: false
+    description: "Optional test pattern for reactory-express-server tests."
+
+steps:
+  # ── 0. Log Start ─────────────────────────────────────────────────────────
+  - id: logStart
+    type: log
+    config:
+      level: info
+      message: "Starting Reactory System Health Monitoring..."
+
+  # ── 1. Gather test health across subsystems (parallel) ───────────────────
+  - id: runSubsystemHealth
+    type: parallel
+    dependsOn: logStart
+    config:
+      branches:
+        - name: server
+          steps:
+            - id: runServerSuite
+              type: cli_command
+              config:
+                command: "bash"
+                args: ["bin/jest.sh", "reactory", "local", "${input.serverPattern || ''}"]
+                cwd: "${process.env.REACTORY_HOME}/reactory-express-server"
+                failOnError: false
+                expectedExitCodes: [0, 1]
+                output:
+                  captureStdout: true
+                  captureStderr: true
+
+        - name: client
+          steps:
+            - id: runClientSuite
+              type: cli_command
+              config:
+                command: "npm"
+                args: ["test", "--", "--watchAll=false", "--bail=false"]
+                cwd: "${process.env.REACTORY_HOME}/reactory-pwa-client"
+                failOnError: false
+                expectedExitCodes: [0, 1]
+                output:
+                  captureStdout: true
+                  captureStderr: true
+
+        - name: workflowEs
+          steps:
+            - id: runWorkflowESSuite
+              type: cli_command
+              config:
+                command: "npm"
+                args: ["test"]
+                cwd: "${process.env.REACTORY_HOME}/reactory-workflow-es/core"
+                failOnError: false
+                expectedExitCodes: [0, 1]
+                output:
+                  captureStdout: true
+                  captureStderr: true
+
+  # ── 2. Evaluate overall health status ────────────────────────────────────
+  - id: evaluateHealth
+    type: cli_command
+    dependsOn: runSubsystemHealth
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const serverCode   = parseInt(process.env.SERVER_CODE || '0', 10);
+          const clientCode   = parseInt(process.env.CLIENT_CODE || '0', 10);
+          const workflowCode = parseInt(process.env.WORKFLOW_CODE || '0', 10);
+          const passed = serverCode === 0 && clientCode === 0 && workflowCode === 0;
+          const summary = {
+            healthy: passed,
+            server: serverCode === 0 ? 'PASSED' : 'FAILED',
+            client: clientCode === 0 ? 'PASSED' : 'FAILED',
+            workflowEs: workflowCode === 0 ? 'PASSED' : 'FAILED'
+          };
+          process.stdout.write(JSON.stringify(summary));
+      env:
+        CLIENT_CODE: "${steps.runClientSuite.outputs.exitCode}"
+        SERVER_CODE: "${steps.runServerSuite.outputs.exitCode}"
+        WORKFLOW_CODE: "${steps.runWorkflowESSuite.outputs.exitCode}"
+      output:
+        captureStdout: true
+
+  - id: logHealthReport
+    type: log
+    dependsOn: evaluateHealth
+    config:
+      level: info
+      message: "Platform Health Evaluation Report: ${steps.evaluateHealth.outputs.stdout}"
+
+  # ── 3. Health Condition Handling ──────────────────────────────────────────
+  - id: reportOverallStatus
+    type: condition
+    dependsOn: logHealthReport
+    config:
+      condition: "JSON.parse(steps.evaluateHealth.stdout).healthy === true"
+      elseSteps:
+        - id: logUnhealthy
+          type: log
+          config:
+            level: error
+            message: "Platform Health Check FAILED — One or more subsystem test suites encountered errors."
+      thenSteps:
+        - id: logHealthy
+          type: log
+          config:
+            level: info
+            message: "Platform Health Check PASSED — All subsystem test suites are healthy!"

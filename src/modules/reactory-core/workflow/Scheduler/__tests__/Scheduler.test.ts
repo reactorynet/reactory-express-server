@@ -25,6 +25,18 @@ jest.mock('fs', () => ({
   watch: jest.fn(),
 }));
 
+// Scheduler constructs a ReactoryAuditService, which imports models/Audit.ts and
+// therefore TypeORM. Loading TypeORM here resolved its TypeScript sources and
+// died inside path-scurry ("Cannot read properties of undefined (reading
+// 'native')") before a single test ran. The field is constructed but never read
+// by Scheduler, so stubbing it keeps the unit test off that entire chain.
+jest.mock('@reactory/server-modules/reactory-core/services/ReactoryAuditService', () => ({
+  ReactoryAuditService: jest.fn().mockImplementation(() => ({
+    log: jest.fn(),
+    record: jest.fn(),
+  })),
+}));
+
 jest.mock('../../../../../logging', () => ({
   debug: jest.fn(),
   info: jest.fn(),

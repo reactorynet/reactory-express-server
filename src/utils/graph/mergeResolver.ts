@@ -13,16 +13,23 @@ function isResolverFunc(resolver: ReactoryResolver): resolver is ReactoryResolve
 };
 
 function isResolverObject(resolver: ReactoryResolver): resolver is Reactory.Graph.IGraphShape {
-  let $resolver = resolver as Reactory.Graph.IGraphShape;
-  return Object.keys($resolver).length > 0
+  // Object.keys(null) throws "Cannot convert undefined or null to object", so a
+  // single undefined entry in a module's resolver array — a renamed export, a
+  // circular import, or a module mocked out in a test — took down the entire
+  // registry import instead of being skipped. A type guard must answer, not
+  // throw.
+  if (resolver === null || resolver === undefined) return false;
+  if (typeof resolver !== 'object') return false;
+  return Object.keys(resolver as Reactory.Graph.IGraphShape).length > 0;
 };
 
 function isResolverClass(resolver: ReactoryResolver): resolver is Reactory.Graph.IGraphShape {
+  if (resolver === null || resolver === undefined) return false;
   //@ts-ignore
   if(resolver.prototype && resolver.prototype.constructor && resolver.prototype.resolver ) {
     return true
-  } 
-  
+  }
+
   return false;
 }
 
@@ -39,8 +46,19 @@ const MergeGraphResolvers = (resolvers: ResolverType[] = []): Reactory.Graph.IGr
     Subscription: {}
   };
 
-  resolvers.forEach((resolver: ReactoryResolver) => {
-    
+  resolvers.forEach((resolver: ReactoryResolver, index: number) => {
+
+    // Report the gap rather than merging nothing in silence: a nullish entry
+    // means an export in the module's resolver array did not resolve, and the
+    // symptom otherwise is a GraphQL field that is simply absent at runtime.
+    if (resolver === null || resolver === undefined) {
+      logger.warn(
+        `MergeGraphResolvers: resolver at index ${index} is ${resolver === null ? 'null' : 'undefined'} — skipping. ` +
+        `Check that every entry in the module's resolver array is exported.`
+      );
+      return;
+    }
+
     let $resolver: Reactory.Graph.IGraphShape = {
       Query: {},
       Mutation: {},

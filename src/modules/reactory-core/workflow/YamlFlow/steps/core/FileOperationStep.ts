@@ -53,6 +53,16 @@ export interface FileOperationStepConfig {
     pattern?: string;
   };
   
+  /**
+   * Convenience aliases for the equivalents under `options`. The workflow JSON
+   * schema documents `overwrite` at this level, so a workflow author following
+   * the schema writes it here — it used to be read only from `options`, which
+   * silently left the flag off.
+   */
+  overwrite?: boolean;
+  createParents?: boolean;
+  recursive?: boolean;
+  
   /** Whether step is enabled */
   enabled?: boolean;
 }
@@ -72,7 +82,27 @@ export class FileOperationStep extends BaseYamlStep {
     const config = this.config as FileOperationStepConfig;
     
     // Resolve template variables
-    const resolvedConfig = this.resolveConfigTemplates(config, context);
+    const resolved = this.resolveConfigTemplates(config, context);
+    
+    // Fold the top-level aliases into `options` so the rest of the step reads
+    // one shape. The schema documents overwrite/createParents/recursive at the
+    // config level while the implementation reads them from `options`; a
+    // workflow written against the schema therefore had its flags ignored.
+    const resolvedConfig: FileOperationStepConfig = {
+      ...resolved,
+      options: {
+        ...(resolved.options ?? {}),
+        ...(resolved.overwrite !== undefined && resolved.options?.overwrite === undefined
+          ? { overwrite: resolved.overwrite }
+          : {}),
+        ...(resolved.createParents !== undefined && resolved.options?.createParents === undefined
+          ? { createParents: resolved.createParents }
+          : {}),
+        ...(resolved.recursive !== undefined && resolved.options?.recursive === undefined
+          ? { recursive: resolved.recursive }
+          : {}),
+      },
+    };
     
     const startTime = Date.now();
     

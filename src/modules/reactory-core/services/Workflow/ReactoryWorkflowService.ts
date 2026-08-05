@@ -77,7 +77,19 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     if (!this.workflowRunner.isInitialized()) {      
       await this.workflowRunner.initialize();
     }
-    await this.syncYamlWorkflowDefinitions();
+    // Copying YAML definitions into the data catalog is a best-effort cache
+    // step — a filesystem error, or a runner that reports its workflows oddly,
+    // must not stop the workflow service from starting. It used to be awaited
+    // bare, so anything it threw aborted onStartup.
+    try {
+      await this.syncYamlWorkflowDefinitions();
+    } catch (error) {
+      this.context.log(
+        `YAML workflow catalog sync failed; continuing startup: ${(error as Error).message}`,
+        { error },
+        'warn'
+      );
+    }
     this.context.log(`Workflow service startup ${this.context.colors.green('STARTUP OKAY')} ✅`);
     return true;
   }
@@ -1495,7 +1507,9 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       runCount: scheduled.runCount,
       errorCount: scheduled.errorCount,
       isRunning: scheduled.isRunning,
-      enabled: scheduled.config.schedule?.enabled !== false,
+      // `config` optional-chained like its nested `schedule`, so a scheduler
+      // entry without one does not throw.
+      enabled: scheduled.config?.schedule?.enabled !== false,
     };
   }
 
@@ -1674,7 +1688,9 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
           runCount: schedule.runCount,
           errorCount: schedule.errorCount,
           isRunning: schedule.isRunning,
-          enabled: schedule.config.schedule?.enabled !== false,
+          // `config` is optional-chained like its nested `schedule` — a
+          // scheduler entry without one should not throw here.
+          enabled: schedule.config?.schedule?.enabled !== false,
         };
       }) || [];
     } catch (error) {
@@ -1789,9 +1805,14 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
           failedExecutions: 0,
           averageExecutionTime: 0
         },
-        configuration: workflowRunner?.getConfiguration(workflowId, workflow.version),
+        // getWorkflowWithId returns null for an unknown id, and the line above
+        // already treats `workflow` as optional — these two dereferenced it
+        // bare, so asking for the status of a workflow that is not registered
+        // threw "Cannot read properties of null (reading 'version')" instead of
+        // reporting it as INACTIVE.
+        configuration: workflowRunner?.getConfiguration(workflowId, workflow?.version),
         instances: workflowRunner?.getAllWorkflowInstances().filter((instance: IWorkflowInstance) => instance.workflowId === workflowId),
-        dependencies: workflow.dependencies || [],
+        dependencies: workflow?.dependencies || [],
         schedules: await this.getWorkflowSchedulesForWorkflowId(workflowId) || []
       };
 
@@ -1813,7 +1834,12 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       }
       return status;
     } catch (error) {
-      this.context.log('Error getting workflow status', { error, name }, 'error');
+      // Logged `name`, which is not in scope here — this method takes
+      // `workflowId` (the identifier was copy-pasted from
+      // startWorkflowLegacy). The catch block therefore threw
+      // "ReferenceError: name is not defined" itself, replacing whatever the
+      // real failure was with a bogus error and no diagnostic.
+      this.context.log('Error getting workflow status', { error, workflowId }, 'error');
       throw error;
     }
   }
@@ -2048,16 +2074,37 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
         mkdirSync(targetDir, { recursive: true });
       }
 
+      /**
+       * A document to write into, guaranteed to have map contents.
+       *
+       * On yaml@1 (this repo's version) `new YAML.Document()` leaves
+       * `contents === null`, and both `doc.set()` and `doc.delete()` then throw
+       * "Expected a YAML collection as document contents". So every *new*
+       * workflow definition failed to save — the method returned
+       * loadStatus:'NOT_FOUND' with "Failed to write workflow file" — and only
+       * updates to an already-existing file worked. (yaml@2 auto-creates the
+       * map on set, which is why this reads as though it should work.)
+       *
+       * An existing file that is empty or holds a scalar parses to null
+       * contents too, so the same initialisation covers that.
+       */
+      const emptyDocument = (): any => {
+        const created = new YAML.Document();
+        created.contents = YAML.createNode({});
+        return created;
+      };
+
       let doc: any;
       if (existsSync(targetFile)) {
         try {
           const originalContent = readFileSync(targetFile, 'utf8');
           doc = YAML.parseDocument(originalContent);
+          if (doc?.contents == null) doc = emptyDocument();
         } catch (err) {
-          doc = new YAML.Document();
+          doc = emptyDocument();
         }
       } else {
-        doc = new YAML.Document();
+        doc = emptyDocument();
       }
 
       // Update top-level fields in AST to preserve comments and layout

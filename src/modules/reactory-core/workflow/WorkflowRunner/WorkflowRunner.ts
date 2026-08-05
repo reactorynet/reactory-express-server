@@ -363,7 +363,11 @@ export class WorkflowRunner {
    * and register them in the shared step registry.
    */
   private discoverModuleSteps(): void {
-    const modules: Reactory.Server.IReactoryModule[] = (this.context as any).modules || [];
+    // `|| []` already says a missing module list is fine — but the context
+    // itself was dereferenced bare, so a runner constructed without one threw
+    // "Cannot read properties of undefined (reading 'modules')" from inside
+    // initialize().
+    const modules: Reactory.Server.IReactoryModule[] = (this.context as any)?.modules || [];
     let registeredCount = 0;
     for (const mod of modules) {
       if (!mod.workflowSteps || !Array.isArray(mod.workflowSteps)) continue;

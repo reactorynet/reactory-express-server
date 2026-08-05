@@ -43,8 +43,12 @@ export function gauge(metricName: string, options: GaugeOptions = {}) {
       // Extract context
       const context = extractContext(args, this, contextSource);
       
-      if (!context || !context.telemetry) {
-        logger.warn(`No telemetry context available for ${metricName}`);
+      // Capability check, not a presence check — see the same guard in
+      // metric.ts. A partial telemetry object would otherwise pass here and
+      // throw "recordGauge is not a function" from inside the instrumentation.
+      const telemetry = context?.telemetry as { recordGauge?: unknown } | undefined;
+      if (!telemetry || typeof telemetry.recordGauge !== 'function') {
+        logger.warn(`No usable telemetry context available for ${metricName}`);
         return result;
       }
 

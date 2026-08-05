@@ -26,6 +26,12 @@ interface StepShellPublisher {
 }
 
 /**
+ * Default ceiling for a single command, applied when a step declares no
+ * timeout. Long-running commands should set their own; `timeout: 0` disables it.
+ */
+export const DEFAULT_COMMAND_TIMEOUT_MS = 120000;
+
+/**
  * Configuration interface for CliCommandStep
  */
 export interface CliCommandStepConfig {
@@ -41,7 +47,10 @@ export interface CliCommandStepConfig {
   /** Environment variables to add/override */
   env?: Record<string, string>;
   
-  /** Timeout in milliseconds */
+  /**
+   * Timeout in milliseconds. Defaults to DEFAULT_COMMAND_TIMEOUT_MS; set 0 to
+   * disable the limit for a command that is genuinely expected to run long.
+   */
   timeout?: number;
   
   /** Shell to use (default: true uses system shell) */
@@ -237,12 +246,17 @@ export class CliCommandStep extends BaseYamlStep {
       ...config.env
     };
     
-    // Prepare options
+    // Prepare options.
+    //
+    // A default timeout matters: a command that reads stdin and gets no input —
+    // `grep pattern` with no file argument, for instance, which is what a
+    // template resolving to an empty path produces — otherwise blocks forever
+    // and takes the worker with it. `timeout: 0` opts out explicitly.
     const options: any = {
       cwd: config.cwd,
       env,
       shell: config.shell !== false,
-      timeout: config.timeout
+      timeout: config.timeout === undefined ? DEFAULT_COMMAND_TIMEOUT_MS : config.timeout
     };
     
     if (config.shell === true || config.shell === undefined) {

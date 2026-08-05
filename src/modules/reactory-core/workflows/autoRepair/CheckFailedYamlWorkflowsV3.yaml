@@ -1,0 +1,110 @@
+nameSpace: reactory
+name: CheckFailedYamlWorkflowsV3
+version: 1.0.0
+description: "Scans server log files in REACTORY_DATA/logging for YAML workflow validation and loading failures, extracts error metadata, and outputs structured findings for self-repair."
+author: WorkflowWill
+tags: [workflow, logging, self-repair, validation]
+
+inputs:
+  logDirectory:
+    type: string
+    required: false
+    default: "${env.REACTORY_DATA}/logging"
+    description: "Path to the server logging directory."
+
+steps:
+  - id: startLogCheck
+    type: log
+    config:
+      level: info
+      message: "Starting log inspection for failing YAML workflows in ${input.logDirectory}"
+
+  - id: findLatestLog
+    type: cli_command
+    dependsOn: startLogCheck
+    config:
+      command: "bash"
+      args:
+        - "-c"
+        - "ls -t ${input.logDirectory}/*.json 2>/dev/null | head -n 1 | tr -d '\\r\\n'"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setLogPath
+    type: set_variable
+    dependsOn: findLatestLog
+    config:
+      action: set
+      key: logPath
+      source: step_output
+      sourcePath: findLatestLog.outputs.stdout
+
+  - id: searchLogFailures
+    type: cli_command
+    dependsOn: setLogPath
+    config:
+      command: "bash"
+      args:
+        - "-c"
+        - "grep -E -i '\\[Workflow Loader\\]|Workflow validation failed|Failed to parse|\\[YamlParser\\]|\\[YamlStepRegistry\\]' ${variables.logPath} | head -n 50 || echo 'NO_FAILURES_FOUND'"
+      failOnError: false
+      expectedExitCodes: [0, 1, 2]
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setLogMatches
+    type: set_variable
+    dependsOn: searchLogFailures
+    config:
+      action: set
+      key: logMatches
+      source: step_output
+      sourcePath: searchLogFailures.outputs.stdout
+
+  - id: parseLogEntries
+    type: cli_command
+    dependsOn: setLogMatches
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const rawLog = process.env.RAW_LOG || '';
+          if (!rawLog || rawLog.trim() === 'NO_FAILURES_FOUND') {
+            process.stdout.write(JSON.stringify({ foundErrors: false, errors: [] }));
+            process.exit(0);
+          }
+          const lines = rawLog.split('\n').filter(Boolean);
+          const results = lines.map(line => {
+            const match = line.match(/(?:Workflow validation failed for|Error in|Failed to parse workflow|workflow)\s+([a-zA-Z0-9_\-\.]+@[0-9\.]+)?[:\s]*(.*)/i);
+            return {
+              rawMessage: line.trim(),
+              workflowId: match && match[1] ? match[1] : 'unknown',
+              errorMessage: match && match[2] ? match[2].trim() : line.trim(),
+              timestamp: new Date().toISOString()
+            };
+          });
+          process.stdout.write(JSON.stringify({ foundErrors: results.length > 0, errors: results }, null, 2));
+      env:
+        RAW_LOG: "${variables.logMatches}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setParseResults
+    type: set_variable
+    dependsOn: parseLogEntries
+    config:
+      action: set
+      key: scanSummary
+      source: step_output
+      sourcePath: parseLogEntries.outputs.stdout
+
+  - id: reportResults
+    type: log
+    dependsOn: setParseResults
+    config:
+      level: info
+      message: "Yaml Workflow Error Scan Summary: ${variables.scanSummary}"

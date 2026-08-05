@@ -7,9 +7,20 @@ import fs from 'fs';
  * This test requires the ServiceGenerator to be instantiated with a proper context,
  * so we test the swagger parsing independently and verify the flow
  */
-describe('ServiceGenerator Swagger Integration', () => {
-  const loyaltyApiYamlPath = path.join(__dirname, '../../../../../zepz-engineer/services/quotes/loyalty/loyalty-api/service-local.yaml');
-  const swaggerPath = path.join(__dirname, '../../../../../zepz-engineer/services/quotes/loyalty/loyalty-api/swagger.json');
+const LOYALTY_API_YAML = path.join(__dirname, '../../../../../zepz-engineer/services/quotes/loyalty/loyalty-api/service-local.yaml');
+const LOYALTY_API_SWAGGER = path.join(__dirname, '../../../../../zepz-engineer/services/quotes/loyalty/loyalty-api/swagger.json');
+
+/**
+ * These fixtures live in the `zepz-engineer` module, which is optional and is
+ * not present in every checkout. Without it every test here failed on ENOENT —
+ * a missing module, not a defect — so the suite skips unless the fixtures are
+ * actually there.
+ */
+const describeSwagger = fs.existsSync(LOYALTY_API_SWAGGER) ? describe : describe.skip;
+
+describeSwagger('ServiceGenerator Swagger Integration', () => {
+  const loyaltyApiYamlPath = LOYALTY_API_YAML;
+  const swaggerPath = LOYALTY_API_SWAGGER;
 
   it('should find the test files', () => {
     expect(fs.existsSync(loyaltyApiYamlPath)).toBe(true);

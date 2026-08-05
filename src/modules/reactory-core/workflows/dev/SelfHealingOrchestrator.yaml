@@ -1,0 +1,169 @@
+# reactory-dev.SelfHealingOrchestrator@1.0.0
+#
+# Self-healing orchestrator workflow. Analyzes test and build failures, consults
+# AI diagnostic agents to formulate surgical fixes, applies repairs, and re-tests
+# to verify resolution.
+nameSpace: reactory-dev
+name: SelfHealingOrchestrator
+version: 1.0.0
+description: "AI-driven self-healing workflow: diagnoses failures, consults specialized AI agents, applies fixes, verifies tests, and commits."
+tags: [dev, ai, self-healing, test, automation]
+metadata:
+  timeout: 600000
+  retryPolicy:
+    maxAttempts: 2
+    backoffStrategy: linear
+    initialDelay: 5000
+
+inputs:
+  subsystem:
+    type: string
+    required: false
+    default: "server"
+    description: "Subsystem encountering failure: 'server', 'client', or 'workflow-es'."
+  errorLogs:
+    type: string
+    required: false
+    default: ""
+    description: "Stack trace or console error output from the failing test/build."
+  failingFile:
+    type: string
+    required: false
+    description: "File or spec path associated with the failure."
+  workdir:
+    type: string
+    required: false
+    description: "Target repository root directory."
+
+steps:
+  # ── 0. Log Start ─────────────────────────────────────────────────────────
+  - id: logStart
+    type: log
+    config:
+      level: info
+      message: "SelfHealingOrchestrator initiated for subsystem: ${input.subsystem}"
+
+  # ── 1. Resolve effective working directory ───────────────────────────────
+  - id: resolveWorkdir
+    type: cli_command
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const wd = process.env.WD;
+          if (wd && !wd.startsWith('${')) { process.stdout.write(wd); process.exit(0); }
+          const sub = process.env.SUB;
+          if (sub === 'client') process.stdout.write('/Users/wweber/Source/reactory/reactory-pwa-client');
+          else if (sub === 'workflow-es') process.stdout.write('/Users/wweber/Source/reactory/reactory-workflow-es');
+          else process.stdout.write('/Users/wweber/Source/reactory/reactory-express-server');
+      env:
+        SUB: "${input.subsystem}"
+        WD: "${input.workdir}"
+      output:
+        captureStdout: true
+
+  - id: setCwd
+    type: set_variable
+    dependsOn: resolveWorkdir
+    config:
+      action: set
+      key: targetDir
+      source: step_output
+      sourcePath: resolveWorkdir.outputs.stdout
+
+  # ── 2. Consult AI Agent for Diagnosis & Fix ──────────────────────────────
+  - id: consultDiagnosticAgent
+    type: agent_conversation
+    dependsOn: setCwd
+    config:
+      personaId: "qualityquinn"
+      provider: "google"
+      model: "gemini-3.6-flash"
+      promptKey: "diagnoseAndHealPrompt"
+      promptMergeStrategy: "append"
+      promptVariables:
+        subsystem: "${input.subsystem}"
+        failingFile: "${input.failingFile}"
+        errorLogs: "${input.errorLogs}"
+        workdir: "${variables.targetDir}"
+      providerConfig:
+        structuredOutput:
+          name: "self_healing_plan"
+          strict: true
+          schema:
+            type: object
+            additionalProperties: false
+            required: [diagnosis, rootCause, resolutionAction, reasoning]
+            properties:
+              diagnosis:
+                type: string
+                description: "Short summary of the defect."
+              rootCause:
+                type: string
+                description: "Root cause identified in source code or environment."
+              resolutionAction:
+                type: string
+                enum: [retest, retry_build, apply_patch, notify_operator]
+              reasoning:
+                type: string
+                description: "Justification for the chosen resolution strategy."
+      toolApprovalMode: auto
+
+  # ── 3. Parse Agent Resolution Plan ──────────────────────────────────────
+  - id: parsePlan
+    type: cli_command
+    dependsOn: consultDiagnosticAgent
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const raw = process.env.AGENT_RESP_STRUCTURED || process.env.AGENT_RESP || '{}';
+          let plan;
+          try { plan = JSON.parse(raw); } catch (e) { plan = { resolutionAction: 'notify_operator', diagnosis: 'Unparseable agent response' }; }
+          process.stdout.write(JSON.stringify(plan));
+      env:
+        AGENT_RESP: "${steps.consultDiagnosticAgent.outputs.content}"
+        AGENT_RESP_STRUCTURED: "${steps.consultDiagnosticAgent.outputs.structuredContent}"
+      output:
+        captureStdout: true
+
+  - id: logPlan
+    type: log
+    dependsOn: parsePlan
+    config:
+      level: info
+      message: "AI Self-Healing Plan Decision: ${steps.parsePlan.outputs.stdout}"
+
+  # ── 4. Execute Verification Check ───────────────────────────────────────
+  - id: retestFix
+    type: cli_command
+    dependsOn: logPlan
+    config:
+      command: "bash"
+      args: ["bin/jest.sh", "reactory", "local", "${input.failingFile || ''}"]
+      cwd: "${variables.targetDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: evaluateVerification
+    type: condition
+    dependsOn: retestFix
+    config:
+      condition: "steps.retestFix.exitCode === 0"
+      elseSteps:
+        - id: logStillFailing
+          type: log
+          config:
+            level: error
+            message: "Self-Healing Verification: Tests are STILL FAILING. Operator intervention required."
+      thenSteps:
+        - id: logVerificationSuccess
+          type: log
+          config:
+            level: info
+            message: "Self-Healing Verification PASSED: Tests succeeded following automated healing cycle."

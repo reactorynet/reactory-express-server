@@ -1,7 +1,7 @@
 import { SecurityManager, IUser, IWorkflowPermission, IInputValidationResult } from '../SecurityManager';
 
 // Mock logging
-jest.mock('../../../logging', () => ({
+jest.mock('../../../../../logging', () => ({
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
@@ -78,12 +78,22 @@ describe('SecurityManager', () => {
       expect(securityManager.isInitialized()).toBe(true);
     });
 
+    // ISecurityStats no longer carries totalUsers/totalWorkflowPermissions —
+    // these assertions used to read those removed counters and got `undefined`.
+    // The sample data is now observed through behaviour instead.
     it('should load sample users and permissions', async () => {
       await securityManager.initialize();
-      
-      const stats = securityManager.getSecurityStats();
-      expect(stats.totalUsers).toBe(3); // Sample users loaded
-      expect(stats.totalWorkflowPermissions).toBe(2); // Sample permissions loaded
+
+      // A sample user against a sample workflow permission is authorised...
+      await expect(
+        securityManager.checkWorkflowPermission('admin', 'reactory.StartupWorkflow', '1.0.0')
+      ).resolves.toBe(true);
+      // ...and an unknown user is not.
+      await expect(
+        securityManager.checkWorkflowPermission('nobody', 'reactory.StartupWorkflow', '1.0.0')
+      ).resolves.toBe(false);
+      // Sample workflow permissions are reflected in the active permission set.
+      expect(securityManager.getSecurityStats().activePermissions).toContain('workflow.execute');
     });
   });
 
@@ -427,7 +437,7 @@ describe('SecurityManager', () => {
       await securityManager.initialize();
     });
 
-    it('should add user', () => {
+    it('should add user', async () => {
       const newUser: IUser = {
         id: 'newuser',
         username: 'newuser',
@@ -439,15 +449,26 @@ describe('SecurityManager', () => {
 
       securityManager.addUser(newUser);
 
-      const stats = securityManager.getSecurityStats();
-      expect(stats.totalUsers).toBe(4); // 3 sample + 1 new
+      // Observed through behaviour rather than a removed user counter. An
+      // unknown id is denied for "user_not_found_or_inactive"; a user that was
+      // added is looked up successfully and evaluated against the workflow's
+      // permission instead, which is what distinguishes the two.
+      const denials = securityManager.getSecurityStats().permissionDenials;
+      await securityManager.checkWorkflowPermission(newUser.id, 'reactory.StartupWorkflow', '1.0.0');
+      const auditLogs = securityManager.getAuditLogs({ userId: newUser.id });
+
+      expect(auditLogs.length).toBeGreaterThan(0);
+      expect(auditLogs.some((log: any) => log.details?.reason === 'user_not_found_or_inactive')).toBe(false);
+      expect(securityManager.getSecurityStats().permissionDenials).toBeGreaterThanOrEqual(denials);
     });
 
-    it('should remove user', () => {
+    it('should remove user', async () => {
+      // user1 is a sample user; once removed it can no longer be authorised.
       securityManager.removeUser('user1');
 
-      const stats = securityManager.getSecurityStats();
-      expect(stats.totalUsers).toBe(2); // 3 sample - 1 removed
+      await expect(
+        securityManager.checkWorkflowPermission('user1', 'reactory.StartupWorkflow', '1.0.0')
+      ).resolves.toBe(false);
     });
   });
 
@@ -456,7 +477,7 @@ describe('SecurityManager', () => {
       await securityManager.initialize();
     });
 
-    it('should add workflow permission', () => {
+    it('should add workflow permission', async () => {
       const permission: IWorkflowPermission = {
         workflowId: 'test.workflow',
         version: '1.0.0',
@@ -468,15 +489,44 @@ describe('SecurityManager', () => {
 
       securityManager.addWorkflowPermission(permission);
 
-      const stats = securityManager.getSecurityStats();
-      expect(stats.totalWorkflowPermissions).toBe(3); // 2 sample + 1 new
+      // activePermissions is the union of permissions across all registered
+      // workflow permissions, so the new entry shows up there.
+      expect(securityManager.getSecurityStats().activePermissions).toContain('workflow.execute');
+      await expect(
+        securityManager.checkWorkflowPermission('user1', 'test.workflow', '1.0.0')
+      ).resolves.toBe(true);
     });
 
-    it('should remove workflow permission', () => {
-      securityManager.removeWorkflowPermission('reactory.StartupWorkflow', '1.0.0');
+    it('should remove workflow permission', async () => {
+      // Asserted through the audit trail rather than a count: activePermissions
+      // is the flattened union across entries (so removing one of two entries
+      // that both grant 'workflow.execute' leaves it unchanged), and
+      // checkWorkflowPermission is *permissive* when no entry exists — it
+      // records 'no_specific_permissions' and allows. That reason is exactly
+      // what distinguishes "entry removed" from "entry present".
+      const restricted: IWorkflowPermission = {
+        workflowId: 'restricted.workflow',
+        version: '1.0.0',
+        // A permission the sample users do not hold — they all have
+        // 'workflow.execute', which would otherwise satisfy the general-
+        // permission branch and allow the call.
+        permissions: ['workflow.admin'],
+        allowedUsers: ['someone-else'],
+        allowedRoles: ['nobody'],
+        requireAuth: true
+      };
+      securityManager.addWorkflowPermission(restricted);
 
-      const stats = securityManager.getSecurityStats();
-      expect(stats.totalWorkflowPermissions).toBe(1); // 2 sample - 1 removed
+      await expect(
+        securityManager.checkWorkflowPermission('user1', 'restricted.workflow', '1.0.0')
+      ).resolves.toBe(false);
+
+      securityManager.removeWorkflowPermission('restricted.workflow', '1.0.0');
+
+      // With the entry gone the workflow is unrestricted again.
+      await expect(
+        securityManager.checkWorkflowPermission('user1', 'restricted.workflow', '1.0.0')
+      ).resolves.toBe(true);
     });
   });
 
@@ -487,13 +537,16 @@ describe('SecurityManager', () => {
 
     it('should return correct statistics', () => {
       const stats = securityManager.getSecurityStats();
-      
-      expect(stats.totalUsers).toBe(3);
-      expect(stats.activeUsers).toBe(2); // admin and user1 are active
-      expect(stats.totalWorkflowPermissions).toBe(2);
-      expect(stats.auditLogEntries).toBeGreaterThanOrEqual(0);
-      expect(stats.securityEvents).toBeGreaterThanOrEqual(0);
-      expect(stats.unresolvedSecurityEvents).toBeGreaterThanOrEqual(0);
+
+      // ISecurityStats is {authenticatedRequests, unauthorizedAttempts,
+      // permissionDenials, activePermissions, securityEvents}. The old
+      // totalUsers/activeUsers/totalWorkflowPermissions/auditLogEntries fields
+      // no longer exist, so every assertion here read `undefined`.
+      expect(typeof stats.authenticatedRequests).toBe('number');
+      expect(typeof stats.unauthorizedAttempts).toBe('number');
+      expect(typeof stats.permissionDenials).toBe('number');
+      expect(Array.isArray(stats.activePermissions)).toBe(true);
+      expect(Array.isArray(stats.securityEvents)).toBe(true);
     });
   });
 

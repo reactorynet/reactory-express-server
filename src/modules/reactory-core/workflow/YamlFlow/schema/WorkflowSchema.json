@@ -387,8 +387,9 @@
           "properties": {
             "url": {
               "type": "string",
-              "format": "uri",
-              "description": "API endpoint URL"
+              "minLength": 1,
+              "pattern": "^(\\$\\{|[a-zA-Z][a-zA-Z0-9+.\\-]*:|/)",
+              "description": "API endpoint URL. Validated as a scheme-prefixed URL, a root-relative path, or a ${...} template expression — not as a strict URI, because template placeholders (e.g. https://host/v1/search?name=${input.city}) are a core feature of the DSL and are not valid URIs until they are interpolated at run time."
             },
             "method": {
               "type": "string",

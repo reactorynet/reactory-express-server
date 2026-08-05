@@ -27,7 +27,17 @@ interface MockReactoryContext {
   getService: (fqn: string) => any;
 }
 
-describe("Reactory API Status Query", () => {
+/**
+ * The query tests below are integration tests: they POST to a running server at
+ * API_URI_ROOT. Without that variable supertest is handed `undefined` and every
+ * one of them fails with "Cannot read properties of undefined (reading
+ * 'address')" — a missing environment, not a defect. They are skipped unless a
+ * target is configured, so the getRoles unit tests further down still run in a
+ * plain `npx jest` pass.
+ */
+const describeApi = process.env.API_URI_ROOT ? describe : describe.skip;
+
+describeApi("Reactory API Status Query", () => {
   let request: TestAgent<supertest.Test>;
 
   beforeAll(() => {

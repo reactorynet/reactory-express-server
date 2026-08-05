@@ -9,15 +9,44 @@ import { StepExecutionContext, StepExecutionResult, ValidationResult } from '../
 /**
  * Configuration interface for ValidationStep
  */
+/**
+ * A single rule in the list form of `rules` — the shape the workflow JSON schema
+ * documents and every YAML workflow in the repository uses.
+ *
+ * `field` carries the *value* under test, not a path: templates in step config
+ * are interpolated before the step runs, so `field: "${input.user.email}"`
+ * arrives as the email itself.
+ */
+export interface ValidationRuleSpec {
+  /** The value to validate (usually a resolved template expression). */
+  field: any;
+  /** How to validate it. */
+  type: 'required' | 'type' | 'pattern' | 'range' | 'custom';
+  /** Type-specific expectation: a regex for `pattern`, a type name for `type`, `{min,max}` for `range`. */
+  value?: string | number | Record<string, any>;
+  /** Message reported when the rule fails. */
+  message?: string;
+}
+
 export interface ValidationStepConfig {
-  /** Data to validate (can use template variables) */
-  data: any;
+  /**
+   * Data to validate. Required by the map form of `rules` and by `schema`; not
+   * used by the list form, which carries its values inline on each rule.
+   */
+  data?: any;
   
   /** JSON Schema for validation */
   schema?: Record<string, any>;
   
-  /** Custom validation rules */
-  rules?: {
+  /**
+   * Validation rules, in either of two forms:
+   *
+   *  - a **list** of ValidationRuleSpec — what the workflow schema documents and
+   *    what all shipped YAML uses;
+   *  - a **map** keyed by check kind (required/types/patterns/ranges/lengths),
+   *    which validates fields of `data`.
+   */
+  rules?: ValidationRuleSpec[] | {
     /** Required fields */
     required?: string[];
     
@@ -36,6 +65,9 @@ export interface ValidationStepConfig {
   
   /** Whether to fail the workflow if validation fails */
   failOnError?: boolean;
+  
+  /** List form only: stop at the first failing rule instead of collecting all. */
+  stopOnFirstError?: boolean;
   
   /** Whether step is enabled */
   enabled?: boolean;
@@ -77,9 +109,15 @@ export class ValidationStep extends BaseYamlStep {
       }
     }
     
-    // Custom rules validation
+    // Custom rules validation — accepts either the documented list form or the
+    // map form. Every YAML workflow in the repository uses the list form, which
+    // was previously unsupported: validateConfig demanded `data` and
+    // validateCustomRules assumed the map, so those steps failed with "data is
+    // required" and the engine retried them forever.
     if (config.rules) {
-      const rulesResult = this.validateCustomRules(data, config.rules);
+      const rulesResult = Array.isArray(config.rules)
+        ? this.validateRuleList(config.rules as ValidationRuleSpec[], config.stopOnFirstError === true)
+        : this.validateCustomRules(data, config.rules);
       validationResults.rules = rulesResult;
       if (!rulesResult.valid) {
         isValid = false;
@@ -244,6 +282,97 @@ export class ValidationStep extends BaseYamlStep {
   }
   
   /**
+   * Evaluate the list form of `rules`.
+   *
+   * Each rule carries the value under test on `field` (templates in step config
+   * are already interpolated by the time the step runs) plus the check to apply.
+   *
+   * @param rules - Rules to evaluate
+   * @param stopOnFirstError - Return as soon as one rule fails
+   * @returns Validity plus the messages of every failed rule
+   */
+  private validateRuleList(
+    rules: ValidationRuleSpec[],
+    stopOnFirstError: boolean
+  ): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    const fail = (rule: ValidationRuleSpec, fallback: string): boolean => {
+      errors.push(rule.message || fallback);
+      return stopOnFirstError;
+    };
+
+    for (const rule of rules) {
+      const value = rule.field;
+
+      switch (rule.type) {
+        case 'required': {
+          const missing =
+            value === undefined ||
+            value === null ||
+            (typeof value === 'string' && value.trim().length === 0) ||
+            (Array.isArray(value) && value.length === 0);
+          if (missing && fail(rule, 'value is required')) return { valid: false, errors };
+          break;
+        }
+
+        case 'pattern': {
+          // An absent value is the `required` rule's business, not this one's.
+          if (value === undefined || value === null || value === '') break;
+          const pattern = typeof rule.value === 'string' ? rule.value : String(rule.value ?? '');
+          let matches = false;
+          try {
+            matches = new RegExp(pattern).test(String(value));
+          } catch {
+            if (fail(rule, `invalid pattern: ${pattern}`)) return { valid: false, errors };
+            break;
+          }
+          if (!matches && fail(rule, `value does not match ${pattern}`)) {
+            return { valid: false, errors };
+          }
+          break;
+        }
+
+        case 'type': {
+          const expected = String(rule.value ?? '');
+          const actual = Array.isArray(value) ? 'array' : typeof value;
+          if (actual !== expected && fail(rule, `expected ${expected} but got ${actual}`)) {
+            return { valid: false, errors };
+          }
+          break;
+        }
+
+        case 'range': {
+          const numeric = Number(value);
+          const bounds = (typeof rule.value === 'object' && rule.value !== null
+            ? rule.value
+            : {}) as { min?: number; max?: number };
+          const outOfRange =
+            Number.isNaN(numeric) ||
+            (bounds.min !== undefined && numeric < bounds.min) ||
+            (bounds.max !== undefined && numeric > bounds.max);
+          if (outOfRange && fail(rule, `value ${String(value)} is out of range`)) {
+            return { valid: false, errors };
+          }
+          break;
+        }
+
+        case 'custom':
+          // No evaluator is defined for custom rules; they are accepted so a
+          // workflow declaring one is not blocked, and recorded for visibility.
+          break;
+
+        default:
+          if (fail(rule, `unknown validation type: ${String((rule as any).type)}`)) {
+            return { valid: false, errors };
+          }
+      }
+    }
+
+    return { valid: errors.length === 0, errors };
+  }
+
+  /**
    * Validate data against custom rules
    * @param data - Data to validate
    * @param rules - Custom validation rules
@@ -375,8 +504,13 @@ export class ValidationStep extends BaseYamlStep {
     const errors: string[] = [];
     const warnings: string[] = [];
     
-    // Must have data to validate
-    if (config.data === undefined) {
+    const rulesAreList = Array.isArray(config.rules);
+    
+    // `data` is what the schema form and the map form of `rules` validate
+    // against. The list form carries its values inline on each rule, so
+    // requiring `data` unconditionally rejected every workflow in the
+    // repository with "data is required".
+    if (config.data === undefined && !rulesAreList) {
       errors.push('data is required');
     }
     
@@ -390,8 +524,23 @@ export class ValidationStep extends BaseYamlStep {
       errors.push('schema must be an object');
     }
     
-    // Validate rules if provided
-    if (config.rules) {
+    if (rulesAreList) {
+      const allowed = ['required', 'type', 'pattern', 'range', 'custom'];
+      (config.rules as any[]).forEach((rule, index) => {
+        if (!rule || typeof rule !== 'object') {
+          errors.push(`rules[${index}] must be an object`);
+          return;
+        }
+        if (!('field' in rule)) errors.push(`rules[${index}].field is required`);
+        if (!rule.type) errors.push(`rules[${index}].type is required`);
+        else if (!allowed.includes(rule.type)) {
+          errors.push(`rules[${index}].type must be one of ${allowed.join(', ')}`);
+        }
+        if (rule.type === 'pattern' && typeof rule.value !== 'string') {
+          errors.push(`rules[${index}].value must be a regex string for a pattern rule`);
+        }
+      });
+    } else if (config.rules) {
       if (typeof config.rules !== 'object') {
         errors.push('rules must be an object');
       } else {

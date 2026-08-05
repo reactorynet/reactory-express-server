@@ -1,24 +1,30 @@
 import { WorkflowRunner, IWorkflow, IWorkflowState } from '../WorkflowRunner';
 import { WorkflowHost } from '@reactorynet/workflow-es';
-import { MongoDBPersistence } from 'workflow-es-mongodb';
+import { MongoDBPersistence } from '@reactorynet/workflow-es-mongodb';
 
 // Mock dependencies
-jest.mock('../../../amq', () => ({
+jest.mock('../../../../../amq', () => ({
   onWorkflowEvent: jest.fn(),
   raiseWorkFlowEvent: jest.fn(),
 }));
 
-jest.mock('../../../logging', () => ({
+jest.mock('../../../../../logging', () => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
 }));
 
-jest.mock('workflow-es', () => ({
+jest.mock('@reactorynet/workflow-es', () => ({
   configureWorkflow: jest.fn(() => ({
     useLogger: jest.fn(),
     usePersistence: jest.fn(),
+    // The runner configures single-node vs cluster mode on the builder. Without
+    // these the initialize path threw
+    // "config.allowSingleNodeProviders is not a function".
+    allowSingleNodeProviders: jest.fn(),
+    useQueueManager: jest.fn(),
+    useLockManager: jest.fn(),
     getHost: jest.fn(() => ({
       registerWorkflow: jest.fn(),
       start: jest.fn(),
@@ -32,7 +38,7 @@ jest.mock('workflow-es', () => ({
   },
 }));
 
-jest.mock('workflow-es-mongodb', () => ({
+jest.mock('@reactorynet/workflow-es-mongodb', () => ({
   MongoDBPersistence: jest.fn(() => ({
     connect: jest.fn(),
     close: jest.fn(),
@@ -60,6 +66,11 @@ describe('WorkflowRunner', () => {
       registerWorkflow: jest.fn(),
       start: jest.fn(),
       startWorkflow: jest.fn(),
+      // Also called on the host; without stop() the three stop() tests threw
+      // "this.state.host.stop is not a function".
+      stop: jest.fn(),
+      publishEvent: jest.fn(),
+      terminateWorkflow: jest.fn(),
     } as any;
 
     mockPersistence = {
@@ -68,14 +79,30 @@ describe('WorkflowRunner', () => {
     } as any;
 
     // Mock the configureWorkflow to return our mock host
-    const { configureWorkflow } = require('workflow-es');
+    const { configureWorkflow } = require('@reactorynet/workflow-es');
     configureWorkflow.mockReturnValue({
       useLogger: jest.fn(),
       usePersistence: jest.fn(),
+      // The runner selects single-node vs cluster mode on the builder before
+      // calling getHost(); omitting these threw
+      // "config.allowSingleNodeProviders is not a function".
+      allowSingleNodeProviders: jest.fn(),
+      useQueueManager: jest.fn(),
+      useLockManager: jest.fn(),
       getHost: jest.fn(() => mockHost),
     });
 
-    workflowRunner = new WorkflowRunner({ workflows: [mockWorkflow] });
+    // WorkflowRunner's constructor is (props, context); the context was omitted,
+    // so initialize() read `.modules` off undefined.
+    workflowRunner = new WorkflowRunner({ workflows: [mockWorkflow] }, {
+      modules: [],
+      log: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      debug: jest.fn(),
+      getService: jest.fn(),
+    } as any);
   });
 
   describe('constructor', () => {
@@ -150,7 +177,7 @@ describe('WorkflowRunner', () => {
     });
 
     it('should throw error when host not initialized', () => {
-      const runner = new WorkflowRunner({ workflows: [] });
+      const runner = new WorkflowRunner({ workflows: [] }, { modules: [] } as any);
       const newWorkflow: IWorkflow = {
         nameSpace: 'test',
         name: 'TestWorkflow',
@@ -174,12 +201,14 @@ describe('WorkflowRunner', () => {
 
       const result = await workflowRunner.startWorkflow('test-workflow', '1.0.0', { data: 'test' });
 
-      expect(mockHost.startWorkflow).toHaveBeenCalledWith('test-workflow', '1.0.0', { data: 'test' });
+      // The runner normalises the semver string to the numeric major version
+      // the engine takes, so '1.0.0' reaches the host as 1.
+      expect(mockHost.startWorkflow).toHaveBeenCalledWith('test-workflow', 1, { data: 'test' });
       expect(result).toEqual(mockResult);
     });
 
     it('should throw error when host not initialized', async () => {
-      const runner = new WorkflowRunner({ workflows: [] });
+      const runner = new WorkflowRunner({ workflows: [] }, { modules: [] } as any);
 
       await expect(
         runner.startWorkflow('test-workflow', '1.0.0', { data: 'test' })
@@ -278,7 +307,7 @@ describe('WorkflowRunner', () => {
 
   describe('error handling', () => {
     it('should not crash the service on AMQ errors', async () => {
-      const amq = require('../../../amq');
+      const amq = require('../../../../../amq');
       amq.onWorkflowEvent.mockImplementation((event: string, handler: (payload: any) => void) => {
         // Simulate an error in the handler
         handler({ id: 'test', version: '1.0.0', data: {}, src: 'test' });
@@ -293,7 +322,7 @@ describe('WorkflowRunner', () => {
     });
 
     it('should handle persistence provider errors gracefully', async () => {
-      const { MongoDBPersistence } = require('workflow-es-mongodb');
+      const { MongoDBPersistence } = require('@reactorynet/workflow-es-mongodb');
       MongoDBPersistence.mockImplementation(() => {
         throw new Error('Persistence connection failed');
       });

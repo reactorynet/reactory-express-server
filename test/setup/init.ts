@@ -1,9 +1,9 @@
 // this file is required
 
-// Import DSL test environment setup
-import setupTestEnvironment from '../../src/reactory/dsl/tests/setup/testEnvironment';
+// Shared test environment: APP_DATA_ROOT, fixture directories, env vars and
+// console mocking. Applies to every suite.
+import setupTestEnvironment from './testEnvironment';
 
-// Set up test environment for DSL tests
 setupTestEnvironment();
 
 /**

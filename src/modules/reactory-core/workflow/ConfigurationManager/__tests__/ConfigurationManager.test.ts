@@ -4,7 +4,7 @@ import * as path from 'path';
 
 // Mock fs module
 jest.mock('fs');
-jest.mock('../../../logging', () => ({
+jest.mock('../../../../../logging', () => ({
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
@@ -453,13 +453,14 @@ describe('ConfigurationManager', () => {
       (configurationManager as any).configs.set('workflow2@1.0.0', configs[1]);
 
       const stats = configurationManager.getConfigurationStats();
-      expect(stats.totalConfigs).toBe(2);
-      expect(stats.enabledConfigs).toBe(1);
-      expect(stats.disabledConfigs).toBe(1);
-      expect(stats.environments).toContain('development');
-      expect(stats.environments).toContain('production');
-      expect(stats.priorities.normal).toBe(1);
-      expect(stats.priorities.high).toBe(1);
+      // IConfigurationStats is {totalConfigurations, activeConfigurations,
+      // validationErrors, lastValidated, defaultSettings, customSettings}. The
+      // old totalConfigs/enabledConfigs/disabledConfigs/environments/priorities
+      // fields no longer exist, so every assertion here read `undefined`.
+      expect(stats.totalConfigurations).toBe(2);
+      expect(stats.activeConfigurations).toBe(1);
+      expect(typeof stats.validationErrors).toBe('number');
+      expect(stats.lastValidated).toBeInstanceOf(Date);
     });
   });
 
