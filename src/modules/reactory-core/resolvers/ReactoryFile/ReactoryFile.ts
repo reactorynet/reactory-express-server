@@ -33,6 +33,7 @@ export type ReactoryFolder = {
 export type ReactoryUserFiles = {
   __typename?: "ReactoryUserFiles";
   path: string;
+  workspace?: string;
   loadOptions?: ReactoryUserFileLoadOptions;
   files: Reactory.Models.IReactoryFileModel[];
   folders: ReactoryFolder[];
@@ -328,6 +329,7 @@ class ReactoryFile {
     obj: any,
     params: {
       path?: string;
+      workspace?: string;
       loadOptions?: {
         limit?: number;
         offset?: number;
@@ -369,7 +371,10 @@ class ReactoryFile {
     const userFiles = await fileService.getUserFiles(
       context.user._id.toString(),
       params.path || "/",
-      userFilesLoadOptions
+      {
+        ...userFilesLoadOptions,
+        workspace: params.workspace,
+      }
     );
     if (!userFiles) {
       return {
@@ -381,6 +386,7 @@ class ReactoryFile {
     return {
       __typename: "ReactoryUserFiles",
       path: params.path || "/",
+      workspace: params.workspace || userFiles.workspace,
       loadOptions: userFilesLoadOptions,
       files: userFiles.files,
       folders: userFiles.folders,

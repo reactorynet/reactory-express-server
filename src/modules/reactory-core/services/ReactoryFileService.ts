@@ -34,6 +34,67 @@ interface IFileDownloadResult {
   size?: number;
 }
 
+function stripJsonComments(jsonString: string): string {
+  let insideString = false;
+  let insideSingleComment = false;
+  let insideMultiComment = false;
+  let result = '';
+
+  for (let i = 0; i < jsonString.length; i++) {
+    const char = jsonString[i];
+    const nextChar = jsonString[i + 1];
+
+    if (insideSingleComment) {
+      if (char === '\n' || char === '\r') {
+        insideSingleComment = false;
+        result += char;
+      }
+      continue;
+    }
+
+    if (insideMultiComment) {
+      if (char === '*' && nextChar === '/') {
+        insideMultiComment = false;
+        i++;
+      }
+      continue;
+    }
+
+    if (insideString) {
+      result += char;
+      if (char === '\\') {
+        result += nextChar;
+        i++;
+      } else if (char === '"') {
+        insideString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      insideString = true;
+      result += char;
+      continue;
+    }
+
+    if (char === '/' && nextChar === '/') {
+      insideSingleComment = true;
+      i++;
+      continue;
+    }
+
+    if (char === '/' && nextChar === '*') {
+      insideMultiComment = true;
+      i++;
+      continue;
+    }
+
+    result += char;
+  }
+
+  return result.replace(/,(\s*[}\]])/g, '$1');
+}
+
 export class ReactoryFileService
   implements Reactory.Service.IReactoryFileService
 {
@@ -70,9 +131,11 @@ export class ReactoryFileService
       includeFolders?: boolean;
       /** When false (default), omit names starting with `.` (hidden files and folders). */
       includeHidden?: boolean;
+      workspace?: string;
     }
   ): {
     path: string;
+    workspace?: string;
     files: Reactory.Models.IReactoryFile[];
     folders: { name: string; path: string }[];
   } {
@@ -94,6 +157,67 @@ export class ReactoryFileService
         partner_id: this.context.partner._id,
         APP_DATA_ROOT,    
       });
+    }
+
+    if (options?.workspace) {
+      const desktopRoot = process.env.REACTOR_DESKTOP_ROOT ? path.join(os.homedir(), process.env.REACTOR_DESKTOP_ROOT) : os.homedir();
+      const homeRoot = process.env.REACTOR_HOME_PATH || desktopRoot;
+      const userHomeFolder = process.env.IS_DESKTOP_INSTALL === "true"
+        ? homeRoot
+        : path.join(APP_DATA_ROOT, "profiles", userId.toString(), "files", this.context.partner._id.toString(), "home");
+
+      let workspaceFilePath = options.workspace;
+      if (!path.isAbsolute(workspaceFilePath) || !fs.existsSync(workspaceFilePath)) {
+        const relativeCandidate = path.join(userHomeFolder, workspaceFilePath.replace(/^\/+/, ""));
+        if (fs.existsSync(relativeCandidate)) {
+          workspaceFilePath = relativeCandidate;
+        }
+      }
+
+      if (fs.existsSync(workspaceFilePath)) {
+        const workspaceDir = path.dirname(workspaceFilePath);
+        if (
+          _rootPath === "/" ||
+          _rootPath === "" ||
+          _rootPath === workspaceFilePath ||
+          _rootPath === workspaceDir
+        ) {
+          try {
+            const fileContent = fs.readFileSync(workspaceFilePath, "utf8");
+            const cleanContent = stripJsonComments(fileContent);
+            const workspaceJson = JSON.parse(cleanContent);
+
+            let workspaceFolders: { name: string; path: string }[] = [];
+            if (Array.isArray(workspaceJson.folders)) {
+              workspaceJson.folders.forEach((f: { name?: string; path: string }) => {
+                if (!f || !f.path) return;
+                let resolvedFolderPath: string;
+                if (path.isAbsolute(f.path)) {
+                  resolvedFolderPath = f.path;
+                } else {
+                  resolvedFolderPath = path.resolve(workspaceDir, f.path);
+                }
+                const folderName = f.name || path.basename(resolvedFolderPath);
+                if (fs.existsSync(resolvedFolderPath)) {
+                  workspaceFolders.push({
+                    name: folderName,
+                    path: resolvedFolderPath,
+                  });
+                }
+              });
+            }
+
+            return {
+              path: rootPath,
+              workspace: options.workspace,
+              files: [],
+              folders: workspaceFolders,
+            };
+          } catch (err) {
+            logger.error(`ReactoryFileService.getUserFiles: Failed to parse workspace file ${workspaceFilePath}`, err);
+          }
+        }
+      }
     }
 
     // [DESKTOP OVERRIDE]: If running in local desktop mode, bypass CDN folder

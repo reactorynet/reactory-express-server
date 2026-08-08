@@ -193,6 +193,7 @@ type ReactoryRemoteSyncError {
 
 type ReactoryUserFiles {
   path: String
+  workspace: String
   loadOptions: ReactoryUserFilesLoadOptions
   folders: [ReactoryFolder]
   files: [ReactoryFile]
@@ -346,7 +347,7 @@ type Query {
   The loadOptions can be used to control pagination, sorting, and searching of files.
   If loadOptions is not provided, it defaults to loading the first 20 files.
   """
-  ReactoryUserFiles(path: String, loadOptions: ReactoryUserFilesLoadOptionsInput): ReactoryUserFileResults
+  ReactoryUserFiles(path: String, workspace: String, loadOptions: ReactoryUserFilesLoadOptionsInput): ReactoryUserFileResults
 
   """
   Fetches server files from administrative server paths. This query is restricted to ADMIN and DEVELOPER roles.
