@@ -45,12 +45,27 @@ const ContentSchema = new mongoose.Schema<Reactory.Models.IReactoryContent>({
     description: String,
     content: String,
     tags: [ String ],
+    // Set when the translation was produced by an AI persona rather than a human.
+    machineTranslated: Boolean,
+    // Hash of the source content at the time the translation was saved. Used to
+    // detect translations that have gone stale after the source was edited.
+    sourceHash: String,
+    updatedAt: Date,
+    updatedBy: {
+      type: ObjectId,
+      ref: 'User',
+    },
   }],
   content: String,
   template: Boolean,
   engine: String,
+  // Authoring format of `content`: 'markdown' | 'html' | 'text'
+  format: String,
   previewInputForm: String,
   description: String,
+  // Source language of `content`. Translations are keyed off this.
+  locale: String,
+  helpTopic: String,
   version: String,
   createdAt: Date,
   updatedAt: Date,

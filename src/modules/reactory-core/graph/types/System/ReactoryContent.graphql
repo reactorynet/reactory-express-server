@@ -1,4 +1,26 @@
 """
+A translation of a ReactoryContent item into a specific language.
+The `lang` field is an ISO 639-1 language code and is unique per content item.
+"""
+type ReactoryContentTranslation {
+  lang: String!
+  title: String
+  description: String
+  content: String
+  tags: [ String ]
+  """
+  Set when the translation was produced by an AI persona rather than a human.
+  """
+  machineTranslated: Boolean
+  """
+  True when the source content changed after this translation was last saved.
+  """
+  stale: Boolean
+  updatedAt: Date
+  updatedBy: User
+}
+
+"""
 A Reactory Content component
 """
 type ReactoryContent {
@@ -12,7 +34,28 @@ type ReactoryContent {
   helpTopic: String
   template: Boolean
   engine: String
-  previewInputForm: String  
+  previewInputForm: String
+  """
+  The authoring format of `content`: markdown, html or text.
+  """
+  format: String
+  """
+  Roles permitted to view this content. Null/empty means all users.
+  """
+  roles: [ String ]
+  """
+  Free-form metadata bag for the content item.
+  """
+  metadata: JSON
+  """
+  Available translations. Only returned when `includeTranslations` is requested
+  and the caller is permitted to edit content.
+  """
+  translations: [ ReactoryContentTranslation ]
+  """
+  The language actually used to resolve `title`, `description` and `content`.
+  """
+  resolvedLocale: String
   createdAt: Date
   updatedAt: Date
   createdBy: User!
@@ -24,7 +67,7 @@ type ReactoryContent {
   comments: [ Comment ]
 }
 
-type ReactorySaveImageDataResponse {  
+type ReactorySaveImageDataResponse {
   success: Boolean
   pngURL: String
   svgURL: String
@@ -32,13 +75,29 @@ type ReactorySaveImageDataResponse {
 
 input ReactoryGetContentOptionsInput {
   basePath: String
+  """
+  Resolve the content into this language. Defaults to the request context language.
+  """
+  locale: String
+  """
+  Return the full `translations` collection alongside the resolved content.
+  Requires content edit permissions.
+  """
+  includeTranslations: Boolean
+  """
+  Return the source record untouched, skipping any translation overlay.
+  Used by the content editor.
+  """
+  raw: Boolean
 }
 
-extend type Query {
-  ReactoryGetContentBySlug(slug: String!, options: ReactoryGetContentOptionsInput): ReactoryContent
-  ReactoryGetContentByTags(tags: [String]!): [ ReactoryContent ]
-  ReactoryGetContentById(id: String!): [ ReactoryContent ]
-  ReactoryGetContentList: [ ReactoryContent ]
+input ReactoryContentTranslationInput {
+  lang: String!
+  title: String
+  description: String
+  content: String
+  tags: [ String ]
+  machineTranslated: Boolean
 }
 
 input CreateContentInput {
@@ -48,9 +107,15 @@ input CreateContentInput {
   content: String!
   locale: String
   description: String
+  version: String
   template: Boolean
   engine: String
+  format: String
+  roles: [ String ]
+  metadata: JSON
+  translations: [ ReactoryContentTranslationInput ]
   previewInputForm: String
+  helpTopic: String
   createdAt: Date
   updatedAt: Date
   publisDate: Date
@@ -66,10 +131,15 @@ input ReactoryContentInput {
   title: String!
   description: String
   content: String!
-  lcoale: String
+  locale: String
   template: Boolean
   engine: String
+  format: String
+  roles: [ String ]
+  metadata: JSON
+  translations: [ ReactoryContentTranslationInput ]
   previewInputForm: String
+  helpTopic: String
   version: String
   createdAt: Date
   updatedAt: Date
@@ -79,8 +149,24 @@ input ReactoryContentInput {
   published: Boolean
 }
 
+extend type Query {
+  ReactoryGetContentBySlug(slug: String!, options: ReactoryGetContentOptionsInput): ReactoryContent
+  ReactoryGetContentByTags(tags: [String]!): [ ReactoryContent ]
+  ReactoryGetContentById(id: String!): [ ReactoryContent ]
+  ReactoryGetContentList: [ ReactoryContent ]
+}
+
 extend type Mutation {
   ReactoryCreateContent(createInput: CreateContentInput!): ReactoryContent
   ReactorySaveContent(reactoryInput: ReactoryContentInput!): ReactoryContent
+  """
+  Creates or replaces a single translation on a content item without
+  rewriting the source content.
+  """
+  ReactorySaveContentTranslation(slug: String!, translation: ReactoryContentTranslationInput!): ReactoryContent
+  """
+  Removes a translation for the given language from a content item.
+  """
+  ReactoryDeleteContentTranslation(slug: String!, lang: String!): ReactoryContent
   ReactorySaveImageData(folder: String, filename: String, svg: String, png: String, width: Int, height: Int): ReactorySaveImageDataResponse
 }
