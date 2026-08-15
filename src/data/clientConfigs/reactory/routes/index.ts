@@ -82,7 +82,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
         key: 'slug',
         value: {
           type: 'string',
-          slug: 'about-reactory-platform',
+          slug: 'about-reactory',
         }
       }
     ]

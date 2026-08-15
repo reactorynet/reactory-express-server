@@ -3,13 +3,21 @@ query ReactoryGetContentBySlug($slug: String!) {
     id
     slug
     title
+    description
     content
     published
     topics
+    version
+    locale
+    template
+    engine
+    previewInputForm
+    helpTopic
     createdBy {
       id
       fullName
     }
     createdAt
+    updatedAt
   }
 }

@@ -84,34 +84,10 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   whitelist,
   featureFlags: [
     {
-      feature: 'core.WorkflowEditorBetaUI@1.0.0',
-      value: true,
-      roles: ['ADMIN', 'DEVELOPER'],
-    },
-    {
-      feature: 'core.WorkflowAdvancedFeatures@1.0.0',
-      value: true,
-      roles: ['ADMIN', 'DEVELOPER'],      
-    },
-    {
-      feature: 'core.WorkflowCollaboration@1.0.0',
+      feature: "reactor.EnableReactor3DAvatar@1.0.0",
+      group: "default",
       value: false,
-      roles: ['ADMIN'],
-    },
-    {
-      feature: 'core.WorkflowTemplatesBeta@1.0.0',
-      value: true,
-      roles: ['USER', 'ADMIN', 'DEVELOPER'],
-    },
-    {
-      feature: 'core.WorkflowValidationExperimental@1.0.0',
-      value: false,
-      roles: ['ADMIN', 'DEVELOPER'],
-    },
-    {
-      feature: 'core.WorkflowAIAssistance@1.0.0',
-      value: false,
-      roles: ['ADMIN'],
+      roles: ['USER', 'ANON'],
     },
     {
       // Forms-engine v5 adapter. Default off; flip value to true to opt
@@ -120,7 +96,7 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
       // See reactory-pwa-client/src/components/reactory/docs/forms-engine
       // for the full migration plan.
       feature: 'core.FormsEngineV5@1.0.0',
-      value: false,
+      value: true,
       roles: ['ADMIN', 'DEVELOPER'],
     }
   ]

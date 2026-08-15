@@ -3,13 +3,21 @@ mutation ReactoryCreateContent($createInput: CreateContentInput!){
     id
     slug
     title
+    description
     content
     topics
     published
+    version
+    locale
+    template
+    engine
+    previewInputForm
+    helpTopic
     createdBy {
       id
       fullName
     }
     createdAt
+    updatedAt
   }
 }

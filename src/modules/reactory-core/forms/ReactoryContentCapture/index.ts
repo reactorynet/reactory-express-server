@@ -1,4 +1,3 @@
-
 import schema from './schema';
 import * as uiSchemas from './uiSchemas';
 import $graphql from './graphql';
@@ -7,7 +6,9 @@ import Reactory from '@reactorynet/reactory-core';
 const {
   fullEditor,
   inlineEditor,
-  minimalEditor
+  minimalEditor,
+  cmsEditor,
+  splitPreviewEditor,
 } = uiSchemas;
 
 const ContentCapture: Reactory.Forms.IReactoryForm = {
@@ -16,11 +17,11 @@ const ContentCapture: Reactory.Forms.IReactoryForm = {
   uiSupport: ['material'],
   uiResources: [],
   title: 'Reactory Content Capture Page',
-  tags: ['static content', 'blog', 'dynamic content'],
+  tags: ['static content', 'blog', 'dynamic content', 'cms'],
   name: 'ContentCapture',
   nameSpace: 'static',
   version: '1.0.0',
-  description: 'Allows the user to create static content / dynamic content using the Reactory Content editor',  
+  description: 'Allows users to create and edit static/dynamic content using Reactory Content editor with full CMS features',  
   helpTopics: [
     'ContentCapture',
     'MountReactoryWidgetInContent'
@@ -41,13 +42,29 @@ const ContentCapture: Reactory.Forms.IReactoryForm = {
       id: 'full',
       title: 'Full',
       key: 'full',
-      description: 'Full Editor',
+      description: 'Full Editor View',
       icon: 'edit',
       uiSchema: fullEditor,
     },    
     {
+      id: 'cms',
+      title: 'CMS Experience',
+      key: 'cms',
+      description: 'Tabbed Full CMS Editor',
+      icon: 'wysiwyg',
+      uiSchema: cmsEditor,
+    },
+    {
+      id: 'split',
+      title: 'Split Preview',
+      key: 'splitPreview',
+      description: 'Side-by-side Editor and Live Preview',
+      icon: 'vertical_split',
+      uiSchema: splitPreviewEditor,
+    },
+    {
       id: 'minimal',
-      title: 'Minmal',
+      title: 'Minimal',
       key: 'minimal',
       description: 'Minimal Content Edit View',
       icon: 'edit',
