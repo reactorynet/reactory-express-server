@@ -1,0 +1,16 @@
+name: list_reactory_home_files
+nameSpace: core
+version: 1.0.0
+description: Lists files in the Reactory home folder using a shell command
+inputs:
+  path:
+    type: string
+    default: /Users/wernerw/Projects/reactory/
+    description: The directory path to list files from
+steps:
+  - id: list_files
+    type: cliCommand
+    label: List files in Reactory home folder
+    config:
+      command: "ls -la /Users/wernerw/Projects/reactory/"
+    outputVariable: files

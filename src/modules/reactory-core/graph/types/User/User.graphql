@@ -394,6 +394,22 @@ type User {
   Social media profiles linked to this user.
   """
   socials: [ReactorySocialReference]
+
+  """
+  AI agents linked to this user.
+  """
+  linked_agents: [ReactoryUserLinkedAgent]
+}
+
+"""
+AI agent linked to a user account.
+"""
+type ReactoryUserLinkedAgent {
+  personaId: String
+  providerId: String
+  modelId: String
+  providerProps: Any
+  description: String
 }
 
 """
@@ -942,6 +958,7 @@ extend type Mutation {
   """
   ReactoryCoreCreateUserMembership(
     user_id: String!, 
+    clientId: String,
     organization: String, 
     businessUnit: String, 
     roles: [String]

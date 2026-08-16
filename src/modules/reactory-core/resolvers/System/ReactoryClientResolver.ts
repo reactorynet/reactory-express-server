@@ -58,6 +58,13 @@ export class ReactoryClientResolver {
   }
   
   @roles(["ADMIN"])
+  @query("ReactoryClients")
+  async reactoryClients(obj: any, arg: any, context: Reactory.Server.IReactoryContext) {
+      const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
+      return systemService.getReactoryClients({});
+  }
+
+  @roles(["ADMIN"])
   @query("ReactoryClientWithId")
   async clientWithId(obj: any, arg: any, context: Reactory.Server.IReactoryContext) {
       const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");

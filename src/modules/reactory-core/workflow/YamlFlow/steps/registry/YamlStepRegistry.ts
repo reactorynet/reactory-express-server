@@ -206,7 +206,15 @@ export class YamlStepRegistry {
       typeof params.config === 'object' &&
       Object.keys(params.config).length > 0
     ) {
-      config = params.config;
+      config = { ...params.config };
+    }
+
+    // Collect top-level step properties that are not standard metadata keys
+    const standardKeys = new Set(['id', 'type', 'config', 'inputs', 'label', 'dependsOn', 'outputVariable', 'name', 'source', 'description']);
+    for (const key of Object.keys(params)) {
+      if (!standardKeys.has(key) && (params as any)[key] !== undefined) {
+        config[key] = (params as any)[key];
+      }
     }
 
     // Resolve inputs
@@ -218,7 +226,7 @@ export class YamlStepRegistry {
           if (parsed && typeof parsed === 'object') {
             // If config is empty, treat parsed inputs as config (backward compat)
             if (Object.keys(config).length === 0) {
-              config = parsed;
+              config = { ...parsed, ...config };
             } else {
               inputs = parsed;
             }
@@ -230,7 +238,7 @@ export class YamlStepRegistry {
       } else if (typeof rawInputs === 'object') {
         // If config is empty, treat object inputs as config (backward compat)
         if (Object.keys(config).length === 0) {
-          config = rawInputs;
+          config = { ...rawInputs, ...config };
         } else {
           inputs = rawInputs;
         }

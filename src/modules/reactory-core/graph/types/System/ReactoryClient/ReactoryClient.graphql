@@ -427,6 +427,11 @@ union ReactoryClientCreateResult = ReactoryClientCreated | ReactoryClientCreateE
 
 extend type Query {
   """
+  Restricted to ADMIN roles. Fetches all ReactoryClient applications
+  """
+  ReactoryClients: [ReactoryClient]
+
+  """
   Restricted to ADMIN roles. Fetches a ReactoryClient item with a given ID
   """
   ReactoryClientWithId(id: String!): ReactoryClient

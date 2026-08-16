@@ -103,17 +103,24 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
     {
       ordinal: 7,
       title: 'reactory:reactory.menu.forms', 
-      link: '/forms/', 
+      link: '/data/', 
       icon: 'code', 
       roles: ['DEVELOPER', 'ADMIN'],
       items: [        
         {
           ordinal: 1, 
           title: 'reactory:reactory.menu.graphiql', 
-          link: '/graphiql/', 
+          link: '/data/graphiql/',
           icon: 'offline_bolt', 
           roles: ['DEVELOPER', 'ADMIN'],
-        },        
+        },
+        {
+          ordinal: 2,
+          title: 'reactory:reactory.menu.sql-editor',
+          link: '/data/sql-editor/',
+          icon: 'storage', 
+          roles: ['DEVELOPER', 'ADMIN'],
+        },
       ]
     },
     {

@@ -78,6 +78,11 @@ class UserResolver {
   authProvider(user: { authProvider: any }) {
     return user.authProvider || 'LOCAL';
   }
+
+  @property('User', 'linked_agents')
+  linked_agents(user: { linked_agents: any }) {
+    return user.linked_agents || [];
+  }
   
 
   // --- Query Resolvers ---

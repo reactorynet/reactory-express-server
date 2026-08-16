@@ -505,7 +505,6 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
   const numSelected = selectedIds.size;
   const rowCount = history.length;
 
-  debugger;
   // Theme-aware styles
   const headerBgColor = isDarkmode 
     ? theme.palette.grey[800]

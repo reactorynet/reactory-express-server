@@ -1,5 +1,6 @@
 import Reactory from "@reactorynet/reactory-core";
 import mongoose from "mongoose";
+import crypto from "crypto";
 import logger from "@reactory/server-core/logging";
 import CoreData from "@reactory/server-core/data";
 import { ReactoryClientValidationError } from "@reactory/server-core/exceptions";
@@ -196,6 +197,14 @@ const synchronizeRoutes = async (
       }
 
       try {
+        const cleanConfigRoute: any = { ...configRoute };
+        if (cleanConfigRoute._id && !mongoose.isValidObjectId(cleanConfigRoute._id)) {
+          delete cleanConfigRoute._id;
+        }
+        if (cleanConfigRoute.id && !mongoose.isValidObjectId(cleanConfigRoute.id)) {
+          delete cleanConfigRoute.id;
+        }
+
         const existingRoute = existingRouteMap.get(routeKey);
 
         if (existingRoute) {
@@ -208,7 +217,7 @@ const synchronizeRoutes = async (
               id: undefined,
             },
             {
-              ...configRoute,
+              ...cleanConfigRoute,
               _id: undefined,
               id: undefined,
             }
@@ -216,7 +225,7 @@ const synchronizeRoutes = async (
 
           if (hasChanges) {
             logger.debug(`Route ${routeKey} has changes, updating`);
-            updatedRoutes.push({ ...configRoute, key: routeKey });
+            updatedRoutes.push({ ...cleanConfigRoute, key: routeKey });
             result.updated++;
           } else {
             // Keep existing route as-is
@@ -226,7 +235,7 @@ const synchronizeRoutes = async (
         } else {
           // New route
           logger.debug(`Adding new route ${routeKey}`);
-          updatedRoutes.push({ ...configRoute, key: routeKey });
+          updatedRoutes.push({ ...cleanConfigRoute, key: routeKey });
           result.added++;
         }
       } catch (routeError) {
@@ -252,6 +261,9 @@ const synchronizeRoutes = async (
 
     // Update the client document with synchronized routes
     clientDocument.routes = updatedRoutes as any;
+    if (typeof clientDocument.markModified === "function") {
+      clientDocument.markModified("routes");
+    }
 
     const duration = (Date.now() - startTime) / 1000;
 
@@ -292,6 +304,36 @@ const synchronizeRoutes = async (
       });
     }
     throw error;
+  }
+};
+
+/**
+ * Helper to re-process password and salt for a ReactoryClient document
+ */
+const processClientPasswordAndSalt = (
+  reactoryClient: Reactory.Models.ReactoryClientDocument,
+  clientConfig: Partial<Reactory.Models.IReactoryClient>
+) => {
+  if (clientConfig.password) {
+    if (clientConfig.salt && clientConfig.salt !== 'generate') {
+      reactoryClient.salt = clientConfig.salt;
+      reactoryClient.password = crypto.pbkdf2Sync(
+        clientConfig.password,
+        clientConfig.salt,
+        1000,
+        64,
+        'sha512'
+      ).toString('hex');
+    } else {
+      reactoryClient.setPassword(clientConfig.password);
+    }
+  } else if (clientConfig.salt && clientConfig.salt !== 'generate' && reactoryClient.password) {
+    reactoryClient.salt = clientConfig.salt;
+  }
+
+  if (typeof reactoryClient.markModified === 'function') {
+    reactoryClient.markModified('salt');
+    reactoryClient.markModified('password');
   }
 };
 
@@ -340,15 +382,21 @@ const upsertFromConfig = async (
 
         // Keep the stored credential in sync with the configured secret —
         // setPassword() re-salts and re-hashes as a pair.
-        if (clientConfig.password && clientConfig.password !== 'generate') {
-          reactoryClient.setPassword(clientConfig.password);
-        }
+        processClientPasswordAndSalt(reactoryClient, clientConfig);
 
         // Explicitly mark complex/mixed fields as modified to ensure Mongoose saves them
         if (input.themes) reactoryClient.markModified('themes');
         if (input.auth_config) reactoryClient.markModified('auth_config');
         if (input.settings) reactoryClient.markModified('settings');
         if (input.whitelist) reactoryClient.markModified('whitelist');
+        if (input.applicationRoles) reactoryClient.markModified('applicationRoles');
+        if (input.plugins) reactoryClient.markModified('plugins');
+        if (input.featureFlags) reactoryClient.markModified('featureFlags');
+        if (input.components) reactoryClient.markModified('components');
+        reactoryClient.markModified('routes');
+        reactoryClient.markModified('menus');
+        // if (input.menus) reactoryClient.markModified('menus');
+        // if (input.routes) reactoryClient.markModified('routes');
 
         // Validate before saving
         const validationResult = reactoryClient.validateSync();
@@ -377,6 +425,7 @@ const upsertFromConfig = async (
         logger.info(`Creating new client ${clientConfig.name}`);
         //@ts-ignore
         reactoryClient = new ReactoryClientModel(input);
+        processClientPasswordAndSalt(reactoryClient, clientConfig);
         const validationResult = reactoryClient.validateSync();
         if (validationResult && validationResult.errors) {
           logger.error("Validation errors during creation", validationResult.errors);
@@ -482,6 +531,9 @@ const upsertFromConfig = async (
 
     //@ts-ignore
     reactoryClient.menus = menuRefs;
+    if (typeof reactoryClient.markModified === "function") {
+      reactoryClient.markModified("menus");
+    }
 
     // Save the final document with all updates
     reactoryClient = await reactoryClient.save().then();
@@ -942,7 +994,7 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
 
         // Set password if provided
         if (clientConfig.password && reactoryClient._id) {
-          reactoryClient.setPassword(clientConfig.password);
+          processClientPasswordAndSalt(reactoryClient, clientConfig);
           await reactoryClient.save();
         }
 

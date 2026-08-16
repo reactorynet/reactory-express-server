@@ -36,6 +36,14 @@ const SocialsSchema = new mongoose.Schema({
   updated: Date,
 });
 
+const LinkedAgentSchema = new mongoose.Schema({
+  personaId: String,
+  providerId: String,
+  modelId: String,
+  providerProps: {},
+  description: String,
+});
+
 const UserSchema = new mongoose.Schema({
   id: ObjectIdSchema,
   username: {
@@ -167,6 +175,7 @@ const UserSchema = new mongoose.Schema({
   },
   meta,
   socials: [SocialsSchema],
+  linked_agents: [LinkedAgentSchema],
 });
 
 UserSchema.methods.setPassword = function setPassword(password: string) {
