@@ -85,6 +85,18 @@ set -a
 source "$ENV_FILE"
 set +a
 
+# ── Export all relevant environment variables for podman-compose compatibility ──
+# This ensures podman-compose can properly resolve variables in the compose file
+# Also ensure we explicitly set the variables from the environment file
+export MONGO_VERSION="${MONGO_VERSION:-7.0}"
+export POSTGRES_VERSION="${POSTGRES_VERSION:-17}"
+export REDIS_VERSION="${REDIS_VERSION:-7.4}"
+export MEILISEARCH_VERSION="${MEILISEARCH_VERSION:-v1.13}"
+export JAEGER_VERSION="${JAEGER_VERSION:-1.76.0}"
+export GRAFANA_VERSION="${GRAFANA_VERSION:-12.4.4}"
+export LOKI_VERSION="${LOKI_VERSION:-3.7.2}"
+export PROMETHEUS_VERSION="${PROMETHEUS_VERSION:-v3.12.0}"
+
 # ── Local image preflight ─────────────────────────────────────────────────────
 # Dynamically extract images starting with "localhost/" from the compose file.
 # These are locally-built images not available from a remote registry. Applies
@@ -139,14 +151,38 @@ else
   echo "ℹ️  No local images required by this compose file"
 fi
 
+# ── Set environment variables for podman-compose to avoid interactive prompts ──
+if [ "$COMPOSE_CMD" = "podman-compose" ]; then
+  # Export all environment variables to ensure they're available to podman-compose
+  export MONGO_VERSION
+  export POSTGRES_VERSION
+  export REDIS_VERSION
+  export MEILISEARCH_VERSION
+  export JAEGER_VERSION
+  export GRAFANA_VERSION
+  export LOKI_VERSION
+  export PROMETHEUS_VERSION
+fi
+
 # ── Launch ────────────────────────────────────────────────────────────────────
 if [ "$COMPOSE_CMD" = "podman-compose" ]; then
   PODMAN_COMPOSE_PROJECT_NAME=${PODMAN_COMPOSE_PROJECT_NAME:-reactory-fullstack}
   echo "🚀 Launching: $COMPOSE_CMD"
+  # For podman-compose, we need to ensure all variables are available in the environment
+  # to avoid interactive prompts for image selection
+  # Source the environment file to ensure variables are properly set
+  set -a
+  source "$ENV_FILE"
+  set +a
+  
+  # Set podman pull arguments to avoid interactive prompts and use standard registries
+  export PODMAN_PULL_ARGS="--disable-content-trust"
+  
   $COMPOSE_CMD \
     -f "$COMPOSE_FILE" \
     -p "$PODMAN_COMPOSE_PROJECT_NAME" \
     --env-file "$ENV_FILE" \
+    --podman-pull-args="--disable-content-trust" \
     $COMPOSE_COMMAND
 else
   echo "🚀 Launching: $COMPOSE_CMD"
