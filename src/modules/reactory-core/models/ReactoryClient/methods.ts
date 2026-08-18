@@ -36,7 +36,10 @@ const getSetting = function getSetting<T>(
   name: string,
   defaultValue: T = null,
   create = false,
-  componentFqn: string = null): { data: T } {
+  componentFqn: string = null,
+  settingType?: string,
+  variant?: string,
+): { data: T } {
 
   if (Array.isArray(this.settings)) {
     const found = find(this.settings, { name });
@@ -47,6 +50,8 @@ const getSetting = function getSetting<T>(
         name,
         data: defaultValue,
         componentFqn: componentFqn,
+        settingType: settingType || 'generic',
+        variant: variant || 'default',
         formSchema: null,
       });
 

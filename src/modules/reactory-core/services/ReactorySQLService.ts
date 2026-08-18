@@ -164,6 +164,21 @@ export default class ReactorySQLService {
    * `default`/absent falls back to engine-specific conventional vars.
    */
   private resolveConnectionStringFromId(engine: SQLEngine, connectionId?: string): string | undefined {
+    // check the context loaded partner. 
+    // if the context has a partner and the partner has a setting with the connectionId
+    // we check if the setting is an object or string
+
+    if (this.context.partner && this.context.partner.getSetting && typeof this.context.partner.getSetting === 'function') {
+      const setting = this.context.partner.getSetting(connectionId || 'default');
+      if (setting && typeof setting === 'object' && setting.data) {
+        if (typeof setting.data === 'string') {
+          return setting.data;
+        } else {
+            return `${engine}://${setting.data.username}:${setting.data.password}@${setting.data.host}:${setting.data.port}/${setting.data.database}`;          
+        }
+      }
+    }
+
     if (connectionId && connectionId !== 'default') {
       const upper = connectionId.toUpperCase().replace(/[^A-Z0-9]/g, '_');
       const named = envFirst(`REACTORY_SQL_${upper}_URL`, `SQL_${upper}_URL`);
