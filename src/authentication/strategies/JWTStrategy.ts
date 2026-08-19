@@ -12,7 +12,6 @@ import {
   resolveSessionState,
   SessionInfoEntry,
   SessionState,
-  toEpochMs,
 } from '@reactory/server-modules/reactory-core/services/SecurityService/sessions';
 
 
@@ -44,8 +43,6 @@ const resolveTokenSessionState = async (
   payload: any,
   clientKey: string
 ): Promise<SessionState> => {
-  const issuedAt = toEpochMs(payload.iat) ?? undefined;
-
   if (request.context?.getService) {
     try {
       const securityService = request.context.getService<ISecurityService>(
@@ -54,12 +51,10 @@ const resolveTokenSessionState = async (
       if (typeof securityService?.resolveSessionState === 'function') {
         return await securityService.resolveSessionState(payload.userId, payload.refresh, {
           clientKey,
-          issuedAt,
         });
       }
       const valid = await securityService.validateSession(payload.userId, payload.refresh, {
         clientKey,
-        issuedAt,
       });
       return valid ? 'valid' : 'revoked';
     } catch {

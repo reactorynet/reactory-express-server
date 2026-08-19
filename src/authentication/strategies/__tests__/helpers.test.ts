@@ -10,7 +10,28 @@ import Reactory from '@reactorynet/reactory-core';
 // $set) so the tests below observe what Mongo would really end up holding.
 const sessionStore: { sessionInfo: any[] } = { sessionInfo: [] };
 
-const applyUpdate = (update: any) => {
+/**
+ * Evaluate the conditional filter the session writer guards its push with, so the
+ * fake enforces the same slot exclusivity Mongo would.
+ */
+const filterMatches = (filter: any): boolean => {
+  const guard = filter?.sessionInfo?.$not?.$elemMatch;
+  if (!guard) return true;
+  const now = guard['jwtPayload.exp']?.$gt ?? new Date();
+  const holder = sessionStore.sessionInfo.find(
+    (s: any) =>
+      s.key === guard.key &&
+      Boolean(s.jwtPayloadJson) &&
+      s.jwtPayload?.exp &&
+      new Date(s.jwtPayload.exp).getTime() > new Date(now).getTime()
+  );
+  return holder === undefined;
+};
+
+const applyUpdate = (filter: any, update: any) => {
+  if (!filterMatches(filter)) {
+    return { acknowledged: true, matchedCount: 0, modifiedCount: 0 };
+  }
   if (update.$pull?.sessionInfo?.id?.$in) {
     const ids: string[] = update.$pull.sessionInfo.id.$in;
     sessionStore.sessionInfo = sessionStore.sessionInfo.filter((s: any) => !ids.includes(s.id));
@@ -21,12 +42,14 @@ const applyUpdate = (update: any) => {
   if (update.$set?.sessionInfo) {
     sessionStore.sessionInfo = update.$set.sessionInfo;
   }
-  return { acknowledged: true, modifiedCount: 1 };
+  return { acknowledged: true, matchedCount: 1, modifiedCount: 1 };
 };
 
-const mockUpdateOne = jest.fn((_filter: any, update: any) => ({
-  exec: jest.fn().mockImplementation(async () => applyUpdate(update)),
-}));
+const defaultUpdateOne = (filter: any, update: any) => ({
+  exec: jest.fn().mockImplementation(async () => applyUpdate(filter, update)),
+});
+
+const mockUpdateOne = jest.fn(defaultUpdateOne);
 
 jest.mock('@reactory/server-modules/reactory-core/models', () => ({
   User: {
@@ -173,7 +196,10 @@ describe('Authentication Helpers', () => {
 
     beforeEach(() => {
       sessionStore.sessionInfo = [];
-      mockUpdateOne.mockClear();
+      // Reset, not clear: tests that force a write failure replace the
+      // implementation, and it has to be put back for the next one.
+      mockUpdateOne.mockReset();
+      mockUpdateOne.mockImplementation(defaultUpdateOne);
       delete process.env.REACTORY_SESSION_REUSE;
       delete process.env.REACTORY_MAX_SESSIONS_PER_CLIENT;
       delete process.env.REACTORY_MAX_TOTAL_SESSIONS;
@@ -251,9 +277,26 @@ describe('Authentication Helpers', () => {
         expect(new Set(refreshes).size).toBe(2);
       });
 
-      it('addSession always stacks, even for the same application and host', async () => {
-        await Helpers.addSession(mockUser, Helpers.jwtTokenForUser(mockUser), '10.0.0.1', 'partner-a');
-        await Helpers.addSession(mockUser, Helpers.jwtTokenForUser(mockUser), '10.0.0.1', 'partner-a');
+      it('addSession refuses a second session for a slot that is already held', async () => {
+        const first = await Helpers.addSession(
+          mockUser, Helpers.jwtTokenForUser(mockUser), '10.0.0.1', 'partner-a'
+        );
+        const second = await Helpers.addSession(
+          mockUser, Helpers.jwtTokenForUser(mockUser), '10.0.0.1', 'partner-a'
+        );
+
+        expect(first.claimed).toBe(true);
+        expect(second.claimed).toBe(false);
+        expect(storedSessions()).toHaveLength(1);
+      });
+
+      it('addSession stacks when given a slot of its own', async () => {
+        await Helpers.addSession(
+          mockUser, Helpers.jwtTokenForUser(mockUser), '10.0.0.1', 'partner-a', undefined, 'slot-1'
+        );
+        await Helpers.addSession(
+          mockUser, Helpers.jwtTokenForUser(mockUser), '10.0.0.1', 'partner-a', undefined, 'slot-2'
+        );
 
         expect(storedSessions()).toHaveLength(2);
       });
@@ -315,6 +358,27 @@ describe('Authentication Helpers', () => {
         expect(updates).toHaveLength(1);
         expect(updates[0].$set.lastLogin).toBeInstanceOf(Date);
         expect(updates[0].$push).toBeUndefined();
+      });
+
+      it('records the login through the throttled service path when one is available', async () => {
+        // Reuse happens on every page load for the shared anonymous account, so
+        // this write has to share touchSession's throttle rather than land
+        // unconditionally on the one document every visitor shares.
+        const touchSession = jest.fn().mockResolvedValue(undefined);
+        const context: any = {
+          getService: jest.fn().mockReturnValue({
+            touchSession,
+            invalidateSessionCache: jest.fn().mockResolvedValue(undefined),
+          }),
+        };
+
+        await Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a', context);
+        mockUpdateOne.mockClear();
+
+        await Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a', context);
+
+        expect(touchSession).toHaveBeenCalledWith('507f1f77bcf86cd799439011', 'partner-a');
+        expect(mockUpdateOne).not.toHaveBeenCalled();
       });
     });
 
@@ -389,6 +453,78 @@ describe('Authentication Helpers', () => {
           lastName: 'Doe',
           token: expect.any(String),
         });
+      });
+    });
+
+    describe('a login never hands back a token without a session', () => {
+      it('fails the login when the session write fails', async () => {
+        mockUpdateOne.mockReturnValueOnce({
+          exec: jest.fn().mockRejectedValue(new Error('mongo write failed')),
+        } as any);
+
+        // Returning a token here would be the worst outcome available: the login
+        // looks like it worked and every request afterwards is a 401.
+        await expect(
+          Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a')
+        ).rejects.toThrow('mongo write failed');
+        expect(storedSessions()).toHaveLength(0);
+      });
+
+      it('does not report success when nothing was persisted', async () => {
+        mockUpdateOne.mockReturnValue({
+          exec: jest.fn().mockRejectedValue(new Error('mongo unavailable')),
+        } as any);
+
+        await expect(
+          Helpers.addSession(mockUser, Helpers.jwtTokenForUser(mockUser), '10.0.0.1', 'partner-a')
+        ).rejects.toThrow('mongo unavailable');
+      });
+    });
+
+    describe('simultaneous logins converge on one session', () => {
+      it('gives both callers the same token from one session', async () => {
+        // Two tabs opening at once, or a burst of first page loads on the shared
+        // anonymous account: both read before either writes, so both find nothing
+        // to reuse. The conditional write lets one through and the other adopts it.
+        const [first, second] = await Promise.all([
+          Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a'),
+          Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a'),
+        ]);
+
+        expect(storedSessions()).toHaveLength(1);
+        expect(second.token).toBe(first.token);
+      });
+
+      it('holds under a burst', async () => {
+        const results = await Promise.all(
+          Array.from({ length: 8 }, () =>
+            Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a')
+          )
+        );
+
+        expect(storedSessions()).toHaveLength(1);
+        expect(new Set(results.map((r) => r.token)).size).toBe(1);
+      });
+
+      it('still lets different hosts and applications through concurrently', async () => {
+        await Promise.all([
+          Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a'),
+          Helpers.generateLoginToken(mockUser, '10.0.0.2', 'partner-a'),
+          Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-b'),
+        ]);
+
+        expect(storedSessions()).toHaveLength(3);
+      });
+
+      it('still stacks every login when reuse is off', async () => {
+        process.env.REACTORY_SESSION_REUSE = 'false';
+
+        await Promise.all([
+          Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a'),
+          Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a'),
+        ]);
+
+        expect(storedSessions()).toHaveLength(2);
       });
     });
 

@@ -22,20 +22,36 @@ import {
   ValidateSessionOptions,
 } from './types';
 import {
+  appendSession,
   buildSessionEntry,
   CachedSessionRecord,
   computeEvictions,
   isSessionLive,
-  persistSession,
   readSessions,
   resolveSessionState as sessionStateFor,
   SESSION_CACHE_TTL,
+  SESSION_GEN_TTL,
   sessionCacheKey,
   SessionCacheEnvelope,
+  sessionGenKey,
   SessionInfoEntry,
   SessionState,
   toCachedRecords,
 } from './sessions';
+
+/**
+ * How long a `lastLogin` touch is suppressed for, in seconds.
+ *
+ * `touchSession` is fire-and-forget on every authenticated request. Left
+ * unthrottled that is one Mongo write per request per pod, all converging on the
+ * same document for shared accounts — the anonymous user is one document that
+ * every visitor of an application authenticates as, so this is write contention
+ * on a single hot document rather than a spread of small updates.
+ */
+const TOUCH_THROTTLE_SECONDS = 60;
+
+/** Redis key prefix for the `lastLogin` touch throttle markers. */
+const TOUCH_MARKER_PREFIX = 'reactory:security:touch:';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -129,39 +145,56 @@ class SecurityService implements ISecurityService {
   // ─── Redis helpers ──────────────────────────────────────────────────────
 
   /**
-   * Read the cached active-session records for a user.
+   * Read the current value of a user's session generation counter.
    *
-   * Returns `null` on a cache miss *or* on any Redis failure, so callers always
-   * treat Mongo as the source of truth. Values written by an older build (a bare
-   * array of refresh strings, or of records) are accepted and normalised with a
-   * `writtenAt` of 0, which makes them non-authoritative for any token — the
-   * first validation after a deploy rewrites them in the current shape.
+   * A missing counter reads as 0. Returns `null` when Redis cannot answer, which
+   * callers treat as "the cache cannot be trusted at all".
+   */
+  private async readGeneration(userId: string): Promise<number | null> {
+    if (!this.redis) return null;
+    try {
+      const raw = await this.redis.get(sessionGenKey(userId));
+      if (raw === null || raw === undefined) return 0;
+      const parsed = parseInt(raw, 10);
+      return Number.isFinite(parsed) ? parsed : 0;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Read the cached active-session records for a user, if they are still current.
+   *
+   * Currency is decided by the generation counter, never by comparing clocks:
+   * several pods write this cache and issue these tokens, and their clocks
+   * disagree. An envelope whose generation no longer matches is discarded, which
+   * covers a session added since the snapshot *and* a revocation an in-flight
+   * reader might otherwise write back over.
+   *
+   * Anything not in the current shape — including caches written by an earlier
+   * build — is treated as a miss, so validation falls through to Mongo and the
+   * entry is rewritten. In particular this keeps a legacy entry, which carried no
+   * client, from vouching for a token on an application it was not issued for.
    */
   private async getCachedSessions(userId: string): Promise<SessionCacheEnvelope | null> {
     if (!this.redis) return null;
     try {
-      const cached = await this.redis.getJSON<any>(sessionCacheKey(userId));
-      if (cached === null || cached === undefined) return null;
+      const [cached, generation] = await Promise.all([
+        this.redis.getJSON<any>(sessionCacheKey(userId)),
+        this.readGeneration(userId),
+      ]);
 
-      if (Array.isArray(cached)) {
-        return {
-          writtenAt: 0,
-          sessions: cached
-            .map((entry: any): CachedSessionRecord | null =>
-              typeof entry === 'string' ? { refresh: entry } : entry?.refresh ? entry : null
-            )
-            .filter((entry): entry is CachedSessionRecord => entry !== null),
-        };
+      if (generation === null) return null;
+      if (!cached || typeof cached !== 'object') return null;
+      if (typeof cached.gen !== 'number' || !Array.isArray(cached.sessions)) return null;
+      if (cached.gen !== generation) {
+        logger.debug(
+          `[SecurityService] Session cache for ${userId} is stale (gen ${cached.gen} != ${generation})`
+        );
+        return null;
       }
 
-      if (Array.isArray(cached.sessions)) {
-        return {
-          writtenAt: typeof cached.writtenAt === 'number' ? cached.writtenAt : 0,
-          sessions: cached.sessions,
-        };
-      }
-
-      return null;
+      return { gen: cached.gen, sessions: cached.sessions };
     } catch {
       // Redis failures should never block the auth path – fall through.
       return null;
@@ -169,22 +202,22 @@ class SecurityService implements ISecurityService {
   }
 
   /**
-   * Write the active-session records into Redis, stamped so a later validation
-   * can tell whether the cache predates the token it is being asked about.
+   * Write the active-session records into Redis against the generation they were
+   * read at.
    *
-   * `readAt` must be the moment *before* the sessions were read from Mongo, not
-   * the moment of the write. Anything created from that instant onwards may be
-   * missing from this snapshot, and the stamp is what stops such a session being
-   * judged by a cache that never saw it.
+   * `gen` must be the counter value observed *before* the sessions were read from
+   * Mongo. Any mutation in between bumps the counter past it, so this envelope is
+   * retired the moment it is written — which is exactly what stops a reader that
+   * started before a revocation from resurrecting the sessions it cleared.
    */
   private async setCachedSessions(
     userId: string,
     sessions: CachedSessionRecord[],
-    readAt: number
+    gen: number | null
   ): Promise<void> {
-    if (!this.redis) return;
+    if (!this.redis || gen === null) return;
     try {
-      const envelope: SessionCacheEnvelope = { writtenAt: readAt, sessions };
+      const envelope: SessionCacheEnvelope = { gen, sessions };
       await this.redis.setJSON(sessionCacheKey(userId), envelope, SESSION_CACHE_TTL);
     } catch {
       // Best-effort – log but don't propagate.
@@ -193,14 +226,23 @@ class SecurityService implements ISecurityService {
   }
 
   /**
-   * Invalidate the Redis session cache for a user so the next read fetches from Mongo.
+   * Retire a user's cached session set, so the next validation reads Mongo.
+   *
+   * Implemented as a counter bump rather than a delete. A delete races: a reader
+   * that loaded Mongo before the change can write its snapshot back *after* the
+   * delete and undo it, which for `expireTokens` means a revoked token quietly
+   * keeps working until the entry expires. Bumping the counter instead retires
+   * every envelope built before this moment, including one that has not been
+   * written yet.
    */
   async invalidateSessionCache(userId: string): Promise<void> {
     if (!this.redis) return;
     try {
-      await this.redis.del(sessionCacheKey(userId));
+      const key = sessionGenKey(userId);
+      await this.redis.incr(key);
+      await this.redis.expire(key, SESSION_GEN_TTL);
     } catch {
-      logger.warn(`[SecurityService] Failed to invalidate session cache for ${userId}`);
+      logger.warn(`[SecurityService] Failed to retire session cache for ${userId}`);
     }
   }
 
@@ -355,7 +397,16 @@ class SecurityService implements ISecurityService {
       ? (user as any).sessionInfo
       : [];
     const { keep, evict } = computeEvictions(existing, clientKey);
-    const { session, payload } = buildSessionEntry(result.payload, host, clientKey, sessionId);
+    // A unique slot, not one derived from client and host: `createToken` is an
+    // explicit request for a *new* token, so it must never lose a slot race to an
+    // existing session and hand back something no session backs.
+    const { session, payload } = buildSessionEntry(
+      result.payload,
+      host,
+      clientKey,
+      sessionId,
+      sessionId
+    );
 
     // `sid` is added by buildSessionEntry, so the token has to be signed from
     // the payload that was actually stored.
@@ -363,9 +414,19 @@ class SecurityService implements ISecurityService {
     result.token = jwt.encode(payload, process.env.SECRET_SAUCE);
 
     (user as any).sessionInfo = [...keep, session];
-    await persistSession({ userId: result.userId, session, evict, touchLastLogin: false });
+    const { claimed } = await appendSession({
+      userId: result.userId,
+      session,
+      evict,
+      touchLastLogin: false,
+    });
+    if (!claimed) {
+      throw new Error(
+        `Could not record a session for user ${result.userId}; refusing to return a token that cannot authenticate`
+      );
+    }
 
-    // Invalidate Redis cache so the next JWT validation picks up the new session
+    // Retire the cached session set so the next JWT validation sees this session
     await this.invalidateSessionCache(result.userId);
 
     // Persist to PostgreSQL session history
@@ -499,7 +560,6 @@ class SecurityService implements ISecurityService {
    * Refreshes the Redis cache on every read so JWT strategy lookups stay warm.
    */
   async listActiveTokens(userIdOrEmail: string): Promise<ActiveTokenSummary[]> {
-    const readAt = Date.now();
     const user = await this.resolveUser(userIdOrEmail);
     const now = moment();
 
@@ -507,16 +567,17 @@ class SecurityService implements ISecurityService {
       ? (user as any).sessionInfo
       : [];
 
-    // (Re)populate the Redis cache. Only live sessions go in — writing expired
-    // ones would let a stale entry vouch for a session that has already lapsed.
-    // `readAt` is when the user document was fetched, above.
-    await this.setCachedSessions(
-      (user._id as any)?.toString(),
-      toCachedRecords(sessions.filter((s: SessionInfoEntry) => isSessionLive(s))),
-      readAt
-    );
-
-    return sessions.map((session: any) => {
+    // Deliberately does not warm the session cache. The generation a cache entry
+    // is written against has to be read before the sessions it describes, and
+    // this method resolves the user by email or id first — so it cannot know
+    // which counter to read until after the read it would be describing.
+    // Validation populates the cache on first use anyway; warming it from an
+    // admin listing would buy nothing and risk writing an entry against the
+    // wrong generation.
+    // Annotated rather than `satisfies`: the pinned TypeScript in this repo
+    // predates that operator and cannot parse it. A return-type annotation gives
+    // the same excess-property and shape checking.
+    return sessions.map((session: any): ActiveTokenSummary => {
       const exp = session.jwtPayload?.exp
         ? moment(session.jwtPayload.exp)
         : null;
@@ -531,7 +592,7 @@ class SecurityService implements ISecurityService {
         expiresAt: exp ? exp.toISOString() : null,
         issuedAt: iat ? iat.toISOString() : null,
         isValid: exp ? exp.isAfter(now) : false,
-      } satisfies ActiveTokenSummary;
+      };
     });
   }
 
@@ -604,39 +665,31 @@ class SecurityService implements ISecurityService {
     refreshToken: string,
     options: ValidateSessionOptions = {}
   ): Promise<SessionState> {
-    const { clientKey, issuedAt } = options;
+    const { clientKey } = options;
 
-    // 1. Try Redis. A hit that names the session settles it; a hit that does not
-    //    only settles it when the cache is known to be newer than the token —
-    //    otherwise this could be a session added since the cache was written and
-    //    we would be rejecting a perfectly good fresh login.
+    // 1. Try Redis. A current envelope is authoritative in both directions —
+    //    `getCachedSessions` has already discarded anything a mutation retired,
+    //    so a token it does not name really has no session.
     const cached = await this.getCachedSessions(userId);
     if (cached !== null) {
       const state = sessionStateFor(cached.sessions, refreshToken, { clientKey });
-      if (state === 'valid') return state;
       if (state === 'client_mismatch') {
-        // The session exists but belongs to another application. That verdict
-        // does not go stale, so there is nothing to re-read.
         logger.debug(
           `[SecurityService] Session for user ${userId} is scoped to another client than ${clientKey}`
         );
-        return state;
       }
-      // Strictly older than the snapshot, so the snapshot is authoritative.
-      // Equality has to fall through: these stamps are millisecond-resolution, so
-      // a session created in the same millisecond as the snapshot may not be in it.
-      const cacheCoversToken = issuedAt === undefined || issuedAt < cached.writtenAt;
-      if (cacheCoversToken) return 'revoked';
+      return state;
     }
 
-    // 2. Fall through to Mongo.
+    // 2. Fall through to Mongo, noting the generation *before* the read so the
+    //    envelope we write is retired by anything that happens during it.
     try {
-      const readAt = Date.now();
+      const gen = await this.readGeneration(userId);
       const sessions = await readSessions(userId);
       await this.setCachedSessions(
         userId,
         toCachedRecords(sessions.filter((s) => isSessionLive(s))),
-        readAt
+        gen
       );
       return sessionStateFor(sessions, refreshToken, { clientKey });
     } catch {
@@ -646,14 +699,43 @@ class SecurityService implements ISecurityService {
   }
 
   /**
+   * Whether a `lastLogin` touch should actually be written.
+   *
+   * Claims a short-lived Redis marker and reports `false` while one is already
+   * held, collapsing a stream of requests into one write per minute per
+   * user/application. Without this, every authenticated request on every pod
+   * writes the same document — and for the shared anonymous account, which every
+   * visitor of an application authenticates as, that is sustained write
+   * contention on a single document rather than useful bookkeeping.
+   *
+   * With no Redis available it always returns `true`, keeping the previous
+   * behaviour rather than silently dropping the timestamp.
+   */
+  private async shouldTouch(userId: string, clientId?: string): Promise<boolean> {
+    if (!this.redis) return true;
+    try {
+      return await this.redis.setIfAbsent(
+        `${TOUCH_MARKER_PREFIX}${userId}:${clientId ?? 'none'}`,
+        '1',
+        TOUCH_THROTTLE_SECONDS
+      );
+    } catch {
+      // Redis unavailable — fall back to writing, as before.
+      return true;
+    }
+  }
+
+  /**
    * Fire-and-forget update of lastLogin timestamps on the user document and,
    * when a clientId is provided, the matching membership entry.
    *
    * Uses atomic updateOne to avoid full-document save race conditions that
-   * could overwrite sessionInfo.
+   * could overwrite sessionInfo, and is throttled — see `shouldTouch`.
    */
   async touchSession(userId: string, clientId?: string): Promise<void> {
     try {
+      if (!(await this.shouldTouch(userId, clientId))) return;
+
       const now = new Date();
       if (clientId && ObjectId.isValid(clientId)) {
         await User.updateOne(

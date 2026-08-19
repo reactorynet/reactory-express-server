@@ -138,13 +138,6 @@ export interface ValidateSessionOptions {
    */
   clientKey?: string;
 
-  /**
-   * The token's `iat` in epoch milliseconds. Used to tell whether the cached
-   * session set predates the token: if it does, a cache miss is inconclusive and
-   * validation re-reads Mongo rather than rejecting a session that was added
-   * after the cache was written.
-   */
-  issuedAt?: number;
 }
 
 export interface ISecurityService extends Reactory.Service.IReactoryService {

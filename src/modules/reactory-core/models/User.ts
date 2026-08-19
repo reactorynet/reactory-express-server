@@ -139,6 +139,10 @@ const UserSchema = new mongoose.Schema({
       id: String,
       host: String,
       client: String,
+      // Identity of the slot this session occupies. Concurrent logins for the
+      // same slot compete for it with a conditional update, so two tabs opening
+      // at once converge on one session instead of stacking two.
+      key: String,
       // The exact JSON that was signed for this session. `jwtPayload` below
       // cannot serve this purpose: it casts exp/iat to Date and drops claims it
       // does not declare, so re-signing it would not reproduce the original

@@ -88,6 +88,25 @@ const query = (result: any) => ({
   catch: (reject: any) => Promise.resolve(result).catch(reject),
 });
 
+/**
+ * Evaluate the conditional filter the session writer guards its push with, so
+ * the fake enforces the same slot exclusivity Mongo would. Without this the
+ * convergence tests below would pass for the wrong reason.
+ */
+const filterMatches = (user: FakeUser, filter: any): boolean => {
+  const guard = filter?.sessionInfo?.$not?.$elemMatch;
+  if (!guard) return true;
+  const threshold = new Date(guard['jwtPayload.exp']?.$gt ?? Date.now()).getTime();
+  const holder = user.sessionInfo.find(
+    (s: any) =>
+      s.key === guard.key &&
+      Boolean(s.jwtPayloadJson) &&
+      s.jwtPayload?.exp &&
+      new Date(s.jwtPayload.exp).getTime() > threshold
+  );
+  return holder === undefined;
+};
+
 const mockUserModel = {
   findById: jest.fn((id: any) => {
     const user = findUserById(id);
@@ -101,9 +120,12 @@ const mockUserModel = {
   updateOne: jest.fn((filter: any, update: any) => ({
     exec: async () => {
       const user = findUserById(filter._id);
-      if (!user) return { acknowledged: true, modifiedCount: 0 };
+      if (!user) return { acknowledged: true, matchedCount: 0, modifiedCount: 0 };
+      if (!filterMatches(user, filter)) {
+        return { acknowledged: true, matchedCount: 0, modifiedCount: 0 };
+      }
       applyUpdate(user, update, filter);
-      return { acknowledged: true, modifiedCount: 1 };
+      return { acknowledged: true, matchedCount: 1, modifiedCount: 1 };
     },
   })),
 };
@@ -140,12 +162,24 @@ const createFakeRedis = () => {
   const store = new Map<string, any>();
   return {
     store,
+    get: jest.fn(async (key: string) => (store.has(key) ? String(store.get(key)) : null)),
     getJSON: jest.fn(async (key: string) => (store.has(key) ? clone(store.get(key)) : null)),
     setJSON: jest.fn(async (key: string, value: any) => {
       store.set(key, clone(value));
       return 'OK' as const;
     }),
     del: jest.fn(async (key: string) => (store.delete(key) ? 1 : 0)),
+    incr: jest.fn(async (key: string) => {
+      const next = (parseInt(store.get(key) ?? '0', 10) || 0) + 1;
+      store.set(key, String(next));
+      return next;
+    }),
+    expire: jest.fn(async () => true),
+    setIfAbsent: jest.fn(async (key: string, value: string) => {
+      if (store.has(key)) return false;
+      store.set(key, value);
+      return true;
+    }),
   };
 };
 
@@ -371,7 +405,7 @@ describe('tokens are scoped to the application they were issued for', () => {
   });
 });
 
-describe('a fresh token is honoured even while a stale cache is warm', () => {
+describe('a fresh token is honoured even while a warm cache knows nothing of it', () => {
   it('accepts a token issued after the cache was populated', async () => {
     // Warm the cache for this user against partner-b, so it knows nothing of the
     // partner-a session that follows.
@@ -379,11 +413,26 @@ describe('a fresh token is honoured even while a stale cache is warm', () => {
     await authenticate(tokenB, PARTNER_B);
     expect(redis.store.has(sessionCacheKey(USER_ID))).toBe(true);
 
-    // Stop invalidation from running, to prove the fall-through is what saves us
-    // rather than the cache being cleared.
-    redis.del.mockImplementation(async () => 0);
+    const tokenA = await login(PARTNER_A, '10.0.0.1');
+    expect(await authenticate(tokenA, PARTNER_A)).toBeTruthy();
+  });
+
+  it('does not depend on the clocks of the pod that issued it and the pod validating it', async () => {
+    const tokenB = await login(PARTNER_B, '10.0.0.1');
+    await authenticate(tokenB, PARTNER_B);
 
     const tokenA = await login(PARTNER_A, '10.0.0.1');
+
+    // Simulate the issuing pod's clock lagging the validating pod's: same session,
+    // but an `iat` well behind anything the validator would stamp. Cache freshness
+    // is decided by generation, so this must make no difference. A wall-clock
+    // comparison would have judged this token by a cache written "after" it and
+    // refused it for as long as the entry lived.
+    const payload: any = jwt.decode(tokenA, process.env.SECRET_SAUCE as string);
+    payload.iat = payload.iat - 5 * 60 * 1000;
+    const skewedToken = jwt.encode(payload, process.env.SECRET_SAUCE as string);
+
+    expect(await authenticate(skewedToken, PARTNER_A)).toBeTruthy();
     expect(await authenticate(tokenA, PARTNER_A)).toBeTruthy();
   });
 
@@ -406,7 +455,56 @@ describe('a fresh token is honoured even while a stale cache is warm', () => {
   });
 });
 
+describe('simultaneous logins', () => {
+  it('converge on one session and one token for the same app and host', async () => {
+    const tokens = await Promise.all([
+      login(PARTNER_A, '10.0.0.1'),
+      login(PARTNER_A, '10.0.0.1'),
+      login(PARTNER_A, '10.0.0.1'),
+    ]);
+
+    expect(storedSessions()).toHaveLength(1);
+    expect(new Set(tokens).size).toBe(1);
+    for (const token of tokens) {
+      expect(await authenticate(token, PARTNER_A)).toBeTruthy();
+    }
+  });
+
+  it('still give each host and application its own session', async () => {
+    await Promise.all([
+      login(PARTNER_A, '10.0.0.1'),
+      login(PARTNER_A, '10.0.0.1'),
+      login(PARTNER_A, '10.0.0.2'),
+      login(PARTNER_B, '10.0.0.1'),
+    ]);
+
+    expect(storedSessions()).toHaveLength(3);
+  });
+});
+
 describe('session revocation', () => {
+  it('is not undone by a validation that was already in flight', async () => {
+    const token = await login(PARTNER_A, '10.0.0.1');
+    const refresh = refreshOf(token);
+
+    // Reproduce the interleaving: a reader takes its generation and snapshot,
+    // revocation lands, and only then does the reader write what it saw.
+    const genAtRead = await (securityService as any).readGeneration(USER_ID);
+    const snapshot = storedSessions().map((s: any) => ({
+      id: s.id,
+      refresh: s.jwtPayload.refresh,
+      client: s.client,
+      exp: new Date(s.jwtPayload.exp).getTime(),
+    }));
+
+    await securityService.expireTokens({ userId: USER_ID, reason: 'test' });
+    await (securityService as any).setCachedSessions(USER_ID, snapshot, genAtRead);
+
+    expect(await authenticate(token, PARTNER_A)).toBe(false);
+    expect(refresh).toEqual(expect.any(String));
+  });
+
+
   it('stops every token for the user once sessions are expired', async () => {
     const tokenA = await login(PARTNER_A, '10.0.0.1');
     const tokenB = await login(PARTNER_B, '10.0.0.1');

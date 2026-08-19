@@ -209,8 +209,22 @@ describe('JWT Strategy', () => {
 
       expect(service.resolveSessionState).toHaveBeenCalledWith('user123', 'refresh-token-123', {
         clientKey: 'test-client',
-        issuedAt: payload.iat,
       });
+      expect(mockDone).toHaveBeenCalledWith(null, mockUser);
+    });
+
+    it('does not pass the token\'s issue time, which would mean comparing clocks', async () => {
+      // Cache freshness is tracked with a generation counter instead. Pods issue
+      // tokens and write that cache with clocks that disagree, so an `iat` here
+      // would let a few hundred milliseconds of drift refuse a valid token.
+      const service = securityService();
+      mockRequest.context.getService.mockReturnValue(service);
+
+      verify(sessionPayload({ iat: Date.now() - 5 * 60 * 1000 }));
+      await flush();
+
+      const [, , options] = service.resolveSessionState.mock.calls[0];
+      expect(options).toEqual({ clientKey: 'test-client' });
       expect(mockDone).toHaveBeenCalledWith(null, mockUser);
     });
 
@@ -264,7 +278,6 @@ describe('JWT Strategy', () => {
 
       expect(service.validateSession).toHaveBeenCalledWith('user123', 'refresh-token-123', {
         clientKey: 'test-client',
-        issuedAt: payload.iat,
       });
       expect(mockDone).toHaveBeenCalledWith(null, mockUser);
     });

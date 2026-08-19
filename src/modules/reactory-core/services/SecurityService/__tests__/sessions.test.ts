@@ -18,20 +18,25 @@ jest.mock('@reactory/server-modules/reactory-core/models', () => ({
 }));
 
 import {
+  appendSession,
   buildSessionEntry,
   clientScopeMatches,
   computeEvictions,
   DEFAULT_MAX_SESSIONS_PER_CLIENT,
   findReusableSession,
+  findSessionBySlot,
   isSessionLive,
   isSessionReuseEnabled,
   matchSession,
-  persistSession,
   readSessions,
   readSignedPayload,
   resolveSessionState,
+  SESSION_CACHE_TTL,
+  SESSION_GEN_TTL,
   sessionCacheKey,
+  sessionGenKey,
   SessionInfoEntry,
+  sessionSlotKey,
   toCachedRecords,
   toEpochMs,
 } from '../sessions';
@@ -64,6 +69,7 @@ const session = (overrides: {
     id,
     client,
     host,
+    key: `${client}::${host}`,
     jwtPayload: payload as any,
     ...(withPayloadJson ? { jwtPayloadJson: JSON.stringify(payload) } : {}),
   };
@@ -71,7 +77,9 @@ const session = (overrides: {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockUpdateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue({ acknowledged: true }) });
+  mockUpdateOne.mockReturnValue({
+    exec: jest.fn().mockResolvedValue({ acknowledged: true, matchedCount: 1, modifiedCount: 1 }),
+  });
   mockFindById.mockReturnValue({
     select: () => ({ lean: () => ({ exec: jest.fn().mockResolvedValue({ sessionInfo: [] }) }) }),
   });
@@ -80,9 +88,57 @@ beforeEach(() => {
   delete process.env.REACTORY_MAX_TOTAL_SESSIONS;
 });
 
-describe('sessionCacheKey', () => {
-  it('namespaces the key by user id', () => {
+describe('cache keys', () => {
+  it('namespaces the session cache by user id', () => {
     expect(sessionCacheKey('user-1')).toBe('reactory:security:sessions:user-1');
+  });
+
+  it('keeps the generation counter outside the session cache prefix', () => {
+    // The startup purge globs the session cache prefix. If the counters lived
+    // under it they would be swept too, and a restarted counter could collide
+    // with a surviving envelope's generation.
+    expect(sessionGenKey('user-1')).toBe('reactory:security:sessiongen:user-1');
+    expect(sessionGenKey('user-1').startsWith(sessionCacheKey(''))).toBe(false);
+  });
+
+  it('expires the generation counter well after any envelope it governs', () => {
+    // The invariant that makes generation comparison safe: no cached envelope can
+    // outlive the counter it was written against.
+    expect(SESSION_GEN_TTL).toBeGreaterThan(SESSION_CACHE_TTL * 10);
+  });
+});
+
+describe('sessionSlotKey', () => {
+  it('derives a stable slot from the application and host under reuse', () => {
+    expect(sessionSlotKey('partner-a', '10.0.0.1')).toBe('partner-a::10.0.0.1');
+    expect(sessionSlotKey('partner-a', '10.0.0.1')).toBe(sessionSlotKey('partner-a', '10.0.0.1'));
+  });
+
+  it('separates applications and hosts', () => {
+    expect(sessionSlotKey('partner-a', '10.0.0.1')).not.toBe(sessionSlotKey('partner-b', '10.0.0.1'));
+    expect(sessionSlotKey('partner-a', '10.0.0.1')).not.toBe(sessionSlotKey('partner-a', '10.0.0.2'));
+  });
+
+  it('gives every login its own slot when reuse is off, so logins stack', () => {
+    process.env.REACTORY_SESSION_REUSE = 'false';
+    expect(sessionSlotKey('partner-a', '10.0.0.1')).not.toBe(sessionSlotKey('partner-a', '10.0.0.1'));
+  });
+});
+
+describe('findSessionBySlot', () => {
+  it('finds the live session holding a slot', () => {
+    const sessions = [session({ id: 's1', client: 'partner-a', host: '10.0.0.1' })];
+    expect(findSessionBySlot(sessions, 'partner-a::10.0.0.1')?.id).toBe('s1');
+  });
+
+  it('ignores an expired holder', () => {
+    const sessions = [session({ id: 's1', exp: Date.now() - 1 })];
+    expect(findSessionBySlot(sessions, 'partner-a::10.0.0.1')).toBeUndefined();
+  });
+
+  it('ignores a holder that cannot be re-signed', () => {
+    const sessions = [session({ id: 's1', withPayloadJson: false })];
+    expect(findSessionBySlot(sessions, 'partner-a::10.0.0.1')).toBeUndefined();
   });
 });
 
@@ -331,6 +387,22 @@ describe('buildSessionEntry', () => {
     expect(entry.client).toBe('partner-a');
   });
 
+  it('records the slot the session occupies', () => {
+    const { session: entry } = buildSessionEntry({ refresh: 'r1' }, '10.0.0.1', 'partner-a', 'sess-42');
+    expect(entry.key).toBe('partner-a::10.0.0.1');
+  });
+
+  it('honours an explicit slot, so a retry can opt out of contention', () => {
+    const { session: entry } = buildSessionEntry(
+      { refresh: 'r1' },
+      '10.0.0.1',
+      'partner-a',
+      'sess-42',
+      'bespoke-slot'
+    );
+    expect(entry.key).toBe('bespoke-slot');
+  });
+
   it('stores the signed payload verbatim so the token can be reproduced', () => {
     const { session: entry, payload } = buildSessionEntry(
       { refresh: 'r1', userId: 'user-1', name: 'John Doe', exp: 123, iat: 1 },
@@ -376,38 +448,104 @@ describe('readSessions', () => {
   });
 });
 
-describe('persistSession', () => {
+describe('appendSession', () => {
+  const applied = { acknowledged: true, matchedCount: 1, modifiedCount: 1 };
+  const rejected = { acknowledged: true, matchedCount: 0, modifiedCount: 0 };
+
   it('appends with $push so a concurrent login cannot be overwritten', async () => {
     const entry = session({ id: 'new' });
-    await persistSession({ userId: 'user-1', session: entry });
+    await expect(appendSession({ userId: 'user-1', session: entry })).resolves.toEqual({
+      claimed: true,
+    });
 
     expect(mockUpdateOne).toHaveBeenCalledTimes(1);
     const [filter, update] = mockUpdateOne.mock.calls[0];
-    expect(filter).toEqual({ _id: 'user-1' });
+    expect(filter._id).toBe('user-1');
     expect(update.$push).toEqual({ sessionInfo: entry });
     expect(update.$set.lastLogin).toBeInstanceOf(Date);
     // The whole array is never rewritten - that is what loses concurrent logins.
     expect(update.$set.sessionInfo).toBeUndefined();
   });
 
-  it('removes evicted sessions by id with $pull before appending', async () => {
-    await persistSession({
+  it('only applies when no live session already holds the slot', async () => {
+    await appendSession({ userId: 'user-1', session: session({ id: 'new' }) });
+
+    const [filter] = mockUpdateOne.mock.calls[0];
+    const guard = filter.sessionInfo.$not.$elemMatch;
+    expect(guard.key).toBe('partner-a::10.0.0.1');
+    expect(guard['jwtPayload.exp'].$gt).toBeInstanceOf(Date);
+    // A row that cannot be re-signed must not block a login it could never serve.
+    expect(guard.jwtPayloadJson).toEqual({ $exists: true });
+  });
+
+  it('reports the slot as unclaimed when another request got there first', async () => {
+    mockUpdateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(rejected) });
+
+    await expect(
+      appendSession({ userId: 'user-1', session: session({ id: 'new' }) })
+    ).resolves.toEqual({ claimed: false });
+  });
+
+  it('does not prune when the slot was not claimed', async () => {
+    mockUpdateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(rejected) });
+
+    await appendSession({
+      userId: 'user-1',
+      session: session({ id: 'new' }),
+      evict: [session({ id: 'dead-1' })],
+    });
+
+    expect(mockUpdateOne).toHaveBeenCalledTimes(1);
+  });
+
+  it('pushes before pulling, so a failed prune leaves a surplus not a gap', async () => {
+    await appendSession({
       userId: 'user-1',
       session: session({ id: 'new' }),
       evict: [session({ id: 'dead-1' }), session({ id: 'dead-2' })],
     });
 
     expect(mockUpdateOne).toHaveBeenCalledTimes(2);
-    const [, pull] = mockUpdateOne.mock.calls[0];
-    expect(pull).toEqual({ $pull: { sessionInfo: { id: { $in: ['dead-1', 'dead-2'] } } } });
-    const [, push] = mockUpdateOne.mock.calls[1];
-    expect(push.$push).toBeDefined();
+    const [, first] = mockUpdateOne.mock.calls[0];
+    const [, second] = mockUpdateOne.mock.calls[1];
+    expect(first.$push).toBeDefined();
+    expect(second).toEqual({ $pull: { sessionInfo: { id: { $in: ['dead-1', 'dead-2'] } } } });
   });
 
   it('can skip the lastLogin touch', async () => {
-    await persistSession({ userId: 'user-1', session: session(), touchLastLogin: false });
+    await appendSession({ userId: 'user-1', session: session(), touchLastLogin: false });
     const [, update] = mockUpdateOne.mock.calls[0];
     expect(update.$set).toBeUndefined();
+  });
+
+  it('reads nModified from older drivers that report it that way', async () => {
+    mockUpdateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue({ n: 1, nModified: 1 }) });
+    await expect(
+      appendSession({ userId: 'user-1', session: session({ id: 'new' }) })
+    ).resolves.toEqual({ claimed: true });
+
+    mockUpdateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue({ n: 0, nModified: 0 }) });
+    await expect(
+      appendSession({ userId: 'user-1', session: session({ id: 'new' }) })
+    ).resolves.toEqual({ claimed: false });
+  });
+
+  it('treats a result with no counters as applied rather than failing closed', async () => {
+    mockUpdateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(undefined) });
+    await expect(
+      appendSession({ userId: 'user-1', session: session({ id: 'new' }) })
+    ).resolves.toEqual({ claimed: true });
+  });
+
+  it('propagates a write failure instead of reporting success', async () => {
+    mockUpdateOne.mockReturnValue({
+      exec: jest.fn().mockRejectedValue(new Error('mongo write failed')),
+    });
+
+    await expect(
+      appendSession({ userId: 'user-1', session: session({ id: 'new' }) })
+    ).rejects.toThrow('mongo write failed');
+    expect(applied).toBeDefined();
   });
 
   it('repairs legacy rows that have no id, since $pull cannot address them', async () => {
@@ -421,7 +559,9 @@ describe('persistSession', () => {
     mockFindById.mockReturnValue({ select: () => ({ lean: () => ({ exec }) }) });
 
     const entry = session({ id: 'new', refresh: 'new-refresh' });
-    await persistSession({ userId: 'user-1', session: entry, evict: [legacy] });
+    await expect(
+      appendSession({ userId: 'user-1', session: entry, evict: [legacy] })
+    ).resolves.toEqual({ claimed: true });
 
     expect(mockUpdateOne).toHaveBeenCalledTimes(1);
     const [, update] = mockUpdateOne.mock.calls[0];

@@ -18,6 +18,13 @@
  *
  * 2. **A session belongs to one client.** A token minted for app A does not
  *    authenticate against app B, even though the same user is a member of both.
+ *
+ * 3. **Nothing here compares wall clocks across processes.** Reactory runs
+ *    several pods against one Redis and one Mongo, and their clocks disagree by
+ *    however much NTP is drifting. Cache freshness is therefore tracked with a
+ *    monotonic per-user counter (see `sessionGenKey`), never a timestamp: a few
+ *    hundred milliseconds of skew must not be able to reject a token that was
+ *    issued a moment ago on another pod.
  */
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
@@ -30,12 +37,33 @@ import logger from '@reactory/server-core/logging';
 export const SESSION_CACHE_PREFIX = 'reactory:security:sessions:';
 
 /**
- * Redis TTL (seconds) for cached session data. Short enough that a missed
- * invalidation self-heals quickly, long enough that the hot read path stays off
- * Mongo. Note that a stale cache cannot reject a freshly issued token: see the
- * `writtenAt` handling in `SessionCacheEnvelope`.
+ * Redis TTL (seconds) for cached session data. Short enough that a lost
+ * generation bump self-heals quickly, long enough that the hot read path stays
+ * off Mongo.
  */
 export const SESSION_CACHE_TTL = 300;
+
+/**
+ * Redis key prefix for the per-user session generation counter.
+ *
+ * Deliberately *not* nested under `SESSION_CACHE_PREFIX`: the startup purge
+ * globs that prefix, and sweeping the counters along with the cache would be a
+ * bug (see the invariant on `SESSION_GEN_TTL`).
+ */
+export const SESSION_GEN_PREFIX = 'reactory:security:sessiongen:';
+
+/**
+ * TTL (seconds) for the generation counter — 24 hours.
+ *
+ * **Invariant: this must stay comfortably larger than `SESSION_CACHE_TTL`.** A
+ * cached envelope records the generation it was built from, and staleness is
+ * detected by comparing that against the current counter. If the counter could
+ * expire and restart at 1 while an envelope from an older era were still live,
+ * the two could collide and a stale envelope would be trusted. Because a cached
+ * envelope cannot outlive the counter, any envelope we ever read was written
+ * during the current counter's lifetime.
+ */
+export const SESSION_GEN_TTL = 24 * 60 * 60;
 
 /** Fallback client key used when a caller could not resolve a partner. */
 export const UNSCOPED_CLIENT_KEY = 'not-set';
@@ -66,6 +94,14 @@ export interface SessionInfoEntry {
   id?: string;
   host?: string;
   client?: string;
+  /**
+   * Identity of the *slot* this session occupies, used to make concurrent
+   * logins converge instead of racing. Under session reuse it is derived from
+   * the client and host, so two simultaneous logins from the same browser
+   * compete for one slot and exactly one wins. With reuse disabled it is unique
+   * per session, so every login stacks.
+   */
+  key?: string;
   jwtPayload?: Record<string, unknown> & {
     exp?: number | string | Date | null;
     iat?: number | string | Date | null;
@@ -95,12 +131,19 @@ export interface CachedSessionRecord {
 }
 
 /**
- * Cache envelope. The `writtenAt` stamp is what makes a stale cache safe: a
- * token issued *after* the cache was written cannot be judged by it, so
- * validation falls through to Mongo instead of rejecting a valid new session.
+ * Cache envelope.
+ *
+ * `gen` is the value the per-user generation counter held *before* the sessions
+ * were read from Mongo. A reader trusts the envelope only while `gen` still
+ * matches the counter; any mutation in between bumps the counter and so retires
+ * this envelope. That covers both directions of staleness with one mechanism:
+ *
+ *   - a session added after the snapshot cannot be judged absent by it, and
+ *   - a revocation cannot be undone by an in-flight reader writing back a
+ *     snapshot it took before the revocation landed.
  */
 export interface SessionCacheEnvelope {
-  writtenAt: number;
+  gen: number;
   sessions: CachedSessionRecord[];
 }
 
@@ -144,6 +187,19 @@ export const isSessionReuseEnabled = (): boolean =>
 // ─── Pure helpers ───────────────────────────────────────────────────────────
 
 export const sessionCacheKey = (userId: string): string => `${SESSION_CACHE_PREFIX}${userId}`;
+
+/** Key of the monotonic counter that retires a user's cached session set. */
+export const sessionGenKey = (userId: string): string => `${SESSION_GEN_PREFIX}${userId}`;
+
+/**
+ * The slot a login competes for.
+ *
+ * Under reuse, one live session per (application, host) — so a reload or a
+ * second tab lands on the existing session while a second device gets its own.
+ * With reuse disabled every login gets a unique slot and therefore stacks.
+ */
+export const sessionSlotKey = (clientKey: string, host: string): string =>
+  isSessionReuseEnabled() ? `${clientKey}::${host}` : uuid();
 
 /**
  * Normalise the many shapes `exp`/`iat` arrive in to epoch milliseconds.
@@ -345,79 +401,156 @@ export const readSessions = async (userId: string): Promise<SessionInfoEntry[]> 
   return Array.isArray(fresh?.sessionInfo) ? (fresh.sessionInfo as SessionInfoEntry[]) : [];
 };
 
-export interface PersistSessionArgs {
+export interface AppendSessionArgs {
   userId: string;
   session: SessionInfoEntry;
-  /** Sessions to remove in the same operation (expired or evicted). */
+  /** Sessions to remove once the new one is safely in place (expired or evicted). */
   evict?: SessionInfoEntry[];
   /** Set `lastLogin` alongside the session write. */
   touchLastLogin?: boolean;
 }
 
+export interface AppendSessionResult {
+  /** `false` when another request won the slot; the caller should reuse theirs. */
+  claimed: boolean;
+}
+
 /**
- * Add a session to a user, removing any evicted ones, without ever rewriting
- * the array wholesale.
+ * Add a session to a user without ever rewriting the array wholesale, and
+ * without two concurrent logins for the same slot both succeeding.
  *
- * `$pull` and `$push` cannot be combined on one field in a single update, so
- * this is two operations — but each is an atomic, server-side edit, which is
- * the point: two logins racing against the same user both end up in
- * `sessionInfo` instead of one overwriting the other.
+ * Three things make this safe under concurrency:
+ *
+ * 1. **`$push`, never `$set`.** The server decides the final array, so two
+ *    logins racing against the same user both land instead of one overwriting
+ *    the other.
+ * 2. **A conditional filter on the push.** The update only applies when no
+ *    *live* session already holds this slot, so simultaneous logins from one
+ *    browser produce one session, not two. Expired rows and rows predating slot
+ *    keys are ignored by the filter, so they never block a login.
+ * 3. **Push before pull.** Eviction happens only after the new session is in
+ *    place. If the pull fails we are left with a surplus session that the next
+ *    login prunes — the harmless direction. Doing it the other way round can
+ *    log other devices out and then fail to issue anything.
  *
  * Legacy rows with no `id` cannot be addressed by `$pull`. Rather than guess,
  * such a user falls back to a single `$set` of the computed array — a one-time
- * repair that stamps ids on every row, after which the atomic path applies.
+ * repair that stamps ids on every row, after which the atomic path applies. That
+ * repair does not contend for the slot, so two logins arriving together during it
+ * can still produce two sessions; it happens once per affected user and the next
+ * login is on the atomic path.
  */
-export const persistSession = async ({
+export const appendSession = async ({
   userId,
   session,
   evict = [],
   touchLastLogin = true,
-}: PersistSessionArgs): Promise<void> => {
+}: AppendSessionArgs): Promise<AppendSessionResult> => {
   const evictIds = evict.map((s) => s.id).filter((id): id is string => Boolean(id));
   const hasUnaddressableRows = evict.length !== evictIds.length;
 
   if (hasUnaddressableRows) {
-    // Identify rows by their refresh token, which is unique per session even
-    // when `id` is absent.
-    const rowKey = (s: SessionInfoEntry) =>
-      JSON.stringify([s.id ?? null, s.jwtPayload?.refresh ?? null, s.client ?? null, s.host ?? null]);
-    const kept = await readSessions(userId);
-    const evictKeys = new Set(evict.map(rowKey));
-    const repaired = kept
-      .filter((s) => !evictKeys.has(rowKey(s)))
-      .map((s) => ({ ...s, id: s.id ?? uuid() }));
-    repaired.push(session);
-
-    await (User as any)
-      .updateOne(
-        { _id: userId },
-        {
-          $set: {
-            sessionInfo: repaired,
-            ...(touchLastLogin ? { lastLogin: new Date() } : {}),
-          },
-        }
-      )
-      .exec();
-    return;
+    await repairAndSet(userId, session, evict, touchLastLogin);
+    return { claimed: true };
   }
 
-  if (evictIds.length > 0) {
-    await (User as any)
-      .updateOne({ _id: userId }, { $pull: { sessionInfo: { id: { $in: evictIds } } } })
-      .exec();
-  }
-
-  await (User as any)
+  // Claim the slot. `$not: {$elemMatch: ...}` means "no array element matches",
+  // i.e. nobody live is holding it. The `jwtPayloadJson` requirement keeps rows
+  // that cannot be re-signed from blocking a login they could never serve.
+  const claim = await (User as any)
     .updateOne(
-      { _id: userId },
+      {
+        _id: userId,
+        sessionInfo: {
+          $not: {
+            $elemMatch: {
+              key: session.key,
+              jwtPayloadJson: { $exists: true },
+              'jwtPayload.exp': { $gt: new Date() },
+            },
+          },
+        },
+      },
       {
         $push: { sessionInfo: session },
         ...(touchLastLogin ? { $set: { lastLogin: new Date() } } : {}),
       }
     )
     .exec();
+
+  if (!wasApplied(claim)) return { claimed: false };
+
+  // Only now that the new session exists is it safe to prune.
+  if (evictIds.length > 0) {
+    await (User as any)
+      .updateOne({ _id: userId }, { $pull: { sessionInfo: { id: { $in: evictIds } } } })
+      .exec();
+  }
+
+  return { claimed: true };
 };
+
+/**
+ * Whether an update actually changed the document.
+ *
+ * Mongo drivers have reported this under different names over the years, and a
+ * mocked model may report none of them; treating "no counters at all" as applied
+ * keeps this from failing closed against a stub that did the write.
+ */
+const wasApplied = (result: any): boolean => {
+  if (!result || typeof result !== 'object') return true;
+  const modified = result.modifiedCount ?? result.nModified;
+  const matched = result.matchedCount ?? result.n;
+  if (typeof modified === 'number') return modified > 0;
+  if (typeof matched === 'number') return matched > 0;
+  return true;
+};
+
+/**
+ * One-time repair for users whose sessions predate session ids: rewrite the
+ * array with ids stamped on every surviving row. Rows are identified by refresh
+ * token, which is unique per session even when `id` is absent.
+ */
+const repairAndSet = async (
+  userId: string,
+  session: SessionInfoEntry,
+  evict: SessionInfoEntry[],
+  touchLastLogin: boolean
+): Promise<void> => {
+  const rowKey = (s: SessionInfoEntry) =>
+    JSON.stringify([s.id ?? null, s.jwtPayload?.refresh ?? null, s.client ?? null, s.host ?? null]);
+  const kept = await readSessions(userId);
+  const evictKeys = new Set(evict.map(rowKey));
+  const repaired = kept
+    .filter((s) => !evictKeys.has(rowKey(s)))
+    .map((s) => ({ ...s, id: s.id ?? uuid() }));
+  repaired.push(session);
+
+  await (User as any)
+    .updateOne(
+      { _id: userId },
+      {
+        $set: {
+          sessionInfo: repaired,
+          ...(touchLastLogin ? { lastLogin: new Date() } : {}),
+        },
+      }
+    )
+    .exec();
+};
+
+/**
+ * The live session currently holding a slot, if any — used to recover after
+ * losing the race for it.
+ */
+export const findSessionBySlot = (
+  sessions: SessionInfoEntry[],
+  slotKey: string,
+  now: number = Date.now()
+): SessionInfoEntry | undefined =>
+  sessions.find(
+    (s) => s.key === slotKey && Boolean(s.jwtPayloadJson) && isSessionLive(s, now)
+  );
 
 /**
  * Build the `sessionInfo` row for a freshly minted token.
@@ -431,7 +564,8 @@ export const buildSessionEntry = (
   payload: Record<string, unknown>,
   host: string,
   clientKey: string,
-  sessionId: string = uuid()
+  sessionId: string = uuid(),
+  slotKey: string = sessionSlotKey(clientKey, host)
 ): { session: SessionInfoEntry; payload: Record<string, unknown> } => {
   const signedPayload = { ...payload, sid: sessionId };
 
@@ -441,6 +575,7 @@ export const buildSessionEntry = (
       id: sessionId,
       host,
       client: clientKey,
+      key: slotKey,
       jwtPayload: signedPayload,
       jwtPayloadJson: JSON.stringify(signedPayload),
     },

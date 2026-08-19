@@ -20,6 +20,7 @@ const mockRedisClient = {
   hgetall: jest.fn(),
   hdel: jest.fn(),
   keys: jest.fn(),
+  scan: jest.fn(),
   mget: jest.fn(),
   mset: jest.fn(),
   pipeline: jest.fn(),
@@ -427,6 +428,120 @@ describe('RedisService', () => {
     it('includes version when requested', () => {
       const identifier = service.toString(true);
       expect(identifier).toBe('core.RedisService@1.0.0');
+    });
+  });
+
+  describe('setIfAbsent', () => {
+    it('reports true when this caller created the key', async () => {
+      mockRedisClient.set.mockResolvedValue('OK');
+
+      await expect(service.setIfAbsent('k', 'v', 60)).resolves.toBe(true);
+      // NX + EX in one command: the atomic form of check-then-set, which is what
+      // makes it usable as a claim shared across pods.
+      expect(mockRedisClient.set).toHaveBeenCalledWith('k', 'v', 'EX', 60, 'NX');
+    });
+
+    it('reports false when someone else already holds it', async () => {
+      mockRedisClient.set.mockResolvedValue(null);
+
+      await expect(service.setIfAbsent('k', 'v', 60)).resolves.toBe(false);
+    });
+  });
+
+  describe('scanKeys', () => {
+    it('follows the cursor to the end and collects every batch', async () => {
+      mockRedisClient.scan
+        .mockResolvedValueOnce(['42', ['a', 'b']])
+        .mockResolvedValueOnce(['0', ['c']]);
+
+      await expect(service.scanKeys('prefix:*')).resolves.toEqual(['a', 'b', 'c']);
+      expect(mockRedisClient.scan).toHaveBeenCalledTimes(2);
+      expect(mockRedisClient.scan).toHaveBeenLastCalledWith('42', 'MATCH', 'prefix:*', 'COUNT', 250);
+    });
+
+    it('does not use KEYS, which blocks every other client', async () => {
+      mockRedisClient.scan.mockResolvedValue(['0', []]);
+
+      await service.scanKeys('prefix:*');
+
+      expect(mockRedisClient.keys).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('tryAcquireLeadership', () => {
+    it('identifies the owner by instance, not just pid', async () => {
+      // Pids collide across containers, so a pid alone makes any owner check
+      // meaningless.
+      process.env.HOSTNAME = 'pod-7';
+      mockRedisClient.set.mockResolvedValue('OK');
+
+      await expect(service.tryAcquireLeadership(30)).resolves.toBe(true);
+      expect(mockRedisClient.set).toHaveBeenCalledWith(
+        'reactory:leader:cache',
+        `pod-7:${process.pid}`,
+        'EX',
+        30,
+        'NX'
+      );
+      expect(service.isCacheLeader()).toBe(true);
+      delete process.env.HOSTNAME;
+    });
+
+    it('reports false when another instance holds the lease', async () => {
+      mockRedisClient.set.mockResolvedValue(null);
+
+      await expect(service.tryAcquireLeadership()).resolves.toBe(false);
+      expect(service.isCacheLeader()).toBe(false);
+    });
+  });
+
+  describe('startup session cache purge', () => {
+    const startService = async () => {
+      mockRedisClient.connect.mockResolvedValue(undefined);
+      mockRedisClient.ping.mockResolvedValue('PONG');
+      await (service as any).onStartup?.() ?? (service as any).start?.();
+    };
+
+    beforeEach(() => {
+      process.env.REACTORY_PURGE_SESSION_CACHE_ON_STARTUP = 'true';
+      mockRedisClient.scan.mockResolvedValue(['0', ['reactory:security:sessions:u1']]);
+      mockRedisClient.del.mockResolvedValue(1);
+    });
+
+    afterEach(() => {
+      delete process.env.REACTORY_PURGE_SESSION_CACHE_ON_STARTUP;
+    });
+
+    it('purges only on the instance that won the lease', async () => {
+      mockRedisClient.set.mockResolvedValue('OK');
+
+      await startService();
+
+      expect(mockRedisClient.scan).toHaveBeenCalled();
+      expect(mockRedisClient.del).toHaveBeenCalledWith('reactory:security:sessions:u1');
+    });
+
+    it('skips the purge on instances that did not win the lease', async () => {
+      // A rolling deploy starts every pod at once; N blocking keyspace sweeps is a
+      // self-inflicted stall, and the cache rebuilds from Mongo on demand anyway.
+      mockRedisClient.set.mockResolvedValue(null);
+
+      await startService();
+
+      expect(mockRedisClient.scan).not.toHaveBeenCalled();
+      expect(mockRedisClient.del).not.toHaveBeenCalled();
+    });
+
+    it('leaves the generation counters alone', async () => {
+      mockRedisClient.set.mockResolvedValue('OK');
+
+      await startService();
+
+      const patterns = mockRedisClient.scan.mock.calls.map((c: any[]) => c[2]);
+      // Sweeping the counters with the cache could restart one at a value an
+      // outliving envelope already claims.
+      expect(patterns).toEqual(['reactory:security:sessions:*']);
+      expect(patterns.some((p: string) => p.includes('sessiongen'))).toBe(false);
     });
   });
 });
