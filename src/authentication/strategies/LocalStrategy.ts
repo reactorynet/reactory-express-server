@@ -35,20 +35,29 @@ const authenticate: BasicVerifyFunctionWithRequest = async (req: Reactory.Server
 
     // @ts-ignore
     if (user.validatePassword(password) === true) {
-      const loginToken = await Helpers.generateLoginToken(user, req.ip, clientKey);
-      req.user = user;
-      req.context.user = user;
-      
-      // Update membership lastLogin if partner exists
-      if (context.partner) {
+      // Update membership lastLogin if partner exists.
+      //
+      // Written with an atomic positional update rather than user.save(): a full
+      // document save rewrites sessionInfo from the copy loaded at the top of
+      // this handler, which would silently drop any session another application
+      // added in the meantime — the exact multi-tenant bug this path must not
+      // reintroduce.
+      if (context.partner && Array.isArray(user.memberships)) {
         const membership = user.memberships.find(m => 
-          m.clientId.toString() === context.partner._id.toString()
+          m.clientId?.toString() === context.partner._id?.toString()
         );
         if (membership) {
           membership.lastLogin = new Date();
-          await user.save(); // Save again after updating membership
+          await User.updateOne(
+            { _id: user._id, 'memberships.clientId': membership.clientId },
+            { $set: { 'memberships.$.lastLogin': membership.lastLogin } }
+          ).exec();
         }
       }
+
+      const loginToken = await Helpers.generateLoginToken(user, req.ip, clientKey, context);
+      req.user = user;
+      req.context.user = user;
       
       const duration = (Date.now() - startTime) / 1000;
       AuthTelemetry.recordSuccess('local', clientKey, duration, user._id.toString());

@@ -98,12 +98,14 @@ export default async (): Promise<JestConfigWithTsJest> => {
     // files that are not test suites. `support/` holds shared fixtures and
     // `manual/` holds scripts meant to be run by hand, so both are excluded —
     // otherwise they are reported as suites that "must contain at least one
-    // test".
+    // test". `testUtils.ts` is the same thing at file granularity: shared mock
+    // builders that several suites import.
     testPathIgnorePatterns: [
       '/node_modules/',
       '/__tests__/support/',
       '/__tests__/manual/',
       '/__tests__/helpers/',
+      '/__tests__/testUtils\\.ts$',
     ],
     setupFilesAfterEnv: ['<rootDir>/test/setup/init.ts'],
     // Coverage configuration

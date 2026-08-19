@@ -1,6 +1,7 @@
 import Reactory from '@reactorynet/reactory-core';
 import { service } from '@reactory/server-core/application/decorators/service';
 import Redis, { RedisOptions } from 'ioredis';
+import { SESSION_CACHE_PREFIX } from './SecurityService/sessions';
 
 /**
  * Redis Service - Provides read/write access to Redis database
@@ -133,6 +134,42 @@ export class RedisService implements Reactory.Service.IReactoryService {
       this.context.error(`Failed to set key: ${key}`, error, 'core.RedisService');
       throw error;
     }
+  }
+
+  /**
+   * Set a key only if it does not already exist, with an expiry.
+   *
+   * Returns `true` when this caller created it. The atomic form of
+   * "check then set", which is what makes it usable as a short-lived claim
+   * shared across pods — throttle markers, one-shot guards, and the like.
+   */
+  async setIfAbsent(key: string, value: string, ttlSeconds: number): Promise<boolean> {
+    try {
+      const result = await this.client.set(key, value, 'EX', ttlSeconds, 'NX');
+      return result === 'OK';
+    } catch (error) {
+      this.context.error(`Failed to conditionally set key: ${key}`, error, 'core.RedisService');
+      throw error;
+    }
+  }
+
+  /**
+   * Collect keys matching a pattern without blocking the server.
+   *
+   * `KEYS` walks the entire keyspace in one go and blocks every other client
+   * while it does. `SCAN` gives the same answer in cursored batches, which is the
+   * only safe way to sweep a pattern on a shared Redis.
+   */
+  async scanKeys(pattern: string, batchSize = 250): Promise<string[]> {
+    const found: string[] = [];
+    let cursor = '0';
+    do {
+      // eslint-disable-next-line no-await-in-loop
+      const [next, keys] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', batchSize);
+      cursor = next;
+      found.push(...keys);
+    } while (cursor !== '0');
+    return found;
   }
 
   /**
@@ -362,7 +399,26 @@ export class RedisService implements Reactory.Service.IReactoryService {
       await this.client.connect();
       const isHealthy = await this.isHealthy();
       if (isHealthy) {
-        await this.tryAcquireLeadership();
+        const isPurgeLeader = await this.tryAcquireLeadership();
+        if (process.env.REACTORY_PURGE_SESSION_CACHE_ON_STARTUP === 'true') {
+          if (isPurgeLeader) {
+            try {
+              // SCAN, not KEYS: a rolling deploy starts every pod at once, and a
+              // blocking keyspace walk per pod is a self-inflicted stall.
+              const sessionKeys = await this.scanKeys(`${SESSION_CACHE_PREFIX}*`);
+              if (sessionKeys.length > 0) {
+                await this.delMultiple(sessionKeys);
+                log(`Purged ${sessionKeys.length} session cache keys on startup (REACTORY_PURGE_SESSION_CACHE_ON_STARTUP=true)`, {}, 'info', 'core.RedisService');
+              }
+            } catch (flushErr: any) {
+              log(`Could not purge session cache on startup: ${flushErr.message}`, {}, 'warn', 'core.RedisService');
+            }
+          } else {
+            // Another pod holds the lease and is doing it. The cache is
+            // rebuilt from Mongo on demand, so there is nothing to wait for.
+            log('Skipping startup session cache purge; another instance holds the lease', {}, 'debug', 'core.RedisService');
+          }
+        }
         log('Redis service started successfully', {}, 'info', 'core.RedisService');
       } else {
         throw new Error('Redis health check failed after connection');
@@ -397,9 +453,24 @@ export class RedisService implements Reactory.Service.IReactoryService {
     return `${this.nameSpace}.${this.name}${includeVersion ? '@' + this.version : ''}`;
   }
 
+  /**
+   * Take a short, non-renewed lease so that one instance can do a piece of
+   * one-off startup work while the others skip it.
+   *
+   * This is **not** a general purpose distributed lock: the lease is never
+   * renewed and there is no release, so it should only gate work that is
+   * optional and idempotent. For anything that needs mutual exclusion held
+   * across a real operation, use `acquireMasterLock`
+   * (`@reactory/server-modules/reactory-core/utils/MasterLock`), which is
+   * owner-scoped, renews itself and releases safely.
+   *
+   * The owner value identifies the instance rather than just the pid — pids
+   * collide across containers, which would make any owner check meaningless.
+   */
   async tryAcquireLeadership(leaseSeconds = 30): Promise<boolean> {
     const leaderKey = 'reactory:leader:cache';
-    const acquired = await this.client.set(leaderKey, process.pid.toString(), 'EX', leaseSeconds, 'NX');
+    const ownerId = `${process.env.HOSTNAME || 'local'}:${process.pid}`;
+    const acquired = await this.client.set(leaderKey, ownerId, 'EX', leaseSeconds, 'NX');
     this.isLeader = acquired === 'OK';
     return this.isLeader;
   }

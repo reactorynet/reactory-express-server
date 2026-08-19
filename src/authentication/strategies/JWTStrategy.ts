@@ -7,6 +7,12 @@ import { isNil } from 'lodash';
 import amq from '@reactory/server-core/amq';
 import AuthTelemetry from './telemetry';
 import { ISecurityService } from '@reactory/server-modules/reactory-core/services/SecurityService/types';
+import {
+  readSessions,
+  resolveSessionState,
+  SessionInfoEntry,
+  SessionState,
+} from '@reactory/server-modules/reactory-core/services/SecurityService/sessions';
 
 
 const JwtOptions: StrategyOptions = {
@@ -17,6 +23,57 @@ const JwtOptions: StrategyOptions = {
   secretOrKey: process.env.SECRET_SAUCE || 'secret-key-needs-to-be-set',
   passReqToCallback: true,
 }
+
+/** Telemetry failure reason for each way a session-backed token can be refused. */
+const SESSION_FAILURE_REASON: Record<Exclude<SessionState, 'valid'>, string> = {
+  revoked: 'session_revoked',
+  client_mismatch: 'session_client_mismatch',
+};
+
+/**
+ * Resolve a session-backed token against the user's live sessions.
+ *
+ * Prefers the SecurityService (Redis cache → Mongo) and falls back to reading
+ * sessionInfo directly when it cannot be resolved — during early bootstrap, or
+ * on a request with no Reactory context. Both routes apply the same matching
+ * rules, so a token's fate does not depend on which one ran.
+ */
+const resolveTokenSessionState = async (
+  request: Reactory.Server.ReactoryExpressRequest,
+  payload: any,
+  clientKey: string
+): Promise<SessionState> => {
+  if (request.context?.getService) {
+    try {
+      const securityService = request.context.getService<ISecurityService>(
+        'core.SecurityService@1.0.0'
+      );
+      if (typeof securityService?.resolveSessionState === 'function') {
+        return await securityService.resolveSessionState(payload.userId, payload.refresh, {
+          clientKey,
+        });
+      }
+      const valid = await securityService.validateSession(payload.userId, payload.refresh, {
+        clientKey,
+      });
+      return valid ? 'valid' : 'revoked';
+    } catch {
+      // SecurityService unavailable — fall through to the direct read below.
+    }
+  }
+
+  let sessions: SessionInfoEntry[] = [];
+  try {
+    sessions = await readSessions(payload.userId);
+  } catch {
+    // If sessionInfo cannot be read at all we cannot prove the session is gone.
+    // Rejecting here would lock every user out of a running server whose Mongo
+    // read failed, so the signed, unexpired token is honoured.
+    return 'valid';
+  }
+
+  return resolveSessionState(sessions, payload.refresh, { clientKey });
+};
 
 const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.ReactoryExpressRequest, payload: any, done: OnDoneCallback) => {
   const startTime = Date.now();
@@ -51,16 +108,16 @@ const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.
   }
 
   // Check token expiration
-  if (payload.exp !== null) {
-    if (moment(payload.exp).isBefore(moment())) {
-      const duration = (Date.now() - startTime) / 1000;
-      AuthTelemetry.recordFailure('jwt', clientKey, 'token_expired', duration);
-      return done(null, false);
-    }
-  } else { 
+  if (isNil(payload.exp)) {
     const duration = (Date.now() - startTime) / 1000;
     AuthTelemetry.recordFailure('jwt', clientKey, 'no_expiration', duration);
-    return done(null, false); 
+    return done(null, false);
+  }
+
+  if (moment(payload.exp).isBefore(moment())) {
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordFailure('jwt', clientKey, 'token_expired', duration);
+    return done(null, false);
   }
 
   if (!payload.userId) {
@@ -85,48 +142,24 @@ const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.
       // Cast once for reuse
       const user = userResult as unknown as Reactory.Models.IUserDocument;
 
-      // Validate the token's refresh id against active sessions.
-      // Prefer the SecurityService (Redis cache → Mongo fallback) when the
-      // request context is available; otherwise fall back to a direct in-memory
-      // check so the strategy still works during early bootstrap.
-      if (payload.refresh) {
-        let sessionValid = false;
+      // ── Session validation ────────────────────────────────────────────
+      // Only tokens that were issued *with* a session are checked against one.
+      // `sid` is written into the payload by the login path, so its presence is
+      // the signal — and it is signed, so it cannot be dropped by a caller to
+      // dodge the check. Tokens minted out of band (password-reset and
+      // assessment links, the reactor CLI, system tokens) carry no `sid` and are
+      // authenticated on signature and expiry alone, exactly as before; they
+      // were never recorded in sessionInfo, so checking them against it would
+      // reject every one of them.
+      if (payload.sid) {
+        const state = await resolveTokenSessionState(request, payload, clientKey);
 
-        if (request.context) {
-          try {
-            const securityService = request.context.getService<ISecurityService>(
-              'core.SecurityService@1.0.0'
-            );
-            sessionValid = await securityService.validateSession(
-              payload.userId,
-              payload.refresh
-            );
-          } catch {
-            // SecurityService not available (e.g. startup) — fall through
-            // to the direct Mongo check below.
-            const sessions: any[] = Array.isArray((user as any).sessionInfo)
-              ? (user as any).sessionInfo
-              : [];
-            sessionValid =
-              sessions.length === 0 ||
-              sessions.some(
-                (s: any) => s.jwtPayload?.refresh === payload.refresh
-              );
-          }
-        } else {
-          // No context yet — direct check
-          const sessions: any[] = Array.isArray((user as any).sessionInfo)
-            ? (user as any).sessionInfo
-            : [];
-          sessionValid =
-            sessions.length === 0 ||
-            sessions.some(
-              (s: any) => s.jwtPayload?.refresh === payload.refresh
-            );
-        }
-
-        if (!sessionValid) {
-          AuthTelemetry.recordFailure('jwt', clientKey, 'session_revoked', duration);
+        if (state !== 'valid') {
+          const reason = SESSION_FAILURE_REASON[state];
+          AuthTelemetry.recordFailure('jwt', clientKey, reason, duration);
+          logger.debug(
+            `JWT session rejected for user ${payload.userId} on client ${clientKey}: ${reason}`
+          );
           return done(null, false);
         }
       }

@@ -178,7 +178,7 @@ const LinkedInOAuthStrategy: passport.Strategy = new LinkedInStrategy({
     }
 
     // Generate login token
-    const loginToken = await Helpers.generateLoginToken(user, req.ip, clientKey);
+    const loginToken = await Helpers.generateLoginToken(user, req.ip, clientKey, req.context);
     
     const duration = (Date.now() - startTime) / 1000;
     AuthTelemetry.recordSuccess('linkedin', clientKey, duration, user._id.toString());
