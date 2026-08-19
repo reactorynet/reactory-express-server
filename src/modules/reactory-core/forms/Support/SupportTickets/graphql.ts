@@ -127,6 +127,18 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
           }
         }
       }`,
+      variables: {
+        'query.search': 'filter.searchString',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize',
+        'query.status': 'filter.status',
+        'query.priority': 'filter.priority',
+        'query.requestType': 'filter.requestType',
+        'query.assignedTo': 'filter.assignedTo',
+        'query.tags': 'filter.tags',
+        'query.showOverdueOnly': 'filter.showOverdueOnly',
+        'query.reference': 'filter.reference',
+      },
       resultType: 'object',
       resultMap: {
         'paging': 'paging',

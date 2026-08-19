@@ -101,6 +101,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
   // Get dependencies from registry
   const {
     React,
+    ReactRouterDom,
     Material,
     QuickFilters,
     AdvancedFilterPanel,
@@ -111,6 +112,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     BulkDeleteAction,    
   } = reactory.getComponents<WorkflowRegistryToolbarDependencies>([
     'react.React',
+    'react-router.ReactRouterDom',
     'material-ui.Material',
     'core.QuickFilters',
     'core.AdvancedFilterPanel',
@@ -123,9 +125,17 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
   ]);
 
   // ✅ All React hooks must be called unconditionally before any conditional returns
+  const location = ReactRouterDom.useLocation();
+  const navigate = ReactRouterDom.useNavigate();
+
   const [advancedPanelOpen, setAdvancedPanelOpen] = React.useState(false);
   const [activeBulkAction, setActiveBulkAction] = React.useState<'activate' | 'deactivate' | 'execute' | 'tag' | 'delete' | 'export' | null>(null);
-  const [searchInput, setSearchInput] = React.useState(queryVariables?.filter?.searchString || '');
+
+  // searchInput for typing; committed value drives query + URL
+  const [searchInput, setSearchInput] = React.useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('search') || queryVariables?.filter?.searchString || '';
+  });
 
   // Count workflows for badges
   const counts = React.useMemo(() => {
@@ -279,45 +289,108 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     },
   ], []);
 
+  // URL <-> filter helpers (search + filters/tags sync to query string)
+  const parseUrlToSearchAndFilters = React.useCallback(() => {
+    const params = new URLSearchParams(location.search);
+    const searchTerm = params.get('search') || '';
+    let filterObj: any = {};
+    const filtersParam = params.get('filters');
+    if (filtersParam) {
+      try { filterObj = JSON.parse(decodeURIComponent(filtersParam)); } catch (e) { /* ignore */ }
+    }
+    // Support some flat params for common filters
+    ['isActive', 'nameSpace', 'tags', 'author', 'hasErrors', 'neverRun', 'hasSchedule', 'recentlyUpdated'].forEach((k) => {
+      if (params.has(k)) {
+        const v = params.get(k);
+        if (v === 'true') filterObj[k] = true;
+        else if (v === 'false') filterObj[k] = false;
+        else if (v && v.includes(',')) filterObj[k] = v.split(',').map((s: string) => s.trim());
+        else if (v) filterObj[k] = v;
+      }
+    });
+    return { search: searchTerm, filter: filterObj };
+  }, [location.search]);
+
+  const syncUrlFromSearchAndFilters = React.useCallback((searchTerm: string, filterObj: any) => {
+    const params = new URLSearchParams(location.search);
+    if (searchTerm && searchTerm.trim()) {
+      params.set('search', searchTerm.trim());
+    } else {
+      params.delete('search');
+    }
+    const { searchString: _ignore, ...restFilters } = filterObj || {};
+    if (Object.keys(restFilters).length > 0) {
+      params.set('filters', encodeURIComponent(JSON.stringify(restFilters)));
+    } else {
+      params.delete('filters');
+    }
+    const qs = params.toString();
+    const newPath = `${location.pathname}${qs ? `?${qs}` : ''}${location.hash || ''}`;
+    navigate(newPath, { replace: true });
+  }, [location.pathname, location.search, location.hash, navigate]);
+
+  // Sync from URL on location change (supports direct links + back/forward)
+  React.useEffect(() => {
+    const { search: urlSearch, filter: urlFilter } = parseUrlToSearchAndFilters();
+    // Update local input
+    if (urlSearch !== searchInput) {
+      setSearchInput(urlSearch);
+    }
+    // Push to parent query if different
+    if (onQueryChange) {
+      const currentSearch = queryVariables?.filter?.searchString || '';
+      const needsUpdate = urlSearch !== currentSearch || Object.keys(urlFilter).length > 0;
+      if (needsUpdate) {
+        onQueryChange('registeredWorkflows', {
+          ...queryVariables,
+          filter: {
+            ...queryVariables?.filter,
+            searchString: urlSearch,
+            ...urlFilter
+          },
+          paging: { ...queryVariables?.paging, page: 1 }
+        });
+      }
+    }
+  }, [location.search]);
+
   // Handle search input change (just update local state)
   const handleSearchInputChange = React.useCallback((event: any) => {
     setSearchInput(event.target.value);
   }, []);
 
-  // Execute search (only when button clicked or Enter pressed)
+  // Execute search (only when button clicked or Enter pressed) + URL sync
   const handleSearch = React.useCallback(() => {
     if (onQueryChange) {
+      const nextFilter = {
+        ...queryVariables?.filter,
+        searchString: searchInput
+      };
       onQueryChange('registeredWorkflows', {
         ...queryVariables,
-        filter: {
-          ...queryVariables?.filter,
-          searchString: searchInput
-        },
-        paging: {
-          ...queryVariables?.paging,
-          page: 1 // Reset to first page on new search
-        }
-      });
-    }
-  }, [searchInput, queryVariables, onQueryChange]);
-
-  // Clear search
-  const handleClearSearch = React.useCallback(() => {
-    setSearchInput('');
-    if (onQueryChange) {
-      onQueryChange('registeredWorkflows', {
-        ...queryVariables,
-        filter: {
-          ...queryVariables?.filter,
-          searchString: ''
-        },
+        filter: nextFilter,
         paging: {
           ...queryVariables?.paging,
           page: 1
         }
       });
+      syncUrlFromSearchAndFilters(searchInput, nextFilter);
     }
-  }, [queryVariables, onQueryChange]);
+  }, [searchInput, queryVariables, onQueryChange, syncUrlFromSearchAndFilters]);
+
+  // Clear search + URL sync
+  const handleClearSearch = React.useCallback(() => {
+    setSearchInput('');
+    if (onQueryChange) {
+      const nextFilter = { ...queryVariables?.filter, searchString: '' };
+      onQueryChange('registeredWorkflows', {
+        ...queryVariables,
+        filter: nextFilter,
+        paging: { ...queryVariables?.paging, page: 1 }
+      });
+      syncUrlFromSearchAndFilters('', nextFilter);
+    }
+  }, [queryVariables, onQueryChange, syncUrlFromSearchAndFilters]);
 
   // Handle search on Enter key
   const handleKeyPress = React.useCallback((event: any) => {
@@ -352,6 +425,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
           page: 1
         }
       });
+      syncUrlFromSearchAndFilters(searchInput, filterUpdates);
       return;
     }
 
@@ -380,7 +454,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
         break;
     }
 
-    // Update query with new filters
+    // Update query with new filters + URL sync
     onQueryChange('registeredWorkflows', {
       ...queryVariables,
       filter: filterUpdates,
@@ -389,7 +463,8 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
         page: 1 // Reset to first page when filtering
       }
     });
-  }, [queryVariables, onQueryChange, searchInput]);
+    syncUrlFromSearchAndFilters(searchInput, filterUpdates);
+  }, [queryVariables, onQueryChange, searchInput, syncUrlFromSearchAndFilters]);
 
   const handleAdvancedFilterChange = React.useCallback((filters: any[]) => {
     if (!onQueryChange) return;
@@ -409,6 +484,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
           page: 1
         }
       });
+      syncUrlFromSearchAndFilters(searchInput, filterUpdates);
       return;
     }
 
@@ -446,7 +522,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
       }
     });
 
-    // Update query with new filters
+    // Update query with new filters + URL sync
     onQueryChange('registeredWorkflows', {
       ...queryVariables,
       filter: filterUpdates,
@@ -455,7 +531,8 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
         page: 1
       }
     });
-  }, [queryVariables, onQueryChange, searchInput]);
+    syncUrlFromSearchAndFilters(searchInput, filterUpdates);
+  }, [queryVariables, onQueryChange, searchInput, syncUrlFromSearchAndFilters]);
 
   // Bulk action handlers
   const handleBulkActionComplete = (actionType: string) => {

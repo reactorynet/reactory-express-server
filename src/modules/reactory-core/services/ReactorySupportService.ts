@@ -169,18 +169,43 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
      }
 
     if (filter) {
-      if (filter.status) {
-        params.status = { $in: filter.status }
-       }
+      if (filter.status && filter.status.length > 0) {
+        params.status = { $in: filter.status };
+      }
 
-      if (filter.reference) {
-        params.reference = { $in: filter.reference }
-       }
+      if (filter.priority && filter.priority.length > 0) {
+        params.priority = { $in: filter.priority };
+      }
 
-      if (filter?.searchString?.length > 0) {
-        params.description = { $regex: filter.searchString, $options: "i" }
-       }
-     }
+      if (filter.requestType && filter.requestType.length > 0) {
+        params.requestType = { $in: filter.requestType };
+      }
+
+      if (filter.reference && filter.reference.length > 0) {
+        params.reference = { $in: filter.reference };
+      }
+
+      if (filter.tags && filter.tags.length > 0) {
+        params.tags = { $in: filter.tags };
+      }
+
+      if (filter.assignedTo && filter.assignedTo.length > 0) {
+        params.assignedTo = { $in: filter.assignedTo.map((id: string) => new ObjectId(id)) };
+      }
+
+      if (filter.showOverdueOnly === true) {
+        params.isOverdue = true;
+      }
+
+      if (filter?.searchString && filter.searchString.trim().length > 0) {
+        const regex = { $regex: filter.searchString.trim(), $options: "i" };
+        params.$or = [
+          { request: regex },
+          { description: regex },
+          { reference: regex }
+        ];
+      }
+    }
 
     let query: QueryWithHelpers<Reactory.Models.IReactorySupportTicketDocument[],
       Reactory.Models.IReactorySupportTicketDocument> = ReactorySupportTicketModel.find(params);
