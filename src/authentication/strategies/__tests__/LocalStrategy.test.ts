@@ -3,9 +3,12 @@ import { BasicStrategy } from 'passport-http';
 import passport from 'passport';
 
 // Mock dependencies
+const mockUpdateOne = jest.fn(() => ({ exec: jest.fn().mockResolvedValue({ acknowledged: true }) }));
+
 jest.mock('@reactory/server-modules/reactory-core/models', () => ({
   User: {
     findOne: jest.fn(),
+    updateOne: (...args: any[]) => (mockUpdateOne as any)(...args),
   },
 }));
 
@@ -35,6 +38,7 @@ describe('Local Strategy', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUpdateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue({ acknowledged: true }) });
 
     mockUser = {
       _id: 'user123',
@@ -169,7 +173,40 @@ describe('Local Strategy', () => {
 
       setImmediate(() => {
         expect(mockUser.memberships[0].lastLogin).toBeInstanceOf(Date);
-        expect(mockUser.save).toHaveBeenCalled();
+        expect(mockUpdateOne).toHaveBeenCalledWith(
+          expect.objectContaining({ _id: 'user123' }),
+          { $set: { 'memberships.$.lastLogin': mockUser.memberships[0].lastLogin } }
+        );
+        done();
+      });
+    });
+
+    it('should not save the whole user document, which would drop other sessions', (done) => {
+      // A full document save rewrites sessionInfo from the copy loaded at the top
+      // of the handler, silently dropping a session another application added in
+      // the meantime.
+      const authenticateFunction = (LocalStrategy as any)._verify;
+      authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
+
+      setImmediate(() => {
+        expect(mockUser.save).not.toHaveBeenCalled();
+        done();
+      });
+    });
+
+    it('should pass the request context through so the session cache is invalidated', (done) => {
+      const { generateLoginToken } = require('../helpers');
+
+      const authenticateFunction = (LocalStrategy as any)._verify;
+      authenticateFunction(mockRequest, 'john@example.com', 'correctpassword', mockDone);
+
+      setImmediate(() => {
+        expect(generateLoginToken).toHaveBeenCalledWith(
+          mockUser,
+          mockRequest.ip,
+          'test-client',
+          mockRequest.context
+        );
         done();
       });
     });
@@ -197,7 +234,7 @@ describe('Local Strategy', () => {
 
       setImmediate(() => {
         expect(mockUser.memberships[0].lastLogin).toBeNull();
-        expect(mockUser.save).not.toHaveBeenCalled();
+        expect(mockUpdateOne).not.toHaveBeenCalled();
         done();
       });
     });

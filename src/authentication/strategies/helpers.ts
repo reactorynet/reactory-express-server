@@ -7,47 +7,51 @@ import { UserValidationError } from '@reactory/server-core/exceptions';
 import { User } from '@reactory/server-modules/reactory-core/models';
 import logger from '@reactory/server-core/logging';
 import amq from '@reactory/server-core/amq';
-import Redis, { RedisOptions } from 'ioredis';
+import type { ISecurityService } from '@reactory/server-modules/reactory-core/services/SecurityService/types';
+import {
+  buildSessionEntry,
+  computeEvictions,
+  findReusableSession,
+  isSessionReuseEnabled,
+  persistSession,
+  readSessions,
+  readSignedPayload,
+  SessionInfoEntry,
+} from '@reactory/server-modules/reactory-core/services/SecurityService/sessions';
 import AuthTelemetry from './telemetry';
 
 const jwtSecret = process.env.SECRET_SAUCE;
 
-let sessionRedisClient: Redis | null = null;
-
-const getSessionRedisClient = (): Redis | null => {
-  if (sessionRedisClient) return sessionRedisClient;
+/**
+ * Drop the cached active-session set for a user so the next JWT validation
+ * reads Mongo and sees a session that was just added or removed.
+ *
+ * The Redis client is taken from the request context rather than opened here:
+ * a second connection per process, owned by no service and closed by nobody,
+ * was leaking handles and duplicating the cache key format. Invalidation is
+ * best-effort by design — `SecurityService.validateSession` stamps its cache
+ * writes and falls through to Mongo for tokens newer than the stamp, so a
+ * missed invalidation delays nothing and rejects nothing.
+ */
+export const invalidateUserSessionCache = async (
+  userId: string,
+  context?: Reactory.Server.IReactoryContext
+): Promise<void> => {
+  if (!userId || !context?.getService) return;
   try {
-    const redisConfig: RedisOptions = {
-      host: process.env.REACTORY_REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REACTORY_REDIS_PORT || '6379', 10),
-      password: process.env.REACTORY_REDIS_PASSWORD || 'reactory',
-      db: parseInt(process.env.REACTORY_REDIS_DB || '0', 10),
-      enableReadyCheck: true,
-      maxRetriesPerRequest: 1,
-      lazyConnect: false,
-    };
-    sessionRedisClient = new Redis(redisConfig);
-    sessionRedisClient.on('error', (err) => {
-      logger.debug(`[Helpers.sessionRedis] Redis connection error: ${err.message}`);
-    });
-    return sessionRedisClient;
-  } catch {
-    return null;
+    const securityService = context.getService<ISecurityService>('core.SecurityService@1.0.0');
+    await securityService?.invalidateSessionCache(userId);
+    logger.debug(`[Helpers] Invalidated session cache for user ${userId}`);
+  } catch (err: any) {
+    // SecurityService may be unavailable (startup, or no Redis configured).
+    logger.debug(`[Helpers] Could not invalidate session cache for user ${userId}: ${err?.message}`);
   }
 };
 
-export const invalidateUserSessionCache = async (userId: string): Promise<void> => {
-  if (!userId) return;
-  try {
-    const client = getSessionRedisClient();
-    if (client) {
-      const key = `reactory:security:sessions:${userId}`;
-      await client.del(key);
-      logger.debug(`[Helpers] Invalidated Redis session cache for user ${userId}`);
-    }
-  } catch (err: any) {
-    logger.warn(`[Helpers] Failed to invalidate Redis session cache for user ${userId}: ${err?.message}`);
-  }
+const resolveUserId = (user: Reactory.Models.IUserDocument): string | null => {
+  const id = (user as any)?._id;
+  if (!id) return null;
+  return typeof id.toString === 'function' ? id.toString() : String(id);
 };
 
 export type OnDoneCallback = (error: Error | null, user?: Partial<Reactory.Models.IUserDocument> | string | false, info?: any) => void;
@@ -157,100 +161,88 @@ export default class Helpers {
     return Helpers.jwtMake(Helpers.jwtTokenForUser(user, options));
   }
 
-  static addSession = async (user: Reactory.Models.IUserDocument, token: any, ip = '-', clientId = 'not-set') => {
-    // Reactory is a multitenant host: a single user can hold concurrent
-    // sessions across multiple partner applications, as well as multiple active
-    // sessions against the same partner (e.g. multi-tab / multi-device).
-    const now = moment();
-    const maxPerClient = parseInt(process.env.REACTORY_MAX_SESSIONS_PER_CLIENT || '10', 10);
-    const maxTotal = parseInt(process.env.REACTORY_MAX_TOTAL_SESSIONS || '50', 10);
+  /**
+   * Record a session for `token` against the given user, application and host.
+   *
+   * Expired sessions are pruned and the per-client / global caps applied in the
+   * same write. Sessions belonging to *other* applications are never touched —
+   * that is the whole point of the multi-tenant model: signing into app B must
+   * leave the session held against app A alone.
+   *
+   * The returned payload is the one that was actually signed: it carries a `sid`
+   * claim naming the session, which is what lets request authentication tell a
+   * revoked session-backed token from a token that was never session-backed.
+   */
+  static addSession = async (
+    user: Reactory.Models.IUserDocument,
+    token: any,
+    ip = '-',
+    clientId = 'not-set',
+    context?: Reactory.Server.IReactoryContext
+  ): Promise<{ user: Reactory.Models.IUserDocument; payload: any; sessionId: string; reused: false }> => {
+    const userId = resolveUserId(user);
+    const existing = userId
+      ? await Helpers.readSessionsSafely(userId, user)
+      : (Array.isArray(user.sessionInfo) ? (user.sessionInfo as unknown as SessionInfoEntry[]) : []);
 
-    const userId = user._id ? (typeof user._id.toString === 'function' ? user._id.toString() : String(user._id)) : null;
-
-    // To prevent in-memory lost updates from concurrent requests, fetch latest sessionInfo from Mongo if possible
-    let existingSessions: any[] = [];
-    if (userId) {
-      try {
-        const freshUser: any = await User.findById(userId).select('sessionInfo').lean().exec();
-        if (freshUser && Array.isArray(freshUser.sessionInfo)) {
-          existingSessions = freshUser.sessionInfo;
-        } else if (Array.isArray(user.sessionInfo)) {
-          existingSessions = user.sessionInfo;
-        }
-      } catch {
-        existingSessions = Array.isArray(user.sessionInfo) ? user.sessionInfo : [];
-      }
-    } else {
-      existingSessions = Array.isArray(user.sessionInfo) ? user.sessionInfo : [];
-    }
-
-    // 1. Prune expired sessions across all partners
-    let validSessions = existingSessions.filter((session: any) => {
-      if (!session?.jwtPayload?.exp) return true;
-      return moment(session.jwtPayload.exp).isAfter(now);
-    });
-
-    // 2. Cap concurrent sessions per client/partner
-    const clientSessions = validSessions.filter((session: any) => session.client === clientId);
-    if (clientSessions.length >= maxPerClient) {
-      clientSessions.sort((a: any, b: any) => (a.jwtPayload?.iat || 0) - (b.jwtPayload?.iat || 0));
-      const toRemoveCount = clientSessions.length - maxPerClient + 1;
-      const removeIds = new Set(clientSessions.slice(0, toRemoveCount).map((s: any) => s.id));
-      validSessions = validSessions.filter((s: any) => !removeIds.has(s.id));
-    }
-
-    // 3. Cap total sessions across all partners
-    if (validSessions.length >= maxTotal) {
-      validSessions.sort((a: any, b: any) => (a.jwtPayload?.iat || 0) - (b.jwtPayload?.iat || 0));
-      const toRemoveCount = validSessions.length - maxTotal + 1;
-      const removeIds = new Set(validSessions.slice(0, toRemoveCount).map((s: any) => s.id));
-      validSessions = validSessions.filter((s: any) => !removeIds.has(s.id));
-    }
-
-    // 4. Add the new session
+    const { keep, evict } = computeEvictions(existing, clientId);
     const sessionId = uuid();
-    validSessions.push({
-      id: sessionId,
-      host: ip,
-      client: clientId,
-      jwtPayload: token,
-    });
+    const { session, payload } = buildSessionEntry(token, ip, clientId, sessionId);
 
-    user.sessionInfo = validSessions;
+    (user as any).sessionInfo = [...keep, session];
 
-    // Use atomic update to avoid clobbering by in-memory saves
     if (userId) {
       try {
-        if (typeof (User as any).updateOne === 'function') {
-          await (User as any).updateOne({ _id: user._id }, { $set: { sessionInfo: validSessions, lastLogin: new Date() } }).exec();
-        } else {
-          await user.save();
-        }
+        await persistSession({ userId, session, evict });
       } catch (err) {
-        logger.error(`Error saving user session info atomically`, err);
-        try {
-          await user.save();
-        } catch (saveErr) {
-          logger.error(`Error in fallback save`, saveErr);
-        }
+        logger.error('Error persisting user session info', err);
       }
+      await invalidateUserSessionCache(userId, context);
     } else {
+      // No id to address — an unsaved or mocked document. Fall back to a
+      // document save so callers that rely on the in-memory array still work.
       try {
-        await user.save();
+        await (user as any).save?.();
       } catch (err) {
-        logger.error(`Error saving user session info`, err);
+        logger.error('Error saving user session info', err);
       }
     }
 
-    // 5. Invalidate Redis session cache so SecurityService and JWTStrategy immediately pick up the new session
-    if (userId) {
-      await invalidateUserSessionCache(userId);
-    }
-
-    return user;
+    return { user, payload, sessionId, reused: false };
   }
 
-  static generateLoginToken = async (user: Reactory.Models.IUserDocument, ip = 'none', clientId = 'not-set'): Promise<{
+  /**
+   * Read the authoritative session list, tolerating a `User` model that cannot
+   * be queried (unit tests, early bootstrap) by falling back to the document.
+   */
+  private static readSessionsSafely = async (
+    userId: string,
+    user: Reactory.Models.IUserDocument
+  ): Promise<SessionInfoEntry[]> => {
+    try {
+      return await readSessions(userId);
+    } catch {
+      return Array.isArray(user.sessionInfo)
+        ? (user.sessionInfo as unknown as SessionInfoEntry[])
+        : [];
+    }
+  }
+
+  /**
+   * Issue a login token for a user against a partner application.
+   *
+   * When the user already holds a live session for this same application *from
+   * this same host*, that session's token is handed back verbatim rather than a
+   * new one being stacked — so a page reload or a second tab does not multiply
+   * sessions, while a different device or a different application still gets its
+   * own. Set `REACTORY_SESSION_REUSE=false` to always mint a new session.
+   */
+  static generateLoginToken = async (
+    user: Reactory.Models.IUserDocument,
+    ip = 'none',
+    clientId = 'not-set',
+    context?: Reactory.Server.IReactoryContext
+  ): Promise<{
     id: string,
     firstName: string,
     lastName: string,
@@ -259,12 +251,41 @@ export default class Helpers {
     logger.info(`generating Login token for user ${user.firstName} ${user.lastName}`);
 
     try {
+      const userId = resolveUserId(user);
+      let token: string | null = null;
+
+      if (userId && isSessionReuseEnabled()) {
+        const sessions = await Helpers.readSessionsSafely(userId, user);
+        const reusable = findReusableSession(sessions, clientId, ip);
+        const signedPayload = reusable ? readSignedPayload(reusable) : null;
+        if (signedPayload) {
+          logger.debug(
+            `Reusing session ${reusable.id} for user ${userId} on client ${clientId} from ${ip}`
+          );
+          token = Helpers.jwtMake(signedPayload);
+          // Nothing is added to sessionInfo on this path, so record the login
+          // directly rather than relying on the session write to do it.
+          try {
+            await (User as any).updateOne({ _id: user._id }, { $set: { lastLogin: new Date() } }).exec();
+          } catch (err: any) {
+            logger.debug(`Could not update lastLogin for reused session: ${err?.message}`);
+          }
+        }
+      }
+
+      if (token === null) {
+        const { payload } = await Helpers.addSession(
+          user,
+          Helpers.jwtTokenForUser(user),
+          ip,
+          clientId,
+          context
+        );
+        token = Helpers.jwtMake(payload);
+      }
+
       user.lastLogin = moment().valueOf(); // eslint-disable-line
-      const jwtPayload = Helpers.jwtTokenForUser(user);
-      await Helpers.addSession(user, jwtPayload, ip, clientId);
-      
-      const token = Helpers.jwtMake(jwtPayload);
-      
+
       // Record JWT token generation in telemetry
       try {
         AuthTelemetry.recordTokenGeneration(user._id.toString(), 'system');
@@ -272,7 +293,7 @@ export default class Helpers {
         logger.error('Failed to record token generation metric', telemetryError);
         // Continue - don't fail auth due to telemetry error
       }
-      
+
       return {
         id: typeof user?._id?.toHexString === 'function' ? user._id.toHexString() : user?._id?.toString(),
         firstName: user.firstName,

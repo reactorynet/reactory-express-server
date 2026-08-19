@@ -1,4 +1,5 @@
 import Reactory from '@reactorynet/reactory-core';
+import type { SessionState } from './sessions';
 
 /**
  * Token lifetime category
@@ -126,6 +127,26 @@ export interface SessionHistoryEntry {
  * Service interface for JWT security management.
  * Consumed by the SecurityCli, GraphQL resolvers, and AI macro tools.
  */
+/**
+ * Options for `validateSession`.
+ */
+export interface ValidateSessionOptions {
+  /**
+   * The application the request arrived for. A session recorded against a
+   * different client will not validate — a token minted for one partner
+   * application does not authenticate against another.
+   */
+  clientKey?: string;
+
+  /**
+   * The token's `iat` in epoch milliseconds. Used to tell whether the cached
+   * session set predates the token: if it does, a cache miss is inconclusive and
+   * validation re-reads Mongo rather than rejecting a session that was added
+   * after the cache was written.
+   */
+  issuedAt?: number;
+}
+
 export interface ISecurityService extends Reactory.Service.IReactoryService {
   /**
    * Create a standard (24h) JWT token for a user identified by userId or email.
@@ -178,7 +199,27 @@ export interface ISecurityService extends Reactory.Service.IReactoryService {
    * Uses Redis cache first, falls back to Mongo sessionInfo[] on cache-miss.
    * Pure read — no DB writes.
    */
-  validateSession(userId: string, refreshToken: string, clientKey?: string): Promise<boolean>;
+  validateSession(
+    userId: string,
+    refreshToken: string,
+    options?: ValidateSessionOptions
+  ): Promise<boolean>;
+
+  /**
+   * As `validateSession`, but reports *why* a token was refused so callers can
+   * tell an ended session from a token presented to the wrong application.
+   */
+  resolveSessionState(
+    userId: string,
+    refreshToken: string,
+    options?: ValidateSessionOptions
+  ): Promise<SessionState>;
+
+  /**
+   * Drop the cached active-session set for a user so the next validation reads
+   * Mongo. Called after a session is added or revoked.
+   */
+  invalidateSessionCache(userId: string): Promise<void>;
 
   /**
    * Record a "touch" on the user and (optionally) the matching membership.

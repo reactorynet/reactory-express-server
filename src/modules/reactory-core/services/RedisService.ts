@@ -1,6 +1,7 @@
 import Reactory from '@reactorynet/reactory-core';
 import { service } from '@reactory/server-core/application/decorators/service';
 import Redis, { RedisOptions } from 'ioredis';
+import { SESSION_CACHE_PREFIX } from './SecurityService/sessions';
 
 /**
  * Redis Service - Provides read/write access to Redis database
@@ -365,7 +366,7 @@ export class RedisService implements Reactory.Service.IReactoryService {
         await this.tryAcquireLeadership();
         if (process.env.REACTORY_PURGE_SESSION_CACHE_ON_STARTUP === 'true') {
           try {
-            const sessionKeys = await this.client.keys('reactory:security:sessions:*');
+            const sessionKeys = await this.client.keys(`${SESSION_CACHE_PREFIX}*`);
             if (sessionKeys.length > 0) {
               await this.client.del(...sessionKeys);
               log(`Purged ${sessionKeys.length} session cache keys on startup (REACTORY_PURGE_SESSION_CACHE_ON_STARTUP=true)`, {}, 'info', 'core.RedisService');

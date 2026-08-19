@@ -139,6 +139,13 @@ const UserSchema = new mongoose.Schema({
       id: String,
       host: String,
       client: String,
+      // The exact JSON that was signed for this session. `jwtPayload` below
+      // cannot serve this purpose: it casts exp/iat to Date and drops claims it
+      // does not declare, so re-signing it would not reproduce the original
+      // token. Keeping the signed JSON verbatim lets a repeat login from the
+      // same app and host hand back a byte-identical JWT. Only the payload is
+      // stored - never the signature.
+      jwtPayloadJson: String,
       jwtPayload: {
         iss: String,
         sub: String,

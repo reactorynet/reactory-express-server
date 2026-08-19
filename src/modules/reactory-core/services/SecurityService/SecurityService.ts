@@ -19,7 +19,23 @@ import {
   ActiveTokenSummary,
   SessionHistoryEntry,
   TokenLifetime,
+  ValidateSessionOptions,
 } from './types';
+import {
+  buildSessionEntry,
+  CachedSessionRecord,
+  computeEvictions,
+  isSessionLive,
+  persistSession,
+  readSessions,
+  resolveSessionState as sessionStateFor,
+  SESSION_CACHE_TTL,
+  sessionCacheKey,
+  SessionCacheEnvelope,
+  SessionInfoEntry,
+  SessionState,
+  toCachedRecords,
+} from './sessions';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -32,12 +48,6 @@ const LIFETIME_PRESETS: Record<
   standard: { amount: 24, unit: 'hours' },
   long: { amount: 30, unit: 'days' },
 };
-
-/** Redis key prefix for cached active-session sets */
-const REDIS_SESSION_PREFIX = 'reactory:security:sessions:';
-/** Redis TTL (seconds) for cached session data – 5 minutes keeps reads fast
- *  while ensuring evictions propagate in a reasonable timeframe. */
-const REDIS_SESSION_TTL = 300;
 
 // ─── Service ────────────────────────────────────────────────────────────────
 
@@ -119,20 +129,39 @@ class SecurityService implements ISecurityService {
   // ─── Redis helpers ──────────────────────────────────────────────────────
 
   /**
-   * Build the Redis key that stores cached active-session refresh ids for a user.
+   * Read the cached active-session records for a user.
+   *
+   * Returns `null` on a cache miss *or* on any Redis failure, so callers always
+   * treat Mongo as the source of truth. Values written by an older build (a bare
+   * array of refresh strings, or of records) are accepted and normalised with a
+   * `writtenAt` of 0, which makes them non-authoritative for any token — the
+   * first validation after a deploy rewrites them in the current shape.
    */
-  private sessionCacheKey(userId: string): string {
-    return `${REDIS_SESSION_PREFIX}${userId}`;
-  }
-
-  /**
-   * Read the cached active refresh tokens from Redis for a given userId.
-   * Returns `null` on cache miss so callers know to fall through to Mongo.
-   */
-  private async getCachedSessions(userId: string): Promise<any[] | null> {
+  private async getCachedSessions(userId: string): Promise<SessionCacheEnvelope | null> {
     if (!this.redis) return null;
     try {
-      return await this.redis.getJSON<any[]>(this.sessionCacheKey(userId));
+      const cached = await this.redis.getJSON<any>(sessionCacheKey(userId));
+      if (cached === null || cached === undefined) return null;
+
+      if (Array.isArray(cached)) {
+        return {
+          writtenAt: 0,
+          sessions: cached
+            .map((entry: any): CachedSessionRecord | null =>
+              typeof entry === 'string' ? { refresh: entry } : entry?.refresh ? entry : null
+            )
+            .filter((entry): entry is CachedSessionRecord => entry !== null),
+        };
+      }
+
+      if (Array.isArray(cached.sessions)) {
+        return {
+          writtenAt: typeof cached.writtenAt === 'number' ? cached.writtenAt : 0,
+          sessions: cached.sessions,
+        };
+      }
+
+      return null;
     } catch {
       // Redis failures should never block the auth path – fall through.
       return null;
@@ -140,19 +169,23 @@ class SecurityService implements ISecurityService {
   }
 
   /**
-   * Write the set of active refresh tokens / session signatures into Redis.
+   * Write the active-session records into Redis, stamped so a later validation
+   * can tell whether the cache predates the token it is being asked about.
+   *
+   * `readAt` must be the moment *before* the sessions were read from Mongo, not
+   * the moment of the write. Anything created from that instant onwards may be
+   * missing from this snapshot, and the stamp is what stops such a session being
+   * judged by a cache that never saw it.
    */
   private async setCachedSessions(
     userId: string,
-    sessions: any[]
+    sessions: CachedSessionRecord[],
+    readAt: number
   ): Promise<void> {
     if (!this.redis) return;
     try {
-      await this.redis.setJSON(
-        this.sessionCacheKey(userId),
-        sessions,
-        REDIS_SESSION_TTL
-      );
+      const envelope: SessionCacheEnvelope = { writtenAt: readAt, sessions };
+      await this.redis.setJSON(sessionCacheKey(userId), envelope, SESSION_CACHE_TTL);
     } catch {
       // Best-effort – log but don't propagate.
       logger.warn(`[SecurityService] Failed to write session cache for ${userId}`);
@@ -165,7 +198,7 @@ class SecurityService implements ISecurityService {
   async invalidateSessionCache(userId: string): Promise<void> {
     if (!this.redis) return;
     try {
-      await this.redis.del(this.sessionCacheKey(userId));
+      await this.redis.del(sessionCacheKey(userId));
     } catch {
       logger.warn(`[SecurityService] Failed to invalidate session cache for ${userId}`);
     }
@@ -312,20 +345,25 @@ class SecurityService implements ISecurityService {
     const user = await this.resolveUser(userIdOrEmail);
     const { result, lifetime } = this.buildToken(user, options);
     const sessionId = uuid();
+    const host = options.host ?? 'cli';
+    const clientKey = options.clientKey ?? 'system';
 
-    // Persist to Mongo sessionInfo (source of truth for the JWT strategy)
-    (user as any).sessionInfo = (user as any).sessionInfo ?? [];
-    (user as any).sessionInfo.push({
-      id: sessionId,
-      host: options.host ?? 'cli',
-      client: options.clientKey ?? 'system',
-      jwtPayload: result.payload,
-    });
-    try {
-      await User.updateOne({ _id: (user as any)._id }, { $set: { sessionInfo: (user as any).sessionInfo } }).exec();
-    } catch (err) {
-      await (user as any).save();
-    }
+    // Persist to Mongo sessionInfo (source of truth for the JWT strategy),
+    // through the same pruning/capping/atomic-append path a browser login uses
+    // so a CLI-issued token behaves identically to an interactive one.
+    const existing: SessionInfoEntry[] = Array.isArray((user as any).sessionInfo)
+      ? (user as any).sessionInfo
+      : [];
+    const { keep, evict } = computeEvictions(existing, clientKey);
+    const { session, payload } = buildSessionEntry(result.payload, host, clientKey, sessionId);
+
+    // `sid` is added by buildSessionEntry, so the token has to be signed from
+    // the payload that was actually stored.
+    result.payload = payload as CreateTokenResult['payload'];
+    result.token = jwt.encode(payload, process.env.SECRET_SAUCE);
+
+    (user as any).sessionInfo = [...keep, session];
+    await persistSession({ userId: result.userId, session, evict, touchLastLogin: false });
 
     // Invalidate Redis cache so the next JWT validation picks up the new session
     await this.invalidateSessionCache(result.userId);
@@ -412,9 +450,11 @@ class SecurityService implements ISecurityService {
           : [];
         const count = sessions.length;
 
-        // 1. Clear Mongo sessions
+        // 1. Clear Mongo sessions. An atomic field update rather than a
+        //    document save, so a login racing this revocation cannot be
+        //    resurrected from a stale in-memory copy of the rest of the document.
         (user as any).sessionInfo = [];
-        await (user as any).save();
+        await User.updateOne({ _id: (user as any)._id }, { $set: { sessionInfo: [] } }).exec();
 
         // 2. Invalidate Redis cache
         await this.invalidateSessionCache(uid);
@@ -459,6 +499,7 @@ class SecurityService implements ISecurityService {
    * Refreshes the Redis cache on every read so JWT strategy lookups stay warm.
    */
   async listActiveTokens(userIdOrEmail: string): Promise<ActiveTokenSummary[]> {
+    const readAt = Date.now();
     const user = await this.resolveUser(userIdOrEmail);
     const now = moment();
 
@@ -466,11 +507,14 @@ class SecurityService implements ISecurityService {
       ? (user as any).sessionInfo
       : [];
 
-    // (Re)populate Redis cache with current refresh-token set
-    const refreshTokens = sessions
-      .map((s: any) => s.jwtPayload?.refresh)
-      .filter(Boolean);
-    await this.setCachedSessions((user._id as any)?.toString(), refreshTokens);
+    // (Re)populate the Redis cache. Only live sessions go in — writing expired
+    // ones would let a stale entry vouch for a session that has already lapsed.
+    // `readAt` is when the user document was fetched, above.
+    await this.setCachedSessions(
+      (user._id as any)?.toString(),
+      toCachedRecords(sessions.filter((s: SessionInfoEntry) => isSessionLive(s))),
+      readAt
+    );
 
     return sessions.map((session: any) => {
       const exp = session.jwtPayload?.exp
@@ -542,44 +586,62 @@ class SecurityService implements ISecurityService {
    *
    * **No DB writes** — safe to call on every JWT request.
    */
-  async validateSession(userId: string, refreshToken: string, clientKey?: string): Promise<boolean> {
-    // 1. Try Redis
+  async validateSession(
+    userId: string,
+    refreshToken: string,
+    options: ValidateSessionOptions = {}
+  ): Promise<boolean> {
+    return (await this.resolveSessionState(userId, refreshToken, options)) === 'valid';
+  }
+
+  /**
+   * As `validateSession`, but says *why* a token was refused: `revoked` when no
+   * live session carries it, `client_mismatch` when one does but it belongs to
+   * another application. Callers that report on auth failures want the two apart.
+   */
+  async resolveSessionState(
+    userId: string,
+    refreshToken: string,
+    options: ValidateSessionOptions = {}
+  ): Promise<SessionState> {
+    const { clientKey, issuedAt } = options;
+
+    // 1. Try Redis. A hit that names the session settles it; a hit that does not
+    //    only settles it when the cache is known to be newer than the token —
+    //    otherwise this could be a session added since the cache was written and
+    //    we would be rejecting a perfectly good fresh login.
     const cached = await this.getCachedSessions(userId);
     if (cached !== null) {
-      return cached.some((entry: any) => {
-        if (typeof entry === 'string') return entry === refreshToken;
-        return entry?.refresh === refreshToken;
-      });
+      const state = sessionStateFor(cached.sessions, refreshToken, { clientKey });
+      if (state === 'valid') return state;
+      if (state === 'client_mismatch') {
+        // The session exists but belongs to another application. That verdict
+        // does not go stale, so there is nothing to re-read.
+        logger.debug(
+          `[SecurityService] Session for user ${userId} is scoped to another client than ${clientKey}`
+        );
+        return state;
+      }
+      // Strictly older than the snapshot, so the snapshot is authoritative.
+      // Equality has to fall through: these stamps are millisecond-resolution, so
+      // a session created in the same millisecond as the snapshot may not be in it.
+      const cacheCoversToken = issuedAt === undefined || issuedAt < cached.writtenAt;
+      if (cacheCoversToken) return 'revoked';
     }
 
-    // 2. Fall through to Mongo
+    // 2. Fall through to Mongo.
     try {
-      const user = await this.resolveUser(userId);
-      const sessions: any[] = Array.isArray((user as any).sessionInfo)
-        ? (user as any).sessionInfo
-        : [];
-
-      const now = moment();
-      const validSessions = sessions.filter((s: any) => {
-        if (!s.jwtPayload?.exp) return true;
-        return moment(s.jwtPayload.exp).isAfter(now);
-      });
-
-      const cachedRecords = validSessions
-        .map((s: any) => ({
-          refresh: s.jwtPayload?.refresh,
-          client: s.client,
-          exp: s.jwtPayload?.exp,
-        }))
-        .filter((r: any) => Boolean(r.refresh));
-
-      // Populate cache for next time
-      await this.setCachedSessions(userId, cachedRecords);
-
-      return cachedRecords.some((r: any) => r.refresh === refreshToken);
+      const readAt = Date.now();
+      const sessions = await readSessions(userId);
+      await this.setCachedSessions(
+        userId,
+        toCachedRecords(sessions.filter((s) => isSessionLive(s))),
+        readAt
+      );
+      return sessionStateFor(sessions, refreshToken, { clientKey });
     } catch {
-      // If we can't resolve the user the session is definitively invalid
-      return false;
+      // If we can't read the user's sessions the token cannot be honoured.
+      return 'revoked';
     }
   }
 

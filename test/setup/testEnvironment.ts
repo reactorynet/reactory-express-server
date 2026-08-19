@@ -43,6 +43,12 @@ const setupTestEnvironment = () => {
 
   // Set other required environment variables
   process.env.NODE_ENV = 'test';
+  // Modules that sign or verify JWTs capture SECRET_SAUCE at import time, so it
+  // has to exist before any suite requires them. Without it jwt-simple throws
+  // "Require key" from inside otherwise-unrelated tests.
+  if (!process.env.SECRET_SAUCE) {
+    process.env.SECRET_SAUCE = 'unit-test-secret-sauce-value-32chars!';
+  }
   process.env.REACTORY_IS_BUILDING = 'false';
   process.env.CDN_ROOT = 'http://localhost:3000/cdn';
   process.env.WEBROOT = 'http://localhost:3000';

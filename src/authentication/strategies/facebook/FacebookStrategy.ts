@@ -179,7 +179,7 @@ const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
     }
 
     // Generate login token
-    const loginToken = await Helpers.generateLoginToken(user, req.ip, clientKey);
+    const loginToken = await Helpers.generateLoginToken(user, req.ip, clientKey, req.context);
     
     const duration = (Date.now() - startTime) / 1000;
     AuthTelemetry.recordSuccess('facebook', clientKey, duration, user._id.toString());
