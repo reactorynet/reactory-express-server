@@ -51,16 +51,16 @@ const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.
   }
 
   // Check token expiration
-  if (payload.exp !== null) {
-    if (moment(payload.exp).isBefore(moment())) {
-      const duration = (Date.now() - startTime) / 1000;
-      AuthTelemetry.recordFailure('jwt', clientKey, 'token_expired', duration);
-      return done(null, false);
-    }
-  } else { 
+  if (isNil(payload.exp)) {
     const duration = (Date.now() - startTime) / 1000;
     AuthTelemetry.recordFailure('jwt', clientKey, 'no_expiration', duration);
-    return done(null, false); 
+    return done(null, false);
+  }
+
+  if (moment(payload.exp).isBefore(moment())) {
+    const duration = (Date.now() - startTime) / 1000;
+    AuthTelemetry.recordFailure('jwt', clientKey, 'token_expired', duration);
+    return done(null, false);
   }
 
   if (!payload.userId) {
@@ -99,7 +99,8 @@ const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.
             );
             sessionValid = await securityService.validateSession(
               payload.userId,
-              payload.refresh
+              payload.refresh,
+              clientKey
             );
           } catch {
             // SecurityService not available (e.g. startup) — fall through

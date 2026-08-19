@@ -169,7 +169,7 @@ describe('JWT Strategy', () => {
       verifyFunction(mockRequest, payload, mockDone);
 
       setImmediate(() => {
-        expect(mockSecurityService.validateSession).toHaveBeenCalledWith('user123', 'refresh-token-123');
+        expect(mockSecurityService.validateSession).toHaveBeenCalledWith('user123', 'refresh-token-123', 'test-client');
         expect(mockDone).toHaveBeenCalledWith(null, mockUser);
         done();
       });
@@ -218,6 +218,34 @@ describe('JWT Strategy', () => {
 
       const verifyFunction = (JWTStrategy as any)._verify;
       verifyFunction(mockRequest, payload, mockDone);
+
+      setImmediate(() => {
+        expect(mockDone).toHaveBeenCalledWith(null, mockUser);
+        done();
+      });
+    });
+
+    it('should authenticate user with valid session in multi-session environment', (done) => {
+      const futureTime = Date.now() + 3600000;
+      const payloadA = {
+        userId: 'user123',
+        exp: futureTime,
+        refresh: 'refresh-token-partner-a',
+      };
+
+      // Set up user with sessions for both partner-a and partner-b
+      mockUser.sessionInfo = [
+        { client: 'partner-a', jwtPayload: { refresh: 'refresh-token-partner-a' } },
+        { client: 'partner-b', jwtPayload: { refresh: 'refresh-token-partner-b' } },
+      ];
+
+      // SecurityService fallback check
+      mockRequest.context.getService.mockImplementation(() => {
+        throw new Error('Service unavailable');
+      });
+
+      const verifyFunction = (JWTStrategy as any)._verify;
+      verifyFunction(mockRequest, payloadA, mockDone);
 
       setImmediate(() => {
         expect(mockDone).toHaveBeenCalledWith(null, mockUser);

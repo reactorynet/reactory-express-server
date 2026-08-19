@@ -363,6 +363,17 @@ export class RedisService implements Reactory.Service.IReactoryService {
       const isHealthy = await this.isHealthy();
       if (isHealthy) {
         await this.tryAcquireLeadership();
+        if (process.env.REACTORY_PURGE_SESSION_CACHE_ON_STARTUP === 'true') {
+          try {
+            const sessionKeys = await this.client.keys('reactory:security:sessions:*');
+            if (sessionKeys.length > 0) {
+              await this.client.del(...sessionKeys);
+              log(`Purged ${sessionKeys.length} session cache keys on startup (REACTORY_PURGE_SESSION_CACHE_ON_STARTUP=true)`, {}, 'info', 'core.RedisService');
+            }
+          } catch (flushErr: any) {
+            log(`Could not purge session cache on startup: ${flushErr.message}`, {}, 'warn', 'core.RedisService');
+          }
+        }
         log('Redis service started successfully', {}, 'info', 'core.RedisService');
       } else {
         throw new Error('Redis health check failed after connection');

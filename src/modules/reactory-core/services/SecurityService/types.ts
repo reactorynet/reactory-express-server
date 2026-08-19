@@ -178,7 +178,7 @@ export interface ISecurityService extends Reactory.Service.IReactoryService {
    * Uses Redis cache first, falls back to Mongo sessionInfo[] on cache-miss.
    * Pure read — no DB writes.
    */
-  validateSession(userId: string, refreshToken: string): Promise<boolean>;
+  validateSession(userId: string, refreshToken: string, clientKey?: string): Promise<boolean>;
 
   /**
    * Record a "touch" on the user and (optionally) the matching membership.

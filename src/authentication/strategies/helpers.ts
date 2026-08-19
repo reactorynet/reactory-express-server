@@ -7,9 +7,48 @@ import { UserValidationError } from '@reactory/server-core/exceptions';
 import { User } from '@reactory/server-modules/reactory-core/models';
 import logger from '@reactory/server-core/logging';
 import amq from '@reactory/server-core/amq';
+import Redis, { RedisOptions } from 'ioredis';
 import AuthTelemetry from './telemetry';
 
 const jwtSecret = process.env.SECRET_SAUCE;
+
+let sessionRedisClient: Redis | null = null;
+
+const getSessionRedisClient = (): Redis | null => {
+  if (sessionRedisClient) return sessionRedisClient;
+  try {
+    const redisConfig: RedisOptions = {
+      host: process.env.REACTORY_REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REACTORY_REDIS_PORT || '6379', 10),
+      password: process.env.REACTORY_REDIS_PASSWORD || 'reactory',
+      db: parseInt(process.env.REACTORY_REDIS_DB || '0', 10),
+      enableReadyCheck: true,
+      maxRetriesPerRequest: 1,
+      lazyConnect: false,
+    };
+    sessionRedisClient = new Redis(redisConfig);
+    sessionRedisClient.on('error', (err) => {
+      logger.debug(`[Helpers.sessionRedis] Redis connection error: ${err.message}`);
+    });
+    return sessionRedisClient;
+  } catch {
+    return null;
+  }
+};
+
+export const invalidateUserSessionCache = async (userId: string): Promise<void> => {
+  if (!userId) return;
+  try {
+    const client = getSessionRedisClient();
+    if (client) {
+      const key = `reactory:security:sessions:${userId}`;
+      await client.del(key);
+      logger.debug(`[Helpers] Invalidated Redis session cache for user ${userId}`);
+    }
+  } catch (err: any) {
+    logger.warn(`[Helpers] Failed to invalidate Redis session cache for user ${userId}: ${err?.message}`);
+  }
+};
 
 export type OnDoneCallback = (error: Error | null, user?: Partial<Reactory.Models.IUserDocument> | string | false, info?: any) => void;
 
@@ -48,12 +87,14 @@ export default class Helpers {
       });
     }
 
-    if (payload.exp !== null) {
-      if (moment(payload.exp).isBefore(moment())) {
-        logger.info('token expired');
-        return done(null, false);
-      }
-    } else { return done(null, false); }
+    if (isNil(payload.exp)) {
+      return done(null, false);
+    }
+
+    if (moment(payload.exp).isBefore(moment())) {
+      logger.info('token expired');
+      return done(null, false);
+    }
 
     if (payload.userId) {
       User.findById(payload.userId).then((userResult) => {
@@ -118,23 +159,92 @@ export default class Helpers {
 
   static addSession = async (user: Reactory.Models.IUserDocument, token: any, ip = '-', clientId = 'not-set') => {
     // Reactory is a multitenant host: a single user can hold concurrent
-    // sessions against several partner applications. Only replace the
-    // session belonging to the client being logged into - leave every
-    // other partner's session untouched so logging into one app doesn't
-    // log the user out of another.
-    const existingSessions = Array.isArray(user.sessionInfo) ? user.sessionInfo : [];
-    user.sessionInfo = existingSessions.filter((session: any) => session.client !== clientId);
-    user.sessionInfo.push({
-      id: uuid(),
+    // sessions across multiple partner applications, as well as multiple active
+    // sessions against the same partner (e.g. multi-tab / multi-device).
+    const now = moment();
+    const maxPerClient = parseInt(process.env.REACTORY_MAX_SESSIONS_PER_CLIENT || '10', 10);
+    const maxTotal = parseInt(process.env.REACTORY_MAX_TOTAL_SESSIONS || '50', 10);
+
+    const userId = user._id ? (typeof user._id.toString === 'function' ? user._id.toString() : String(user._id)) : null;
+
+    // To prevent in-memory lost updates from concurrent requests, fetch latest sessionInfo from Mongo if possible
+    let existingSessions: any[] = [];
+    if (userId) {
+      try {
+        const freshUser: any = await User.findById(userId).select('sessionInfo').lean().exec();
+        if (freshUser && Array.isArray(freshUser.sessionInfo)) {
+          existingSessions = freshUser.sessionInfo;
+        } else if (Array.isArray(user.sessionInfo)) {
+          existingSessions = user.sessionInfo;
+        }
+      } catch {
+        existingSessions = Array.isArray(user.sessionInfo) ? user.sessionInfo : [];
+      }
+    } else {
+      existingSessions = Array.isArray(user.sessionInfo) ? user.sessionInfo : [];
+    }
+
+    // 1. Prune expired sessions across all partners
+    let validSessions = existingSessions.filter((session: any) => {
+      if (!session?.jwtPayload?.exp) return true;
+      return moment(session.jwtPayload.exp).isAfter(now);
+    });
+
+    // 2. Cap concurrent sessions per client/partner
+    const clientSessions = validSessions.filter((session: any) => session.client === clientId);
+    if (clientSessions.length >= maxPerClient) {
+      clientSessions.sort((a: any, b: any) => (a.jwtPayload?.iat || 0) - (b.jwtPayload?.iat || 0));
+      const toRemoveCount = clientSessions.length - maxPerClient + 1;
+      const removeIds = new Set(clientSessions.slice(0, toRemoveCount).map((s: any) => s.id));
+      validSessions = validSessions.filter((s: any) => !removeIds.has(s.id));
+    }
+
+    // 3. Cap total sessions across all partners
+    if (validSessions.length >= maxTotal) {
+      validSessions.sort((a: any, b: any) => (a.jwtPayload?.iat || 0) - (b.jwtPayload?.iat || 0));
+      const toRemoveCount = validSessions.length - maxTotal + 1;
+      const removeIds = new Set(validSessions.slice(0, toRemoveCount).map((s: any) => s.id));
+      validSessions = validSessions.filter((s: any) => !removeIds.has(s.id));
+    }
+
+    // 4. Add the new session
+    const sessionId = uuid();
+    validSessions.push({
+      id: sessionId,
       host: ip,
       client: clientId,
       jwtPayload: token,
     });
 
-    try {
-      await user.save();
-    } catch (err) {
-      logger.error(`Error saving user session info`, err);
+    user.sessionInfo = validSessions;
+
+    // Use atomic update to avoid clobbering by in-memory saves
+    if (userId) {
+      try {
+        if (typeof (User as any).updateOne === 'function') {
+          await (User as any).updateOne({ _id: user._id }, { $set: { sessionInfo: validSessions, lastLogin: new Date() } }).exec();
+        } else {
+          await user.save();
+        }
+      } catch (err) {
+        logger.error(`Error saving user session info atomically`, err);
+        try {
+          await user.save();
+        } catch (saveErr) {
+          logger.error(`Error in fallback save`, saveErr);
+        }
+      }
+    } else {
+      try {
+        await user.save();
+      } catch (err) {
+        logger.error(`Error saving user session info`, err);
+      }
+    }
+
+    // 5. Invalidate Redis session cache so SecurityService and JWTStrategy immediately pick up the new session
+    if (userId) {
+      await invalidateUserSessionCache(userId);
     }
 
     return user;
@@ -164,7 +274,7 @@ export default class Helpers {
       }
       
       return {
-        id: user?._id?.toHexString(),
+        id: typeof user?._id?.toHexString === 'function' ? user._id.toHexString() : user?._id?.toString(),
         firstName: user.firstName,
         lastName: user.lastName,
         token,

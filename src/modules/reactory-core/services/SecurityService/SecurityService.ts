@@ -129,10 +129,10 @@ class SecurityService implements ISecurityService {
    * Read the cached active refresh tokens from Redis for a given userId.
    * Returns `null` on cache miss so callers know to fall through to Mongo.
    */
-  private async getCachedSessions(userId: string): Promise<string[] | null> {
+  private async getCachedSessions(userId: string): Promise<any[] | null> {
     if (!this.redis) return null;
     try {
-      return await this.redis.getJSON<string[]>(this.sessionCacheKey(userId));
+      return await this.redis.getJSON<any[]>(this.sessionCacheKey(userId));
     } catch {
       // Redis failures should never block the auth path – fall through.
       return null;
@@ -140,17 +140,17 @@ class SecurityService implements ISecurityService {
   }
 
   /**
-   * Write the set of active refresh tokens into Redis.
+   * Write the set of active refresh tokens / session signatures into Redis.
    */
   private async setCachedSessions(
     userId: string,
-    refreshTokens: string[]
+    sessions: any[]
   ): Promise<void> {
     if (!this.redis) return;
     try {
       await this.redis.setJSON(
         this.sessionCacheKey(userId),
-        refreshTokens,
+        sessions,
         REDIS_SESSION_TTL
       );
     } catch {
@@ -162,7 +162,7 @@ class SecurityService implements ISecurityService {
   /**
    * Invalidate the Redis session cache for a user so the next read fetches from Mongo.
    */
-  private async invalidateSessionCache(userId: string): Promise<void> {
+  async invalidateSessionCache(userId: string): Promise<void> {
     if (!this.redis) return;
     try {
       await this.redis.del(this.sessionCacheKey(userId));
@@ -321,7 +321,11 @@ class SecurityService implements ISecurityService {
       client: options.clientKey ?? 'system',
       jwtPayload: result.payload,
     });
-    await (user as any).save();
+    try {
+      await User.updateOne({ _id: (user as any)._id }, { $set: { sessionInfo: (user as any).sessionInfo } }).exec();
+    } catch (err) {
+      await (user as any).save();
+    }
 
     // Invalidate Redis cache so the next JWT validation picks up the new session
     await this.invalidateSessionCache(result.userId);
@@ -538,11 +542,14 @@ class SecurityService implements ISecurityService {
    *
    * **No DB writes** — safe to call on every JWT request.
    */
-  async validateSession(userId: string, refreshToken: string): Promise<boolean> {
+  async validateSession(userId: string, refreshToken: string, clientKey?: string): Promise<boolean> {
     // 1. Try Redis
     const cached = await this.getCachedSessions(userId);
     if (cached !== null) {
-      return cached.includes(refreshToken);
+      return cached.some((entry: any) => {
+        if (typeof entry === 'string') return entry === refreshToken;
+        return entry?.refresh === refreshToken;
+      });
     }
 
     // 2. Fall through to Mongo
@@ -552,14 +559,24 @@ class SecurityService implements ISecurityService {
         ? (user as any).sessionInfo
         : [];
 
-      const refreshTokens: string[] = sessions
-        .map((s: any) => s.jwtPayload?.refresh)
-        .filter(Boolean);
+      const now = moment();
+      const validSessions = sessions.filter((s: any) => {
+        if (!s.jwtPayload?.exp) return true;
+        return moment(s.jwtPayload.exp).isAfter(now);
+      });
+
+      const cachedRecords = validSessions
+        .map((s: any) => ({
+          refresh: s.jwtPayload?.refresh,
+          client: s.client,
+          exp: s.jwtPayload?.exp,
+        }))
+        .filter((r: any) => Boolean(r.refresh));
 
       // Populate cache for next time
-      await this.setCachedSessions(userId, refreshTokens);
+      await this.setCachedSessions(userId, cachedRecords);
 
-      return refreshTokens.includes(refreshToken);
+      return cachedRecords.some((r: any) => r.refresh === refreshToken);
     } catch {
       // If we can't resolve the user the session is definitively invalid
       return false;
@@ -570,23 +587,24 @@ class SecurityService implements ISecurityService {
    * Fire-and-forget update of lastLogin timestamps on the user document and,
    * when a clientId is provided, the matching membership entry.
    *
-   * Any failure is logged and swallowed so it never impacts the caller.
+   * Uses atomic updateOne to avoid full-document save race conditions that
+   * could overwrite sessionInfo.
    */
   async touchSession(userId: string, clientId?: string): Promise<void> {
     try {
-      const user = await this.resolveUser(userId);
-      (user as any).lastLogin = new Date();
-
-      if (clientId) {
-        const membership = (user as any).memberships?.find(
-          (m: any) => m.clientId?.toString() === clientId
-        );
-        if (membership) {
-          membership.lastLogin = new Date();
-        }
+      const now = new Date();
+      if (clientId && ObjectId.isValid(clientId)) {
+        await User.updateOne(
+          { _id: new ObjectId(userId), 'memberships.clientId': new ObjectId(clientId) },
+          { $set: { lastLogin: now, 'memberships.$.lastLogin': now } }
+        ).exec();
+        return;
       }
 
-      await (user as any).save();
+      await User.updateOne(
+        { _id: ObjectId.isValid(userId) ? new ObjectId(userId) : userId },
+        { $set: { lastLogin: now } }
+      ).exec();
     } catch (err: any) {
       logger.warn(
         `[SecurityService] touchSession failed for user ${userId}: ${err.message}`

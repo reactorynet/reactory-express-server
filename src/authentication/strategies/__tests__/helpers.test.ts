@@ -132,4 +132,104 @@ describe('Authentication Helpers', () => {
       expect(token.length).toBeGreaterThan(0);
     });
   });
+
+  describe('addSession and Multi-Tenant / Multi-Session Support', () => {
+    let mockUser: any;
+
+    beforeEach(() => {
+      mockUser = {
+        _id: { toString: () => '507f1f77bcf86cd799439011' },
+        firstName: 'John',
+        lastName: 'Doe',
+        sessionInfo: [],
+        save: jest.fn().mockResolvedValue(undefined),
+      };
+    });
+
+    it('should allow multiple active sessions for the same client', async () => {
+      const token1 = Helpers.jwtTokenForUser(mockUser);
+      const token2 = Helpers.jwtTokenForUser(mockUser);
+
+      await Helpers.addSession(mockUser, token1, '127.0.0.1', 'partner-a');
+      expect(mockUser.sessionInfo).toHaveLength(1);
+      expect(mockUser.sessionInfo[0].client).toBe('partner-a');
+
+      await Helpers.addSession(mockUser, token2, '127.0.0.1', 'partner-a');
+      expect(mockUser.sessionInfo).toHaveLength(2);
+      expect(mockUser.sessionInfo[0].client).toBe('partner-a');
+      expect(mockUser.sessionInfo[1].client).toBe('partner-a');
+      expect(mockUser.sessionInfo[0].jwtPayload.refresh).not.toBe(mockUser.sessionInfo[1].jwtPayload.refresh);
+    });
+
+    it('should preserve existing sessions when logging into a different client/partner', async () => {
+      const tokenA = Helpers.jwtTokenForUser(mockUser);
+      const tokenB = Helpers.jwtTokenForUser(mockUser);
+
+      await Helpers.addSession(mockUser, tokenA, '127.0.0.1', 'partner-a');
+      await Helpers.addSession(mockUser, tokenB, '127.0.0.1', 'partner-b');
+
+      expect(mockUser.sessionInfo).toHaveLength(2);
+      const partnerASession = mockUser.sessionInfo.find((s: any) => s.client === 'partner-a');
+      const partnerBSession = mockUser.sessionInfo.find((s: any) => s.client === 'partner-b');
+
+      expect(partnerASession).toBeDefined();
+      expect(partnerBSession).toBeDefined();
+      expect(partnerASession.jwtPayload.refresh).toBe(tokenA.refresh);
+      expect(partnerBSession.jwtPayload.refresh).toBe(tokenB.refresh);
+    });
+
+    it('should automatically prune expired sessions when adding a new session', async () => {
+      const expiredToken = {
+        ...Helpers.jwtTokenForUser(mockUser),
+        exp: Date.now() - 60000, // expired 1 minute ago
+      };
+      const activeToken1 = Helpers.jwtTokenForUser(mockUser);
+      const activeToken2 = Helpers.jwtTokenForUser(mockUser);
+
+      mockUser.sessionInfo = [
+        { id: 'sess-old', host: '127.0.0.1', client: 'partner-a', jwtPayload: expiredToken },
+        { id: 'sess-active', host: '127.0.0.1', client: 'partner-a', jwtPayload: activeToken1 },
+      ];
+
+      await Helpers.addSession(mockUser, activeToken2, '127.0.0.1', 'partner-b');
+
+      expect(mockUser.sessionInfo).toHaveLength(2);
+      const ids = mockUser.sessionInfo.map((s: any) => s.id);
+      expect(ids).not.toContain('sess-old');
+      expect(ids).toContain('sess-active');
+    });
+
+    it('should evict only the oldest session when max sessions per client is exceeded', async () => {
+      process.env.REACTORY_MAX_SESSIONS_PER_CLIENT = '2';
+
+      const token1 = { ...Helpers.jwtTokenForUser(mockUser), iat: 1000 };
+      const token2 = { ...Helpers.jwtTokenForUser(mockUser), iat: 2000 };
+      const token3 = { ...Helpers.jwtTokenForUser(mockUser), iat: 3000 };
+
+      await Helpers.addSession(mockUser, token1, '127.0.0.1', 'partner-a');
+      await Helpers.addSession(mockUser, token2, '127.0.0.1', 'partner-a');
+      expect(mockUser.sessionInfo).toHaveLength(2);
+
+      // Adding 3rd session should drop token1 (oldest) and keep token2 and token3
+      await Helpers.addSession(mockUser, token3, '127.0.0.1', 'partner-a');
+      expect(mockUser.sessionInfo).toHaveLength(2);
+      const refreshes = mockUser.sessionInfo.map((s: any) => s.jwtPayload.refresh);
+      expect(refreshes).not.toContain(token1.refresh);
+      expect(refreshes).toContain(token2.refresh);
+      expect(refreshes).toContain(token3.refresh);
+
+      delete process.env.REACTORY_MAX_SESSIONS_PER_CLIENT;
+    });
+
+    it('generateLoginToken should add session and return login token', async () => {
+      const loginResult = await Helpers.generateLoginToken(mockUser, '127.0.0.1', 'partner-test');
+
+      expect(loginResult).toHaveProperty('id', '507f1f77bcf86cd799439011');
+      expect(loginResult).toHaveProperty('token');
+      expect(loginResult.firstName).toBe('John');
+      expect(loginResult.lastName).toBe('Doe');
+      expect(mockUser.sessionInfo).toHaveLength(1);
+      expect(mockUser.sessionInfo[0].client).toBe('partner-test');
+    });
+  });
 });

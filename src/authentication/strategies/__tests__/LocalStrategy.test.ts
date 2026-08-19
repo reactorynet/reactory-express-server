@@ -91,12 +91,16 @@ describe('Local Strategy', () => {
   describe('User Lookup', () => {
     beforeEach(() => {
       const { User } = require('@reactory/server-modules/reactory-core/models');
-      User.findOne.mockResolvedValue(mockUser);
+      User.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockUser),
+      });
     });
 
     it('should reject when user is not found', (done) => {
       const { User } = require('@reactory/server-modules/reactory-core/models');
-      User.findOne.mockResolvedValue(null);
+      User.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
 
       const authenticateFunction = (LocalStrategy as any)._verify;
       authenticateFunction(mockRequest, 'nonexistent@example.com', 'password', mockDone);
@@ -149,7 +153,9 @@ describe('Local Strategy', () => {
   describe('Membership Updates', () => {
     beforeEach(() => {
       const { User } = require('@reactory/server-modules/reactory-core/models');
-      User.findOne.mockResolvedValue(mockUser);
+      User.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockUser),
+      });
       mockUser.validatePassword.mockReturnValue(true);
 
       const mockToken = { id: 'user123', token: 'jwt-token-123' };
@@ -271,7 +277,9 @@ describe('Local Strategy', () => {
   describe('Client Key Handling', () => {
     beforeEach(() => {
       const { User } = require('@reactory/server-modules/reactory-core/models');
-      User.findOne.mockResolvedValue(mockUser);
+      User.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockUser),
+      });
     });
 
     it('should use partner key when available', (done) => {
