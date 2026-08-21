@@ -19,6 +19,21 @@ export default [
     roles: ['ADMIN'],
   },
   {
+    title: "Reactory Default MongoDB Connection",
+    name: "reactory.mongodb.connection",
+    componentFqn: "core.MongoConnectionForm@1.0.0",
+    settingType: "connection",
+    variant: "mongodb",
+    data: {
+      host: process.env.REACTORY_MONGO_HOST || 'localhost',
+      port: parseInt(process.env.REACTORY_MONGO_PORT || '27017'),
+      username: process.env.REACTORY_MONGO_USER || '',
+      password: process.env.REACTORY_MONGO_PASSWORD || '',
+      database: process.env.REACTORY_MONGO_DB || 'reactory',
+    },
+    roles: ['ADMIN'],
+  },
+  {
     title: 'Reactory Default Postgres Connection',
     name: 'reactory.postgres.connection',
     componentFqn: 'core.PostgresConnectionForm@1.0.0',
