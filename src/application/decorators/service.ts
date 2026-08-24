@@ -38,6 +38,8 @@ function service<S extends Reactory.Service.IReactoryService>(options:  Reactory
     };
     constructor.prototype.reactory = reactory;
     constructor.prototype.COMPONENT_DEFINITION = reactory;
+    (constructor as any).reactory = reactory;
+    (constructor as any).COMPONENT_DEFINITION = reactory;
   };
 }
 

@@ -57,6 +57,15 @@ class ServiceManager {
                     $service?.prototype?.reactory
                   ) {
                     $service = ($service as any).prototype.reactory;
+                  } else if (
+                    typeof $service === "function" &&
+                    ($service as any)?.reactory
+                  ) {
+                    $service = ($service as any).reactory;
+                  }
+                  if (!$service || !$service.id) {
+                    logger.warn(`🟠 Invalid or undefined service definition in module ${installedModule?.name || 'unknown'}`);
+                    return;
                   }
                   logger.debug(`🔀 ${$service.id} [${$service.serviceType}]`);
                   services.push($service);
