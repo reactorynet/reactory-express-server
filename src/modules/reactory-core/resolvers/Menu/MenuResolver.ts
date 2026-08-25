@@ -122,7 +122,39 @@ class ReactoryMenuResolver {
     params: any,
     context: Reactory.Server.IReactoryContext,
   ): Promise<string> {
-    return context.i18n.t(menuItem.title);
+    if (!menuItem?.title) return '';
+    const translated = context.i18n.t(menuItem.title);
+    if (translated && translated !== menuItem.title && !translated.startsWith('reactory.menu.')) {
+      return translated;
+    }
+
+    const stripped = menuItem.title.replace(/^[^:]+:/, '');
+    const strippedTranslated = context.i18n.t(stripped);
+    if (strippedTranslated && strippedTranslated !== stripped && !strippedTranslated.startsWith('reactory.menu.')) {
+      return strippedTranslated;
+    }
+
+    const fallbacks: Record<string, string> = {
+      'reactory.menu.my-owned-courses': 'Courses Owned',
+      'reactory.menu.classes': 'Classes & Cohorts',
+      'reactory.menu.create-course': 'Create Course',
+      'reactory.menu.create-assignment': 'Create Assignment',
+      'reactory.menu.course-enroll': 'Course Enrollment',
+      'reactory.menu.markbook': 'Classroom Markbook',
+      'reactory.menu.my-schedule': 'Schedule',
+      'reactory.menu.my-courses': 'My Courses',
+      'reactory.menu.my-tutors': 'My Tutors',
+      'reactory.menu.my-students': 'My Students',
+      'reactory.menu.assignments': 'Assignments',
+      'reactory.menu.home': 'Home',
+      'reactory.menu.library': 'Library',
+      'reactory.menu.courses': 'Courses',
+      'reactory.menu.my-profile': 'Profile',
+    };
+
+    if (fallbacks[stripped]) return fallbacks[stripped];
+
+    return translated || menuItem.title;
   }
 
   /**

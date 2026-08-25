@@ -84,11 +84,32 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
     
     const ns: string | readonly string[] | null = i18n.options.ns;
 
+    const fs = require('fs');
+    const path = require('path');
+    const APP_DATA_ROOT = process.env.APP_DATA_ROOT || path.resolve(process.cwd(), '../reactory-data');
+
     let bundles: Reactory.Models.IReactoryI18nResource[] = []
 
     if(this.context.utils.lodash.isArray(ns) === true) {
       (ns as string[]).forEach($ns => {
-        const resourceBundle = i18n.getResourceBundle(i18n.language, $ns);    
+        let resourceBundle = { ...(i18n.getResourceBundle(i18n.language, $ns) || {}) };    
+        
+        // Merge fresh translations from disk
+        const candidates = [
+          path.resolve(APP_DATA_ROOT, `i18n/${locale}/${$ns}.json`),
+          path.resolve(APP_DATA_ROOT, `i18n/en/${$ns}.json`),
+          path.resolve(APP_DATA_ROOT, `i18n/en-US/${$ns}.json`),
+        ];
+        for (const filePath of candidates) {
+          if (fs.existsSync(filePath)) {
+            try {
+              const fileContent = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+              resourceBundle = { ...resourceBundle, ...fileContent };
+            } catch (e) {}
+            break;
+          }
+        }
+
         bundles.push({ id: `${locale}.${$ns}`, ns: $ns, translations: resourceBundle });
       });
 
