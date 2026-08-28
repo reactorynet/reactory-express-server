@@ -104,7 +104,7 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
   {
     compilerOptions: {},
     id: 'core.SupportTicketWorkflow@1.0.0',
-    src: fileAsString(require.resolve('../../Widgets/core.SupportTicketWorkflow.ts')),
+    src: fileAsString(path.resolve(__dirname, '../../Widgets/core.SupportTicketWorkflow.ts')),
     compiler: 'rollup',
     fileType: 'ts'
   }

@@ -1,0 +1,270 @@
+# reactory-dev.BuildElectron@2.0.0
+#
+# Builds the Reactory Electron desktop application (main process, embedded
+# express server, PWA client, and data bundle), and optionally packages
+# platform distributables with electron-builder.
+#
+# Underlying scripts (run from $REACTORY_ELECTRON / reactory-electron checkout):
+#   yarn build [--config <id>] [--server-config <id>] [--client-config <id>] [--theme <id>] [--pack] [--all-fonts]
+#   yarn dist / yarn dist:mac / yarn dist:win / yarn dist:linux (if dist input specified)
+#
+# Inputs:
+#   config        (optional) — shared config key (default: reactory).
+#   serverConfig  (optional) — server config key override (defaults to config).
+#   clientConfig  (optional) — client config key override (defaults to config).
+#   theme         (optional) — theme ID override (defaults to clientConfig/config).
+#   pack          (optional) — "true" to package with electron-builder --dir (default: false).
+#   dist          (optional) — distributable target: "none", "mac", "win", "linux", "all" (default: none).
+#   allFonts      (optional) — "true" to include all fonts in bundle-data (default: false).
+#   workdir       (optional) — path to reactory-electron repo root. Defaults to $REACTORY_ELECTRON.
+nameSpace: reactory-dev
+name: BuildElectron
+version: 2.0.0
+description: "Build the Reactory Electron desktop application and optionally package distributables with electron-builder."
+tags: [dev, build, electron, desktop]
+metadata:
+  timeout: 900000
+
+inputs:
+  config:
+    type: string
+    required: false
+    default: "reactory"
+    description: "Config key for both server and client (e.g. 'reactory', 'booktutor')."
+  serverConfig:
+    type: string
+    required: false
+    default: ""
+    description: "Server config key override (defaults to config if omitted)."
+  clientConfig:
+    type: string
+    required: false
+    default: ""
+    description: "Client config key override (defaults to config if omitted)."
+  theme:
+    type: string
+    required: false
+    default: ""
+    description: "Theme ID override (defaults to clientConfig/config if omitted)."
+  pack:
+    type: string
+    required: false
+    default: "false"
+    description: "Set to 'true' to run electron-builder packaging after compilation."
+  dist:
+    type: string
+    required: false
+    default: "none"
+    description: "Distributable target to package: 'none', 'mac', 'win', 'linux', or 'all'."
+  allFonts:
+    type: string
+    required: false
+    default: "false"
+    description: "Set to 'true' to include all fonts when bundling reactory-data assets."
+  workdir:
+    type: string
+    required: false
+    description: "Absolute path to reactory-electron repository root. Defaults to $REACTORY_ELECTRON."
+
+steps:
+  # ── 0. Resolve effective workdir ─────────────────────────────────────────
+  - id: resolveWorkdir
+    type: cli_command
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const path = require('path');
+          const fs = require('fs');
+          const wd = process.env.WD;
+          if (wd && !wd.startsWith('${') && fs.existsSync(wd)) {
+            process.stdout.write(wd);
+            process.exit(0);
+          }
+          if (process.env.REACTORY_ELECTRON && fs.existsSync(process.env.REACTORY_ELECTRON)) {
+            process.stdout.write(process.env.REACTORY_ELECTRON);
+            process.exit(0);
+          }
+          const candidate = path.resolve(process.cwd(), '../reactory-electron');
+          if (fs.existsSync(candidate)) {
+            process.stdout.write(candidate);
+            process.exit(0);
+          }
+          process.stdout.write(process.cwd());
+      env:
+        WD: "${input.workdir}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setWorkdir
+    type: set_variable
+    dependsOn: resolveWorkdir
+    config:
+      action: set
+      key: electronDir
+      source: step_output
+      sourcePath: resolveWorkdir.outputs.stdout
+
+  # ── 1. Assemble build command ────────────────────────────────────────────
+  - id: assembleBuildCommand
+    type: cli_command
+    dependsOn: setWorkdir
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const config = (process.env.CONFIG && !process.env.CONFIG.startsWith('${')) ? process.env.CONFIG : 'reactory';
+          const serverConfig = (process.env.SERVER_CONFIG && !process.env.SERVER_CONFIG.startsWith('${')) ? process.env.SERVER_CONFIG : '';
+          const clientConfig = (process.env.CLIENT_CONFIG && !process.env.CLIENT_CONFIG.startsWith('${')) ? process.env.CLIENT_CONFIG : '';
+          const theme = (process.env.THEME && !process.env.THEME.startsWith('${')) ? process.env.THEME : '';
+          const pack = process.env.PACK && !process.env.PACK.startsWith('${') && process.env.PACK === 'true';
+          const allFonts = process.env.ALL_FONTS && !process.env.ALL_FONTS.startsWith('${') && process.env.ALL_FONTS === 'true';
+
+          const parts = ['yarn', 'build'];
+          if (config) parts.push('--config', config);
+          if (serverConfig && serverConfig !== config) parts.push('--server-config', serverConfig);
+          if (clientConfig && clientConfig !== config) parts.push('--client-config', clientConfig);
+          if (theme) parts.push('--theme', theme);
+          if (pack) parts.push('--pack');
+          if (allFonts) parts.push('--all-fonts');
+
+          process.stdout.write(parts.join(' '));
+      env:
+        CONFIG: "${input.config}"
+        SERVER_CONFIG: "${input.serverConfig}"
+        CLIENT_CONFIG: "${input.clientConfig}"
+        THEME: "${input.theme}"
+        PACK: "${input.pack}"
+        ALL_FONTS: "${input.allFonts}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setBuildCommand
+    type: set_variable
+    dependsOn: assembleBuildCommand
+    config:
+      action: set
+      key: buildCommand
+      source: step_output
+      sourcePath: assembleBuildCommand.outputs.stdout
+
+  - id: logStart
+    type: log
+    dependsOn: setBuildCommand
+    config:
+      level: info
+      message: "Building Reactory Electron app in ${variables.electronDir} — command: ${variables.buildCommand}"
+
+  # ── 2. Run master build pipeline ─────────────────────────────────────────
+  - id: runBuild
+    type: cli_command
+    dependsOn: logStart
+    timeout: 0
+    config:
+      command: "bash"
+      args: ["-c", "${variables.buildCommand}"]
+      cwd: "${variables.electronDir}"
+      timeout: 0
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: reportBuildResult
+    type: condition
+    dependsOn: runBuild
+    config:
+      condition: "stepResults.runBuild.outputs.exitCode === 0"
+      thenSteps:
+        - id: logBuildPass
+          type: log
+          config:
+            level: info
+            message: "Reactory Electron build PASSED — output in build/"
+      elseSteps:
+        - id: logBuildFail
+          type: log
+          config:
+            level: error
+            message: "Reactory Electron build FAILED — review output above for details."
+
+  # ── 3. Optionally package distributable ───────────────────────────────────
+  - id: maybePackageDist
+    type: condition
+    dependsOn: reportBuildResult
+    config:
+      condition: "input.dist !== 'none' && stepResults.runBuild.outputs.exitCode === 0"
+      thenSteps:
+        - id: assembleDistCommand
+          type: cli_command
+          config:
+            command: "node"
+            args:
+              - "-e"
+              - |
+                const dist = (process.env.DIST && !process.env.DIST.startsWith('${')) ? process.env.DIST.toLowerCase() : 'none';
+                let cmd = 'yarn dist';
+                if (dist === 'mac') cmd = 'yarn dist:mac';
+                else if (dist === 'win') cmd = 'yarn dist:win';
+                else if (dist === 'linux') cmd = 'yarn dist:linux';
+                else if (dist === 'all') cmd = 'yarn dist';
+                process.stdout.write(cmd);
+            env:
+              DIST: "${input.dist}"
+            output:
+              captureStdout: true
+              captureStderr: false
+
+        - id: setDistCommand
+          type: set_variable
+          dependsOn: assembleDistCommand
+          config:
+            action: set
+            key: distCommand
+            source: step_output
+            sourcePath: assembleDistCommand.outputs.stdout
+
+        - id: logDistStart
+          type: log
+          dependsOn: setDistCommand
+          config:
+            level: info
+            message: "Packaging Reactory Electron distributable — command: ${variables.distCommand}"
+
+        - id: runDist
+          type: cli_command
+          dependsOn: logDistStart
+          timeout: 0
+          config:
+            command: "bash"
+            args: ["-c", "${variables.distCommand}"]
+            cwd: "${variables.electronDir}"
+            timeout: 0
+            failOnError: false
+            expectedExitCodes: [0, 1]
+            output:
+              captureStdout: true
+              captureStderr: true
+
+        - id: reportDistResult
+          type: condition
+          dependsOn: runDist
+          config:
+            condition: "stepResults.runDist.outputs.exitCode === 0"
+            thenSteps:
+              - id: logDistPass
+                type: log
+                config:
+                  level: info
+                  message: "Reactory Electron distributable packaging PASSED."
+            elseSteps:
+              - id: logDistFail
+                type: log
+                config:
+                  level: error
+                  message: "Reactory Electron distributable packaging FAILED — review output above for details."
