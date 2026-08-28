@@ -21,6 +21,7 @@ const DEV_WORKFLOW_NAMES: string[] = [
   'RunClientTests',
   'RunWorkflowESTests',
   'BuildClient',
+  'BuildElectron',
   'DeployServerPodman',
   'SystemHealthMonitor',
   'SelfHealingOrchestrator',

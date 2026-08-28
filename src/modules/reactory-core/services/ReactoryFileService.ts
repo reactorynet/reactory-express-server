@@ -13,7 +13,7 @@ import ReactoryFileModel from "@reactory/server-modules/reactory-core/models/Cor
 import logger from "@reactory/server-core/logging";
 import { template } from "lodash";
 import { roles } from "@reactory/server-core/authentication/decorators";
-import safeUrl, { safeCDNUrl } from 'utils/url/safeUrl';
+import safeUrl, { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 const { APP_DATA_ROOT, CDN_ROOT } = process.env;
 
 const writeFilePromise = promisify(writeFile);

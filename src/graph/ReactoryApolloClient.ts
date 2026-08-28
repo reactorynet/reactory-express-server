@@ -21,7 +21,7 @@ import moment from 'moment';
 import Helpers from '@reactory/server-core/authentication/strategies/helpers';
 import Reactory from '@reactorynet/reactory-core';
 import { getCache, ReactoryCachePersistor } from './ReactoryApolloCache';
-import safeUrl from 'utils/url/safeUrl';
+import safeUrl from '@reactory/server-core/utils/url/safeUrl';
 
 const packageInfo: any = require('../../package.json');
 
