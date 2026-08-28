@@ -18,7 +18,6 @@ import * as path from 'path';
 import {
   buildYamlWorkflowClass,
   engineWorkflowId,
-  engineWorkflowMajorVersion,
   yamlDefinitionFingerprintSeed,
   applyYamlInputDefaults,
 } from '../YamlFlowBuilder';
@@ -56,12 +55,24 @@ function freshData(extra: Record<string, any> = {}) {
 
 describe('YamlFlowBuilder (engine bridge)', () => {
   describe('id / version helpers', () => {
-    it('derives engine id and numeric version', () => {
+    it('derives the engine id from namespace, name and version', () => {
       const def = { nameSpace: 'test', name: 'sample', version: '2.3.1' };
       expect(engineWorkflowId(def)).toBe('test.sample@2.3.1');
-      expect(engineWorkflowMajorVersion('2.3.1')).toBe(2);
-      expect(engineWorkflowMajorVersion('1.0.0')).toBe(1);
-      expect(engineWorkflowMajorVersion('')).toBe(1);
+    });
+
+    // M11 — the engine version is the semantic version verbatim. The former
+    // The former major-truncation helper is gone; 2.3.1 must NOT become 2.
+    it('carries the full semantic version onto the generated class', () => {
+      const def: any = { nameSpace: 'test', name: 'sample', version: '2.3.1', steps: [] };
+      const Cls: any = buildYamlWorkflowClass(def);
+      expect(new Cls().version).toBe('2.3.1');
+    });
+
+    it('keeps two minor versions distinguishable on the generated class', () => {
+      const mk = (v: string) => new (buildYamlWorkflowClass(
+        { nameSpace: 't', name: 'n', version: v, steps: [] } as any) as any)();
+      expect(mk('1.0.0').version).toBe('1.0.0');
+      expect(mk('1.1.0').version).toBe('1.1.0');
     });
   });
 
@@ -195,7 +206,7 @@ describe('YamlFlowBuilder (engine bridge)', () => {
       await host.start();
       const id = await host.startWorkflow(
         engineWorkflowId(def),
-        engineWorkflowMajorVersion(def.version),
+        def.version,
         data,
       );
       return runToCompletion(persistence, id);
@@ -383,7 +394,7 @@ describe('YamlFlowBuilder (engine bridge)', () => {
 
       const id = await host.startWorkflow(
         engineWorkflowId(def),
-        engineWorkflowMajorVersion(def.version),
+        def.version,
         freshData({ inputs: { requestId: 'req-1' } }),
       );
 

@@ -57,13 +57,6 @@ export function engineWorkflowId(def: { nameSpace: string; name: string; version
   return `${def.nameSpace}.${def.name}@${def.version}`;
 }
 
-/** Engine (numeric) version derived from the semantic version's major component. */
-export function engineWorkflowMajorVersion(version: string): number {
-  if (!version) return 1;
-  const major = parseInt(String(version).split('.')[0], 10);
-  return Number.isNaN(major) ? 1 : major;
-}
-
 /**
  * Recursively key-sorted JSON, so two structurally identical definitions serialise
  * identically regardless of the key order js-yaml happened to produce.
@@ -406,7 +399,8 @@ export function buildYamlWorkflowClass(def: {
   steps: AnyStep[];
 }): { new (): WorkflowBase<YamlWorkflowData> } {
   const id = engineWorkflowId(def);
-  const version = engineWorkflowMajorVersion(def.version);
+  // M11 — the engine version IS the semantic version. No truncation to a major.
+  const version = def.version;
   const steps = def.steps || [];
   // M10 — bind the definition's CONTENT to the engine fingerprint. The engine hashes
   // graph shape; this seed adds the step configuration, which lives in closures the
@@ -417,7 +411,7 @@ export function buildYamlWorkflowClass(def: {
   return class GeneratedYamlWorkflow implements WorkflowBase<YamlWorkflowData> {
     public id: string = id;
 
-    public version: number = version;
+    public version: string = version;
 
     public fingerprintSeed: string = fingerprintSeed;
 

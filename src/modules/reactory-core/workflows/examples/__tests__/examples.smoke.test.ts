@@ -14,7 +14,6 @@ import { YamlFlowParser } from '../../../workflow/YamlFlow/YamlFlowParser';
 import {
   buildYamlWorkflowClass,
   engineWorkflowId,
-  engineWorkflowMajorVersion,
 } from '../../../workflow/YamlFlow/YamlFlowBuilder';
 
 const COMPLETE = 2;
@@ -95,7 +94,7 @@ describe('YAML example workflows (engine smoke tests)', () => {
     try {
       const instanceId = await host.startWorkflow(
         engineWorkflowId(def),
-        engineWorkflowMajorVersion(def.version),
+        def.version,
         { inputs: {}, variables: {}, stepResults: {}, env: {}, outputs: {} },
       );
       const instance = await runToCompletion(persistence, instanceId);

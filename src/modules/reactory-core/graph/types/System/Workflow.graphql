@@ -697,8 +697,8 @@ type WorkflowExecutionHistory {
   id: String!
   """The workflow definition ID (e.g., 'core.CleanCacheWorkflow@1.0.0')"""
   workflowDefinitionId: String!
-  """Version of the workflow definition"""
-  version: Int!
+  """Semantic version of the workflow definition (M11 — was Int! before 3.0.0)"""
+  version: String!
   """Current status of the workflow (0=Pending, 1=Running, 2=Complete, 3=Terminated, 4=Suspended)"""
   status: Int!
   """Human-readable status label"""
