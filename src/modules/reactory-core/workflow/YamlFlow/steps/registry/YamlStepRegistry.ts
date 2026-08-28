@@ -499,6 +499,18 @@ export class YamlStepRegistry {
       version: '1.0.0'
     });
 
+    // Saga step (workflow-es transactional block with compensation)
+    this.registerStep('saga', CustomStep, {
+      description: 'Transactional body with compensation on failure',
+      version: '1.0.0'
+    });
+
+    // Wait for external event step (workflow-es suspend/resume)
+    this.registerStep('wait_event', CustomStep, {
+      description: 'Pause workflow until an external event arrives',
+      version: '1.0.0'
+    });
+
     // ETL steps
     this.registerStep('cross_instance_variable', CrossInstanceVariableStep, {
       description: 'Set, get or delete persistent cross-instance variables (global or workflow scoped)',

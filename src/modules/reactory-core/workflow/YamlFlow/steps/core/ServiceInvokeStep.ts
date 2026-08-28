@@ -15,7 +15,9 @@ export class ServiceInvokeStep extends BaseYamlStep {
   public readonly stepType = 'service_invoke';
 
   protected async executeStep(context: StepExecutionContext): Promise<StepExecutionResult> {
-    const { service, method, params = {} } = this.config;
+    const service = this.config.service || this.config.serviceId;
+    const method = this.config.method;
+    const params = this.config.params || this.config.arguments || this.config.args || {};
 
     if (!context.reactoryContext) {
       return {
@@ -74,7 +76,8 @@ export class ServiceInvokeStep extends BaseYamlStep {
 
   public validateConfig(config: Record<string, any>): ValidationResult {
     const errors: string[] = [];
-    if (!config.service || typeof config.service !== 'string') {
+    const service = config.service || config.serviceId;
+    if (!service || typeof service !== 'string') {
       errors.push('service is required and must be a string (e.g. "namespace.ServiceName@version")');
     }
     if (!config.method || typeof config.method !== 'string') {

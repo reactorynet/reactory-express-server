@@ -24,7 +24,7 @@ inputs:
 outputs:
   failingWorkflows:
     type: array
-    source: "${steps.extractFailingWorkflows.outputPath}"
+    source: step.extractFailingWorkflows.failingWorkflows
     description: List of failing workflow names and error messages extracted from logs.
 
 steps:
@@ -37,7 +37,7 @@ steps:
 
   - id: findLatestLog
     name: Find Latest Log File
-    type: cliCommand
+    type: cli_command
     dependsOn: startLogCheck
     config:
       command: "bash"
@@ -49,7 +49,7 @@ steps:
 
   - id: searchLogFailures
     name: Search Logs for Workflow Failures
-    type: cliCommand
+    type: cli_command
     dependsOn: findLatestLog
     config:
       command: "bash"
@@ -61,7 +61,7 @@ steps:
 
   - id: extractFailingWorkflows
     name: Extract Failed Workflow Names
-    type: dataTransformation
+    type: data_transformation
     dependsOn: searchLogFailures
     config:
       transformations:
@@ -76,7 +76,8 @@ steps:
     config:
       level: info
       message: "YAML workflow failure scan completed"
-      data: "${steps.extractFailingWorkflows.failingWorkflows}"
+      data:
+        failing: "${steps.extractFailingWorkflows.failingWorkflows}"
 
   - id: endLogCheck
     name: End Log Inspection

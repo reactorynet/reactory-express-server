@@ -586,9 +586,9 @@ export class DataTransformationStep extends BaseYamlStep {
     const errors: string[] = [];
     const warnings: string[] = [];
     
-    // Required fields
-    if (config.input === undefined) {
-      errors.push('input is required');
+    // Input is optional if transformations specify their own sources
+    if (config.input === undefined && config.source === undefined && !config.transformations?.some((t: any) => t.source)) {
+      errors.push('input or source is required');
     }
     
     if (!config.transformations) {
@@ -600,14 +600,11 @@ export class DataTransformationStep extends BaseYamlStep {
     } else {
       // Validate each transformation
       config.transformations.forEach((transformation: any, index: number) => {
-        if (!transformation.type) {
+        const transType = transformation.type || transformation.operation;
+        if (!transType) {
           errors.push(`transformation[${index}] is missing type`);
-        } else if (!['filter', 'map', 'sort', 'group', 'aggregate', 'merge', 'extract', 'custom'].includes(transformation.type)) {
-          errors.push(`transformation[${index}] has invalid type: ${transformation.type}`);
-        }
-        
-        if (!transformation.config || typeof transformation.config !== 'object') {
-          errors.push(`transformation[${index}] is missing or invalid config`);
+        } else if (!['filter', 'map', 'sort', 'group', 'aggregate', 'merge', 'extract', 'custom'].includes(transType)) {
+          errors.push(`transformation[${index}] has invalid type: ${transType}`);
         }
       });
     }

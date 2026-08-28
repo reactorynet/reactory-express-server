@@ -328,9 +328,8 @@
           "required": ["duration"],
           "properties": {
             "duration": {
-              "type": "integer",
-              "minimum": 1,
-              "description": "Delay duration in milliseconds"
+              "type": ["integer", "string"],
+              "description": "Delay duration in milliseconds or template expression"
             },
             "reason": {
               "type": "string",

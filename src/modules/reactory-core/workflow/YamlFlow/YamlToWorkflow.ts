@@ -46,14 +46,12 @@ function provisionCatalogFile(
         mkdirSync(catalogDir, { recursive: true });
     }
 
-    if (!existsSync(catalogPath)) {
-        const sourceFile = join(sourceDir, filename);
-        if (existsSync(sourceFile)) {
-            copyFileSync(sourceFile, catalogPath);
-            logger.debug(`Provisioned workflow ${filename} → ${catalogPath}`);
-        } else {
-            logger.warn(`Source workflow file not found: ${sourceFile}`);
-        }
+    const sourceFile = join(sourceDir, filename);
+    if (existsSync(sourceFile)) {
+        copyFileSync(sourceFile, catalogPath);
+        logger.debug(`Provisioned workflow ${filename} → ${catalogPath}`);
+    } else {
+        logger.warn(`Source workflow file not found: ${sourceFile}`);
     }
 }
 

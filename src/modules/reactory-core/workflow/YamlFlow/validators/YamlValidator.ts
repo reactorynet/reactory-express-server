@@ -25,7 +25,8 @@ export class YamlValidator {
   constructor() {
     this.ajv = new Ajv({
       allErrors: true,
-      verbose: true
+      verbose: true,
+      allowUnionTypes: true,
     });
     addFormats(this.ajv);
 
@@ -452,8 +453,8 @@ export class YamlValidator {
    * Basic conditional expression validation
    */
   private isValidConditionalExpression(expression: string): boolean {
-    // Basic validation - should contain valid operators and operands
-    const basicPattern = /^[\w\s\.\$\{\}\|\&\!\=\<\>\(\)]+$/;
+    // Basic validation - should contain valid operators and operands including quotes and literals
+    const basicPattern = /^[\w\s\.\$\{\}\|\&\!\=\<\>\(\)\'\"\,\:\-\+]+$/;
     return basicPattern.test(expression) && expression.trim().length > 0;
   }
 

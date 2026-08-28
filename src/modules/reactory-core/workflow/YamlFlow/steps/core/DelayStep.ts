@@ -143,12 +143,14 @@ export class DelayStep extends BaseYamlStep {
     
     // Validate duration if provided
     if (config.duration !== undefined) {
-      if (typeof config.duration !== 'number') {
-        errors.push('duration must be a number (milliseconds)');
-      } else if (config.duration < 0) {
-        errors.push('duration must be non-negative');
-      } else if (config.duration > 24 * 60 * 60 * 1000) { // 24 hours
-        warnings.push('duration is very long (>24 hours), this may cause workflow timeouts');
+      if (typeof config.duration !== 'number' && typeof config.duration !== 'string') {
+        errors.push('duration must be a number (milliseconds) or template string');
+      } else if (typeof config.duration === 'number') {
+        if (config.duration < 0) {
+          errors.push('duration must be non-negative');
+        } else if (config.duration > 24 * 60 * 60 * 1000) { // 24 hours
+          warnings.push('duration is very long (>24 hours), this may cause workflow timeouts');
+        }
       }
     }
     

@@ -9,8 +9,8 @@ inputs:
     description: The directory path to list files from
 steps:
   - id: list_files
-    type: cliCommand
-    label: List files in Reactory home folder
+    type: cli_command
+    name: List files in Reactory home folder
     config:
-      command: "ls -la /Users/wernerw/Projects/reactory/"
-    outputVariable: files
+      command: "ls"
+      args: ["-la", "${input.path}"]
