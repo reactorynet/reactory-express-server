@@ -19,6 +19,7 @@ import {
   buildYamlWorkflowClass,
   engineWorkflowId,
   engineWorkflowMajorVersion,
+  yamlDefinitionFingerprintSeed,
   applyYamlInputDefaults,
 } from '../YamlFlowBuilder';
 import { InstanceResourceManager } from '../../InstanceResourceManager';
@@ -61,6 +62,68 @@ describe('YamlFlowBuilder (engine bridge)', () => {
       expect(engineWorkflowMajorVersion('2.3.1')).toBe(2);
       expect(engineWorkflowMajorVersion('1.0.0')).toBe(1);
       expect(engineWorkflowMajorVersion('')).toBe(1);
+    });
+  });
+
+  describe('yamlDefinitionFingerprintSeed (M10 content digest)', () => {
+    const base = {
+      steps: [{ id: 'a', type: 'http', config: { url: 'https://one' } }],
+      inputs: { who: { type: 'string', default: 'x' } },
+    };
+
+    it('is deterministic for the same definition', () => {
+      expect(yamlDefinitionFingerprintSeed(base)).toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('ignores key ORDER — a re-serialised but identical definition matches', () => {
+      const reordered = {
+        inputs: { who: { default: 'x', type: 'string' } },
+        steps: [{ config: { url: 'https://one' }, type: 'http', id: 'a' }],
+      };
+      expect(yamlDefinitionFingerprintSeed(reordered)).toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('CHANGES when a step config value is edited — the designer-edit case', () => {
+      const edited = { ...base, steps: [{ id: 'a', type: 'http', config: { url: 'https://two' } }] };
+      expect(yamlDefinitionFingerprintSeed(edited)).not.toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('CHANGES when a step is inserted', () => {
+      const edited = { ...base, steps: [{ id: 'z', type: 'noop' }, ...base.steps] };
+      expect(yamlDefinitionFingerprintSeed(edited)).not.toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('CHANGES when an input schema is edited', () => {
+      const edited = { ...base, inputs: { who: { type: 'string', default: 'y' } } };
+      expect(yamlDefinitionFingerprintSeed(edited)).not.toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('is UNCHANGED by description/author/tags — metadata cannot alter behaviour', () => {
+      const annotated: any = { ...base, description: 'new text', author: 'someone', tags: ['a'] };
+      expect(yamlDefinitionFingerprintSeed(annotated)).toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('tolerates an empty definition', () => {
+      expect(yamlDefinitionFingerprintSeed({})).toMatch(/^[0-9a-f]{32}$/);
+    });
+  });
+
+  describe('generated workflow class carries the seed', () => {
+    it('exposes fingerprintSeed matching the definition digest', () => {
+      const def = {
+        nameSpace: 'test', name: 'seeded', version: '1.0.0',
+        steps: [{ id: 'a', type: 'noop' }],
+      };
+      const Cls: any = buildYamlWorkflowClass(def as any);
+      expect(new Cls().fingerprintSeed).toBe(yamlDefinitionFingerprintSeed(def as any));
+    });
+
+    it('two definitions differing ONLY in step config produce different seeds on the class', () => {
+      const a: any = { nameSpace: 't', name: 'n', version: '1.0.0', steps: [{ id: 's', type: 'http', config: { url: 'a' } }] };
+      const b: any = { nameSpace: 't', name: 'n', version: '1.0.0', steps: [{ id: 's', type: 'http', config: { url: 'b' } }] };
+      const A: any = buildYamlWorkflowClass(a);
+      const B: any = buildYamlWorkflowClass(b);
+      expect(new A().fingerprintSeed).not.toBe(new B().fingerprintSeed);
     });
   });
 
