@@ -188,7 +188,7 @@ fi
 cd "$PROJECT_ROOT" || exit 1
 
 if [ "$WATCH_MODE" = true ]; then
-  NODE_PATH=./src env-cmd -f "$ENV_FILE" npx nodemon \
+  NODE_PATH=./src env-cmd -f "$ENV_FILE" -- npx nodemon \
     -e js,ts,tsx,graphql \
     --exec npx babel-node "$CLI_SCRIPT" \
     --presets @babel/env \
@@ -196,7 +196,7 @@ if [ "$WATCH_MODE" = true ]; then
     $NODE_OPTIONS \
     -- "${CLI_ARGS[@]}"
 else
-  NODE_PATH=./src env-cmd -f "$ENV_FILE" npx babel-node "$CLI_SCRIPT" \
+  NODE_PATH=./src env-cmd -f "$ENV_FILE" -- npx babel-node "$CLI_SCRIPT" \
     --presets @babel/env \
     --extensions ".js,.ts" \
     $NODE_OPTIONS \
