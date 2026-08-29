@@ -353,8 +353,25 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
       }
   
   
-      let command: string = cargs.length >= 1 && cargs[0].indexOf('-') === -1 ? cargs[0] : null;
-      let commandArgs: string[] = cargs.length >= 2 ? cargs.slice(1) : [];
+      // The command is the first token that is not a flag. It is NOT simply cargs[0]:
+      // launchers legitimately put flags in front of it (bin/reactory prepends
+      // `--silent`), and babel's own arguments precede it whenever a launcher omits the
+      // `--` separator. Assuming index 0 left `command` null, and MultiStageJobRunner
+      // guards on `if (job?.command)` — so the CLI booted the whole server, ran nothing,
+      // printed "Goodbye." and exited 0. A silent no-op is the worst possible failure
+      // mode here, so resolve the command positionally and fail loudly when there is none.
+      //
+      // `startsWith('-')` rather than `indexOf('-') === -1`: the latter also rejected any
+      // hyphenated command name (e.g. `module-gen`).
+      const commandIndex: number = cargs.findIndex(arg => !arg.startsWith('-'));
+      let command: string = commandIndex === -1 ? null : cargs[commandIndex];
+      let commandArgs: string[] = commandIndex === -1 ? [] : cargs.slice(commandIndex + 1);
+
+      if (!command) {
+        console.error(colors.red(t('cli:common.noCommand',
+          `No command found in arguments: ${cargs.join(' ')}`)));
+        process.exit(1);
+      }
       let isServiceCall: boolean = false;
       let serviceMethod: string = null;
       let serviceProps: any = {};

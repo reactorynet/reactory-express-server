@@ -6,7 +6,11 @@ CONFIG_ENV="local"
 WATCH_MODE=false
 VERBOSE=false
 
-KWARGS=
+# An ARRAY, not a string. A string built with `KWARGS="$KWARGS $arg"` and expanded
+# unquoted is word-split on spaces, so `--input='{"id": 1}'` reached the CLI as two
+# broken fragments and failed with "Unexpected end of JSON input". An array expanded as
+# "${KWARGS[@]}" preserves each argument exactly as the caller typed it.
+KWARGS=()
 # Loop through the arguments
 for arg in "$@"; do
   case $arg in
@@ -15,7 +19,7 @@ for arg in "$@"; do
       --cenv=*) CONFIG_ENV="${arg#*=}" ;;
       --debug) DEBUG=true ;;
       --verbose|-v) VERBOSE=true ;;
-      *) KWARGS="$KWARGS $arg" ;;
+      *) KWARGS+=("$arg") ;;
   esac
 done
 
@@ -46,19 +50,23 @@ if [ "$DEBUG" = true ]; then
   NODE_DEBUG_OPTIONS="--inspect"
 fi
 
-# Check if watch mode is enabled
+# The `--` separator is REQUIRED. Without it babel-node's own arguments (--presets,
+# --extensions, --max_old_space_size) stay in process.argv ahead of the command, and
+# src/reactory/cli/cli.ts cannot tell them apart from the command's own flags. It also
+# stops env-cmd from claiming `-h` / `-v` for itself instead of forwarding them.
+# bin/reactory passes `--` for the same reason — keep the two launchers in step.
 if [ "$WATCH_MODE" = true ]; then
   NODE_PATH=./src env-cmd -f ${ENV_FILE} npx nodemon -e js,ts,tsx,graphql --exec npx babel-node ${SCRIPT_PATH} \
     --presets @babel/env \
     --extensions ".js,.ts" \
     --max_old_space_size=2000000 \
-    $KWARGS
+    -- "${KWARGS[@]}"
 else
   NODE_PATH=./src env-cmd -f ${ENV_FILE} npx babel-node ${SCRIPT_PATH} \
     --presets @babel/env \
     --extensions ".js,.ts" \
     --max_old_space_size=2000000 \
-    $KWARGS
+    -- "${KWARGS[@]}"
 
 fi
 
