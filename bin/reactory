@@ -18,7 +18,10 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # Parse command line arguments
 COMMAND=""
-KWARGS=""
+# An ARRAY, not a string. A string expanded unquoted is word-split on spaces, so
+# `--input='{"id": 1}'` reached the CLI as two broken fragments and failed with
+# "Unexpected end of JSON input". An array preserves each argument verbatim.
+KWARGS=()
 
 show_help() {
   cat << EOF
@@ -117,7 +120,7 @@ while [[ $# -gt 0 ]]; do
         shift
       else
         # Everything else goes to KWARGS
-        KWARGS="$KWARGS $1"
+        KWARGS+=("$1")
         shift
       fi
       ;;
@@ -125,7 +128,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Show help if requested and no command specified
-if [ "$SHOW_REACTORY_HELP" = true ] || { [ -z "$COMMAND" ] && [ -z "$KWARGS" ]; }; then
+if [ "$SHOW_REACTORY_HELP" = true ] || { [ -z "$COMMAND" ] && [ ${#KWARGS[@]} -eq 0 ]; }; then
   show_help
   exit 0
 fi
@@ -167,33 +170,37 @@ if [ "$VERBOSE" = true ]; then
   echo "Environment: $CONFIG_ENV"
   echo "ENV File: $ENV_FILE"
   echo "Command: $COMMAND"
-  echo "Arguments: $KWARGS"
+  echo "Arguments: ${KWARGS[*]}"
   echo "Project Root: $PROJECT_ROOT"
 fi
 
-# Pass --silent to Node if not in verbose mode so core logger can be suppressed
-CLI_ARGS="$COMMAND $KWARGS"
+# Pass --silent to Node if not in verbose mode so core logger can be suppressed.
+# The command goes FIRST: prepending --silent ahead of it used to leave the CLI
+# resolving the command from a flag token, which made every invocation a silent
+# no-op (boot, "Goodbye.", exit 0). cli.ts now scans past leading flags too, but
+# ordering the command first keeps the intent explicit.
+CLI_ARGS=("$COMMAND" "${KWARGS[@]}")
 if [ "$VERBOSE" != true ]; then
-  CLI_ARGS="--silent $CLI_ARGS"
+  CLI_ARGS+=("--silent")
 fi
 
 # Execute the CLI
 cd "$PROJECT_ROOT" || exit 1
 
 if [ "$WATCH_MODE" = true ]; then
-  NODE_PATH=./src env-cmd -f "$ENV_FILE" npx nodemon \
+  NODE_PATH=./src env-cmd -f "$ENV_FILE" -- npx nodemon \
     -e js,ts,tsx,graphql \
     --exec npx babel-node "$CLI_SCRIPT" \
     --presets @babel/env \
     --extensions ".js,.ts" \
     $NODE_OPTIONS \
-    -- $CLI_ARGS
+    -- "${CLI_ARGS[@]}"
 else
-  NODE_PATH=./src env-cmd -f "$ENV_FILE" npx babel-node "$CLI_SCRIPT" \
+  NODE_PATH=./src env-cmd -f "$ENV_FILE" -- npx babel-node "$CLI_SCRIPT" \
     --presets @babel/env \
     --extensions ".js,.ts" \
     $NODE_OPTIONS \
-    -- $CLI_ARGS
+    -- "${CLI_ARGS[@]}"
 fi
 
 # Capture exit code

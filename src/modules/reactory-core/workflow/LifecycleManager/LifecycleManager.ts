@@ -176,7 +176,8 @@ export interface IExecutionPointerSummary {
 export interface IWorkflowHistoryItem {
   id: string;
   workflowDefinitionId: string;
-  version: number;
+  /** M11 — semantic version string, verbatim from the engine instance. */
+  version: string;
   status: WorkflowESStatus;
   statusLabel: string;
   description?: string | null;

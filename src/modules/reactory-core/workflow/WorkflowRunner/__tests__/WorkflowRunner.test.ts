@@ -201,10 +201,20 @@ describe('WorkflowRunner', () => {
 
       const result = await workflowRunner.startWorkflow('test-workflow', '1.0.0', { data: 'test' });
 
-      // The runner normalises the semver string to the numeric major version
-      // the engine takes, so '1.0.0' reaches the host as 1.
-      expect(mockHost.startWorkflow).toHaveBeenCalledWith('test-workflow', 1, { data: 'test' });
+      // M11 — the semantic version reaches the host VERBATIM. The runner used to
+      // truncate it to a numeric major (so '1.0.0', '1.2.0' and '1.9.7' all arrived
+      // as 1); that shim is gone and minor/patch are now preserved end to end.
+      expect(mockHost.startWorkflow).toHaveBeenCalledWith('test-workflow', '1.0.0', { data: 'test' });
       expect(result).toEqual(mockResult);
+    });
+
+    it('passes a minor version through without collapsing it to the major (M11)', async () => {
+      const mockResult = { id: 'instance-2', status: 'running' };
+      mockHost.startWorkflow.mockResolvedValue(mockResult);
+
+      await workflowRunner.startWorkflow('test-workflow', '1.9.7', { data: 'test' });
+
+      expect(mockHost.startWorkflow).toHaveBeenCalledWith('test-workflow', '1.9.7', { data: 'test' });
     });
 
     it('should throw error when host not initialized', async () => {

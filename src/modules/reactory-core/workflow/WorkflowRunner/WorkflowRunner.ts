@@ -35,7 +35,6 @@ import type { YamlWorkflowDefinition } from '../YamlFlow/types/WorkflowDefinitio
 import {
   buildYamlWorkflowClass,
   engineWorkflowId,
-  engineWorkflowMajorVersion,
   applyYamlInputDefaults,
 } from '../YamlFlow/YamlFlowBuilder';
 import { configureYamlFlowRuntime } from '../YamlFlow/execution/YamlFlowRuntime';
@@ -785,18 +784,9 @@ export class WorkflowRunner {
       metadata: { data },
     };
 
-    let versionNumber = 1;
-    if (version && typeof version === 'string') {
-      try {
-        if (version.includes('.')) {
-          versionNumber = parseInt(version.split('.')[0]);
-        } else {
-          versionNumber = parseInt(version);
-        }
-      } catch (error) {
-        logger.warn(`Invalid version number ${version} for workflow ${id}, using default 1`, error);
-      }
-    }
+    // M11 — the engine takes the semantic version verbatim. The former truncation to a
+    // major integer is gone: it collapsed 1.0.0 / 1.2.0 / 1.9.7 to the same engine
+    // version, so every persisted instance reported "1" regardless of what it ran.
 
     try {
       if (!this.state.host) {
@@ -805,14 +795,14 @@ export class WorkflowRunner {
 
       return await this.errorHandler.executeWithRetry(
         async () => {
-          const startResult = await this.state.host!.startWorkflow(id, versionNumber, data);
-          logger.debug(`Workflow ${id} :${versionNumber} started successfully`, startResult);
+          const startResult = await this.state.host!.startWorkflow(id, version, data);
+          logger.debug(`Workflow ${id}@${version} started successfully`, startResult);
           return startResult;
         },
         errorContext
       );
     } catch (error) {
-      logger.error(`Failed to start workflow ${id} :${versionNumber}`, error);
+      logger.error(`Failed to start workflow ${id}@${version}`, error);
       throw error;
     }
   }
@@ -915,7 +905,8 @@ export class WorkflowRunner {
     this.registerYamlWorkflowOnHost(workflow, this.state.host);
 
     const engineId = engineWorkflowId(definition);
-    const version = engineWorkflowMajorVersion(definition.version);
+    // M11 — the definition's semantic version is the engine version, verbatim.
+    const version = definition.version;
     const ctx = context || this.context;
     const tenantId = (ctx?.partner as any)?.key || undefined;
 

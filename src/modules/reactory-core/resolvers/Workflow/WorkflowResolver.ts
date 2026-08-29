@@ -834,7 +834,11 @@ class WorkflowResolver {
 
   @property("WorkflowInstance", "version")
   instanceVersion(obj: any) {
-    if (obj.version) return String(obj.version);
+    // M11 — the engine now persists the semantic version verbatim, so this is a plain
+    // read. The former String() coercion and id-reparse fallback existed only because
+    // the engine stored a truncated major integer. The fqn fallback is retained solely
+    // for instances persisted BEFORE the M11 migration, whose version may be absent.
+    if (obj.version) return obj.version;
     const fqn = obj.workflowId || obj.workflowDefinitionId || '';
     const atIdx = fqn.lastIndexOf('@');
     return atIdx > -1 ? fqn.substring(atIdx + 1) : '1.0.0';

@@ -59,7 +59,8 @@ reactory-express-server/
     start.sh                # Start server in development mode
     start-otel.sh           # Start server with OpenTelemetry
     jest.sh                 # Run tests
-    cli.sh                  # Run Reactory CLI commands
+    reactory                # Run Reactory CLI commands (the CLI entry point)
+    cli.sh                  # DEPRECATED shim -> bin/reactory
   build/                    # Build output
   certificates/             # SSL certificates
   docker/                   # Docker configuration
@@ -103,8 +104,11 @@ bin/jest.sh reactory local --watch                  # Watch mode
 bin/jest.sh reactory local --testPathPattern=Feature # Specific test
 bin/jest.sh reactory local --coverage               # Coverage report
 
-# Run CLI commands
-bin/cli.sh
+# Run CLI commands (bin/reactory is the single CLI entry point; bin/cli.sh is a
+# deprecated shim that forwards to it). Runs from any working directory.
+bin/reactory <command> [options]
+bin/reactory workflow stats
+bin/reactory workflow start core.MyWorkflow@1.0.0 --input='{"foo":1}'
 
 # Package management
 yarn install       # Install dependencies

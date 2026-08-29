@@ -99,96 +99,113 @@ const getCLI = (name: string): Reactory.IReactoryComponentDefinition<TCLI> => {
 }
 
 /**
- * Processes the command line arguments for the cli. We allow the 
- * user to specify the environment, user, password, partner, etc.
- * and then return the remaining arguments to be processed by the
- * command.
- * -cf, --config: The configuration file to use for the command.
- * --cname: The environment name to use for the command. (this value is used by the cli.sh and cli.cmd file)
- * --cenv: The environment to use for the command. (this value is used by the cli.sh file)
- * -p, --partner: The partner to use for the command.
- * -u, --user: The user to use for the command.
- * -pwd, --password: The password to use for the command.
- * -h, --help: Show help for reactory cli.
- * --list <module>: List all the commands available for a module.
- * --modules: List all the modules available.
+ * Informational switches that short-circuit command dispatch.
+ *
+ * Accepts BOTH the flag form and the bare form, because `bin/reactory --help` advertises
+ * `list [module]` and `modules` as bare commands while this module has always looked for
+ * `--list` / `--modules`. Supporting both means the documented usage works either way.
+ *
+ *   -h  | --help    | help          show the CLI help text
+ *   -l  | --list    | list [module] list registered CLI commands, optionally filtered
+ *         --modules | modules       list enabled modules
+ *         --version                 print the server version
+ *
+ * NOTE: `-v` is deliberately NOT bound to --version. Both launchers (bin/reactory and
+ * the bin/cli.sh shim) consume `-v` as their own verbose flag, so it never reaches here;
+ * binding it would advertise something that cannot work.
+ *
+ * Returns true when a switch was handled, in which case the caller should exit without
+ * dispatching a command.
  */
-const processCliArgs = async (vargs: string[]): Promise<string[]> => {
-  let ignore: string[] = ['--cname', '--env', '-p', '--partner', '-u', '--user', '-pwd', '--password']
-  let action: string[] = ['--list', '--modules', '-h', '--help', '-v', '--version'];
-  vargs.forEach((arg) => {
-    let KP:string[] = [null, null];
-    if(arg.trim().includes('=')) {
-      KP = arg.split('=');
+const INFO_SWITCHES = new Set([
+  '-h', '--help', 'help',
+  '-l', '--list', 'list',
+  '--modules', 'modules',
+  '--version',
+]);
+
+const processCliArgs = (cargs: string[]): boolean => {
+  for (let i = 0; i < cargs.length; i++) {
+    const raw = cargs[i];
+    // Split on the FIRST '=' only; everything after it is the value. (The previous
+    // implementation also split on ' ' and ':', which corrupted any value containing
+    // either — argv entries are already separate tokens, so neither split was correct.)
+    const eq = raw.indexOf('=');
+    const flag = eq === -1 ? raw : raw.slice(0, eq);
+
+    if (!INFO_SWITCHES.has(flag)) continue;
+
+    // Value from `--list=core`, else the following token when it is not itself a flag.
+    let value: string | undefined = eq === -1 ? undefined : raw.slice(eq + 1);
+    if (value === undefined && i + 1 < cargs.length && !cargs[i + 1].startsWith('-')) {
+      value = cargs[i + 1];
     }
 
-    if(arg.trim().includes(' ')) {
-      KP = arg.split(' ');
-    }
+    switch (flag) {
+      case '-h':
+      case '--help':
+      case 'help': {
+        console.log(colors.green(fs.readFileSync(require.resolve('./help.txt')).toString()));
+        return true;
+      }
 
-    if(arg.trim().includes(':')) {
-      KP = arg.split(':');
-    }
+      case '-l':
+      case '--list':
+      case 'list': {
+        // Print the INVOCATION NAME first. The old listing printed only
+        // "core.Workflow@1.0.0", which is not what you type — the CLI resolves by stem
+        // or feature action, so `workflow` is the usable name and the fqn is detail.
+        const rows: string[] = [];
+        ReactoryModules.enabled.forEach((module) => {
+          const moduleFqn = `${module.nameSpace}.${module.name}@${module.version}`;
+          const matches = !value
+            || module.name.toLowerCase() === value.toLowerCase()
+            || moduleFqn === value;
+          if (!matches || !(module.cli?.length > 0)) return;
 
-    if(KP[0] === null) {
-      KP[0] = arg;
-    }
-    
-    const [key, value] = KP;
-
-    if(action.includes(key)) {
-      //we have to process this action.
-      switch(key) {
-        case '--list': {
-          //list all commands available for a module.
-          let commandsText = '';
-
-          if(value === undefined || value === null || value === '') {
-            ReactoryModules.enabled.forEach((module) => {              
-              if (module.cli?.length > 0) {
-                module.cli.forEach((cli) => {
-                  commandsText += `${cli.nameSpace}.${cli.name}@${cli.version}\n`;
-                });
-              }              
-            });
-          } else {
-            ReactoryModules.enabled.forEach((module) => {
-              const fqn = `${module.nameSpace}.${module.name}@${module.version}`;
-              if (module.name.toLowerCase() === value.toLowerCase() || fqn === value) {
-                if (module.cli?.length > 0) {
-                  module.cli.forEach((cli) => {
-                    commandsText += `${cli.nameSpace}.${cli.name}@${cli.version}\n`;
-                  });
-                }
-              }
-            });
-          }
-          console.log(colors.green(`Listing all commands ${value ? `for module ${value}`: ''}\n${commandsText}`));
-          break;
-        }
-        case '--modules': {
-          //list all modules that are available.
-          let modulesText = '';
-          ReactoryModules.enabled.forEach((module) => {
-            modulesText += `${module.nameSpace}.${module.name}@${module.version}}\n`;
+          module.cli.forEach((cli) => {
+            const invocation = cli.stem
+              || cli.features?.find((f: Reactory.IReactoryComponentFeature) => f.stem)?.stem
+              || cli.name;
+            rows.push(`  ${String(invocation).padEnd(20)} ${cli.nameSpace}.${cli.name}@${cli.version}`);
           });
-          console.log(colors.green(`Listing all modules available.\n${modulesText}`));
+        });
 
-          break;
+        if (rows.length === 0) {
+          console.log(colors.yellow(
+            value ? `No CLI commands found for module "${value}".` : 'No CLI commands registered.'));
+        } else {
+          console.log(colors.green(
+            `Available commands${value ? ` for module ${value}` : ''}:\n${rows.join('\n')}`));
         }
-        case '-h': {
-          //show help for the reactory cli.
-          console.log(colors.green(`Showing help for the reactory cli.\n`));
-          console.log(colors.green(fs.readFileSync(require.resolve('./help.txt')).toString()));
+        return true;
+      }
 
-          break;
-        }
+      case '--modules':
+      case 'modules': {
+        const rows: string[] = [];
+        ReactoryModules.enabled.forEach((module) => {
+          const cliCount = module.cli?.length || 0;
+          rows.push(`  ${`${module.nameSpace}.${module.name}@${module.version}`.padEnd(48)}` +
+                    `${cliCount} cli command${cliCount === 1 ? '' : 's'}`);
+        });
+        console.log(colors.green(`Enabled modules:\n${rows.join('\n')}`));
+        return true;
+      }
+
+      case '--version': {
+        let version = 'unknown';
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          version = require('../../../package.json').version || version;
+        } catch { /* fall through to "unknown" */ }
+        console.log(colors.green(`reactory-server ${version}`));
+        return true;
       }
     }
-  });
+  }
 
-
-  return [];
+  return false;
 };
 
 const loadYamlConfig = (file: string): CliConfig => { 
@@ -328,6 +345,15 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
     // Find actual command arguments (strip babel args before '--' if present)
     const dashDashIndex = vargs.indexOf('--');
     let cargs: string[] = dashDashIndex >= 0 ? vargs.slice(dashDashIndex + 1) : vargs;
+
+    // Informational switches (--help / --list / --modules / --version) short-circuit
+    // here, BEFORE command resolution — they describe the CLI rather than invoking a
+    // command, so they must not fall through to "No command found". processCliArgs was
+    // previously declared but never called, which is why `--modules` and `--list` had
+    // never worked from either launcher.
+    if (processCliArgs(cargs)) {
+      process.exit(0);
+    }
     // check for config first
     if(cargs[0] && cargs[0].indexOf('.yaml') !== -1 && fs.existsSync(cargs[0]) === true){ 
       //we will process the yaml file.
@@ -353,8 +379,25 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
       }
   
   
-      let command: string = cargs.length >= 1 && cargs[0].indexOf('-') === -1 ? cargs[0] : null;
-      let commandArgs: string[] = cargs.length >= 2 ? cargs.slice(1) : [];
+      // The command is the first token that is not a flag. It is NOT simply cargs[0]:
+      // launchers legitimately put flags in front of it (bin/reactory prepends
+      // `--silent`), and babel's own arguments precede it whenever a launcher omits the
+      // `--` separator. Assuming index 0 left `command` null, and MultiStageJobRunner
+      // guards on `if (job?.command)` — so the CLI booted the whole server, ran nothing,
+      // printed "Goodbye." and exited 0. A silent no-op is the worst possible failure
+      // mode here, so resolve the command positionally and fail loudly when there is none.
+      //
+      // `startsWith('-')` rather than `indexOf('-') === -1`: the latter also rejected any
+      // hyphenated command name (e.g. `module-gen`).
+      const commandIndex: number = cargs.findIndex(arg => !arg.startsWith('-'));
+      let command: string = commandIndex === -1 ? null : cargs[commandIndex];
+      let commandArgs: string[] = commandIndex === -1 ? [] : cargs.slice(commandIndex + 1);
+
+      if (!command) {
+        console.error(colors.red(t('cli:common.noCommand',
+          `No command found in arguments: ${cargs.join(' ')}`)));
+        process.exit(1);
+      }
       let isServiceCall: boolean = false;
       let serviceMethod: string = null;
       let serviceProps: any = {};

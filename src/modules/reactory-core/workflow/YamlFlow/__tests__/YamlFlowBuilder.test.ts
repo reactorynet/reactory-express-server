@@ -18,7 +18,7 @@ import * as path from 'path';
 import {
   buildYamlWorkflowClass,
   engineWorkflowId,
-  engineWorkflowMajorVersion,
+  yamlDefinitionFingerprintSeed,
   applyYamlInputDefaults,
 } from '../YamlFlowBuilder';
 import { InstanceResourceManager } from '../../InstanceResourceManager';
@@ -55,12 +55,86 @@ function freshData(extra: Record<string, any> = {}) {
 
 describe('YamlFlowBuilder (engine bridge)', () => {
   describe('id / version helpers', () => {
-    it('derives engine id and numeric version', () => {
+    it('derives the engine id from namespace, name and version', () => {
       const def = { nameSpace: 'test', name: 'sample', version: '2.3.1' };
       expect(engineWorkflowId(def)).toBe('test.sample@2.3.1');
-      expect(engineWorkflowMajorVersion('2.3.1')).toBe(2);
-      expect(engineWorkflowMajorVersion('1.0.0')).toBe(1);
-      expect(engineWorkflowMajorVersion('')).toBe(1);
+    });
+
+    // M11 — the engine version is the semantic version verbatim. The former
+    // The former major-truncation helper is gone; 2.3.1 must NOT become 2.
+    it('carries the full semantic version onto the generated class', () => {
+      const def: any = { nameSpace: 'test', name: 'sample', version: '2.3.1', steps: [] };
+      const Cls: any = buildYamlWorkflowClass(def);
+      expect(new Cls().version).toBe('2.3.1');
+    });
+
+    it('keeps two minor versions distinguishable on the generated class', () => {
+      const mk = (v: string) => new (buildYamlWorkflowClass(
+        { nameSpace: 't', name: 'n', version: v, steps: [] } as any) as any)();
+      expect(mk('1.0.0').version).toBe('1.0.0');
+      expect(mk('1.1.0').version).toBe('1.1.0');
+    });
+  });
+
+  describe('yamlDefinitionFingerprintSeed (M10 content digest)', () => {
+    const base = {
+      steps: [{ id: 'a', type: 'http', config: { url: 'https://one' } }],
+      inputs: { who: { type: 'string', default: 'x' } },
+    };
+
+    it('is deterministic for the same definition', () => {
+      expect(yamlDefinitionFingerprintSeed(base)).toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('ignores key ORDER — a re-serialised but identical definition matches', () => {
+      const reordered = {
+        inputs: { who: { default: 'x', type: 'string' } },
+        steps: [{ config: { url: 'https://one' }, type: 'http', id: 'a' }],
+      };
+      expect(yamlDefinitionFingerprintSeed(reordered)).toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('CHANGES when a step config value is edited — the designer-edit case', () => {
+      const edited = { ...base, steps: [{ id: 'a', type: 'http', config: { url: 'https://two' } }] };
+      expect(yamlDefinitionFingerprintSeed(edited)).not.toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('CHANGES when a step is inserted', () => {
+      const edited = { ...base, steps: [{ id: 'z', type: 'noop' }, ...base.steps] };
+      expect(yamlDefinitionFingerprintSeed(edited)).not.toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('CHANGES when an input schema is edited', () => {
+      const edited = { ...base, inputs: { who: { type: 'string', default: 'y' } } };
+      expect(yamlDefinitionFingerprintSeed(edited)).not.toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('is UNCHANGED by description/author/tags — metadata cannot alter behaviour', () => {
+      const annotated: any = { ...base, description: 'new text', author: 'someone', tags: ['a'] };
+      expect(yamlDefinitionFingerprintSeed(annotated)).toBe(yamlDefinitionFingerprintSeed(base));
+    });
+
+    it('tolerates an empty definition', () => {
+      expect(yamlDefinitionFingerprintSeed({})).toMatch(/^[0-9a-f]{32}$/);
+    });
+  });
+
+  describe('generated workflow class carries the seed', () => {
+    it('exposes fingerprintSeed matching the definition digest', () => {
+      const def = {
+        nameSpace: 'test', name: 'seeded', version: '1.0.0',
+        steps: [{ id: 'a', type: 'noop' }],
+      };
+      const Cls: any = buildYamlWorkflowClass(def as any);
+      expect(new Cls().fingerprintSeed).toBe(yamlDefinitionFingerprintSeed(def as any));
+    });
+
+    it('two definitions differing ONLY in step config produce different seeds on the class', () => {
+      const a: any = { nameSpace: 't', name: 'n', version: '1.0.0', steps: [{ id: 's', type: 'http', config: { url: 'a' } }] };
+      const b: any = { nameSpace: 't', name: 'n', version: '1.0.0', steps: [{ id: 's', type: 'http', config: { url: 'b' } }] };
+      const A: any = buildYamlWorkflowClass(a);
+      const B: any = buildYamlWorkflowClass(b);
+      expect(new A().fingerprintSeed).not.toBe(new B().fingerprintSeed);
     });
   });
 
@@ -132,7 +206,7 @@ describe('YamlFlowBuilder (engine bridge)', () => {
       await host.start();
       const id = await host.startWorkflow(
         engineWorkflowId(def),
-        engineWorkflowMajorVersion(def.version),
+        def.version,
         data,
       );
       return runToCompletion(persistence, id);
@@ -320,7 +394,7 @@ describe('YamlFlowBuilder (engine bridge)', () => {
 
       const id = await host.startWorkflow(
         engineWorkflowId(def),
-        engineWorkflowMajorVersion(def.version),
+        def.version,
         freshData({ inputs: { requestId: 'req-1' } }),
       );
 

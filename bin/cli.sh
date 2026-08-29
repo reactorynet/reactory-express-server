@@ -1,75 +1,39 @@
 #!/bin/bash
+#
+# DEPRECATED — this is a thin compatibility shim for `bin/reactory`.
+#
+# `bin/reactory` is the single supported CLI entry point (it is also the package's
+# npm `bin` entry). It accepts every flag this script ever did — --cname=, --cenv=,
+# --watch, --debug, --verbose/-v — and adds what this script lacked:
+#
+#   * runs from ANY working directory (this script used relative paths and failed
+#     anywhere but the project root)
+#   * REACTORY_CONFIG_NAME / REACTORY_CONFIG_ENV environment defaults
+#   * a working --debug (the one here set NODE_DEBUG_OPTIONS and never used it)
+#   * `help` / usage text and friendly command aliases (service-gen, module-gen, …)
+#   * reliable exit-code propagation
+#
+# Kept because `bin/build.bin.rsync` has historically shipped cli.sh into the built
+# image, so deployed containers and any operator muscle memory keep working. Slated
+# for removal in a future release — migrate callers to `bin/reactory`.
+#
+# Set REACTORY_SUPPRESS_DEPRECATION=1 to silence the notice in scripts.
 
-# Default values
-CONFIG_NAME="reactory"
-CONFIG_ENV="local"
-WATCH_MODE=false
-VERBOSE=false
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REACTORY_BIN="$SCRIPT_DIR/reactory"
 
-KWARGS=
-# Loop through the arguments
-for arg in "$@"; do
-  case $arg in
-      --watch) WATCH_MODE=true ;;
-      --cname=*) CONFIG_NAME="${arg#*=}" ;;
-      --cenv=*) CONFIG_ENV="${arg#*=}" ;;
-      --debug) DEBUG=true ;;
-      --verbose|-v) VERBOSE=true ;;
-      *) KWARGS="$KWARGS $arg" ;;
-  esac
-done
-
-# Set the environment file based on the selected parameters
-ENV_FILE="./config/$CONFIG_NAME/.env.$CONFIG_ENV"
-
-# Check if environment file exists
-if [ ! -f ${ENV_FILE} ]; then
-  echo "Error: ${ENV_FILE} does not exist."
+if [ ! -x "$REACTORY_BIN" ]; then
+  echo "Error: $REACTORY_BIN not found or not executable." >&2
+  echo "bin/cli.sh is now a shim for bin/reactory; ensure it is present and executable." >&2
   exit 1
 fi
 
-# Verify that node_modules exist before running
-if [ ! -d "./node_modules" ]; then
-  echo "Error: node_modules directory not found. Run 'yarn install'."
-  exit 1
+if [ -z "$REACTORY_SUPPRESS_DEPRECATION" ]; then
+  # stderr, never stdout — callers pipe and parse stdout.
+  echo "warning: bin/cli.sh is deprecated; use 'bin/reactory' instead (forwarding)." >&2
 fi
 
-# Run the script
-SCRIPT_PATH=./src/reactory/cli/index.ts
-if [ ! -f ${SCRIPT_PATH} ]; then
-  echo "Error: ${SCRIPT_PATH} does not exist."
-  exit 1
-fi
-
-# Check if debug flag is set
-if [ "$DEBUG" = true ]; then
-  NODE_DEBUG_OPTIONS="--inspect"
-fi
-
-# Check if watch mode is enabled
-if [ "$WATCH_MODE" = true ]; then
-  NODE_PATH=./src env-cmd -f ${ENV_FILE} npx nodemon -e js,ts,tsx,graphql --exec npx babel-node ${SCRIPT_PATH} \
-    --presets @babel/env \
-    --extensions ".js,.ts" \
-    --max_old_space_size=2000000 \
-    $KWARGS
-else
-  NODE_PATH=./src env-cmd -f ${ENV_FILE} npx babel-node ${SCRIPT_PATH} \
-    --presets @babel/env \
-    --extensions ".js,.ts" \
-    --max_old_space_size=2000000 \
-    $KWARGS
-
-fi
-
-# NODE_PATH=./src env-cmd -f ./config/reactory/.env.local npx babel-node $SCRIPT_PATH --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
-
-# Check the exit status of the script
-if [ $? -eq 0 ]; then
-  if [ "$VERBOSE" = true ]; then
-    echo "Script completed successfully"
-  fi
-else
-  echo "Error: Script did not complete successfully"
-  exit 1
-fi
+# "$@" preserves argument boundaries exactly, so payloads containing spaces
+# (e.g. --input='{"id": 1}') survive the hand-off. exec replaces this process so the
+# child's exit code becomes ours with no extra propagation logic.
+exec "$REACTORY_BIN" "$@"

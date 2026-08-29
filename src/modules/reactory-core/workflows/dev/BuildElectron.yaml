@@ -163,12 +163,10 @@ steps:
   - id: runBuild
     type: cli_command
     dependsOn: logStart
-    timeout: 0
     config:
       command: "bash"
       args: ["-c", "${variables.buildCommand}"]
       cwd: "${variables.electronDir}"
-      timeout: 0
       failOnError: false
       expectedExitCodes: [0, 1]
       output:
@@ -239,12 +237,10 @@ steps:
         - id: runDist
           type: cli_command
           dependsOn: logDistStart
-          timeout: 0
           config:
             command: "bash"
             args: ["-c", "${variables.distCommand}"]
             cwd: "${variables.electronDir}"
-            timeout: 0
             failOnError: false
             expectedExitCodes: [0, 1]
             output:
