@@ -84,8 +84,8 @@ reactory --help
 reactory -h
 
 ./bin/reactory help
-./bin/cli.sh help
-bin/cli.sh help
+./bin/reactory help
+bin/reactory help
 ```
 
 ## Troubleshooting
