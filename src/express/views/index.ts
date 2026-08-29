@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 const ConfigureViews = (reactoryExpress: express.Application): void => {
   let root = process.cwd();
-  const appFolder = process.env.NODE_ENV !== 'development' ? 'app' : 'src'
+  const appFolder = process.env.APPLICATION_ROOT || (process.env.NODE_ENV !== 'development' ? 'app' : 'src');
   const DEFAULT_VIEWS = path.join(root, appFolder, 'express/views');
   let viewFolders: string[] = [DEFAULT_VIEWS];
 

@@ -84,6 +84,7 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
 
   user.setPassword(REACTORY_APPLICATION_PASSWORD);
   await user.addRole(reactoryClient._id.toString(), 'SYSTEM');
+  await user.save();
 
   log(`System user initialized successfully`, {}, 'info');
 }

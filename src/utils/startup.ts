@@ -25,7 +25,8 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
       if (!systemUser) {
         context.log('System user not found. Creating system user...', {}, 'info');
         // @ts-ignore
-        systemUser = await Helpers.initializeSystemUser();
+        const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
+        systemUser = await userService.initializeSystemUser();
       }
     }
 
