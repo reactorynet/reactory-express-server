@@ -181,7 +181,8 @@ bin/migrate.sh create reactory local --server --desc="add-index"
 |--------|---------|-------|
 | [generate.sh](./generate.sh) | Run code generation from YAML definitions | `bin/generate.sh [client] [env]` |
 | [depends.sh](./depends.sh) | Manage dependencies with watch/config/env flags | `bin/depends.sh --watch --cname=myapp --cenv=prod` |
-| [cli.sh](./cli.sh) | Watch-mode dependency checker with environment validation | `bin/cli.sh --watch --cname=myapp --debug` |
+| [reactory](./reactory) | **The Reactory CLI entry point** | `bin/reactory workflow stats` |
+| [cli.sh](./cli.sh) | DEPRECATED shim -> `bin/reactory` | `bin/cli.sh <command>` (forwards, warns) |
 
 ### Infrastructure & Git
 

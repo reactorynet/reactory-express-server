@@ -22,7 +22,7 @@ A bash script that:
 - ✅ Watch mode (`--watch`)
 - ✅ Verbose output (`--verbose`)
 - ✅ Environment variable support
-- ✅ Backward compatible with `bin/cli.sh`
+- ✅ Backward compatible with `bin/cli.sh` (now a deprecating shim that forwards here)
 
 ### 2. Package.json Binary Registration
 
@@ -105,7 +105,7 @@ The `reactory` executable integrates seamlessly with the existing CLI infrastruc
 
 1. **Wraps Existing CLI**: Calls `src/reactory/cli/index.ts` via babel-node
 2. **Same Module System**: Uses the same module CLI definitions
-3. **Backward Compatible**: `bin/cli.sh` still works identically
+3. **Backward Compatible**: `bin/cli.sh` still works — it forwards here and warns on stderr
 4. **No Breaking Changes**: Existing scripts continue to function
 
 ## Benefits
@@ -188,7 +188,8 @@ Potential improvements:
 
 ### For Existing Scripts
 
-**Option 1**: Replace `bin/cli.sh` with `reactory`
+Replace `bin/cli.sh` with `reactory`:
+
 ```bash
 # Before
 bin/cli.sh service-gen -c service.yaml
@@ -197,11 +198,14 @@ bin/cli.sh service-gen -c service.yaml
 reactory service-gen -c service.yaml
 ```
 
-**Option 2**: Keep using `bin/cli.sh` (no changes needed)
-```bash
-# Still works exactly the same
-bin/cli.sh service-gen -c service.yaml
-```
+`bin/cli.sh` is now a **deprecated shim** that forwards to `bin/reactory` and warns on
+stderr, so nothing breaks while you migrate — but it is no longer a supported option and
+will be removed. (An earlier revision of this document offered keeping `cli.sh` as
+"Option 2"; that is withdrawn. `bin/reactory` is a strict superset — see
+`REACTORY_EXECUTABLE_USAGE.md` for the capability comparison.)
+
+Set `REACTORY_SUPPRESS_DEPRECATION=1` to silence the notice in scripts you have not
+migrated yet.
 
 ### For Documentation
 

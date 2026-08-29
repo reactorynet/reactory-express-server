@@ -26,7 +26,7 @@ export { BaseYamlStep } from './steps/base/BaseYamlStep';
 export {
   buildYamlWorkflowClass,
   engineWorkflowId,
-  engineWorkflowMajorVersion,
+  yamlDefinitionFingerprintSeed,
 } from './YamlFlowBuilder';
 export { YamlStepBody, NoOpStepBody } from './execution/YamlStepBody';
 export type { YamlWorkflowData } from './execution/YamlStepBody';
