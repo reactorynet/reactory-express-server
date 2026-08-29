@@ -23,7 +23,14 @@ import Reactory from '@reactorynet/reactory-core';
 import { getCache, ReactoryCachePersistor } from './ReactoryApolloCache';
 import safeUrl from '@reactory/server-core/utils/url/safeUrl';
 
-const packageInfo: any = require('../../package.json');
+import path from 'path';
+
+let packageInfo: any = { version: '1.0.0', name: '@reactory/server-core' };
+try {
+  packageInfo = require(path.join(process.cwd(), 'package.json'));
+} catch {
+  // fallback if package.json cannot be resolved
+}
 
 export const clientFor = async (context: Reactory.Server.IReactoryContext): Promise<ApolloClient<NormalizedCacheObject>> => {
 
