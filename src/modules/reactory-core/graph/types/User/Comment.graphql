@@ -100,6 +100,51 @@ type Comment {
   The replies to this comment (threaded comments)
   """
   replies: [Comment]
+
+  """
+  Optional selected/highlighted text snippet being commented on
+  """
+  quote: String
+
+  """
+  Contextual metadata (e.g. selection offsets, anchor keys, tags)
+  """
+  metadata: JSON
+}
+
+"""
+Input for creating a comment in any context
+"""
+input CreateCommentInput {
+  """
+  The context for the comment (e.g. 'ReactoryContent', 'StaticContent', 'ReactorySupportTicket')
+  """
+  context: String!
+  
+  """
+  The context ID (e.g. content slug/id, ticket id)
+  """
+  contextId: String!
+  
+  """
+  The text content of the comment
+  """
+  text: String!
+  
+  """
+  Optional parent comment ID for threaded replies
+  """
+  parentId: ObjID
+
+  """
+  Optional selected/highlighted text snippet being commented on
+  """
+  quote: String
+
+  """
+  Contextual metadata (e.g. selection offsets, anchor keys, tags)
+  """
+  metadata: JSON
 }
 
 """
@@ -241,6 +286,11 @@ extend type Query {
 }
 
 extend type Mutation {
+  """
+  Create a new comment attached to a context and contextId
+  """
+  createComment(input: CreateCommentInput!): Comment
+
   """
   Edit an existing comment (user must be the comment author)
   """

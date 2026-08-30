@@ -444,6 +444,83 @@ class CommentResolver {
   // ============================================================================
 
   /**
+   * Create a new comment attached to a context and contextId
+   */
+  @roles(["USER"], 'args.context')
+  @mutation("createComment")
+  async createComment(
+    obj: any,
+    args: {
+      input: {
+        context: string;
+        contextId: string;
+        text: string;
+        parentId?: string;
+        quote?: string;
+        metadata?: any;
+      }
+    },
+    context: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IReactoryCommentDocument> {
+    const { context: ctx, contextId, text, parentId, quote, metadata } = args.input;
+
+    if (!text || text.trim().length === 0) {
+      throw new Error('Comment text cannot be empty');
+    }
+
+    if (!ctx || !contextId) {
+      throw new Error('Context and contextId are required');
+    }
+
+    let parentObjectId = null;
+    if (parentId) {
+      parentObjectId = new ObjectId(parentId);
+      const parentComment = await CommentModel.findById(parentObjectId).exec();
+      if (!parentComment) {
+        throw new Error('Parent comment not found');
+      }
+    }
+
+    const comment = new CommentModel({
+      user: context.user._id,
+      text: text.trim(),
+      context: ctx,
+      contextId: contextId,
+      parent: parentObjectId || undefined,
+      quote: quote ? quote.trim() : undefined,
+      metadata: metadata || {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      updatedBy: context.user._id,
+      published: true,
+      removed: false,
+    });
+
+    await comment.save();
+
+    if (parentObjectId) {
+      await CommentModel.findByIdAndUpdate(parentObjectId, {
+        $push: { replies: comment._id },
+        updatedAt: new Date(),
+      });
+    }
+
+    await comment.populate('user');
+
+    if (context.emit) {
+      context.emit('core.CommentAdded', {
+        commentId: comment._id,
+        context: ctx,
+        contextId: contextId,
+        parentId: parentId || null,
+        userId: context.user._id,
+      });
+    }
+
+    return comment;
+  }
+
+  /**
    * Edit an existing comment
    * Only the comment author can edit their own comment
    */
