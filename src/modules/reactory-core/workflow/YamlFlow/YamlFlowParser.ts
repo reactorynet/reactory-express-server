@@ -459,16 +459,21 @@ export class YamlFlowParser {
    * Validate step connectivity and isolation
    */
   private validateStepConnectivity(steps: any[], warnings: any[]): void {
+    const dependedOnIds = new Set<string>();
+    this.collectAllDependenciesRecursive(steps, dependedOnIds);
+
     for (const step of steps) {
-      // Check for isolated steps (no inputs, outputs, or dependencies)
+      // Check for isolated steps (no inputs, outputs, config, dependencies, and not depended on by others)
       const hasInputs = step.inputs && Object.keys(step.inputs).length > 0;
       const hasOutputs = step.outputs && Object.keys(step.outputs).length > 0;
-      const hasDependencies = step.dependsOn;
+      const hasDependencies = step.dependsOn && (Array.isArray(step.dependsOn) ? step.dependsOn.length > 0 : true);
+      const hasConfig = step.config && Object.keys(step.config).length > 0;
+      const isDependedOn = dependedOnIds.has(step.id);
       
-      if (!hasInputs && !hasOutputs && !hasDependencies && step.type !== 'log') {
+      if (!hasInputs && !hasOutputs && !hasDependencies && !hasConfig && !isDependedOn && !['log', 'start', 'end'].includes(step.type)) {
         warnings.push({
           code: 'ISOLATED_STEP',
-          message: `Step '${step.id}' appears to be isolated (no inputs, outputs, or dependencies)`,
+          message: `Step '${step.id}' appears to be isolated (no inputs, outputs, config, or dependencies)`,
           path: `steps[${step.id}]`,
           severity: 'warning'
         });
@@ -488,6 +493,34 @@ export class YamlFlowParser {
         for (const branch of step.config.branches) {
           if (branch.steps) {
             this.validateStepConnectivity(branch.steps, warnings);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Recursively collect all step dependencies
+   */
+  private collectAllDependenciesRecursive(steps: any[], dependedOnIds: Set<string>): void {
+    for (const step of steps) {
+      if (step.dependsOn) {
+        const deps = Array.isArray(step.dependsOn) ? step.dependsOn : [step.dependsOn];
+        deps.forEach((d: string) => dependedOnIds.add(d));
+      }
+      if (step.steps) {
+        this.collectAllDependenciesRecursive(step.steps, dependedOnIds);
+      }
+      if (step.config?.thenSteps) {
+        this.collectAllDependenciesRecursive(step.config.thenSteps, dependedOnIds);
+      }
+      if (step.config?.elseSteps) {
+        this.collectAllDependenciesRecursive(step.config.elseSteps, dependedOnIds);
+      }
+      if (step.config?.branches) {
+        for (const branch of step.config.branches) {
+          if (branch.steps) {
+            this.collectAllDependenciesRecursive(branch.steps, dependedOnIds);
           }
         }
       }
