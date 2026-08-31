@@ -134,7 +134,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
   // searchInput for typing; committed value drives query + URL
   const [searchInput, setSearchInput] = React.useState(() => {
     const params = new URLSearchParams(location.search);
-    return params.get('search') || queryVariables?.filter?.searchString || '';
+    return params.get('search') || queryVariables?.filter?.searchString || searchText || '';
   });
 
   // Count workflows for badges
@@ -388,6 +388,10 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
 
   // Execute search (only when button clicked or Enter pressed) + URL sync
   const handleSearch = React.useCallback(() => {
+    if (onSearchChange) {
+      onSearchChange(searchInput);
+    }
+
     if (onQueryChange) {
       const nextFilter = {
         ...queryVariables?.filter,
@@ -403,11 +407,14 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
       });
       syncUrlFromSearchAndFilters(searchInput, nextFilter);
     }
-  }, [searchInput, queryVariables, onQueryChange, syncUrlFromSearchAndFilters]);
+  }, [searchInput, queryVariables, onQueryChange, onSearchChange, syncUrlFromSearchAndFilters]);
 
   // Clear search + URL sync
   const handleClearSearch = React.useCallback(() => {
     setSearchInput('');
+    if (onSearchChange) {
+      onSearchChange('');
+    }
     if (onQueryChange) {
       const nextFilter = { ...queryVariables?.filter, searchString: '' };
       onQueryChange('registeredWorkflows', {
@@ -417,7 +424,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
       });
       syncUrlFromSearchAndFilters('', nextFilter);
     }
-  }, [queryVariables, onQueryChange, syncUrlFromSearchAndFilters]);
+  }, [queryVariables, onQueryChange, onSearchChange, syncUrlFromSearchAndFilters]);
 
   // Handle search on Enter key
   const handleKeyPress = React.useCallback((event: any) => {

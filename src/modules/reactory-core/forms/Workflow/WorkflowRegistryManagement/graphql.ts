@@ -84,20 +84,19 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
         }
       }`,
       variables: {
-        'filter': 'filter',
-        'filter.searchString': 'filter.searchString',
-        'filter.nameSpace': 'filter.nameSpace',
-        'filter.name': 'filter.name',
-        'filter.version': 'filter.version',
-        'filter.isActive': 'filter.isActive',
-        'filter.tags': 'filter.tags',
-        'filter.author': 'filter.author',
-        'filter.hasSchedule': 'filter.hasSchedule',
-        'filter.hasErrors': 'filter.hasErrors',
-        'filter.neverRun': 'filter.neverRun',
-        'filter.recentlyUpdated': 'filter.recentlyUpdated',
-        'paging.page': 'pagination.page',
-        'paging.pageSize': 'pagination.limit'
+        'query.search': 'filter.searchString',
+        'query.nameSpace': 'filter.nameSpace',
+        'query.name': 'filter.name',
+        'query.version': 'filter.version',
+        'query.isActive': 'filter.isActive',
+        'query.tags': 'filter.tags',
+        'query.author': 'filter.author',
+        'query.hasSchedule': 'filter.hasSchedule',
+        'query.hasErrors': 'filter.hasErrors',
+        'query.neverRun': 'filter.neverRun',
+        'query.recentlyUpdated': 'filter.recentlyUpdated',
+        'query.page': 'pagination.page',
+        'query.pageSize': 'pagination.limit'
       },
       resultType: 'object',
       resultMap: {
