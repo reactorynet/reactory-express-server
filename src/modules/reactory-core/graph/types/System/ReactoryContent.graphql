@@ -67,6 +67,9 @@ type ReactoryContent {
   enableComments: Boolean
   commentLayout: String
   commentsProps: JSON
+  container: String
+  containerProps: JSON
+  style: JSON
   comments: [ Comment ]
 }
 
@@ -122,6 +125,9 @@ input CreateContentInput {
   enableComments: Boolean
   commentLayout: String
   commentsProps: JSON
+  container: String
+  containerProps: JSON
+  style: JSON
   createdAt: Date
   updatedAt: Date
   publisDate: Date
@@ -149,6 +155,9 @@ input ReactoryContentInput {
   enableComments: Boolean
   commentLayout: String
   commentsProps: JSON
+  container: String
+  containerProps: JSON
+  style: JSON
   version: String
   createdAt: Date
   updatedAt: Date

@@ -319,10 +319,33 @@ class CommentResolver {
     const { context: ctx, contextId, includeRemoved = false, paging } = args;
 
     try {
+      // Build context IDs to match either slug or mongo id for static/reactory content
+      let contextIds = [contextId];
+      if (ctx === 'StaticContent' || ctx === 'ReactoryContent') {
+        try {
+          const isObjectId = ObjectId.isValid(contextId) && String(new ObjectId(contextId)) === contextId;
+          const ContentModel = (await import('../../models/Content')).default;
+          if (ContentModel) {
+            const contentDoc = isObjectId
+              ? await ContentModel.findById(contextId).select('_id slug').exec()
+              : await ContentModel.findOne({ slug: contextId }).select('_id slug').exec();
+            if (contentDoc) {
+              contextIds = Array.from(new Set([
+                contextId,
+                contentDoc._id.toString(),
+                contentDoc.slug,
+              ].filter(Boolean)));
+            }
+          }
+        } catch (e) {
+          // fallback to contextId
+        }
+      }
+
       // Build query
       const query: any = {
         context: ctx,
-        contextId: contextId,
+        contextId: contextIds.length === 1 ? contextIds[0] : { $in: contextIds },
         parent: { $exists: false }, // Root comments only
       };
 

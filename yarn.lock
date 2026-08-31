@@ -5910,7 +5910,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grpc/proto-loader@npm:^0.7.10":
+"@grpc/proto-loader@npm:^0.7.10, @grpc/proto-loader@npm:^0.7.13":
   version: 0.7.15
   resolution: "@grpc/proto-loader@npm:0.7.15"
   dependencies:
@@ -10235,9 +10235,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@reactory/reactory-compute-planner@workspace:src/modules/reactory-compute-planner":
+"@reactory/reactory-google@workspace:src/modules/reactory-google":
   version: 0.0.0-use.local
-  resolution: "@reactory/reactory-compute-planner@workspace:src/modules/reactory-compute-planner"
+  resolution: "@reactory/reactory-google@workspace:src/modules/reactory-google"
+  dependencies:
+    "@types/jest": "npm:^29.5.0"
+    google-auth-library: "npm:^9.14.1"
+    googleapis: "npm:^140.0.1"
+    jest: "npm:^29.7.0"
+    typescript: "npm:^5.5.0"
   languageName: unknown
   linkType: soft
 
@@ -10594,6 +10600,16 @@ __metadata:
     zod: "npm:3.24.2"
   bin:
     reactory: ./bin/reactory
+  languageName: unknown
+  linkType: soft
+
+"@reactory/zepz-quotes@workspace:src/modules/reactory-zepz-quotes":
+  version: 0.0.0-use.local
+  resolution: "@reactory/zepz-quotes@workspace:src/modules/reactory-zepz-quotes"
+  dependencies:
+    "@grpc/grpc-js": "npm:1.10.3"
+    "@grpc/proto-loader": "npm:^0.7.13"
+    talon_one_sdk: "npm:^26.17.0"
   languageName: unknown
   linkType: soft
 
@@ -20534,7 +20550,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gaxios@npm:^6.0.0, gaxios@npm:^6.1.1":
+"gaxios@npm:^6.0.0, gaxios@npm:^6.0.3, gaxios@npm:^6.1.1":
   version: 6.7.1
   resolution: "gaxios@npm:6.7.1"
   dependencies:
@@ -20985,7 +21001,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"google-auth-library@npm:^9.14.2":
+"google-auth-library@npm:^9.0.0, google-auth-library@npm:^9.14.1, google-auth-library@npm:^9.14.2, google-auth-library@npm:^9.7.0":
   version: 9.15.1
   resolution: "google-auth-library@npm:9.15.1"
   dependencies:
@@ -21027,6 +21043,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"googleapis-common@npm:^7.0.0":
+  version: 7.2.0
+  resolution: "googleapis-common@npm:7.2.0"
+  dependencies:
+    extend: "npm:^3.0.2"
+    gaxios: "npm:^6.0.3"
+    google-auth-library: "npm:^9.7.0"
+    qs: "npm:^6.7.0"
+    url-template: "npm:^2.0.8"
+    uuid: "npm:^9.0.0"
+  checksum: 10c0/cbbce900582a66c28bb8ccde631bc08202c6fb2e591932b981a23b437b074150051b966d3ad67bcb4b06b4ff5bbbfd8524ac5ca6f7b77b8790f417924bec1f3c
+  languageName: node
+  linkType: hard
+
 "googleapis-common@npm:^8.0.0":
   version: 8.0.3
   resolution: "googleapis-common@npm:8.0.3"
@@ -21038,6 +21068,16 @@ __metadata:
     qs: "npm:^6.7.0"
     url-template: "npm:^2.0.8"
   checksum: 10c0/8cda8ab8c300fc63fcabfd3b9ca35529dcbd9bdb9106db6bc460e33541d5bcd8f62b7051ae15129f98cddcddc964c35e59c671523a1eb5da8edf4c88a4cf3326
+  languageName: node
+  linkType: hard
+
+"googleapis@npm:^140.0.1":
+  version: 140.0.1
+  resolution: "googleapis@npm:140.0.1"
+  dependencies:
+    google-auth-library: "npm:^9.0.0"
+    googleapis-common: "npm:^7.0.0"
+  checksum: 10c0/ed90e0d9bff7b35598fa0161cf0a2e3f874a6479dd4ecca89d6e5b8c3de886db33e9b73251acf2db5b931ec5ffea99e0c8751a26f0ef1297ad2ee0c5c89487d3
   languageName: node
   linkType: hard
 
@@ -23523,7 +23563,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest@npm:^29.5.0":
+"jest@npm:^29.5.0, jest@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest@npm:29.7.0"
   dependencies:
@@ -32534,6 +32574,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"talon_one_sdk@npm:^26.17.0":
+  version: 26.17.0
+  resolution: "talon_one_sdk@npm:26.17.0"
+  checksum: 10c0/24a52dc3f240b5f00f2982e38f3696b6690950d7ebf23dc8bad2e6bf768fd1df7716b70d58bc53e9dfc55cc9a5216b8330d00bde862a295dfc1a0201e4359099
+  languageName: node
+  linkType: hard
+
 "tar-fs@npm:2.1.1":
   version: 2.1.1
   resolution: "tar-fs@npm:2.1.1"
@@ -33548,7 +33595,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.0.0":
+"typescript@npm:^5.0.0, typescript@npm:^5.5.0":
   version: 5.9.3
   resolution: "typescript@npm:5.9.3"
   bin:
@@ -33568,7 +33615,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.0.0#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A^5.0.0#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.5.0#optional!builtin<compat/typescript>":
   version: 5.9.3
   resolution: "typescript@patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"
   bin:

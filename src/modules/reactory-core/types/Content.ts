@@ -62,6 +62,9 @@ export interface ReactoryContent
   enableComments?: boolean;
   commentLayout?: string;
   commentsProps?: Record<string, any>;
+  container?: string;
+  containerProps?: Record<string, any>;
+  style?: Record<string, any>;
   translations?: ReactoryContentTranslation[];
   /**
    * Computed on read: the language actually used to resolve `title`,
@@ -114,6 +117,9 @@ export interface ReactoryContentInput
   enableComments?: boolean;
   commentLayout?: string;
   commentsProps?: Record<string, any>;
+  container?: string;
+  containerProps?: Record<string, any>;
+  style?: Record<string, any>;
   roles?: string[];
   metadata?: Record<string, unknown>;
   translations?: ReactoryContentTranslationInput[];
