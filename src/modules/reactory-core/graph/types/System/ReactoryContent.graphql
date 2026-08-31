@@ -64,6 +64,9 @@ type ReactoryContent {
   releaseDate: Date
   version: String
   publishedVersion: String
+  enableComments: Boolean
+  commentLayout: String
+  commentsProps: JSON
   comments: [ Comment ]
 }
 
@@ -116,6 +119,9 @@ input CreateContentInput {
   translations: [ ReactoryContentTranslationInput ]
   previewInputForm: String
   helpTopic: String
+  enableComments: Boolean
+  commentLayout: String
+  commentsProps: JSON
   createdAt: Date
   updatedAt: Date
   publisDate: Date
@@ -140,6 +146,9 @@ input ReactoryContentInput {
   translations: [ ReactoryContentTranslationInput ]
   previewInputForm: String
   helpTopic: String
+  enableComments: Boolean
+  commentLayout: String
+  commentsProps: JSON
   version: String
   createdAt: Date
   updatedAt: Date

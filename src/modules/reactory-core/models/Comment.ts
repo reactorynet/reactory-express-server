@@ -13,6 +13,8 @@ const CommentSchema = new mongoose.Schema<Reactory.Models.IReactoryComment>({
   text: String,
   context: String,
   contextId: String,
+  quote: String,
+  metadata: {},
   upvoted: [{
     type: ObjectId,
     ref: 'User'
