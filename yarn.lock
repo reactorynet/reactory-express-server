@@ -5910,7 +5910,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grpc/proto-loader@npm:^0.7.10, @grpc/proto-loader@npm:^0.7.13":
+"@grpc/proto-loader@npm:^0.7.10":
   version: 0.7.15
   resolution: "@grpc/proto-loader@npm:0.7.15"
   dependencies:
@@ -9015,12 +9015,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@reactory/reactory-compute-planner@workspace:src/modules/reactory-compute-planner":
-  version: 0.0.0-use.local
-  resolution: "@reactory/reactory-compute-planner@workspace:src/modules/reactory-compute-planner"
-  languageName: unknown
-  linkType: soft
-
 "@reactory/reactory-kb@workspace:src/modules/reactory-kb":
   version: 0.0.0-use.local
   resolution: "@reactory/reactory-kb@workspace:src/modules/reactory-kb"
@@ -9361,16 +9355,6 @@ __metadata:
     zod: "npm:3.24.2"
   bin:
     reactory: ./bin/reactory
-  languageName: unknown
-  linkType: soft
-
-"@reactory/zepz-quotes@workspace:src/modules/reactory-zepz-quotes":
-  version: 0.0.0-use.local
-  resolution: "@reactory/zepz-quotes@workspace:src/modules/reactory-zepz-quotes"
-  dependencies:
-    "@grpc/grpc-js": "npm:1.10.3"
-    "@grpc/proto-loader": "npm:^0.7.13"
-    talon_one_sdk: "npm:^26.17.0"
   languageName: unknown
   linkType: soft
 
@@ -12761,6 +12745,18 @@ __metadata:
     https-proxy-agent: "npm:^5.0.1"
     proxy-from-env: "npm:^2.1.0"
   checksum: 10c0/559fe7d51291787def61566a3db78b87510c8faf9c8a8c006d9d8b933808628ff0d8eca7756b40ae25e07da96d946c68c1ffba3da9075ed0b5d3661801d76869
+  languageName: node
+  linkType: hard
+
+"axios@npm:^1.7.0":
+  version: 1.20.0
+  resolution: "axios@npm:1.20.0"
+  dependencies:
+    follow-redirects: "npm:^1.16.0"
+    form-data: "npm:^4.0.6"
+    https-proxy-agent: "npm:^5.0.1"
+    proxy-from-env: "npm:^2.1.0"
+  checksum: 10c0/976088acf532286356f4c2e65df1ef47ba7da3936d83e928d0d64357bbf5370456abd3eb5826c15df322335fcb1fe200d4a84b4fcf20ffccdd63b40d80fa495c
   languageName: node
   linkType: hard
 
@@ -28290,6 +28286,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"reactory-speech@workspace:src/modules/reactory-speech":
+  version: 0.0.0-use.local
+  resolution: "reactory-speech@workspace:src/modules/reactory-speech"
+  dependencies:
+    axios: "npm:^1.7.0"
+    multer: "npm:^1.4.5-lts.1"
+    ws: "npm:^8.18.0"
+  languageName: unknown
+  linkType: soft
+
 "reactory-telemetry@workspace:src/modules/reactory-telemetry":
   version: 0.0.0-use.local
   resolution: "reactory-telemetry@workspace:src/modules/reactory-telemetry"
@@ -31169,13 +31175,6 @@ __metadata:
   version: 2.6.2
   resolution: "taffydb@npm:2.6.2"
   checksum: 10c0/34cefd7f22eb67660c2b2b06c6fd37dd515db4dfe2036876b13008fb7d11d8fe844bd23f29ae4100158e485928d64b9932d8357c8392b0eadbeeddac0ef9fcd3
-  languageName: node
-  linkType: hard
-
-"talon_one_sdk@npm:^26.17.0":
-  version: 26.17.0
-  resolution: "talon_one_sdk@npm:26.17.0"
-  checksum: 10c0/24a52dc3f240b5f00f2982e38f3696b6690950d7ebf23dc8bad2e6bf768fd1df7716b70d58bc53e9dfc55cc9a5216b8330d00bde862a295dfc1a0201e4359099
   languageName: node
   linkType: hard
 
