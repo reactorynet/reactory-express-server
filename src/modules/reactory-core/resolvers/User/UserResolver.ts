@@ -12,8 +12,11 @@ import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 class UserResolver {
   // --- User Type Properties ---
   @property('User', 'id')
-  id(obj: { _id: any }) {
-    return obj._id;
+  id(obj: any) {
+    if (!obj) return null;
+    const raw = obj._id || obj.id;
+    if (!raw) return null;
+    return typeof raw === 'string' ? raw : (raw.toString ? raw.toString() : String(raw));
   }
 
   @property('User', 'avatar')

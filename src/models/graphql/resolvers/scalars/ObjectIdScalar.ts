@@ -19,9 +19,11 @@ const ObjectIdScalarConfig: GraphQLScalarTypeConfig<ObjectId, string> = {
   },
   serialize(value) {
     try {
+      if (value === null || value === undefined) return null;
+      if (typeof value === 'string') return value;
       if (value instanceof Object && value.$oid) return value.$oid;
       if (value instanceof ObjectId) return value.toString();
-      return value.toString();
+      return String(value);
     } catch (error) {
       logger.error(error);
     }
