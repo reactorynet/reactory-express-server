@@ -59,6 +59,12 @@ export interface ReactoryContent
   format?: ReactoryContentFormat;
   locale?: string;
   helpTopic?: string;
+  enableComments?: boolean;
+  commentLayout?: string;
+  commentsProps?: Record<string, any>;
+  container?: string;
+  containerProps?: Record<string, any>;
+  style?: Record<string, any>;
   translations?: ReactoryContentTranslation[];
   /**
    * Computed on read: the language actually used to resolve `title`,
@@ -108,6 +114,12 @@ export interface ReactoryContentInput
   extends Reactory.Service.ReactoryContentInput {
   format?: ReactoryContentFormat;
   helpTopic?: string;
+  enableComments?: boolean;
+  commentLayout?: string;
+  commentsProps?: Record<string, any>;
+  container?: string;
+  containerProps?: Record<string, any>;
+  style?: Record<string, any>;
   roles?: string[];
   metadata?: Record<string, unknown>;
   translations?: ReactoryContentTranslationInput[];

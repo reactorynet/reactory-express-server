@@ -27,6 +27,7 @@ export class YamlValidator {
       allErrors: true,
       verbose: true,
       allowUnionTypes: true,
+      strict: false,
     });
     addFormats(this.ajv);
 
@@ -162,11 +163,11 @@ export class YamlValidator {
     const errors: ValidationError[] = [];
     const warnings: ValidationWarning[] = [];
 
-    // Validate nameSpace follows camelCase convention
-    if (!/^[a-z][a-zA-Z0-9]*$/.test(workflow.nameSpace)) {
+    // Validate nameSpace follows convention (supports camelCase, kebab-case, and dot notation)
+    if (!/^[a-z][a-zA-Z0-9.\-_]*$/.test(workflow.nameSpace)) {
       warnings.push({
         code: 'NAMESPACE_CONVENTION',
-        message: 'nameSpace should follow camelCase convention (start with lowercase letter)',
+        message: 'nameSpace should follow convention (start with lowercase letter, alphanumeric, dashes, dots)',
         path: 'nameSpace',
         value: workflow.nameSpace,
         severity: 'warning'

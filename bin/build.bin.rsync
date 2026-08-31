@@ -3,6 +3,7 @@
 + backup.sh
 + bun.sh
 + cli.sh
++ reactory
 + depends.sh
 + meilisearch.sh
 + serve.sh

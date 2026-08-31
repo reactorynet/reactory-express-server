@@ -120,7 +120,7 @@ reactory service-gen -c ./service.yaml --watch
 ```
 bin/
 ├── reactory           # Main executable
-├── cli.sh             # Legacy CLI wrapper (still supported)
+├── cli.sh             # DEPRECATED shim -> bin/reactory
 └── ...
 
 src/
@@ -132,7 +132,8 @@ src/
 
 ## Legacy Support
 
-The existing `bin/cli.sh` script is still supported and works identically:
+`bin/cli.sh` is a DEPRECATED shim that forwards here and warns on stderr. It keeps
+working while you migrate, but `bin/reactory` is the supported entry point:
 
 ```bash
 # These are equivalent

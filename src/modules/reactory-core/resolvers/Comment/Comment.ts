@@ -319,10 +319,33 @@ class CommentResolver {
     const { context: ctx, contextId, includeRemoved = false, paging } = args;
 
     try {
+      // Build context IDs to match either slug or mongo id for static/reactory content
+      let contextIds = [contextId];
+      if (ctx === 'StaticContent' || ctx === 'ReactoryContent') {
+        try {
+          const isObjectId = ObjectId.isValid(contextId) && String(new ObjectId(contextId)) === contextId;
+          const ContentModel = (await import('../../models/Content')).default;
+          if (ContentModel) {
+            const contentDoc = isObjectId
+              ? await ContentModel.findById(contextId).select('_id slug').exec()
+              : await ContentModel.findOne({ slug: contextId }).select('_id slug').exec();
+            if (contentDoc) {
+              contextIds = Array.from(new Set([
+                contextId,
+                contentDoc._id.toString(),
+                contentDoc.slug,
+              ].filter(Boolean)));
+            }
+          }
+        } catch (e) {
+          // fallback to contextId
+        }
+      }
+
       // Build query
       const query: any = {
         context: ctx,
-        contextId: contextId,
+        contextId: contextIds.length === 1 ? contextIds[0] : { $in: contextIds },
         parent: { $exists: false }, // Root comments only
       };
 
@@ -442,6 +465,83 @@ class CommentResolver {
   // ============================================================================
   // MUTATION RESOLVERS
   // ============================================================================
+
+  /**
+   * Create a new comment attached to a context and contextId
+   */
+  @roles(["USER"], 'args.context')
+  @mutation("createComment")
+  async createComment(
+    obj: any,
+    args: {
+      input: {
+        context: string;
+        contextId: string;
+        text: string;
+        parentId?: string;
+        quote?: string;
+        metadata?: any;
+      }
+    },
+    context: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IReactoryCommentDocument> {
+    const { context: ctx, contextId, text, parentId, quote, metadata } = args.input;
+
+    if (!text || text.trim().length === 0) {
+      throw new Error('Comment text cannot be empty');
+    }
+
+    if (!ctx || !contextId) {
+      throw new Error('Context and contextId are required');
+    }
+
+    let parentObjectId = null;
+    if (parentId) {
+      parentObjectId = new ObjectId(parentId);
+      const parentComment = await CommentModel.findById(parentObjectId).exec();
+      if (!parentComment) {
+        throw new Error('Parent comment not found');
+      }
+    }
+
+    const comment = new CommentModel({
+      user: context.user._id,
+      text: text.trim(),
+      context: ctx,
+      contextId: contextId,
+      parent: parentObjectId || undefined,
+      quote: quote ? quote.trim() : undefined,
+      metadata: metadata || {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      updatedBy: context.user._id,
+      published: true,
+      removed: false,
+    });
+
+    await comment.save();
+
+    if (parentObjectId) {
+      await CommentModel.findByIdAndUpdate(parentObjectId, {
+        $push: { replies: comment._id },
+        updatedAt: new Date(),
+      });
+    }
+
+    await comment.populate('user');
+
+    if (context.emit) {
+      context.emit('core.CommentAdded', {
+        commentId: comment._id,
+        context: ctx,
+        contextId: contextId,
+        parentId: parentId || null,
+        userId: context.user._id,
+      });
+    }
+
+    return comment;
+  }
 
   /**
    * Edit an existing comment

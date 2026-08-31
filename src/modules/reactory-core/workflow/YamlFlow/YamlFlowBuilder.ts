@@ -29,6 +29,7 @@
  *   workflow        → workflow metadata
  */
 
+import { createHash } from 'crypto';
 import { WorkflowBase, WorkflowBuilder, WorkflowErrorHandling } from '@reactorynet/workflow-es';
 import { YamlStepBody, NoOpStepBody, FinalizeStepBody, WaitForEventStepBody, NamedMarkerStepBody, YamlWorkflowData } from './execution/YamlStepBody';
 
@@ -56,11 +57,37 @@ export function engineWorkflowId(def: { nameSpace: string; name: string; version
   return `${def.nameSpace}.${def.name}@${def.version}`;
 }
 
-/** Engine (numeric) version derived from the semantic version's major component. */
-export function engineWorkflowMajorVersion(version: string): number {
-  if (!version) return 1;
-  const major = parseInt(String(version).split('.')[0], 10);
-  return Number.isNaN(major) ? 1 : major;
+/**
+ * Recursively key-sorted JSON, so two structurally identical definitions serialise
+ * identically regardless of the key order js-yaml happened to produce.
+ */
+function canonicalJson(value: any): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  const keys = Object.keys(value).sort();
+  return `{${keys.map(k => `${JSON.stringify(k)}:${canonicalJson(value[k])}`).join(',')}}`;
+}
+
+/**
+ * M10 — content digest of a YAML workflow definition, fed to the engine as
+ * `WorkflowBase.fingerprintSeed`.
+ *
+ * The engine's structural fingerprint hashes graph SHAPE only; a YAML leaf step's
+ * configuration lives inside an input closure (`attachLeaf` binds `s.def = step`) and is
+ * invisible to it. Without this seed, editing a step's URL or template in the designer
+ * and saving over the same version would leave in-flight instances unprotected.
+ *
+ * Digests `steps` and `inputs` — the parts that determine what the workflow DOES. Not
+ * the raw file text: hashing the text would make a comment or re-indent invalidate every
+ * running instance, and a false positive here dead-letters live work. Metadata that
+ * cannot change behaviour (description, author, tags) is excluded for the same reason.
+ */
+export function yamlDefinitionFingerprintSeed(def: {
+  steps?: AnyStep[];
+  inputs?: Record<string, any>;
+}): string {
+  const canonical = canonicalJson({ steps: def.steps || [], inputs: def.inputs || {} });
+  return createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 32);
 }
 
 /**
@@ -372,13 +399,21 @@ export function buildYamlWorkflowClass(def: {
   steps: AnyStep[];
 }): { new (): WorkflowBase<YamlWorkflowData> } {
   const id = engineWorkflowId(def);
-  const version = engineWorkflowMajorVersion(def.version);
+  // M11 — the engine version IS the semantic version. No truncation to a major.
+  const version = def.version;
   const steps = def.steps || [];
+  // M10 — bind the definition's CONTENT to the engine fingerprint. The engine hashes
+  // graph shape; this seed adds the step configuration, which lives in closures the
+  // engine cannot see. Together they mean an instance started on this YAML can never
+  // resume against an edited copy published under the same version.
+  const fingerprintSeed = yamlDefinitionFingerprintSeed(def);
 
   return class GeneratedYamlWorkflow implements WorkflowBase<YamlWorkflowData> {
     public id: string = id;
 
-    public version: number = version;
+    public version: string = version;
+
+    public fingerprintSeed: string = fingerprintSeed;
 
     public build(builder: WorkflowBuilder<YamlWorkflowData>): void {
       const chain = walk(steps, builder, {});

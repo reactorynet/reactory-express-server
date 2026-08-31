@@ -78,6 +78,12 @@ const ContentSchema = new mongoose.Schema<Reactory.Models.IReactoryContent>({
     type: ObjectId,
   },
   published: Boolean,
+  enableComments: Boolean,
+  commentLayout: String,
+  commentsProps: {},
+  container: String,
+  containerProps: {},
+  style: {},
   commentsAllowed: Boolean,
   commentRoles: [ String ],
   comments: [{ ref: 'Comment', type: ObjectId }]

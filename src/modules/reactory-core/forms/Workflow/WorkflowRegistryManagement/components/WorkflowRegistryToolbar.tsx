@@ -289,6 +289,21 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     },
   ], []);
 
+  // Helper to compare filter objects deeply to prevent redundant updates / render loops
+  const isFilterDifferent = React.useCallback((urlFilter: Record<string, any>, currentFilter: Record<string, any> = {}) => {
+    const allKeys = new Set([...Object.keys(urlFilter), ...Object.keys(currentFilter)]);
+    for (const key of allKeys) {
+      if (key === 'searchString') continue; // searchString is compared separately
+      const urlVal = urlFilter[key];
+      const curVal = currentFilter[key];
+      if (urlVal === undefined && curVal === undefined) continue;
+      if (JSON.stringify(urlVal) !== JSON.stringify(curVal)) {
+        return true;
+      }
+    }
+    return false;
+  }, []);
+
   // URL <-> filter helpers (search + filters/tags sync to query string)
   const parseUrlToSearchAndFilters = React.useCallback(() => {
     const params = new URLSearchParams(location.search);
@@ -319,14 +334,24 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
       params.delete('search');
     }
     const { searchString: _ignore, ...restFilters } = filterObj || {};
-    if (Object.keys(restFilters).length > 0) {
-      params.set('filters', encodeURIComponent(JSON.stringify(restFilters)));
+    const activeRestFilters: any = {};
+    Object.entries(restFilters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && v.length === 0)) {
+        activeRestFilters[k] = v;
+      }
+    });
+
+    if (Object.keys(activeRestFilters).length > 0) {
+      params.set('filters', encodeURIComponent(JSON.stringify(activeRestFilters)));
     } else {
       params.delete('filters');
     }
     const qs = params.toString();
     const newPath = `${location.pathname}${qs ? `?${qs}` : ''}${location.hash || ''}`;
-    navigate(newPath, { replace: true });
+    const currentPath = `${location.pathname}${location.search}${location.hash || ''}`;
+    if (currentPath !== newPath) {
+      navigate(newPath, { replace: true });
+    }
   }, [location.pathname, location.search, location.hash, navigate]);
 
   // Sync from URL on location change (supports direct links + back/forward)
@@ -339,8 +364,10 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
     // Push to parent query if different
     if (onQueryChange) {
       const currentSearch = queryVariables?.filter?.searchString || '';
-      const needsUpdate = urlSearch !== currentSearch || Object.keys(urlFilter).length > 0;
-      if (needsUpdate) {
+      const searchChanged = urlSearch !== currentSearch;
+      const filtersChanged = isFilterDifferent(urlFilter, queryVariables?.filter || {});
+
+      if (searchChanged || filtersChanged) {
         onQueryChange('registeredWorkflows', {
           ...queryVariables,
           filter: {
@@ -352,7 +379,7 @@ const WorkflowRegistryToolbar = (props: WorkflowRegistryToolbarProps) => {
         });
       }
     }
-  }, [location.search]);
+  }, [location.search, isFilterDifferent]);
 
   // Handle search input change (just update local state)
   const handleSearchInputChange = React.useCallback((event: any) => {

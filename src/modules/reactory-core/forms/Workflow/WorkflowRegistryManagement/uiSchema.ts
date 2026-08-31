@@ -394,12 +394,20 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
     },
 
     variables: {
-      "query.search": "filter.searchString",
-      "query.page": "pagination.page",
-      "query.pageSize": "pagination.limit",
+      "filter": "filter",
+      "filter.searchString": "filter.searchString",
       "filter.nameSpace": "filter.nameSpace",
+      "filter.name": "filter.name",
+      "filter.version": "filter.version",
       "filter.isActive": "filter.isActive",
       "filter.tags": "filter.tags",
+      "filter.author": "filter.author",
+      "filter.hasSchedule": "filter.hasSchedule",
+      "filter.hasErrors": "filter.hasErrors",
+      "filter.neverRun": "filter.neverRun",
+      "filter.recentlyUpdated": "filter.recentlyUpdated",
+      "paging.page": "pagination.page",
+      "paging.pageSize": "pagination.limit",
     },
   };
 

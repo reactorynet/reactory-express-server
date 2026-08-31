@@ -1,6 +1,6 @@
 import express from 'express';
-import { workflowRunner } from 'modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
-import { WorkflowStatus } from 'modules/reactory-core/workflow/LifecycleManager/LifecycleManager';
+import { workflowRunner } from '@reactory/server-modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
+import { WorkflowStatus } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager/LifecycleManager';
 import logger from '@reactory/server-core/logging';
 
 const router = express.Router();

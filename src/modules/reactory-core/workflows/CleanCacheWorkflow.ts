@@ -27,7 +27,7 @@ class AfterCacheClean extends StepBody {
 
 class CleanCacheWorkflow implements WorkflowBase<{interval: number, enabled: boolean}> {
   id: string = "core.CleanCacheWorkflow@1.0.0"
-  version: number = 1;
+  version: string = "1.0.0";
 
   build(builder: any) {
     builder

@@ -2,7 +2,7 @@ import amq from '@reactory/server-core/amq';
 import pdfRouter from '@reactory/server-core/pdf';
 import resourcesRouter from '@reactory/server-core/resources'
 import userAccountRouter from '@reactory/server-core/useraccount';;
-import workflowRouter from 'modules/reactory-core/workflow';
+import workflowRouter from '@reactory/server-modules/reactory-core/workflow';
 import express from 'express';
 //import flash from 'connect-flash';
 import modules from '@reactory/server-core/modules';

@@ -2,7 +2,7 @@ import Reactory from '@reactorynet/reactory-core';
 import { service } from '@reactory/server-core/application/decorators';
 import {
   WorkflowRunner,
-} from 'modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
+} from '@reactory/server-modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
 import { collectAndStripDesigner, reattachDesigner } from './designerMetadata';
 import { 
   IReactoryWorkflowService,
