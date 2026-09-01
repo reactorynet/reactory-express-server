@@ -78,21 +78,31 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
       i18n
     } = this.context;
 
-    if(i18n.language !== locale) {
+    if (i18n && typeof i18n.changeLanguage === 'function' && i18n.isInitialized && i18n.language !== locale) {
       await i18n.changeLanguage(locale);
     }
     
-    const ns: string | readonly string[] | null = i18n.options.ns;
+    let ns: string[] = [];
+    if (i18n && i18n.options && Array.isArray(i18n.options.ns)) {
+      ns = i18n.options.ns as string[];
+    } else {
+      try {
+        const { getNamesSpaces } = require('@reactory/server-core/express/i18n');
+        ns = getNamesSpaces();
+      } catch (err) {
+        ns = ['common', 'forms', 'models', 'services', 'workflow', 'schemas', 'cli', 'reactory'];
+      }
+    }
 
     const fs = require('fs');
     const path = require('path');
-    const APP_DATA_ROOT = process.env.APP_DATA_ROOT || path.resolve(process.cwd(), '../reactory-data');
+    const APP_DATA_ROOT = process.env.APP_DATA_ROOT || process.env.REACTORY_DATA || path.resolve(process.cwd(), '../reactory-data');
 
     let bundles: Reactory.Models.IReactoryI18nResource[] = []
 
-    if(this.context.utils.lodash.isArray(ns) === true) {
-      (ns as string[]).forEach($ns => {
-        let resourceBundle = { ...(i18n.getResourceBundle(i18n.language, $ns) || {}) };    
+    if (Array.isArray(ns)) {
+      ns.forEach($ns => {
+        let resourceBundle = { ...(i18n && typeof i18n.getResourceBundle === 'function' ? i18n.getResourceBundle(locale || 'en-US', $ns) || {} : {}) };    
         
         // Merge fresh translations from disk
         const candidates = [
