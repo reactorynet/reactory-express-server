@@ -136,6 +136,22 @@ if [ -f $MODULES_FILE ]; then
       echo "No rsync file found for module $module, skipping"
     fi
   done
+
+  # Pre-compile form modules and generate rsync filter
+  echo "🧩 Pre-compiling form widget modules for enabled modules"
+  TEMP_RUNTIME_PLUGINS_RSYNC=./bin/build.runtime-plugins.rsync
+  NODE_PATH=./src env-cmd -f $ENV_FILE npx babel-node ./bin/utils/build/compile-form-modules.ts --presets @babel/env,@babel/preset-typescript --extensions ".ts,.tsx,.js" --max_old_space_size=2000000 -- --output=$TEMP_RUNTIME_PLUGINS_RSYNC
+  if [ $? -ne 0 ]; then
+    echo "❌ Error: Form module compilation failed"
+    exit 1
+  fi
+
+  DATA_SOURCE_PLUGINS="${APP_DATA_ROOT:-$REACTORY_DATA}/plugins/__runtime__/lib"
+  if [ -d "$DATA_SOURCE_PLUGINS" ]; then
+    echo "🔁 Synchronizing compiled __runtime__ plugins to build destination"
+    mkdir -p $BUILD_PATH/data/plugins/__runtime__/lib
+    rsync -av --filter="merge $TEMP_RUNTIME_PLUGINS_RSYNC" $DATA_SOURCE_PLUGINS/ $BUILD_PATH/data/plugins/__runtime__/lib/ --quiet
+  fi
 else
   echo "Modules file $MODULES_FILE not found, skipping module copy"
 fi

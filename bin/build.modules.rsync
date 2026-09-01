@@ -30,6 +30,6 @@
 + /reactory-speech/**
 + /reactory-pdf-manager/
 + /reactory-pdf-manager/**
-+ /reactory-google/
-+ /reactory-google/**
++ /reactory-compute-planner/
++ /reactory-compute-planner/**
 - *
