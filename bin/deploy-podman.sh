@@ -50,33 +50,41 @@ fi
 echo "🔨 Compiling server from source..."
 sh bin/build.sh "${CONFIG_ID}" "${ENV_ID}"
 
-# 4. Build container image in Podman
+# 4. Synchronize compiled runtime plugins & data build outputs to host data directory
+BUILD_DATA_DIR="./build/server/${CONFIG_ID}/${ENV_ID}/data"
+if [ -d "${BUILD_DATA_DIR}" ]; then
+  echo "🔁 Synchronizing build data outputs to ${REACTORY_DATA}..."
+  mkdir -p "${REACTORY_DATA}"
+  rsync -av "${BUILD_DATA_DIR}/" "${REACTORY_DATA}/"
+fi
+
+# 5. Build container image in Podman
 echo "🐳 Building Podman container image..."
 sh bin/build-image.sh "${CONFIG_ID}" "${ENV_ID}"
 
 BUILD_VERSION=$(node -p "require('./package.json').version")
 
-# 5. Ensure tags exist
+# 6. Ensure tags exist
 podman tag "localhost/reactory/${CONFIG_ID}-express-server:${BUILD_VERSION}" "localhost/reactory/${CONFIG_ID}-express-server:latest" 2>/dev/null || true
 
-# 6. Ensure infra network exists
+# 7. Ensure infra network exists
 NETWORK_NAME="reactory-develop_reactory-network"
 if ! podman network exists "${NETWORK_NAME}" 2>/dev/null; then
   echo "🌐 Creating podman network: ${NETWORK_NAME}"
   podman network create "${NETWORK_NAME}"
 fi
 
-# 7. Ensure host logging directory permissions
+# 8. Ensure host logging directory permissions
 if [ -d "${REACTORY_DATA}/logging" ]; then
   chmod -R 777 "${REACTORY_DATA}/logging" 2>/dev/null || true
 fi
 
-# 8. Remove old container
+# 9. Remove old container
 CONTAINER_NAME="${CONFIG_ID}-express-server"
 echo "♻️  Restarting container: ${CONTAINER_NAME}"
 podman rm -f "${CONTAINER_NAME}" 2>/dev/null || true
 
-# 9. Run new container
+# 10. Run new container
 podman run -d \
   --name "${CONTAINER_NAME}" \
   --network "${NETWORK_NAME}" \
@@ -97,7 +105,7 @@ podman run -d \
   "localhost/reactory/${CONFIG_ID}-express-server:${BUILD_VERSION}" \
   bin/run-otel.sh
 
-# 10. Health check verification
+# 11. Health check verification
 echo "⏳ Waiting for server to initialize..."
 HEALTHY=false
 for i in $(seq 1 12); do

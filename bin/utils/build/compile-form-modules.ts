@@ -26,7 +26,11 @@ export interface ICompileFormModulesResult {
  * Loads all YAML forms from the $REACTORY_DATA/forms directory.
  */
 const scanYamlForms = (): Reactory.Forms.IReactoryForm[] => {
-  const reactoryData = process.env.REACTORY_DATA || process.env.APP_DATA_ROOT;
+  const reactoryData = (process.env.REACTORY_DATA && fs.existsSync(process.env.REACTORY_DATA))
+    ? process.env.REACTORY_DATA
+    : (process.env.APP_DATA_ROOT && fs.existsSync(process.env.APP_DATA_ROOT))
+      ? process.env.APP_DATA_ROOT
+      : (process.env.REACTORY_DATA || process.env.APP_DATA_ROOT);
   if (!reactoryData) return [];
   const dir = path.join(reactoryData, 'forms');
   if (!fs.existsSync(dir)) return [];
@@ -184,11 +188,14 @@ if (require.main === module) {
   let rsyncOut: string | undefined;
   for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
+    if (arg === '--') continue;
     if (arg.startsWith('--output=')) {
       rsyncOut = arg.split('=')[1];
     } else if (arg.startsWith('--rsync=')) {
       rsyncOut = arg.split('=')[1];
-    } else if (!arg.startsWith('-')) {
+    } else if (arg === '-o' || arg === '--output' || arg === '--rsync') {
+      rsyncOut = process.argv[++i];
+    } else if (!arg.startsWith('-') && !rsyncOut) {
       rsyncOut = arg;
     }
   }

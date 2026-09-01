@@ -81,6 +81,20 @@ const acquireCompileLock = (moduleId: string): { release: () => void; ready: Pro
 };
 
 /**
+ * Resolves the root directory for data/plugins storage, falling back gracefully
+ * between APP_DATA_ROOT and REACTORY_DATA depending on host vs container environment.
+ */
+export const getDataRoot = (): string => {
+  if (process.env.APP_DATA_ROOT && fs.existsSync(process.env.APP_DATA_ROOT)) {
+    return process.env.APP_DATA_ROOT;
+  }
+  if (process.env.REACTORY_DATA && fs.existsSync(process.env.REACTORY_DATA)) {
+    return process.env.REACTORY_DATA;
+  }
+  return process.env.APP_DATA_ROOT || process.env.REACTORY_DATA || path.join(process.cwd(), 'data');
+};
+
+/**
  * Service class that provides access to forms for the logged in user
  */
 
@@ -371,7 +385,8 @@ class ReactoryModuleCompilerService
   async compileModule(
     module: Reactory.Forms.IReactoryFormModule
   ): Promise<Reactory.Forms.IReactoryFormResource> {
-    const runtimeBase = path.join(process.env.APP_DATA_ROOT, "plugins", "__runtime__");
+    const dataRoot = getDataRoot();
+    const runtimeBase = path.join(dataRoot, "plugins", "__runtime__");
     const compiledFile = path.join(runtimeBase, `lib/${module.id}.min.js`);
 
     // ---------------------------------------------------------------
@@ -687,19 +702,20 @@ class ReactoryModuleCompilerService
   }
 
   async onStartup(): Promise<any> {
+    const dataRoot = getDataRoot();
     const runtimePath = path.join(
-      process.env.APP_DATA_ROOT,
+      dataRoot,
       "plugins",
       "__runtime__"
     );
     const libPath = path.join(
-      process.env.APP_DATA_ROOT,
+      dataRoot,
       "plugins",
       "__runtime__",
       "lib"
     );
     const srcPath = path.join(
-      process.env.APP_DATA_ROOT,
+      dataRoot,
       "plugins",
       "__runtime__",
       "src"
