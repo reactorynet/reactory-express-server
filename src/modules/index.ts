@@ -5,9 +5,14 @@ import * as fs from 'fs';
 
 
 let resolved: Reactory.Server.IReactoryModule[] = [];
+const appRoot = process.env.APPLICATION_ROOT || 'src';
 const files = [
-  `./${process.env.APPLICATION_ROOT || 'src'}/modules/__index.ts`,
-  `./${process.env.APPLICATION_ROOT || 'src'}/modules/__index.js`,
+  `./${appRoot}/modules/__index.ts`,
+  `./${appRoot}/modules/__index.js`,
+  `./src/modules/__index.ts`,
+  `./src/modules/__index.js`,
+  `./app/modules/__index.ts`,
+  `./app/modules/__index.js`,
 ];
 
 if (files.some(file => fs.existsSync(file))) {
