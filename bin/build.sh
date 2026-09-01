@@ -158,6 +158,14 @@ if [ -f $MODULES_FILE ]; then
     mkdir -p $BUILD_PATH/data/plugins/__runtime__/lib
     rsync -av --filter="merge $TEMP_RUNTIME_PLUGINS_RSYNC" $DATA_SOURCE_PLUGINS/ $BUILD_PATH/data/plugins/__runtime__/lib/ --quiet
   fi
+
+  # Package i18n translation files for enabled namespaces
+  echo "🌐 Packaging i18n translation files for enabled namespaces [${I18N_NS:-reactory}]"
+  NODE_PATH=./src env-cmd -f $ENV_FILE npx babel-node --presets @babel/env,@babel/preset-typescript --extensions ".ts,.tsx,.js" ./bin/utils/build/package-translations.ts --output=$BUILD_PATH/data/i18n
+  if [ $? -ne 0 ]; then
+    echo "❌ Error: Translation packaging failed"
+    exit 1
+  fi
 else
   echo "Modules file $MODULES_FILE not found, skipping module copy"
 fi
