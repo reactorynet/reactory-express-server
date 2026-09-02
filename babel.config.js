@@ -76,6 +76,6 @@ module.exports = function (api) {
       '**/*.graphql',
       'node_modules/**/*'
     ],
-    include: ['src/**/*', 'node_modules/@reactorynet/reactory-core/**/*']
+    include: ['src/**/*', 'bin/**/*', 'node_modules/@reactorynet/reactory-core/**/*']
   };
 };

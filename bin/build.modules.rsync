@@ -26,10 +26,10 @@
 + /reactory-classroom/**
 + /reactory-socialeyes/
 + /reactory-socialeyes/**
++ /reactory-speech/
++ /reactory-speech/**
 + /reactory-pdf-manager/
 + /reactory-pdf-manager/**
-+ /reactory-google/
-+ /reactory-google/**
-+ /reactory-zepz-quotes/
-+ /reactory-zepz-quotes/**
++ /reactory-compute-planner/
++ /reactory-compute-planner/**
 - *

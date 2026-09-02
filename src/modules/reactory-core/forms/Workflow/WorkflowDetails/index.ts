@@ -24,7 +24,16 @@ const WorkflowDetails: Reactory.Forms.IReactoryForm = {
   backButton: true,
   uiSupport: ['material'],
   widgetMap: [
-    { componentFqn: 'core.WorkflowDetailsPanel@1.0.0', widget: 'WorkflowDetailsPanel' }
+    { componentFqn: 'core.WorkflowDetailsPanel@1.0.0', widget: 'WorkflowDetailsPanel' },
+    { componentFqn: 'core.WorkflowOverview@1.0.0', widget: 'WorkflowOverview' },
+    { componentFqn: 'core.WorkflowInstanceHistory@1.0.0', widget: 'WorkflowInstanceHistory' },
+    { componentFqn: 'core.WorkflowDataViewer@1.0.0', widget: 'WorkflowDataViewer' },
+    { componentFqn: 'core.WorkflowInstanceInspector@1.0.0', widget: 'WorkflowInstanceInspector' },
+    { componentFqn: 'core.WorkflowErrors@1.0.0', widget: 'WorkflowErrors' },
+    { componentFqn: 'core.WorkflowSchedule@1.0.0', widget: 'WorkflowSchedule' },
+    { componentFqn: 'core.WorkflowLaunch@1.0.0', widget: 'WorkflowLaunch' },
+    { componentFqn: 'core.WorkflowConfiguration@1.0.0', widget: 'WorkflowConfiguration' },
+    { componentFqn: 'core.WorkflowYamlView@1.0.0', widget: 'WorkflowYamlView' },
   ],
   modules,
   graphql,

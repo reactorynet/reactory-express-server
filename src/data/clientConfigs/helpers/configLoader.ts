@@ -38,7 +38,12 @@ const DEFAULT_ENABLED_CLIENTS_FILE = 'enabled-clients.reactory.json';
 const getClientConfigsDir = (options?: ClientConfigLoaderOptions) => {
 	if (options?.clientConfigsDir) return options.clientConfigsDir;
 	const applicationRoot = options?.applicationRoot || process.env.APPLICATION_ROOT || 'src';
-	return path.resolve(applicationRoot, 'data/clientConfigs');
+	const dir = path.resolve(applicationRoot, 'data/clientConfigs');
+	if (fs.existsSync(dir)) return dir;
+	if (fs.existsSync(path.resolve('src/data/clientConfigs'))) {
+		return path.resolve('src/data/clientConfigs');
+	}
+	return dir;
 };
 
 const toArray = (value?: string | string[]) => {

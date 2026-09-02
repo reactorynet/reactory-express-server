@@ -5910,7 +5910,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grpc/proto-loader@npm:^0.7.10, @grpc/proto-loader@npm:^0.7.13":
+"@grpc/proto-loader@npm:^0.7.10":
   version: 0.7.15
   resolution: "@grpc/proto-loader@npm:0.7.15"
   dependencies:
@@ -10851,16 +10851,6 @@ __metadata:
     zod: "npm:3.24.2"
   bin:
     reactory: ./bin/reactory
-  languageName: unknown
-  linkType: soft
-
-"@reactory/zepz-quotes@workspace:src/modules/reactory-zepz-quotes":
-  version: 0.0.0-use.local
-  resolution: "@reactory/zepz-quotes@workspace:src/modules/reactory-zepz-quotes"
-  dependencies:
-    "@grpc/grpc-js": "npm:1.10.3"
-    "@grpc/proto-loader": "npm:^0.7.13"
-    talon_one_sdk: "npm:^26.17.0"
   languageName: unknown
   linkType: soft
 
@@ -33524,13 +33514,6 @@ __metadata:
   version: 2.6.2
   resolution: "taffydb@npm:2.6.2"
   checksum: 10c0/34cefd7f22eb67660c2b2b06c6fd37dd515db4dfe2036876b13008fb7d11d8fe844bd23f29ae4100158e485928d64b9932d8357c8392b0eadbeeddac0ef9fcd3
-  languageName: node
-  linkType: hard
-
-"talon_one_sdk@npm:^26.17.0":
-  version: 26.17.0
-  resolution: "talon_one_sdk@npm:26.17.0"
-  checksum: 10c0/24a52dc3f240b5f00f2982e38f3696b6690950d7ebf23dc8bad2e6bf768fd1df7716b70d58bc53e9dfc55cc9a5216b8330d00bde862a295dfc1a0201e4359099
   languageName: node
   linkType: hard
 

@@ -136,6 +136,36 @@ if [ -f $MODULES_FILE ]; then
       echo "No rsync file found for module $module, skipping"
     fi
   done
+
+  # Pre-compile form modules and generate rsync filter
+  echo "🧩 Pre-compiling form widget modules for enabled modules"
+  TEMP_RUNTIME_PLUGINS_RSYNC=./bin/build.runtime-plugins.rsync
+  NODE_PATH=./src env-cmd -f $ENV_FILE npx babel-node --presets @babel/env,@babel/preset-typescript --extensions ".ts,.tsx,.js" --max_old_space_size=2000000 ./bin/utils/build/compile-form-modules.ts --output=$TEMP_RUNTIME_PLUGINS_RSYNC
+  if [ $? -ne 0 ]; then
+    echo "❌ Error: Form module compilation failed"
+    exit 1
+  fi
+
+  DATA_SOURCE_PLUGINS=""
+  if [ -n "$REACTORY_DATA" ] && [ -d "$REACTORY_DATA/plugins/__runtime__/lib" ]; then
+    DATA_SOURCE_PLUGINS="$REACTORY_DATA/plugins/__runtime__/lib"
+  elif [ -n "$APP_DATA_ROOT" ] && [ -d "$APP_DATA_ROOT/plugins/__runtime__/lib" ]; then
+    DATA_SOURCE_PLUGINS="$APP_DATA_ROOT/plugins/__runtime__/lib"
+  fi
+
+  if [ -n "$DATA_SOURCE_PLUGINS" ] && [ -d "$DATA_SOURCE_PLUGINS" ]; then
+    echo "🔁 Synchronizing compiled __runtime__ plugins to build destination"
+    mkdir -p $BUILD_PATH/data/plugins/__runtime__/lib
+    rsync -av --filter="merge $TEMP_RUNTIME_PLUGINS_RSYNC" $DATA_SOURCE_PLUGINS/ $BUILD_PATH/data/plugins/__runtime__/lib/ --quiet
+  fi
+
+  # Package i18n translation files for enabled namespaces
+  echo "🌐 Packaging i18n translation files for enabled namespaces [${I18N_NS:-reactory}]"
+  NODE_PATH=./src env-cmd -f $ENV_FILE npx babel-node --presets @babel/env,@babel/preset-typescript --extensions ".ts,.tsx,.js" ./bin/utils/build/package-translations.ts --output=$BUILD_PATH/data/i18n
+  if [ $? -ne 0 ]; then
+    echo "❌ Error: Translation packaging failed"
+    exit 1
+  fi
 else
   echo "Modules file $MODULES_FILE not found, skipping module copy"
 fi

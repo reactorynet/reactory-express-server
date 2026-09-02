@@ -2,7 +2,9 @@
 
 export interface WorkflowDetailPanelProps {
   reactory: Reactory.Client.IReactoryApi;
-  workflow: any;
+  workflow?: any;
+  formData?: any;
+  data?: any;
   useCase?: string;
   rowData?: any;
 }

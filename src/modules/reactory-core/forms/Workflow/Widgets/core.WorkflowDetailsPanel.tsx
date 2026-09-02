@@ -37,7 +37,8 @@ interface DetailPanelDependencies {
  * }
  */
 const WorkflowDetailsPanel = (props: WorkflowDetailPanelProps) => {
-  const { reactory, workflow, useCase = 'grid', rowData } = props;
+  const { reactory, useCase = 'grid', rowData } = props;
+  const workflow = props.workflow || (props.formData?.workflow ? props.formData.workflow : props.formData) || rowData || props.data;
   
   const { 
     React, 
