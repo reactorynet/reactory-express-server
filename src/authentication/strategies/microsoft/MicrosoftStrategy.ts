@@ -41,7 +41,7 @@ const MicrosoftOIDCStrategy = new OIDCStrategy({
   responseType: 'code id_token',
   responseMode: 'form_post',
   redirectUrl: OAUTH_REDIRECT_URI,
-  allowHttpForRedirectUrl: MICROSOFT_OAUTH_ALLOW_HTTP_REDIRECT === 'true',
+  allowHttpForRedirectUrl: MICROSOFT_OAUTH_ALLOW_HTTP_REDIRECT === 'true' || OAUTH_REDIRECT_URI.startsWith('http://'),
   clientSecret: MICROSOFT_CLIENT_SECRET,
   validateIssuer: false, // Set to true for production with specific tenant
   passReqToCallback: true,

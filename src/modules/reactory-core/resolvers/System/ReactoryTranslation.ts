@@ -11,7 +11,7 @@ class ReactoryTranslationResolver {
 
   resolver: any;
 
-  @roles(["USER"], 'args.context')
+  @roles(["USER", "ANON"], 'args.context')
   @query("ReactoryTranslation")
   async ReactoryTranslation(obj: any,
     params: IReactoryTranslantionParams, 

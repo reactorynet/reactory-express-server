@@ -159,6 +159,32 @@ if [ -f $MODULES_FILE ]; then
     rsync -av --filter="merge $TEMP_RUNTIME_PLUGINS_RSYNC" $DATA_SOURCE_PLUGINS/ $BUILD_PATH/data/plugins/__runtime__/lib/ --quiet
   fi
 
+  PLUGINS_ROOT=""
+  if [ -n "$REACTORY_DATA" ] && [ -d "$REACTORY_DATA/plugins" ]; then
+    PLUGINS_ROOT="$REACTORY_DATA/plugins"
+  elif [ -n "$APP_DATA_ROOT" ] && [ -d "$APP_DATA_ROOT/plugins" ]; then
+    PLUGINS_ROOT="$APP_DATA_ROOT/plugins"
+  fi
+
+  if [ -n "$PLUGINS_ROOT" ] && [ -d "$PLUGINS_ROOT/reactory-client-core/lib" ]; then
+    echo "🔁 Synchronizing reactory-client-core plugin to build destination"
+    mkdir -p $BUILD_PATH/data/plugins/reactory-client-core/lib
+    rsync -av $PLUGINS_ROOT/reactory-client-core/lib/ $BUILD_PATH/data/plugins/reactory-client-core/lib/ --quiet
+  fi
+
+  THEMES_ROOT=""
+  if [ -n "$REACTORY_DATA" ] && [ -d "$REACTORY_DATA/themes" ]; then
+    THEMES_ROOT="$REACTORY_DATA/themes"
+  elif [ -n "$APP_DATA_ROOT" ] && [ -d "$APP_DATA_ROOT/themes" ]; then
+    THEMES_ROOT="$APP_DATA_ROOT/themes"
+  fi
+
+  if [ -n "$THEMES_ROOT" ] && [ -d "$THEMES_ROOT" ]; then
+    echo "🔁 Synchronizing themes to build destination"
+    mkdir -p $BUILD_PATH/data/themes
+    rsync -av $THEMES_ROOT/ $BUILD_PATH/data/themes/ --quiet
+  fi
+
   # Package i18n translation files for enabled namespaces
   echo "🌐 Packaging i18n translation files for enabled namespaces [${I18N_NS:-reactory}]"
   NODE_PATH=./src env-cmd -f $ENV_FILE npx babel-node --presets @babel/env,@babel/preset-typescript --extensions ".ts,.tsx,.js" ./bin/utils/build/package-translations.ts --output=$BUILD_PATH/data/i18n

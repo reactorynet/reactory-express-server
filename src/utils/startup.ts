@@ -83,6 +83,7 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
         logger.warn('Could not publish client env files', envError);
       }
     }
+    (global as any).REACTORY_SYSTEM_CONTEXT = context;
     logger.info(`Startup Completed in ${(new Date().valueOf() - start) / 1000} seconds`);
     return context;
   } catch (startupError) {

@@ -77,7 +77,7 @@ const resolveTokenSessionState = async (
 
 const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.ReactoryExpressRequest, payload: any, done: OnDoneCallback) => {
   const startTime = Date.now();
-  const clientKey = request.context?.partner?.key || 'api';
+  const clientKey = request.partner?.key || (request.headers?.['x-client-key'] as string) || request.context?.partner?.key || 'api';
 
   // Track attempt
   AuthTelemetry.recordAttempt('jwt', clientKey);

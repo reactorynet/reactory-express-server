@@ -172,7 +172,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     public: false,
     exact: true,
     roles: ['USER'],
-    componentFqn: 'reactory.MyApplications@1.0.0',
+    componentFqn: 'reactory.ReactoryApplicationsForm@1.0.0',
   },
   {
     key: 'home_guest',

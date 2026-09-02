@@ -364,6 +364,25 @@ const upsertFromConfig = async (
     delete (input as { onStartup?: unknown }).onStartup;
     delete (input as { onShutdown?: unknown }).onShutdown;
 
+    const sanitizeArrayOfSubdocs = (arr: any[]) => {
+      if (!Array.isArray(arr)) return arr;
+      return arr.map(item => {
+        if (!item || typeof item !== 'object') return item;
+        const copy: any = { ...item };
+        if (copy._id && typeof copy._id === 'object' && Object.keys(copy._id).length === 0) {
+          delete copy._id;
+        }
+        return copy;
+      });
+    };
+
+    input.auth_config = sanitizeArrayOfSubdocs(input.auth_config);
+    input.settings = sanitizeArrayOfSubdocs(input.settings);
+    input.plugins = sanitizeArrayOfSubdocs(input.plugins);
+    input.themes = sanitizeArrayOfSubdocs(input.themes);
+    input.routes = sanitizeArrayOfSubdocs(input.routes);
+    input.featureFlags = sanitizeArrayOfSubdocs(input.featureFlags);
+
     // Find existing client
     let reactoryClient: Reactory.Models.ReactoryClientDocument =
       await ReactoryClientModel.findOne({ key }).then();

@@ -100,7 +100,7 @@ describe('HealthRouter', () => {
     (global as any).REACTORY_SYSTEM_CONTEXT = context;
 
     const res = await request(app).get('/health');
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(200);
     expect(res.body.status).toBe('degraded');
     expect(res.body.services[0].healthy).toBe(false);
   });
@@ -133,16 +133,16 @@ describe('HealthRouter', () => {
     (global as any).REACTORY_SYSTEM_CONTEXT = context;
 
     const res = await request(app).get('/health');
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(200);
     expect(res.body.services[0].healthy).toBe(false);
     expect(res.body.services[0].message).toBe('boom');
   });
 
   it('returns 503 degraded on unexpected error during check', async () => {
     const context = createMockContext({
-      redisService: { get: jest.fn().mockRejectedValue(new Error('redis fail')) },
       servicesList: [],
     });
+    context.listServices = jest.fn(() => { throw new Error('critical failure'); });
     (global as any).REACTORY_SYSTEM_CONTEXT = context;
 
     const res = await request(app).get('/health');

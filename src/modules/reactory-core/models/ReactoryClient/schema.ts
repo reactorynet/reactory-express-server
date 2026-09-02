@@ -17,7 +17,7 @@ const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IR
   options: {},
   enabled: Boolean,
   roles: [String],
-});
+}, { _id: false });
 
 const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReactoryClient>({
   id: ObjectId,
@@ -44,6 +44,7 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
     ref: 'User',
   }, 
   themes: [{
+    _id: false,
   }],
   applicationRoles: [String], 
   billingType: String,
@@ -57,6 +58,7 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
     {
       key: String,
       value: String,
+      _id: false,
     },
   ],
   menus: [
@@ -78,7 +80,8 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
       args: [
         {},
       ],
-      componentProps: {}
+      componentProps: {},
+      _id: false,
     },
   ],
   auth_config: [
@@ -86,6 +89,7 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
       provider: String,
       enabled: Boolean,
       properties: {},
+      _id: false,
     },
   ],
   settings: [
@@ -98,6 +102,7 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
       componentFqn: String,
       formSchema: {},
       data: {},
+      _id: false,
     },
   ],
   whitelist: [String],
