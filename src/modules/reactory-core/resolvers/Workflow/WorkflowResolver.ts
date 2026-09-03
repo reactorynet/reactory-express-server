@@ -865,20 +865,43 @@ class WorkflowResolver {
 
   @property("WorkflowSchedule", "id")
   scheduleId(obj: any) {
-    return obj._id || obj.id;
+    return obj.id || obj._id || obj.config?.id || obj.config?._id || '';
+  }
+
+  @property("WorkflowSchedule", "name")
+  scheduleName(obj: any) {
+    return obj.name || obj.config?.name || '';
+  }
+
+  @property("WorkflowSchedule", "description")
+  scheduleDescription(obj: any) {
+    return obj.description || obj.config?.description || null;
+  }
+
+  @property("WorkflowSchedule", "schedule")
+  scheduleSettings(obj: any) {
+    return obj.schedule || obj.config?.schedule || null;
+  }
+
+  @property("WorkflowSchedule", "enabled")
+  scheduleEnabled(obj: any) {
+    if (obj.enabled !== undefined) return obj.enabled;
+    if (obj.config?.enabled !== undefined) return obj.config.enabled;
+    if (obj.config?.schedule?.enabled !== undefined) return obj.config.schedule.enabled;
+    return true;
   }
 
   @property("WorkflowSchedule", "createdBy")
   async scheduleCreatedBy(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
-    // If createdBy is populated, return it, otherwise fetch user data
-    if (typeof obj.createdBy === 'object') {
-      return obj.createdBy;
+    const createdBy = obj.createdBy || obj.config?.createdBy;
+    if (typeof createdBy === 'object') {
+      return createdBy;
     }
     
     // Fetch user by ID if needed
     const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
-    if (userService && obj.createdBy) {
-      return userService.findUserById(obj.createdBy);
+    if (userService && createdBy) {
+      return userService.findUserById(createdBy);
     }
     
     return null;
@@ -1001,22 +1024,31 @@ class WorkflowResolver {
   }
 
   @property("WorkflowSchedule", "workflow")
-  async workflowReferenceResolver(obj: IScheduleConfig) {
+  async workflowReferenceResolver(obj: any) {
     if (!obj) return null;
-    const { workflow } = obj;
+    const workflow = obj.workflow || obj.config?.workflow;
     if (!workflow) return null;
-    if (!workflow.id) return null;
-    if (workflow.id.includes('.')) {
+    if (typeof workflow === 'string') {
+      const [nameSpaceName, version] = workflow.split('@');
+      const [nameSpace, name] = (nameSpaceName || '').split('.');
+      return {
+        id: workflow,
+        nameSpace: nameSpace || '',
+        name: name || '',
+        version: version || '1.0.0'
+      };
+    }
+    if (workflow.id && workflow.id.includes('.')) {
       // If the ID is already in the format "namespace.name@version", return it as is
       // extract the namespace, name, and version from the ID
       const [nameSpaceName, version] = workflow.id.split('@');
-      const [nameSpace, name] = nameSpaceName.split('.');
+      const [nameSpace, name] = (nameSpaceName || '').split('.');
 
       return {
         id: workflow.id,
-        nameSpace: nameSpace,
-        name: name,
-        version: version
+        nameSpace: nameSpace || '',
+        name: name || '',
+        version: version || '1.0.0'
       };
     }
     // if the id is not in the format "namespace.name@version", we check if name, namespace, and version are provided and construct the id
@@ -1028,6 +1060,7 @@ class WorkflowResolver {
         version: workflow.version
       };
     }
+    return workflow;
   }
 
   // YamlWorkflowDefinition property resolvers
