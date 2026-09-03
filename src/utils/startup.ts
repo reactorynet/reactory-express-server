@@ -62,6 +62,7 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
           }
         }
         logger.info(`Synchronized ${(clientConfigs as unknown[]).length} client config(s) to the database`);
+        context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();
       } catch (syncError) {
         logger.warn('Client config synchronization failed', syncError);
       }
@@ -83,6 +84,7 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
         logger.warn('Could not publish client env files', envError);
       }
     }
+    (global as any).REACTORY_SYSTEM_CONTEXT = context;
     logger.info(`Startup Completed in ${(new Date().valueOf() - start) / 1000} seconds`);
     return context;
   } catch (startupError) {

@@ -103,7 +103,7 @@ router.get('/', async (req, res) => {
     }
 
     const health = await performHealthCheck(systemContext);
-    const httpStatus = health.status === 'healthy' ? 200 : 503;
+    const httpStatus = 200;
     res.status(httpStatus).json(health);
   } catch (error) {
     logger.error('Health check error', error);

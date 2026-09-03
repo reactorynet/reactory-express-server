@@ -1,8 +1,8 @@
+import Applications from './Applications';
 import Application from './Application';
 import ApplicationUsers from './Application/ApplicationUsers';
 import ApplicationOrganizations from './Application/ApplicationOrganizations';
 import ApplicationRouteEditor from './Application/ApplicationRouteEditor';
-import Applications from './Applications';
 import ReactoryContentCapture from './ReactoryContentCapture';
 import ReactoryContentList from './ReactoryContentList';
 import TemplateList from './EmailTemplate/TemplateList';
@@ -16,11 +16,11 @@ import WorkflowForms from './Workflow'
 import UserForms from './User';
 
 export default [
+  Applications,
   Application,
   ApplicationUsers,
   ApplicationOrganizations,
   ApplicationRouteEditor,
-  Applications,
   ReactoryContentCapture,
   ReactoryContentList,
   TemplateList,

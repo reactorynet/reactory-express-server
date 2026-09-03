@@ -25,7 +25,11 @@ const bypassUri = [
   '/cdn/ui/',
   '/cdn/forms/images/',
   '/cdn/forms/icons/',
-  '/favicon.ico',  
+  '/favicon.ico',
+  '/login',
+  '/logout',
+  '/health',
+  '/telemetry',
 ];
 
 if (NODE_ENV === 'development' || NODE_ENV === 'local' || NODE_ENV === 'test') {

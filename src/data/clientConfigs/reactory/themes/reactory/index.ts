@@ -72,9 +72,9 @@ const ReactoryTheme: Reactory.UX.IReactoryTheme = {
     {
       mode: 'light',
       options: LIGHT_PALETTE,
-      name: 'Reactory Dark',
-      description: 'Reactory default dark mode',
-      icon: 'night'
+      name: 'Reactory Light',
+      description: 'Reactory default light mode',
+      icon: 'day'
     }
   ],    
   assets: [

@@ -16,7 +16,6 @@ REACTORY_ENV_ID=${2:-local}
 source ./bin/shared/shell-utils.sh
 check_env_vars
 check_node
-NODE_PATH=./app env-cmd -f ./.env node ./app/modules/reactory-telemetry/reactory.inst.otlp.js && \
-NODE_PATH=./app env-cmd -f ./.env node ./app/index.js
+NODE_OPTIONS="-r /reactory/reactory-express-server/app/modules/reactory-telemetry/reactory.inst.otlp.js" NODE_PATH=/reactory/reactory-express-server/app:/reactory/reactory-express-server/node_modules:./app:./node_modules:. env-cmd --no-override -f ./.env node /reactory/reactory-express-server/app/index.js
 
  

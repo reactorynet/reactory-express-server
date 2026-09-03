@@ -50,7 +50,7 @@ const getData = async (form: Reactory.Forms.IReactoryForm, args: any, context: R
 };
 
 const Applications: Reactory.Forms.IReactoryForm = {
-  id: `reactory-my-applications`,
+  id: "reactory.MyApplications@1.0.0",
   nameSpace: 'reactory',
   name: 'MyApplications',
   uiFramework: "material",

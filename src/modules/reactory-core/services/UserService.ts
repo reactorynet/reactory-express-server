@@ -772,29 +772,73 @@ class UserService implements Reactory.Service.IReactoryUserService {
   
     if(user) {
       log('Initial user already exists', {}, 'warning');
-      return user;
+      user.memberships = user.memberships || [];
+      if (!user.hasRole(reactoryClient._id.toString(), 'SYSTEM')) {
+        await user.addRole(reactoryClient._id.toString(), 'SYSTEM');
+        await user.save();
+      }
+    } else {
+      //@ts-ignore
+      user = new User({
+        email: REACTORY_APPLICATION_EMAIL,
+        password: "",
+        firstName: 'Reactory',
+        lastName: 'System',
+        memberships: [],
+        username: 'reactory',
+        salt: strongRandom(16),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        active: true,
+        dateOfBirth: new Date(),
+      });
+    
+      user.setPassword(REACTORY_APPLICATION_PASSWORD);
+      await user.addRole(reactoryClient._id.toString(),'SYSTEM');
+      await user.save();
+      log(`System user initialized successfully`, {}, 'info');
     }
-  
-    //@ts-ignore
-    user = new User({
-      email: REACTORY_APPLICATION_EMAIL,
-      password: "",
-      firstName: 'Reactory',
-      lastName: 'System',
-      memberships: [],
-      username: 'reactory',
-      salt: strongRandom(16),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      active: true,
-      dateOfBirth: new Date(),
-    });
-  
-    user.setPassword(REACTORY_APPLICATION_PASSWORD);
-    user.addRole(reactoryClient._id.toString(),'SYSTEM');
-    await user.save();
-  
-    log(`System user initialized successfully`, {}, 'info');
+
+    // Automatically seed anonymous users required by client boot
+    const anonUsers = [
+      { email: 'anon@reactor.local', password: 'anonymousepassword', firstName: 'Anonymous', lastName: 'User', username: 'anon' },
+      { email: 'anonymous@reactory.local', password: 'anonymous-password', firstName: 'Anonymous', lastName: 'Local', username: 'anonymous' },
+    ];
+
+    for (const anonData of anonUsers) {
+      //@ts-ignore
+      let anonUser: Reactory.Models.IUserDocument = await User.findOne({ email: anonData.email }).exec();
+      if (!anonUser) {
+        //@ts-ignore
+        anonUser = new User({
+          email: anonData.email,
+          password: "",
+          firstName: anonData.firstName,
+          lastName: anonData.lastName,
+          username: anonData.username,
+          salt: strongRandom(16),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          active: true,
+          dateOfBirth: new Date(),
+          memberships: [{
+            clientId: reactoryClient._id,
+            roles: ['ANON'],
+            enabled: true,
+            provider: 'LOCAL',
+          }],
+        });
+        anonUser.setPassword(anonData.password);
+        await anonUser.save();
+        log(`Seeded anonymous user ${anonData.email} with ANON role on ${reactoryClient.key}`, {}, 'info');
+      } else {
+        if (!anonUser.hasRole(reactoryClient._id.toString(), 'ANON')) {
+          await anonUser.addRole(reactoryClient._id.toString(), 'ANON');
+          await anonUser.save();
+          log(`Ensured ANON role on ${reactoryClient.key} for ${anonData.email}`, {}, 'info');
+        }
+      }
+    }
 
     return user;
   }

@@ -78,6 +78,7 @@ export const UNSCOPED_CLIENT_KEYS: readonly string[] = [
   UNSCOPED_CLIENT_KEY,
   'system',
   'cli',
+  'api',
   '',
 ];
 

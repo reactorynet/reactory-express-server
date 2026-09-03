@@ -11,7 +11,7 @@ import AuthTelemetry from './telemetry';
 const authenticate: BasicVerifyFunctionWithRequest = async (req: Reactory.Server.ReactoryExpressRequest, username: string, password: string, done: OnDoneCallback) => {
   const startTime = Date.now();
   const { context } = req;
-  const clientKey = context?.partner?.key || 'api';
+  const clientKey = req.partner?.key || (req.headers?.['x-client-key'] as string) || context?.partner?.key || 'api';
   if (!context) {
     logger.error('Authentication context is missing');
     done(new Error('Authentication context is missing'), false);
@@ -84,13 +84,21 @@ const ReactoryLocalStrategy = new BasicStrategy({
 
 export const useReactoryLocalRoutes = (app: Application) => {
 
-  app.post(
-    '/login',
-    passport.authenticate('basic', { session: false }),
-    (req, res) => {
-      res.json({ user: req.user });
-    },
-  );
+  if (typeof app.post === 'function') {
+    app.post(
+      '/login',
+      passport.authenticate('basic', { session: false }),
+      (req, res) => {
+        res.json({ user: req.user });
+      },
+    );
+  }
+
+  if (typeof app.get === 'function') {
+    app.get('/login', (req, res) => {
+      res.redirect('/');
+    });
+  }
 
 }
 

@@ -230,8 +230,7 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
       const apolloServer = new ApolloServer(expressConfig);
       await apolloServer.start();
 
-      app.use(
-        '/graph',
+      const graphHandler = [
         multipartHandler,
         // Then handle other body types
         bodyParser.urlencoded({ extended: true }),
@@ -239,7 +238,7 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
           limit: process.env.MAX_FILE_UPLOAD || '20mb',
         }),
         // Then authenticate
-        passport.authenticate(['jwt'], 
+        passport.authenticate(['jwt', 'anonymous'], 
         { session: false }),
         // Finally process GraphQL
         expressMiddleware(apolloServer, {
@@ -250,7 +249,10 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
             return _req.context;
             },
         }), 
-      );
+      ];
+
+      app.use('/graph', ...graphHandler);
+      app.use('/graphql', ...graphHandler);
 
       logger.info('✅ Apollo server started OKAY');
     } catch (apolloStarterror) {

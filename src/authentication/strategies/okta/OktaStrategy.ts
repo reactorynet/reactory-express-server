@@ -5,7 +5,7 @@
  * Okta is an enterprise identity and access management platform.
  */
 
-import { Strategy as OpenIDStrategy } from 'passport-openidconnect';
+import { Strategy as OktaOAuthStrategy } from 'passport-okta-oauth20';
 import passport from 'passport';
 import { Application, Response } from 'express';
 import Helpers, { OnDoneCallback } from '../helpers';
@@ -24,32 +24,21 @@ const {
 
 // Construct issuer URL
 const issuerUrl = OKTA_ISSUER || `https://${OKTA_DOMAIN}/oauth2/default`;
-const authorizationUrl = `https://${OKTA_DOMAIN}/oauth2/default/v1/authorize`;
-const tokenUrl = `https://${OKTA_DOMAIN}/oauth2/default/v1/token`;
-const userInfoUrl = `https://${OKTA_DOMAIN}/oauth2/default/v1/userinfo`;
 
 /**
- * Okta OIDC Strategy Configuration
- * Handles authentication via Okta OpenID Connect
+ * Okta OAuth 2.0 Strategy Configuration
  */
-const OktaStrategy = new OpenIDStrategy({
-  issuer: issuerUrl,
-  authorizationURL: authorizationUrl,
-  tokenURL: tokenUrl,
-  userInfoURL: userInfoUrl,
+const OktaStrategy = new OktaOAuthStrategy({
+  audience: `https://${OKTA_DOMAIN}`,
   clientID: OKTA_CLIENT_ID,
   clientSecret: OKTA_CLIENT_SECRET,
   callbackURL: OKTA_CALLBACK_URL,
   scope: ['openid', 'profile', 'email'],
-  passReqToCallback: true,
 }, async (
-  req: any,
-  issuer: string,
-  profile: any,
-  idToken: any,
   accessToken: string,
   refreshToken: string,
   params: any,
+  profile: any,
   done: OnDoneCallback
 ) => {
   const startTime = Date.now();
