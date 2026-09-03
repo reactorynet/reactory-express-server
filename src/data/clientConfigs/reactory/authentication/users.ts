@@ -3,11 +3,12 @@ import yaml from 'js-yaml';
 import fs from 'fs';
 import logger from '@reactory/server-core/logging';
 
-const { 
-  REACTORY_APPLICATION_EMAIL = 'reactory@reactory.local', 
-  REACTORY_APPLICATION_PASSWORD = 'reactory-password',
-  REACTORY_APPLICATION_ANONUSER_EMAIL = 'anonymous@reactory.local',
-  REACTORY_APPLICATION_ANONUSER_PASSWORD = 'anonymous-password',
+const {
+  REACTORY_APPLICATION_EMAIL = "reactory@reactory.local",
+  REACTORY_APPLICATION_PASSWORD = "reactory-password",
+  REACTORY_APPLICATION_ANONUSER_EMAIL = "anon@reactory.local",
+  REACTORY_APPLICATION_ANONUSER_USERNAME = "reactoryanon",
+  REACTORY_APPLICATION_ANONUSER_PASSWORD = "anonymouspassword",
 } = process.env;
 
 const USERS_TO_LOAD: Reactory.Server.IStaticallyLoadedUser[] = [];
@@ -48,9 +49,9 @@ const APPLICATION_ACCOUNT: Reactory.Server.IStaticallyLoadedUser = {
 const APPLICATION_ANON_USER_ACCOUNT: Reactory.Server.IStaticallyLoadedUser = {
   email: REACTORY_APPLICATION_ANONUSER_EMAIL,
   roles: ['ANON'],
-  firstName: 'Anonymous',
+  firstName: 'Reactory Anonymous',
   lastName: 'User',
-  username: 'anonymous',
+  username: REACTORY_APPLICATION_ANONUSER_USERNAME,
   teams: [],
   password: REACTORY_APPLICATION_ANONUSER_PASSWORD,
 };

@@ -7,7 +7,6 @@ import users from './authentication/users';
 import roles from './authentication/roles';
 import menus from './menus';
 import whitelist from './whitelist';
-
 import Reactory from '@reactorynet/reactory-core'
 import logger from '@reactory/server-core/logging';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';

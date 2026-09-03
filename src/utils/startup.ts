@@ -62,6 +62,7 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
           }
         }
         logger.info(`Synchronized ${(clientConfigs as unknown[]).length} client config(s) to the database`);
+        context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();
       } catch (syncError) {
         logger.warn('Client config synchronization failed', syncError);
       }

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import methods from './methods';
 import statics from './statics';
 import { ReactoryFeatureFlagValueSchema } from '../ReactoryFeatureFlag';
-const { ObjectId } = mongoose.Schema.Types;
+const { ObjectId, Mixed } = mongoose.Schema.Types;
 
 const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IReactoryApplicationPlugin>({ 
   id: String,  
@@ -14,7 +14,7 @@ const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IR
   uri: String,
   loader: String,
   mimeType: String,
-  options: {},
+  options: Mixed,
   enabled: Boolean,
   roles: [String],
 }, { _id: false });
@@ -43,9 +43,7 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
     type: ObjectId,
     ref: 'User',
   }, 
-  themes: [{
-    _id: false,
-  }],
+  themes: [Mixed],
   applicationRoles: [String], 
   billingType: String,
   components: [
@@ -78,9 +76,9 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
       redirect: String,
       componentFqn: String,
       args: [
-        {},
+        Mixed,
       ],
-      componentProps: {},
+      componentProps: Mixed,
       _id: false,
     },
   ],
@@ -88,7 +86,7 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
     {
       provider: String,
       enabled: Boolean,
-      properties: {},
+      properties: Mixed,
       _id: false,
     },
   ],
@@ -100,8 +98,8 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
       title: String,
       description: String,
       componentFqn: String,
-      formSchema: {},
-      data: {},
+      formSchema: Mixed,
+      data: Mixed,
       _id: false,
     },
   ],
