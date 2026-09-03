@@ -779,18 +779,6 @@ input SendMailInput {
 }
 
 """
-Input for creating a basic task.
-"""
-input CreateTaskInput {
-  id: String!
-  via: String!
-  subject: String!
-  startDate: Date!
-  dueDate: Date!
-  timeZone: String
-}
-
-"""
 Input for deleting a task.
 """
 input DeleteTaskInput {

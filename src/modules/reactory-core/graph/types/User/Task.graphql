@@ -1,0 +1,82 @@
+type Task {
+  id: String!
+  title: String!
+  description: String
+  category: String
+  workflowStatus: String
+  status: String!
+  percentComplete: Int
+  workflowId: String
+  instanceId: String
+  stepId: String
+  stepNumber: Int
+  componentFqn: String
+  componentProps: Any
+  formSchemaId: String
+  resultData: Any
+  startDate: DateTime
+  dueDate: DateTime
+  completionDate: DateTime
+  user: User
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type PaginatedTasks {
+  tasks: [Task!]!
+  total: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+}
+
+input CreateTaskInput {
+  title: String!
+  description: String
+  category: String
+  workflowStatus: String
+  status: String
+  workflowId: String
+  instanceId: String
+  stepId: String
+  stepNumber: Int
+  componentFqn: String
+  componentProps: Any
+  formSchemaId: String
+  dueDate: DateTime
+  startDate: DateTime
+  label: [String!]
+}
+
+input UpdateTaskInput {
+  title: String
+  description: String
+  percentComplete: Int
+  category: String
+  workflowStatus: String
+  status: String
+  dueDate: DateTime
+  completionDate: DateTime
+  resultData: Any
+  label: [String!]
+}
+
+type CompleteWorkflowTaskResult {
+  success: Boolean!
+  message: String
+  task: Task
+  signalResult: JSON
+}
+
+extend type Query {
+  userTasks(status: String, category: String, page: Int, limit: Int): PaginatedTasks
+  userWorkflowTasks(workflowId: String, instanceId: String, status: String): [Task!]!
+  task(id: String!): Task
+}
+
+extend type Mutation {
+  createTask(input: CreateTaskInput!): Task!
+  updateTask(id: String!, input: UpdateTaskInput!): Task!
+  completeWorkflowTask(taskId: String!, resultData: Any): CompleteWorkflowTaskResult!
+  deleteTask(id: String!): WorkflowOperationResult!
+}

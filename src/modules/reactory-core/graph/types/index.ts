@@ -1,4 +1,3 @@
-
 import { loadGraphQLTypeDefinitions } from '@reactory/server-core/graph/graphql-loader';
 
 const CoreTypeDefinitions = loadGraphQLTypeDefinitions([
@@ -22,6 +21,7 @@ const CoreTypeDefinitions = loadGraphQLTypeDefinitions([
   'System/Natural',
   'Forms/Form',
   'User/User',
+  'User/Task',
   'User/Comment',
   'User/Team',
   'User/Profile',

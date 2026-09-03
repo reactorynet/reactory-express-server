@@ -1452,7 +1452,32 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     try {
       const workflowRunner = await this.getWorkflowRunner();
       const scheduler = workflowRunner?.getScheduler();
-      const schedules = Array.from(await scheduler?.getSchedules() || []).map((entry: any) => entry[1]);
+      const rawEntries = Array.from(await scheduler?.getSchedules() || []);
+      const schedules = rawEntries.map((entry: any) => {
+        const key = entry[0];
+        const val = entry[1];
+        if (!val) return null;
+        const config = val.config || val;
+        return {
+          id: config.id || key,
+          name: config.name || key,
+          description: config.description || null,
+          workflow: config.workflow,
+          schedule: config.schedule,
+          properties: config.properties || null,
+          propertiesFormId: config.propertiesFormId || null,
+          retry: config.retry || null,
+          timeout: config.timeout || null,
+          maxConcurrent: config.maxConcurrent || null,
+          monitoring: config.monitoring || null,
+          lastRun: val.lastExecutionTime || val.lastRun || null,
+          nextRun: val.nextExecutionTime || val.nextRun || null,
+          runCount: val.runCount || 0,
+          errorCount: val.errorCount || 0,
+          isRunning: val.isRunning || false,
+          enabled: val.enabled !== undefined ? val.enabled : (config.enabled !== undefined ? config.enabled : (config.schedule?.enabled ?? true)),
+        };
+      }).filter(Boolean);
       
       // Apply pagination
       const page = pagination?.page || 1;
