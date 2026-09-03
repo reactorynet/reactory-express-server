@@ -101,10 +101,56 @@ export class UserActivityStep extends BaseYamlStep {
       (timeout ? `, timeout=${timeout}ms` : '')
     );
 
+    // Auto-create/upsert Task in MongoDB if Reactory Context is available
+    if (context.reactoryContext) {
+      try {
+        const TaskModel = (await import('../../../models/Task')).default;
+        const targetUserId = resolvedAssignee || context.reactoryContext.user?._id;
+        const workflowId = (context as any).workflowId
+          || (context as any).workflowDefinitionId
+          || (context.workflow ? `${context.workflow.nameSpace}.${context.workflow.name}@${context.workflow.version}` : undefined);
+
+        if (targetUserId) {
+          const task = new TaskModel({
+            title: resolvedMessage || `Workflow Task: ${this.id}`,
+            description: `Activity "${activityType}" waiting for user action in step "${this.id}"`,
+            category: 'workflow',
+            workflowStatus: 'awaiting_input',
+            status: 'pending',
+            workflowId,
+            instanceId: context.executionId,
+            stepId: this.id,
+            componentFqn: resolvedFqn,
+            componentProps,
+            formSchemaId: resolvedFormSchemaId,
+            user: targetUserId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+
+          await task.save();
+
+          if (context.reactoryContext.hasFeature && context.reactoryContext.hasFeature('core.ReactoryAMQService')) {
+            const amq = context.reactoryContext.getService('core.ReactoryAMQService@1.0.0') as any;
+            if (amq && amq.publish) {
+              amq.publish('workflow', 'workflow.task.created', {
+                taskId: task._id.toString(),
+                workflowId,
+                instanceId: context.executionId,
+                stepId: this.id,
+                userId: targetUserId.toString(),
+              });
+            }
+          }
+        }
+      } catch (err: any) {
+        context.logger.warn(`Could not persist Task document for user_activity step: ${err.message}`);
+      }
+    }
+
     // Returning requiresUserInput: true signals the executor to SUSPEND the
-    // workflow instance at this step.  Execution resumes only when an external
-    // event delivers the user's response (the resumed payload should contain an
-    // `approved` boolean and/or a `data` object for input/review activities).
+    // workflow instance at this step. Execution resumes only when an external
+    // event delivers the user's response (e.g. via completeWorkflowTask or signalWorkflowInstance).
     return {
       success: true,
       outputs: {
