@@ -2,6 +2,10 @@
 # Include directory structure
 + */
 # Include compiled form module bundles and source maps
++ core.ApplicationCard@1.0.0.min.js
++ core.ApplicationCard@1.0.0.min.js.map
++ core.ContentWidget@1.0.0.min.js
++ core.ContentWidget@1.0.0.min.js.map
 + reactory.ApplicationOverviewPanel@1.0.0.min.js
 + reactory.ApplicationOverviewPanel@1.0.0.min.js.map
 + reactory.ApplicationSettingsPanel@1.0.0.min.js
@@ -34,10 +38,6 @@
 + core.OrganizationBusinessUnitsTab@1.0.0.min.js.map
 + core.OrganizationTeamsTab@1.0.0.min.js
 + core.OrganizationTeamsTab@1.0.0.min.js.map
-+ core.ApplicationCard@1.0.0.min.js
-+ core.ApplicationCard@1.0.0.min.js.map
-+ core.ContentWidget@1.0.0.min.js
-+ core.ContentWidget@1.0.0.min.js.map
 + core.SupportStatusWidget@1.0.0.min.js
 + core.SupportStatusWidget@1.0.0.min.js.map
 + core.SupportTicketInfoPanel@1.0.0.min.js
@@ -112,8 +112,26 @@
 + classroom.ReactoryClassroomMarkbookToolbar@1.0.0.min.js.map
 + classroom.ClassroomMarkbookScoreCellWidget@1.0.0.min.js
 + classroom.ClassroomMarkbookScoreCellWidget@1.0.0.min.js.map
++ classroom.CourseAdminToolbar@1.0.0.min.js
++ classroom.CourseAdminToolbar@1.0.0.min.js.map
++ classroom.CourseDetailPanel@1.0.0.min.js
++ classroom.CourseDetailPanel@1.0.0.min.js.map
 + classroom.ReactoryClassroomToolbar@1.0.0.min.js
 + classroom.ReactoryClassroomToolbar@1.0.0.min.js.map
++ classroom.AssignmentAdminToolbar@1.0.0.min.js
++ classroom.AssignmentAdminToolbar@1.0.0.min.js.map
++ classroom.AssignmentDetailPanel@1.0.0.min.js
++ classroom.AssignmentDetailPanel@1.0.0.min.js.map
++ classroom.ClassRosterToolbar@1.0.0.min.js
++ classroom.ClassRosterToolbar@1.0.0.min.js.map
++ classroom.ClassRosterDetailPanel@1.0.0.min.js
++ classroom.ClassRosterDetailPanel@1.0.0.min.js.map
++ classroom.ClassroomScheduleWidget@1.0.0.min.js
++ classroom.ClassroomScheduleWidget@1.0.0.min.js.map
++ classroom.TemplateAdminToolbar@1.0.0.min.js
++ classroom.TemplateAdminToolbar@1.0.0.min.js.map
++ classroom.TemplateDetailPanel@1.0.0.min.js
++ classroom.TemplateDetailPanel@1.0.0.min.js.map
 + socialeyes.AccountDetailPanel@1.0.0.min.js
 + socialeyes.AccountDetailPanel@1.0.0.min.js.map
 + socialeyes.AccountOverview@1.0.0.min.js
