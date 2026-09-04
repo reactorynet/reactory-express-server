@@ -165,7 +165,15 @@
             "graph_query",
             "process_conversation",
             "cross_instance_variable",
-            "python_script"
+            "python_script",
+            "temporal_workflow",
+            "temporal_await",
+            "temporal_signal",
+            "temporal_query",
+            "temporal_update",
+            "temporal_cancel",
+            "temporal_terminate",
+            "temporal_describe"
           ],
           "description": "Type of step to execute (snake_case convention). NOTE: this enum must stay in sync with the step types registered in YamlStepRegistry; the executor's validateWorkflow() is the authoritative check against the live registry (including module-contributed steps)."
         },

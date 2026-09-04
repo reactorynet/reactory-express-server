@@ -1313,22 +1313,42 @@ export class WorkflowRunner {
    * the given (eventName, eventKey) pair. This is the low-level signal primitive
    * that lets an operator continue a suspended WaitEvent step.
    *
+   * TENANCY: instances are started under `partner.key` as their tenant (see
+   * startYamlWorkflow) and the engine matches event subscriptions *strictly* by
+   * tenant, so an event published under the wrong tenant is silently discarded and
+   * the waiting step never resumes. The tenant therefore defaults to this runner's
+   * context partner — pass `tenantId` explicitly when publishing on behalf of an
+   * instance belonging to a different tenant (e.g. a background sweeper running
+   * under the system context).
+   *
    * @param eventName - The event name the waiting step subscribed to
    * @param eventKey  - The correlation key the waiting step subscribed with
    * @param eventData - Arbitrary payload delivered to the resumed step
    * @param eventTime - Effective event time (defaults to now)
+   * @param tenantId  - Tenant owning the waiting instance (defaults to the
+   *                    runner context's partner key)
    */
   public async publishEvent(
     eventName: string,
     eventKey: string,
     eventData: any,
-    eventTime?: Date
+    eventTime?: Date,
+    tenantId?: string
   ): Promise<void> {
     if (!this.state.host) {
       throw new Error('Workflow host not initialized');
     }
-    await this.state.host.publishEvent(eventName, eventKey, eventData, eventTime || new Date());
-    logger.info(`Published workflow event '${eventName}' (key: ${eventKey})`);
+    const effectiveTenant = tenantId || (this.context?.partner as any)?.key || undefined;
+    await this.state.host.publishEvent(
+      eventName,
+      eventKey,
+      eventData,
+      eventTime || new Date(),
+      effectiveTenant
+    );
+    logger.info(
+      `Published workflow event '${eventName}' (key: ${eventKey}, tenant: ${effectiveTenant || 'default'})`
+    );
   }
 
   /**

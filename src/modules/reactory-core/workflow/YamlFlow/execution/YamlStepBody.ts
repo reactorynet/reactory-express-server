@@ -10,7 +10,12 @@
  *   3. creates the concrete IYamlStep via the shared registry and executes it
  *      with a YAML IStepExecutionContext built from TData;
  *   4. records outputs back into TData.stepResults / TData.outputs and lets
- *      mutations to TData.variables persist (passed by reference).
+ *      mutations to TData.variables persist (passed by reference);
+ *   5. honours an optional durable control directive on the result — a step may ask
+ *      to suspend until an external event (`control.waitForEvent`) or to sleep and
+ *      re-run (`control.sleep`), which is how module-contributed leaf steps get
+ *      first-class suspend/resume without being hardcoded into the builder's
+ *      STRUCTURAL_TYPES.
  *
  * This reuses every existing IYamlStep implementation unchanged, and preserves
  * the exact data-flow conventions used by the standalone executor (variables +
@@ -21,6 +26,7 @@ import { StepBody, StepExecutionContext, ExecutionResult } from '@reactorynet/wo
 import { InstanceResourceManager } from '@reactory/server-modules/reactory-core/workflow/InstanceResourceManager';
 import { getYamlStepRegistry, createWorkflowContext, WorkflowIdentity } from './YamlFlowRuntime';
 import { StepCreationParams } from '../types/WorkflowDefinition';
+import { StepControlDirective, StepExecutionResult } from '../steps/interfaces/IYamlStep';
 
 /**
  * The serializable workflow-instance state (TData) for engine-run YAML
@@ -216,6 +222,20 @@ async function withTimeout<T>(p: Promise<T>, ms: number, stepId: string): Promis
   } finally {
     clearTimeout(timer!);
   }
+}
+
+/**
+ * Resolve a `sleep` directive to an absolute instant. `until` (ISO-8601) wins over
+ * `durationMs`; an unparseable or past value collapses to "as soon as possible"
+ * (now), which re-queues the instance on the next poll rather than sleeping forever.
+ */
+function resolveSleepUntil(sleep: NonNullable<StepControlDirective['sleep']>): Date {
+  if (sleep.until) {
+    const parsed = new Date(sleep.until);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  const durationMs = typeof sleep.durationMs === 'number' && sleep.durationMs > 0 ? sleep.durationMs : 0;
+  return new Date(Date.now() + durationMs);
 }
 
 /**
@@ -434,6 +454,15 @@ export class YamlStepBody extends StepBody {
         },
         reactoryContext,
         utils: reactoryContext?.utils,
+        // Durable control channel. `eventPublished`/`eventData` are set by the
+        // engine when a waitForEvent suspension is satisfied (the SAME step body
+        // re-runs); `persistenceData` carries state across a sleep directive.
+        control: {
+          supportsSuspend: true,
+          eventPublished: !!(context as any).pointer?.eventPublished,
+          eventData: (context as any).pointer?.eventData,
+          persistenceData: (context as any).persistenceData,
+        },
       };
 
       const timeoutMs = typeof def.timeout === 'number' && def.timeout > 0 ? def.timeout : 0;
@@ -450,6 +479,39 @@ export class YamlStepBody extends StepBody {
         metadata: toSerializable(result.metadata || {}),
       };
       data.outputs[def.id] = safeOutputs;
+
+      // Durable control directives — evaluated AFTER outputs are recorded into TData
+      // (above), so a step that suspends can read its own outputs back on resume via
+      // context.stepResults[<stepId>].outputs. Only honoured on a successful result;
+      // failure handling below always wins.
+      const control = (result as StepExecutionResult).control;
+      if (result.success && control) {
+        const alreadyResumed = !!(context as any).pointer?.eventPublished;
+        if (control.waitForEvent && !alreadyResumed) {
+          const { eventName, eventKey } = control.waitForEvent;
+          if (!eventName) {
+            throw new Error(`${thrownPrefix}waitForEvent directive requires an eventName`);
+          }
+          logger.info(
+            `Step "${def.id}" (${def.type}) suspending until event "${eventName}" (key: ${eventKey ?? ''})`,
+          );
+          // effectiveDate is ALWAYS now: the engine matches a subscription only when
+          // subscribeAsOf <= event.eventTime, so a future effectiveDate would make
+          // the subscription ignore events published before it — delaying eligibility
+          // rather than timing the wait out. Timeouts must be delivered as events.
+          return ExecutionResult.waitForEvent(eventName, eventKey ?? '', new Date());
+        }
+        if (control.sleep) {
+          const until = resolveSleepUntil(control.sleep);
+          logger.debug(
+            `Step "${def.id}" (${def.type}) sleeping until ${until.toISOString()}`,
+          );
+          return ExecutionResult.sleep(until, {
+            ...(control.persist || {}),
+            __stepId: def.id,
+          });
+        }
+      }
 
       if (!result.success) {
         const message = result.error || 'Step execution failed';

@@ -1154,21 +1154,33 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   // Workflow Events (signal / continue waiting steps)
   // ============================================
 
+  /**
+   * Publish an event into the workflow engine, resuming any step suspended on
+   * `(eventName, eventKey)`.
+   *
+   * @param tenantId - Tenant that owns the waiting instance. Defaults to the calling
+   *   context's partner key, which is what instances are started under. Pass it
+   *   explicitly when publishing for another tenant's instance (a background
+   *   sweeper running under the system context must do this, otherwise the engine's
+   *   tenant-scoped subscription match silently drops the event).
+   */
   async publishWorkflowEvent(
     eventName: string,
     eventKey: string,
-    eventData?: any
+    eventData?: any,
+    tenantId?: string
   ): Promise<IWorkflowOperationResult> {
     try {
       if (!eventName || !eventKey) {
         return { success: false, message: 'publishWorkflowEvent requires both eventName and eventKey' };
       }
       const workflowRunner = await this.getWorkflowRunner();
-      await workflowRunner?.publishEvent(eventName, eventKey, eventData ?? {});
+      const effectiveTenant = tenantId || (this.context?.partner as any)?.key || undefined;
+      await workflowRunner?.publishEvent(eventName, eventKey, eventData ?? {}, undefined, effectiveTenant);
       return {
         success: true,
         message: `Published event '${eventName}' (key: ${eventKey})`,
-        data: { eventName, eventKey },
+        data: { eventName, eventKey, tenantId: effectiveTenant ?? null },
       };
     } catch (error) {
       this.context.log('Error publishing workflow event', { error, eventName, eventKey }, 'error');
@@ -1207,12 +1219,22 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
 
       const workflowRunner = await this.getWorkflowRunner();
       const signalled: Array<{ stepName: string | null; eventName: string; eventKey: string }> = [];
+      // Publish under the INSTANCE's tenant: the engine matches subscriptions by
+      // tenant, so signalling a tenant instance from another context (or from the
+      // system context) would otherwise be dropped without waking anything.
+      const instanceTenant = (instance as any).tenantId || undefined;
 
       for (const p of waiting) {
         // The correlation key defaults to the instance id when the engine did
         // not record an explicit event key (the common single-waiter case).
         const eventKey = p.eventKey || instanceId;
-        await workflowRunner?.publishEvent(p.eventName as string, eventKey, eventData ?? {});
+        await workflowRunner?.publishEvent(
+          p.eventName as string,
+          eventKey,
+          eventData ?? {},
+          undefined,
+          instanceTenant
+        );
         signalled.push({ stepName: p.stepName ?? null, eventName: p.eventName as string, eventKey });
       }
 

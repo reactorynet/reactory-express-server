@@ -176,6 +176,13 @@ export interface IExecutionPointerSummary {
 export interface IWorkflowHistoryItem {
   id: string;
   workflowDefinitionId: string;
+  /**
+   * The tenant the instance was started under (the Reactory client key), or null
+   * for the engine's default tenant. Required to publish an event that can wake a
+   * suspended step: the engine matches event subscriptions by tenant, so a publish
+   * to the wrong tenant is silently dropped.
+   */
+  tenantId?: string | null;
   /** M11 — semantic version string, verbatim from the engine instance. */
   version: string;
   status: WorkflowESStatus;
@@ -324,6 +331,7 @@ function transformToHistoryItem(instance: WorkflowInstance): IWorkflowHistoryIte
   return {
     id: instance.id,
     workflowDefinitionId: instance.workflowDefinitionId,
+    tenantId: (instance as any).tenantId ?? null,
     version: instance.version,
     status,
     statusLabel: getStatusLabel(status),
