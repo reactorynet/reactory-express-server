@@ -1,6 +1,7 @@
 import Reactory from '@reactorynet/reactory-core';
 import { Client } from '@elastic/elasticsearch';
 import {
+  SearchIndexInfo,
   IndexAttributes,
   IndexConfig,
   ISearchProvider,
@@ -333,6 +334,18 @@ export class ElasticSearchProvider implements ISearchProvider {
       this.context.error(`ElasticSearch count failed for ${index}: ${ex.message}`);
       return 0;
     }
+  }
+
+  /** Enumerates indexes via cat.indices (system indexes excluded). */
+  async listIndexes(): Promise<SearchIndexInfo[]> {
+    const rows: any = await this.client.cat.indices({ format: 'json' });
+    const list: any[] = Array.isArray(rows) ? rows : rows?.body || [];
+    return list
+      .filter((r: any) => r?.index && !String(r.index).startsWith('.'))
+      .map((r: any) => ({
+        name: r.index,
+        documentCount: r['docs.count'] !== undefined ? Number(r['docs.count']) : undefined,
+      }));
   }
 
   async deleteIndex(index: string): Promise<boolean> {

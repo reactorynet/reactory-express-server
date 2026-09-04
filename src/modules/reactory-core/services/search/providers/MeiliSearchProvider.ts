@@ -1,6 +1,7 @@
 import Reactory from '@reactorynet/reactory-core';
 import { MeiliSearch, TaskStatus } from 'meilisearch';
 import {
+  SearchIndexInfo,
   IndexAttributes,
   IndexConfig,
   ISearchProvider,
@@ -236,6 +237,37 @@ export class MeiliSearchProvider implements ISearchProvider {
     const term = query && typeof query !== 'string' ? (query as SearchQuery).q ?? '' : (query as string) || '';
     const results = await this.client.index(index).search(term, params);
     return results.estimatedTotalHits ?? 0;
+  }
+
+  /** Enumerates all indexes, paging through MeiliSearch's index listing. */
+  async listIndexes(): Promise<SearchIndexInfo[]> {
+    const out: SearchIndexInfo[] = [];
+    const limit = 200;
+    let offset = 0;
+    // getIndexes pages via { offset, limit, total }
+    for (;;) {
+      const page: any = await this.client.getIndexes({ offset, limit });
+      const results: any[] = page?.results || [];
+      for (const idx of results) {
+        let documentCount: number | undefined;
+        try {
+          const stats: any = await this.client.index(idx.uid).getStats();
+          documentCount = stats?.numberOfDocuments;
+        } catch {
+          // stats are best-effort
+        }
+        out.push({
+          name: idx.uid,
+          primaryKey: idx.primaryKey || undefined,
+          updatedAt: idx.updatedAt ? new Date(idx.updatedAt) : undefined,
+          documentCount,
+        });
+      }
+      offset += results.length;
+      const total = typeof page?.total === "number" ? page.total : offset;
+      if (results.length === 0 || offset >= total) break;
+    }
+    return out;
   }
 
   async deleteIndex(index: string): Promise<boolean> {

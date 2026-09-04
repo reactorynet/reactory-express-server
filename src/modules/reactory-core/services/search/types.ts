@@ -96,6 +96,18 @@ export interface IndexAttributes {
   sortableAttributes?: string[];
 }
 
+/**
+ * Descriptive metadata for one index in the backend, as returned by
+ * `listIndexes` (Providers Session 08). Backends differ in what they expose —
+ * every field beyond `name` is best-effort.
+ */
+export interface SearchIndexInfo {
+  name: string;
+  documentCount?: number;
+  updatedAt?: Date;
+  primaryKey?: string;
+}
+
 /** Options for creating an index. */
 export interface IndexConfig extends IndexAttributes {
   /** Primary-key field used to de-duplicate documents (MeiliSearch). */
@@ -155,6 +167,14 @@ export interface ISearchProvider {
 
   /** Optional: count documents matching an (optional) query. */
   count?(index: string, query?: SearchInput): Promise<number>;
+
+  /**
+   * Optional: enumerate the backend's indexes. NOTE: this is the RAW backend
+   * listing — multi-tenant deployments must never expose it directly to
+   * agents/users; curate through a tenant-aware catalog instead (see
+   * SystemGraphManager.getSearchIndexCatalog in reactory-reactor).
+   */
+  listIndexes?(): Promise<SearchIndexInfo[]>;
 }
 
 /**
@@ -193,6 +213,9 @@ export interface IReactorySearchServiceExt extends Reactory.Service.ISearchServi
 
   /** Count documents matching an optional query. */
   count(index: string, query?: SearchInput): Promise<number>;
+
+  /** Enumerate the backend's indexes (raw listing — curate before exposing). */
+  listIndexes(): Promise<SearchIndexInfo[]>;
 
   /** Returns the active provider. */
   getProvider(): ISearchProvider;

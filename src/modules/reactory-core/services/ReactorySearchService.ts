@@ -1,6 +1,7 @@
 import { service } from '@reactory/server-core/application/decorators';
 import Reactory from '@reactorynet/reactory-core';
 import {
+  SearchIndexInfo,
   IndexAttributes,
   IndexConfig,
   IReactorySearchServiceExt,
@@ -171,6 +172,23 @@ class ReactorySearchService implements IReactorySearchServiceExt {
     this.assertIndex(index, 'count');
     const count = this.requireCapability('count');
     return count(index, query);
+  }
+
+  /** Enumerates the backend's indexes (raw listing — curate before exposing to agents). */
+  async listIndexes(): Promise<SearchIndexInfo[]> {
+    const listIndexes = this.requireCapability('listIndexes');
+    return listIndexes();
+  }
+
+  /** Best-effort stats for one index: existence + document count. */
+  async getIndexStats(index: string): Promise<{ name: string; exists: boolean; documentCount?: number }> {
+    try {
+      const documentCount = await this.count(index);
+      return { name: index, exists: true, documentCount };
+    } catch (err) {
+      this.context.warn?.(`getIndexStats(${index}) failed: ${(err as Error).message}`);
+      return { name: index, exists: false };
+    }
   }
 
   async onStartup(): Promise<void> {
