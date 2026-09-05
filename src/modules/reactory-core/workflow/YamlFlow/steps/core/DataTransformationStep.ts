@@ -13,13 +13,30 @@ export interface DataTransformationStepConfig {
   /** Input data to transform */
   input: any;
   
-  /** Array of transformations to apply in sequence */
+  /**
+   * Array of transformations to apply in sequence.
+   *
+   * Two dialects are accepted, because the workflow JSON schema and this step were
+   * written against different ones and real workflows exist in both:
+   *   `type` + step-level `input`/`outputVariable`   (this step's original shape)
+   *   `operation` + per-transformation `source`/`target` (the schema's shape)
+   * `type` wins over `operation` when both are present.
+   */
   transformations: Array<{
-    /** Type of transformation */
-    type: 'filter' | 'map' | 'sort' | 'group' | 'aggregate' | 'merge' | 'extract' | 'custom';
-    
+    /** Type of transformation. */
+    type?: 'filter' | 'map' | 'sort' | 'group' | 'aggregate' | 'merge' | 'extract' | 'custom';
+
+    /** Alias for `type` (schema dialect). */
+    operation?: string;
+
+    /** Per-transformation input expression (schema dialect); overrides the running data. */
+    source?: any;
+
+    /** Per-transformation output variable (schema dialect). */
+    target?: string;
+
     /** Configuration for the transformation */
-    config: Record<string, any>;
+    config?: Record<string, any>;
   }>;
   
   /** Output variable name to store result */
@@ -56,10 +73,21 @@ export class DataTransformationStep extends BaseYamlStep {
     // Apply transformations in sequence
     for (const transformation of config.transformations) {
       const startTime = Date.now();
+      // Schema dialect: a transformation may name its own source, in which case it
+      // starts from that rather than the running data.
+      if (transformation.source !== undefined) {
+        data = this.resolveDataTemplates(transformation.source, context);
+      }
       const inputSize = this.getDataSize(data);
       
       try {
         data = await this.applyTransformation(data, transformation, context);
+
+        // Schema dialect: publish this stage's result to its own variable. The chain
+        // continues from it either way.
+        if (transformation.target) {
+          context.variables[transformation.target] = data;
+        }
         
         const outputSize = this.getDataSize(data);
         const duration = Date.now() - startTime;
@@ -127,33 +155,38 @@ export class DataTransformationStep extends BaseYamlStep {
     transformation: DataTransformationStepConfig['transformations'][0], 
     context: StepExecutionContext
   ): Promise<any> {
-    switch (transformation.type) {
+    // `type` is this step's field; `operation` is the workflow schema's name for the
+    // same thing. Accept both (see the docblock on transformations).
+    const kind = transformation.type || (transformation.operation as any);
+    switch (kind) {
       case 'filter':
-        return this.applyFilter(data, transformation.config);
+        return this.applyFilter(data, transformation.config || {});
       
       case 'map':
-        return this.applyMap(data, transformation.config);
+        return this.applyMap(data, transformation.config || {});
       
       case 'sort':
-        return this.applySort(data, transformation.config);
+        return this.applySort(data, transformation.config || {});
       
       case 'group':
-        return this.applyGroup(data, transformation.config);
+        return this.applyGroup(data, transformation.config || {});
       
       case 'aggregate':
-        return this.applyAggregate(data, transformation.config);
+        return this.applyAggregate(data, transformation.config || {});
       
       case 'merge':
-        return this.applyMerge(data, transformation.config, context);
+        return this.applyMerge(data, transformation.config || {}, context);
       
       case 'extract':
-        return this.applyExtract(data, transformation.config);
+        return this.applyExtract(data, transformation.config || {});
       
       case 'custom':
-        return this.applyCustom(data, transformation.config, context);
+        return this.applyCustom(data, transformation.config || {}, context);
       
       default:
-        throw new Error(`Unknown transformation type: ${transformation.type}`);
+        throw new Error(
+          `Unknown transformation type: ${kind ?? '(none — set "type" or "operation")'}`,
+        );
     }
   }
   
@@ -426,7 +459,11 @@ export class DataTransformationStep extends BaseYamlStep {
    */
   private resolveDataTemplates(data: any, context: StepExecutionContext): any {
     if (typeof data === 'string') {
-      return this.resolveTemplate(data, context);
+      // resolveTemplateValue, not resolveTemplate: the data under transformation is
+      // usually a whole-value reference ("${input.rows}") and must keep its type.
+      // Plain interpolation would hand the transformations a JSON string, and
+      // `data.filter(...)` would fail with "not a function" far from the cause.
+      return this.resolveTemplateValue(data, context);
     }
     
     if (Array.isArray(data)) {

@@ -4,6 +4,7 @@ import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver';
 import TaskModel, { ITaskDocument } from '../../models/Task';
 import { IReactoryWorkflowService } from '../../services/Workflow/types';
+import { TASK_COMPLETED_EVENT } from '../../workflow/YamlFlow/steps/core/UserActivityStep';
 
 const getWorkflowService = (context: Reactory.Server.IReactoryContext): IReactoryWorkflowService => {
   return context.getService('core.ReactoryWorkflowService@1.0.0') as IReactoryWorkflowService;
@@ -140,23 +141,8 @@ class TaskResolver {
 
     await task.save();
 
-    // Publish AMQ event on workflow/tasks channel
-    try {
-      if (context.hasFeature && context.hasFeature('core.ReactoryAMQService')) {
-        const amqService = context.getService('core.ReactoryAMQService@1.0.0') as any;
-        if (amqService && amqService.publish) {
-          amqService.publish('workflow', 'workflow.task.created', {
-            taskId: task._id.toString(),
-            workflowId: task.workflowId,
-            instanceId: task.instanceId,
-            stepId: task.stepId,
-            userId: context.user._id.toString(),
-          });
-        }
-      }
-    } catch (e) {
-      context.log(`Failed to publish AMQ event for task creation: ${e.message}`, { error: e }, 'warn', 'TaskResolver');
-    }
+    // NOTE: see completeWorkflowTask — the AMQ publish that stood here targeted an
+    // unregistered service behind a guard no context implements, so it never ran.
 
     return task;
   }
@@ -212,47 +198,76 @@ class TaskResolver {
       };
     }
 
-    // Mark task as completed
+    // Mark task as completed. `completedBy` is taken from the AUTHENTICATED context,
+    // never from the submitted payload: for an approval gate the approver's identity
+    // is the audit trail, and a client-supplied one proves nothing.
+    const completedBy = (context.user as any)?._id;
+    const completedByEmail = (context.user as any)?.email;
+
     task.status = 'completed';
     task.percentComplete = 100;
     task.completionDate = new Date();
     task.resultData = params.resultData;
+    task.completedBy = completedBy;
+    task.completedByEmail = completedByEmail;
     task.updatedAt = new Date();
     await task.save();
 
+    // The payload delivered to the resumed workflow step. The submitted resultData is
+    // merged UNDER the server-stamped identity so a client cannot spoof the approver.
+    const resumePayload = {
+      ...(params.resultData && typeof params.resultData === 'object' ? params.resultData : {}),
+      completedBy: completedBy ? String(completedBy) : undefined,
+      completedByEmail,
+      completedAt: task.completionDate.toISOString(),
+      taskId: task._id.toString(),
+    };
+
     let signalResult = null;
-    // If associated with a workflow instance, signal and resume it
+    // Resume the workflow that raised this task.
+    //
+    // The event is correlated by TASK ID, which is what the user_activity step
+    // suspends on. Signalling by step id cannot be relied on: the engine stamps
+    // pointer.stepName with the step's NAME when it has one, so a named step is
+    // unmatchable by its YAML id, and one instance may hold several tasks at once.
+    //
+    // The tenant matters too — event subscriptions are matched strictly by tenant,
+    // so publishing under the caller's partner would silently wake nothing whenever
+    // the instance runs under a different one. publishWorkflowEvent resolves it from
+    // the instance when we hand it the id.
     if (task.instanceId) {
       try {
         const workflowService = getWorkflowService(context);
-        signalResult = await workflowService.signalWorkflowInstance(
-          task.instanceId,
-          params.resultData,
-          task.stepId
+        const instance = await workflowService.getWorkflowHistoryById(task.instanceId);
+        const tenantId = (instance as any)?.tenantId || undefined;
+
+        signalResult = await workflowService.publishWorkflowEvent(
+          TASK_COMPLETED_EVENT,
+          task._id.toString(),
+          resumePayload,
+          tenantId
         );
+
+        // Legacy path: tasks raised before the task-id correlation existed are woken
+        // by matching the waiting pointer. It is a no-op when nothing matches, so it
+        // is safe to attempt after the publish above.
+        if (signalResult && (signalResult as any).success === false) {
+          signalResult = await workflowService.signalWorkflowInstance(
+            task.instanceId,
+            resumePayload,
+            task.stepId
+          );
+        }
       } catch (err: any) {
         context.log(`Error signalling workflow instance ${task.instanceId}`, { error: err }, 'error', 'TaskResolver');
       }
     }
 
-    // Publish AMQ event on workflow channel
-    try {
-      if (context.hasFeature && context.hasFeature('core.ReactoryAMQService')) {
-        const amqService = context.getService('core.ReactoryAMQService@1.0.0') as any;
-        if (amqService && amqService.publish) {
-          amqService.publish('workflow', 'workflow.task.completed', {
-            taskId: task._id.toString(),
-            workflowId: task.workflowId,
-            instanceId: task.instanceId,
-            stepId: task.stepId,
-            userId: context.user._id.toString(),
-            resultData: params.resultData,
-          });
-        }
-      }
-    } catch (e) {
-      // Non-critical AMQ logging
-    }
+    // NOTE: the removed AMQ publish here referenced core.ReactoryAMQService@1.0.0,
+    // which is not a registered service, behind a `hasFeature` guard no context
+    // implements — it never ran. The workflow itself is resumed by the event
+    // published above, which is the part that matters; UI notification is handled by
+    // polling until a server→browser transport exists.
 
     return {
       success: true,

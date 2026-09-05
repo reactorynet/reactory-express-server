@@ -496,7 +496,17 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
    * Publish a raw event to the workflow engine, waking any step waiting on the
    * given (eventName, eventKey) pair.
    */
-  publishWorkflowEvent(eventName: string, eventKey: string, eventData?: any): Promise<IWorkflowOperationResult>;
+  publishWorkflowEvent(
+    eventName: string,
+    eventKey: string,
+    eventData?: any,
+    /**
+     * Tenant that owns the waiting instance. Defaults to the calling context's
+     * partner. Event subscriptions are matched strictly by tenant, so a publish for
+     * another tenant's instance MUST pass it or the event is silently discarded.
+     */
+    tenantId?: string
+  ): Promise<IWorkflowOperationResult>;
   /**
    * Resolve the event(s) an instance is currently waiting on and publish them,
    * continuing the suspended step(s). When `stepId` is supplied only the

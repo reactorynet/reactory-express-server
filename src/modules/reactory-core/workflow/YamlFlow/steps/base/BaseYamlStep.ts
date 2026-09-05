@@ -194,45 +194,46 @@ export abstract class BaseYamlStep implements IYamlStep {
   }
 
   /**
-   * Helper method to resolve variable substitutions in strings with support for logical OR (||) and literals
-   * @param template - String template with ${variable} syntax
-   * @param context - Execution context containing variables
-   * @returns Resolved string
+   * Resolve a SINGLE `${...}` expression to its underlying value, preserving type.
+   *
+   * Supports literals ('x', 42, true, null), `env.X` / `process.env.X`,
+   * `input(s).path`, `steps.<id>.<path>`, `variables.path` and bare variable names.
+   * Returns undefined when the expression cannot be resolved.
+   *
+   * Exposed as a method (rather than the closure it used to be) so callers that need
+   * the VALUE — an array of workflow arguments, an object payload — can get it
+   * without the JSON-string round trip that resolveTemplate necessarily performs.
+   * See resolveTemplateValue.
    */
-  protected resolveTemplate(template: string, context: StepExecutionContext): string {
-    if (typeof template !== 'string') {
-      return template;
+  protected resolveExpression(expr: string, context: StepExecutionContext): any {
+    const trimmed = expr.trim();
+    if (!trimmed) return undefined;
+
+    // Check if it's a string literal
+    if (
+      (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+      (trimmed.startsWith('"') && trimmed.endsWith('"'))
+    ) {
+      return trimmed.slice(1, -1);
     }
 
-    const resolveSingleExpression = (expr: string): any => {
-      const trimmed = expr.trim();
-      if (!trimmed) return undefined;
+    // Check if it's a boolean or number literal
+    if (trimmed === 'true') return true;
+    if (trimmed === 'false') return false;
+    if (trimmed === 'null') return null;
+    if (!isNaN(Number(trimmed)) && trimmed !== '') return Number(trimmed);
 
-      // Check if it's a string literal
-      if (
-        (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
-        (trimmed.startsWith('"') && trimmed.endsWith('"'))
-      ) {
-        return trimmed.slice(1, -1);
+    // Resolve from environment variables (process.env.VAR or env.VAR)
+    const envMatch = trimmed.match(/^(?:process\.)?env\.(.+)$/);
+    if (envMatch) {
+      const varName = envMatch[1];
+      if (context.env && varName in context.env) {
+        return context.env[varName];
       }
-
-      // Check if it's a boolean or number literal
-      if (trimmed === 'true') return true;
-      if (trimmed === 'false') return false;
-      if (trimmed === 'null') return null;
-      if (!isNaN(Number(trimmed)) && trimmed !== '') return Number(trimmed);
-
-      // Resolve from environment variables (process.env.VAR or env.VAR)
-      const envMatch = trimmed.match(/^(?:process\.)?env\.(.+)$/);
-      if (envMatch) {
-        const varName = envMatch[1];
-        if (context.env && varName in context.env) {
-          return context.env[varName];
-        }
-        if (typeof process !== 'undefined' && process.env && varName in process.env) {
-          return process.env[varName];
-        }
-        return undefined;
+      if (typeof process !== 'undefined' && process.env && varName in process.env) {
+        return process.env[varName];
+      }
+      return undefined;
       }
 
       // Resolve from inputs
@@ -297,25 +298,71 @@ export abstract class BaseYamlStep implements IYamlStep {
         return current;
       }
 
-      return undefined;
-    };
+    return undefined;
+  }
+
+  /**
+   * Resolve an expression list (`a || b || 'default'`) to the first value that
+   * resolves to something meaningful, preserving type. Returns undefined when none do.
+   */
+  protected resolveExpressionList(expression: string, context: StepExecutionContext): any {
+    const parts = expression.split('||');
+    for (const part of parts) {
+      const resolved = this.resolveExpression(part, context);
+      if (resolved !== undefined && resolved !== null && resolved !== '') {
+        return resolved;
+      }
+    }
+    // Fall back to the first part so an explicit null/empty resolution still wins
+    // over "unresolved".
+    return this.resolveExpression(parts[0], context);
+  }
+
+  /**
+   * Helper method to resolve variable substitutions in strings with support for logical OR (||) and literals
+   * @param template - String template with ${variable} syntax
+   * @param context - Execution context containing variables
+   * @returns Resolved string
+   */
+  protected resolveTemplate(template: string, context: StepExecutionContext): string {
+    if (typeof template !== 'string') {
+      return template;
+    }
 
     return template.replace(/\$\{([^}]+)\}/g, (match, expression) => {
-      // Split the expression by logical OR (||)
-      const parts = expression.split('||');
-      for (const part of parts) {
-        const resolved = resolveSingleExpression(part);
-        if (resolved !== undefined && resolved !== null && resolved !== '') {
-          return this.stringifyValue(resolved);
-        }
-      }
-      // If none of the parts resolved, try to resolve the first part as a fallback
-      // or return the original match if even that fails.
-      const firstPartResolved = resolveSingleExpression(parts[0]);
-      if (firstPartResolved !== undefined) {
-        return this.stringifyValue(firstPartResolved);
+      const resolved = this.resolveExpressionList(expression, context);
+      if (resolved !== undefined) {
+        return this.stringifyValue(resolved);
       }
       return match;
     });
+  }
+
+  /**
+   * Resolve a config value, PRESERVING TYPE when the whole value is a single
+   * `${...}` reference.
+   *
+   * `resolveTemplate` necessarily returns a string — it performs interpolation, so
+   * an array or object reference comes back as JSON text. That is wrong for values
+   * that are passed onward as data rather than rendered: workflow arguments, request
+   * bodies, GraphQL variables. Here:
+   *
+   *   "${input.rows}"          → the actual array
+   *   "batch_${input.id}"      → interpolated string (mixed content)
+   *   "${input.missing}"       → the original token, so optional-value handling
+   *                              elsewhere can still detect "not supplied"
+   *
+   * Non-string values are returned unchanged.
+   */
+  protected resolveTemplateValue(value: any, context: StepExecutionContext): any {
+    if (typeof value !== 'string') {
+      return value;
+    }
+    const whole = value.match(/^\s*\$\{([^}]+)\}\s*$/);
+    if (whole) {
+      const resolved = this.resolveExpressionList(whole[1], context);
+      return resolved === undefined ? value : resolved;
+    }
+    return this.resolveTemplate(value, context);
   }
 }
