@@ -7,7 +7,7 @@
 import Reactory from '@reactorynet/reactory-core';
 import { YamlStepRegistry } from '../steps/registry/YamlStepRegistry';
 import { YamlWorkflowDefinition, StepCreationParams } from '../types/WorkflowDefinition';
-import { IYamlStep, StepExecutionContext } from '../steps/interfaces/IYamlStep';
+import { IYamlStep, StepExecutionContext, StepExecutionResult } from '../steps/interfaces/IYamlStep';
 import {
   WorkflowExecutionResult,
   WorkflowExecutionContext,
@@ -485,11 +485,43 @@ export class YamlWorkflowExecutor {
         },
         reactoryContext: workflowContext.reactoryContext,
         utils: workflowContext.reactoryContext?.utils,
+        // This executor runs steps in-process and cannot suspend an execution, so
+        // steps that support both engines must degrade themselves when they see
+        // supportsSuspend === false (a returned directive is an error, below).
+        control: {
+          supportsSuspend: false,
+          eventPublished: false,
+        },
       } as StepExecutionContext;
 
       // Execute step
       const result = await step.execute(stepContext);
       const endTime = new Date();
+
+      // A step that asks to suspend cannot be honoured here — surface it as a step
+      // failure rather than silently continuing as if the wait had completed.
+      const control = (result as StepExecutionResult).control;
+      if (result.success && (control?.waitForEvent || control?.sleep)) {
+        const requested = control.waitForEvent ? 'waitForEvent' : 'sleep';
+        return {
+          stepId: stepConfig.id,
+          stepType: stepConfig.type,
+          success: false,
+          outputs: result.outputs || {},
+          metadata: {
+            startTime,
+            endTime,
+            duration: endTime.getTime() - startTime.getTime(),
+            executionId: workflowContext.workflow.executionId,
+          },
+          error: {
+            message:
+              `Step "${stepConfig.id}" requested a durable "${requested}" directive, but ` +
+              'YamlWorkflowExecutor cannot suspend an execution. Run this workflow on the ' +
+              'durable engine (WorkflowRunner), or configure the step for in-process waiting.',
+          },
+        };
+      }
       
       return {
         stepId: stepConfig.id,

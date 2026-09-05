@@ -1,28 +1,33 @@
 import Reactory from '@reactorynet/reactory-core';
+//@ts-ignore
 import postal from 'postal';
 import * as express from 'express';
 
-/**
- * Type definition for event callback functions
- */
-type EventCallback = (data: any, envelope: any) => void;
 
-/**
- * Type definition for postal subscription
- */
-type PostalSubscription = {
-  unsubscribe: () => void;
-  [key: string]: any;
-};
+  /**
+   * Type definition for event callback functions
+   */
+  export type EventCallback = (data: any, envelope: any) => void;
 
-/**
- * Type definition for postal channel
- */
-type PostalChannel = {
-  subscribe: (eventId: string, callback: EventCallback) => PostalSubscription;
-  publish: (eventId: string, data?: any) => void;
-  [key: string]: any;
-};
+  /**
+   * Type definition for postal subscription
+   */
+  export interface PostalSubscription {
+    unsubscribe: () => void;
+    [key: string]: any;
+  };
+
+
+  export interface PostalChannel {
+    subscribe(eventId: string, callback: EventCallback): PostalSubscription;
+    publish(eventId: string, data?: any): void;
+    [key: string]: any;
+  }
+
+  export interface Postal {
+    channel(name: string): PostalChannel;
+    [key: string]: any;
+  }
 
 /**
  * AMQ - Asynchronous Message Queue. We use postal.js to create a

@@ -37,6 +37,13 @@ export interface ITaskDocument extends mongoose.Document {
   componentProps?: any;
   formSchemaId?: string;
   resultData?: any;
+  /**
+   * The AUTHENTICATED user who completed the task. Stamped server-side rather than
+   * taken from the submitted payload — for a maker/checker control the approver's
+   * identity is the audit trail, and a client-supplied one proves nothing.
+   */
+  completedBy?: mongoose.Types.ObjectId;
+  completedByEmail?: string;
   user: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -80,6 +87,12 @@ const TaskSchema = new mongoose.Schema({
   componentProps: Mixed,
   formSchemaId: String,
   resultData: Mixed,
+  // Server-stamped identity of whoever completed the task (see the interface note).
+  completedBy: {
+    type: ObjectId,
+    ref: 'User',
+  },
+  completedByEmail: String,
   user: {
     required: true,
     type: ObjectId,

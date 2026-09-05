@@ -12,7 +12,7 @@ declare module 'postal' {
     channel(name: string): PostalChannel;
     [key: string]: any;
   }
-
+  
   const postal: Postal;
   export = postal;
 }

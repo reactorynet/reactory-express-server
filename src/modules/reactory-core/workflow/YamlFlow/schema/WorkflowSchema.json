@@ -3,7 +3,12 @@
   "title": "Reactory YAML Workflow Definition",
   "description": "Schema for defining declarative workflows in YAML format",
   "type": "object",
-  "required": ["nameSpace", "name", "version", "steps"],
+  "required": [
+    "nameSpace",
+    "name",
+    "version",
+    "steps"
+  ],
   "properties": {
     "nameSpace": {
       "type": "string",
@@ -76,23 +81,39 @@
     "variables": {
       "description": "Workflow-scoped variables (object map or JSON-serialized array/object string)",
       "oneOf": [
-        { "type": "string" },
+        {
+          "type": "string"
+        },
         {
           "type": "object",
           "patternProperties": {
             "^[a-zA-Z][a-zA-Z0-9_]*$": {
               "oneOf": [
-                { "type": "string" },
-                { "type": "number" },
-                { "type": "boolean" },
-                { "type": "null" },
-                { "type": "object" },
-                { "type": "array" }
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "array"
+                }
               ]
             }
           }
         },
-        { "type": "array" }
+        {
+          "type": "array"
+        }
       ]
     },
     "steps": {
@@ -107,7 +128,10 @@
   "definitions": {
     "WorkflowStep": {
       "type": "object",
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -165,7 +189,15 @@
             "graph_query",
             "process_conversation",
             "cross_instance_variable",
-            "python_script"
+            "python_script",
+            "temporal_workflow",
+            "temporal_await",
+            "temporal_signal",
+            "temporal_query",
+            "temporal_update",
+            "temporal_cancel",
+            "temporal_terminate",
+            "temporal_describe"
           ],
           "description": "Type of step to execute (snake_case convention). NOTE: this enum must stay in sync with the step types registered in YamlStepRegistry; the executor's validateWorkflow() is the authoritative check against the live registry (including module-contributed steps)."
         },
@@ -180,7 +212,15 @@
           "description": "Whether to continue workflow execution if this step fails"
         },
         "timeout": {
-          "oneOf": [{"type": "integer", "minimum": 1}, {"type": "null"}],
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
           "description": "Step timeout in milliseconds"
         },
         "retryPolicy": {
@@ -189,18 +229,32 @@
         "inputs": {
           "description": "Step input parameters (object or JSON-serialized string)",
           "oneOf": [
-            { "type": "string" },
+            {
+              "type": "string"
+            },
             {
               "type": "object",
               "patternProperties": {
                 "^[a-zA-Z][a-zA-Z0-9_]*$": {
                   "oneOf": [
-                    { "type": "string" },
-                    { "type": "number" },
-                    { "type": "boolean" },
-                    { "type": "null" },
-                    { "type": "object" },
-                    { "type": "array" }
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object"
+                    },
+                    {
+                      "type": "array"
+                    }
                   ]
                 }
               }
@@ -210,7 +264,9 @@
         "outputs": {
           "description": "Step output mapping (object or JSON-serialized string)",
           "oneOf": [
-            { "type": "string" },
+            {
+              "type": "string"
+            },
             {
               "type": "object",
               "patternProperties": {
@@ -228,10 +284,14 @@
         },
         "dependsOn": {
           "oneOf": [
-            { "type": "string" },
+            {
+              "type": "string"
+            },
             {
               "type": "array",
-              "items": { "type": "string" }
+              "items": {
+                "type": "string"
+              }
             }
           ],
           "description": "Step dependencies"
@@ -252,48 +312,136 @@
       },
       "allOf": [
         {
-          "if": { "properties": { "type": { "const": "log" } } },
-          "then": { "$ref": "#/definitions/LogStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "log"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/LogStepConfig"
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "delay" } } },
-          "then": { "$ref": "#/definitions/DelayStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "delay"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/DelayStepConfig"
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "validation" } } },
-          "then": { "$ref": "#/definitions/ValidationStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "validation"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/ValidationStepConfig"
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "data_transformation" } } },
-          "then": { "$ref": "#/definitions/DataTransformationStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "data_transformation"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/DataTransformationStepConfig"
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "api_call" } } },
-          "then": { "$ref": "#/definitions/ApiCallStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "api_call"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/ApiCallStepConfig"
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "cli_command" } } },
-          "then": { "$ref": "#/definitions/CliCommandStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "cli_command"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/CliCommandStepConfig"
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "file_operation" } } },
-          "then": { "$ref": "#/definitions/FileOperationStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "file_operation"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/FileOperationStepConfig"
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "condition" } } },
-          "then": { "$ref": "#/definitions/ConditionalStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "condition"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/ConditionalStepConfig"
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "parallel" } } },
-          "then": { "$ref": "#/definitions/ParallelStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "parallel"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/ParallelStepConfig"
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "for_each" } } },
-          "then": { "$ref": "#/definitions/ForEachStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "for_each"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/ForEachStepConfig"
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "while" } } },
-          "then": { "$ref": "#/definitions/WhileStepConfig" }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "while"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/WhileStepConfig"
+          }
         }
       ]
     },
@@ -305,7 +453,9 @@
       "properties": {
         "config": {
           "type": "object",
-          "required": ["message"],
+          "required": [
+            "message"
+          ],
           "properties": {
             "message": {
               "type": "string",
@@ -313,7 +463,12 @@
             },
             "level": {
               "type": "string",
-              "enum": ["debug", "info", "warn", "error"],
+              "enum": [
+                "debug",
+                "info",
+                "warn",
+                "error"
+              ],
               "default": "info",
               "description": "Log level"
             },
@@ -329,10 +484,15 @@
       "properties": {
         "config": {
           "type": "object",
-          "required": ["duration"],
+          "required": [
+            "duration"
+          ],
           "properties": {
             "duration": {
-              "type": ["integer", "string"],
+              "type": [
+                "integer",
+                "string"
+              ],
               "description": "Delay duration in milliseconds or template expression"
             },
             "reason": {
@@ -347,7 +507,9 @@
       "properties": {
         "config": {
           "type": "object",
-          "required": ["rules"],
+          "required": [
+            "rules"
+          ],
           "properties": {
             "rules": {
               "type": "array",
@@ -369,7 +531,9 @@
       "properties": {
         "config": {
           "type": "object",
-          "required": ["transformations"],
+          "required": [
+            "transformations"
+          ],
           "properties": {
             "transformations": {
               "type": "array",
@@ -377,6 +541,13 @@
                 "$ref": "#/definitions/DataTransformation"
               },
               "description": "Data transformation operations"
+            },
+            "input": {
+              "description": "Data to transform \u2014 usually a whole-value reference such as \"${input.rows}\"."
+            },
+            "outputVariable": {
+              "type": "string",
+              "description": "Workflow variable to store the final result in."
             }
           }
         }
@@ -386,30 +557,47 @@
       "properties": {
         "config": {
           "type": "object",
-          "required": ["url", "method"],
+          "required": [
+            "url",
+            "method"
+          ],
           "properties": {
             "url": {
               "type": "string",
               "minLength": 1,
               "pattern": "^(\\$\\{|[a-zA-Z][a-zA-Z0-9+.\\-]*:|/)",
-              "description": "API endpoint URL. Validated as a scheme-prefixed URL, a root-relative path, or a ${...} template expression — not as a strict URI, because template placeholders (e.g. https://host/v1/search?name=${input.city}) are a core feature of the DSL and are not valid URIs until they are interpolated at run time."
+              "description": "API endpoint URL. Validated as a scheme-prefixed URL, a root-relative path, or a ${...} template expression \u2014 not as a strict URI, because template placeholders (e.g. https://host/v1/search?name=${input.city}) are a core feature of the DSL and are not valid URIs until they are interpolated at run time."
             },
             "method": {
               "type": "string",
-              "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "HEAD",
+                "OPTIONS"
+              ],
               "description": "HTTP method"
             },
             "headers": {
               "type": "object",
               "patternProperties": {
-                "^.+$": { "type": "string" }
+                "^.+$": {
+                  "type": "string"
+                }
               },
               "description": "HTTP headers"
             },
             "body": {
               "oneOf": [
-                { "type": "string" },
-                { "type": "object" }
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object"
+                }
               ],
               "description": "Request body"
             },
@@ -423,7 +611,9 @@
                 "minimum": 100,
                 "maximum": 599
               },
-              "default": [200],
+              "default": [
+                200
+              ],
               "description": "Expected successful HTTP status codes"
             }
           }
@@ -434,7 +624,9 @@
       "properties": {
         "config": {
           "type": "object",
-          "required": ["command"],
+          "required": [
+            "command"
+          ],
           "properties": {
             "command": {
               "type": "string",
@@ -442,7 +634,9 @@
             },
             "arguments": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Command arguments"
             },
             "workingDirectory": {
@@ -452,14 +646,20 @@
             "environment": {
               "type": "object",
               "patternProperties": {
-                "^.+$": { "type": "string" }
+                "^.+$": {
+                  "type": "string"
+                }
               },
               "description": "Environment variables"
             },
             "expectedExitCodes": {
               "type": "array",
-              "items": { "type": "integer" },
-              "default": [0],
+              "items": {
+                "type": "integer"
+              },
+              "default": [
+                0
+              ],
               "description": "Expected successful exit codes"
             }
           }
@@ -470,11 +670,21 @@
       "properties": {
         "config": {
           "type": "object",
-          "required": ["operation"],
+          "required": [
+            "operation"
+          ],
           "properties": {
             "operation": {
               "type": "string",
-              "enum": ["read", "write", "copy", "move", "delete", "exists", "mkdir"],
+              "enum": [
+                "read",
+                "write",
+                "copy",
+                "move",
+                "delete",
+                "exists",
+                "mkdir"
+              ],
               "description": "File operation type"
             },
             "source": {
@@ -507,7 +717,9 @@
       "properties": {
         "config": {
           "type": "object",
-          "required": ["condition"],
+          "required": [
+            "condition"
+          ],
           "properties": {
             "condition": {
               "type": "string",
@@ -550,7 +762,10 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["name", "steps"],
+                "required": [
+                  "name",
+                  "steps"
+                ],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -573,7 +788,10 @@
       "properties": {
         "config": {
           "type": "object",
-          "required": ["items", "steps"],
+          "required": [
+            "items",
+            "steps"
+          ],
           "properties": {
             "items": {
               "type": "string",
@@ -608,7 +826,10 @@
       "properties": {
         "config": {
           "type": "object",
-          "required": ["condition", "steps"],
+          "required": [
+            "condition",
+            "steps"
+          ],
           "properties": {
             "condition": {
               "type": "string",
@@ -631,11 +852,19 @@
     },
     "InputParameter": {
       "type": "object",
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["string", "number", "boolean", "object", "array"],
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array"
+          ],
           "description": "Parameter type"
         },
         "description": {
@@ -649,12 +878,24 @@
         },
         "default": {
           "oneOf": [
-            { "type": "string" },
-            { "type": "number" },
-            { "type": "boolean" },
-            { "type": "null" },
-            { "type": "object" },
-            { "type": "array" }
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "array"
+            }
           ],
           "description": "Default value"
         },
@@ -665,11 +906,20 @@
     },
     "OutputParameter": {
       "type": "object",
-      "required": ["type", "source"],
+      "required": [
+        "type",
+        "source"
+      ],
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["string", "number", "boolean", "object", "array"],
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array"
+          ],
           "description": "Output type"
         },
         "description": {
@@ -707,8 +957,12 @@
           "type": "array",
           "items": {
             "oneOf": [
-              { "type": "string" },
-              { "type": "number" }
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
             ]
           }
         }
@@ -716,7 +970,10 @@
     },
     "ValidationRule": {
       "type": "object",
-      "required": ["field", "type"],
+      "required": [
+        "field",
+        "type"
+      ],
       "properties": {
         "field": {
           "type": "string",
@@ -724,14 +981,26 @@
         },
         "type": {
           "type": "string",
-          "enum": ["required", "type", "pattern", "range", "custom"],
+          "enum": [
+            "required",
+            "type",
+            "pattern",
+            "range",
+            "custom"
+          ],
           "description": "Validation type"
         },
         "value": {
           "oneOf": [
-            { "type": "string" },
-            { "type": "number" },
-            { "type": "object" }
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "object"
+            }
           ],
           "description": "Validation value/configuration"
         },
@@ -743,12 +1012,22 @@
     },
     "DataTransformation": {
       "type": "object",
-      "required": ["operation"],
+      "required": [],
       "properties": {
         "operation": {
           "type": "string",
-          "enum": ["map", "filter", "reduce", "sort", "group", "merge", "extract", "custom"],
-          "description": "Transformation operation"
+          "enum": [
+            "map",
+            "filter",
+            "reduce",
+            "sort",
+            "group",
+            "aggregate",
+            "merge",
+            "extract",
+            "custom"
+          ],
+          "description": "Transformation operation \u2014 alias for `type`."
         },
         "source": {
           "type": "string",
@@ -761,16 +1040,50 @@
         "config": {
           "type": "object",
           "description": "Operation-specific configuration"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "filter",
+            "map",
+            "sort",
+            "group",
+            "aggregate",
+            "merge",
+            "extract",
+            "custom"
+          ],
+          "description": "Transformation type (preferred). `operation` is accepted as an alias."
         }
-      }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "required": [
+            "operation"
+          ]
+        }
+      ]
     },
     "Authentication": {
       "type": "object",
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["none", "basic", "bearer", "apiKey", "oauth2"],
+          "enum": [
+            "none",
+            "basic",
+            "bearer",
+            "apiKey",
+            "oauth2"
+          ],
           "description": "Authentication type"
         },
         "config": {
@@ -791,7 +1104,11 @@
         },
         "backoffStrategy": {
           "type": "string",
-          "enum": ["fixed", "exponential", "linear"],
+          "enum": [
+            "fixed",
+            "exponential",
+            "linear"
+          ],
           "default": "exponential",
           "description": "Backoff strategy"
         },
@@ -866,12 +1183,28 @@
               "description": "Vertical pan offset in pixels"
             },
             "gridSize": {
-              "oneOf": [{"type": "integer", "minimum": 5, "maximum": 100}, {"type": "null"}],
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "default": 20,
               "description": "Grid spacing in pixels"
             },
             "snapToGrid": {
-              "oneOf": [{"type": "boolean"}, {"type": "null"}],
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "default": true,
               "description": "Whether steps snap to grid when moved"
             }
@@ -886,43 +1219,79 @@
         },
         "notes": {
           "oneOf": [
-            {"type": "null"},
+            {
+              "type": "null"
+            },
             {
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["id", "text", "position"],
+                "required": [
+                  "id",
+                  "text",
+                  "position"
+                ],
                 "properties": {
-                  "id": {"type": "string"},
-                  "text": {"type": "string"},
-                  "position": {"$ref": "#/definitions/Position"},
-                  "size": {"$ref": "#/definitions/Size"},
-                  "color": {"type": "string"}
+                  "id": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "position": {
+                    "$ref": "#/definitions/Position"
+                  },
+                  "size": {
+                    "$ref": "#/definitions/Size"
+                  },
+                  "color": {
+                    "type": "string"
+                  }
                 }
               }
             }
           ],
-          "description": "Sticky notes or annotations placed on the canvas — may be null when none exist"
+          "description": "Sticky notes or annotations placed on the canvas \u2014 may be null when none exist"
         },
         "groups": {
           "oneOf": [
-            {"type": "null"},
+            {
+              "type": "null"
+            },
             {
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["id", "label", "stepIds"],
+                "required": [
+                  "id",
+                  "label",
+                  "stepIds"
+                ],
                 "properties": {
-                  "id": {"type": "string"},
-                  "label": {"type": "string"},
-                  "stepIds": {"type": "array", "items": {"type": "string"}},
-                  "color": {"type": "string"},
-                  "collapsed": {"type": "boolean", "default": false}
+                  "id": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "stepIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "color": {
+                    "type": "string"
+                  },
+                  "collapsed": {
+                    "type": "boolean",
+                    "default": false
+                  }
                 }
               }
             }
           ],
-          "description": "Visual groups that cluster related steps together — may be null when none exist"
+          "description": "Visual groups that cluster related steps together \u2014 may be null when none exist"
         }
       }
     },
@@ -959,11 +1328,15 @@
           "properties": {
             "inputs": {
               "type": "array",
-              "items": { "$ref": "#/definitions/PortDesignerMetadata" }
+              "items": {
+                "$ref": "#/definitions/PortDesignerMetadata"
+              }
             },
             "outputs": {
               "type": "array",
-              "items": { "$ref": "#/definitions/PortDesignerMetadata" }
+              "items": {
+                "$ref": "#/definitions/PortDesignerMetadata"
+              }
             }
           }
         }
@@ -972,7 +1345,12 @@
     "ConnectionDesignerMetadata": {
       "type": "object",
       "description": "Visual metadata for a connection between steps",
-      "required": ["sourceStepId", "sourcePort", "targetStepId", "targetPort"],
+      "required": [
+        "sourceStepId",
+        "sourcePort",
+        "targetStepId",
+        "targetPort"
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -997,19 +1375,47 @@
         "points": {
           "type": "array",
           "description": "Optional intermediate waypoints for the connection path",
-          "items": { "$ref": "#/definitions/Position" }
+          "items": {
+            "$ref": "#/definitions/Position"
+          }
         },
         "style": {
-          "oneOf": [{"type": "string", "enum": ["straight", "curved", "orthogonal"]}, {"type": "null"}],
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "straight",
+                "curved",
+                "orthogonal"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "curved",
           "description": "Connection line rendering style"
         },
         "color": {
-          "oneOf": [{"type": "string"}, {"type": "null"}],
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "description": "Custom colour for the connection line"
         },
         "label": {
-          "oneOf": [{"type": "string"}, {"type": "null"}],
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "description": "Optional label displayed on the connection"
         }
       }
@@ -1017,21 +1423,37 @@
     "PortDesignerMetadata": {
       "type": "object",
       "description": "Visual metadata for a step port",
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "properties": {
         "name": {
           "type": "string",
           "description": "Port name matching the step input/output key"
         },
         "label": {
-          "oneOf": [{"type": "string"}, {"type": "null"}],
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "description": "Display label for the port"
         },
         "position": {
           "$ref": "#/definitions/Position"
         },
         "dataType": {
-          "oneOf": [{"type": "string"}, {"type": "null"}],
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "description": "Expected data type flowing through the port"
         }
       }
@@ -1039,7 +1461,10 @@
     "Position": {
       "type": "object",
       "description": "2D position on the designer canvas",
-      "required": ["x", "y"],
+      "required": [
+        "x",
+        "y"
+      ],
       "properties": {
         "x": {
           "type": "number",
@@ -1054,7 +1479,10 @@
     "Size": {
       "type": "object",
       "description": "Dimensions of a visual element",
-      "required": ["width", "height"],
+      "required": [
+        "width",
+        "height"
+      ],
       "properties": {
         "width": {
           "type": "number",
