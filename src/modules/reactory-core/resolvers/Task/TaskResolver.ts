@@ -4,6 +4,7 @@ import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver';
 import TaskModel, { ITaskDocument } from '../../models/Task';
 import { IReactoryWorkflowService } from '../../services/Workflow/types';
+import { TASK_COMPLETED_EVENT } from '../../workflow/YamlFlow/steps/core/UserActivityStep';
 
 const getWorkflowService = (context: Reactory.Server.IReactoryContext): IReactoryWorkflowService => {
   return context.getService('core.ReactoryWorkflowService@1.0.0') as IReactoryWorkflowService;
@@ -221,15 +222,40 @@ class TaskResolver {
     await task.save();
 
     let signalResult = null;
-    // If associated with a workflow instance, signal and resume it
+    // Resume the workflow that raised this task.
+    //
+    // The event is correlated by TASK ID, which is what the user_activity step
+    // suspends on. Signalling by step id cannot be relied on: the engine stamps
+    // pointer.stepName with the step's NAME when it has one, so a named step is
+    // unmatchable by its YAML id, and one instance may hold several tasks at once.
+    //
+    // The tenant matters too — event subscriptions are matched strictly by tenant,
+    // so publishing under the caller's partner would silently wake nothing whenever
+    // the instance runs under a different one. publishWorkflowEvent resolves it from
+    // the instance when we hand it the id.
     if (task.instanceId) {
       try {
         const workflowService = getWorkflowService(context);
-        signalResult = await workflowService.signalWorkflowInstance(
-          task.instanceId,
-          params.resultData,
-          task.stepId
+        const instance = await workflowService.getWorkflowHistoryById(task.instanceId);
+        const tenantId = (instance as any)?.tenantId || undefined;
+
+        signalResult = await workflowService.publishWorkflowEvent(
+          TASK_COMPLETED_EVENT,
+          task._id.toString(),
+          params.resultData ?? {},
+          tenantId
         );
+
+        // Legacy path: tasks raised before the task-id correlation existed are woken
+        // by matching the waiting pointer. It is a no-op when nothing matches, so it
+        // is safe to attempt after the publish above.
+        if (signalResult && (signalResult as any).success === false) {
+          signalResult = await workflowService.signalWorkflowInstance(
+            task.instanceId,
+            params.resultData,
+            task.stepId
+          );
+        }
       } catch (err: any) {
         context.log(`Error signalling workflow instance ${task.instanceId}`, { error: err }, 'error', 'TaskResolver');
       }

@@ -11,13 +11,31 @@
  *   props?:        Record<string, any>   (static props passed to the component)
  *   propsMap?:     Record<string, string> (maps workflow data paths to component prop keys)
  *
- * When the executor encounters requiresUserInput: true it MUST suspend the
- * workflow instance and wait for an external resume event before continuing.
- * The resumed payload should carry the user's response under the same step id.
+ * HOW THE HUMAN GATE ACTUALLY CLOSES
+ * ----------------------------------
+ * On its first run the step creates (or re-finds) a Task document and then asks the
+ * durable engine to SUSPEND on `workflow.task.completed`, correlated by the TASK ID.
+ * The UI lists the task (userWorkflowTasks), renders `componentFqn` / `formSchemaId`,
+ * and calls the `completeWorkflowTask` mutation, which publishes that event. The same
+ * step body then re-runs with the user's `resultData` as its outputs.
+ *
+ * The task id is the correlation key on purpose. Signalling by step id cannot work:
+ * the engine stamps `pointer.stepName` with the step's NAME when it has one, so a
+ * named step is unmatchable by its YAML id — and a single instance may hold several
+ * user tasks at once. The task id is unambiguous for both.
+ *
+ * The step is idempotent: an engine retry before the suspension re-finds the pending
+ * task for (instanceId, stepId) instead of creating a second one.
  */
 
 import { BaseYamlStep } from '../base/BaseYamlStep';
 import { StepExecutionContext, StepExecutionResult, ValidationResult } from '../interfaces/IYamlStep';
+
+/**
+ * Event published by the completeWorkflowTask mutation, correlated by task id.
+ * Shared with the Task resolver so the two halves cannot drift apart.
+ */
+export const TASK_COMPLETED_EVENT = 'workflow.task.completed';
 
 export class UserActivityStep extends BaseYamlStep {
   public readonly stepType = 'user_activity';
@@ -94,6 +112,29 @@ export class UserActivityStep extends BaseYamlStep {
       ? this.resolveComponentProps(props as Record<string, unknown>, propsMap as Record<string, string>, context)
       : undefined;
 
+    // ── Resumed: the user completed the task ────────────────────────────────────
+    // The payload published by completeWorkflowTask is the user's resultData.
+    if (context.control?.eventPublished) {
+      const response = context.control.eventData ?? {};
+      const priorOutputs = context.stepResults?.[this.id]?.outputs ?? {};
+      context.logger.info(
+        `UserActivity step "${this.id}" completed by user (task ${priorOutputs.taskId ?? 'unknown'})`,
+      );
+      return {
+        success: true,
+        outputs: {
+          ...priorOutputs,
+          status: 'completed',
+          response,
+          // Surface the common approval shape directly so YAML can branch on it
+          // without knowing the whole payload: ${steps.approve.outputs.approved}
+          approved: response?.approved,
+          completedBy: response?.completedBy ?? response?.approverId,
+        },
+        metadata: { activityType, taskId: priorOutputs.taskId, resumed: true },
+      };
+    }
+
     context.logger.info(
       `UserActivity step "${this.id}": type=${activityType}` +
       (resolvedAssignee ? `, assignee=${resolvedAssignee}` : '') +
@@ -101,70 +142,155 @@ export class UserActivityStep extends BaseYamlStep {
       (timeout ? `, timeout=${timeout}ms` : '')
     );
 
-    // Auto-create/upsert Task in MongoDB if Reactory Context is available
-    if (context.reactoryContext) {
+    if (!context.reactoryContext) {
+      return {
+        success: false,
+        error: 'No Reactory context available — cannot create a user task',
+        outputs: {},
+        metadata: { activityType },
+      };
+    }
+
+    // ── First run: create (or re-find) the task ─────────────────────────────────
+    const instanceId = context.workflow?.instanceId;
+    const workflowId = context.workflow
+      ? `${context.workflow.nameSpace}.${context.workflow.name}@${context.workflow.version}`
+      : undefined;
+
+    let taskId: string;
+    let assignedTo: string | undefined;
+    try {
+      const TaskModel = (await import('../../../../models/Task')).default;
+      const targetUserId = await this.resolveAssignee(resolvedAssignee, context);
+
+      if (!targetUserId) {
+        return {
+          success: false,
+          error:
+            `user_activity step "${this.id}" could not determine an assignee. Set "assignee" ` +
+            '(user id or email), or start the workflow with a user identity.',
+          outputs: {},
+          metadata: { activityType },
+        };
+      }
+      assignedTo = String(targetUserId);
+
+      // Idempotent: an engine retry before the suspension must not raise a second
+      // task for the same gate.
+      let task = instanceId
+        ? await TaskModel.findOne({ instanceId, stepId: this.id, status: 'pending' }).exec()
+        : null;
+
+      if (task) {
+        context.logger.debug(`Re-using pending task ${task._id.toString()} for step "${this.id}"`);
+      } else {
+        task = new TaskModel({
+          title: resolvedMessage || `Workflow Task: ${this.id}`,
+          description: `Activity "${activityType}" waiting for user action in step "${this.id}"`,
+          category: 'workflow',
+          workflowStatus: 'awaiting_input',
+          status: 'pending',
+          workflowId,
+          instanceId,
+          stepId: this.id,
+          componentFqn: resolvedFqn,
+          componentProps,
+          formSchemaId: resolvedFormSchemaId,
+          dueDate: timeout ? new Date(Date.now() + Number(timeout)) : undefined,
+          user: targetUserId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        await task.save();
+        context.logger.info(
+          `Created ${activityType} task ${task._id.toString()} for ${assignedTo} (instance ${instanceId || 'unknown'})`,
+        );
+      }
+
+      taskId = task._id.toString();
+
+      if (context.reactoryContext.hasFeature?.('core.ReactoryAMQService')) {
+        const amq = context.reactoryContext.getService('core.ReactoryAMQService@1.0.0') as any;
+        amq?.publish?.('workflow', 'workflow.task.created', {
+          taskId,
+          workflowId,
+          instanceId,
+          stepId: this.id,
+          userId: assignedTo,
+        });
+      }
+    } catch (err: any) {
+      // A gate that cannot raise its task must fail: continuing would run the
+      // approved path with nobody having approved anything.
+      context.logger.error(`Could not create the task for user_activity step: ${err.message}`);
+      return {
+        success: false,
+        error: `Could not create the user task for step "${this.id}": ${err.message}`,
+        outputs: {},
+        metadata: { activityType },
+      };
+    }
+
+    const outputs = {
+      taskId,
+      activityType,
+      assignee: assignedTo,
+      formSchemaId: resolvedFormSchemaId,
+      message: resolvedMessage,
+      fqn: resolvedFqn,
+      componentProps,
+      timeout,
+      status: 'pending',
+    };
+
+    // ── Suspend until the task is completed ─────────────────────────────────────
+    if (context.control?.supportsSuspend !== true) {
+      // The standalone executor cannot suspend. The task exists and is actionable,
+      // but this run cannot wait for it — say so rather than proceeding as though
+      // the gate had been passed.
+      context.logger.warn(
+        `Step "${this.id}" raised task ${taskId} but this executor cannot suspend — ` +
+          'the workflow will continue WITHOUT waiting for the user. Run it on the durable ' +
+          'engine for a real approval gate.',
+      );
+      return { success: true, outputs, metadata: { activityType, taskId, waited: false } };
+    }
+
+    return {
+      success: true,
+      outputs,
+      metadata: { activityType, taskId, requiresUserInput: true },
+      // Correlated by task id — see the header note on why not by step id.
+      control: { waitForEvent: { eventName: TASK_COMPLETED_EVENT, eventKey: taskId } },
+    };
+  }
+
+  /**
+   * Resolve the assignee to a user id.
+   *
+   * Accepts a user id or an email address; when neither is configured the task falls
+   * to the identity the instance carries (the user who started the workflow), which
+   * is the sensible default for a self-service gate.
+   */
+  private async resolveAssignee(
+    assignee: string | undefined,
+    context: StepExecutionContext,
+  ): Promise<string | undefined> {
+    if (assignee && !assignee.includes('@')) return assignee;
+
+    if (assignee && assignee.includes('@')) {
       try {
-        const TaskModel = (await import('../../../models/Task')).default;
-        const targetUserId = resolvedAssignee || context.reactoryContext.user?._id;
-        const workflowId = (context as any).workflowId
-          || (context as any).workflowDefinitionId
-          || (context.workflow ? `${context.workflow.nameSpace}.${context.workflow.name}@${context.workflow.version}` : undefined);
-
-        if (targetUserId) {
-          const task = new TaskModel({
-            title: resolvedMessage || `Workflow Task: ${this.id}`,
-            description: `Activity "${activityType}" waiting for user action in step "${this.id}"`,
-            category: 'workflow',
-            workflowStatus: 'awaiting_input',
-            status: 'pending',
-            workflowId,
-            instanceId: context.executionId,
-            stepId: this.id,
-            componentFqn: resolvedFqn,
-            componentProps,
-            formSchemaId: resolvedFormSchemaId,
-            user: targetUserId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
-
-          await task.save();
-
-          if (context.reactoryContext.hasFeature && context.reactoryContext.hasFeature('core.ReactoryAMQService')) {
-            const amq = context.reactoryContext.getService('core.ReactoryAMQService@1.0.0') as any;
-            if (amq && amq.publish) {
-              amq.publish('workflow', 'workflow.task.created', {
-                taskId: task._id.toString(),
-                workflowId,
-                instanceId: context.executionId,
-                stepId: this.id,
-                userId: targetUserId.toString(),
-              });
-            }
-          }
-        }
+        const UserModel = (await import('../../../../models/User')).default as any;
+        const user = await UserModel.findOne({ email: assignee.toLowerCase() }).exec();
+        if (user) return String(user._id);
+        context.logger.warn(`No user found for assignee "${assignee}" — falling back to the workflow starter`);
       } catch (err: any) {
-        context.logger.warn(`Could not persist Task document for user_activity step: ${err.message}`);
+        context.logger.warn(`Could not look up assignee "${assignee}": ${err.message}`);
       }
     }
 
-    // Returning requiresUserInput: true signals the executor to SUSPEND the
-    // workflow instance at this step. Execution resumes only when an external
-    // event delivers the user's response (e.g. via completeWorkflowTask or signalWorkflowInstance).
-    return {
-      success: true,
-      outputs: {
-        activityType,
-        assignee: resolvedAssignee,
-        formSchemaId: resolvedFormSchemaId,
-        message: resolvedMessage,
-        fqn: resolvedFqn,
-        componentProps,
-        timeout,
-        status: 'pending',
-      },
-      metadata: { activityType, requiresUserInput: true }
-    };
+    const contextUser = (context.reactoryContext as any)?.user?._id;
+    return contextUser ? String(contextUser) : undefined;
   }
 
   public validateConfig(config: Record<string, any>): ValidationResult {
