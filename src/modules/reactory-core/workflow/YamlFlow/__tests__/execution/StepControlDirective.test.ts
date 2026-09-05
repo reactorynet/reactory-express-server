@@ -126,6 +126,7 @@ class EventSuspendStep extends BaseYamlStep {
     runLog.push({
       step: this.id,
       resumed,
+      workflow: context.workflow,
       eventData: context.control?.eventData,
       // Proves outputs recorded before the suspend are readable on resume.
       priorOutputs: context.stepResults?.[this.id]?.outputs,
@@ -299,6 +300,59 @@ describe('durable step control directives', () => {
       // Completed rather than parking again, and the body ran exactly twice.
       expect(instance.status).toBe(COMPLETE);
       expect(runLog.filter((entry) => entry.step === 'awaitOutcome')).toHaveLength(2);
+    });
+  });
+
+  describe('workflow identity exposed to steps', () => {
+    /**
+     * A step that arranges an external wake-up (a Temporal completion watch, a user
+     * task callback) must record WHICH instance to wake and under WHICH tenant.
+     *
+     * Both were previously unavailable: workflow data is built before
+     * host.startWorkflow() returns, so __workflow.instanceId is an empty placeholder,
+     * and the engine tenant was never surfaced at all. The result was a watch with no
+     * instance id (delivery could not be verified) published under the executing
+     * context's partner instead of the instance's tenant — the event matched no
+     * subscription and the parked instance waited forever.
+     */
+    it('gives the step the real engine instance id and tenant', async () => {
+      const def = {
+        nameSpace: 'test',
+        name: 'identity',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'awaitOutcome',
+            type: 'test_event_suspend',
+            config: { eventName: 'temporal.workflow.settled', eventKey: 'run-identity' },
+          },
+        ],
+      };
+
+      const config = configureWorkflow();
+      config.usePersistence(persistence);
+      config.allowSingleNodeProviders(true);
+      host = config.getHost();
+      host.registerWorkflow(buildYamlWorkflowClass(def));
+      await host.start();
+
+      // Start under an explicit tenant, as WorkflowRunner does from partner.key.
+      const id = await host.startWorkflow(
+        engineWorkflowId(def),
+        def.version,
+        freshData({ __workflow: { id: 'test.identity@1.0.0', instanceId: '', nameSpace: 'test', name: 'identity', version: '1.0.0' } }),
+        'acme',
+      );
+
+      await waitForEventSubscription(persistence, id, 'temporal.workflow.settled');
+
+      expect(runLog).toHaveLength(1);
+      // The engine's id, not the empty placeholder carried in the workflow data.
+      expect(runLog[0].workflow.instanceId).toBe(id);
+      expect(runLog[0].workflow.instanceId).not.toBe('');
+      expect(runLog[0].workflow.tenantId).toBe('acme');
+      // Definition metadata from the data is preserved alongside it.
+      expect(runLog[0].workflow.name).toBe('identity');
     });
   });
 

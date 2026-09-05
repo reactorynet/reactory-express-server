@@ -445,12 +445,20 @@ export class YamlStepBody extends StepBody {
         env: data.env,
         stepResults: data.stepResults,
         logger,
-        workflow: data.__workflow || {
-          id: '',
-          instanceId: context.workflow?.id || '',
-          nameSpace: '',
-          name: '',
-          version: '',
+        // The ENGINE instance id wins over the one carried in TData: workflow data is
+        // built before host.startWorkflow() returns, so __workflow.instanceId is an
+        // empty placeholder. Steps that correlate external work back to this instance
+        // (a Temporal completion watch, a user task) need the real id, and the engine
+        // instance is the only place it exists at run time.
+        //
+        // tenantId likewise: the engine matches event subscriptions strictly by
+        // tenant, so anything that will later publish an event to wake this step must
+        // know which tenant the instance actually runs under — not the tenant of
+        // whatever context happens to be executing the step.
+        workflow: {
+          ...(data.__workflow || { id: '', nameSpace: '', name: '', version: '' }),
+          instanceId: (context as any).workflow?.id || data.__workflow?.instanceId || '',
+          tenantId: (context as any).workflow?.tenantId,
         },
         reactoryContext,
         utils: reactoryContext?.utils,

@@ -15,6 +15,12 @@ import Reactory from '@reactorynet/reactory-core';
 export type StepExecutionContext = Reactory.Workflow.IStepExecutionContext & {
   /** Durable-engine control channel. Absent in bare test/CLI contexts. */
   control?: IStepControlContext;
+  /**
+   * Workflow metadata, extended with the engine tenant. Event subscriptions are
+   * matched by tenant, so a step arranging an external wake-up (a Temporal
+   * completion, a task callback) must publish under THIS instance's tenant.
+   */
+  workflow: Reactory.Workflow.IStepExecutionContext['workflow'] & { tenantId?: string };
 };
 export type ValidationResult = Reactory.Workflow.IStepValidationResult;
 export type IYamlStep = Reactory.Workflow.IYamlStep;
