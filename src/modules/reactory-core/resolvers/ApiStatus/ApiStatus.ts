@@ -18,8 +18,8 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ ro
 
   let isAnon: boolean = false;
 
-  if (user.anon === true) {
-    isAnon = true;
+  if (user?.anon === true || isNil(user) === true) {
+    return { roles: ['ANON'], alt_roles: [] };
   }
 
   const roles: string[] = [];
