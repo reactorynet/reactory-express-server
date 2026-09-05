@@ -129,7 +129,12 @@ export class UserActivityStep extends BaseYamlStep {
           // Surface the common approval shape directly so YAML can branch on it
           // without knowing the whole payload: ${steps.approve.outputs.approved}
           approved: response?.approved,
-          completedBy: response?.completedBy ?? response?.approverId,
+          // Identity of the approver, stamped server-side by completeWorkflowTask
+          // from the authenticated context — this is the audit trail, so it is never
+          // read from the client-submitted payload.
+          completedBy: response?.completedBy,
+          completedByEmail: response?.completedByEmail,
+          completedAt: response?.completedAt,
         },
         metadata: { activityType, taskId: priorOutputs.taskId, resumed: true },
       };

@@ -213,13 +213,30 @@ class TaskResolver {
       };
     }
 
-    // Mark task as completed
+    // Mark task as completed. `completedBy` is taken from the AUTHENTICATED context,
+    // never from the submitted payload: for an approval gate the approver's identity
+    // is the audit trail, and a client-supplied one proves nothing.
+    const completedBy = (context.user as any)?._id;
+    const completedByEmail = (context.user as any)?.email;
+
     task.status = 'completed';
     task.percentComplete = 100;
     task.completionDate = new Date();
     task.resultData = params.resultData;
+    task.completedBy = completedBy;
+    task.completedByEmail = completedByEmail;
     task.updatedAt = new Date();
     await task.save();
+
+    // The payload delivered to the resumed workflow step. The submitted resultData is
+    // merged UNDER the server-stamped identity so a client cannot spoof the approver.
+    const resumePayload = {
+      ...(params.resultData && typeof params.resultData === 'object' ? params.resultData : {}),
+      completedBy: completedBy ? String(completedBy) : undefined,
+      completedByEmail,
+      completedAt: task.completionDate.toISOString(),
+      taskId: task._id.toString(),
+    };
 
     let signalResult = null;
     // Resume the workflow that raised this task.
@@ -242,7 +259,7 @@ class TaskResolver {
         signalResult = await workflowService.publishWorkflowEvent(
           TASK_COMPLETED_EVENT,
           task._id.toString(),
-          params.resultData ?? {},
+          resumePayload,
           tenantId
         );
 
@@ -252,7 +269,7 @@ class TaskResolver {
         if (signalResult && (signalResult as any).success === false) {
           signalResult = await workflowService.signalWorkflowInstance(
             task.instanceId,
-            params.resultData,
+            resumePayload,
             task.stepId
           );
         }
@@ -273,6 +290,7 @@ class TaskResolver {
             stepId: task.stepId,
             userId: context.user._id.toString(),
             resultData: params.resultData,
+            completedBy: completedBy ? String(completedBy) : undefined,
           });
         }
       }

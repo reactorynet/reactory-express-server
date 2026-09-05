@@ -165,7 +165,14 @@ describe('UserActivityStep human gate', () => {
     const result = await step.execute(
       makeContext({
         eventPublished: true,
-        eventData: { approved: true, approverId: 'user_checker_werner', comment: 'looks fine' },
+        eventData: {
+          approved: true,
+          comment: 'looks fine',
+          // Stamped by completeWorkflowTask from the authenticated context.
+          completedBy: 'user-checker',
+          completedByEmail: 'checker@reactory.net',
+          completedAt: '2026-09-05T06:54:45.179Z',
+        },
         stepResults: { approveBatch: { success: true, outputs: { taskId: 'task-abc123' }, metadata: {} } },
       }),
     );
@@ -175,7 +182,11 @@ describe('UserActivityStep human gate', () => {
     expect(result.outputs.status).toBe('completed');
     // The common approval shape is surfaced so YAML can branch without unpacking.
     expect(result.outputs.approved).toBe(true);
-    expect(result.outputs.completedBy).toBe('user_checker_werner');
+    // The approver identity must survive to the workflow — it is what a downstream
+    // signal or audit record attributes the approval to.
+    expect(result.outputs.completedBy).toBe('user-checker');
+    expect(result.outputs.completedByEmail).toBe('checker@reactory.net');
+    expect(result.outputs.completedAt).toBe('2026-09-05T06:54:45.179Z');
     expect(result.outputs.response).toMatchObject({ comment: 'looks fine' });
     // No second task on resume.
     expect(mockSaved).toHaveLength(0);
