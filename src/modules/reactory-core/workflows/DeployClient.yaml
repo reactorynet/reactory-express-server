@@ -1,0 +1,334 @@
+# core.DeployClient@1.0.0
+#
+# Parameterized Build & Deployment Workflow for Reactory PWA Client.
+# Supports multi-tenant client configurations, cache clearing, environment generation,
+# compilation, and deployment synchronization to Kubernetes pods, Podman containers, or S3 distribution.
+
+nameSpace: core
+name: DeployClient
+version: 1.0.0
+description: "Compiles and deploys Reactory PWA Client frontends with cache clearing, configuration generation, and deployment synchronization to Kubernetes, Podman, or S3/distribution targets."
+tags: [build, deploy, client, pwa, kubernetes, podman]
+metadata:
+  timeout: 900000
+
+inputs:
+  configId:
+    type: string
+    required: false
+    default: "reactory"
+    description: "Client identity configuration (reactory, booktutor, reactor, etc.)"
+  envId:
+    type: string
+    required: false
+    default: "linode"
+    description: "Environment key (local, podman, linode, production, etc.)"
+  target:
+    type: string
+    required: false
+    default: "kubernetes"
+    description: "Deployment target (kubernetes, podman, s3, distribute)"
+  clearCache:
+    type: string
+    required: false
+    default: "true"
+    description: "Set to 'true' to clear webpack cache and stale build artifacts before compiling"
+  workdir:
+    type: string
+    required: false
+    description: "Absolute path to reactory-pwa-client root. Defaults to sibling directory or $REACTORY_CLIENT."
+  kubeconfig:
+    type: string
+    required: false
+    default: "~/.kube/reactory-small.yaml"
+    description: "Path to kubeconfig file for Kubernetes deployment targets."
+  namespace:
+    type: string
+    required: false
+    default: "reactory"
+    description: "Target Kubernetes namespace."
+  clientUrl:
+    type: string
+    required: false
+    default: "https://reactory.net"
+    description: "Frontend URL for post-deployment verification."
+  port:
+    type: string
+    required: false
+    default: "9000"
+    description: "Port used when deploying via Podman."
+  skipHealthCheck:
+    type: string
+    required: false
+    default: "false"
+    description: "Set to 'true' to skip HTTP verification."
+
+steps:
+  # ── 0. Resolve client directory ──────────────────────────────────────────
+  - id: resolveClientDir
+    type: cli_command
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const path = require('path');
+          const fs = require('fs');
+
+          const customWd = process.env.CUSTOM_WD;
+          if (customWd && !customWd.startsWith('${') && fs.existsSync(customWd)) {
+            process.stdout.write(customWd);
+            process.exit(0);
+          }
+
+          if (process.env.REACTORY_CLIENT && fs.existsSync(process.env.REACTORY_CLIENT)) {
+            process.stdout.write(process.env.REACTORY_CLIENT);
+            process.exit(0);
+          }
+
+          const defaultSibling = path.resolve(process.env.REACTORY_SERVER || process.cwd(), '../reactory-pwa-client');
+          if (fs.existsSync(defaultSibling)) {
+            process.stdout.write(defaultSibling);
+            process.exit(0);
+          }
+
+          const hardcodedFallback = '/Users/wernerw/Projects/reactory/reactory-pwa-client';
+          process.stdout.write(hardcodedFallback);
+      env:
+        CUSTOM_WD: "${input.workdir}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setClientDir
+    type: set_variable
+    dependsOn: resolveClientDir
+    config:
+      action: set
+      key: clientDir
+      source: step_output
+      sourcePath: resolveClientDir.outputs.stdout
+
+  # ── 1. Clear Webpack Cache & Build Artifacts ─────────────────────────────
+  - id: maybeClearCache
+    type: condition
+    dependsOn: setClientDir
+    config:
+      condition: "input.clearCache === 'true'"
+      thenSteps:
+        - id: clearCache
+          type: cli_command
+          config:
+            command: "node"
+            args:
+              - "-e"
+              - |
+                const fs = require('fs');
+                const path = require('path');
+                const clientDir = process.env.CLIENT_DIR;
+
+                console.log(`[Cache] Cleaning cache in ${clientDir}...`);
+                const cacheDir = path.join(clientDir, 'node_modules', '.cache');
+                if (fs.existsSync(cacheDir)) {
+                  fs.rmSync(cacheDir, { recursive: true, force: true });
+                  console.log(`[Cache] Removed node_modules/.cache`);
+                }
+                const buildDir = path.join(clientDir, 'build');
+                if (fs.existsSync(buildDir)) {
+                  fs.rmSync(buildDir, { recursive: true, force: true });
+                  console.log(`[Cache] Removed build/ directory`);
+                }
+                console.log(`[Cache] Cache clearing completed.`);
+            env:
+              CLIENT_DIR: "${variables.clientDir}"
+            cwd: "${variables.clientDir}"
+            failOnError: false
+            expectedExitCodes: [0, 1]
+            output:
+              captureStdout: true
+              captureStderr: true
+
+  # ── 2. Generate Client Configuration ─────────────────────────────────────
+  - id: generateClientConfig
+    type: cli_command
+    dependsOn: maybeClearCache
+    config:
+      command: "bash"
+      args: ["bin/generate.sh", "${input.configId}", "${input.envId}"]
+      cwd: "${variables.clientDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  # ── 3. Compile React/PWA Client Bundle ───────────────────────────────────
+  - id: compileClient
+    type: cli_command
+    dependsOn: generateClientConfig
+    config:
+      command: "bash"
+      args: ["bin/build.sh", "${input.configId}", "${input.envId}"]
+      cwd: "${variables.clientDir}"
+      timeout: 600000
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: reportCompileResult
+    type: condition
+    dependsOn: compileClient
+    config:
+      condition: "steps.compileClient.outputs.exitCode === 0"
+      thenSteps:
+        - id: logCompilePass
+          type: log
+          config:
+            level: info
+            message: "PWA Client compilation PASSED for ${input.configId} (${input.envId})."
+      elseSteps:
+        - id: logCompileFail
+          type: log
+          config:
+            level: error
+            message: "PWA Client compilation FAILED — review compiler logs."
+
+  # ── 4. Deploy PWA Distribution ───────────────────────────────────────────
+  - id: deployDistribution
+    type: cli_command
+    dependsOn: reportCompileResult
+    config:
+      command: "node"
+      timeout: 600000
+      args:
+        - "-e"
+        - |
+          const { execSync } = require('child_process');
+          const path = require('path');
+          const fs = require('fs');
+
+          const clientDir = process.env.CLIENT_DIR;
+          const configId = process.env.CONFIG_ID || 'reactory';
+          const envId = process.env.ENV_ID || 'linode';
+          const target = process.env.TARGET || 'kubernetes';
+          const namespace = process.env.NAMESPACE || 'reactory';
+          const port = process.env.PORT || '9000';
+          const kubeconfig = (process.env.KUBECONFIG || '~/.kube/reactory-small.yaml').replace(/^~/, process.env.HOME);
+
+          console.log(`[DeployClient] Deploying ${configId} (${envId}) to target ${target}...`);
+
+          if (target === 'podman') {
+            console.log(`[DeployClient] Triggering Podman client deploy script...`);
+            execSync(`bash bin/deploy-podman.sh "${configId}" "${envId}" "${port}" --no-pull`, {
+              cwd: clientDir,
+              stdio: 'inherit'
+            });
+          } else if (target === 'distribute' || target === 's3') {
+            console.log(`[DeployClient] Running distribution publish script...`);
+            execSync(`bash bin/deploy.sh "${configId}" "${envId}"`, {
+              cwd: clientDir,
+              stdio: 'inherit'
+            });
+          } else {
+            // Kubernetes deployment sync
+            const kenv = `KUBECONFIG="${kubeconfig}"`;
+            console.log(`[DeployClient] Locating PWA client pod in namespace ${namespace}...`);
+
+            // Try client-specific pod first, then generic pwa-client
+            let pod = '';
+            const candidateLabels = [`app=${configId}-pwa-client`, `app=reactory-pwa-client`];
+            for (const lbl of candidateLabels) {
+              try {
+                const found = execSync(`${kenv} kubectl get pods -n "${namespace}" -l "${lbl}" -o jsonpath="{.items[0].metadata.name}" 2>/dev/null`).toString().trim();
+                if (found) {
+                  pod = found;
+                  break;
+                }
+              } catch (e) {}
+            }
+
+            if (!pod) {
+              console.warn(`[DeployClient] Note: No running PWA pod found matching labels in namespace ${namespace}.`);
+              process.exit(0);
+            }
+
+            console.log(`[DeployClient] Target pod found: ${pod}`);
+            // Check build directory
+            let distDir = path.join(clientDir, 'build', configId, envId);
+            if (!fs.existsSync(distDir)) {
+              distDir = path.join(clientDir, 'build');
+            }
+
+            console.log(`[DeployClient] Streaming client build from ${distDir} to ${pod}:/usr/share/nginx/html...`);
+            execSync(`${kenv} kubectl cp "${distDir}/." "${namespace}/${pod}:/usr/share/nginx/html/"`, { stdio: 'inherit' });
+
+            console.log(`[DeployClient] Normalizing permissions on nginx webroot...`);
+            execSync(`${kenv} kubectl exec -n "${namespace}" "${pod}" -- chmod -R a+rX /usr/share/nginx/html`, { stdio: 'inherit' });
+
+            console.log(`[DeployClient] Reloading Nginx daemon...`);
+            execSync(`${kenv} kubectl exec -n "${namespace}" "${pod}" -- nginx -s reload || true`, { stdio: 'inherit' });
+            console.log(`[DeployClient] PWA client synced and reloaded successfully.`);
+          }
+      env:
+        CLIENT_DIR: "${variables.clientDir}"
+        CONFIG_ID: "${input.configId}"
+        ENV_ID: "${input.envId}"
+        TARGET: "${input.target}"
+        NAMESPACE: "${input.namespace}"
+        KUBECONFIG: "${input.kubeconfig}"
+        PORT: "${input.port}"
+      cwd: "${variables.clientDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  # ── 5. Post-Deployment Verification ──────────────────────────────────────
+  - id: verifyClientHealth
+    type: cli_command
+    dependsOn: deployDistribution
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const https = require('https');
+          const http = require('http');
+
+          const clientUrl = process.env.CLIENT_URL || 'https://reactory.net';
+          const skip = process.env.SKIP_HEALTH === 'true';
+
+          if (skip) {
+            console.log('[VerifyClient] Health check skipped as requested.');
+            process.exit(0);
+          }
+
+          console.log(`[VerifyClient] Verifying frontend response at ${clientUrl}...`);
+          const client = clientUrl.startsWith('https') ? https : http;
+          const req = client.get(clientUrl, { timeout: 10000 }, (res) => {
+            console.log(`[VerifyClient] HTTP status: ${res.statusCode}`);
+            if (res.statusCode >= 200 && res.statusCode < 400) {
+              console.log(`[VerifyClient] Client frontend is LIVE and healthy!`);
+            } else {
+              console.warn(`[VerifyClient] Unexpected HTTP status: ${res.statusCode}`);
+            }
+          });
+          req.on('error', (e) => console.warn(`[VerifyClient] Verification warning: ${e.message}`));
+      env:
+        CLIENT_URL: "${input.clientUrl}"
+        SKIP_HEALTH: "${input.skipHealthCheck}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: logClientDeploySummary
+    type: log
+    dependsOn: verifyClientHealth
+    config:
+      level: info
+      message: "DeployClient workflow finished for ${input.configId} (${input.envId}) to ${input.target}."

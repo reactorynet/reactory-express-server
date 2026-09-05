@@ -111,14 +111,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
       // });
       const partnerToUse = partner;
       let foundUser: Reactory.Models.IUserDocument = await User.findOne(
-        { email: user.email },
-        {
-          _id: 1,
-          memberships: 1,
-          firstName: 1,
-          lastName: 1,
-          email: 1
-        }
+        { email: user.email }
       ).then();
       context.info(
         `Using partner ${partnerToUse.name} to create user ${user.email} ${
@@ -139,6 +132,12 @@ class UserService implements Reactory.Service.IReactoryUserService {
           await foundUser.save().then();
         }
 
+        if (!foundUser.memberships) {
+          foundUser.memberships = [] as any;
+        }
+
+        const effectiveRoles = roles.length == 1 && roles[0].toUpperCase().indexOf("ANON") >= 0 ? roles : union(roles, ["USER"]);
+
         const membership: any = {
           // eslint-disable-line
           clientId: new ObjectId(partnerToUse._id), // eslint-disable-line no-underscore-dangle
@@ -148,49 +147,71 @@ class UserService implements Reactory.Service.IReactoryUserService {
             businessUnit && businessUnit._id ? businessUnit._id : null, // eslint-disable-line no-underscore-dangle
           provider,
           enabled: true,
-          roles: roles.length == 1 && roles[0].toUpperCase().indexOf("ANON") >= 0 ? roles : union(roles, ["USER"]),
+          roles: effectiveRoles,
         };
 
-        let membershipString = `${membership.clientId.toString()}::${membership.organizationId?.toString() || 'null'}::${membership.businessUnitId?.toString() || 'null'}`;
-        // @ts-ignore //TODO: Fix the typings 
-        let hasMembership = foundUser.hasMembership(
-            membership.clientId,
-            membership.organizationId,
-            membership.businessUnitId
-          );
-        logger.debug(`${user.firstName} ${user.lastName} ${hasMembership ? 'has' : 'does not have'} membership: ${membershipString}`);
-        if (!hasMembership) {
-          foundUser.memberships.push(membership);          
-        }
+        const syncMembership = (mTarget: any) => {
+          const targetClientIdStr = mTarget.clientId ? mTarget.clientId.toString() : null;
+          const targetOrgIdStr = mTarget.organizationId ? mTarget.organizationId.toString() : null;
+          const targetBuIdStr = mTarget.businessUnitId ? mTarget.businessUnitId.toString() : null;
 
-        membershipString = `${membership.clientId.toString()}::${membership.organizationId?.toString() || 'null'}}`;
-        hasMembership = foundUser.hasMembership(
-          membership.clientId,
-          membership.organizationId
-        );
-        logger.debug(`${user.firstName} ${user.lastName} ${hasMembership ? 'has' : 'does not have'} membership: ${membershipString}`);
-        if (!hasMembership) {
-          foundUser.memberships.push({
+          const existingIndex = foundUser.memberships.findIndex((m: any) => {
+            const mClientIdStr = m.clientId ? m.clientId.toString() : null;
+            const mOrgIdStr = m.organizationId ? m.organizationId.toString() : null;
+            const mBuIdStr = m.businessUnitId ? m.businessUnitId.toString() : null;
+            return mClientIdStr === targetClientIdStr && mOrgIdStr === targetOrgIdStr && mBuIdStr === targetBuIdStr;
+          });
+
+          if (existingIndex >= 0) {
+            const existing = foundUser.memberships[existingIndex];
+            existing.roles = union(existing.roles || [], mTarget.roles);
+            existing.enabled = true;
+          } else {
+            foundUser.memberships.push(mTarget);
+          }
+        };
+
+        syncMembership(membership);
+
+        if (membership.organizationId) {
+          syncMembership({
             clientId: membership.clientId,
             organizationId: membership.organizationId,
+            businessUnitId: null,
             provider: membership.provider,
             enabled: membership.enabled,
             roles: membership.roles,
           });
         }
 
-        membershipString = `${membership.clientId.toString()}`;
-        hasMembership = foundUser.hasMembership(membership.clientId);
-        logger.debug(`${user.firstName} ${user.lastName} ${hasMembership ? 'has' : 'does not have'} membership: ${membershipString}`);
-        if (!hasMembership) {
-          foundUser.memberships.push({
-            clientId: membership.clientId,
-            provider: membership.provider,
-            enabled: membership.enabled,
-            roles: membership.roles,
-          });
+        syncMembership({
+          clientId: membership.clientId,
+          organizationId: null,
+          businessUnitId: null,
+          provider: membership.provider,
+          enabled: membership.enabled,
+          roles: membership.roles,
+        });
+
+        if (Array.isArray(foundUser.roles)) {
+          foundUser.roles = union(foundUser.roles, effectiveRoles);
+        } else {
+          foundUser.roles = effectiveRoles;
         }
+
+        foundUser.markModified('memberships');
+        foundUser.markModified('roles');
         result.user = await foundUser.save().then();
+
+        await User.updateOne(
+          { _id: foundUser._id },
+          {
+            $set: {
+              memberships: foundUser.memberships,
+              roles: foundUser.roles,
+            }
+          }
+        );
 
         return result;
       }

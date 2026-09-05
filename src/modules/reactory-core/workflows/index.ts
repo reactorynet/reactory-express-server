@@ -9,6 +9,10 @@ import devWorkflows from './dev';
 
 const WORKFLOW_FILES = [
     { filename: 'DefaultUserOnboarding.yaml', nameSpace: 'reactory-core', name: 'DefaultUserOnboarding', version: '1.0.0' },    
+    { filename: 'DeployServer.yaml', nameSpace: 'core', name: 'DeployServer', version: '1.0.0' },
+    { filename: 'DeployClient.yaml', nameSpace: 'core', name: 'DeployClient', version: '1.0.0' },
+    { filename: 'SyncClusterData.yaml', nameSpace: 'core', name: 'SyncClusterData', version: '1.0.0' },
+    { filename: 'VerifyDeployment.yaml', nameSpace: 'core', name: 'VerifyDeployment', version: '1.0.0' },
 ];
 const workflows: Reactory.Workflow.IWorkflow[] = WORKFLOW_FILES
     .map(({ nameSpace, name, filename, version }) => loadYamlWorkflow(nameSpace, name, filename, version, __dirname))

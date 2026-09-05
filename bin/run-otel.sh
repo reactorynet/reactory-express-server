@@ -16,6 +16,13 @@ REACTORY_ENV_ID=${2:-local}
 source ./bin/shared/shell-utils.sh
 check_env_vars
 check_node
-NODE_OPTIONS="-r /reactory/reactory-express-server/app/modules/reactory-telemetry/reactory.inst.otlp.js" NODE_PATH=/reactory/reactory-express-server/app:/reactory/reactory-express-server/node_modules:./app:./node_modules:. env-cmd --no-override -f ./.env node /reactory/reactory-express-server/app/index.js
+
+while true; do
+  echo "🚀 [run-otel] Starting Reactory Express Server..."
+  NODE_OPTIONS="-r /reactory/reactory-express-server/app/modules/reactory-telemetry/reactory.inst.otlp.js" NODE_PATH=/reactory/reactory-express-server/app:/reactory/reactory-express-server/node_modules:./app:./node_modules:. env-cmd --no-override -f ./.env node /reactory/reactory-express-server/app/index.js
+  EXIT_CODE=$?
+  echo "⚠️ [run-otel] Server process exited with code ${EXIT_CODE}. Restarting in 2s..."
+  sleep 2
+done
 
  

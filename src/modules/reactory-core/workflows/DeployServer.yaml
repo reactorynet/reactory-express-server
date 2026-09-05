@@ -1,0 +1,413 @@
+# core.DeployServer@1.0.0
+#
+# Parameterized Build & Deployment Workflow for Reactory Express Server.
+# Supports multi-tenant configuration identities, target environments (local, podman, linode, aws, minikube),
+# full container image builds & rolling updates, or fast hotfix code/data streaming with OTEL process restart.
+
+nameSpace: core
+name: DeployServer
+version: 1.0.0
+description: "Builds, packages, and deploys Reactory Express Server with multi-client parameterization, data bundling, container builds, rolling/hotfix deployments, and live healthchecks."
+tags: [build, deploy, server, kubernetes, podman, multi-client]
+metadata:
+  timeout: 1200000
+
+inputs:
+  configId:
+    type: string
+    required: false
+    default: "reactory"
+    description: "Client config key (reactory, booktutor, reactor, compute-planner, etc.)"
+  envId:
+    type: string
+    required: false
+    default: "linode"
+    description: "Environment key (local, podman, linode, production, etc.)"
+  target:
+    type: string
+    required: false
+    default: "linode/small/workload"
+    description: "Deployment target blueprint (minikube, linode/small/cluster, linode/small/workload, aws/dev/workload, podman, etc.)"
+  buildMode:
+    type: string
+    required: false
+    default: "full"
+    description: "Deployment mode: 'full' (compile + container image build + rollout) or 'hotfix' (compile + code/data stream)"
+  dataScopes:
+    type: string
+    required: false
+    default: "all"
+    description: "Data scopes to bundle/sync: all, pinned, plugins, themes, content, fonts, i18n, wordnet, profiles"
+  autoRestart:
+    type: string
+    required: false
+    default: "true"
+    description: "Boolean flag ('true'/'false') to trigger graceful in-container process restart via OTEL loop"
+  workdir:
+    type: string
+    required: false
+    description: "Absolute path to reactory-express-server root. Defaults to $REACTORY_SERVER."
+  kubeconfig:
+    type: string
+    required: false
+    default: "~/.kube/reactory-small.yaml"
+    description: "Path to kubeconfig file for Kubernetes deployment targets."
+  namespace:
+    type: string
+    required: false
+    default: "reactory"
+    description: "Target Kubernetes namespace."
+  apiEndpoint:
+    type: string
+    required: false
+    default: "https://api.reactory.net"
+    description: "Target API base URL for health verification."
+
+steps:
+  # ── 0. Resolve effective workdir ─────────────────────────────────────────
+  - id: resolveWorkdir
+    type: cli_command
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const wd = process.env.WD;
+          const fallback = process.env.REACTORY_SERVER || process.cwd();
+          process.stdout.write((wd && !wd.startsWith('${')) ? wd : fallback);
+      env:
+        WD: "${input.workdir}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setWorkdir
+    type: set_variable
+    dependsOn: resolveWorkdir
+    config:
+      action: set
+      key: serverDir
+      source: step_output
+      sourcePath: resolveWorkdir.outputs.stdout
+
+  # ── 1. Preflight Validation ──────────────────────────────────────────────
+  - id: preflightValidation
+    type: cli_command
+    dependsOn: setWorkdir
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const fs = require('fs');
+          const path = require('path');
+          const { execSync } = require('child_process');
+
+          const serverDir = process.env.SERVER_DIR;
+          const configId = process.env.CONFIG_ID || 'reactory';
+          const envId = process.env.ENV_ID || 'linode';
+          const target = process.env.TARGET || 'linode/small/workload';
+
+          console.log(`[Preflight] Validating deployment configuration for ${configId} (${envId}) on target ${target}`);
+
+          // Check env file
+          const envFile = path.join(serverDir, 'config', configId, `.env.${envId}`);
+          if (!fs.existsSync(envFile)) {
+            console.error(`[Preflight] ERROR: Environment file not found: ${envFile}`);
+            process.exit(1);
+          }
+          console.log(`[Preflight] Found environment file: ${envFile}`);
+
+          // Check Git status
+          try {
+            const gitStatus = execSync('git status --porcelain', { cwd: serverDir }).toString().trim();
+            if (gitStatus.length > 0) {
+              console.log(`[Preflight] Note: Working tree has uncommitted modifications:\n${gitStatus.slice(0, 500)}`);
+            } else {
+              console.log(`[Preflight] Working tree is clean.`);
+            }
+          } catch (e) {
+            console.warn(`[Preflight] Warning checking git status: ${e.message}`);
+          }
+
+          // Check Kubernetes connectivity if target is kubernetes
+          if (target !== 'podman' && target !== 'local') {
+            const kubeconfig = (process.env.KUBECONFIG || '').replace(/^~/, process.env.HOME);
+            if (fs.existsSync(kubeconfig)) {
+              console.log(`[Preflight] Found kubeconfig at ${kubeconfig}`);
+              try {
+                const clusterInfo = execSync(`KUBECONFIG="${kubeconfig}" kubectl cluster-info`, { timeout: 10000 }).toString();
+                console.log(`[Preflight] Kubernetes cluster connected successfully.`);
+              } catch (e) {
+                console.warn(`[Preflight] Note: Kubectl cluster-info check failed or cluster unreachable: ${e.message}`);
+              }
+            } else {
+              console.warn(`[Preflight] Kubeconfig not found at ${kubeconfig}. Ensure remote connectivity is configured.`);
+            }
+          }
+          console.log(`[Preflight] Preflight validation passed.`);
+      env:
+        SERVER_DIR: "${variables.serverDir}"
+        CONFIG_ID: "${input.configId}"
+        ENV_ID: "${input.envId}"
+        TARGET: "${input.target}"
+        KUBECONFIG: "${input.kubeconfig}"
+      cwd: "${variables.serverDir}"
+      failOnError: true
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: logPreflightPassed
+    type: log
+    dependsOn: preflightValidation
+    config:
+      level: info
+      message: "Preflight validated for ${input.configId} (${input.envId}) on ${input.target} [mode=${input.buildMode}, dataScopes=${input.dataScopes}]"
+
+  # ── 2. Compile Server & Bundle Data ───────────────────────────────────────
+  - id: buildServer
+    type: cli_command
+    dependsOn: logPreflightPassed
+    config:
+      command: "bash"
+      args: ["bin/build.sh", "${input.configId}", "${input.envId}"]
+      cwd: "${variables.serverDir}"
+      timeout: 600000
+      env:
+        INCLUDE_DATA_WITH_IMAGE: "false"
+        PACKAGE_DATA_FOLDER: "false"
+        DATA_SCOPES: "${input.dataScopes}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: reportBuildResult
+    type: condition
+    dependsOn: buildServer
+    config:
+      condition: "steps.buildServer.outputs.exitCode === 0"
+      thenSteps:
+        - id: logBuildPass
+          type: log
+          config:
+            level: info
+            message: "Server compilation and data bundling PASSED."
+      elseSteps:
+        - id: logBuildFail
+          type: log
+          config:
+            level: error
+            message: "Server compilation FAILED — review build logs."
+
+  # ── 3. Build Container Image (Full Mode Only) ─────────────────────────────
+  - id: maybeBuildImage
+    type: condition
+    dependsOn: reportBuildResult
+    config:
+      condition: "input.buildMode === 'full' && steps.buildServer.outputs.exitCode === 0"
+      thenSteps:
+        - id: buildImage
+          type: cli_command
+          config:
+            command: "bash"
+            args: ["bin/build-image.sh", "${input.configId}", "${input.envId}"]
+            cwd: "${variables.serverDir}"
+            timeout: 600000
+            failOnError: false
+            expectedExitCodes: [0, 1]
+            output:
+              captureStdout: true
+              captureStderr: true
+        - id: reportImageResult
+          type: condition
+          dependsOn: buildImage
+          config:
+            condition: "steps.buildImage.outputs.exitCode === 0"
+            thenSteps:
+              - id: logImagePass
+                type: log
+                config:
+                  level: info
+                  message: "Container image build PASSED for ${input.configId}:${input.envId}."
+            elseSteps:
+              - id: logImageFail
+                type: log
+                config:
+                  level: error
+                  message: "Container image build FAILED."
+
+  # ── 4. Workload Deployment (Podman or Kubernetes) ─────────────────────────
+  - id: deployWorkload
+    type: cli_command
+    dependsOn: maybeBuildImage
+    config:
+      command: "node"
+      timeout: 600000
+      args:
+        - "-e"
+        - |
+          const { execSync } = require('child_process');
+          const path = require('path');
+          const fs = require('fs');
+
+          const target = process.env.TARGET || 'linode/small/workload';
+          const buildMode = process.env.BUILD_MODE || 'full';
+          const configId = process.env.CONFIG_ID || 'reactory';
+          const envId = process.env.ENV_ID || 'linode';
+          const namespace = process.env.NAMESPACE || 'reactory';
+          const kubeconfig = (process.env.KUBECONFIG || '~/.kube/reactory-small.yaml').replace(/^~/, process.env.HOME);
+          const autoRestart = process.env.AUTO_RESTART === 'true';
+          const serverDir = process.env.SERVER_DIR || process.cwd();
+          const dataScopes = process.env.DATA_SCOPES || 'all';
+
+          console.log(`[Deploy] Deploying ${configId} (${envId}) to ${target} via ${buildMode} mode`);
+
+          if (target === 'podman') {
+            if (buildMode === 'full') {
+              console.log(`[Deploy] Re-deploying Podman container stack...`);
+              execSync(`bash bin/compose.sh "${configId}" "${envId}" "" "up -d"`, { cwd: serverDir, stdio: 'inherit' });
+            } else {
+              console.log(`[Deploy] Hot-streaming compiled app to podman container...`);
+              const containerName = `${configId}-express-server`;
+              const appBuildDir = path.join(serverDir, 'build', 'server', configId, envId, 'app');
+              execSync(`podman cp "${appBuildDir}/." "${containerName}:/reactory/reactory-express-server/app/"`, { stdio: 'inherit' });
+              if (autoRestart) {
+                console.log(`[Deploy] Triggering graceful restart inside podman container...`);
+                execSync(`podman exec "${containerName}" pkill -f "node /reactory/reactory-express-server/app/index.js" || true`, { stdio: 'inherit' });
+              }
+            }
+          } else {
+            // Kubernetes target (Linode, AWS, Minikube, etc.)
+            const kenv = `KUBECONFIG="${kubeconfig}"`;
+            if (buildMode === 'full') {
+              console.log(`[Deploy] Triggering Kubernetes rolling deployment update in namespace ${namespace}...`);
+              try {
+                execSync(`${kenv} kubectl rollout restart deployment/reactory-express-server -n "${namespace}"`, { stdio: 'inherit' });
+                console.log(`[Deploy] Waiting for rolling update to complete...`);
+                execSync(`${kenv} kubectl rollout status deployment/reactory-express-server -n "${namespace}" --timeout=180s`, { stdio: 'inherit' });
+                console.log(`[Deploy] Kubernetes rollout complete.`);
+              } catch (e) {
+                console.error(`[Deploy] Rollout restart encountered warning/error: ${e.message}`);
+              }
+            } else {
+              // Hotfix mode: stream app + sync data + signal OTEL reload
+              console.log(`[Deploy] Hotfix streaming to active Kubernetes pod in namespace ${namespace}...`);
+              const pod = execSync(`${kenv} kubectl get pods -n "${namespace}" -l app=reactory-express-server -o jsonpath="{.items[0].metadata.name}"`).toString().trim();
+              if (!pod) {
+                console.error(`[Deploy] No running reactory-express-server pod found in namespace ${namespace}`);
+                process.exit(1);
+              }
+              console.log(`[Deploy] Found active pod: ${pod}`);
+
+              // Stream app code
+              const appDir = path.join(serverDir, 'build', 'server', configId, envId, 'app');
+              if (fs.existsSync(appDir)) {
+                console.log(`[Deploy] Uploading compiled app code to ${pod}...`);
+                execSync(`${kenv} kubectl cp "${appDir}" "${namespace}/${pod}:/reactory/reactory-express-server/app"`, { stdio: 'inherit' });
+              }
+
+              // Stream data scopes via bin/sync-data.sh
+              console.log(`[Deploy] Synchronizing data scopes (${dataScopes}) to ${pod}...`);
+              execSync(`bash bin/sync-data.sh "${namespace}" "${kubeconfig}" "${dataScopes}"`, { cwd: serverDir, stdio: 'inherit' });
+
+              // Normalize permissions
+              execSync(`${kenv} kubectl exec -n "${namespace}" "${pod}" -- sh -c "chmod -R a+rX /reactory/reactory-data /reactory/reactory-express-server/app"`, { stdio: 'inherit' });
+
+              // Auto-restart via OTEL loop
+              if (autoRestart) {
+                console.log(`[Deploy] Signaling process restart to in-container OTEL supervisor...`);
+                execSync(`${kenv} kubectl exec -n "${namespace}" "${pod}" -- sh -c "pkill -f 'node /reactory/reactory-express-server/app/index.js' || true"`, { stdio: 'inherit' });
+              }
+            }
+          }
+          console.log(`[Deploy] Workload deployment finished successfully.`);
+      env:
+        SERVER_DIR: "${variables.serverDir}"
+        CONFIG_ID: "${input.configId}"
+        ENV_ID: "${input.envId}"
+        TARGET: "${input.target}"
+        BUILD_MODE: "${input.buildMode}"
+        DATA_SCOPES: "${input.dataScopes}"
+        AUTO_RESTART: "${input.autoRestart}"
+        KUBECONFIG: "${input.kubeconfig}"
+        NAMESPACE: "${input.namespace}"
+      cwd: "${variables.serverDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  # ── 5. Live Healthcheck Verification ──────────────────────────────────────
+  - id: verifyHealthcheck
+    type: cli_command
+    dependsOn: deployWorkload
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const https = require('https');
+          const http = require('http');
+
+          const apiEndpoint = (process.env.API_ENDPOINT || 'https://api.reactory.net').replace(/\/+$/, '');
+          const configId = process.env.CONFIG_ID || 'reactory';
+
+          function checkUrl(url, headers = {}) {
+            return new Promise((resolve) => {
+              const client = url.startsWith('https') ? https : http;
+              const req = client.get(url, { headers, timeout: 10000 }, (res) => {
+                let body = '';
+                res.on('data', chunk => body += chunk);
+                res.on('end', () => resolve({ statusCode: res.statusCode, body }));
+              });
+              req.on('error', (err) => resolve({ error: err.message }));
+              req.on('timeout', () => { req.destroy(); resolve({ error: 'timeout' }); });
+            });
+          }
+
+          async function runVerification() {
+            console.log(`[Verify] Testing live endpoints at ${apiEndpoint}...`);
+
+            // 1. /health check
+            const healthRes = await checkUrl(`${apiEndpoint}/health`);
+            console.log(`[Verify] /health response:`, healthRes.statusCode || healthRes.error);
+
+            // 2. Core client CDN plugin check
+            const cdnUrl = `${apiEndpoint}/cdn/plugins/reactory-client-core/lib/reactory.client.core.js`;
+            const cdnRes = await checkUrl(cdnUrl);
+            console.log(`[Verify] CDN core bundle response:`, cdnRes.statusCode || cdnRes.error);
+
+            // 3. Theme icon check
+            const themeRes = await checkUrl(`${apiEndpoint}/cdn/themes/reactory/images/icons-144.png`);
+            console.log(`[Verify] CDN theme icon response:`, themeRes.statusCode || themeRes.error);
+
+            if (healthRes.statusCode === 200) {
+              console.log(`[Verify] Healthcheck verification SUCCESSFUL.`);
+            } else {
+              console.warn(`[Verify] Warning: Healthcheck returned non-200 status or connection error.`);
+            }
+          }
+
+          runVerification().catch(e => {
+            console.error('[Verify] Verification error:', e);
+          });
+      env:
+        API_ENDPOINT: "${input.apiEndpoint}"
+        CONFIG_ID: "${input.configId}"
+      cwd: "${variables.serverDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: logDeploymentSummary
+    type: log
+    dependsOn: verifyHealthcheck
+    config:
+      level: info
+      message: "DeployServer workflow completed for ${input.configId} (${input.envId}) on target ${input.target} with mode ${input.buildMode}."

@@ -412,7 +412,7 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
    * before starting.
    * @returns 
    */
-  onStartup(): Promise<any> {
+  async onStartup(): Promise<any> {
     //check if directory for Wordnet exists
     const wordnetDir = path.join(process.env.APP_DATA_ROOT, 'wordnet');
     if(!fs.existsSync(wordnetDir)) {
@@ -422,25 +422,38 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
     if(!fs.existsSync(path.join(wordnetDir, 'dict/index.sense'))) {
 
       async function downloadAndExtractWordNet(databaseUrl: string, filePath: string): Promise<void> {
-        
-        const response = await fetch(databaseUrl, { method: 'GET' });
-        if (!response.ok) {
-          logger.warn(`Could not download the word net database from ${databaseUrl}`);
+        try {
+          const response = await fetch(databaseUrl, { method: 'GET' });
+          if (!response.ok) {
+            logger.warn(`Could not download the word net database from ${databaseUrl}`);
+            return;
+          }
+
+          const tarPkg = require('tar');
+          const extractFn = tarPkg.extract || tarPkg.x || (tarPkg.default && (tarPkg.default.extract || tarPkg.default.x));
+          if (!extractFn) {
+            logger.warn('tar.extract is not available, skipping WordNet extraction');
+            return;
+          }
+
+          const targetDir = path.dirname(filePath);
+          if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+
+          const extractStream: Writable = extractFn({ cwd: targetDir });
+          await new Promise((resolve, reject) => {
+            response.body.pipe(extractStream)
+              .on('error', reject)
+              .on('finish', resolve);
+          });
+
+          logger.info('WordNet database downloaded and extracted to:', filePath);
+        } catch (err: any) {
+          logger.warn(`WordNet download/extract error (non-fatal): ${err.message}`);
         }
-
-        // Pipe the response into a tar extractor and save it to the specified file path
-        const extractStream: Writable = tar.extract({ cwd: path.dirname(filePath) });
-        await new Promise((resolve, reject) => {
-          response.body.pipe(extractStream)
-            .on('error', reject)
-            .on('finish', resolve);
-        });
-
-        logger.info('WordNet database downloaded and extracted to:', filePath);
       }
 
       try {
-        downloadAndExtractWordNet('https://wordnetcode.princeton.edu/wn3.1.dict.tar.gz', path.join(wordnetDir, 'dict'));
+        await downloadAndExtractWordNet('https://wordnetcode.princeton.edu/wn3.1.dict.tar.gz', path.join(wordnetDir, 'dict'));
       } catch (error) {
         logger.error('Could not download and extract wordnet database - Wordnet Features will not work unless dictionary is installed', error);        
       }      

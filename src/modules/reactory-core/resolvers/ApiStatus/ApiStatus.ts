@@ -11,22 +11,33 @@ const packageJson = require(path.join(process.cwd(), 'package.json'));
 /***
  * Helper function to return roles for a user from the context object
  */
+const isAnonymousUser = (user: any): boolean => {
+  if (!user) return true;
+  if (user.anon === true) return true;
+  if (user.username === 'anonymous' || user.username === 'anon') return true;
+  if (user.email && (user.email.startsWith('anon') || user.email.startsWith('anonymous'))) return true;
+  if (Array.isArray(user.roles) && user.roles.length === 1 && user.roles[0] === 'ANON') return true;
+  return false;
+};
+
 const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ roles: string[], alt_roles: string[] }> => {
   const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
 
   const { user, partner } = context;
 
-  let isAnon: boolean = false;
-
-  if (user.anon === true) {
-    isAnon = true;
-  }
+  const isAnon: boolean = isAnonymousUser(user);
 
   const roles: string[] = [];
   const alt_roles: string[] = [];
-  const memberships: any[] = isArray(user.memberships) === true ? user.memberships : [];
+  const memberships: any[] = (user && isArray(user.memberships)) === true ? user.memberships : [];
 
-  if (isAnon === false) {
+  if (isAnon === false && user) {
+    const getUserDisplayName = () => {
+      if (typeof user.fullName === 'function') return user.fullName();
+      if (user.firstName || user.lastName) return `${user.firstName || ''} ${user.lastName || ''}`.trim();
+      return user.email || 'User';
+    };
+
     try {
       const login_partner_keys_setting = partner.getSetting("login_partner_keys", {
         partner_keys: [partner.key, 'reactory'],
@@ -37,12 +48,12 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ ro
 
       const login_partner_keys = login_partner_keys_setting.data;
 
-      //get a list of all partner / cross partner logins allowed
+      // get a list of all partner / cross partner logins allowed
       const partnerLogins: Reactory.Models.IReactoryClientDocument[] = await systemService.getReactoryClients({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
 
       let root_partner_memberships: any[] = [];
       memberships.forEach((membership) => {
-        if (membership.clientId.toString() === partner._id.toString()) {
+        if (membership.clientId && partner._id && membership.clientId.toString() === partner._id.toString()) {
           root_partner_memberships.push(membership);
         }
       });
@@ -57,16 +68,18 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ ro
 
       // Process partner logins sequentially to avoid parallel save errors
       for (const alt_partner of partnerLogins) {
-        const alt_partner_memberships = filter(memberships, { clientId: alt_partner._id });
+        const alt_partner_memberships = memberships.filter((m: any) =>
+          m.clientId && alt_partner._id && m.clientId.toString() === alt_partner._id.toString()
+        );
 
         for (const alt_partner_membership of alt_partner_memberships) {
           if (isArray(alt_partner_membership.roles)) {
 
             if (roles.length === 0) {
-              context.log(`${user.fullName()} did not have a membership for ${partner.name} - assigning default roles`, {}, 'debug', 'ApiStatus:getRoles');
-              //we have no roles in the primary partner,
-              //but we have one or more roles on the alt_partner
-              //so we create our OWN PARTNER default role for the user and add the membership.
+              context.log(`${getUserDisplayName()} did not have a membership for ${partner.name} - assigning default roles`, {}, 'debug', 'ApiStatus:getRoles');
+              // we have no roles in the primary partner,
+              // but we have one or more roles on the alt_partner
+              // so we create our OWN PARTNER default role for the user and add the membership.
               const _default_roles_setting = partner.getSetting('new_user_roles', ['USER'], true, 'core.SecurityNewUserRolesForReactoryClient');
               const _default_roles: string[] = _default_roles_setting?.data || ['USER'];
 
@@ -78,7 +91,7 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ ro
                 try {
                   await user.addRole(partner._id, r, null, null, context);
                 } catch (addRoleError) {
-                  context.log(`Failed to add role ${r} to user ${user.fullName()}: ${addRoleError.message}`, { error: addRoleError }, 'error', 'ApiStatus:getRoles');
+                  context.log(`Failed to add role ${r} to user ${getUserDisplayName()}: ${addRoleError.message}`, { error: addRoleError }, 'error', 'ApiStatus:getRoles');
                   // Continue processing other roles even if one fails
                 }
               }
@@ -90,9 +103,60 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ ro
           }
         }
       }
+
+      // Safe fallback if roles is still empty for an authenticated user
+      if (roles.length === 0) {
+        let fallbackRoles: string[] = [];
+        if (isArray(user.roles) && user.roles.length > 0) {
+          fallbackRoles = user.roles.filter((r: string) => r && r !== 'ANON');
+        }
+        if (fallbackRoles.length === 0) {
+          const _default_roles_setting = partner.getSetting('new_user_roles', ['USER'], true, 'core.SecurityNewUserRolesForReactoryClient');
+          fallbackRoles = _default_roles_setting?.data || ['USER'];
+        }
+
+        if (fallbackRoles.length > 0) {
+          context.log(`Assigning fallback roles [${fallbackRoles.join(', ')}] for user ${getUserDisplayName()} on ${partner.name}`, {}, 'info', 'ApiStatus:getRoles');
+          fallbackRoles.forEach((r: string) => roles.push(r));
+
+          // Auto-persist the missing membership record so the session does not drop into an unauthorized state
+          try {
+            if (typeof user.addRole === 'function') {
+              for (const r of fallbackRoles) {
+                await user.addRole(partner._id, r, null, null, context);
+              }
+            } else if (user._id) {
+              const mongoose = require('mongoose');
+              const UserModel = mongoose.models.User || mongoose.model('User');
+              if (UserModel) {
+                await UserModel.updateOne(
+                  { _id: user._id },
+                  {
+                    $addToSet: {
+                      memberships: {
+                        clientId: partner._id,
+                        enabled: true,
+                        roles: fallbackRoles,
+                      }
+                    }
+                  }
+                );
+              }
+            }
+          } catch (persistError) {
+            context.log(`Failed to auto-persist membership roles for user ${user.email}: ${persistError.message}`, { error: persistError }, 'warn', 'ApiStatus:getRoles');
+          }
+        }
+      }
     } catch (error) {
-      context.log(`Error in getRoles for user ${user.fullName()}: ${error.message}`, { error }, 'error', 'ApiStatus:getRoles');
-      // Return empty roles on error - don't expose internal details to client
+      context.log(`Error in getRoles for user ${getUserDisplayName()}: ${error.message}`, { error }, 'error', 'ApiStatus:getRoles');
+      // If user has global roles, use them as resilient fallback even on error
+      if (isArray(user.roles) && user.roles.length > 0) {
+        const globalRoles = user.roles.filter((r: string) => r && r !== 'ANON');
+        if (globalRoles.length > 0) {
+          return { roles: uniq(globalRoles), alt_roles: [] };
+        }
+      }
       return { roles: [], alt_roles: [] };
     }
   } else {
@@ -187,7 +251,7 @@ class ApiStatus {
   async routes(apiStatus: Reactory.Models.IApiStatus, _: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.Routing.IReactoryRoute[]> {
     
     const { partner, user, hasRole } = context;
-    const { anon = false } = user;
+    const anon = isAnonymousUser(user);
     const { routes } = apiStatus;
     let $routes: Reactory.Routing.IReactoryRoute[] = [];
 
@@ -204,37 +268,13 @@ class ApiStatus {
           }
         }
         if (route.public === false) {
-          permitted = false; //default to false
-          //if no roles are specified, we assume we don't care about the role, only need them to be authentication
-          if (!route.roles || route.roles.length === 0) permitted = true; 
-          //if anon is true, we deny access as the route is not public
-          //we can rewrite the route to show the login page instead
-          if (anon === true) {
-            let loginRoute = routes.find((r: Reactory.Routing.IReactoryRoute) => r.path === '/login');
-            $routes.push({ 
-              path: route.path,
-              args: loginRoute.args,
-              roles: ["ANON"],
-              components: loginRoute.components,
-              exact: route.exact,
-              id: route.id,
-              key: route.key,
-              redirect: route.redirect,
-              title: loginRoute.title,
-              public: true, 
-              componentFqn: loginRoute.componentFqn,
-              componentProps: loginRoute.componentProps,              
-            });
-            permitted = false;
-          }
-          
-          if (anon === false && route.roles && route.roles.length > 0) {
-            route.roles.forEach((role: string) => {
-              if (hasRole(role, partner._id) === true) {
-                permitted = true;
-                return false;
-              }
-            });
+          permitted = false;
+          if (anon === false) {
+            if (!route.roles || route.roles.length === 0) {
+              permitted = true;
+            } else {
+              permitted = route.roles.some((role: string) => hasRole(role, partner._id) === true);
+            }
           }
         }       
         if(permitted === true) $routes.push(route);
@@ -247,8 +287,9 @@ class ApiStatus {
   @property("ApiStatus", "server")
   async server(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
+    const membershipsList = (context.user?.memberships && Array.isArray(context.user.memberships)) ? context.user.memberships : [];
     const clients = systemService.getReactoryClients({ 
-      _id: {  $in: context.user.memberships.map((m: any) => m.clientId) } 
+      _id: {  $in: membershipsList.map((m: any) => m.clientId) } 
     });
 
     return {
@@ -290,6 +331,33 @@ class ApiStatus {
 
   @property("ApiStatus", "loggedIn")
   async loggedInContext(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.Models.IReactoryLoggedInContext> {
+    const isAnon = isAnonymousUser(context.user);
+    if (isAnon === true) {
+      return {
+        user: {
+          _id: null,
+          id: 'anon',
+          firstName: 'Anon',
+          lastName: 'Anonymous',
+          fullNameWithEmail: 'Anon Anonymous (anon@reactor.local)',
+          email: 'anon@reactor.local',
+          avatar: null,
+          authentications: [],
+          memberships: [],
+          roles: ['ANON'],
+          alt_roles: [],
+          additional: {},
+        },
+        id: 'anon',
+        memberships: [],
+        roles: ['ANON'],
+        businessUnit: null,
+        organization: null,
+        team: null,
+        additional: [],
+        altRoles: [],
+      };
+    }
         
     const { roles, alt_roles } = await getRoles(context).then();
 
@@ -299,9 +367,9 @@ class ApiStatus {
       loggedInUser = ReactoryAnonUser
     }
 
-    const memberships = loggedInUser.memberships.map((m: any) => {
+    const memberships = ((loggedInUser && Array.isArray(loggedInUser.memberships)) ? loggedInUser.memberships : []).map((m: any) => {
       return {
-        id: m._id.toString(),
+        id: m._id ? m._id.toString() : '',
         clientId: m.clientId?.toString(),
         organizationId: m.organizationId?.toString(),
         businessUnitId: m.businessUnitId?.toString(),
@@ -350,7 +418,7 @@ class ApiStatus {
     
     const { roles, alt_roles } = await getRoles(context).then()    
 
-    if (user.anon === true) {
+    if (isAnonymousUser(user)) {
       skipResfresh = true;
       isAnon = true;
     }
@@ -374,7 +442,7 @@ class ApiStatus {
       roles: uniq(roles),
       alt_roles,
       memberships: isNil(user) === false && isArray(user.memberships) ? user.memberships : [],
-      organization: user.organization,
+      organization: user ? user.organization : null,
       routes: (partner.routes || []).map((route: Reactory.Routing.IReactoryRoute) => {
         if (!route.roles) return route;
         if (intersection(route.roles, route.roles).length > 0) return route;

@@ -134,6 +134,7 @@ const UserSchema = new mongoose.Schema({
       roles: [String],
     },
   ],
+  roles: [String],
   sessionInfo: [
     {
       id: String,
@@ -207,7 +208,12 @@ UserSchema.methods.fullName = function fullName(email = false) {
  */
 UserSchema.methods.hasRole = function hasRole(clientId: string, role = 'USER', 
   organizationId: string | typeof ObjectId = null, businessUnitId: string | typeof ObjectId = null) {
-  if (this.memberships.length === 0) return false;
+  if (!this.memberships || this.memberships.length === 0) {
+    if (isArray(this.roles) && this.roles.includes(role)) {
+      return true;
+    }
+    return false;
+  }
 
   let matches = [];
 
@@ -255,6 +261,10 @@ UserSchema.methods.hasRole = function hasRole(clientId: string, role = 'USER',
     }
   }
 
+  if (isArray(this.roles) && this.roles.includes(role)) {
+    return true;
+  }
+
   return false;
 };
 
@@ -263,7 +273,9 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(
   organizationId: string | mongo.ObjectId, 
   businessUnitId: string | mongo.ObjectId) {
   
-  if (this.memberships.length === 0) return false;
+  if (!this.memberships || this.memberships.length === 0) {
+    return isArray(this.roles) && this.roles.length > 0 && !this.roles.every((r: string) => r === 'ANON');
+  }
 
 
   let matches = [];
@@ -287,11 +299,14 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(
   if (ObjectId.isValid(businessUnitId)) {
     matches = filter(
       matches,
-      membership => new ObjectId(new membership.businessUnitId).equals(new ObjectId(businessUnitId)),
+      membership => new ObjectId(membership.businessUnitId).equals(new ObjectId(businessUnitId)),
     );
   }
 
-  return (isArray(matches) === true && matches.length > 0) === true;
+  const hasMatched = isArray(matches) === true && matches.length > 0;
+  if (hasMatched) return true;
+
+  return isArray(this.roles) && this.roles.length > 0 && !this.roles.every((r: string) => r === 'ANON');
 };
 
 // eslint-disable-next-line max-len
@@ -327,11 +342,19 @@ UserSchema.methods.addRole = async function addRole
 
     const mIndex = lodash.findIndex(
       $model.memberships,
-      {
-        // @ts-ignore
-        clientId: new ObjectId(clientId),
-        organizationId: ObjectId.isValid(organizationId) ? new ObjectId(organizationId) : null,
-        businessUnitId: ObjectId.isValid(businessUnitId) ? new ObjectId(businessUnitId) : null,
+      (m: any) => {
+        if (!m.clientId || !new ObjectId(m.clientId).equals(new ObjectId(clientId))) return false;
+        if (ObjectId.isValid(organizationId)) {
+          if (!m.organizationId || !new ObjectId(m.organizationId).equals(new ObjectId(organizationId))) return false;
+        } else if (!lodash.isNil(m.organizationId)) {
+          return false;
+        }
+        if (ObjectId.isValid(businessUnitId)) {
+          if (!m.businessUnitId || !new ObjectId(m.businessUnitId).equals(new ObjectId(businessUnitId))) return false;
+        } else if (!lodash.isNil(m.businessUnitId)) {
+          return false;
+        }
+        return true;
       },
     );
 
@@ -351,6 +374,7 @@ UserSchema.methods.addRole = async function addRole
       }
     }
 
+    $model.markModified('memberships');
     await $model.save().then();
     return $model.memberships;
   }
@@ -383,18 +407,23 @@ UserSchema.methods.removeRole = async function removeRole(clientId: Id, role: st
 };
 
 UserSchema.methods.hasMembership = function hasMembership(clientId: Id, organizationId: Id, businessUnitId: Id) {
-  if (this.memberships.length === 0) return false;
+  if (!this.memberships || this.memberships.length === 0) return false;
+
+  const targetClientIdStr = clientId ? clientId.toString() : null;
+  const targetOrgIdStr = organizationId && organizationId.toString ? organizationId.toString() : null;
+  const targetBuIdStr = businessUnitId && businessUnitId.toString ? businessUnitId.toString() : null;
 
   const found = find(this.memberships, (membership) => {
-    return JSON.stringify({
-      clientId: membership.clientId.toString(),
-      organizationId: membership.organizationId ? membership.organizationId.toString() : null,
-      businessUnitId: membership.businessUnitId ? membership.businessUnitId.toString() : null,
-    }) === JSON.stringify({
-      clientId: clientId.toString(),
-      organizationId: organizationId && organizationId.toString ? organizationId.toString() : null,
-      businessUnitId: businessUnitId && businessUnitId.toString ? businessUnitId.toString() : null,
-    });
+    const mClientIdStr = membership.clientId ? membership.clientId.toString() : null;
+    if (mClientIdStr !== targetClientIdStr) return false;
+
+    const mOrgIdStr = membership.organizationId ? membership.organizationId.toString() : null;
+    if (mOrgIdStr !== targetOrgIdStr) return false;
+
+    const mBuIdStr = membership.businessUnitId ? membership.businessUnitId.toString() : null;
+    if (mBuIdStr !== targetBuIdStr) return false;
+
+    return true;
   });
 
   if (found === null || found === undefined) return false;
@@ -405,13 +434,13 @@ UserSchema.methods.hasMembership = function hasMembership(clientId: Id, organiza
 UserSchema.methods.getMembership = function getMembership(clientId: Id, organizationId?: Id, businessUnitId?: Id) {
   
   const $user: Reactory.Models.IUserDocument = this as Reactory.Models.IUserDocument;
-  if ($user.memberships.length === 0) return false;
+  if (!$user.memberships || $user.memberships.length === 0) return null;
 
   let matches = [];
 
   if (ObjectId.isValid(clientId) === false) {
     logger.warn('clientId parameter is supposed to be ObjectId');
-    return false;
+    return null;
   }
 
   matches = filter($user.memberships, (membership) => {

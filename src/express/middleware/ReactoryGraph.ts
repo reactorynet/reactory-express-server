@@ -246,8 +246,10 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
             //@ts-ignore
             const _req = req as Reactory.Server.ReactoryExpressRequest;            
             if(!_req.context) _req.context = await ReactoryContextProvider(null,{});
+            if (_req.user) _req.context.user = _req.user;
+            if (_req.partner) _req.context.partner = _req.partner;
             return _req.context;
-            },
+          },
         }), 
       ];
 

@@ -157,6 +157,8 @@ if [ -f $MODULES_FILE ]; then
     echo "🔁 Synchronizing compiled __runtime__ plugins to build destination"
     mkdir -p $BUILD_PATH/data/plugins/__runtime__/lib
     rsync -av --filter="merge $TEMP_RUNTIME_PLUGINS_RSYNC" $DATA_SOURCE_PLUGINS/ $BUILD_PATH/data/plugins/__runtime__/lib/ --quiet
+    echo "🔗 Ensuring .js symlinks for runtime plugins"
+    (cd "$BUILD_PATH/data/plugins/__runtime__/lib" && for f in *.min.js; do [ -f "$f" ] && ln -sf "$f" "${f%.min.js}.js"; done)
   fi
 
   PLUGINS_ROOT=""
@@ -172,6 +174,11 @@ if [ -f $MODULES_FILE ]; then
     rsync -av $PLUGINS_ROOT/reactory-client-core/lib/ $BUILD_PATH/data/plugins/reactory-client-core/lib/ --quiet
   fi
 
+  if [ -n "$PLUGINS_ROOT" ]; then
+    [ -f "$PLUGINS_ROOT/installed.json" ] && cp "$PLUGINS_ROOT/installed.json" $BUILD_PATH/data/plugins/
+    [ -f "$PLUGINS_ROOT/available.json" ] && cp "$PLUGINS_ROOT/available.json" $BUILD_PATH/data/plugins/
+  fi
+
   THEMES_ROOT=""
   if [ -n "$REACTORY_DATA" ] && [ -d "$REACTORY_DATA/themes" ]; then
     THEMES_ROOT="$REACTORY_DATA/themes"
@@ -183,6 +190,55 @@ if [ -f $MODULES_FILE ]; then
     echo "🔁 Synchronizing themes to build destination"
     mkdir -p $BUILD_PATH/data/themes
     rsync -av $THEMES_ROOT/ $BUILD_PATH/data/themes/ --quiet
+  fi
+
+  DATA_ROOT=""
+  if [ -n "$REACTORY_DATA" ] && [ -d "$REACTORY_DATA" ]; then
+    DATA_ROOT="$REACTORY_DATA"
+  elif [ -n "$APP_DATA_ROOT" ] && [ -d "$APP_DATA_ROOT" ]; then
+    DATA_ROOT="$APP_DATA_ROOT"
+  fi
+
+  if [ -n "$DATA_ROOT" ]; then
+    # Synchronize content (documentation, articles, static pages)
+    if [ -d "$DATA_ROOT/content" ]; then
+      echo "🔁 Synchronizing content to build destination"
+      mkdir -p $BUILD_PATH/data/content
+      rsync -av $DATA_ROOT/content/ $BUILD_PATH/data/content/ --quiet
+    fi
+
+    # Synchronize wordnet dictionary database
+    if [ -d "$DATA_ROOT/wordnet" ]; then
+      echo "🔁 Synchronizing wordnet dictionary to build destination"
+      mkdir -p $BUILD_PATH/data/wordnet
+      rsync -av $DATA_ROOT/wordnet/ $BUILD_PATH/data/wordnet/ --quiet
+    fi
+
+    # Synchronize profiles (default and reactory system profiles)
+    if [ -d "$DATA_ROOT/profiles/default" ]; then
+      echo "🔁 Synchronizing profiles/default to build destination"
+      mkdir -p $BUILD_PATH/data/profiles/default
+      rsync -av $DATA_ROOT/profiles/default/ $BUILD_PATH/data/profiles/default/ --quiet
+    fi
+    if [ -d "$DATA_ROOT/profiles/reactory" ]; then
+      echo "🔁 Synchronizing profiles/reactory to build destination"
+      mkdir -p $BUILD_PATH/data/profiles/reactory
+      rsync -av $DATA_ROOT/profiles/reactory/ $BUILD_PATH/data/profiles/reactory/ --quiet
+    fi
+
+    # Synchronize system fonts if present
+    if [ -d "$DATA_ROOT/fonts" ]; then
+      echo "🔁 Synchronizing fonts to build destination"
+      mkdir -p $BUILD_PATH/data/fonts
+      rsync -av $DATA_ROOT/fonts/ $BUILD_PATH/data/fonts/ --quiet
+    fi
+
+    # Synchronize base i18n directory
+    if [ -d "$DATA_ROOT/i18n" ]; then
+      echo "🔁 Synchronizing base i18n directory to build destination"
+      mkdir -p $BUILD_PATH/data/i18n
+      rsync -av $DATA_ROOT/i18n/ $BUILD_PATH/data/i18n/ --quiet
+    fi
   fi
 
   # Package i18n translation files for enabled namespaces
@@ -275,7 +331,7 @@ fi
 # Create archive for deployment
 echo "Creating archive for deployment"
 cd $BUILD_PATH
-if [ "${INCLUDE_DATA_WITH_IMAGE:-false}" = "true" ]; then
+if [ "${INCLUDE_DATA_WITH_IMAGE:-true}" = "true" ]; then
   echo "Including data folder in archive"
   tar -czf ../$REACTORY_CONFIG_ID-server-${REACTORY_ENV_ID}-${BUILD_VERSION}.tar.gz .
 else

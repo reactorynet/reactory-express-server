@@ -1,0 +1,267 @@
+# core.SyncClusterData@1.0.0
+#
+# Declarative workflow wrapping bin/sync-data.sh allowing targeted data synchronization
+# (plugins, themes, content, fonts, wordnet, profiles, i18n) directly to cluster pods using kubectl cp
+# with automatic permission normalization (chmod -R a+rX).
+
+nameSpace: core
+name: SyncClusterData
+version: 1.0.0
+description: "Declarative workflow synchronizing targeted reactory-data scopes (plugins, themes, content, fonts, wordnet, profiles, i18n) to Kubernetes pods with automatic permission normalization."
+tags: [data, sync, kubernetes, cdn, plugins, themes]
+metadata:
+  timeout: 600000
+
+inputs:
+  namespace:
+    type: string
+    required: false
+    default: "reactory"
+    description: "Target Kubernetes namespace."
+  kubeconfig:
+    type: string
+    required: false
+    default: "~/.kube/reactory-small.yaml"
+    description: "Path to kubeconfig file."
+  scope:
+    type: string
+    required: false
+    default: "all"
+    description: "Scope of data to synchronize: all, pinned, plugins, themes, content, fonts, i18n, wordnet, profiles."
+  podLabel:
+    type: string
+    required: false
+    default: "app=reactory-express-server"
+    description: "Kubernetes label selector for target pod."
+  normalizePermissions:
+    type: string
+    required: false
+    default: "true"
+    description: "Set to 'true' to recursively enforce a+rX permissions on /reactory/reactory-data."
+  autoRestart:
+    type: string
+    required: false
+    default: "false"
+    description: "Set to 'true' to gracefully restart server process via in-container OTEL supervisor."
+  workdir:
+    type: string
+    required: false
+    description: "Absolute path to reactory-express-server root."
+  apiEndpoint:
+    type: string
+    required: false
+    default: "https://api.reactory.net"
+    description: "Backend API endpoint for CDN asset verification."
+
+steps:
+  # ── 0. Resolve workdir ───────────────────────────────────────────────────
+  - id: resolveWorkdir
+    type: cli_command
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const wd = process.env.WD;
+          const fallback = process.env.REACTORY_SERVER || process.cwd();
+          process.stdout.write((wd && !wd.startsWith('${')) ? wd : fallback);
+      env:
+        WD: "${input.workdir}"
+      output:
+        captureStdout: true
+        captureStderr: false
+
+  - id: setWorkdir
+    type: set_variable
+    dependsOn: resolveWorkdir
+    config:
+      action: set
+      key: serverDir
+      source: step_output
+      sourcePath: resolveWorkdir.outputs.stdout
+
+  # ── 1. Preflight Pod & Environment Verification ──────────────────────────
+  - id: preflightCheck
+    type: cli_command
+    dependsOn: setWorkdir
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const { execSync } = require('child_process');
+          const fs = require('fs');
+
+          const namespace = process.env.NAMESPACE || 'reactory';
+          const podLabel = process.env.POD_LABEL || 'app=reactory-express-server';
+          const kubeconfig = (process.env.KUBECONFIG || '~/.kube/reactory-small.yaml').replace(/^~/, process.env.HOME);
+          const scope = process.env.SCOPE || 'all';
+
+          console.log(`[SyncData] Preflight verification for namespace '${namespace}', scope '${scope}'...`);
+
+          if (!fs.existsSync(kubeconfig)) {
+            console.error(`[SyncData] ERROR: Kubeconfig file not found: ${kubeconfig}`);
+            process.exit(1);
+          }
+
+          const kenv = `KUBECONFIG="${kubeconfig}"`;
+          try {
+            const pod = execSync(`${kenv} kubectl get pods -n "${namespace}" -l "${podLabel}" -o jsonpath="{.items[0].metadata.name}" 2>/dev/null`).toString().trim();
+            if (!pod) {
+              console.error(`[SyncData] ERROR: No pod matching '${podLabel}' in namespace '${namespace}'`);
+              process.exit(1);
+            }
+            console.log(`[SyncData] Found target pod: ${pod}`);
+          } catch (e) {
+            console.error(`[SyncData] ERROR executing kubectl query: ${e.message}`);
+            process.exit(1);
+          }
+      env:
+        NAMESPACE: "${input.namespace}"
+        POD_LABEL: "${input.podLabel}"
+        KUBECONFIG: "${input.kubeconfig}"
+        SCOPE: "${input.scope}"
+      cwd: "${variables.serverDir}"
+      failOnError: true
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  # ── 2. Execute Data Synchronization ──────────────────────────────────────
+  - id: executeSync
+    type: cli_command
+    dependsOn: preflightCheck
+    config:
+      command: "bash"
+      args:
+        - "bin/sync-data.sh"
+        - "${input.namespace}"
+        - "${input.kubeconfig}"
+        - "${input.scope}"
+      cwd: "${variables.serverDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: reportSyncResult
+    type: condition
+    dependsOn: executeSync
+    config:
+      condition: "steps.executeSync.outputs.exitCode === 0"
+      thenSteps:
+        - id: logSyncPass
+          type: log
+          config:
+            level: info
+            message: "Data sync PASSED for scope '${input.scope}' in namespace '${input.namespace}'."
+      elseSteps:
+        - id: logSyncFail
+          type: log
+          config:
+            level: error
+            message: "Data sync FAILED — see log output."
+
+  # ── 3. Normalization & Optional Graceful Process Restart ──────────────────
+  - id: postSyncActions
+    type: cli_command
+    dependsOn: reportSyncResult
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const { execSync } = require('child_process');
+
+          const namespace = process.env.NAMESPACE || 'reactory';
+          const podLabel = process.env.POD_LABEL || 'app=reactory-express-server';
+          const kubeconfig = (process.env.KUBECONFIG || '~/.kube/reactory-small.yaml').replace(/^~/, process.env.HOME);
+          const normalize = process.env.NORMALIZE === 'true';
+          const autoRestart = process.env.AUTO_RESTART === 'true';
+
+          const kenv = `KUBECONFIG="${kubeconfig}"`;
+          const pod = execSync(`${kenv} kubectl get pods -n "${namespace}" -l "${podLabel}" -o jsonpath="{.items[0].metadata.name}"`).toString().trim();
+
+          if (normalize) {
+            console.log(`[SyncData] Normalizing file permissions on /reactory/reactory-data...`);
+            execSync(`${kenv} kubectl exec -n "${namespace}" "${pod}" -- chmod -R a+rX /reactory/reactory-data`, { stdio: 'inherit' });
+            console.log(`[SyncData] Permissions normalized.`);
+          }
+
+          if (autoRestart) {
+            console.log(`[SyncData] Auto-restart enabled: signaling process restart to in-container OTEL supervisor...`);
+            execSync(`${kenv} kubectl exec -n "${namespace}" "${pod}" -- sh -c "pkill -f 'node /reactory/reactory-express-server/app/index.js' || true"`, { stdio: 'inherit' });
+            console.log(`[SyncData] Restart signal dispatched.`);
+          }
+      env:
+        NAMESPACE: "${input.namespace}"
+        POD_LABEL: "${input.podLabel}"
+        KUBECONFIG: "${input.kubeconfig}"
+        NORMALIZE: "${input.normalizePermissions}"
+        AUTO_RESTART: "${input.autoRestart}"
+      cwd: "${variables.serverDir}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  # ── 4. Verify Live CDN Asset Availability ─────────────────────────────────
+  - id: verifyCdnAssets
+    type: cli_command
+    dependsOn: postSyncActions
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const https = require('https');
+          const http = require('http');
+
+          const apiEndpoint = (process.env.API_ENDPOINT || 'https://api.reactory.net').replace(/\/+$/, '');
+          const scope = process.env.SCOPE || 'all';
+
+          function check(path) {
+            return new Promise((resolve) => {
+              const url = `${apiEndpoint}${path}`;
+              const client = url.startsWith('https') ? https : http;
+              client.get(url, { timeout: 8000 }, res => {
+                console.log(`[VerifyCDN] ${path} -> HTTP ${res.statusCode}`);
+                resolve(res.statusCode === 200);
+              }).on('error', e => {
+                console.warn(`[VerifyCDN] ${path} -> error: ${e.message}`);
+                resolve(false);
+              });
+            });
+          }
+
+          async function verify() {
+            console.log(`[VerifyCDN] Testing endpoints at ${apiEndpoint} for scope '${scope}'...`);
+            if (scope === 'all' || scope === 'plugins') {
+              await check('/cdn/plugins/reactory-client-core/lib/reactory.client.core.js');
+              await check('/cdn/plugins/__runtime__/lib/core.ApplicationCard@1.0.0.js');
+            }
+            if (scope === 'all' || scope === 'themes') {
+              await check('/cdn/themes/reactory/images/icons-144.png');
+              await check('/cdn/themes/reactory/images/favicon.ico');
+            }
+            console.log(`[VerifyCDN] Verification completed.`);
+          }
+
+          verify();
+      env:
+        API_ENDPOINT: "${input.apiEndpoint}"
+        SCOPE: "${input.scope}"
+      failOnError: false
+      expectedExitCodes: [0, 1]
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  - id: logSyncSummary
+    type: log
+    dependsOn: verifyCdnAssets
+    config:
+      level: info
+      message: "SyncClusterData completed for scope '${input.scope}' in namespace '${input.namespace}'."

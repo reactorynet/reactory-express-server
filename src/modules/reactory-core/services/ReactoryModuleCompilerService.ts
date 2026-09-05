@@ -388,6 +388,57 @@ class ReactoryModuleCompilerService
     const dataRoot = getDataRoot();
     const runtimeBase = path.join(dataRoot, "plugins", "__runtime__");
     const compiledFile = path.join(runtimeBase, `lib/${module.id}.min.js`);
+    const isProduction = process.env.NODE_ENV === "production";
+
+    // ---------------------------------------------------------------
+    // Strict Production Freeze:
+    // In production, NEVER invoke compilation, build.sh, or Rollup under any circumstances.
+    // ---------------------------------------------------------------
+    if (isProduction) {
+      if (fs.existsSync(compiledFile)) {
+        let checksum = "";
+        const moduleDirName = module.id.replace(/[\\/]/g, "_");
+        const checksumFile = path.join(runtimeBase, "src", moduleDirName, ".reactory-checksum");
+        try {
+          if (fs.existsSync(checksumFile)) {
+            checksum = fs.readFileSync(checksumFile, "utf8").trim();
+          }
+        } catch {
+          // ignore
+        }
+        if (!checksum) {
+          checksum = checksumFromString(module.src || module.id, "sha1");
+        }
+        return {
+          name: module.id,
+          type: "script",
+          uri: safeCDNUrl(`plugins/__runtime__/lib/${module.id}.min.js?cs=${checksum}`),
+          id: module.id,
+          signature: checksum,
+          signatureMethod: "sha1",
+          crossOrigin: false,
+          signed: true,
+          expr: "",
+          required: true,
+          cacheProvider: "CDN",
+        };
+      }
+
+      // Compiled widget is missing in production:
+      // Log missing asset error and serve a safe error notification component without child process execution.
+      this.context.log(
+        `[Production Freeze] Compiled widget missing for module ${module.id} in production environment. Runtime compilation is strictly prohibited in production.`,
+        { moduleId: module.id, compiledFile },
+        "error",
+        ReactoryModuleCompilerService.reactory.id
+      );
+
+      return this.createFailureResource(
+        module,
+        compiledFile,
+        `Compiled widget not found for ${module.id}. Runtime module compilation is disabled in production.`
+      );
+    }
 
     // ---------------------------------------------------------------
     // Acquire a per-module lock so concurrent requests for the same
@@ -486,7 +537,7 @@ class ReactoryModuleCompilerService
     // entry) triggers a rebuild.
     // ---------------------------------------------------------------
     let doCompile = false;
-    if (!fs.existsSync(compiledFile) || !fs.existsSync(entryFile)) {
+    if (!fs.existsSync(compiledFile)) {
       doCompile = true;
     } else {
       let existingChecksum = "";
@@ -496,15 +547,38 @@ class ReactoryModuleCompilerService
         }
       } catch (checksumErr) {
         this.context.log(
-          `Could not read checksum for module ${module.id}, will recompile`,
+          `Could not read checksum for module ${module.id}, will check recompile`,
           { checksumErr },
           "warning",
           ReactoryModuleCompilerService.reactory.id,
         );
         existingChecksum = "";
       }
-      if (existingChecksum !== newChecksum) {
+      if (existingChecksum && existingChecksum !== newChecksum) {
         doCompile = true;
+      }
+    }
+
+    // Safety guard: if build.sh is not available or we are in production,
+    // and compiledFile already exists without a failure signature, do NOT recompile!
+    const buildScriptPath = path.join(runtimeBase, "build.sh");
+    const canBuild = fs.existsSync(buildScriptPath);
+
+    if (doCompile && fs.existsSync(compiledFile)) {
+      try {
+        const existingContent = fs.readFileSync(compiledFile, "utf8");
+        const hasFailureScript = existingContent.includes("Compilation Failure for");
+        if (!hasFailureScript && (!canBuild || process.env.NODE_ENV === "production")) {
+          this.context.log(
+            `Using existing precompiled bundle for ${module.id} (build.sh available: ${canBuild}, prod: ${process.env.NODE_ENV === "production"})`,
+            { moduleId: module.id },
+            "info",
+            ReactoryModuleCompilerService.reactory.id,
+          );
+          doCompile = false;
+        }
+      } catch (readErr) {
+        // Continue if reading compiled file fails
       }
     }
 
@@ -593,6 +667,14 @@ class ReactoryModuleCompilerService
   ): Promise<{ success: boolean; messages: string[] }> {
     const result = { success: false, messages: [] as string[] };
 
+    // Strict Production Freeze: never invoke Rollup in production
+    if (process.env.NODE_ENV === "production") {
+      const msg = `CRITICAL: compileWithRollup invoked in production mode for module ${module.id}. Execution aborted.`;
+      this.context.log(msg, { moduleId: module.id }, "error", ReactoryModuleCompilerService.reactory.id);
+      result.messages.push(msg);
+      return result;
+    }
+
     // Start from a clean module folder so removed includes do not persist.
     try {
       if (fs.existsSync(moduleDir)) {
@@ -625,6 +707,18 @@ class ReactoryModuleCompilerService
 
     const rollupConfigFile = path.join(runtimeBase, `rollup.${module.id}.js`);
     durableWriteFile(rollupConfigFile, $config);
+
+    const buildScript = path.join(runtimeBase, "build.sh");
+    if (!fs.existsSync(buildScript)) {
+      this.context.log(
+        `Cannot compile module ${module.id}: build.sh not found at ${buildScript}`,
+        {},
+        "error",
+        ReactoryModuleCompilerService.reactory.id,
+      );
+      result.messages.push(`build.sh not found at ${buildScript}. Please ensure runtime compiler build scripts are deployed.`);
+      return result;
+    }
 
     try {
       const { stdout, stderr, error } = await exec(
@@ -667,11 +761,39 @@ class ReactoryModuleCompilerService
     compiledFile: string,
     errorMessage: string,
   ): Reactory.Forms.IReactoryFormResource {
+    const compRegistrations: string[] = [];
+    if (Array.isArray(module.components)) {
+      module.components.forEach((c) => {
+        compRegistrations.push(`
+        if ($reactory.registerComponent) {
+          $reactory.registerComponent('${c.nameSpace}', '${c.name}', '${c.version || '1.0.0'}', function MissingWidgetFallback() {
+            return React.createElement('div', {
+              style: { padding: '16px', border: '1px solid #d32f2f', borderRadius: '4px', backgroundColor: '#ffebee', color: '#c62828', fontFamily: 'sans-serif' }
+            }, React.createElement('strong', null, 'Component Unavailable: ${c.nameSpace}.${c.name}'), React.createElement('p', { style: { margin: '4px 0 0' } }, ${JSON.stringify(errorMessage)}));
+          }, ['Fallback', 'Error'], [], true, [], 'widget');
+        }`);
+      });
+    }
+
+    const idMatch = module.id.match(/^([^.]+)\.([^@]+)(?:@(.*))?$/);
+    if (idMatch && (!module.components || module.components.length === 0)) {
+      const [, ns, name, ver] = idMatch;
+      compRegistrations.push(`
+        if ($reactory.registerComponent) {
+          $reactory.registerComponent('${ns}', '${name}', '${ver || '1.0.0'}', function MissingWidgetFallback() {
+            return React.createElement('div', {
+              style: { padding: '16px', border: '1px solid #d32f2f', borderRadius: '4px', backgroundColor: '#ffebee', color: '#c62828', fontFamily: 'sans-serif' }
+            }, React.createElement('strong', null, 'Component Unavailable: ${ns}.${name}'), React.createElement('p', { style: { margin: '4px 0 0' } }, ${JSON.stringify(errorMessage)}));
+          }, ['Fallback', 'Error'], [], true, [], 'widget');
+        }`);
+    }
+
     const failureScript = `
       if(window && window.reactory) {
         var $reactory = window.reactory.api;
-        $reactory.createNotification("Compilation error on module ${module.id}: ${errorMessage}", { type: 'error' });
-        $reactory.log("Compilation Failure for ${module.id} --> [${errorMessage}]", { module: "${module.id}" }, 'error');
+        $reactory.createNotification("Compilation error on module ${module.id}: " + ${JSON.stringify(errorMessage)}, { type: 'error' });
+        $reactory.log("Compilation Failure for ${module.id} --> [" + ${JSON.stringify(errorMessage)} + "]", { module: "${module.id}" }, 'error');
+        ${compRegistrations.join('\n')}
       }
     `;
 
@@ -720,6 +842,18 @@ class ReactoryModuleCompilerService
       "__runtime__",
       "src"
     );
+
+    if (process.env.NODE_ENV === "production") {
+      this.context.log(
+        "Production environment detected: skipping runtime compiler environment setup and yarn install",
+        {},
+        "info",
+        ReactoryModuleCompilerService.reactory.id
+      );
+      if (!fs.existsSync(libPath)) fs.mkdirSync(libPath, { recursive: true });
+      if (!fs.existsSync(srcPath)) fs.mkdirSync(srcPath, { recursive: true });
+      return true;
+    }
 
     if (!fs.existsSync(runtimePath)) {
       fs.mkdirSync(runtimePath, { recursive: true });

@@ -1,0 +1,290 @@
+# core.VerifyDeployment@1.0.0
+#
+# Automated post-deployment verification workflow.
+# Issues JWT authentication via POST /login, validates effective roles and accessible route counts across target clients,
+# and verifies that multi-tenant membership resolution and CDN assets remain healthy.
+
+nameSpace: core
+name: VerifyDeployment
+version: 1.0.0
+description: "Automated post-deployment verification workflow. Authenticates administrator credentials via HTTP Basic Auth /login, queries GraphQL apiStatus, and verifies effective roles, accessible route counts, and CDN assets across multi-tenant clients (reactory, booktutor)."
+tags: [verification, healthcheck, graphql, auth, multi-client, routes]
+metadata:
+  timeout: 300000
+
+inputs:
+  apiEndpoint:
+    type: string
+    required: false
+    default: "https://api.reactory.net"
+    description: "Target API base URL (e.g. https://api.reactory.net or http://localhost:4000)."
+  adminEmail:
+    type: string
+    required: false
+    default: "werner.weber@gmail.com"
+    description: "Administrator user email for authentication tests."
+  adminPassword:
+    type: string
+    required: false
+    default: "Password123"
+    description: "Administrator user password."
+  clients:
+    type: string
+    required: false
+    default: "reactory,booktutor"
+    description: "Comma-separated list of client IDs to verify."
+  minRoutesReactory:
+    type: string
+    required: false
+    default: "30"
+    description: "Minimum expected route count for reactory client."
+  minRoutesBooktutor:
+    type: string
+    required: false
+    default: "25"
+    description: "Minimum expected route count for booktutor client."
+
+steps:
+  # ── 1. Backend Health Check ──────────────────────────────────────────────
+  - id: checkHealth
+    type: cli_command
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const https = require('https');
+          const http = require('http');
+
+          const apiEndpoint = (process.env.API_ENDPOINT || 'https://api.reactory.net').replace(/\/+$/, '');
+          console.log(`[Verify] Testing /health at ${apiEndpoint}/health...`);
+
+          const client = apiEndpoint.startsWith('https') ? https : http;
+          const req = client.get(`${apiEndpoint}/health`, { timeout: 10000 }, (res) => {
+            console.log(`[Verify] /health returned HTTP ${res.statusCode}`);
+            if (res.statusCode === 200) {
+              console.log(`[Verify] API server is LIVE and responding healthy.`);
+              process.exit(0);
+            } else {
+              console.error(`[Verify] API server returned non-200 status: ${res.statusCode}`);
+              process.exit(1);
+            }
+          });
+          req.on('error', (e) => {
+            console.error(`[Verify] Connection error: ${e.message}`);
+            process.exit(1);
+          });
+      env:
+        API_ENDPOINT: "${input.apiEndpoint}"
+      failOnError: true
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  # ── 2. Multi-Client Authentication & Route Resolution ────────────────────
+  - id: verifyMultiClientAuthAndRoutes
+    type: cli_command
+    dependsOn: checkHealth
+    config:
+      command: "node"
+      args:
+        - "-e"
+        - |
+          const https = require('https');
+          const http = require('http');
+          const { URL } = require('url');
+
+          const apiEndpoint = (process.env.API_ENDPOINT || 'https://api.reactory.net').replace(/\/+$/, '');
+          const adminEmail = process.env.ADMIN_EMAIL || 'werner.weber@gmail.com';
+          const adminPassword = process.env.ADMIN_PASSWORD || 'Password123';
+          const targetClients = (process.env.CLIENTS || 'reactory,booktutor').split(',').map(s => s.trim());
+          const minRoutesReactory = parseInt(process.env.MIN_ROUTES_REACTORY || '30', 10);
+          const minRoutesBooktutor = parseInt(process.env.MIN_ROUTES_BOOKTUTOR || '25', 10);
+
+          const clientSecrets = {
+            reactory: 'bYGgEjp9U9BBi3R3RPx8DAjm+8thTKdpymngp2kU+50=',
+            booktutor: 'booktutor-password',
+            reactor: 'reactor-secret'
+          };
+
+          function sendRequest(urlPath, method, headers, payload) {
+            return new Promise((resolve, reject) => {
+              const u = new URL(`${apiEndpoint}${urlPath}`);
+              const client = u.protocol === 'https:' ? https : http;
+
+              const reqOptions = {
+                method,
+                headers: {
+                  ...headers
+                },
+                timeout: 15000
+              };
+
+              if (payload) {
+                reqOptions.headers['Content-Type'] = 'application/json';
+                reqOptions.headers['Content-Length'] = Buffer.byteLength(payload);
+              }
+
+              const req = client.request(u, reqOptions, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                  try {
+                    const parsed = data.length > 0 ? JSON.parse(data) : {};
+                    resolve({ status: res.statusCode, data: parsed });
+                  } catch (e) {
+                    resolve({ status: res.statusCode, raw: data });
+                  }
+                });
+              });
+
+              req.on('error', reject);
+              req.on('timeout', () => { req.destroy(); reject(new Error('Request timed out')); });
+              if (payload) req.write(payload);
+              req.end();
+            });
+          }
+
+          async function verifyClient(clientKey) {
+            console.log(`\n======================================================`);
+            console.log(`🔍 Verifying Client: [${clientKey}]`);
+            console.log(`======================================================`);
+
+            const pwd = clientSecrets[clientKey] || `${clientKey}-secret`;
+            const baseHeaders = {
+              'x-client-key': clientKey,
+              'x-client-pwd': pwd
+            };
+
+            // Step A: Login via HTTP Basic Auth on /login
+            console.log(`🔑 1. Authenticating via /login for ${adminEmail}...`);
+            const basicAuth = Buffer.from(`${adminEmail}:${adminPassword}`).toString('base64');
+            const loginRes = await sendRequest('/login', 'POST', {
+              ...baseHeaders,
+              'Authorization': `Basic ${basicAuth}`
+            });
+
+            if (loginRes.status !== 200) {
+              throw new Error(`Login failed for ${clientKey} with HTTP status ${loginRes.status}: ${JSON.stringify(loginRes.data || loginRes.raw)}`);
+            }
+
+            const token = loginRes.data?.user?.token;
+            if (!token) {
+              throw new Error(`Login succeeded but did not return user.token for ${clientKey}`);
+            }
+            console.log(`   ✅ JWT authentication SUCCESSFUL (token length: ${token.length})`);
+
+            // Step B: ApiStatus query with bearer token
+            console.log(`🛡️  2. Querying apiStatus for effective roles and routes...`);
+            const statusQuery = JSON.stringify({
+              query: `
+                query ApiStatus {
+                  apiStatus {
+                    status
+                    roles
+                    routes {
+                      id
+                      title
+                      path
+                    }
+                    menus {
+                      id
+                      name
+                    }
+                  }
+                }
+              `
+            });
+
+            const authHeaders = {
+              ...baseHeaders,
+              'Authorization': `Bearer ${token}`
+            };
+
+            const statusRes = await sendRequest('/graphql', 'POST', authHeaders, statusQuery);
+            if (statusRes.data?.errors && statusRes.data.errors.length > 0) {
+              throw new Error(`apiStatus query failed for ${clientKey}: ${JSON.stringify(statusRes.data.errors)}`);
+            }
+
+            const apiStatus = statusRes.data?.data?.apiStatus;
+            if (!apiStatus) {
+              throw new Error(`apiStatus payload empty for ${clientKey}`);
+            }
+
+            const roles = apiStatus.roles || [];
+            const routes = apiStatus.routes || [];
+            const menus = apiStatus.menus || [];
+
+            console.log(`   ✅ Effective Roles (${roles.length}): [${roles.join(', ')}]`);
+            console.log(`   ✅ Accessible Routes: ${routes.length}`);
+            console.log(`   ✅ Registered Menus: ${menus.length}`);
+
+            // Validations
+            if (!roles.includes('USER')) {
+              throw new Error(`Client [${clientKey}] failed role check: 'USER' role missing! Got: ${JSON.stringify(roles)}`);
+            }
+
+            const expectedMin = clientKey === 'reactory' ? minRoutesReactory : minRoutesBooktutor;
+            if (routes.length < expectedMin) {
+              throw new Error(`Client [${clientKey}] accessible routes (${routes.length}) below minimum threshold (${expectedMin})! Membership resolution may have failed.`);
+            }
+
+            console.log(`   🎉 Client [${clientKey}] PASSED all membership and route validations!`);
+            return { clientKey, rolesCount: roles.length, routesCount: routes.length, success: true };
+          }
+
+          async function main() {
+            const results = [];
+            let failed = false;
+
+            for (const client of targetClients) {
+              try {
+                const res = await verifyClient(client);
+                results.push(res);
+              } catch (e) {
+                console.error(`   ❌ Client [${client}] FAILED: ${e.message}`);
+                results.push({ clientKey: client, error: e.message, success: false });
+                failed = true;
+              }
+            }
+
+            console.log(`\n======================================================`);
+            console.log(`📊 VERIFICATION SUMMARY:`);
+            console.log(`======================================================`);
+            for (const r of results) {
+              if (r.success) {
+                console.log(`  ✓ ${r.clientKey.padEnd(12)}: PASSED (Roles: ${r.rolesCount}, Routes: ${r.routesCount})`);
+              } else {
+                console.log(`  ✗ ${r.clientKey.padEnd(12)}: FAILED (${r.error})`);
+              }
+            }
+
+            if (failed) {
+              process.exit(1);
+            }
+            console.log(`\n🎉 All multi-client deployments verified successfully!`);
+          }
+
+          main().catch(err => {
+            console.error('[Verify] Fatal error:', err);
+            process.exit(1);
+          });
+      env:
+        API_ENDPOINT: "${input.apiEndpoint}"
+        ADMIN_EMAIL: "${input.adminEmail}"
+        ADMIN_PASSWORD: "${input.adminPassword}"
+        CLIENTS: "${input.clients}"
+        MIN_ROUTES_REACTORY: "${input.minRoutesReactory}"
+        MIN_ROUTES_BOOKTUTOR: "${input.minRoutesBooktutor}"
+      failOnError: true
+      output:
+        captureStdout: true
+        captureStderr: true
+
+  # ── 3. Final Logging ─────────────────────────────────────────────────────
+  - id: logVerificationComplete
+    type: log
+    dependsOn: verifyMultiClientAuthAndRoutes
+    config:
+      level: info
+      message: "VerifyDeployment PASSED: All target clients verified with active JWT authentication, expected role sets, and accessible route thresholds."
