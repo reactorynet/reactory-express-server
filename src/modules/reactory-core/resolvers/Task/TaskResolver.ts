@@ -141,23 +141,8 @@ class TaskResolver {
 
     await task.save();
 
-    // Publish AMQ event on workflow/tasks channel
-    try {
-      if (context.hasFeature && context.hasFeature('core.ReactoryAMQService')) {
-        const amqService = context.getService('core.ReactoryAMQService@1.0.0') as any;
-        if (amqService && amqService.publish) {
-          amqService.publish('workflow', 'workflow.task.created', {
-            taskId: task._id.toString(),
-            workflowId: task.workflowId,
-            instanceId: task.instanceId,
-            stepId: task.stepId,
-            userId: context.user._id.toString(),
-          });
-        }
-      }
-    } catch (e) {
-      context.log(`Failed to publish AMQ event for task creation: ${e.message}`, { error: e }, 'warn', 'TaskResolver');
-    }
+    // NOTE: see completeWorkflowTask — the AMQ publish that stood here targeted an
+    // unregistered service behind a guard no context implements, so it never ran.
 
     return task;
   }
@@ -278,25 +263,11 @@ class TaskResolver {
       }
     }
 
-    // Publish AMQ event on workflow channel
-    try {
-      if (context.hasFeature && context.hasFeature('core.ReactoryAMQService')) {
-        const amqService = context.getService('core.ReactoryAMQService@1.0.0') as any;
-        if (amqService && amqService.publish) {
-          amqService.publish('workflow', 'workflow.task.completed', {
-            taskId: task._id.toString(),
-            workflowId: task.workflowId,
-            instanceId: task.instanceId,
-            stepId: task.stepId,
-            userId: context.user._id.toString(),
-            resultData: params.resultData,
-            completedBy: completedBy ? String(completedBy) : undefined,
-          });
-        }
-      }
-    } catch (e) {
-      // Non-critical AMQ logging
-    }
+    // NOTE: the removed AMQ publish here referenced core.ReactoryAMQService@1.0.0,
+    // which is not a registered service, behind a `hasFeature` guard no context
+    // implements — it never ran. The workflow itself is resumed by the event
+    // published above, which is the part that matters; UI notification is handled by
+    // polling until a server→browser transport exists.
 
     return {
       success: true,

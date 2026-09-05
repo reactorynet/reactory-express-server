@@ -214,16 +214,12 @@ export class UserActivityStep extends BaseYamlStep {
 
       taskId = task._id.toString();
 
-      if (context.reactoryContext.hasFeature?.('core.ReactoryAMQService')) {
-        const amq = context.reactoryContext.getService('core.ReactoryAMQService@1.0.0') as any;
-        amq?.publish?.('workflow', 'workflow.task.created', {
-          taskId,
-          workflowId,
-          instanceId,
-          stepId: this.id,
-          userId: assignedTo,
-        });
-      }
+      // NOTE: no notification is published here. `core.ReactoryAMQService@1.0.0` was
+      // never registered — the previous publish sat behind a `hasFeature` guard that
+      // no context implements, so it silently did nothing. There is also no
+      // server→browser transport today, so the task queue polls (see the PWA's
+      // useWorkflowTasks). When a real push exists, publish on the server bus in
+      // src/amq ($pub.workflow) and bridge it to the client.
     } catch (err: any) {
       // A gate that cannot raise its task must fail: continuing would run the
       // approved path with nobody having approved anything.
