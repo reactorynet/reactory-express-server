@@ -13,9 +13,9 @@ import { StepExecutionContext, StepExecutionResult, ValidationResult } from '../
  * A single rule in the list form of `rules` — the shape the workflow JSON schema
  * documents and every YAML workflow in the repository uses.
  *
- * `field` carries the *value* under test, not a path: templates in step config
- * are interpolated before the step runs, so `field: "${input.user.email}"`
- * arrives as the email itself.
+ * `field` carries the *value* under test, not a path: the step resolves the
+ * template itself (see resolveRuleTemplates), so `field: "${input.user.email}"`
+ * is evaluated as the email itself.
  */
 export interface ValidationRuleSpec {
   /** The value to validate (usually a resolved template expression). */
@@ -116,7 +116,10 @@ export class ValidationStep extends BaseYamlStep {
     // required" and the engine retried them forever.
     if (config.rules) {
       const rulesResult = Array.isArray(config.rules)
-        ? this.validateRuleList(config.rules as ValidationRuleSpec[], config.stopOnFirstError === true)
+        ? this.validateRuleList(
+            this.resolveRuleTemplates(config.rules as ValidationRuleSpec[], context),
+            config.stopOnFirstError === true,
+          )
         : this.validateCustomRules(data, config.rules);
       validationResults.rules = rulesResult;
       if (!rulesResult.valid) {
@@ -173,6 +176,52 @@ export class ValidationStep extends BaseYamlStep {
   }
   
   /**
+   * Resolve the templates carried by list-form rules.
+   *
+   * Step config is NOT interpolated by the engine — every step resolves its own
+   * templates — so without this a rule reads `field: "${input.email}"` as the
+   * literal token. That is worse than an error: a `required` rule PASSES, because
+   * "${input.email}" is a non-empty string, so the validation silently approves
+   * whatever it was meant to guard, while `pattern` / `type` / `range` rules fail
+   * against text that was never the value.
+   *
+   * resolveTemplateValue (not resolveTemplate) so a numeric or boolean input keeps
+   * its type — `type` and `range` rules test the actual value, not its string form.
+   */
+  private resolveRuleTemplates(
+    rules: ValidationRuleSpec[],
+    context: StepExecutionContext,
+  ): ValidationRuleSpec[] {
+    return rules.map((rule) => ({
+      ...rule,
+      field: this.resolveRuleValue(rule.field, context),
+      // `value` holds the expectation (a regex, a type name, {min,max}); a workflow
+      // may template it too, e.g. range bounds taken from workflow inputs.
+      value:
+        rule.value === undefined
+          ? undefined
+          : this.resolveDataTemplates(rule.value, context),
+    }));
+  }
+
+  /**
+   * Resolve a rule's value, treating an UNRESOLVED reference as absent.
+   *
+   * resolveTemplateValue deliberately passes an unresolvable token through, so that
+   * callers handling optional config can tell "not supplied" from "supplied empty".
+   * For validation the opposite is needed: `field: "${input.email}"` with no such
+   * input means the value is MISSING, and a `required` rule must fail. Returning the
+   * token would make it pass — the exact silent-approval bug this guards against.
+   */
+  private resolveRuleValue(value: any, context: StepExecutionContext): any {
+    const resolved = this.resolveTemplateValue(value, context);
+    if (typeof resolved === 'string' && resolved.includes('${')) {
+      return undefined;
+    }
+    return resolved;
+  }
+
+  /**
    * Resolve template variables in data recursively
    * @param data - Data to resolve
    * @param context - Execution context
@@ -180,7 +229,9 @@ export class ValidationStep extends BaseYamlStep {
    */
   private resolveDataTemplates(data: any, context: StepExecutionContext): any {
     if (typeof data === 'string') {
-      return this.resolveTemplate(data, context);
+      // Type-preserving: a whole-value reference must stay an object/array/number,
+      // otherwise schema and type rules test JSON text instead of the value.
+      return this.resolveTemplateValue(data, context);
     }
     
     if (Array.isArray(data)) {
@@ -284,8 +335,8 @@ export class ValidationStep extends BaseYamlStep {
   /**
    * Evaluate the list form of `rules`.
    *
-   * Each rule carries the value under test on `field` (templates in step config
-   * are already interpolated by the time the step runs) plus the check to apply.
+   * Each rule carries the value under test on `field` (already resolved by
+   * resolveRuleTemplates) plus the check to apply.
    *
    * @param rules - Rules to evaluate
    * @param stopOnFirstError - Return as soon as one rule fails
