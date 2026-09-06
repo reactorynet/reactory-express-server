@@ -32,10 +32,16 @@ MIGRATION_NAME=""
 _CLIENT_SET=0
 _ENV_SET=0
 
+USE_BUN=false
+BUN_VERSION=""
+
 for arg in "$@"; do
   case "$arg" in
     --module=*) ONLY_MODULE="${arg#*=}" ;;
     --name=*)   MIGRATION_NAME="${arg#*=}" ;;
+    --bun)      USE_BUN=true ;;
+    --bun-version=*) USE_BUN=true; BUN_VERSION="${arg#*=}" ;;
+    --version=*)     BUN_VERSION="${arg#*=}" ;;
     --*)        ;;
     *)
       if [[ $_CLIENT_SET -eq 0 ]]; then
@@ -79,6 +85,16 @@ if [[ ! -f "$TYPEORM_CLI" ]]; then
   exit 1
 fi
 
+if [[ "$USE_BUN" == "true" ]]; then
+  ensure_bun "$BUN_VERSION" || exit 1
+  RUN_CLI=("bun" "$TYPEORM_CLI")
+else
+  if type check_node &>/dev/null; then
+    check_node
+  fi
+  RUN_CLI=("node" "-r" "ts-node/register" "$TYPEORM_CLI")
+fi
+
 MODULES_DIR="./src/modules"
 
 run_for_module() {
@@ -93,14 +109,14 @@ run_for_module() {
   printf '\n\033[1;34m┌─ module: %s\033[0m\n' "$module_key"
 
   if [[ "$COMMAND" == "status" ]]; then
-    NODE_PATH="" "$ENV_CMD" -f "$ENV_FILE" node -r ts-node/register "$TYPEORM_CLI" migration:show -d "$ds_file"
+    NODE_PATH="" "$ENV_CMD" --no-override -f "$ENV_FILE" "${RUN_CLI[@]}" migration:show -d "$ds_file"
   elif [[ "$COMMAND" == "up" ]]; then
-    NODE_PATH="" "$ENV_CMD" -f "$ENV_FILE" node -r ts-node/register "$TYPEORM_CLI" migration:run -d "$ds_file"
+    NODE_PATH="" "$ENV_CMD" --no-override -f "$ENV_FILE" "${RUN_CLI[@]}" migration:run -d "$ds_file"
   elif [[ "$COMMAND" == "down" ]]; then
-    NODE_PATH="" "$ENV_CMD" -f "$ENV_FILE" node -r ts-node/register "$TYPEORM_CLI" migration:revert -d "$ds_file"
+    NODE_PATH="" "$ENV_CMD" --no-override -f "$ENV_FILE" "${RUN_CLI[@]}" migration:revert -d "$ds_file"
   elif [[ "$COMMAND" == "create" ]]; then
     local target="${module_dir}/migrations/typeorm/${MIGRATION_NAME}"
-    NODE_PATH="" "$ENV_CMD" -f "$ENV_FILE" node -r ts-node/register "$TYPEORM_CLI" migration:create "$target"
+    NODE_PATH="" "$ENV_CMD" --no-override -f "$ENV_FILE" "${RUN_CLI[@]}" migration:create "$target"
   else
     echo "Error: unsupported command '$COMMAND'"
     return 1

@@ -45,12 +45,18 @@ VALIDATE=false
 _CLIENT_SET=0
 _ENV_SET=0
 
+USE_BUN=false
+BUN_VERSION=""
+
 for arg in "$@"; do
   case "$arg" in
     --module=*)  ONLY_MODULE="${arg#*=}" ;;
     --server)    SERVER_ONLY=true ;;
     --desc=*)    DESCRIPTION="${arg#*=}" ;;
     --validate)  VALIDATE=true ;;
+    --bun)       USE_BUN=true ;;
+    --bun-version=*) USE_BUN=true; BUN_VERSION="${arg#*=}" ;;
+    --version=*)     BUN_VERSION="${arg#*=}" ;;
     --*)         ;;  # ignore unknown flags
     *)
       if [[ $_CLIENT_SET -eq 0 ]]; then CLIENT_KEY="$arg";  _CLIENT_SET=1
@@ -135,6 +141,13 @@ JSEOF
   echo "$tmp"
 }
 
+if [[ "$USE_BUN" == "true" ]]; then
+  ensure_bun "$BUN_VERSION" || exit 1
+  RUN_CMD=("bun" "$MIGRATE_BIN")
+else
+  RUN_CMD=("$MIGRATE_BIN")
+fi
+
 # Runs the current COMMAND against one config file, then optionally removes it.
 run_for_target() {
   local label="$1"
@@ -143,9 +156,9 @@ run_for_target() {
   printf '\n\033[1;34m┌─ %s\033[0m\n' "$label"
 
   if [[ "$COMMAND" == "create" ]]; then
-    "$ENV_CMD" -f "$ENV_FILE" "$MIGRATE_BIN" create -f "$config" "$DESCRIPTION"
+    "$ENV_CMD" --no-override -f "$ENV_FILE" "${RUN_CMD[@]}" create -f "$config" "$DESCRIPTION"
   else
-    "$ENV_CMD" -f "$ENV_FILE" "$MIGRATE_BIN" "$COMMAND" -f "$config"
+    "$ENV_CMD" --no-override -f "$ENV_FILE" "${RUN_CMD[@]}" "$COMMAND" -f "$config"
   fi
 
   local exit_code=$?

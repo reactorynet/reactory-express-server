@@ -112,17 +112,19 @@ Every script in `bin/` conforms to this pattern:
 
 | Script | How Environment is Loaded |
 |--------|---------------------------|
-| `bin/start.sh` | `copy_env_file`, `source_env_file`, then `env-cmd -f ./.env` |
-| `bin/start-otel.sh` | `copy_env_file`, `source_env_file`, then `env-cmd -f ./.env` |
-| `bin/debug.sh` | `copy_env_file`, `source_env_file`, then `env-cmd -f ./.env` |
-| `bin/generate.sh` | `copy_env_file`, `source_env_file`, then `env-cmd -f ./.env` |
+| `bin/start.sh` | Dev server; auto-restarts; supports `--bun` and `--bun-version=VERSION` |
+| `bin/start-otel.sh` | Dev server with OTLP telemetry; supports `--bun` and `--bun-version=VERSION` |
+| `bin/debug.sh` | Debugger attached; supports `--bun` and `--bun-version=VERSION` |
+| `bin/generate.sh` | Code generation runner; supports `--bun` and `--bun-version=VERSION` |
 | `bin/run.sh` | Dynamically resolves `app/index.js`; supports `--bun` and `--bun-version=VERSION` |
 | `bin/run-otel.sh` | Continuous restart loop; preloads OTLP; supports `--bun` and `--bun-version=VERSION` |
 | `bin/serve.sh` | `copy_env_file`, `source_env_file`, then `env-cmd -f ./.env` with PM2 |
 | `bin/bun.sh` | Dedicated Bun runner; resolves `app/index.js`; supports `--bun-version=VERSION` |
-| `bin/reactory` | Resolves base + override, merges to root `./.env`, then passes to `env-cmd` |
-| `bin/migrate.sh` | `copy_env_file`, sets `ENV_FILE="./.env"`, invokes `migrate-mongo` via `env-cmd` |
-| `bin/migrate-typeorm.sh` | `copy_env_file`, sets `ENV_FILE="./.env"`, invokes TypeORM via `env-cmd` |
+| `bin/reactory` | Unified CLI; resolves base + override; supports `--bun` and `--bun-version=VERSION` |
+| `bin/jest.sh` | Jest / Bun test runner; supports `--bun` and `--bun-version=VERSION` |
+| `bin/mocha.sh` | Mocha test runner; supports `--bun` and `--bun-version=VERSION` |
+| `bin/migrate.sh` | MongoDB migration runner; supports `--bun` and `--bun-version=VERSION` |
+| `bin/migrate-typeorm.sh` | TypeORM migration runner; supports `--bun` and `--bun-version=VERSION` |
 | `bin/backup.sh` | `source_env_file` (safe export of DB credentials) |
 | `bin/restore.sh` | `source_env_file` (safe export of DB credentials) |
 | `bin/compose.sh` | `copy_env_file`, `source_env_file`, passes `--env-file ./.env` |

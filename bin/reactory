@@ -16,6 +16,11 @@ VERBOSE=false
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# Source shell utilities
+if [ -f "${SCRIPT_DIR}/shared/shell-utils.sh" ]; then
+  source "${SCRIPT_DIR}/shared/shell-utils.sh"
+fi
+
 # Parse command line arguments
 COMMAND=""
 # An ARRAY, not a string. A string expanded unquoted is word-split on spaces, so
@@ -97,6 +102,19 @@ while [[ $# -gt 0 ]]; do
       ;;
     --debug)
       DEBUG_MODE=true
+      shift
+      ;;
+    --bun)
+      USE_BUN=true
+      shift
+      ;;
+    --bun-version=*)
+      USE_BUN=true
+      BUN_VERSION="${1#*=}"
+      shift
+      ;;
+    --version=*)
+      BUN_VERSION="${1#*=}"
       shift
       ;;
     --watch)
@@ -245,8 +263,15 @@ fi
 # Execute the CLI
 cd "$PROJECT_ROOT" || exit 1
 
-if [ "$WATCH_MODE" = true ]; then
-  NODE_PATH=./src env-cmd -f "$ENV_FILE" -- npx nodemon \
+if [ "$USE_BUN" = true ]; then
+  ensure_bun "$BUN_VERSION" || exit 1
+  if [ "$WATCH_MODE" = true ]; then
+    NODE_PATH=./src env-cmd --no-override -f "$ENV_FILE" -- bun --watch "$CLI_SCRIPT" $NODE_OPTIONS -- "${CLI_ARGS[@]}"
+  else
+    NODE_PATH=./src env-cmd --no-override -f "$ENV_FILE" -- bun run "$CLI_SCRIPT" $NODE_OPTIONS -- "${CLI_ARGS[@]}"
+  fi
+elif [ "$WATCH_MODE" = true ]; then
+  NODE_PATH=./src env-cmd --no-override -f "$ENV_FILE" -- npx nodemon \
     -e js,ts,tsx,graphql \
     --exec npx babel-node "$CLI_SCRIPT" \
     --presets @babel/env \
@@ -254,7 +279,7 @@ if [ "$WATCH_MODE" = true ]; then
     $NODE_OPTIONS \
     -- "${CLI_ARGS[@]}"
 else
-  NODE_PATH=./src env-cmd -f "$ENV_FILE" -- npx babel-node "$CLI_SCRIPT" \
+  NODE_PATH=./src env-cmd --no-override -f "$ENV_FILE" -- npx babel-node "$CLI_SCRIPT" \
     --presets @babel/env \
     --extensions ".js,.ts" \
     $NODE_OPTIONS \

@@ -74,24 +74,54 @@ else
   npm i
 fi
 
-# Extract parameters
-CLIENT=${1:-reactory}
-ENVIRONMENT=${2:-local}
-FILE_PATTERN=${3:-**/**/*.spec.*s}
+# Parse arguments
+USE_BUN=false
+BUN_VERSION=""
+POSITIONAL=()
+EXTRA_ARGS=()
+
+for arg in "$@"; do
+  case "$arg" in
+    --bun)
+      USE_BUN=true
+      ;;
+    --bun-version=*)
+      USE_BUN=true
+      BUN_VERSION="${arg#*=}"
+      ;;
+    --version=*)
+      BUN_VERSION="${arg#*=}"
+      ;;
+    *)
+      if [[ ${#POSITIONAL[@]} -lt 3 && "$arg" != -* ]]; then
+        POSITIONAL+=("$arg")
+      else
+        EXTRA_ARGS+=("$arg")
+      fi
+      ;;
+  esac
+done
+
+CLIENT=${POSITIONAL[0]:-reactory}
+ENVIRONMENT=${POSITIONAL[1]:-local}
+FILE_PATTERN=${POSITIONAL[2]:-**/**/*.spec.*s}
 
 copy_env_file "$CLIENT" "$ENVIRONMENT"
 source_env_file "$CLIENT" "$ENVIRONMENT"
 check_env_vars
 
-echo "🛠️ Loading Environment: client [${CLIENT}] env [${ENVIRONMENT}]"
+echo "🛠️ Loading Environment: client [${CLIENT}] env [${ENVIRONMENT}] runtime: $([[ "$USE_BUN" == "true" ]] && echo 'bun' || echo 'node')"
 echo "🧪 File Pattern: ${FILE_PATTERN}"
-echo "🔧 Additional Args: ${@:4}"
+echo "🔧 Additional Args: ${EXTRA_ARGS[*]}"
 
-# Build Jest command
-JEST_CMD="NODE_PATH=./ env-cmd -f ./.env npx jest \"${FILE_PATTERN}\" ${@:4} --detectOpenHandles --forceExit"
-
-echo "🚀 Running: ${JEST_CMD}"
-echo ""
-
-# Execute Jest
-eval $JEST_CMD
+if [[ "$USE_BUN" == "true" ]]; then
+  ensure_bun "$BUN_VERSION" || exit 1
+  echo "🚀 Running: bun test \"${FILE_PATTERN}\" ${EXTRA_ARGS[*]}"
+  NODE_PATH=./ env-cmd --no-override -f ./.env bun test "${FILE_PATTERN}" "${EXTRA_ARGS[@]}"
+else
+  # Build Jest command
+  JEST_CMD="NODE_PATH=./ env-cmd --no-override -f ./.env npx jest \"${FILE_PATTERN}\" ${EXTRA_ARGS[*]} --detectOpenHandles --forceExit"
+  echo "🚀 Running: ${JEST_CMD}"
+  echo ""
+  eval $JEST_CMD
+fi

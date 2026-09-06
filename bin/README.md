@@ -42,13 +42,13 @@ All scripts source `bin/shared/shell-utils.sh` to resolve runtime configuration 
 
 | Script | Purpose | Usage |
 |--------|---------|-------|
-| [start.sh](./start.sh) | Local dev server with auto-restart via nodemon | `bin/start.sh [client] [env] [--no-nodemon]` |
-| [debug.sh](./debug.sh) | Local dev server with Node inspector for remote debugging | `bin/debug.sh [client] [env]` |
-| [run.sh](./run.sh) | Run the compiled version of the application (supports Node and Bun) | `bin/run.sh [client] [env] [--bun] [--bun-version=VERSION]` |
+| [start.sh](./start.sh) | Local dev server with auto-restart (Node / Bun) | `bin/start.sh [client] [env] [--no-nodemon] [--bun] [--bun-version=VERSION]` |
+| [debug.sh](./debug.sh) | Local dev server with Node inspector / Bun inspector | `bin/debug.sh [client] [env] [--bun] [--bun-version=VERSION]` |
+| [run.sh](./run.sh) | Run the compiled version of the application (Node / Bun) | `bin/run.sh [client] [env] [--bun] [--bun-version=VERSION]` |
 | [serve.sh](./serve.sh) | Production deployment via pm2 (auto-detects podman/docker) | `bin/serve.sh [client] [env] [pm2-env]` |
 | [bun.sh](./bun.sh) | Run the compiled server using the Bun runtime | `bin/bun.sh [client] [env] [--bun-version=VERSION]` |
-| [start-otel.sh](./start-otel.sh) | Dev server with OpenTelemetry instrumentation | `bin/start-otel.sh [client] [env] [no-nodemon]` |
-| [run-otel.sh](./run-otel.sh) | Run compiled app with OTLP telemetry collector (supports Node and Bun) | `bin/run-otel.sh [client] [env] [--bun] [--bun-version=VERSION]` |
+| [start-otel.sh](./start-otel.sh) | Dev server with OpenTelemetry instrumentation (Node / Bun) | `bin/start-otel.sh [client] [env] [--no-nodemon] [--bun] [--bun-version=VERSION]` |
+| [run-otel.sh](./run-otel.sh) | Run compiled app with OTLP telemetry collector (Node / Bun) | `bin/run-otel.sh [client] [env] [--bun] [--bun-version=VERSION]` |
 
 ### Development mode
 
@@ -186,8 +186,8 @@ bin/migrate.sh create reactory local --server --desc="add-index"
 
 | Script | Purpose | Usage |
 |--------|---------|-------|
-| [jest.sh](./jest.sh) | Launch the Jest test suite with env loading and auto-installed deps | `bin/jest.sh [client] [env] [file-pattern] [--testNamePattern=PATTERN]` |
-| [mocha.sh](./mocha.sh) | Launch the Mocha test suite | `bin/mocha.sh [client] [env] [file-pattern]` |
+| [jest.sh](./jest.sh) | Launch Jest / Bun test suite | `bin/jest.sh [client] [env] [pattern] [--bun] [--bun-version=VERSION]` |
+| [mocha.sh](./mocha.sh) | Launch Mocha / Bun test suite | `bin/mocha.sh [client] [env] [pattern] [--bun] [--bun-version=VERSION]` |
 
 ### Search & Testing Infrastructure
 
@@ -200,9 +200,9 @@ bin/migrate.sh create reactory local --server --desc="add-index"
 
 | Script | Purpose | Usage |
 |--------|---------|-------|
-| [generate.sh](./generate.sh) | Run code generation from YAML definitions | `bin/generate.sh [client] [env]` |
+| [generate.sh](./generate.sh) | Run code generation from YAML definitions (Node / Bun) | `bin/generate.sh [client] [env] [--bun] [--bun-version=VERSION]` |
 | [depends.sh](./depends.sh) | Manage dependencies with watch/config/env flags | `bin/depends.sh --watch --cname=myapp --cenv=prod` |
-| [reactory](./reactory) | **The Reactory CLI entry point** | `bin/reactory workflow stats` |
+| [reactory](./reactory) | **The Reactory CLI entry point** (Node / Bun) | `bin/reactory <cmd> [--bun] [--bun-version=VERSION]` |
 | [cli.sh](./cli.sh) | DEPRECATED shim -> `bin/reactory` | `bin/cli.sh <command>` (forwards, warns) |
 
 ### Infrastructure & Git

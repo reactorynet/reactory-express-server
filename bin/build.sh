@@ -247,6 +247,12 @@ else
   echo "Modules file $MODULES_FILE not found, skipping module copy"
 fi
 
+# Clean up any non-form TypeScript source files from build output so runtimes like Bun
+# don't erroneously resolve uncompiled .ts files over compiled .js modules
+echo "🧹 Cleaning up non-form TypeScript source files from build output"
+find $APP_BUILD_PATH -name "*.ts" ! -path "*/forms/*" -delete 2>/dev/null || true
+find $APP_BUILD_PATH -name "*.tsx" ! -path "*/forms/*" -delete 2>/dev/null || true
+
 # Check if there is a pm2 configuration file
 if [ -f "./config/$REACTORY_CONFIG_ID/pm2.$REACTORY_ENV_ID.config.js" ]; then
   echo "Copying pm2 configuration file"

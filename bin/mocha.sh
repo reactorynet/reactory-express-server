@@ -11,12 +11,49 @@
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
 source ./bin/shared/shell-utils.sh
-CLIENT_KEY="${1:-reactory}"
-TARGET_ENV="${2:-local}"
+USE_BUN=false
+BUN_VERSION=""
+POSITIONAL=()
+EXTRA_ARGS=()
+
+for arg in "$@"; do
+  case "$arg" in
+    --bun)
+      USE_BUN=true
+      ;;
+    --bun-version=*)
+      USE_BUN=true
+      BUN_VERSION="${arg#*=}"
+      ;;
+    --version=*)
+      BUN_VERSION="${arg#*=}"
+      ;;
+    *)
+      if [[ ${#POSITIONAL[@]} -lt 3 && "$arg" != -* ]]; then
+        POSITIONAL+=("$arg")
+      else
+        EXTRA_ARGS+=("$arg")
+      fi
+      ;;
+  esac
+done
+
+CLIENT_KEY="${POSITIONAL[0]:-reactory}"
+TARGET_ENV="${POSITIONAL[1]:-local}"
+FILE_PATTERN="${POSITIONAL[2]:-**/**/*.spec.*s}"
 
 copy_env_file "$CLIENT_KEY" "$TARGET_ENV"
 source_env_file "$CLIENT_KEY" "$TARGET_ENV"
 check_env_vars
 
-echo "Environment: config key: [$CLIENT_KEY] target: [$TARGET_ENV]"
-NODE_PATH=./ env-cmd -f ./.env npx mocha -r ts-node/register ${3:-**/**/*.spec.*s}
+echo "Environment: config key: [$CLIENT_KEY] target: [$TARGET_ENV] runtime: $([[ "$USE_BUN" == "true" ]] && echo 'bun' || echo 'node')"
+
+if [[ "$USE_BUN" == "true" ]]; then
+  ensure_bun "$BUN_VERSION" || exit 1
+  NODE_PATH=./ env-cmd --no-override -f ./.env bun test "$FILE_PATTERN" "${EXTRA_ARGS[@]}"
+else
+  if type check_node &>/dev/null; then
+    check_node
+  fi
+  NODE_PATH=./ env-cmd --no-override -f ./.env npx mocha -r ts-node/register "$FILE_PATTERN" "${EXTRA_ARGS[@]}"
+fi
