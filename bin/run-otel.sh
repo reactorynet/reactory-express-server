@@ -120,19 +120,24 @@ if [[ "$USE_BUN" == "true" ]]; then
     exit 1
   fi
   JS_RUNTIME="bun"
-  RUNTIME_ARGS=("run" "-r" "${OTLP_ENTRY}")
+  RUNTIME_ARGS=("--preload" "${OTLP_ENTRY}")
   RUNTIME_VERSION="$(bun --version 2>/dev/null || echo 'unknown')"
 else
   if type check_node &>/dev/null; then
     check_node
   fi
   JS_RUNTIME="node"
-  RUNTIME_ARGS=()
+  RUNTIME_ARGS=("-r" "${OTLP_ENTRY}")
   RUNTIME_VERSION="$(node --version 2>/dev/null || echo 'unknown')"
 fi
 
 export NODE_PATH="${APP_DIR}:${SERVER_ROOT}/node_modules:./node_modules:./app:.${NODE_PATH:+:$NODE_PATH}"
-export NODE_OPTIONS="-r ${OTLP_ENTRY}${NODE_OPTIONS:+ $NODE_OPTIONS}"
+
+# Clear any -r flags from NODE_OPTIONS so wrapper scripts (like env-cmd)
+# do not execute OpenTelemetry instrumentation and hijack ports.
+if [[ -n "${NODE_OPTIONS:-}" ]]; then
+  export NODE_OPTIONS="$(echo "$NODE_OPTIONS" | sed -E 's/-r [^ ]+//g' | xargs)"
+fi
 
 echo "🚀 [run-otel] Starting Reactory Express Server from: ${SERVER_ROOT}"
 echo "   App Entry   : ${APP_DIR}/index.js"
