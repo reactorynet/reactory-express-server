@@ -62,17 +62,7 @@ if [[ ! -e "$ARCHIVE" ]]; then
 fi
 
 # ── Load env file for credentials ─────────────────────────────────────────────
-ENV_FILE="$REACTORY_SERVER/config/${CLIENT_KEY}/.env.${TARGET_ENV}"
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo -e "${RED}Env file not found: $ENV_FILE${NC}"
-  exit 1
-fi
-
-echo "Loading environment from: $ENV_FILE"
-set -a
-# shellcheck disable=SC1090
-source <(grep -v '^[[:space:]]*#\|^[[:space:]]*$' "$ENV_FILE")
-set +a
+source_env_file "$CLIENT_KEY" "$TARGET_ENV" || exit 1
 
 # ── Extract archive if needed ──────────────────────────────────────────────────
 WORK_DIR="$(mktemp -d)"

@@ -180,24 +180,25 @@ This will clone the server into `reactory/reactory-server/`, the core types into
 
 > **Note:** The Reactory Core library is published to npm as `@reactorynet/reactory-core`. The repository is cloned for development purposes and module definitions, but the build process is skipped during installation as the npm package is used instead. 
 
-### Install env-cmd and create a configuration file
+### Environment Configuration Files
 Before you continue with the install, make sure you have env-cmd installed globally.
 
 env-cmd is used for development / environment configuration when running the server from the terminal.
-pm2 configuration files are used for running within the pm2 container.
 `> npm install -g env-cmd` or `yarn global add env-cmd`
 
-Make a copy of the sample environment file and set the settings that is applicable for your instance.
+Reactory uses a two-stage environment resolution model:
+- **Base Environment**: `config/<name>/.env` or root `./.env` (contains common/default settings)
+- **Environment Overrides**: `config/<name>/.env.<environment>` (e.g. `.env.local`, `.env.staging`)
 
-`> cp reactory-server/config/reactory/.env.sample reactory-server/config/reactory/.env.local`
+For local development, copy the sample environment file to create your local override:
+`> cp config/reactory/env.sample config/reactory/.env.local`
 
-Change your variables to match the directories to where you have installed your server and where you want your data folder.
+Change your variables to match the directories where you have installed your server and data folder.
 
-You can also run the [addconfig.sh](/bin/addconfig.sh) command to create an environment file in the reactory-server/config folder.
+In production deployments, providing a single `.env` file at the server root or in `config/<name>/.env` is fully supported without requiring `.env.local`. See [ENVIRONMENT_CONFIGURATION.md](./ENVIRONMENT_CONFIGURATION.md) for full details.
 
-`>bin/addconfig.sh <config-name> <environment>`
-
-The config-name is the name of the configuration file you want to create.  The environment is the environment you want to create the configuration for. You can use the same utility to generate client configuration files as well.
+You can also run the [addconfig.sh](/bin/addconfig.sh) command to generate a new configuration:
+`> bin/addconfig.sh <config-name> <environment>`
 
 ### Install Azure Module
 Currently the Reactory server is using the Azure Graph API for authentication and authorization and has direct dependency on the Azure module. We will be refactoring the code and remove this direct dependency in the future and make the azure graph an optional module.
@@ -293,13 +294,13 @@ To start the default server first copy a .env.local to the /config/reactory/ fol
 ```
 
 To run the application in development mode in your terminal run:
-`> bin/start.sh <key> <environment>` where "key" is the specific environment configuration folder within `<root>/config/<key>/.env.<environment>`
+`> bin/start.sh <key> <environment>` where "key" is the specific configuration folder within `<root>/config/<key>` (default: `reactory`) and "environment" is the environment overlay (default: `local`).
 
 Files matching `<root>/config/**` will be ignored by git by default. 
 
-<b>Note:</b> Do not commit env files to the repository.  The .env files are used to store sensitive information and should not be shared with anyone.  The .env files are ignored by git by default.
+<b>Note:</b> Do not commit env files to the repository. The .env files are used to store sensitive information and are ignored by git by default.
 
-_** Running the start command without any parameters will start with 'reactory' and 'local' as the parameters for key and environment._
+Running the start command without parameters (`bin/start.sh`) will automatically resolve the base `.env` and merge with `.env.local` if present. In production deployments, a single `.env` at the server root is used directly without requiring `.env.local`.
 
 If you have configured everything correctly along with your CDN folder and default data, you should be presented by the following output in your terminal.
 
@@ -309,22 +310,34 @@ If you have configured everything correctly along with your CDN folder and defau
 
 ## Utility Scripts
 
-The `/bin` folder contains several utilities for managing your Reactory instance. See [bin/README.MD](/bin/README.MD) for the full list.
+The `/bin` folder contains comprehensive utilities for managing your Reactory instance. See [bin/README.MD](/bin/README.MD) and [ENVIRONMENT_CONFIGURATION.md](./ENVIRONMENT_CONFIGURATION.md) for detailed reference.
 
-| Script | Purpose |
-|--------|---------|
-| `bin/install.sh` | Interactive guided installer for the full platform |
-| `bin/start.sh` | Start a local development server |
-| `bin/debug.sh` | Start with a node debugger attached |
-| `bin/serve.sh` | Start in production mode via pm2 |
-| `bin/depends.sh` | Manage yarn dependencies for a configuration |
-| `bin/generate.sh` | Run the code generation process |
-| `bin/addconfig.sh` | Create a new environment configuration file |
-| `bin/git-manager.sh` | Manage all git repositories at once |
-| `bin/docker-compose.sh` | Start docker-compose services |
-| `bin/podman-compose.sh` | Start podman-compose services |
-| `bin/backup.sh` | Back up a MongoDB instance |
-| `bin/restore2.sh` | Restore MongoDB backups |
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `bin/reactory` | **Unified Reactory CLI executable** (workflows, service-gen, module-gen) | `bin/reactory <command> [options]` |
+| `bin/install.sh` | Interactive guided installer for the full platform | `bash bin/install.sh` |
+| `bin/start.sh` | Start local development server with nodemon auto-restart | `bin/start.sh [client] [env] [--no-nodemon]` |
+| `bin/start-otel.sh` | Dev server with OpenTelemetry instrumentation | `bin/start-otel.sh [client] [env] [no-nodemon]` |
+| `bin/debug.sh` | Start with Node inspector attached for remote debugging | `bin/debug.sh [client] [env]` |
+| `bin/run.sh` | Run compiled version of the application | `bin/run.sh [client] [env]` |
+| `bin/run-otel.sh` | Run compiled app in continuous loop with OpenTelemetry | `bin/run-otel.sh [client] [env]` |
+| `bin/serve.sh` | Start in production mode via PM2 | `bin/serve.sh [client] [env] [pm2-env]` |
+| `bin/restart-server.sh` | Gracefully restart running server by PID / port inspection | `bin/restart-server.sh` |
+| `bin/compose.sh` | Unified container launcher (auto-selects Podman / Docker Compose v2/v1) | `bin/compose.sh [config] [env] [variant] [cmd]` |
+| `bin/build.sh` | Compile server application and produce deployment tar archive | `bin/build.sh [client] [env]` |
+| `bin/build-image.sh` | Build container image from server build tar | `bin/build-image.sh [client] [env] [Dockerfile]` |
+| `bin/bic.sh` | **Full deployment pipeline**: build → image → compose (3 steps in one) | `bin/bic.sh [config] [env] [variant]` |
+| `bin/bit.sh` | **Infra pipeline**: build → image → PWA build → terraform apply | `bin/bit.sh [config] [env] [options]` |
+| `bin/migrate.sh` | Module-aware MongoDB migration runner (status, up, down, create) | `bin/migrate.sh [command] [client] [env]` |
+| `bin/migrate-typeorm.sh` | Module-aware PostgreSQL/TypeORM migration runner | `bin/migrate-typeorm.sh [command] [client] [env]` |
+| `bin/backup.sh` | Comprehensive database backup (MongoDB + PostgreSQL) | `bin/backup.sh [client] [env] [options]` |
+| `bin/restore.sh` | Comprehensive database restore from archive or directory | `bin/restore.sh <archive> [client] [env] [options]` |
+| `bin/generate.sh` | Run code generation from YAML service definitions | `bin/generate.sh [client] [env]` |
+| `bin/depends.sh` | Manage yarn dependencies and lockfiles for a configuration | `bin/depends.sh [--watch] [--cname=name]` |
+| `bin/git-manager.sh` | Multi-repo git management across the Reactory workspace | `bin/git-manager.sh <command>` |
+| `bin/docker-compose.sh` | Legacy docker-compose wrapper (superseded by `compose.sh`) | `bin/docker-compose.sh [client] [env] [command]` |
+| `bin/podman-compose.sh` | Legacy podman-compose wrapper (superseded by `compose.sh`) | `bin/podman-compose.sh [client] [env]` |
+| `bin/restore2.sh` | Legacy MongoDB-only restore (superseded by `restore.sh`) | `bin/restore2.sh <dbFrom> <dbTo> <file>` |
 
 ---
 

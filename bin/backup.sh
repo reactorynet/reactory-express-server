@@ -43,17 +43,7 @@ done
 [[ ${#POSITIONAL[@]} -gt 1 ]] && TARGET_ENV="${POSITIONAL[1]}"
 
 # ── Load env file ──────────────────────────────────────────────────────────────
-ENV_FILE="$REACTORY_SERVER/config/${CLIENT_KEY}/.env.${TARGET_ENV}"
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo -e "${RED}Env file not found: $ENV_FILE${NC}"
-  exit 1
-fi
-
-echo "Loading environment from: $ENV_FILE"
-set -a
-# shellcheck disable=SC1090
-source <(grep -v '^[[:space:]]*#\|^[[:space:]]*$' "$ENV_FILE")
-set +a
+source_env_file "$CLIENT_KEY" "$TARGET_ENV" || exit 1
 
 # ── Validate required shell env vars ──────────────────────────────────────────
 for var in REACTORY_DATA REACTORY_SERVER; do

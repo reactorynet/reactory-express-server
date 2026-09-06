@@ -11,33 +11,20 @@
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
 
-checkEnvVars(){
-  echo "Checking environment variables"
-  env_vars=("REACTORY_HOME" "REACTORY_DATA" "REACTORY_SERVER" "REACTORY_CLIENT" "REACTORY_PLUGINS")
-  do_exit=0
-  # Loop over each environment variable and check if it is set and points to a valid directory
-  for var in ${env_vars[@]}; do
-    if [[ -z "${!var}" ]]; then
-      echo -e "$var is not set"
-      do_exit=1
-    elif [[ ! -d "${!var}" ]]; then
-      echo -e "$var is not a valid directory"
-      do_exit=1
-    else
-      echo -e "$var is set and points to a valid directory"
-    fi
-  done
-  
-  if [[ $do_exit -eq 1 ]]; then
-    echo -e "Please set the environment variables listed above"
-    exit 1
-  fi
-  
-  echo "Checked Environment Variables"
-}
+source ./bin/shared/shell-utils.sh
+CLIENT_KEY="${1:-reactory}"
+TARGET_ENV="${2:-local}"
+PM2_ENV="${3:-local}"
 
-checkEnvVars
+copy_env_file "$CLIENT_KEY" "$TARGET_ENV"
+source_env_file "$CLIENT_KEY" "$TARGET_ENV"
+check_env_vars
 
-echo "Starting Reactory Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-local}"
-NODE_PATH=./bin/server/${1:-reactory} env-cmd -f ./config/${1:-reactory}/.env.${2-local} npx pm2 start ./bin/server/${1:-reactory}/pm2.${2-local}.config.js --env ${3:-local}
+PM2_CONFIG="./bin/server/${CLIENT_KEY}/pm2.${TARGET_ENV}.config.js"
+if [[ ! -f "$PM2_CONFIG" ]]; then
+  PM2_CONFIG="./bin/server/${CLIENT_KEY}/pm2.local.config.js"
+fi
+
+echo "Starting Reactory Server key: [${CLIENT_KEY}] target: ${TARGET_ENV} environment: ${PM2_ENV}"
+NODE_PATH=./bin/server/${CLIENT_KEY} env-cmd -f ./.env npx pm2 start "$PM2_CONFIG" --env "$PM2_ENV"
 npx pm2 monit

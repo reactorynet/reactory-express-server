@@ -10,9 +10,15 @@
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
 source ./bin/shared/shell-utils.sh
+
+CLIENT_KEY="${1:-reactory}"
+TARGET_ENV="${2:-local}"
+USE_NODEMON="${3:-nodemon}"
+
+copy_env_file "$CLIENT_KEY" "$TARGET_ENV"
+source_env_file "$CLIENT_KEY" "$TARGET_ENV"
 check_env_vars
 check_meili_search
-copy_env_file ${1:-reactory} ${2:-local}
 
 # Verify that the reactory-telemetry module is installed before attempting to
 # start with OpenTelemetry.  The module must be cloned into src/modules/ and
@@ -32,15 +38,12 @@ if [[ ! -f "$TELEMETRY_ENTRY" ]]; then
   exit 1
 fi
 
-# $3 - Use "no-nodemon" to run without nodemon (default: uses nodemon)
-USE_NODEMON=${3:-nodemon}
-
-echo "Starting Reactory Development Server (OTEL) key: [${1:-reactory}] target: ${2:-local} watch: ${USE_NODEMON}"
-sh ./bin/generate.sh ${1:-reactory} ${2:-local}
+echo "Starting Reactory Development Server (OTEL) key: [${CLIENT_KEY}] target: ${TARGET_ENV} watch: ${USE_NODEMON}"
+sh ./bin/generate.sh "$CLIENT_KEY" "$TARGET_ENV"
 # Start the application with OpenTelemetry configuration
 if [[ "$USE_NODEMON" == "no-nodemon" ]]; then
-  NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} -- npx babel-node --extensions '.js,.ts' -r ./src/modules/reactory-telemetry/reactory.inst.otlp.ts ./src/index.ts --presets @babel/env --max_old_space_size=2000000
+  NODE_PATH=./src env-cmd -f ./.env -- npx babel-node --extensions '.js,.ts' -r ./src/modules/reactory-telemetry/reactory.inst.otlp.ts ./src/index.ts --presets @babel/env --max_old_space_size=2000000
 else
-  NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} -- npx nodemon -e js,ts,tsx,graphql --exec "babel-node --extensions '.js,.ts' -r ./src/modules/reactory-telemetry/reactory.inst.otlp.ts ./src/index.ts" --presets @babel/env --max_old_space_size=2000000
+  NODE_PATH=./src env-cmd -f ./.env -- npx nodemon -e js,ts,tsx,graphql --exec "babel-node --extensions '.js,.ts' -r ./src/modules/reactory-telemetry/reactory.inst.otlp.ts ./src/index.ts" --presets @babel/env --max_old_space_size=2000000
 fi
  

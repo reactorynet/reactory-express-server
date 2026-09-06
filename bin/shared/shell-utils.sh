@@ -60,10 +60,189 @@ check_meili_search(){
   echo "Checked MeiliSearch"
 }
 
-# function to copy the specified .env file to the root of the project
+# ── Environment Resolution and Setup ──────────────────────────────────────────
+# Merges base_file and override_file into output_file using awk so that
+# override keys replace base keys in-place and brand new keys are appended.
+# Each variable key appears exactly once.
+merge_dotenv_files() {
+  local base_file="$1"
+  local override_file="$2"
+  local output_file="$3"
+
+  awk -F '=' '
+    NR==FNR {
+      line=$0
+      sub(/^[ \t]+/, "", line)
+      if (line !~ /^#/ && line ~ /=/) {
+        split(line, parts, "=")
+        key=parts[1]
+        sub(/[ \t]+$/, "", key)
+        override[key]=substr(line, length(key)+2)
+        override_seen[key]=0
+      }
+      next
+    }
+    {
+      line=$0
+      trimmed=line
+      sub(/^[ \t]+/, "", trimmed)
+      if (trimmed !~ /^#/ && trimmed ~ /=/) {
+        split(trimmed, parts, "=")
+        key=parts[1]
+        sub(/[ \t]+$/, "", key)
+        if (key in override) {
+          print key "=" override[key]
+          override_seen[key]=1
+          next
+        }
+      }
+      print $0
+    }
+    END {
+      has_new=0
+      for (k in override) {
+        if (override_seen[k] == 0) {
+          if (has_new == 0) {
+            print "\n# ── Additional Environment Overrides ──"
+            has_new=1
+          }
+          print k "=" override[k]
+        }
+      }
+    }
+  ' "$override_file" "$base_file" > "$output_file"
+}
+
+# Resolves base .env (without environment) and optional override .env.<target_env>.
+# In production, when .env.<target_env> does not exist, the base .env is used cleanly.
+# If both exist in config/, they are merged into .env with override values taking precedence.
+resolve_env_files() {
+  local client_key="${1:-reactory}"
+  local target_env="${2:-local}"
+  local server_root="${REACTORY_SERVER:-$(pwd)}"
+
+  CONFIG_BASE_ENV=""
+  CONFIG_OVERRIDE_ENV=""
+  ROOT_ENV=""
+
+  # 1. Check for configuration files inside config/<client_key>
+  if [[ -f "${server_root}/config/${client_key}/.env" ]]; then
+    CONFIG_BASE_ENV="${server_root}/config/${client_key}/.env"
+  elif [[ -f "./config/${client_key}/.env" ]]; then
+    CONFIG_BASE_ENV="./config/${client_key}/.env"
+  fi
+
+  if [[ -n "$target_env" ]]; then
+    if [[ -f "${server_root}/config/${client_key}/.env.${target_env}" ]]; then
+      CONFIG_OVERRIDE_ENV="${server_root}/config/${client_key}/.env.${target_env}"
+    elif [[ -f "./config/${client_key}/.env.${target_env}" ]]; then
+      CONFIG_OVERRIDE_ENV="./config/${client_key}/.env.${target_env}"
+    fi
+  fi
+
+  # 2. Check for root .env (used in deployed production or standalone runs)
+  if [[ -f "${server_root}/.env" ]]; then
+    ROOT_ENV="${server_root}/.env"
+  elif [[ -f "./.env" ]]; then
+    ROOT_ENV="./.env"
+  fi
+
+  if [[ -z "$CONFIG_BASE_ENV" && -z "$CONFIG_OVERRIDE_ENV" && -z "$ROOT_ENV" ]]; then
+    echo -e "${RED}Error: No environment configuration file found.${NC}" >&2
+    echo "  Checked: ./config/${client_key}/.env, ./config/${client_key}/.env.${target_env}, ./.env" >&2
+    return 1
+  fi
+
+  return 0
+}
+
+# Copies / merges the resolved environment files to the project root .env
 copy_env_file(){
-  cp ./config/${1:-reactory}/.env.${2:-local} .env
-  echo "Copied .env file"
+  local client_key="${1:-reactory}"
+  local target_env="${2:-local}"
+  local server_root="${REACTORY_SERVER:-$(pwd)}"
+  local target_file="${server_root}/.env"
+
+  resolve_env_files "$client_key" "$target_env" || return 1
+
+  # Case 1: Both config base and override exist in config/ -> Clean merge without duplicate keys
+  if [[ -n "$CONFIG_BASE_ENV" && -n "$CONFIG_OVERRIDE_ENV" ]]; then
+    echo "📄 Merging base environment ($CONFIG_BASE_ENV) and override ($CONFIG_OVERRIDE_ENV) into .env"
+    merge_dotenv_files "$CONFIG_BASE_ENV" "$CONFIG_OVERRIDE_ENV" "${target_file}.tmp"
+    mv "${target_file}.tmp" "$target_file"
+    echo "🟩 Clean merged environment written to $target_file"
+
+  # Case 2: Only config override exists (e.g. config/reactory/.env.local in dev) -> Copy directly
+  elif [[ -n "$CONFIG_OVERRIDE_ENV" ]]; then
+    local override_real=""
+    local target_real=""
+    override_real="$(cd "$(dirname "$CONFIG_OVERRIDE_ENV")" 2>/dev/null && pwd)/$(basename "$CONFIG_OVERRIDE_ENV")"
+    [[ -f "$target_file" ]] && target_real="$(cd "$(dirname "$target_file")" 2>/dev/null && pwd)/$(basename "$target_file")"
+
+    if [[ "$override_real" != "$target_real" ]]; then
+      echo "📄 Copying environment ($CONFIG_OVERRIDE_ENV) to $target_file"
+      cp "$CONFIG_OVERRIDE_ENV" "$target_file"
+    fi
+    echo "🟩 Using environment: $CONFIG_OVERRIDE_ENV"
+
+  # Case 3: Only config base exists (e.g. config/reactory/.env in prod) -> Copy directly
+  elif [[ -n "$CONFIG_BASE_ENV" ]]; then
+    local base_real=""
+    local target_real=""
+    base_real="$(cd "$(dirname "$CONFIG_BASE_ENV")" 2>/dev/null && pwd)/$(basename "$CONFIG_BASE_ENV")"
+    [[ -f "$target_file" ]] && target_real="$(cd "$(dirname "$target_file")" 2>/dev/null && pwd)/$(basename "$target_file")"
+
+    if [[ "$base_real" != "$target_real" ]]; then
+      echo "📄 Copying base environment ($CONFIG_BASE_ENV) to $target_file"
+      cp "$CONFIG_BASE_ENV" "$target_file"
+    fi
+    echo "🟩 Using base environment: $CONFIG_BASE_ENV"
+
+  # Case 4: No config/ files exist, but root ./.env exists (deployed production container/VM)
+  elif [[ -n "$ROOT_ENV" ]]; then
+    echo "🟩 Using existing production environment: $ROOT_ENV"
+  fi
+
+  return 0
+}
+
+# Sources environment variables into the calling shell (exporting them).
+# Safely parses dotenv lines without triggering shell metacharacter expansion (like &, <, >).
+source_env_file(){
+  local client_key="${1:-reactory}"
+  local target_env="${2:-local}"
+
+  resolve_env_files "$client_key" "$target_env" || return 1
+
+  _load_dotenv_file() {
+    local f="$1"
+    [[ ! -f "$f" ]] && return 0
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      local trimmed="${line#"${line%%[![:space:]]*}"}"
+      [[ -z "$trimmed" || "$trimmed" == \#* ]] && continue
+      [[ "$trimmed" != *"="* ]] && continue
+      local key="${trimmed%%=*}"
+      key="${key%"${key##*[![:space:]]}"}"
+      key="${key#export }"
+      local val="${trimmed#*=}"
+      val="${val#\"}"
+      val="${val%\"}"
+      val="${val#\'}"
+      val="${val%\'}"
+      export "$key=$val" 2>/dev/null || true
+    done < "$f"
+  }
+
+  if [[ -n "$CONFIG_BASE_ENV" ]]; then
+    _load_dotenv_file "$CONFIG_BASE_ENV"
+  fi
+  if [[ -n "$CONFIG_OVERRIDE_ENV" ]]; then
+    _load_dotenv_file "$CONFIG_OVERRIDE_ENV"
+  elif [[ -z "$CONFIG_BASE_ENV" && -n "$ROOT_ENV" ]]; then
+    _load_dotenv_file "$ROOT_ENV"
+  fi
+
+  return 0
 }
 
 package_version(){
@@ -79,6 +258,71 @@ check_node(){
     echo "🟥 Node is not installed. Please install the node runtime using nvm."
     exit 1
   fi
+}
+
+check_bun_command(){
+  if [[ -d "$HOME/.bun/bin" && ":$PATH:" != *":$HOME/.bun/bin:"* ]]; then
+    export PATH="$HOME/.bun/bin:$PATH"
+  fi
+  if has_command bun; then
+    echo "🟩 Bun is installed ($(bun --version 2>/dev/null || echo 'unknown'))"
+    return 0
+  else
+    echo "🟥 Bun is not installed."
+    return 1
+  fi
+}
+
+ensure_bun(){
+  local target_version="${1:-}"
+
+  if [[ -d "$HOME/.bun/bin" && ":$PATH:" != *":$HOME/.bun/bin:"* ]]; then
+    export PATH="$HOME/.bun/bin:$PATH"
+  fi
+
+  if has_command bun; then
+    local current_version
+    current_version="$(bun --version 2>/dev/null || echo "")"
+    if [[ -n "$target_version" && "$current_version" != "$target_version"* ]]; then
+      echo "ℹ️  Bun is installed (${current_version}), but version ${target_version} was requested."
+      if has_command npm; then
+        echo "🔄 Installing bun@${target_version} via npm..."
+        npm install -g "bun@${target_version}" 2>/dev/null || true
+      fi
+    fi
+    echo "🟩 Bun is ready ($(bun --version 2>/dev/null || echo 'unknown'))"
+    return 0
+  fi
+
+  echo "⚠️  Bun not found in PATH. Checking alternative installation methods..."
+  if has_command npm; then
+    echo "📦 Attempting to install bun via npm..."
+    npm install -g "bun${target_version:+@$target_version}" 2>/dev/null || true
+    if has_command bun; then
+      echo "🟩 Bun installed successfully ($(bun --version 2>/dev/null))"
+      return 0
+    fi
+  fi
+
+  if has_command curl; then
+    echo "📦 Attempting to install bun via official script..."
+    if [[ -n "$target_version" ]]; then
+      curl -fsSL https://bun.sh/install | bash -s "bun-v${target_version}" 2>/dev/null || true
+    else
+      curl -fsSL https://bun.sh/install | bash 2>/dev/null || true
+    fi
+    if [[ -d "$HOME/.bun/bin" && ":$PATH:" != *":$HOME/.bun/bin:"* ]]; then
+      export PATH="$HOME/.bun/bin:$PATH"
+    fi
+    if has_command bun; then
+      echo "🟩 Bun installed successfully ($(bun --version 2>/dev/null))"
+      return 0
+    fi
+  fi
+
+  echo -e "${RED}Error: Bun is not installed and could not be auto-installed.${NC}" >&2
+  echo "Please install bun manually: curl -fsSL https://bun.sh/install | bash" >&2
+  return 1
 }
 
 check_podman_command(){
@@ -100,7 +344,19 @@ check_podman_compose_command(){
 }
 
 get_env_file_path(){
-  echo "$REACTORY_SERVER/config/${REACTORY_CONFIG_ID:-reactory}/.env.${REACTORY_ENV_ID:-local}"
+  local client_key="${1:-${REACTORY_CONFIG_ID:-reactory}}"
+  local target_env="${2:-${REACTORY_ENV_ID:-local}}"
+  local server_root="${REACTORY_SERVER:-$(pwd)}"
+
+  if [[ -n "$target_env" && -f "${server_root}/config/${client_key}/.env.${target_env}" ]]; then
+    echo "${server_root}/config/${client_key}/.env.${target_env}"
+  elif [[ -f "${server_root}/config/${client_key}/.env" ]]; then
+    echo "${server_root}/config/${client_key}/.env"
+  elif [[ -f "${server_root}/.env" ]]; then
+    echo "${server_root}/.env"
+  else
+    echo "${server_root}/config/${client_key}/.env.${target_env}"
+  fi
 }
 
 log() {

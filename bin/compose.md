@@ -118,20 +118,16 @@ bin/compose.sh reactory local develop logs
 bin/compose.sh reactory local develop ps
 ```
 
-## Environment Files
+## Environment Resolution & Cascading
 
-Each configuration + environment pair maps to a `.env` file:
+`bin/compose.sh` uses a two-stage environment resolution via `copy_env_file()` and `source_env_file()`:
 
-```
-config/
-  reactory/
-    .env.local        # local development (default)
-    .env.podman       # full-stack podman run
-    .env.staging
-    .env.production
-```
+1. **Base Environment**: `config/<config-id>/.env` or `./.env`
+2. **Environment Override**: `config/<config-id>/.env.<env-id>` (e.g. `.env.local`, `.env.podman`, `.env.staging`)
 
-The env file is sourced before the image preflight runs so that variable substitutions inside compose files (e.g. `${BUILD_VERSION}`, `${REACTORY_CONFIG_ID}`) are resolved correctly.
+When both exist, they are merged into `./.env` with override keys taking precedence. In production environments where only a single `.env` exists (and no environment suffix is provided), `bin/compose.sh` automatically uses the base `.env` directly without error.
+
+The merged/active env file is sourced before preflight runs and passed to `--env-file` so variable substitutions inside compose files (e.g. `${BUILD_VERSION}`, `${REACTORY_CONFIG_ID}`) resolve properly.
 
 ## Choosing Between `compose.sh`, `podman-compose.sh`, and `docker-compose.sh`
 

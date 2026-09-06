@@ -10,5 +10,11 @@
 #$SECONDS - The number of seconds since the script was started.
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
-echo "Running Generate Process For: ./config/${1:-reactory}/${2:-local} "
-NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx babel-node ./src/utils/code/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000
+source ./bin/shared/shell-utils.sh
+CLIENT_KEY="${1:-reactory}"
+TARGET_ENV="${2:-local}"
+copy_env_file "$CLIENT_KEY" "$TARGET_ENV"
+source_env_file "$CLIENT_KEY" "$TARGET_ENV"
+
+echo "Running Generate Process For: config key: [$CLIENT_KEY] target: [$TARGET_ENV]"
+NODE_PATH=./src env-cmd -f ./.env npx babel-node ./src/utils/code/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000

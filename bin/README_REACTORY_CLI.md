@@ -143,18 +143,16 @@ bin/cli.sh service-gen -c ./service.yaml
 
 ## Configuration Files
 
-The executable expects configuration files in the following structure:
+The executable resolves environment configuration using a two-stage cascade:
 
-```
-config/
-└── <config-name>/
-    └── .env.<environment>
-```
+1. **Base Configuration**: Checks `config/<config-name>/.env` or root `./.env`.
+2. **Environment Override**: Checks `config/<config-name>/.env.<environment>` or root `./.env.<environment>`.
 
-Example:
-- `config/reactory/.env.local`
-- `config/reactory/.env.development`
-- `config/production/.env.production`
+If both exist, they are merged into `./.env` where environment-specific variables take precedence. In production environments where only a single `.env` file exists without an environment name, `bin/reactory` automatically uses the base file directly.
+
+Examples:
+- `config/reactory/.env` (base) + `config/reactory/.env.local` (local override)
+- `.env` (single production deployment file)
 
 ## Troubleshooting
 
@@ -169,10 +167,12 @@ If `reactory` command is not found:
 ### Environment File Not Found
 
 ```
-Error: Environment file not found: config/reactory/.env.local
+Error: Environment file not found.
+Checked for base: ...
+Checked for override: ...
 ```
 
-**Solution**: Create the configuration file or specify a different config:
+**Solution**: Ensure at least one valid `.env` file exists (either `./.env` or `./config/<config-name>/.env` or `./config/<config-name>/.env.<environment>`):
 ```bash
 reactory service-gen -c ./service.yaml --cname=myconfig --cenv=dev
 ```

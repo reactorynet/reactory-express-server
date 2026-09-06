@@ -18,10 +18,12 @@
 REACTORY_CONFIG_ID=${1:-reactory}
 REACTORY_ENV_ID=${2:-podman}
 source ./bin/shared/shell-utils.sh
+copy_env_file "$REACTORY_CONFIG_ID" "$REACTORY_ENV_ID" || exit 1
+source_env_file "$REACTORY_CONFIG_ID" "$REACTORY_ENV_ID" || exit 1
 check_env_vars
 check_podman_command
 check_podman_compose_command
-ENV_FILE=$(get_env_file_path)
+ENV_FILE="./.env"
 export BUILD_VERSION=$(node -p "require('./package.json').version")
 echo "🛠️ Loading Environment $ENV_FILE"
 # Provide a warning if the environment is not set to podman
@@ -145,5 +147,5 @@ else
   echo "ℹ️  No local images required by this compose file"
 fi
 
-echo "🚀 Launching podman for ${1:-reactory} ${2:-podman} configuration"
-podman-compose -f "$COMPOSE_FILE" -p "${PODMAN_COMPOSE_PROJECT_NAME:-reactory-fullstack}" --env-file "./config/${1:-reactory}/.env.${2:-local}" ${3:-up} -d
+echo "🚀 Launching podman for ${REACTORY_CONFIG_ID} ${REACTORY_ENV_ID} configuration"
+podman-compose -f "$COMPOSE_FILE" -p "${PODMAN_COMPOSE_PROJECT_NAME:-reactory-fullstack}" --env-file "./.env" ${3:-up} -d

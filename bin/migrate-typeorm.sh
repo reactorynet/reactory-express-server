@@ -64,11 +64,8 @@ if [[ "$COMMAND" == "create" && -z "$MIGRATION_NAME" ]]; then
   exit 1
 fi
 
-ENV_FILE="./config/${CLIENT_KEY}/.env.${TARGET_ENV}"
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo "Error: env file not found: ${ENV_FILE}"
-  exit 1
-fi
+copy_env_file "$CLIENT_KEY" "$TARGET_ENV" || exit 1
+ENV_FILE="./.env"
 
 ENV_CMD="./node_modules/.bin/env-cmd"
 if [[ ! -f "$ENV_CMD" ]]; then

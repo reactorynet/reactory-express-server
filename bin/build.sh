@@ -26,19 +26,14 @@ INCLUDE_ENV=true
 NODE_PATH=$REACTORY_SERVER/src
 CLEAN_NODE_MODULES=true
 BUILD_OPTIONS=$REACTORY_SERVER/config/$REACTORY_CONFIG_ID/.env.build.$REACTORY_ENV_ID
-export ENV_FILE=$REACTORY_SERVER/config/$REACTORY_CONFIG_ID/.env.$REACTORY_ENV_ID
+copy_env_file "$REACTORY_CONFIG_ID" "$REACTORY_ENV_ID" || exit 1
+source_env_file "$REACTORY_CONFIG_ID" "$REACTORY_ENV_ID" || exit 1
+export ENV_FILE="$REACTORY_SERVER/.env"
 BUILD_PATH=$REACTORY_SERVER/build/server/$REACTORY_CONFIG_ID/$REACTORY_ENV_ID
 APP_BUILD_PATH=$BUILD_PATH/${DEFAULT_APPLICATION_ROOT}
 BIN_BUILD_PATH=$BUILD_PATH/bin
 CONFIG_BUILD_PATH=$BUILD_PATH/config
 BUILD_LOGS=$BUILD_PATH/logs
-# Source the ENV_FILE
-if [ -f $ENV_FILE ]; then
-  source $ENV_FILE
-else
-  echo "Environment file $ENV_FILE not found, exiting"
-  exit -1;
-fi
 
 # Check if jq is installed
 if ! command -v jq &> /dev/null; then

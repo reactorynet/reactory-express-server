@@ -13,7 +13,28 @@ All scripts rely on these environment variables being set:
 - `REACTORY_CLIENT` — PWA client directory
 - `REACTORY_PLUGINS` — plugins directory
 
-Most scripts also accept positional arguments for **client key** (config directory under `config/`, default: `reactory`) and **environment** (env file suffix, default: `local`).
+Most scripts accept positional arguments or flags for **client key** (default: `reactory`) and **environment** (default: `local`).
+
+---
+
+## Environment Resolution & Cascading (.env & .env.<environment>)
+
+All scripts source `bin/shared/shell-utils.sh` to resolve runtime configuration using a **two-stage cascade**:
+
+1. **Stage 1 (Base Defaults)**: The script locates the un-suffixed base `.env` file from:
+   - `./config/<client>/.env`
+   - `$REACTORY_SERVER/config/<client>/.env`
+   - `./.env` (project root)
+   - `$REACTORY_SERVER/.env`
+2. **Stage 2 (Environment Overrides)**: If an environment name is specified (or defaulted to `local`), the script checks for:
+   - `./config/<client>/.env.<environment>`
+   - `$REACTORY_SERVER/config/<client>/.env.<environment>`
+   - `./.env.<environment>`
+3. **Merging & Active Configuration**:
+   - When **both** base and override files exist, `copy_env_file()` merges them into `./.env`, with values from the environment override file taking precedence.
+   - When running in **production deployments**, typically only a single `.env` exists (without an environment name). When an environment ID like `local` is omitted or does not exist, the scripts cleanly fall back to the base `.env` without error.
+   - Shell scripts that need exported variables use `source_env_file()`, which parses dotenv key-value pairs safely into the shell without failing on unquoted metacharacters (e.g. `<`, `>`, `&`, `^`).
+   - Node processes are launched via `env-cmd -f ./.env` or read `./.env` directly via `dotenv.config()`.
 
 ---
 
@@ -23,11 +44,11 @@ Most scripts also accept positional arguments for **client key** (config directo
 |--------|---------|-------|
 | [start.sh](./start.sh) | Local dev server with auto-restart via nodemon | `bin/start.sh [client] [env] [--no-nodemon]` |
 | [debug.sh](./debug.sh) | Local dev server with Node inspector for remote debugging | `bin/debug.sh [client] [env]` |
-| [run.sh](./run.sh) | Run the compiled version of the application | `bin/run.sh [client] [env]` |
+| [run.sh](./run.sh) | Run the compiled version of the application (supports Node and Bun) | `bin/run.sh [client] [env] [--bun] [--bun-version=VERSION]` |
 | [serve.sh](./serve.sh) | Production deployment via pm2 (auto-detects podman/docker) | `bin/serve.sh [client] [env] [pm2-env]` |
-| [bun.sh](./bun.sh) | Run the dev server using the Bun runtime | `bin/bun.sh [client] [env]` |
+| [bun.sh](./bun.sh) | Run the compiled server using the Bun runtime | `bin/bun.sh [client] [env] [--bun-version=VERSION]` |
 | [start-otel.sh](./start-otel.sh) | Dev server with OpenTelemetry instrumentation | `bin/start-otel.sh [client] [env] [no-nodemon]` |
-| [run-otel.sh](./run-otel.sh) | Run compiled app with OTLP telemetry collector | `bin/run-otel.sh [client] [env]` |
+| [run-otel.sh](./run-otel.sh) | Run compiled app with OTLP telemetry collector (supports Node and Bun) | `bin/run-otel.sh [client] [env] [--bun] [--bun-version=VERSION]` |
 
 ### Development mode
 
@@ -189,6 +210,12 @@ bin/migrate.sh create reactory local --server --desc="add-index"
 | Script | Purpose | Usage |
 |--------|---------|-------|
 | [terraform.sh](./terraform.sh) | Execute Terraform for infrastructure (K8/minikube). Supports log-level, dry-run, skip hooks. | `bin/terraform.sh <cmd> --reactory-config=key --reactory-env=env` |
+| [terraform-verify.sh](./terraform-verify.sh) | Validate all deployment targets (syntax, schemas, helm templates, secret refs) without deploying | `bin/terraform-verify.sh [config-id] [--fix]` |
+| [minikube-up.sh](./minikube-up.sh) | Provision local Kubernetes cluster with corporate TLS interception support | `bin/minikube-up.sh [options]` |
+| [get-kubeconfig.sh](./get-kubeconfig.sh) | Extract cluster credentials from Terraform outputs and generate `~/.kube/reactory-small.yaml` | `bin/get-kubeconfig.sh` |
+| [sync-data.sh](./sync-data.sh) | Synchronize themes & plugins from `reactory-data` to remote Kubernetes pod | `bin/sync-data.sh [namespace] [kubeconfig] [scope]` |
+| [deploy-podman.sh](./deploy-podman.sh) | Deploy server container locally via Podman with health checks | `bin/deploy-podman.sh [config] [env] [version]` |
+| [restart-server.sh](./restart-server.sh) | Gracefully restart running dev/otel server by PID / port 4000 inspection | `bin/restart-server.sh` |
 | [git-manager.sh](./git-manager.sh) | Multi-repo git management utility across the Reactory workspace | `bin/git-manager.sh <command>` |
 
 ### Unified CLI

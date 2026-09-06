@@ -57,11 +57,17 @@ reactory service-gen -c service.yaml --verbose
 
 ## Configuration
 
-### Environment Files
+### Environment Resolution
 
-Location: `config/<name>/.env.<environment>`
+The CLI uses a two-stage cascade:
+1. **Base configuration**: `config/<name>/.env` or root `./.env`
+2. **Environment override**: `config/<name>/.env.<environment>` or root `./.env.<environment>` (optional, e.g. `.env.local`, `.env.staging`)
 
-Example: `config/reactory/.env.local`
+If both exist, they are merged with override values taking precedence. In production, a single `.env` file without an environment name is used directly.
+
+Examples:
+- Development: `config/reactory/.env.local`
+- Production: `.env` or `config/reactory/.env`
 
 ### Override Defaults
 

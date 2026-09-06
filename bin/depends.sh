@@ -27,10 +27,16 @@ done
 # Set the environment file based on the selected parameters
 ENV_FILE="./config/$CONFIG_NAME/.env.$CONFIG_ENV"
 
-# Check if environment file exists
-if [ ! -f ${ENV_FILE} ]; then
-  echo "Error: ${ENV_FILE} does not exist."
-  exit 1
+# Check if environment file exists (fallback to base .env)
+if [ ! -f "${ENV_FILE}" ]; then
+  if [ -f "./config/$CONFIG_NAME/.env" ]; then
+    ENV_FILE="./config/$CONFIG_NAME/.env"
+  elif [ -f "./.env" ]; then
+    ENV_FILE="./.env"
+  else
+    echo "Error: No environment file found for $CONFIG_NAME (tried ${ENV_FILE}, ./config/$CONFIG_NAME/.env, ./.env)"
+    exit 1
+  fi
 fi
 
 # check if there is a yarn.lock file in the configurations directory

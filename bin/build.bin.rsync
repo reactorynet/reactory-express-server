@@ -11,4 +11,9 @@
 + run-otel.sh
 + reactory.service
 + restore2.sh
++ migrate-typeorm.sh
++ migrate.sh
++ migrate.md
++ jest.sh
++ restart-server.sh
 - *.*

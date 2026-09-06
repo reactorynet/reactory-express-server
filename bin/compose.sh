@@ -61,7 +61,7 @@ else
   COMPOSE_FILE="${CONFIG_DIR}/docker-compose-${COMPOSE_VARIANT}.yaml"
 fi
 
-echo "🛠️  Loading environment : config/${REACTORY_CONFIG_ID}/.env.${REACTORY_ENV_ID}"
+echo "🛠️  Loading environment for config [${REACTORY_CONFIG_ID}] env [${REACTORY_ENV_ID}]"
 echo "📄 Compose file         : $COMPOSE_FILE"
 
 if [ ! -f "$COMPOSE_FILE" ]; then
@@ -74,16 +74,9 @@ if [ ! -f "$COMPOSE_FILE" ]; then
   exit 1
 fi
 
-ENV_FILE="./config/${REACTORY_CONFIG_ID}/.env.${REACTORY_ENV_ID}"
-if [ ! -f "$ENV_FILE" ]; then
-  echo "❌ Environment file not found: $ENV_FILE"
-  exit 1
-fi
-
-# ── Source env file so variable substitution works in the image preflight ─────
-set -a
-source "$ENV_FILE"
-set +a
+copy_env_file "$REACTORY_CONFIG_ID" "$REACTORY_ENV_ID" || exit 1
+source_env_file "$REACTORY_CONFIG_ID" "$REACTORY_ENV_ID" || exit 1
+ENV_FILE="./.env"
 
 # ── Export all relevant environment variables for podman-compose compatibility ──
 # This ensures podman-compose can properly resolve variables in the compose file

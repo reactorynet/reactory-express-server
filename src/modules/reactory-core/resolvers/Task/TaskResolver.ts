@@ -269,6 +269,34 @@ class TaskResolver {
     // published above, which is the part that matters; UI notification is handled by
     // polling until a server→browser transport exists.
 
+    // Check if this task is associated with a Reactor Chat tool approval
+    if (task.componentProps?.chatSessionId) {
+      try {
+        const conversationService = context.getService<any>('reactor.ReactorConversationService@1.0.0');
+        if (conversationService) {
+          const isApproved = params.resultData?.approved === true || params.resultData?.decision === 'approved';
+          if (isApproved) {
+            const newMax = params.resultData?.newMaxIterations || task.componentProps?.newMaxIterations || (task.componentProps?.maxIterations ? task.componentProps.maxIterations + 10 : undefined);
+            void conversationService.continueToolExecution(
+              task.componentProps.chatSessionId,
+              task.componentProps.personaId,
+              newMax
+            );
+            context.log(`Resumed chat session ${task.componentProps.chatSessionId} after task approval`, { newMax }, 'info', 'TaskResolver');
+          } else {
+            void conversationService.interruptToolExecution(
+              task.componentProps.chatSessionId,
+              task.componentProps.personaId,
+              params.resultData?.reason || 'Declined in task queue'
+            );
+            context.log(`Interrupted chat session ${task.componentProps.chatSessionId} after task decline`, {}, 'info', 'TaskResolver');
+          }
+        }
+      } catch (chatResumeErr: any) {
+        context.log(`Error resuming chat session from task ${task._id}: ${chatResumeErr.message}`, { error: chatResumeErr }, 'warn', 'TaskResolver');
+      }
+    }
+
     return {
       success: true,
       message: 'Workflow task completed and workflow signaled successfully',

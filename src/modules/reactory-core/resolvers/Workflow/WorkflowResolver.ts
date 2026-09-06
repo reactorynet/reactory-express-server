@@ -25,7 +25,7 @@ import safeUrl from '@reactory/server-core/utils/url/safeUrl';
 
 
 // IScheduleConfig imported for future use in schedule-related resolvers
-// import { IScheduleConfig } from 'modules/reactory-core/workflow/Scheduler/Scheduler';
+// import { IScheduleConfig } from '@reactory/server-modules/reactory-core/workflow/Scheduler/Scheduler';
 
 
 const getWorkflowService = (context: Reactory.Server.IReactoryContext): IReactoryWorkflowService => {

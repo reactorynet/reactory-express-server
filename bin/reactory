@@ -133,12 +133,70 @@ if [ "$SHOW_REACTORY_HELP" = true ] || { [ -z "$COMMAND" ] && [ ${#KWARGS[@]} -e
   exit 0
 fi
 
-# Set the environment file based on the selected parameters
-ENV_FILE="$PROJECT_ROOT/config/$CONFIG_NAME/.env.$CONFIG_ENV"
+# Resolve environment files (base .env and optional override .env.$CONFIG_ENV)
+CONFIG_BASE_ENV=""
+[ -f "$PROJECT_ROOT/config/$CONFIG_NAME/.env" ] && CONFIG_BASE_ENV="$PROJECT_ROOT/config/$CONFIG_NAME/.env"
 
-# Check if environment file exists
-if [ ! -f "$ENV_FILE" ]; then
-  echo "Error: Environment file not found: $ENV_FILE"
+CONFIG_OVERRIDE_ENV=""
+if [ -n "$CONFIG_ENV" ]; then
+  if [ -f "$PROJECT_ROOT/config/$CONFIG_NAME/.env.$CONFIG_ENV" ]; then
+    CONFIG_OVERRIDE_ENV="$PROJECT_ROOT/config/$CONFIG_NAME/.env.$CONFIG_ENV"
+  elif [ -f "$PROJECT_ROOT/.env.$CONFIG_ENV" ]; then
+    CONFIG_OVERRIDE_ENV="$PROJECT_ROOT/.env.$CONFIG_ENV"
+  fi
+fi
+
+ROOT_ENV=""
+[ -f "$PROJECT_ROOT/.env" ] && ROOT_ENV="$PROJECT_ROOT/.env"
+
+TARGET_DOTENV="$PROJECT_ROOT/.env"
+
+if [ -n "$CONFIG_BASE_ENV" ] && [ -n "$CONFIG_OVERRIDE_ENV" ]; then
+  # Clean merge without duplicate keys: override keys replace base keys
+  awk -F '=' '
+    NR==FNR {
+      line=$0; sub(/^[ \t]+/, "", line)
+      if (line !~ /^#/ && line ~ /=/) {
+        split(line, p, "="); k=p[1]; sub(/[ \t]+$/, "", k); o[k]=substr(line, length(k)+2); s[k]=0
+      }
+      next
+    }
+    {
+      line=$0; t=line; sub(/^[ \t]+/, "", t)
+      if (t !~ /^#/ && t ~ /=/) {
+        split(t, p, "="); k=p[1]; sub(/[ \t]+$/, "", k)
+        if (k in o) { print k "=" o[k]; s[k]=1; next }
+      }
+      print $0
+    }
+    END {
+      has_new=0
+      for (k in o) {
+        if (s[k] == 0) {
+          if (has_new == 0) { print "\n# ── Additional Overrides ──"; has_new=1 }
+          print k "=" o[k]
+        }
+      }
+    }
+  ' "$CONFIG_OVERRIDE_ENV" "$CONFIG_BASE_ENV" > "${TARGET_DOTENV}.tmp"
+  mv "${TARGET_DOTENV}.tmp" "$TARGET_DOTENV"
+  ENV_FILE="$TARGET_DOTENV"
+elif [ -n "$CONFIG_OVERRIDE_ENV" ]; then
+  if [ "$CONFIG_OVERRIDE_ENV" != "$TARGET_DOTENV" ]; then
+    cp "$CONFIG_OVERRIDE_ENV" "$TARGET_DOTENV"
+  fi
+  ENV_FILE="$TARGET_DOTENV"
+elif [ -n "$CONFIG_BASE_ENV" ]; then
+  if [ "$CONFIG_BASE_ENV" != "$TARGET_DOTENV" ]; then
+    cp "$CONFIG_BASE_ENV" "$TARGET_DOTENV"
+  fi
+  ENV_FILE="$TARGET_DOTENV"
+elif [ -n "$ROOT_ENV" ]; then
+  ENV_FILE="$ROOT_ENV"
+else
+  echo "Error: Environment file not found."
+  echo "Checked for base: $PROJECT_ROOT/config/$CONFIG_NAME/.env, $PROJECT_ROOT/.env"
+  echo "Checked for override: $PROJECT_ROOT/config/$CONFIG_NAME/.env.$CONFIG_ENV, $PROJECT_ROOT/.env.$CONFIG_ENV"
   echo "Please ensure the configuration exists or set REACTORY_CONFIG_NAME and REACTORY_CONFIG_ENV"
   exit 1
 fi

@@ -11,7 +11,7 @@ import {
   encoder 
 } from '@reactory/server-core/utils';
 import { ReactoryServer } from '@reactory/server-core/express/server';
-import { WorkFlowRunner } from 'modules/reactory-core/workflow';
+import { WorkFlowRunner } from '@reactory/server-modules/reactory-core/workflow';
 
 
 

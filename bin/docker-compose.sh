@@ -15,6 +15,12 @@
 # the given configuration name and environment. The script will check
 # environment variables and the existence of the docker-compose file
 source ./bin/shared/shell-utils.sh
+CLIENT_KEY="${1:-reactory}"
+TARGET_ENV="${2:-local}"
+
+copy_env_file "$CLIENT_KEY" "$TARGET_ENV" || exit 1
+source_env_file "$CLIENT_KEY" "$TARGET_ENV" || exit 1
 check_env_vars
-echo "🛠️ Loading Environment ./config/${1:-reactory}/${2:-local} "
-docker-compose -f ./config/${1:-reactory}/docker-compose.yaml --env-file ./config/${1:-reactory}/.env.${2:-local} ${3:-up}
+
+echo "🛠️ Loading Environment for config [${CLIENT_KEY}] env [${TARGET_ENV}]"
+docker-compose -f ./config/${CLIENT_KEY}/docker-compose.yaml --env-file ./.env ${3:-up}

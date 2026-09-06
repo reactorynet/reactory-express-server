@@ -82,10 +82,11 @@ reactory <command> [options]
 
 ## Configuration
 
-### Default Configuration
-- Config Name: `reactory`
-- Environment: `local`
-- Config File: `config/reactory/.env.local`
+### Environment Resolution
+- Base Config: `config/$CONFIG_NAME/.env` or root `./.env`
+- Override Config: `config/$CONFIG_NAME/.env.$CONFIG_ENV` (if present)
+- Auto-merge: When both exist, merged to root `./.env` with overrides winning
+- Production support: Automatically uses single `.env` when no environment suffix exists
 
 ### Override via Options
 ```bash

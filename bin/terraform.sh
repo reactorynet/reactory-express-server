@@ -176,15 +176,28 @@ fi
 # ---------------------------------------------------------------------------
 # Environment
 # ---------------------------------------------------------------------------
-if [ -f "$ENV_FILE" ]; then
-  set -a
+BASE_ENV=""
+if [ -f "./config/${REACTORY_CONFIG}/.env" ]; then
+  BASE_ENV="./config/${REACTORY_CONFIG}/.env"
+elif [ -f "./.env" ]; then
+  BASE_ENV="./.env"
+fi
+
+set -a
+if [ -n "$BASE_ENV" ]; then
+  # shellcheck disable=SC1090
+  source "$BASE_ENV" || die "Failed to source $BASE_ENV"
+  echo "🛠️  Loaded base environment $BASE_ENV"
+fi
+
+if [ -f "$ENV_FILE" ] && [ "$ENV_FILE" != "$BASE_ENV" ]; then
   # shellcheck disable=SC1090
   source "$ENV_FILE" || die "Failed to source $ENV_FILE"
-  set +a
   echo "🛠️  Loaded environment $ENV_FILE"
-else
+elif [ -z "$BASE_ENV" ]; then
   die "Environment file $ENV_FILE not found. Create it or pass --reactory-env=<key>."
 fi
+set +a
 
 if [ -f "$TARGET_DIR/tfvars.sh" ]; then
   # shellcheck disable=SC1090

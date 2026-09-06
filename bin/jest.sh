@@ -74,20 +74,21 @@ else
   npm i
 fi
 
-# check environment variables
-check_env_vars
-
 # Extract parameters
 CLIENT=${1:-reactory}
 ENVIRONMENT=${2:-local}
 FILE_PATTERN=${3:-**/**/*.spec.*s}
 
-echo "🛠️ Loading Environment ./config/${CLIENT}/${ENVIRONMENT}"
+copy_env_file "$CLIENT" "$ENVIRONMENT"
+source_env_file "$CLIENT" "$ENVIRONMENT"
+check_env_vars
+
+echo "🛠️ Loading Environment: client [${CLIENT}] env [${ENVIRONMENT}]"
 echo "🧪 File Pattern: ${FILE_PATTERN}"
 echo "🔧 Additional Args: ${@:4}"
 
 # Build Jest command
-JEST_CMD="NODE_PATH=./ env-cmd -f ./config/${CLIENT}/.env.${ENVIRONMENT} npx jest \"${FILE_PATTERN}\" ${@:4} --detectOpenHandles --forceExit"
+JEST_CMD="NODE_PATH=./ env-cmd -f ./.env npx jest \"${FILE_PATTERN}\" ${@:4} --detectOpenHandles --forceExit"
 
 echo "🚀 Running: ${JEST_CMD}"
 echo ""

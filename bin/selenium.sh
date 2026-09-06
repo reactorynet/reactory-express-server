@@ -10,5 +10,12 @@
 #$SECONDS - The number of seconds since the script was started.
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
-echo "Environment: ./config/${1:-reactory}/${2:-local} "
-NODE_PATH=./ env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx ./node_modules/.bin/selenium-standalone start
+source ./bin/shared/shell-utils.sh
+CLIENT_KEY="${1:-reactory}"
+TARGET_ENV="${2:-local}"
+
+copy_env_file "$CLIENT_KEY" "$TARGET_ENV"
+source_env_file "$CLIENT_KEY" "$TARGET_ENV"
+
+echo "Environment: config key: [$CLIENT_KEY] target: [$TARGET_ENV]"
+NODE_PATH=./ env-cmd -f ./.env npx ./node_modules/.bin/selenium-standalone start

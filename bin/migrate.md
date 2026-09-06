@@ -69,11 +69,14 @@ Defaults:
 - `client_key = reactory`
 - `target_env = local`
 
-The env file resolved is:
+The env file resolution uses a two-stage cascade via `copy_env_file()`:
 
-- `config/<client_key>/.env.<target_env>`
+1. **Base configuration**: `config/<client_key>/.env` or root `./.env`
+2. **Environment override**: `config/<client_key>/.env.<target_env>` or root `./.env.<target_env>` (if present)
 
-The scripts use `env-cmd` to load dotenv files safely.
+If both exist, they are merged into `./.env` where override variables take precedence. In production environments where only a single `.env` exists (and no environment name is provided), the runner automatically uses the base `.env` directly without failing on a missing `.env.local`.
+
+The scripts use `env-cmd -f ./.env` to load dotenv files safely into child migration processes without shell metacharacter issues.
 
 ## Mongo Migrations
 
