@@ -315,7 +315,13 @@ const processClientPasswordAndSalt = (
   clientConfig: Partial<Reactory.Models.IReactoryClient>
 ) => {
   if (clientConfig.password) {
-    if (clientConfig.salt && clientConfig.salt !== 'generate') {
+    // If the password in config is already a 128-char hex sha512 hash (e.g. from an exported config.yaml)
+    if (/^[0-9a-f]{128}$/i.test(clientConfig.password)) {
+      reactoryClient.password = clientConfig.password;
+      if (clientConfig.salt && clientConfig.salt !== 'generate') {
+        reactoryClient.salt = clientConfig.salt;
+      }
+    } else if (clientConfig.salt && clientConfig.salt !== 'generate') {
       reactoryClient.salt = clientConfig.salt;
       reactoryClient.password = crypto.pbkdf2Sync(
         clientConfig.password,

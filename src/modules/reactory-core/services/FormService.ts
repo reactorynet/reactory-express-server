@@ -3,6 +3,7 @@ import { roles } from '@reactory/server-core/authentication/decorators'
 import Reactory from '@reactorynet/reactory-core';
 import modules from '@reactory/server-core/modules';
 import ApiError from '@reactory/server-core/exceptions';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 class ReactoryFormService implements Reactory.Service.IReactoryFormService {
 
@@ -405,6 +406,21 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
   }
 
   async getCompiledResourceForModule(module: Reactory.Forms.IReactoryFormModule): Promise<Reactory.Forms.IReactoryFormResource> {    
+    if (process.env.NODE_ENV === 'production') {
+      return {
+        name: module.id,
+        type: 'script',
+        uri: safeCDNUrl(`plugins/__runtime__/lib/${module.id}.min.js`),
+        id: module.id,
+        signature: '',
+        signatureMethod: 'sha1',
+        crossOrigin: false,
+        signed: true,
+        expr: '',
+        required: true,
+        cacheProvider: 'CDN',
+      };
+    }
     return this.compiler.compileModule(module);
   }
 

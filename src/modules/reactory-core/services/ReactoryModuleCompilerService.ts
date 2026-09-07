@@ -387,32 +387,40 @@ class ReactoryModuleCompilerService
   ): Promise<Reactory.Forms.IReactoryFormResource> {
     const dataRoot = getDataRoot();
     const runtimeBase = path.join(dataRoot, "plugins", "__runtime__");
-    const compiledFile = path.join(runtimeBase, `lib/${module.id}.min.js`);
+    const minifiedFile = path.join(runtimeBase, `lib/${module.id}.min.js`);
+    const plainJsFile = path.join(runtimeBase, `lib/${module.id}.js`);
+    const compiledFile = fs.existsSync(minifiedFile) ? minifiedFile : (fs.existsSync(plainJsFile) ? plainJsFile : minifiedFile);
     const isProduction = process.env.NODE_ENV === "production";
 
     // ---------------------------------------------------------------
     // Strict Production Freeze:
     // In production, NEVER invoke compilation, build.sh, or Rollup under any circumstances.
+    // If asset exists on disk, serve its CDN url; otherwise skip compilation without writing failure files.
     // ---------------------------------------------------------------
     if (isProduction) {
-      if (fs.existsSync(compiledFile)) {
-        let checksum = "";
-        const moduleDirName = module.id.replace(/[\\/]/g, "_");
-        const checksumFile = path.join(runtimeBase, "src", moduleDirName, ".reactory-checksum");
-        try {
-          if (fs.existsSync(checksumFile)) {
-            checksum = fs.readFileSync(checksumFile, "utf8").trim();
-          }
-        } catch {
-          // ignore
+      const fileExists = fs.existsSync(compiledFile);
+      const isMinified = compiledFile.endsWith('.min.js');
+      const filename = isMinified ? `${module.id}.min.js` : `${module.id}.js`;
+
+      let checksum = "";
+      const moduleDirName = module.id.replace(/[\\/]/g, "_");
+      const checksumFile = path.join(runtimeBase, "src", moduleDirName, ".reactory-checksum");
+      try {
+        if (fs.existsSync(checksumFile)) {
+          checksum = fs.readFileSync(checksumFile, "utf8").trim();
         }
-        if (!checksum) {
-          checksum = checksumFromString(module.src || module.id, "sha1");
-        }
+      } catch {
+        // ignore
+      }
+      if (!checksum) {
+        checksum = checksumFromString(module.src || module.id, "sha1");
+      }
+
+      if (fileExists) {
         return {
           name: module.id,
           type: "script",
-          uri: safeCDNUrl(`plugins/__runtime__/lib/${module.id}.min.js?cs=${checksum}`),
+          uri: safeCDNUrl(`plugins/__runtime__/lib/${filename}?cs=${checksum}`),
           id: module.id,
           signature: checksum,
           signatureMethod: "sha1",
@@ -424,20 +432,27 @@ class ReactoryModuleCompilerService
         };
       }
 
-      // Compiled widget is missing in production:
-      // Log missing asset error and serve a safe error notification component without child process execution.
+      // In production, if compiled bundle does not exist, do NOT compile and do NOT write failure stubs to disk.
       this.context.log(
-        `[Production Freeze] Compiled widget missing for module ${module.id} in production environment. Runtime compilation is strictly prohibited in production.`,
+        `[Production Freeze] Compiled widget missing for module ${module.id} in production environment. Skipping compilation without modifying disk.`,
         { moduleId: module.id, compiledFile },
-        "error",
+        "warn",
         ReactoryModuleCompilerService.reactory.id
       );
 
-      return this.createFailureResource(
-        module,
-        compiledFile,
-        `Compiled widget not found for ${module.id}. Runtime module compilation is disabled in production.`
-      );
+      return {
+        name: module.id,
+        type: "script",
+        uri: safeCDNUrl(`plugins/__runtime__/lib/${module.id}.min.js?cs=${checksum}`),
+        id: module.id,
+        signature: checksum,
+        signatureMethod: "sha1",
+        crossOrigin: false,
+        signed: true,
+        expr: "",
+        required: true,
+        cacheProvider: "CDN",
+      };
     }
 
     // ---------------------------------------------------------------
@@ -478,6 +493,28 @@ class ReactoryModuleCompilerService
     runtimeBase: string,
     compiledFile: string,
   ): Promise<Reactory.Forms.IReactoryFormResource> {
+    if (process.env.NODE_ENV === "production") {
+      this.context.log(
+        `[Production Freeze] Skipping internal compilation for ${module.id} in production mode`,
+        { moduleId: module.id },
+        "info",
+        ReactoryModuleCompilerService.reactory.id,
+      );
+      return {
+        name: module.id,
+        type: "script",
+        uri: safeCDNUrl(`plugins/__runtime__/lib/${module.id}.min.js`),
+        id: module.id,
+        signature: "",
+        signatureMethod: "sha1",
+        crossOrigin: false,
+        signed: true,
+        expr: "",
+        required: true,
+        cacheProvider: "CDN",
+      };
+    }
+
     const that = this;
 
     const opts = (module.compilerOptions ?? {}) as IRollupCompilerOptions;
@@ -797,15 +834,18 @@ class ReactoryModuleCompilerService
       }
     `;
 
-    try {
-      durableWriteFile(compiledFile, failureScript);
-    } catch (writeErr) {
-      this.context.log(
-        `Could not write failure script for module ${module.id}`,
-        { writeErr, compiledFile },
-        "error",
-        ReactoryModuleCompilerService.reactory.id,
-      );
+    // NEVER overwrite files on disk in production mode
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        durableWriteFile(compiledFile, failureScript);
+      } catch (writeErr) {
+        this.context.log(
+          `Could not write failure script for module ${module.id}`,
+          { writeErr, compiledFile },
+          "error",
+          ReactoryModuleCompilerService.reactory.id,
+        );
+      }
     }
 
     return {
