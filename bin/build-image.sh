@@ -27,6 +27,7 @@ echo "🐳 Using container runtime: $CONTAINER_CMD"
 REACTORY_CONFIG_ID=${1:-reactory}
 REACTORY_ENV_ID=${2:-local}
 DOCKERFILE=${3:-Dockerfile}
+BUN_VERSION=${BUN_VERSION:-1.4.2}
 
 export REACTORY_CONFIG_ID
 export REACTORY_ENV_ID
@@ -70,6 +71,7 @@ BUILD_OPTIONS="${REACTORY_SERVER}/config/${REACTORY_CONFIG_ID}/.env.build.${REAC
 TARFILE="./build/server/${REACTORY_CONFIG_ID}/${REACTORY_ENV_ID}/express-server-image.tar"
 
 echo "🔢 Node version : $NODE_VERSION"
+echo "🔢 Bun version  : $BUN_VERSION"
 echo "🏷️  Image tag    : $IMAGE_TAG"
 echo "📄 Dockerfile   : config/${REACTORY_CONFIG_ID}/${DOCKERFILE}"
 
@@ -112,6 +114,7 @@ $CONTAINER_CMD build \
   --build-arg REACTORY_ENV_ID="${REACTORY_ENV_ID}" \
   --build-arg BUILD_VERSION="${BUILD_VERSION}" \
   --build-arg NODE_VERSION="${NODE_VERSION}" \
+  --build-arg BUN_VERSION="${BUN_VERSION}" \
   --build-arg HAS_CUSTOM_CERTS="${HAS_CUSTOM_CERTS}" \
   --build-arg NODE_EXTRA_CA_CERTS_VALUE="${NODE_EXTRA_CA_CERTS_VALUE}" \
   -t "$IMAGE_TAG" \

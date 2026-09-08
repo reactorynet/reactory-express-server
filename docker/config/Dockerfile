@@ -1,10 +1,18 @@
-# NODE_VERSION must be declared before FROM so it can be used in the FROM instruction.
+# NODE_VERSION and BUN_VERSION must be declared before FROM so they can be used in FROM instructions.
 # The default matches .nvmrc — override by passing --build-arg NODE_VERSION=<version>.
 ARG NODE_VERSION=20.19.4
+ARG BUN_VERSION=1.4.2
+
+FROM oven/bun:${BUN_VERSION} AS bun-image
 FROM node:${NODE_VERSION}
+
+# Install Bun runtime (default version 1.4.2)
+COPY --from=bun-image /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx && bun --version
 
 ARG REACTORY_CONFIG_ID
 ARG REACTORY_ENV_ID
+ARG BUN_VERSION=1.4.2
 # Passed by build-image.sh: "true" when *.crt files exist in the local certificates/ dir.
 # Controls whether custom cert installation and verification steps are executed.
 ARG HAS_CUSTOM_CERTS=false
@@ -23,6 +31,7 @@ ENV WORKDIR_PATH=/${CONFIG_ID}/reactory-express-server
 ENV BUILD_TAR_FILE=${CONFIG_ID}-server-${ENV_ID}-${BUILD_VERSION}.tar.gz
 # Only set when custom certs are present; empty string means Node uses its default trust store.
 ENV NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS_VALUE}
+ENV BUN_VERSION=${BUN_VERSION}
 
 # Copy certificates into the image.
 # build-image.sh guarantees the local certificates/ directory exists (creating it if absent),

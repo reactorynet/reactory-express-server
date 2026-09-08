@@ -24,8 +24,10 @@ elif [[ -n "${REACTORY_SERVER:-}" && -f "${REACTORY_SERVER}/bin/shared/shell-uti
   source "${REACTORY_SERVER}/bin/shared/shell-utils.sh"
 fi
 
-USE_BUN=false
-BUN_VERSION=""
+# Support setting bun runtime via environment variable (e.g. REACTORY_RUNTIME=bun or USE_BUN=true)
+USE_BUN="${USE_BUN:-false}"
+[[ "${REACTORY_RUNTIME:-}" == "bun" ]] && USE_BUN=true
+BUN_VERSION="${BUN_VERSION:-}"
 POSITIONAL=()
 
 for arg in "$@"; do
@@ -107,6 +109,14 @@ fi
 
 if [[ -n "$ENV_FILE" && -f "$ENV_FILE" ]]; then
   ENV_CMD_ARG="-f ${ENV_FILE}"
+  # Check if env file specifies runtime
+  if [[ "$USE_BUN" != "true" ]]; then
+    ENV_RUNTIME=$(grep -E '^REACTORY_RUNTIME=' "$ENV_FILE" 2>/dev/null | cut -d '=' -f2 | tr -d '"'\'' ')
+    ENV_USE_BUN=$(grep -E '^USE_BUN=' "$ENV_FILE" 2>/dev/null | cut -d '=' -f2 | tr -d '"'\'' ')
+    if [[ "$ENV_RUNTIME" == "bun" || "$ENV_USE_BUN" == "true" ]]; then
+      USE_BUN=true
+    fi
+  fi
 else
   ENV_CMD_ARG=""
 fi
