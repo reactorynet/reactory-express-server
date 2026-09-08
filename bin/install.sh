@@ -928,7 +928,8 @@ PYEOF
 
 build_and_install() {
   banner "Step 7/7: Build & Install"
-
+  # one-off, for the next install
+  export CFLAGS="-Wno-error=incompatible-pointer-types"
   # --- Server ---
   if [[ -d "$REACTORY_SERVER" ]]; then
     info "Installing server dependencies..."
