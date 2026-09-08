@@ -96,7 +96,7 @@ steps:
 
           const apiEndpoint = (process.env.API_ENDPOINT || 'https://api.reactory.net').replace(/\/+$/, '');
           const adminEmail = process.env.ADMIN_EMAIL || 'werner.weber@gmail.com';
-          const adminPassword = process.env.ADMIN_PASSWORD || 'Password123';
+          const adminPassword = process.env.ADMIN_PASSWORD || 'R3act0ry!W3rn3r#2026$Apex';
           const targetClients = (process.env.CLIENTS || 'reactory,booktutor').split(',').map(s => s.trim());
           const minRoutesReactory = parseInt(process.env.MIN_ROUTES_REACTORY || '30', 10);
           const minRoutesBooktutor = parseInt(process.env.MIN_ROUTES_BOOKTUTOR || '25', 10);
