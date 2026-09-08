@@ -1,9 +1,64 @@
 import Reactory from '@reactorynet/reactory-core'
+import { ThemeOptions } from '@mui/material/styles';
 import { ReactoryLayouts } from '@reactory/server-core/data/layouts/index';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
-const DARK_PALETTE: Reactory.UX.ITheme = {
+/**
+ * Global MUI component default-prop overrides applied to every Reactory
+ * theme mode (light & dark). The Material UI theming system allows
+ * default props to be set per-component via `theme.components.<Component>.defaultProps`.
+ *
+ * Here we default form related components (buttons, button groups, etc.)
+ * to the "contained" variant so that forms rendered through the default
+ * Reactory theme present a solid/contained style out of the box, rather
+ * than the MUI default "text" style.
+ */
+const FORM_COMPONENT_OVERRIDES: ThemeOptions['components'] = {
+  MuiButton: {
+    defaultProps: {
+      variant: 'contained',
+    },
+  },
+  MuiButtonGroup: {
+    defaultProps: {
+      variant: 'contained',
+    },
+  },
+  MuiToggleButtonGroup: {
+    defaultProps: {
+      exclusive: true,
+    },
+  },
+  MuiFab: {
+    defaultProps: {
+      variant: 'circular',
+    },
+  },
+  // Input-style form controls default to "filled" — MUI's closest equivalent
+  // to a "contained" look for inputs, since TextField/Select/FormControl
+  // only support 'standard' | 'outlined' | 'filled' (no literal 'contained').
+  // A solid background fill mirrors the same contained/solid visual language
+  // used by MuiButton above.
+  MuiTextField: {
+    defaultProps: {
+      variant: 'outlined',
+    },
+  },
+  MuiSelect: {
+    defaultProps: {
+      variant: 'outlined',
+    },
+  },
+  MuiFormControl: {
+    defaultProps: {
+      variant: 'outlined',
+    },
+  },
+};
+
+const DARK_PALETTE: Reactory.UX.ITheme & ThemeOptions = {
   type: 'material',
+  components: FORM_COMPONENT_OVERRIDES,
   palette: {
     mode: 'dark',    
     primary: {
@@ -31,7 +86,8 @@ const DARK_PALETTE: Reactory.UX.ITheme = {
 }
 
 
-const LIGHT_PALETTE: Reactory.UX.ITheme = {
+const LIGHT_PALETTE: Reactory.UX.ITheme & ThemeOptions = {
+  components: FORM_COMPONENT_OVERRIDES,
   palette: {
     mode: 'light',
     primary: {
