@@ -215,7 +215,7 @@ install_system_deps() {
         ;;
       dnf|yum)
         info "Installing development tools and canvas dependencies..."
-        sudo "$PKG_MANAGER" groupinstall -y "Development Tools"
+        # sudo "$PKG_MANAGER" groupinstall -y "Development Tools"
         sudo "$PKG_MANAGER" install -y cairo-devel pango-devel libjpeg-turbo-devel \
           giflib-devel librsvg2-devel
         ;;
@@ -925,93 +925,9 @@ print(f"Wrote {len(installed)} installed module(s) to installed.json")
 PYEOF
   success "installed.json updated: ${installed_file}"
 }
-# ---------------------------------------------------------------------------
-# Build workflow engine, pack it, and update the server's package.json
-# file: reference to point at the freshly built artifact.
-# ---------------------------------------------------------------------------
-build_workflow_engine() {
-  local workflow_dir="${REACTORY_WORKFLOW:-${REACTORY_HOME}/reactory-workflow-es}"
-  local core_dir="$workflow_dir/core"
-
-  if [[ ! -d "$core_dir" ]]; then
-    warn "Workflow engine core directory not found: $core_dir"
-    warn "Skipping workflow engine build — server yarn install may fail if the artifact is missing."
-    return
-  fi
-
-  banner "Building Workflow Engine (@reactorynet/workflow-es)"
-
-  pushd "$core_dir" > /dev/null || { error "Cannot enter $core_dir"; return 1; }
-
-  info "Installing workflow engine dependencies..."
-  yarn install
-  success "Workflow engine dependencies installed"
-
-  info "Building and packing workflow engine..."
-  # build:pack runs 'npm run build && npm pack' which emits a .tgz in core/
-  yarn build:pack
-  success "Workflow engine built and packed"
-
-  # Find the newest .tgz — matches reactorynet-workflow-es-*.tgz
-  local tgz_file
-  tgz_file=$(ls -t reactorynet-workflow-es-*.tgz 2>/dev/null | head -1)
-
-  popd > /dev/null
-
-  if [[ -z "$tgz_file" ]]; then
-    warn "No .tgz artifact found after build — server may not install correctly."
-    warn "Expected: ${core_dir}/reactorynet-workflow-es-*.tgz"
-    return
-  fi
-
-  success "Workflow engine artifact: ${core_dir}/${tgz_file}"
-
-  # Update server package.json so the file: reference points to the fresh artifact.
-  local server_pkg="$REACTORY_SERVER/package.json"
-  if [[ ! -f "$server_pkg" ]]; then
-    warn "Server package.json not found at $server_pkg — skipping update"
-    return
-  fi
-
-  # Use node (guaranteed present after step 2) to update the JSON safely.
-  local tgz_ref="file:../reactory-workflow-es/core/${tgz_file}"
-  local tmp_js
-  tmp_js=$(mktemp /tmp/update-wf-pkg.XXXXXX.js)
-  cat > "$tmp_js" << 'JSEOF'
-const fs = require('fs');
-const [,, pkgFile, tgzRef] = process.argv;
-try {
-  const raw = fs.readFileSync(pkgFile, 'utf8');
-  const pkg = JSON.parse(raw);
-  const deps = pkg.dependencies || {};
-  if ('@reactorynet/workflow-es' in deps) {
-    deps['@reactorynet/workflow-es'] = tgzRef;
-    fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n');
-    process.stdout.write('Updated @reactorynet/workflow-es -> ' + tgzRef + '\n');
-  } else {
-    process.stderr.write('WARNING: @reactorynet/workflow-es not found in server dependencies\n');
-    process.exit(1);
-  }
-} catch (e) {
-  process.stderr.write('Error updating package.json: ' + e.message + '\n');
-  process.exit(1);
-}
-JSEOF
-  if node "$tmp_js" "$server_pkg" "$tgz_ref"; then
-    success "Server package.json updated: @reactorynet/workflow-es -> ${tgz_ref}"
-  else
-    warn "Could not update server package.json automatically."
-    warn "Please set \"@reactorynet/workflow-es\": \"${tgz_ref}\" in ${server_pkg} manually."
-  fi
-  rm -f "$tmp_js"
-}
 
 build_and_install() {
   banner "Step 7/7: Build & Install"
-
-  # --- Workflow engine: must be built before the server install so the
-  #     file: tarball reference in server/package.json can be resolved. ---
-  build_workflow_engine
 
   # --- Server ---
   if [[ -d "$REACTORY_SERVER" ]]; then
