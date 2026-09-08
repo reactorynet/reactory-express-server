@@ -266,11 +266,12 @@ export class ReactoryFileService
       } else if (dirent.isFile()) {
         const filePath = path.join(rootFolder, dirent.name);
         const stats = fs.statSync(filePath);
+        const ext = path.extname(dirent.name).replace(".", "");
         //@ts-ignore
         files.push({
           _id: new ObjectId(),
           filename: dirent.name,
-          mimetype: "application/octet-stream",
+          mimetype: this.getMimeType(ext) || "application/octet-stream",
           alias: dirent.name,
           size: stats.size,
           link: safeCDNUrl(path.join(
