@@ -1,7 +1,16 @@
 query ReactoryGetContentList {
   ReactoryGetContentList {
-    id
-    slug
-    updatedAt
+    paging {
+      page
+      pageSize
+      total
+      hasNext
+    }
+    data {
+      id
+      slug
+      title
+      updatedAt
+    }
   }
 }

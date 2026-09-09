@@ -13,56 +13,68 @@ import safeUrl from '@reactory/server-core/utils/url/safeUrl';
 
 const routes: Reactory.Routing.IReactoryRoute[] = [
   {
-    ...loginroute,    
+    ...loginroute,
     args: [
       {
-        key: 'forgotEnabled',
+        key: "forgotEnabled",
         value: {
-          type: 'bool',
+          type: "bool",
           forgotEnabled: true,
         },
       },
       {
-        key: 'magicLink',
+        key: "magicLink",
         value: {
-          type: 'bool',
-          magicLink: false
-        }
+          type: "bool",
+          magicLink: false,
+        },
       },
       {
-        key: 'authlist',
+        key: "authlist",
         value: {
-          type: 'array',
+          type: "array",
           authlist: [
-            'local',
-            { 
-              provider: 'google', 
-              component: 'core.GoogleLoginButton@1.0.0', 
-              props: { 
-                url: safeUrl([process?.env?.API_URI_ROOT ?? 'http://localhost:4000', 'auth/google/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}']) 
-              }
+            "local",
+            {
+              provider: "google",
+              component: "core.GoogleLoginButton@1.0.0",
+              props: {
+                url: safeUrl([
+                  process?.env?.API_URI_ROOT ?? "http://localhost:4000",
+                  "auth/google/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}",
+                ]),
+              },
             },
-            { 
-              provider: 'microsoft', 
-              component: 'core.MicrosoftLoginButton@1.0.0',
-              props: { 
-                url: safeUrl([process?.env?.API_URI_ROOT ?? 'http://localhost:4000', 'auth/microsoft/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}']) 
-              }
+            {
+              provider: "microsoft",
+              component: "core.MicrosoftLoginButton@1.0.0",
+              props: {
+                url: safeUrl([
+                  process?.env?.API_URI_ROOT ?? "http://localhost:4000",
+                  "auth/microsoft/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}",
+                ]),
+              },
             },
-            { 
-              provider: 'github', 
-              component: 'core.GitHubLoginButton@1.0.0', 
-              props: { 
-                url: safeUrl([process?.env?.API_URI_ROOT ?? 'http://localhost:4000', 'auth/github/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}']) 
-              }
+            {
+              provider: "github",
+              component: "core.GitHubLoginButton@1.0.0",
+              props: {
+                url: safeUrl([
+                  process?.env?.API_URI_ROOT ?? "http://localhost:4000",
+                  "auth/github/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}",
+                ]),
+              },
             },
-            { 
-              provider: 'okta', 
-              component: 'core.OktaLoginButton@1.0.0', 
-              props: { 
-                url: safeUrl([process?.env?.API_URI_ROOT ?? 'http://localhost:4000', 'auth/okta/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}']) 
-              }
-            },                        
+            {
+              provider: "okta",
+              component: "core.OktaLoginButton@1.0.0",
+              props: {
+                url: safeUrl([
+                  process?.env?.API_URI_ROOT ?? "http://localhost:4000",
+                  "auth/okta/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}",
+                ]),
+              },
+            },
           ],
         },
       },
@@ -70,141 +82,141 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   },
   registerRoute,
   {
-    key: 'about',
-    title: 'About Reactory',
-    path: '/about/*',
+    key: "about",
+    title: "About Reactory",
+    path: "/about/*",
     public: true,
     exact: true,
-    roles: ['USER', 'ANON'],
-    componentFqn: 'core.StaticContent@1.0.0',
+    roles: ["USER", "ANON"],
+    componentFqn: "core.StaticContent@1.0.0",
     args: [
       {
-        key: 'slug',
+        key: "slug",
         value: {
-          type: 'string',
-          slug: 'about-reactory',
-        }
-      }
-    ]
+          type: "string",
+          slug: "about-reactory",
+        },
+      },
+    ],
   },
   {
-    key: 'whats-new',
-    title: 'What\'s new',
-    path: '/whats-new/*',
+    key: "whats-new",
+    title: "What's new",
+    path: "/whats-new/*",
     public: true,
     exact: true,
-    componentFqn: 'core.StaticContent@1.0.0',
-    roles: ['USER'],
+    componentFqn: "core.StaticContent@1.0.0",
+    roles: ["USER"],
     args: [
       {
-        key: 'slug',
+        key: "slug",
         value: {
-          type: 'string',
-          slug: 'whats-new-reactory-platform',
-        }
-      }
-    ]
+          type: "string",
+          slug: "whats-new-reactory-platform",
+        },
+      },
+    ],
   },
   {
-    key: 'blog',
-    title: 'Blog Path',
+    key: "blog",
+    title: "Blog Path",
     public: true,
     exact: false,
-    componentFqn: 'core.StaticContent@1.0.0',
-    path: '/blog/:blog_slug',
-    roles: ['ANON', 'USER'],
+    componentFqn: "core.StaticContent@1.0.0",
+    path: "/blog/:blog_slug",
+    roles: ["ANON", "USER"],
     componentProps: {
-      slugSource: 'route',
+      slugSource: "route",
       slugSourceProps: {
-        paramId: 'blog_slug'
-      }
+        paramId: "blog_slug",
+      },
     },
   },
   {
-    key: 'support-home',
-    title: 'Support Home',
-    path: '/support/',
+    key: "support-home",
+    title: "Support Home",
+    path: "/support/",
     public: true,
     exact: true,
-    roles: ['USER'],
-    componentFqn: 'core.StaticContent@1.0.0',
+    roles: ["USER"],
+    componentFqn: "core.StaticContent@1.0.0",
     componentProps: {
-      slug: 'support-home'
+      slug: "support-home",
     },
   },
 
   {
-    key: 'reactory-docs-root',
-    title: 'Docs List',
-    path: '/docs/',
+    key: "reactory-docs-root",
+    title: "Docs List",
+    path: "/docs/",
     public: false,
     exact: true,
-    roles: ['USER'],
-    componentFqn: 'core.StaticContent@1.0.0',
+    roles: ["USER"],
+    componentFqn: "core.StaticContent@1.0.0",
     componentProps: {
-      slug: 'reactory-docs-root'
-    }
+      slug: "reactory-docs-root",
+    },
   },
 
   {
-    key: 'reactory-docs-slug',
-    title: 'Docs List',
-    path: '/docs/:slug',
+    key: "reactory-docs-slug",
+    title: "Docs List",
+    path: "/docs/:slug",
     public: false,
     exact: false,
-    roles: ['USER'],
-    componentFqn: 'core.StaticContent@1.0.0',
+    roles: ["USER"],
+    componentFqn: "core.StaticContent@1.0.0",
     componentProps: {
-      slugSource: 'route',
+      slugSource: "route",
       slugSourceProps: {
-        paramId: 'slug',
-        slugPrefix: 'reactory-docs-'
-      }
-    }
+        paramId: "slug",
+        slugPrefix: "reactory-docs-",
+      },
+    },
   },
   logoutroute,
   forgotpasswordroute,
   resetpasswordroute,
   {
-    key: 'home_authenticated',
-    title: 'Home (Authenticated)',
-    path: '/',
+    key: "home_authenticated",
+    title: "Home (Authenticated)",
+    path: "/",
     public: false,
     exact: true,
-    roles: ['USER'],
-    componentFqn: 'reactory.MyApplications@1.0.0',
+    roles: ["USER"],
+    componentFqn: "reactory.MyApplications@1.0.0",
   },
   {
-    key: 'home_guest',
-    title: 'Home (Guest)',
-    path: '/',
+    key: "home_guest",
+    title: "Home (Guest)",
+    path: "/",
     public: true,
     exact: true,
-    roles: ['ANON'],
-    componentFqn: 'core.StaticContent@1.0.0',
+    roles: ["ANON"],
+    componentFqn: "core.StaticContent@1.0.0",
     componentProps: {
-      slug: 'reactory-home-guest'
-    }
-  },  
-  {
-    key: 'modules',
-    title: 'Server Modules',
-    path: '/reactory-server/*',
-    public: false,
-    exact: true,
-    roles: ['SYS-ADMIN', 'ADMIN'],
-    componentFqn: 'reactory.ServerModules@1.0.0',
+      slug: "reactory-home-guest",
+    },
   },
   {
-    key: 'application_detail',
-    title: 'Application',
-    path: '/applications/:applicationId',
+    key: "modules",
+    title: "Server Modules",
+    path: "/reactory-server/*",
+    public: false,
+    exact: true,
+    roles: ["SYS-ADMIN", "ADMIN"],
+    componentFqn: "reactory.ServerModules@1.0.0",
+  },
+  {
+    key: "application_detail",
+    title: "Application",
+    path: "/applications/:applicationId",
     public: false,
     exact: false,
-    roles: ['USER'],
-    componentFqn: 'reactory.Application@1.0.0',
+    roles: ["USER"],
+    componentFqn: "reactory.Application@1.0.0",
     componentProps: {
-      applicationId: '${route.applicationId}',
+      applicationId: "${route.applicationId}",
     },
     args: [
       {
@@ -214,316 +226,306 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
           mode: "view",
         },
       },
-    ]
+    ],
   },
   {
-    key: 'profile',
-    title: 'Profile',
-    path: '/profile',
+    key: "profile",
+    title: "Profile",
+    path: "/profile",
     public: false,
-    roles: ['USER'],
-    componentFqn: 'core.UserProfile@1.0.1',
+    roles: ["USER"],
+    componentFqn: "core.UserProfile@1.0.1",
     componentProps: {
       withPeers: true,
       withMemberships: true,
       withOrganigram: true,
-      components: [ 
-      ]
-    }
+      components: [],
+    },
   },
   {
-    key: 'forms_with_mode_and_id',
-    title: 'Form with mode and id',
-    path: '/forms/:formId/:mode/:id/*',
+    key: "forms_with_mode_and_id",
+    title: "Form with mode and id",
+    path: "/forms/:formId/:mode/:id/*",
     public: false,
-    roles: ['USER'],
-    componentFqn: 'core.ReactoryRouter@1.0.0',
-    args: [{
-      key: "routePrefix",
-      value: {
-        routePrefix: "forms"
-      }
-    }],
-    exact: false,    
-  },
-  {
-    key: 'forms_with_mode',
-    title: 'Form with mode',
-    path: '/forms/:formId/:mode',
-    public: false,
-    roles: ['USER'],
-    componentFqn: 'core.ReactoryRouter@1.0.0',
-    args: [{
-      key: "routePrefix",
-      value: {
-        routePrefix: "forms"
-      }
-    }],
-  },
-  {
-    key: 'forms_with_id',
-    title: 'Form',
-    path: '/forms/:formId',
-    public: false,
-    roles: ['USER'],
-    componentFqn: 'core.ReactoryRouter@1.0.0',
-    args: [{
-      key: "routePrefix",
-      value: {
-        routePrefix: "forms"
-      }
-    }],
-  },
-
-  {
-    key: 'forms',
-    title: 'Reactory Forms',
-    path: '/forms/*',
-    public: false,
-    roles: ['USER'],
-    componentFqn: 'core.ReactoryRouter@1.0.0',
-    args: [{
-      key: "routePrefix",
-      value: {
-        routePrefix: "forms"
-      }
-    }],
-  },  
-  {
-    key: 'content-capture',
-    title: 'Content Capture',
-    path: '/content-capture/edit/:slug/',
-    public: false,
+    roles: ["USER"],
+    componentFqn: "core.ReactoryRouter@1.0.0",
+    args: [
+      {
+        key: "routePrefix",
+        value: {
+          routePrefix: "forms",
+        },
+      },
+    ],
     exact: false,
-    roles: ['ADMIN'],
-    componentFqn: 'static.ContentCapture@1.0.0',
-    args: [
-      {
-        key: 'mode',
-        value: {
-          type: 'string',
-          mode: 'edit',
-        }
-      }
-    ]
   },
   {
-    key: 'content-capture-new',
-    title: 'Content Capture',
-    path: '/content-capture/new',
+    key: "forms_with_mode",
+    title: "Form with mode",
+    path: "/forms/:formId/:mode",
     public: false,
-    exact: true,
-    roles: ['ADMIN'],
-    componentFqn: 'static.ContentCapture@1.0.0',
+    roles: ["USER"],
+    componentFqn: "core.ReactoryRouter@1.0.0",
     args: [
       {
-        key: 'mode',
+        key: "routePrefix",
         value: {
-          type: 'string',
-          mode: 'new',
-        }
-      }
-    ]
+          routePrefix: "forms",
+        },
+      },
+    ],
   },
   {
-    key: 'content-list',
-    title: 'Content List',
-    path: '/content-list/',
+    key: "forms_with_id",
+    title: "Form",
+    path: "/forms/:formId",
     public: false,
-    exact: true,
-    roles: ['ADMIN'],
-    componentFqn: 'static.ContentList@1.0.0',
-
+    roles: ["USER"],
+    componentFqn: "core.ReactoryRouter@1.0.0",
+    args: [
+      {
+        key: "routePrefix",
+        value: {
+          routePrefix: "forms",
+        },
+      },
+    ],
   },
 
   {
-    key: 'graphiql',
-    title: 'GraphiQL',
-    path: '/graphiql/*',
+    key: "forms",
+    title: "Reactory Forms",
+    path: "/forms/*",
+    public: false,
+    roles: ["USER"],
+    componentFqn: "core.ReactoryRouter@1.0.0",
+    args: [
+      {
+        key: "routePrefix",
+        value: {
+          routePrefix: "forms",
+        },
+      },
+    ],
+  },
+  // --------------------
+  // Content Management
+  // --------------------
+  {
+    key: "content-management",
+    title: "Content Management",
+    path: "/content",
+    exact: true,
+    public: false,
+    roles: ["CONTENT-EDITOR", "ADMIN", "DEVELOPER"],
+    componentFqn: "core.ContentManagementPage@1.0.0",
+  },
+  {
+    key: "content-management-wildcard",
+    title: "Content Management",
+    path: "/content/:slug",
+    exact: false,
+    public: false,
+    roles: ["CONTENT-EDITOR", "ADMIN", "DEVELOPER"],
+    componentFqn: "core.StaticContent@1.0.0",
+    componentProps: {
+      slugSource: "route",
+      slugSourceProps: {
+        paramId: "slug",
+      },
+    },
+  },
+
+  {
+    key: "graphiql",
+    title: "GraphiQL",
+    path: "/graphiql/*",
     exact: true,
     public: true,
-    roles: ['ADMIN'],
-    componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
+    roles: ["ADMIN"],
+    componentFqn: "core.ReactoryGraphiQLExplorer@1.0.0",
   },
 
   {
-    key: 'reactor',
-    title: 'Reactory Reactor',
-    path: '/reactor/chat/*',
+    key: "reactor",
+    title: "Reactory Reactor",
+    path: "/reactor/chat/*",
     exact: false,
     public: false,
-    roles: ['USER'],
-    componentFqn: 'reactor.ReactorChat@1.0.0',
+    roles: ["USER"],
+    componentFqn: "reactor.ReactorChat@1.0.0",
   },
   {
-    key: 'reactor-projects',
-    title: 'Reactor Projects',
-    path: '/reactor/projects',
+    key: "reactor-projects",
+    title: "Reactor Projects",
+    path: "/reactor/projects",
     exact: true,
     public: false,
-    roles: ['USER', 'DEVELOPER', 'ADMIN'],
-    componentFqn: 'reactor.ReactorProjectsHome@1.0.0',
+    roles: ["USER", "DEVELOPER", "ADMIN"],
+    componentFqn: "reactor.ReactorProjectsHome@1.0.0",
   },
   {
-    key: 'reactor-project-detail',
-    title: 'Reactor Project Details',
-    path: '/reactor/project/:id',
+    key: "reactor-project-detail",
+    title: "Reactor Project Details",
+    path: "/reactor/project/:id",
     exact: false,
     public: false,
-    roles: ['USER', 'DEVELOPER', 'ADMIN'],
-    componentFqn: 'reactor.ReactorProjectHome@1.0.0',
+    roles: ["USER", "DEVELOPER", "ADMIN"],
+    componentFqn: "reactor.ReactorProjectHome@1.0.0",
     componentProps: {
-      id: '${route.id}',
-      serviceId: '${route.id}',
-      name: '${route.id}',
+      id: "${route.id}",
+      serviceId: "${route.id}",
+      name: "${route.id}",
     },
   },
   {
-    key: 'reactor-projects-detail',
-    title: 'Reactor Project Details',
-    path: '/reactor/projects/:id',
+    key: "reactor-projects-detail",
+    title: "Reactor Project Details",
+    path: "/reactor/projects/:id",
     exact: false,
     public: false,
-    roles: ['USER', 'DEVELOPER', 'ADMIN'],
-    componentFqn: 'reactor.ReactorProjectHome@1.0.0',
+    roles: ["USER", "DEVELOPER", "ADMIN"],
+    componentFqn: "reactor.ReactorProjectHome@1.0.0",
     componentProps: {
-      id: '${route.id}',
-      serviceId: '${route.id}',
-      name: '${route.id}',
+      id: "${route.id}",
+      serviceId: "${route.id}",
+      name: "${route.id}",
     },
   },
   {
-    key: 'reactor-graph-explorer-node',
-    title: 'Reactory Reactor Graph Explorer Node',
-    path: '/reactor/graph/:projectId?/:nodeId?',
+    key: "reactor-graph-explorer-node",
+    title: "Reactory Reactor Graph Explorer Node",
+    path: "/reactor/graph/:projectId?/:nodeId?",
     exact: true,
     public: false,
-    roles: ['USER'],
-    componentFqn: 'core.GraphExplorer@1.0.0',
+    roles: ["USER"],
+    componentFqn: "core.GraphExplorer@1.0.0",
     componentProps: {
-      projectId: '${route?.projectId}',
-      nodeId: '${route?.nodeId}',
+      projectId: "${route?.projectId}",
+      nodeId: "${route?.nodeId}",
     },
   },
   {
-    key: 'admin-ai-budgets',
-    title: 'AI Usage Budgets',
-    path: '/admin/ai/budgets',
+    key: "admin-ai-budgets",
+    title: "AI Usage Budgets",
+    path: "/admin/ai/budgets",
     exact: true,
     public: false,
-    roles: ['ADMIN', 'SUPERADMIN', 'DEVELOPER'],
-    componentFqn: 'reactor.UserBudgetAdminForm@1.0.0',
+    roles: ["ADMIN", "SUPERADMIN", "DEVELOPER"],
+    componentFqn: "reactor.UserBudgetAdminForm@1.0.0",
   },
   {
-    key: 'admin-ai-usage-by-user',
-    title: 'AI Usage Dashboard (Admin)',
-    path: '/admin/ai/usage/:userId',
+    key: "admin-ai-usage-by-user",
+    title: "AI Usage Dashboard (Admin)",
+    path: "/admin/ai/usage/:userId",
     exact: true,
     public: false,
-    roles: ['ADMIN', 'SUPERADMIN', 'DEVELOPER'],
-    componentFqn: 'reactor.UsageDashboardForm@1.0.0',
+    roles: ["ADMIN", "SUPERADMIN", "DEVELOPER"],
+    componentFqn: "reactor.UsageDashboardForm@1.0.0",
     componentProps: {
-      userId: '${route.userId}',
+      userId: "${route.userId}",
     },
   },
   {
-    key: 'admin-ai-usage-landing',
-    title: 'AI Usage Dashboard (Admin)',
-    path: '/admin/ai/usage',
+    key: "admin-ai-usage-landing",
+    title: "AI Usage Dashboard (Admin)",
+    path: "/admin/ai/usage",
     exact: true,
     public: false,
-    roles: ['ADMIN', 'SUPERADMIN', 'DEVELOPER'],
-    componentFqn: 'reactor.UsageDashboardForm@1.0.0',
+    roles: ["ADMIN", "SUPERADMIN", "DEVELOPER"],
+    componentFqn: "reactor.UsageDashboardForm@1.0.0",
   },
   {
-    key: 'profile-ai-usage',
-    title: 'My AI Usage',
-    path: '/profile/usage',
+    key: "profile-ai-usage",
+    title: "My AI Usage",
+    path: "/profile/usage",
     exact: true,
     public: false,
-    roles: ['USER'],
-    componentFqn: 'reactor.UsageDashboardForm@1.0.0',
+    roles: ["USER"],
+    componentFqn: "reactor.UsageDashboardForm@1.0.0",
     componentProps: {
-      userId: '${reactory.user.id}',
+      userId: "${reactory.user.id}",
     },
   },
   {
-    key: 'organizations',
-    title: 'Organizations List',
-    path: '/organizations/',
+    key: "organizations",
+    title: "Organizations List",
+    path: "/organizations/",
     exact: true,
     public: true,
-    roles: ['ADMIN'],
-    componentFqn: 'core.ReactoryOrganizationSelector@1.0.0'
-  },
-  
-  {
-    key: 'general-support',
-    title: 'Support Request',
-    path: '/support/request',
-    exact: true,
-    public: false,
-    roles: ['USER'],
-    componentFqn: 'core.SupportForm@1.0.0',
-    args: [{
-      key: "mode",
-      value: {
-        type: "string",
-        mode: "new"
-      }
-    }]
+    roles: ["ADMIN"],
+    componentFqn: "core.ReactoryOrganizationSelector@1.0.0",
   },
 
   {
-    key: 'my-support-tickets',
-    title: 'My Open Tickets',
-    path: '/support/open',
+    key: "general-support",
+    title: "Support Request",
+    path: "/support/request",
     exact: true,
     public: false,
-    roles: ['USER'],
-    componentFqn: 'core.SupportTickets@1.0.0',
+    roles: ["USER"],
+    componentFqn: "core.SupportForm@1.0.0",
     args: [
       {
-        key: 'variant',
+        key: "mode",
         value: {
-          type: 'string',
-          variant: 'logged_in_user'
-        }
-      }
-    ]
-  }, 
-  
-  {
-    key: 'workflows-registry-management',
-    title: 'Workflows Registry Management',
-    path: '/workflows/registry',
-    exact: true,
-    public: false,
-    roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR'],
-    componentFqn: 'core.WorkflowRegistryManagement@1.0.0',
+          type: "string",
+          mode: "new",
+        },
+      },
+    ],
   },
 
   {
-    key: 'workflow-details-page',
-    title: 'Workflow Details',
-    path: '/workflows/registry/:workflowId',
+    key: "my-support-tickets",
+    title: "My Open Tickets",
+    path: "/support/open",
     exact: true,
     public: false,
-    roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR'],
-    componentFqn: 'core.WorkflowDetails@1.0.0',
+    roles: ["USER"],
+    componentFqn: "core.SupportTickets@1.0.0",
+    args: [
+      {
+        key: "variant",
+        value: {
+          type: "string",
+          variant: "logged_in_user",
+        },
+      },
+    ],
+  },
+
+  {
+    key: "workflows-registry-management",
+    title: "Workflows Registry Management",
+    path: "/workflows/registry",
+    exact: true,
+    public: false,
+    roles: ["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"],
+    componentFqn: "core.WorkflowRegistryManagement@1.0.0",
+  },
+
+  {
+    key: "workflow-details-page",
+    title: "Workflow Details",
+    path: "/workflows/registry/:workflowId",
+    exact: true,
+    public: false,
+    roles: ["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"],
+    componentFqn: "core.WorkflowDetails@1.0.0",
     componentProps: {
-      workflowId: '${route.workflowId}',
+      workflowId: "${route.workflowId}",
     },
   },
 
   {
-    key: 'workflows-operations-dashboard',
-    title: 'Workflows Operations Dashboard',
-    path: '/workflows/operation-dashboard',
+    key: "workflows-operations-dashboard",
+    title: "Workflows Operations Dashboard",
+    path: "/workflows/operation-dashboard",
     exact: true,
     public: false,
-    roles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_OPERATOR'],
-    componentFqn: 'core.WorkflowOperationsDashboard@1.0.0',
+    roles: ["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"],
+    componentFqn: "core.WorkflowOperationsDashboard@1.0.0",
   },
 
   {
@@ -538,7 +540,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       workflowId: "${route.workflowId}",
     },
   },
-]
+];
 
 
 // staticContentMappings.forEach((mapping) => {

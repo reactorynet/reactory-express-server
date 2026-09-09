@@ -167,11 +167,19 @@ input ReactoryContentInput {
   published: Boolean
 }
 
+"""
+Paged Reactory Content result
+"""
+type PagedReactoryContent {
+  paging: PagingResult
+  data: [ ReactoryContent ]
+}
+
 extend type Query {
   ReactoryGetContentBySlug(slug: String!, options: ReactoryGetContentOptionsInput): ReactoryContent
   ReactoryGetContentByTags(tags: [String]!): [ ReactoryContent ]
   ReactoryGetContentById(id: String!): [ ReactoryContent ]
-  ReactoryGetContentList: [ ReactoryContent ]
+  ReactoryGetContentList(search: Any, paging: PagingRequest): PagedReactoryContent
 }
 
 extend type Mutation {

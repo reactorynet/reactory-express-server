@@ -83,7 +83,11 @@ class ReactoryContentResolver {
   async getContentList(parent: unknown, args: { search: any, paging: Reactory.Data.PagingRequest }, context: Reactory.Server.IReactoryContext) {
     const { paging, search } = args;
     const contentService = getContentService(context);
-    return contentService.listContent(search, paging);
+    const result: any = await contentService.listContent(search, paging);
+    return {
+      paging: result?.paging,
+      data: result?.data || [],
+    };
   }
 
   @roles(["USER"], 'args.context')

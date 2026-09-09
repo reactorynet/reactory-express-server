@@ -1,4 +1,6 @@
 
+import Reactory from '@reactorynet/reactory-core';
+
 const MainMenu: Reactory.UX.IReactoryMenuConfig = {
   name: 'Main',
   key: 'left-nav',
@@ -115,6 +117,13 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
           roles: ['DEVELOPER'],
         }
       ]
+    },
+    {
+      ordinal: 4.5,
+      title: 'reactory:reactory.menu.content-management',
+      link: '/content',
+      icon: 'article',
+      roles: ['USER', 'CONTENT-EDITOR', 'ADMIN', 'DEVELOPER'],
     },
     {
       ordinal: 5, 

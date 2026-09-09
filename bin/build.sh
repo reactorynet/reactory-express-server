@@ -306,6 +306,8 @@ cp ./jsconfig.json $BUILD_PATH
 # for the modules and the application root
 
 cd $BUILD_PATH
+chmod +x $BUILD_PATH/bin/*.sh 
+chmod +x $BUILD_PATH/bin/reactory
 sed 's/src/app/g' jsconfig.json > jsconfig_temp.json && mv jsconfig_temp.json jsconfig.json
 cd $WORKING_FOLDER
 

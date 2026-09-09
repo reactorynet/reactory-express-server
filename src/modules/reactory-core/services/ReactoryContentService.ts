@@ -464,19 +464,62 @@ class ReactoryContentService implements IReactoryContentService {
 
   @roles(['USER'])
   async listContent<TQuery>(query: TQuery, paging: Reactory.Data.PagingRequest): Promise<Reactory.Data.PagedDataResponse<Reactory.Models.IReactoryContent, TQuery>> {
-    const result = await Content.find({});
+    const page = Math.max(1, (paging && paging.page) ? Number(paging.page) : 1);
+    const pageSize = Math.max(1, Math.min(100, (paging && paging.pageSize) ? Number(paging.pageSize) : 10));
+    const skip = (page - 1) * pageSize;
+
+    const filterObj: Record<string, any> = {};
+
+    let searchStr = '';
+    if (typeof query === 'string') {
+      searchStr = query;
+    } else if (query && typeof query === 'object') {
+      const q: any = query;
+      searchStr = q.searchString || q.search || q.query || '';
+
+      if (q.status && q.status !== 'all') {
+        if (q.status === 'published') filterObj.published = true;
+        if (q.status === 'draft') filterObj.published = false;
+      }
+      if (q.format && q.format !== 'all') {
+        filterObj.format = q.format;
+      }
+      if (q.topic) {
+        filterObj.topics = q.topic;
+      }
+      if (q.locale) {
+        filterObj.locale = q.locale;
+      }
+    }
+
+    if (searchStr && typeof searchStr === 'string' && searchStr.trim()) {
+      const regex = new RegExp(searchStr.trim(), 'i');
+      filterObj.$or = [
+        { title: regex },
+        { slug: regex },
+        { description: regex },
+        { topics: regex },
+      ];
+    }
+
+    const total = await Content.countDocuments(filterObj);
+    const result = await Content.find(filterObj)
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize);
+
     return {
       query: query,
       paging: { 
-        page: 1,
-        pageSize: 10,
-        total: result.length,
-        hasNext: true,
+        page,
+        pageSize,
+        total,
+        hasNext: skip + result.length < total,
       },
-      sort: [],
-      sortDirection: [],
+      sort: ['updatedAt'],
+      sortDirection: ['descending'],
       data: result,
-    }
+    };
   }
 
   /**
