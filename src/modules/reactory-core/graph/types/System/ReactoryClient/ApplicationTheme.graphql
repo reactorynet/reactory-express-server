@@ -142,4 +142,50 @@ type ApplicationTheme {
   may require.
   """
   il8n: Any
+  """
+  Theme content including branding title, login message, etc.
+  """
+  content: Any
+}
+
+"""
+Input type for an application theme asset
+"""
+input ApplicationThemeAssetInput {
+  id: String
+  name: String
+  assetType: ApplicationThemeAssetType
+  url: String
+  loader: String
+  options: Any
+  data: Any
+}
+
+"""
+Input type for an application theme mode
+"""
+input ApplicationThemeModeInput {
+  id: String
+  mode: ApplicationThemeModeType!
+  name: String!
+  description: String
+  icon: String
+  options: Any!
+}
+
+"""
+Input type for creating or updating an application theme
+"""
+input ApplicationThemeInput {
+  id: String
+  nameSpace: String
+  name: String!
+  version: String
+  type: ApplicationThemeType!
+  defaultThemeMode: ApplicationThemeModeType!
+  description: String
+  options: Any
+  modes: [ApplicationThemeModeInput]
+  assets: [ApplicationThemeAssetInput]
+  content: Any
 }
