@@ -9,7 +9,6 @@
 import schema from './schema';
 import uiSchema from './uiSchema';
 import graphql from './graphql';
-import modules from './modules';
 
 /**
  * Defines an Application dashboard form. A dashboard for an application will display 
@@ -90,7 +89,6 @@ const Application: Reactory.Forms.IReactoryForm = {
   schema,
   uiSchema,
   graphql,
-  modules
 };
 
 export default Application;
