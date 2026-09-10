@@ -148,6 +148,41 @@ export class ReactoryClientResolver {
     const systemService = context.getService<Reactory.Service.IReactorySystemService>("core.SystemService@1.0.0");
     return systemService.deleteFeatureFlag(params.clientId, params.feature);
   }
+
+  @roles(["ADMIN"])
+  @query("ReactoryClientGetThemeCss")
+  async getThemeCss(obj: any, params: { themeName: string }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<any>("core.SystemService@1.0.0");
+    return systemService.getThemeCss(params.themeName);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientSetActiveTheme")
+  async setActiveTheme(obj: any, params: { clientId: string, themeName: string }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<any>("core.SystemService@1.0.0");
+    return systemService.setActiveTheme(params.clientId, params.themeName);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientSaveTheme")
+  async saveTheme(obj: any, params: { clientId: string, theme: any }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<any>("core.SystemService@1.0.0");
+    return systemService.saveTheme(params.clientId, params.theme);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientDeleteTheme")
+  async deleteTheme(obj: any, params: { clientId: string, themeName: string }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<any>("core.SystemService@1.0.0");
+    return systemService.deleteTheme(params.clientId, params.themeName);
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryClientPublishThemeCss")
+  async publishThemeCss(obj: any, params: { clientId?: string, themeName: string, cssContent: string }, context: Reactory.Server.IReactoryContext) {
+    const systemService = context.getService<any>("core.SystemService@1.0.0");
+    return systemService.publishThemeCss(params.themeName, params.cssContent, params.clientId);
+  }
 }
 
 @resolver
@@ -165,6 +200,14 @@ export class ClientComponentResolver {
 @resolver
 export class ClientRouteResolver {
   resolver: any
+
+  @property("ClientRoute", "id")
+  id(route: any) {
+    if (route) {
+      return route.id || (route._id ? route._id.toString() : route.key);
+    }
+    return null;
+  }
 
   component(route: any){
     if(!route.componentFqn) {

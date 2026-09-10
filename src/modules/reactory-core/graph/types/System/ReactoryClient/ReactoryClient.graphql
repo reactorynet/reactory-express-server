@@ -449,6 +449,11 @@ extend type Query {
     filter: ReactoryUserFilterInput
     paging: PagingRequest
   ): UserList
+
+  """
+  Restricted to ADMIN roles. Reads custom CSS content for a theme.
+  """
+  ReactoryClientGetThemeCss(themeName: String!): String
 }
 
 """
@@ -571,4 +576,24 @@ extend type Mutation {
   Replaces the settings for the specified ReactoryClient. Restricted to ADMIN roles.
   """
   ReactoryClientUpdateSettings(clientId: String!, settings: [ReactoryClientSettingInput!]!): ReactoryClient!
+
+  """
+  Sets the default active theme for the specified ReactoryClient. Restricted to ADMIN roles.
+  """
+  ReactoryClientSetActiveTheme(clientId: String!, themeName: String!): ReactoryClient!
+
+  """
+  Creates or updates a theme on the specified ReactoryClient. Restricted to ADMIN roles.
+  """
+  ReactoryClientSaveTheme(clientId: String!, theme: ApplicationThemeInput!): ReactoryClient!
+
+  """
+  Deletes a theme from the specified ReactoryClient. Restricted to ADMIN roles.
+  """
+  ReactoryClientDeleteTheme(clientId: String!, themeName: String!): ReactoryClient!
+
+  """
+  Publishes custom CSS for a theme directly to the theme folder on disk. Restricted to ADMIN roles.
+  """
+  ReactoryClientPublishThemeCss(clientId: String, themeName: String!, cssContent: String!): Boolean!
 }

@@ -69,6 +69,25 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
             type
             defaultThemeMode
             description
+            options
+            modes {
+              id
+              mode
+              name
+              description
+              icon
+              options
+            }
+            assets {
+              id
+              name
+              assetType
+              url
+              loader
+              options
+              data
+            }
+            content
           }
           featureFlags {
             feature

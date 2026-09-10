@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import Reactory from '@reactorynet/reactory-core';
 import modules from '@reactory/server-core/modules';
 import { ReactoryClient, Menu } from '@reactory/server-modules/reactory-core/models'
@@ -251,37 +253,60 @@ class SystemService implements Reactory.Service.IReactorySystemService {
   }
 
   async addRoute(clientId: string, route: unknown): Promise<Reactory.Models.TReactoryClient> {
-    const client = await ReactoryClient.findByIdAndUpdate(
-      clientId,
-      { $push: { routes: route } },
-      { new: true },
-    ).exec();
+    const client = await ReactoryClient.findById(clientId).exec();
     if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+
+    const routeObj: any = { ...(route as Record<string, unknown>) };
+    if (!routeObj.id && !routeObj._id) {
+      routeObj.id = routeObj.key || new ObjectId().toString();
+    }
+
+    const routes = (client as any).routes || [];
+    routes.push(routeObj);
+    (client as any).routes = routes;
+    (client as any).markModified('routes');
+    await (client as any).save();
     return client;
   }
 
   async updateRoute(clientId: string, routeId: string, route: unknown): Promise<Reactory.Models.TReactoryClient> {
-    const setFields: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(route as Record<string, unknown>)) {
-      setFields[`routes.$.${key}`] = value;
-    }
+    const client = await ReactoryClient.findById(clientId).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
 
-    const client = await ReactoryClient.findOneAndUpdate(
-      { _id: clientId, 'routes._id': routeId },
-      { $set: setFields },
-      { new: true },
-    ).exec();
-    if (!client) throw new Error(`ReactoryClient ${clientId} or route ${routeId} not found`);
+    const routes = (client as any).routes || [];
+    const index = routes.findIndex((r: any) => 
+      r.id === routeId || 
+      r._id?.toString() === routeId || 
+      r.key === routeId
+    );
+
+    if (index === -1) throw new Error(`Route ${routeId} not found on ReactoryClient ${clientId}`);
+
+    const existing = typeof routes[index].toObject === 'function' ? routes[index].toObject() : routes[index];
+    routes[index] = {
+      ...existing,
+      ...(route as Record<string, unknown>),
+      id: existing.id || routeId,
+    };
+
+    (client as any).routes = routes;
+    (client as any).markModified('routes');
+    await (client as any).save();
     return client;
   }
 
   async deleteRoute(clientId: string, routeId: string): Promise<Reactory.Models.TReactoryClient> {
-    const client = await ReactoryClient.findByIdAndUpdate(
-      clientId,
-      { $pull: { routes: { _id: routeId } } },
-      { new: true },
-    ).exec();
+    const client = await ReactoryClient.findById(clientId).exec();
     if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+
+    const routes = (client as any).routes || [];
+    (client as any).routes = routes.filter((r: any) => 
+      r.id !== routeId && 
+      r._id?.toString() !== routeId && 
+      r.key !== routeId
+    );
+    (client as any).markModified('routes');
+    await (client as any).save();
     return client;
   }
 
@@ -289,23 +314,29 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     const client = await ReactoryClient.findById(clientId).exec();
     if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
 
+    const routes = (client as any).routes || [];
     const routeMap = new Map<string, any>();
-    for (const route of (client as any).routes) {
-      routeMap.set(route._id.toString(), route);
+    for (const route of routes) {
+      const id = route.id || route._id?.toString() || route.key;
+      if (id) routeMap.set(id, route);
     }
 
-    const reordered = routeIds
-      .map(id => routeMap.get(id))
-      .filter(Boolean);
-
-    // Append any routes not included in the reorder list at the end
-    for (const route of (client as any).routes) {
-      if (!routeIds.includes(route._id.toString())) {
-        reordered.push(route);
+    const reordered: any[] = [];
+    for (const id of routeIds) {
+      const match = routeMap.get(id);
+      if (match) {
+        reordered.push(match);
+        routeMap.delete(id);
       }
     }
 
+    // Append any routes not included in the reorder list at the end
+    for (const remaining of routeMap.values()) {
+      reordered.push(remaining);
+    }
+
     (client as any).routes = reordered;
+    (client as any).markModified('routes');
     await (client as any).save();
     return client;
   }
@@ -386,6 +417,103 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     );
     await (client as any).save();
     return client;
+  }
+
+  async setActiveTheme(clientId: string, themeName: string): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findById(clientId).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+
+    client.theme = themeName;
+    await (client as any).save();
+    return client;
+  }
+
+  async saveTheme(clientId: string, theme: any): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findById(clientId).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+
+    const themes = (client as any).themes ? [...(client as any).themes] : [];
+    const index = themes.findIndex((t: any) => t.name === theme.name || (theme.id && t.id === theme.id));
+
+    if (index >= 0) {
+      themes[index] = { ...themes[index], ...theme };
+    } else {
+      themes.push(theme);
+    }
+
+    (client as any).themes = themes;
+    (client as any).markModified('themes');
+    await (client as any).save();
+    return client;
+  }
+
+  async deleteTheme(clientId: string, themeName: string): Promise<Reactory.Models.TReactoryClient> {
+    const client = await ReactoryClient.findById(clientId).exec();
+    if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
+
+    const themes = ((client as any).themes || []).filter((t: any) => t.name !== themeName && t.id !== themeName);
+    (client as any).themes = themes;
+    if (client.theme === themeName) {
+      client.theme = themes[0]?.name || 'reactory';
+    }
+    (client as any).markModified('themes');
+    await (client as any).save();
+    return client;
+  }
+
+  async publishThemeCss(themeName: string, cssContent: string, clientId?: string): Promise<boolean> {
+    const dataRoot = process.env.APP_DATA_ROOT || path.join(process.cwd(), '../reactory-data');
+    const themeFolder = path.join(dataRoot, 'themes', themeName);
+
+    if (!fs.existsSync(themeFolder)) {
+      fs.mkdirSync(themeFolder, { recursive: true });
+    }
+
+    const cssPath = path.join(themeFolder, 'styles.css');
+    fs.writeFileSync(cssPath, cssContent, { encoding: 'utf-8' });
+
+    // Also update client asset entry if clientId is provided
+    if (clientId) {
+      try {
+        const client = await ReactoryClient.findById(clientId).exec();
+        if (client) {
+          const themes = (client as any).themes ? [...(client as any).themes] : [];
+          const themeIdx = themes.findIndex((t: any) => t.name === themeName);
+          if (themeIdx >= 0) {
+            const assets = themes[themeIdx].assets ? [...themes[themeIdx].assets] : [];
+            const cssAssetIdx = assets.findIndex((a: any) => a.assetType === 'css' || a.id === 'styles');
+            const cssAsset = {
+              id: 'styles',
+              name: 'styles.css',
+              assetType: 'css',
+              url: `themes/${themeName}/styles.css`,
+            };
+            if (cssAssetIdx >= 0) {
+              assets[cssAssetIdx] = cssAsset;
+            } else {
+              assets.push(cssAsset);
+            }
+            themes[themeIdx].assets = assets;
+            (client as any).themes = themes;
+            (client as any).markModified('themes');
+            await (client as any).save();
+          }
+        }
+      } catch (err) {
+        this.context.error(`Failed to link styles.css asset on client: ${err.message}`);
+      }
+    }
+
+    return true;
+  }
+
+  async getThemeCss(themeName: string): Promise<string> {
+    const dataRoot = process.env.APP_DATA_ROOT || path.join(process.cwd(), '../reactory-data');
+    const cssPath = path.join(dataRoot, 'themes', themeName, 'styles.css');
+    if (fs.existsSync(cssPath)) {
+      return fs.readFileSync(cssPath, { encoding: 'utf-8' });
+    }
+    return '';
   }
 
   static reactory: Reactory.Service.IReactoryServiceDefinition<SystemService> = {
