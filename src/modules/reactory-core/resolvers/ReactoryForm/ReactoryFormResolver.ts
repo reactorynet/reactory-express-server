@@ -1,6 +1,7 @@
 
 import Reactory from '@reactorynet/reactory-core';
 import { resolver, query, property, mutation } from "@reactory/server-core/models/graphql/decorators/resolver";
+import { roles } from "@reactory/server-core/authentication/decorators";
 import ApiError from '@reactory/server-core/exceptions';
 
 
@@ -107,6 +108,7 @@ class ReactoryFormResolver {
     }
   }
 
+  @roles(['ADMIN', 'DEVELOPER'], 'args.context')
   @mutation("ReactoryFormSave")
   async reactoryFormSave(obj: any, args: IReactoryFormSaveArgs, context: Reactory.Server.IReactoryContext): Promise<Reactory.Forms.IReactoryForm> {
 
@@ -133,6 +135,37 @@ class ReactoryFormResolver {
       throw error instanceof ApiError
         ? error
         : new ApiError(`Failed to save form: ${error.message}`, { where: "ReactoryFormSave resolver", error });
+    }
+  }
+
+  @roles(['ADMIN', 'DEVELOPER'], 'args.context')
+  @mutation("ReactoryFormDelete")
+  async reactoryFormDelete(obj: any, args: { id: string }, context: Reactory.Server.IReactoryContext): Promise<{ success: boolean, message: string }> {
+
+    const formSvc: Reactory.Service.IReactoryFormService = context.getService("core.ReactoryFormService@1.0.0") as Reactory.Service.IReactoryFormService;
+
+    if (!args.id) {
+      throw new ApiError("form id is required", { where: "ReactoryFormDelete resolver" });
+    }
+
+    // id convention: nameSpace.name@version (version optional, defaults 1.0.0)
+    const match = /^([^.]+)\.([^@]+)(?:@(.+))?$/.exec(args.id);
+    if (!match) {
+      throw new ApiError(`Invalid form id: ${args.id}`, { where: "ReactoryFormDelete resolver" });
+    }
+    const [, nameSpace, name, version = '1.0.0'] = match;
+
+    try {
+      const deleted = await formSvc.delete({ nameSpace, name, version } as Reactory.Forms.IReactoryForm);
+      return {
+        success: deleted === true,
+        message: deleted === true
+          ? `Runtime form ${args.id} deleted`
+          : `Runtime form ${args.id} was not deleted`,
+      };
+    } catch (error) {
+      context.log(`Error deleting form ${args.id}: ${error.message}`, { error }, 'error', 'ReactoryFormResolver');
+      return { success: false, message: error.message };
     }
   }
 

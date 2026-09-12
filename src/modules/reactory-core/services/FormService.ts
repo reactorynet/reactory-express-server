@@ -401,8 +401,39 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return merged || (overlay as Reactory.Forms.IReactoryForm);
   }
 
-  delete(form: Reactory.Forms.IReactoryForm): Promise<boolean> {
-    throw new Error('Method not implemented.');
+  /**
+   * Deletes a form's YAML overlay from $REACTORY_DATA/forms. Only runtime
+   * (YAML) definitions can be deleted — a code form shipped in a module has no
+   * overlay file and is refused. Deleting an overlay over a code form reverts
+   * the form to its code definition.
+   */
+  async delete(form: Reactory.Forms.IReactoryForm): Promise<boolean> {
+    if (!form || !form.nameSpace || !form.name) {
+      throw new ApiError('form with nameSpace and name is required', { where: 'ReactoryFormService.delete' });
+    }
+    const version = form.version || '1.0.0';
+    const filePath = this.getFormYamlPath(form.nameSpace, form.name, version);
+    if (!filePath) {
+      throw new ApiError('REACTORY_DATA environment variable is not set, cannot delete form', { where: 'ReactoryFormService.delete' });
+    }
+    const fs = require('fs');
+    if (fs.existsSync(filePath) !== true) {
+      throw new ApiError(
+        `Form ${form.nameSpace}.${form.name}@${version} has no runtime (YAML) definition to delete — code forms cannot be deleted at runtime.`,
+        { where: 'ReactoryFormService.delete', filePath });
+    }
+    try {
+      fs.unlinkSync(filePath);
+      this.getExecutionContext().log(
+        `Deleted YAML overlay for form ${form.nameSpace}.${form.name}@${version}`,
+        { filePath }, 'info', 'ReactoryFormService');
+      return true;
+    } catch (deleteErr) {
+      this.getExecutionContext().log(
+        `Failed to delete YAML overlay for form ${form.nameSpace}.${form.name}@${version}: ${deleteErr.message}`,
+        { filePath, deleteErr }, 'error', 'ReactoryFormService');
+      throw new ApiError(`Failed to delete form: ${deleteErr.message}`, { where: 'ReactoryFormService.delete', deleteErr });
+    }
   }
 
   async getCompiledResourceForModule(module: Reactory.Forms.IReactoryFormModule): Promise<Reactory.Forms.IReactoryFormResource> {    
