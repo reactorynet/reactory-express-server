@@ -104,25 +104,26 @@ const BulkStatusChangeAction = (props: BulkStatusChangeActionProps) => {
       try {
         // Call GraphQL mutation to update status
         const result = await reactory.graphqlMutation(
-          `mutation UpdateTicketStatus($id: String!, $status: String!, $comment: String) {
-            updateSupportTicketStatus(id: $id, status: $status, comment: $comment) {
+          // updateSupportTicketStatus(id, status, comment) does not exist in the schema.
+          // Status changes go through ReactoryUpdateSupportTicket(ticket_id, updates).
+          `mutation ReactoryUpdateSupportTicket($ticket_id: String, $updates: ReactorySupportTicketUpdate) {
+            ReactoryUpdateSupportTicket(ticket_id: $ticket_id, updates: $updates) {
               id
               status
               updatedDate
             }
           }`,
           {
-            id: ticket.id,
-            status: newStatus,
-            comment: comment || undefined,
+            ticket_id: ticket.id,
+            updates: { status: newStatus, comment: comment || undefined },
           }
         );
 
-        if (result.data?.updateSupportTicketStatus) {
+        if (result.data?.ReactoryUpdateSupportTicket) {
           results.push({
             ...ticket,
             status: newStatus,
-            updatedDate: result.data.updateSupportTicketStatus.updatedDate,
+            updatedDate: result.data.ReactoryUpdateSupportTicket.updatedDate,
           });
         } else {
           throw new Error('Failed to update ticket');
@@ -135,6 +136,18 @@ const BulkStatusChangeAction = (props: BulkStatusChangeActionProps) => {
       }
 
       setProgress(((i + 1) / selectedTickets.length) * 100);
+    }
+
+    // Publish ONE canonical change event for the whole batch rather than one per ticket,
+    // so the grid refreshes once instead of N times.
+    if (failed.length === 0 && results.length > 0) {
+      const changedIds = results.map((t: any) => t.id).filter(Boolean);
+      try {
+        reactory.emit('core.SupportTicketChanged', { action: 'status-changed', ids: changedIds, ticketIds: changedIds });
+        reactory.emit('core.SupportTicketUpdated', { ids: changedIds, ticketIds: changedIds, action: 'status-changed' });
+      } catch (emitError) {
+        reactory.log('core.BulkStatusChangeAction.tsx: failed to emit change event', { emitError }, 'warn');
+      }
     }
 
     setProcessing(false);

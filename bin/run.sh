@@ -99,7 +99,6 @@ elif type get_env_file_path &>/dev/null; then
 fi
 
 if [[ -n "$ENV_FILE" && -f "$ENV_FILE" ]]; then
-  ENV_CMD_ARG="-f ${ENV_FILE}"
   # Check if env file specifies runtime
   if [[ "$USE_BUN" != "true" ]]; then
     ENV_RUNTIME=$(grep -E '^REACTORY_RUNTIME=' "$ENV_FILE" 2>/dev/null | cut -d '=' -f2 | tr -d '"'\'' ')
@@ -108,17 +107,20 @@ if [[ -n "$ENV_FILE" && -f "$ENV_FILE" ]]; then
       USE_BUN=true
     fi
   fi
-else
-  ENV_CMD_ARG=""
 fi
 
 # Runtime selection: bun vs node
 if [[ "$USE_BUN" == "true" ]]; then
-  if type ensure_bun &>/dev/null; then
-    ensure_bun "$BUN_VERSION" || exit 1
-  elif ! has_command bun; then
-    echo "❌ [run] Error: Bun is not installed." >&2
-    exit 1
+  # Prefer a bun that is already resolvable on PATH. ensure_bun() force-prepends
+  # $HOME/.bun/bin, which can shadow a different (e.g. architecture-mismatched)
+  # install and break native addons — only fall back to it when bun is absent.
+  if ! has_command bun; then
+    if type ensure_bun &>/dev/null; then
+      ensure_bun "$BUN_VERSION" || exit 1
+    else
+      echo "❌ [run] Error: Bun is not installed." >&2
+      exit 1
+    fi
   fi
   JS_RUNTIME="bun"
   RUNTIME_ARGS=("run")
@@ -132,6 +134,12 @@ else
   RUNTIME_VERSION="$(node --version 2>/dev/null || echo 'unknown')"
 fi
 
+# Make locally installed CLIs (env-cmd) resolvable for the Node path and
+# for npm/postinstall hooks launched from this script.
+if [[ -d "${SERVER_ROOT}/node_modules/.bin" ]]; then
+  export PATH="${SERVER_ROOT}/node_modules/.bin:${PATH}"
+fi
+
 export NODE_PATH="${APP_DIR}:${SERVER_ROOT}/node_modules:./node_modules:./app:.${NODE_PATH:+:$NODE_PATH}"
 
 echo "🚀 [run] Starting Reactory Express Server from: ${SERVER_ROOT}"
@@ -139,4 +147,23 @@ echo "   App Entry   : ${APP_DIR}/index.js"
 echo "   Runtime     : ${JS_RUNTIME} (${RUNTIME_VERSION})"
 echo "   Env File    : ${ENV_FILE:-none}"
 
-env-cmd --no-override ${ENV_CMD_ARG} "$JS_RUNTIME" "${RUNTIME_ARGS[@]}" "${APP_DIR}/index.js"
+# exec so the JS runtime (bun/node) replaces this shell: signals reach it
+# directly and no intermediate bash process lingers in the process group.
+if [[ "$USE_BUN" == "true" ]]; then
+  # Bun loads dotenv files natively via --env-file (non-overriding, matching
+  # env-cmd --no-override). This deliberately avoids env-cmd, which is a Node
+  # CLI and would otherwise require a `node` runtime on PATH — a GUI/packaged
+  # Electron launch has no Node on PATH. Paths are passed as array elements so
+  # spaces in the install location cannot break argument parsing.
+  BUN_ARGS=()
+  if [[ -n "$ENV_FILE" && -f "$ENV_FILE" ]]; then
+    BUN_ARGS+=("--env-file=${ENV_FILE}")
+  fi
+  exec "$JS_RUNTIME" "${BUN_ARGS[@]}" "${RUNTIME_ARGS[@]}" "${APP_DIR}/index.js"
+else
+  ENV_CMD=(env-cmd --no-override)
+  if [[ -n "$ENV_FILE" && -f "$ENV_FILE" ]]; then
+    ENV_CMD+=(-f "$ENV_FILE")
+  fi
+  exec "${ENV_CMD[@]}" "$JS_RUNTIME" "${RUNTIME_ARGS[@]}" "${APP_DIR}/index.js"
+fi

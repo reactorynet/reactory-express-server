@@ -1,0 +1,21 @@
+type GraphQLQueryResult {
+  data: Any
+  errors: [Any]
+  extensions: Any
+  success: Boolean
+  executionTime: Int
+}
+
+input GraphQLQueryInput {
+  query: String!
+  variables: Any
+  operationName: String
+}
+
+extend type Query {
+  ReactoryGraphQLQuery(input: GraphQLQueryInput!): GraphQLQueryResult
+}
+
+extend type Mutation {
+  ReactoryGraphQLQuery(input: GraphQLQueryInput!): GraphQLQueryResult
+}

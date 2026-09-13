@@ -67,6 +67,7 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
   ],
   routes: [
     {
+      id: String,
       key: String,
       title: String,
       path: String,
@@ -101,6 +102,7 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
       provider: String,
       enabled: Boolean,
       properties: Mixed,
+      options: Mixed,
       _id: false,
     },
   ],

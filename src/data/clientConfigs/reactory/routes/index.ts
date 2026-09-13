@@ -337,6 +337,24 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   },
 
   {
+    key: "data-graphiql",
+    title: "GraphiQL",
+    path: "/data/graphiql/*",
+    exact: false,
+    public: false,
+    roles: ["DEVELOPER", "ADMIN"],
+    componentFqn: "core.GraphQLQueryForm@1.0.0",
+  },
+  {
+    key: "data-sql-editor",
+    title: "SQL Query Editor",
+    path: "/data/sql-editor/*",
+    exact: false,
+    public: false,
+    roles: ["DEVELOPER", "ADMIN"],
+    componentFqn: "core.SQLQueryForm@1.0.0",
+  },
+  {
     key: "graphiql",
     title: "GraphiQL",
     path: "/graphiql/*",
@@ -472,7 +490,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     exact: true,
     public: true,
     roles: ["ADMIN"],
-    componentFqn: "core.ReactoryOrganizationSelector@1.0.0",
+    componentFqn: "reactory.ApplicationOrganizationsPanel@1.0.0",
   },
 
   {

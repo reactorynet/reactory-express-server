@@ -51,4 +51,26 @@ const Hash = (e: any) : number => {
   return Hash(e);
 };
 
+/**
+ * Returns a guaranteed non-negative integer hash.
+ *
+ * The base `Hash` implementation folds the accumulator with `hash & hash`,
+ * which yields a SIGNED 32-bit integer and can therefore be negative
+ * (e.g. Hash('Improve the tool descriptions ...') === -453156351).
+ *
+ * Use this variant whenever the hash is used to build a user facing or
+ * persisted identifier (support ticket references, human readable codes,
+ * slugs) where a leading '-' is invalid or confusing.
+ *
+ * The unsigned coercion (`>>> 0`) is used rather than Math.abs so that the
+ * result is always a stable integer in the range 0 .. 4294967295 and never
+ * produces `-0` or a non-integer value.
+ */
+export const HashUnsigned = (value: any): number => {
+  const raw = Hash(value);
+  const numeric =
+    typeof raw === 'number' && Number.isFinite(raw) ? Math.trunc(raw) : 0;
+  return numeric >>> 0;
+};
+
 export default Hash;

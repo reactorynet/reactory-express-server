@@ -85,6 +85,14 @@ interface SupportTicketsToolbarProps {
 }
 
 /**
+ * Open tickets span several status values. The persistence layer stores
+ * snake_case (`in_progress`) while this toolbar historically used kebab-case
+ * (`in-progress`); both forms are included so the badge count and the outgoing
+ * filter match regardless of which convention produced the stored value.
+ */
+const OPEN_STATUS_VALUES = ['new', 'open', 'in-progress', 'in_progress'];
+
+/**
  * Custom toolbar for Support Tickets with Quick Filters, Search, Advanced Filters, and Bulk Actions
  */
 const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
@@ -136,6 +144,12 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
     return params.get('search') || queryVariables?.filter?.searchString || searchText || '';
   });
 
+  // The toolbar owns the quick-filter selection so it survives re-renders of the
+  // QuickFilters child (which happens whenever the grid data changes and `counts` is
+  // recomputed). Previously the selection lived only inside the child hook, so a re-render
+  // lost it and every click re-applied the same filter instead of toggling it off.
+  const [activeQuickFilters, setActiveQuickFilters] = React.useState<string[]>([]);
+
   const currentUser = reactory.getUser();
   const userId = currentUser?.loggedIn?.user?.id;
 
@@ -144,7 +158,7 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
     return {
       myTickets: data?.data?.filter((t: Partial<Reactory.Models.IReactorySupportTicket>) => t.assignedTo?.id === userId).length || 0,
       unassigned: data?.data?.filter((t: Partial<Reactory.Models.IReactorySupportTicket>) => !t.assignedTo).length || 0,
-      open: data?.data?.filter(t => ['new', 'open', 'in-progress'].includes(t.status || '')).length || 0,
+      open: data?.data?.filter(t => OPEN_STATUS_VALUES.includes(t.status || '')).length || 0,
       urgent: data?.data?.filter((t: Partial<Reactory.Models.IReactorySupportTicket>) => ['critical', 'high'].includes(t.priority || '')).length || 0,
       overdue: data?.data?.filter((t: Partial<Reactory.Models.IReactorySupportTicket>) => t.isOverdue).length || 0,
       resolvedToday: data?.data?.filter((t: Partial<Reactory.Models.IReactorySupportTicket>) => {
@@ -189,7 +203,7 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
       color: 'info',
       filter: {
         field: 'status',
-        value: ['new', 'open', 'in-progress'],
+        value: OPEN_STATUS_VALUES,
         operator: 'in',
       },
       badge: counts.open,
@@ -312,7 +326,7 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
       try { filterObj = JSON.parse(decodeURIComponent(filtersParam)); } catch (e) { /* ignore */ }
     }
     // Support flat params for common ticket filters
-    ['status', 'priority', 'requestType', 'isOverdue', 'assignedTo.id', 'reference'].forEach((k) => {
+    ['status', 'priority', 'requestType', 'showOverdueOnly', 'unassignedOnly', 'assignedTo', 'reference'].forEach((k) => {
       if (params.has(k)) {
         const v = params.get(k);
         if (v === 'true') filterObj[k] = true;
@@ -438,13 +452,20 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
       searchString: searchInput // Preserve search
     };
 
-    // Clear all quick filter fields first
+    // Clear every quick-filter field before applying the new selection. This list must
+    // stay in step with the keys the switch below sets, otherwise a previously applied
+    // filter is silently retained (e.g. Unassigned followed by Open).
     delete filterUpdates['assignedTo.id'];
     delete filterUpdates.assignedTo;
+    delete filterUpdates.unassignedOnly;
     delete filterUpdates.status;
     delete filterUpdates.priority;
+    delete filterUpdates.showOverdueOnly;
     delete filterUpdates.isOverdue;
     delete filterUpdates.resolvedToday;
+    delete filterUpdates.startDate;
+    delete filterUpdates.endDate;
+    delete filterUpdates.dateFields;
 
     if (activeFilters.length === 0) {
       // No filters - reset to base state
@@ -463,24 +484,33 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
     // Apply first active quick filter (single select mode)
     const firstFilter = activeFilters[0];
 
+    // Only send values the server filter actually understands
+    // (ReactorySupportTicketFilter): assignedTo:[String], unassignedOnly, status:[String],
+    // priority:[String], showOverdueOnly, startDate/endDate/dateFields.
+    // Previously: "My Tickets" sent `assignedTo.id` (not a filter field), "Unassigned" sent
+    // `assignedTo: null` (skipped by the server), "Overdue" sent `isOverdue` (never mapped)
+    // and "Resolved Today" sent `status` as a string instead of an array - so four of the
+    // six quick filters returned the fully unfiltered list.
     switch (firstFilter) {
       case 'my-tickets':
-        filterUpdates['assignedTo.id'] = userId;
+        filterUpdates.assignedTo = userId ? [userId] : [];
         break;
       case 'unassigned':
-        filterUpdates.assignedTo = null;
+        filterUpdates.unassignedOnly = true;
         break;
       case 'open':
-        filterUpdates.status = ['new', 'open', 'in-progress'];
+        filterUpdates.status = OPEN_STATUS_VALUES;
         break;
       case 'urgent':
         filterUpdates.priority = ['critical', 'high'];
         break;
       case 'overdue':
-        filterUpdates.isOverdue = true;
+        filterUpdates.showOverdueOnly = true;
         break;
       case 'resolved-today':
-        filterUpdates.status = 'resolved';
+        filterUpdates.status = ['resolved'];
+        filterUpdates.startDate = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+        filterUpdates.dateFields = ['updatedDate'];
         break;
     }
 
@@ -537,7 +567,7 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
           filterUpdates.reference = filter.value;
           break;
         case 'isOverdue':
-          filterUpdates.isOverdue = filter.value;
+          filterUpdates.showOverdueOnly = filter.value;
           break;
       }
     });
@@ -650,12 +680,26 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
               Export
             </Button>
           </Tooltip>
+          <Tooltip title="Add a new support ticket">
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<Icon>add</Icon>}
+              onClick={() => navigate('/support/request')}
+              sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
+            >
+              Add Ticket
+            </Button>
+          </Tooltip>
         </Box>
-
         {/* Quick Filters Row */}
         <QuickFilters
           filters={quickFilters}
-          onFilterChange={handleQuickFilterChange}
+          activeFilters={activeQuickFilters}
+          onFilterChange={(filters: string[]) => {
+            setActiveQuickFilters(filters || []);
+            handleQuickFilterChange(filters || []);
+          }}
           variant="buttons"
           multiSelect={false}
         />

@@ -122,21 +122,29 @@ const BulkDeleteAction = (props: BulkDeleteActionProps) => {
       try {
         // Call GraphQL mutation to delete ticket
         const result = await reactory.graphqlMutation(
-          `mutation DeleteTicket($id: String!) {
-            deleteSupportTicket(id: $id) {
-              success
-              message
+          // deleteSupportTicket(id) does not exist in the schema. Deletion uses
+          // ReactoryDeleteSupportTicket(deleteInput: { ids }) which returns a union.
+          `mutation ReactoryDeleteSupportTicket($deleteInput: ReactorySupportTicketDeleteInput!) {
+            ReactoryDeleteSupportTicket(deleteInput: $deleteInput) {
+              ... on ReactorySupportTicketDeleteSuccess {
+                ids
+              }
+              ... on ReactorySupportTicketDeleteError {
+                ids
+                error
+              }
             }
           }`,
           {
-            id: ticket.id,
+            deleteInput: { ids: [ticket.id] },
           }
         );
 
-        if (result.data?.deleteSupportTicket?.success) {
+        const deleteResult = result.data?.ReactoryDeleteSupportTicket;
+        if (deleteResult && !deleteResult.error) {
           deleted.push(ticket.id!);
         } else {
-          throw new Error(result.data?.deleteSupportTicket?.message || 'Failed to delete ticket');
+          throw new Error(deleteResult?.error || 'Failed to delete ticket');
         }
       } catch (error: any) {
         failed.push({
@@ -146,6 +154,16 @@ const BulkDeleteAction = (props: BulkDeleteActionProps) => {
       }
 
       setProgress(((i + 1) / selectedTickets.length) * 100);
+    }
+
+    // Publish ONE canonical change event for the whole batch rather than one per ticket.
+    if (failed.length === 0 && deleted.length > 0) {
+      try {
+        reactory.emit('core.SupportTicketChanged', { action: 'deleted', ids: deleted, ticketIds: deleted });
+        reactory.emit('core.SupportTicketDeletedEvent', { ids: deleted, action: 'deleted' });
+      } catch (emitError) {
+        reactory.log('core.BulkDeleteAction: failed to emit change event', { emitError }, 'warn');
+      }
     }
 
     setProcessing(false);

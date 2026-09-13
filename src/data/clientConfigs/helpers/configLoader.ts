@@ -148,7 +148,21 @@ export const loadClientConfigFromYaml = (
 	if (!baseYaml) {
 		const message = `Client base YAML not found for ${clientKey} in ${clientDir}`;
 		if (options?.allowMissing) {
-			logger.warn(message);
+			// A folder that has element YAML files (routes/menus/whitelist/...) but
+			// no base config is silently skipped — flag it so the author knows the
+			// client is being ignored in favour of any code config / not loaded at all.
+			const orphanElements = findYaml(clientDir, [
+				'routes.yaml', 'routes.yml', 'routes/index.yaml', 'routes/index.yml',
+				'menus.yaml', 'menus.yml', 'menus/index.yaml', 'menus/index.yml',
+				'whitelist.yaml', 'whitelist.yml',
+			]);
+			if (orphanElements) {
+				logger.warn(
+					`${message}. Element YAML was found (${orphanElements}) but will be ignored without a base config.yaml/index.yaml.`
+				);
+			} else {
+				logger.warn(message);
+			}
 			return null;
 		}
 		throw new Error(message);

@@ -36,6 +36,7 @@ const CoreTypeDefinitions = loadGraphQLTypeDefinitions([
   'System/ReactoryContent',
   'Communications/Notification',
   'SQL/ReactorySQL',
+  'GraphQL/ReactoryGraphQL',
   'Finance/Payments',
   'Audit',
 ], __dirname, 'CORE');

@@ -142,24 +142,26 @@ const BulkTagAction = (props: BulkTagActionProps) => {
 
         // Call GraphQL mutation to update tags
         const result = await reactory.graphqlMutation(
-          `mutation UpdateTicketTags($id: String!, $tags: [String!]!) {
-            updateSupportTicketTags(id: $id, tags: $tags) {
+          // updateSupportTicketTags(id, tags) does not exist in the schema. Tags are set via
+          // ReactoryUpdateSupportTicket(ticket_id, updates: { tags }).
+          `mutation ReactoryUpdateSupportTicket($ticket_id: String, $updates: ReactorySupportTicketUpdate) {
+            ReactoryUpdateSupportTicket(ticket_id: $ticket_id, updates: $updates) {
               id
               tags
               updatedDate
             }
           }`,
           {
-            id: ticket.id,
-            tags: newTags,
+            ticket_id: ticket.id,
+            updates: { tags: newTags },
           }
         );
 
-        if (result.data?.updateSupportTicketTags) {
+        if (result.data?.ReactoryUpdateSupportTicket) {
           results.push({
             ...ticket,
-            tags: result.data.updateSupportTicketTags.tags,
-            updatedDate: result.data.updateSupportTicketTags.updatedDate,
+            tags: result.data.ReactoryUpdateSupportTicket.tags,
+            updatedDate: result.data.ReactoryUpdateSupportTicket.updatedDate,
           });
         } else {
           throw new Error('Failed to update ticket tags');
@@ -172,6 +174,18 @@ const BulkTagAction = (props: BulkTagActionProps) => {
       }
 
       setProgress(((i + 1) / selectedTickets.length) * 100);
+    }
+
+    // Publish ONE canonical change event for the whole batch rather than one per ticket,
+    // so the grid refreshes once instead of N times.
+    if (failed.length === 0 && results.length > 0) {
+      const changedIds = results.map((t: any) => t.id).filter(Boolean);
+      try {
+        reactory.emit('core.SupportTicketChanged', { action: 'tags-changed', ids: changedIds, ticketIds: changedIds });
+        reactory.emit('core.SupportTicketUpdated', { ids: changedIds, ticketIds: changedIds, action: 'tags-changed' });
+      } catch (emitError) {
+        reactory.log('core.BulkTagAction.tsx: failed to emit change event', { emitError }, 'warn');
+      }
     }
 
     setProcessing(false);

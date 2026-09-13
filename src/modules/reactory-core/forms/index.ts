@@ -14,6 +14,8 @@ import SupportTickets from './Support/SupportTickets';
 import SupportticketDelete from './Support/SupportTicketDelete';
 import WorkflowForms from './Workflow'
 import UserForms from './User';
+import SQLQueryForm from './SQL';
+import GraphQLQueryForm from './GraphQL';
 
 export default [
   Applications,
@@ -31,5 +33,7 @@ export default [
   SupportTickets,  
   SupportticketDelete,
   ...WorkflowForms,
-  ...UserForms
+  ...UserForms,
+  SQLQueryForm,
+  GraphQLQueryForm,
 ];

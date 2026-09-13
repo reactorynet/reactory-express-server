@@ -169,7 +169,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
               'closed': 'check_circle_outline',
               'on-hold': 'pause_circle'
             },
-            labelFormat: '${value.toUpperCase()}'
+            labelFormat: '${value.replace(/_/g, " ").replace(/-/g, " ")}'
           }
         }
       }
@@ -201,7 +201,7 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
               'medium': 'remove',
               'low': 'arrow_downward'
             },
-            labelFormat: '${value.toUpperCase()}'
+            labelFormat: '${value.replace(/_/g, " ").replace(/-/g, " ")}'
           }
         }
       },
@@ -304,6 +304,9 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
             dialogTitle: 'Assign Ticket To',
             showFilters: true,
             userListQuery: 'users',
+            // Selecting a user assigns immediately (no confirmation step).
+            // Resolved by UserAvatar as a declarative "componentFqn/method" handler.
+            onClick: 'core.SupportTicketWorkflow@1.0.0/assignTicket',
           }
         }
       }
@@ -468,7 +471,14 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
     fontWeight: 600,
     fontSize: '0.875rem',    
   },
-  refreshEvents: [{ name: "core.SupportTicketDeletedEvent" }],
+  // Refresh the grid when a ticket is deleted or updated (e.g. reassigned from the
+  // "Assigned To" column picker) so the row reflects the new value without a reload.
+  // The grid re-runs its query whenever the Support feature publishes a change.
+  // Bind ONLY the canonical event: the feature mirrors every change to the legacy names for
+  // external subscribers, so binding those here as well fired the refresh twice per change.
+  refreshEvents: [
+    { name: "core.SupportTicketChanged" },
+  ],
   actions: [
     {
       key: 'delete',
@@ -538,6 +548,10 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
     'query.assignedTo': 'filter.assignedTo',
     'query.tags': 'filter.tags',
     'query.showOverdueOnly': 'filter.showOverdueOnly',
+    'query.unassignedOnly': 'filter.unassignedOnly',
+    'query.startDate': 'filter.startDate',
+    'query.endDate': 'filter.endDate',
+    'query.dateFields': 'filter.dateFields',
     'query.reference': 'filter.reference',
   }
 }

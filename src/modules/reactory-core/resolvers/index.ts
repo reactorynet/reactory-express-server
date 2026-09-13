@@ -12,6 +12,7 @@ import {
   UserMembershipResolver
  } from './User';
 import ReactorySQLResolver from './SQL/ReactorySQLResolver';
+import ReactoryGraphQLResolver from './GraphQL/ReactoryGraphQLResolver';
 import ReactoryCacheResolver from './Cache/CacheResolver';
 import ReactoryFileResolver from './ReactoryFile/ReactoryFile';
 import SupportResolver from './Support/SupportResolver';
@@ -46,6 +47,7 @@ export default mergeGraphResolver([
   ReactoryContent,
   ProfileResolver,
   ReactorySQLResolver,
+  ReactoryGraphQLResolver,
   ReactoryCacheResolver,
   ReactoryFileResolver,
   TemplateResolver,

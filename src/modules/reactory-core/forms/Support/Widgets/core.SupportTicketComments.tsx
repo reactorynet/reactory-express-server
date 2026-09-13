@@ -12,6 +12,11 @@ interface CommentsDependencies {
 interface CommentsProps {
   reactory: Reactory.Client.IReactoryApi,
   ticket: Reactory.Models.IReactorySupportTicket,
+  /**
+   * Reports the current total number of comments so a parent (e.g. the ticket
+   * detail panel tab badge) can stay in sync without refetching the ticket.
+   */
+  onCommentCountChange?: (count: number) => void,
 }
 
 /**
@@ -31,7 +36,7 @@ interface CommentsProps {
  * <SupportTicketComments ticket={ticketData} reactory={api} />
  */
 const SupportTicketComments = (props: CommentsProps) => {
-  const { reactory, ticket } = props;
+  const { reactory, ticket, onCommentCountChange } = props;
 
   if (!ticket) {
     return <div>No ticket data available</div>;
@@ -77,6 +82,11 @@ const SupportTicketComments = (props: CommentsProps) => {
   } = MaterialCore;
 
   const [commentText, setCommentText] = React.useState('');
+  // Incrementing this key remounts the rich text editor. The editor is a Quill
+  // instance which does not clear its own DOM when the bound `formData` prop is
+  // reset to '', so a successful post previously left the text visible and the
+  // user could re-submit it (duplicate comments).
+  const [composerKey, setComposerKey] = React.useState(0);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [replyingToId, setReplyingToId] = React.useState<string | null>(null);
   const [replyText, setReplyText] = React.useState('');
@@ -97,8 +107,26 @@ const SupportTicketComments = (props: CommentsProps) => {
   const userId = currentUser?.loggedIn?.user?.id;
 
   // Fetch comments for this ticket
-  const fetchComments = React.useCallback(async () => {
-    if (!ticket?.id) return;
+  /**
+   * Publish the canonical change event so the MaterialTableWidget grid (Comments column)
+   * and any other subscriber can refresh after this component mutates the ticket.
+   */
+  const notifyTicketChanged = React.useCallback((action: string, changes?: any) => {
+    try {
+      reactory.emit('core.SupportTicketChanged', {
+        action,
+        ticketId: ticket?.id,
+        reference: ticket?.reference,
+        ticket,
+        changes,
+      });
+    } catch (emitError) {
+      reactory.log('SupportTicketComments: failed to emit core.SupportTicketChanged', { emitError }, 'warn');
+    }
+  }, [reactory, ticket]);
+
+  const fetchComments = React.useCallback(async (): Promise<any[]> => {
+    if (!ticket?.id) return [];
 
     setLoading(true);
     try {
@@ -149,14 +177,18 @@ const SupportTicketComments = (props: CommentsProps) => {
       });
 
       if (result.data?.getCommentsByContext?.comments) {
-        setComments(result.data.getCommentsByContext.comments);
+        const list = result.data.getCommentsByContext.comments;
+        setComments(list);
+        return list;
       }
+      return [];
     } catch (error) {
       reactory.log('Error fetching comments', { error }, 'error');
       reactory.createNotification('Failed to load comments', {
         title: 'Error',
         options: { body: 'Could not load comments for this ticket' }
       });
+      return [];
     } finally {
       setLoading(false);
     }
@@ -176,9 +208,12 @@ const SupportTicketComments = (props: CommentsProps) => {
       }
     };
 
+    // Subscribe to the canonical change event, plus the legacy name for compatibility.
+    reactory.on('core.SupportTicketChanged', handleUpdate);
     reactory.on('core.SupportTicketUpdated', handleUpdate);
-    
+
     return () => {
+      reactory.off('core.SupportTicketChanged', handleUpdate);
       reactory.off('core.SupportTicketUpdated', handleUpdate);
     };
   }, [ticket.id, fetchComments, restoreExpandedStates, reactory]);
@@ -352,8 +387,11 @@ const SupportTicketComments = (props: CommentsProps) => {
         });
         setCommentText('');
         setReplyingToId(null);
+        setComposerKey((key) => key + 1);
         // Refresh comments and restore expanded states
-        await fetchComments();
+        const afterAdd = await fetchComments();
+        notifyTicketChanged('commented', { comment: 'added' });
+        if (typeof onCommentCountChange === 'function') onCommentCountChange(afterAdd?.length || 0);
         await restoreExpandedStates();
       }
     } catch (error) {
@@ -412,7 +450,9 @@ const SupportTicketComments = (props: CommentsProps) => {
         setCommentText('');
         
         // Refresh comments and restore expanded states
-        await fetchComments();
+        const afterEdit = await fetchComments();
+        notifyTicketChanged('commented', { comment: 'updated' });
+        if (typeof onCommentCountChange === 'function') onCommentCountChange(afterEdit?.length || 0);
         await restoreExpandedStates();
       }
     } catch (error) {
@@ -427,6 +467,7 @@ const SupportTicketComments = (props: CommentsProps) => {
   const handleCancelEdit = () => {
     setEditingId(null);
     setCommentText('');
+    setComposerKey((key) => key + 1);
   };
 
   const handleDeleteComment = (commentId: string) => {
@@ -469,7 +510,9 @@ const SupportTicketComments = (props: CommentsProps) => {
         });
         
         // Refresh comments and restore expanded states
-        await fetchComments();
+        const afterDelete = await fetchComments();
+        notifyTicketChanged('commented', { comment: 'deleted' });
+        if (typeof onCommentCountChange === 'function') onCommentCountChange(afterDelete?.length || 0);
         await restoreExpandedStates();
       } else {
         throw new Error(deleteResult?.message || 'Delete failed');
@@ -508,6 +551,7 @@ const SupportTicketComments = (props: CommentsProps) => {
       if (result.data?.upvoteComment) {
         // Refresh comments and restore expanded states
         await fetchComments();
+        notifyTicketChanged('commented', { comment: 'upvoted' });
         await restoreExpandedStates();
       }
     } catch (error) {
@@ -571,7 +615,9 @@ const SupportTicketComments = (props: CommentsProps) => {
         setReplyingToId(null);
         
         // Refresh comments to get the new reply
-        await fetchComments();
+        const afterReply = await fetchComments();
+        notifyTicketChanged('commented', { comment: 'reply added' });
+        if (typeof onCommentCountChange === 'function') onCommentCountChange(afterReply?.length || 0);
         
         // Restore all previously expanded states (this will fetch nested replies)
         await restoreExpandedStates();
@@ -887,6 +933,7 @@ const SupportTicketComments = (props: CommentsProps) => {
         {RichEditorWidget ? (
           <Box sx={{ mb: 2 }}>
             <RichEditorWidget
+              key={composerKey}
               reactory={reactory}
               formData={commentText}              
               onChange={(value: string) => setCommentText(value)}              
@@ -913,7 +960,10 @@ const SupportTicketComments = (props: CommentsProps) => {
             <Button
               variant="outlined"
               size="small"
-              onClick={() => setCommentText('')}
+              onClick={() => {
+                setCommentText('');
+                setComposerKey((key) => key + 1);
+              }}
               disabled={!commentText}
             >
               Clear
