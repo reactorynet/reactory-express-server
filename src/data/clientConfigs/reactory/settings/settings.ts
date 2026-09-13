@@ -94,7 +94,21 @@ export default [
       host: process.env.REACTORY_JAEGER_HOST || 'localhost',
       port: parseInt(process.env.REACTORY_JAEGER_PORT || '6831'),
       protocol: process.env.REACTORY_JAEGER_PROTOCOL || 'http',
-    },  
+    },
+    roles: ['ADMIN'],
+  },
+  {
+    name: 'reactory.grafana.connection',
+    componentFqn: 'reactory-telemetry.GrafanaConnectionForm@1.0.0',
+    settingType: 'connection',
+    variant: 'grafana',
+    data: {
+      host: process.env.REACTORY_GRAFANA_HOST || 'localhost',
+      port: parseInt(process.env.REACTORY_GRAFANA_PORT || '3000'),
+      protocol: process.env.REACTORY_GRAFANA_PROTOCOL || 'http',
+      // Grafana service-account token for the dashboard import API
+      token: process.env.REACTORY_GRAFANA_TOKEN || '',
+    },
     roles: ['ADMIN'],
   }
 ];

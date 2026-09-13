@@ -209,6 +209,18 @@ export class ClientRouteResolver {
     return null;
   }
 
+  @property("ClientRoute", "header")
+  header(route: any) {
+    if (!route || !route.header) return null;
+    return typeof route.header.toObject === 'function' ? route.header.toObject() : route.header;
+  }
+
+  @property("ClientRoute", "footer")
+  footer(route: any) {
+    if (!route || !route.footer) return null;
+    return typeof route.footer.toObject === 'function' ? route.footer.toObject() : route.footer;
+  }
+
   component(route: any){
     if(!route.componentFqn) {
       return {

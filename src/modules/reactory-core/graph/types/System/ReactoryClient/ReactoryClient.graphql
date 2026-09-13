@@ -99,6 +99,25 @@ type ReactoryUXMessage {
 }
 
 """
+Configuration for a route slot such as header or footer
+"""
+type RouteSlotConfig {
+  show: Boolean
+  title: String
+  componentFqn: String
+  props: Any
+  propsMap: Any
+}
+
+input RouteSlotConfigInput {
+  show: Boolean
+  title: String
+  componentFqn: String
+  props: Any
+  propsMap: Any
+}
+
+"""
 A client route / path used by the client for internal routing
 """
 type ClientRoute {
@@ -147,6 +166,14 @@ type ClientRoute {
   A redirect path if the component becomes redundant
   """
   redirect: String
+  """
+  Configuration for the route header component/slot
+  """
+  header: RouteSlotConfig
+  """
+  Configuration for the route footer component/slot
+  """
+  footer: RouteSlotConfig
   """
   An array of components that should be mounted at this route.  
   
@@ -490,6 +517,8 @@ input ClientRouteInput {
   componentFqn: String
   redirect: String
   componentProps: Any
+  header: RouteSlotConfigInput
+  footer: RouteSlotConfigInput
 }
 
 """
