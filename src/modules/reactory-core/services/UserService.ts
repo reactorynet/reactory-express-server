@@ -977,14 +977,37 @@ class UserService implements Reactory.Service.IReactoryUserService {
     
     try {
       const { search, sortBy, sortOrder, limit, offset, fields } = request || {};
-      const users = await User.find({ email: { $regex: search, $options: 'i' } })
+
+      // A $regex filter must never receive an undefined or empty value: MongoDB
+      // rejects it with "$regex has to be a string", which surfaced to the client
+      // as ReactoryUserQueryFailed and rendered as "No users found" in the
+      // support ticket assign dialogs whenever they listed users without a
+      // search term (browsing by role filter rather than by query).
+      const searchTerm = typeof search === 'string' ? search.trim() : '';
+      const query: Record<string, any> = {};
+
+      if (searchTerm.length > 0) {
+        // Escape regex metacharacters so a term such as "(" cannot produce an
+        // invalid pattern and break the query.
+        const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`);
+        const regex = { $regex: escaped, $options: 'i' };
+        // Search the caller supplied fields (defaults to name + email) so the
+        // assign dialogs honour their "search by name or email" affordance.
+        const searchable =
+          Array.isArray(fields) && fields.length > 0
+            ? fields
+            : ['firstName', 'lastName', 'email'];
+        query.$or = searchable.map((field) => ({ [field]: regex }));
+      }
+
+      const users = await User.find(query)
         .sort(`-${sortBy}`)
         .limit(limit || 10)
         .skip(offset || 0)
         .exec();
   
       return {
-        total: users.length,
+        total: await User.countDocuments(query),
         users: users as unknown as Reactory.Models.IUserDocument[],
         limit: limit || 10,
         offset: offset || 0,

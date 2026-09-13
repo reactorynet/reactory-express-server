@@ -28,8 +28,17 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
 
     edit: {
       name: 'ReactoryUpdateSupportTicket',
-      text: `mutation ReactoryUpdateSupportTicket($ticket_id: String, $status: String, $assignedTo: String, $comment: String) {
-        ReactoryUpdateSupportTicket(ticket_id: $ticket_id, status: $status, assignedTo: $assignedTo, comment: $comment) {
+      text: `mutation ReactoryUpdateSupportTicket($ticket_id: String, $request: String, $requestType: String, $description: String, $status: String, $priority: String) {
+        ReactoryUpdateSupportTicket(
+          ticket_id: $ticket_id
+          updates: {
+            request: $request
+            requestType: $requestType
+            description: $description
+            status: $status
+            priority: $priority
+          }
+        ) {
           id
           request
           description
@@ -53,8 +62,12 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
         }
       }`,
       variables: {
+        'formData.id': 'ticket_id',
         'formData.request': 'request',
-        'formData.description': 'description'
+        'formData.requestType': 'requestType',
+        'formData.description': 'description',
+        'formData.status': 'status',
+        'formData.priority': 'priority',
       },
       resultMap: {
         'id': 'id',

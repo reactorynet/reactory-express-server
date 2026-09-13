@@ -130,8 +130,12 @@ const BulkAssignAction = (props: BulkAssignActionProps) => {
       try {
         // Call GraphQL mutation to assign ticket
         const result = await reactory.graphqlMutation(
-          `mutation AssignTicket($id: String!, $userId: String, $sendNotification: Boolean) {
-            assignSupportTicket(id: $id, userId: $userId, sendNotification: $sendNotification) {
+          // assignSupportTicket(id, userId, sendNotification) does not exist in the schema.
+          // Bulk assignment goes through ReactoryUpdateSupportTicket(ticket_id, updates).
+          // NOTE: the update input exposes no notification flag, so the "send notification"
+          // toggle is currently a no-op server-side.
+          `mutation ReactoryUpdateSupportTicket($ticket_id: String, $updates: ReactorySupportTicketUpdate) {
+            ReactoryUpdateSupportTicket(ticket_id: $ticket_id, updates: $updates) {
               id
               assignedTo {
                 id
@@ -144,17 +148,16 @@ const BulkAssignAction = (props: BulkAssignActionProps) => {
             }
           }`,
           {
-            id: ticket.id,
-            userId: selectedUser?.id || null,
-            sendNotification,
+            ticket_id: ticket.id,
+            updates: { assignTo: selectedUser?.id || null },
           }
         );
 
-        if (result.data?.assignSupportTicket) {
+        if (result.data?.ReactoryUpdateSupportTicket) {
           results.push({
             ...ticket,
-            assignedTo: result.data.assignSupportTicket.assignedTo,
-            updatedDate: result.data.assignSupportTicket.updatedDate,
+            assignedTo: result.data.ReactoryUpdateSupportTicket.assignedTo,
+            updatedDate: result.data.ReactoryUpdateSupportTicket.updatedDate,
           });
         } else {
           throw new Error('Failed to assign ticket');
@@ -167,6 +170,18 @@ const BulkAssignAction = (props: BulkAssignActionProps) => {
       }
 
       setProgress(((i + 1) / selectedTickets.length) * 100);
+    }
+
+    // Publish ONE canonical change event for the whole batch rather than one per ticket,
+    // so the grid refreshes once instead of N times.
+    if (failed.length === 0 && results.length > 0) {
+      const changedIds = results.map((t: any) => t.id).filter(Boolean);
+      try {
+        reactory.emit('core.SupportTicketChanged', { action: 'assigned', ids: changedIds, ticketIds: changedIds });
+        reactory.emit('core.SupportTicketUpdated', { ids: changedIds, ticketIds: changedIds, action: 'assigned' });
+      } catch (emitError) {
+        reactory.log('core.BulkAssignAction.tsx: failed to emit change event', { emitError }, 'warn');
+      }
     }
 
     setProcessing(false);

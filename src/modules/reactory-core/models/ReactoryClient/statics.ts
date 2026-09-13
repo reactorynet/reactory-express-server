@@ -175,9 +175,13 @@ const synchronizeRoutes = async (
 
     // Get existing routes from the document
     const existingRoutes = clientDocument.routes || [];
-    const configRouteKeys = new Set(configRoutes.map((r) => r.key));
+    // Identity is key, falling back to path — match the same rule used when
+    // processing each configured route so keyless routes reconcile correctly.
+    const configRouteKeys = new Set(
+      configRoutes.map((r: any) => r.key || r.path).filter(Boolean)
+    );
     const existingRouteMap = new Map(
-      existingRoutes.map((r: any) => [r.key, r])
+      existingRoutes.map((r: any) => [r.key || r.path, r])
     );
 
     // Track which routes to keep
@@ -308,6 +312,138 @@ const synchronizeRoutes = async (
 };
 
 /**
+ * Result of menu synchronization operation
+ */
+interface MenuSyncResult {
+  added: number;
+  updated: number;
+  removed: number;
+  errors: Array<{ menuKey: string; error: any }>;
+}
+
+/**
+ * Menu entries in config files use human-readable string ids
+ * (id: pricing-fees) while MenuEntrySchema.id is an ObjectId — passing
+ * them through makes the whole entry fail its embedded cast and the menu
+ * silently keeps its previous state. Strip non-ObjectId ids recursively.
+ */
+const sanitizeMenuEntries = (entries: any[] = []): any[] =>
+  (Array.isArray(entries) ? entries : []).map((entry) => {
+    const { id, items, ...rest } = entry || {};
+    return {
+      ...rest,
+      ...(id && mongoose.isValidObjectId(id) ? { id } : {}),
+      ...(Array.isArray(items) ? { items: sanitizeMenuEntries(items) } : {}),
+    };
+  });
+
+/**
+ * Synchronize menus for a client configuration.
+ *
+ * Menus live in their own collection, so unlike routes they cannot be replaced
+ * wholesale by assigning an embedded array. This performs a reconcile against
+ * the source configuration:
+ *   - every menu declared in config is upserted (matched by client + key)
+ *   - every stored menu for the client whose key is no longer declared is deleted
+ * The client's `menus` reference array is rewritten to the reconciled set.
+ */
+const synchronizeMenus = async (
+  clientDocument: Reactory.Models.ReactoryClientDocument,
+  configMenus: Reactory.UX.IReactoryMenuConfig[],
+  telemetry?: ClientConfigTelemetry
+): Promise<{ refs: any[]; result: MenuSyncResult }> => {
+  const result: MenuSyncResult = { added: 0, updated: 0, removed: 0, errors: [] };
+  const refs: any[] = [];
+
+  const normalizeKey = (value: unknown) => String(value ?? "").toLowerCase();
+  const configKeys = new Set(
+    configMenus.map((m) => normalizeKey((m as any).key)).filter(Boolean)
+  );
+
+  // Snapshot existing menus so we can report adds/updates and compute removals.
+  const existingMenus = (await Menu.find({ client: clientDocument._id }).lean()) as any[];
+  const existingByKey = new Map<string, any>(
+    existingMenus.map((m) => [normalizeKey(m.key), m])
+  );
+
+  for (const menuDef of configMenus) {
+    const rawKey = (menuDef as any).key;
+    const menuKey = normalizeKey(rawKey);
+
+    if (!menuKey) {
+      logger.warn(`Menu without key for client ${clientDocument.name}, skipping`);
+      result.errors.push({ menuKey: "unknown", error: "Menu missing key" });
+      continue;
+    }
+
+    try {
+      const now = new Date();
+      // Never let a config-supplied createdAt/updatedAt collide with our $setOnInsert.
+      const { createdAt: _createdAt, updatedAt: _updatedAt, ...menuFields } =
+        (menuDef as any) || {};
+
+      const menuFound: any = await Menu.findOneAndUpdate(
+        { client: clientDocument._id, key: rawKey },
+        {
+          $set: {
+            ...menuFields,
+            entries: sanitizeMenuEntries((menuDef as any).entries),
+            client: clientDocument._id,
+            updatedAt: now,
+          },
+          $setOnInsert: { createdAt: now },
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+
+      if (menuFound && menuFound._id) {
+        refs.push(menuFound._id);
+        if (existingByKey.has(menuKey)) result.updated++;
+        else result.added++;
+
+        if (telemetry?.menuSyncCounter) {
+          telemetry.menuSyncCounter.add(1, {
+            clientKey: clientDocument.key,
+            menuKey: rawKey,
+          });
+        }
+      }
+    } catch (menuErr) {
+      logger.error(`Error synchronizing menu ${rawKey}`, menuErr);
+      result.errors.push({ menuKey: rawKey, error: menuErr });
+      if (telemetry?.menuSyncErrorCounter) {
+        telemetry.menuSyncErrorCounter.add(1, {
+          clientKey: clientDocument.key,
+          menuKey: rawKey,
+        });
+      }
+    }
+  }
+
+  // Reconcile removals: stored menus for this client no longer declared in config.
+  const removedIds = existingMenus
+    .filter((m) => !configKeys.has(normalizeKey(m.key)))
+    .map((m) => m._id);
+
+  if (removedIds.length > 0) {
+    const removal = await Menu.deleteMany({ _id: { $in: removedIds } });
+    result.removed = (removal as any)?.deletedCount ?? removedIds.length;
+    logger.info(
+      `Removed ${result.removed} menu(s) no longer present in configuration for ${clientDocument.name}`,
+      { menuIds: removedIds.map((id) => String(id)) }
+    );
+  }
+
+  logger.info(
+    `Menu synchronization complete for ${clientDocument.name}: ` +
+      `${result.added} added, ${result.updated} updated, ` +
+      `${result.removed} removed, ${result.errors.length} errors`
+  );
+
+  return { refs, result };
+};
+
+/**
  * Helper to re-process password and salt for a ReactoryClient document
  */
 const processClientPasswordAndSalt = (
@@ -344,14 +480,75 @@ const processClientPasswordAndSalt = (
 };
 
 /**
+ * Collections that represent the complete desired state for a client. When a
+ * config is applied in reconcile mode and one of these is omitted, the
+ * persisted value is cleared rather than left untouched. Routes and menus are
+ * handled separately by their synchronizers.
+ */
+const RECONCILABLE_COLLECTION_FIELDS = [
+  "whitelist",
+  "applicationRoles",
+  "plugins",
+  "featureFlags",
+  "auth_config",
+  "settings",
+  "themes",
+  "modules",
+  "components",
+] as const;
+
+/**
+ * Options controlling how a client configuration is applied.
+ */
+export interface IUpsertFromConfigOptions {
+  /**
+   * Treat the supplied config as the complete desired state for reconcilable
+   * collections (and for routes/menus). When true, a collection omitted from the
+   * config is cleared to an empty set instead of being left untouched, so that
+   * removals in the source config are honoured.
+   *
+   * Default: false. This is deliberately opt-in — partial-config callers (e.g.
+   * macros that upsert only routes or only menus) must never wipe unrelated
+   * fields such as whitelist or plugins.
+   */
+  reconcile?: boolean;
+}
+
+/**
+ * Apply reconcile semantics to a prepared input object.
+ *
+ * In reconcile mode an omitted reconcilable collection is the authoritative
+ * empty state, so it is explicitly set to [] (rather than left as undefined) to
+ * ensure the persisted value is cleared. In non-reconcile mode this is a no-op,
+ * which keeps partial-config callers (routes-only / menus-only upserts) safe.
+ */
+export const applyReconcileDefaults = <T extends Record<string, any>>(
+  clientConfig: Partial<Reactory.Models.IReactoryClient>,
+  input: T,
+  reconcile: boolean
+): T => {
+  if (!reconcile) return input;
+
+  RECONCILABLE_COLLECTION_FIELDS.forEach((field) => {
+    if ((clientConfig as any)[field] === undefined) {
+      (input as any)[field] = [];
+    }
+  });
+
+  return input;
+};
+
+/**
  * Comprehensive upsert operation for client configuration
  * Handles all aspects of client config including routes, menus, components, etc.
  */
 const upsertFromConfig = async (
   clientConfig: Partial<Reactory.Models.IReactoryClient>,
-  context?: Reactory.Server.IReactoryContext
+  context?: Reactory.Server.IReactoryContext,
+  options?: IUpsertFromConfigOptions
 ): Promise<Reactory.Models.ReactoryClientDocument> => {
   const { key } = clientConfig;
+  const { reconcile = false } = options || {};
   const startTime = Date.now();
   const telemetry = context ? initializeTelemetry(context) : {};
 
@@ -389,6 +586,11 @@ const upsertFromConfig = async (
     input.routes = sanitizeArrayOfSubdocs(input.routes);
     input.featureFlags = sanitizeArrayOfSubdocs(input.featureFlags);
 
+    // D5: in reconcile mode an omitted collection means "authoritative empty".
+    // Set it to [] so Object.assign below clears the persisted value and the
+    // configured (absent) state matches the database exactly.
+    applyReconcileDefaults(clientConfig, input as Record<string, any>, reconcile);
+
     // Find existing client
     let reactoryClient: Reactory.Models.ReactoryClientDocument =
       await ReactoryClientModel.findOne({ key }).then();
@@ -409,19 +611,12 @@ const upsertFromConfig = async (
         // setPassword() re-salts and re-hashes as a pair.
         processClientPasswordAndSalt(reactoryClient, clientConfig);
 
-        // Explicitly mark complex/mixed fields as modified to ensure Mongoose saves them
-        if (input.themes) reactoryClient.markModified('themes');
-        if (input.auth_config) reactoryClient.markModified('auth_config');
-        if (input.settings) reactoryClient.markModified('settings');
-        if (input.whitelist) reactoryClient.markModified('whitelist');
-        if (input.applicationRoles) reactoryClient.markModified('applicationRoles');
-        if (input.plugins) reactoryClient.markModified('plugins');
-        if (input.featureFlags) reactoryClient.markModified('featureFlags');
-        if (input.components) reactoryClient.markModified('components');
+        // Explicitly mark complex/mixed fields as modified to ensure Mongoose saves them.
+        RECONCILABLE_COLLECTION_FIELDS.forEach((field) => {
+          if (input[field] !== undefined) reactoryClient.markModified(field);
+        });
         reactoryClient.markModified('routes');
         reactoryClient.markModified('menus');
-        // if (input.menus) reactoryClient.markModified('menus');
-        // if (input.routes) reactoryClient.markModified('routes');
 
         // Validate before saving
         const validationResult = reactoryClient.validateSync();
@@ -476,11 +671,13 @@ const upsertFromConfig = async (
     }
 
     // Synchronize routes
-    if (clientConfig.routes && Array.isArray(clientConfig.routes)) {
+    const shouldSynchronizeRoutes =
+      Array.isArray(clientConfig.routes) || reconcile;
+    if (shouldSynchronizeRoutes) {
       try {
         const routeSyncResult = await synchronizeRoutes(
           reactoryClient,
-          clientConfig.routes as Reactory.Routing.IReactoryRoute[],
+          (clientConfig.routes || []) as Reactory.Routing.IReactoryRoute[],
           telemetry
         );
 
@@ -497,67 +694,38 @@ const upsertFromConfig = async (
         }
       } catch (routeError) {
         logger.error("Failed to synchronize routes", routeError);
-        // Don't throw - continue with other operations
+        // Surface the failure so the client is reported as failed rather than
+        // silently persisting stale routes.
+        throw routeError;
       }
     } else {
       logger.debug(`No routes to synchronize for ${reactoryClient.name}`);
     }
 
-    // Synchronize menus
-    const menuDefs = clientConfig.menus || [];
-    const menuRefs = [];
-    logger.info(`Synchronizing ${menuDefs.length} menus for ${reactoryClient.name}`);
+    // Synchronize menus by reconciling against the source configuration so
+    // that menus removed from config are deleted rather than left behind.
+    const shouldSynchronizeMenus = Array.isArray(clientConfig.menus) || reconcile;
+    if (shouldSynchronizeMenus) {
+      const menuSync = await synchronizeMenus(
+        reactoryClient,
+        (clientConfig.menus || []) as Reactory.UX.IReactoryMenuConfig[],
+        telemetry
+      );
 
-    // Menu entries in config files use human-readable string ids
-    // (id: pricing-fees) while MenuEntrySchema.id is an ObjectId — passing
-    // them through makes the whole entry fail its embedded cast and the menu
-    // silently keeps its previous state. Strip non-ObjectId ids recursively.
-    const sanitizeMenuEntries = (entries: any[] = []): any[] =>
-      entries.map((entry) => {
-        const { id, items, ...rest } = entry || {};
-        return {
-          ...rest,
-          ...(id && mongoose.isValidObjectId(id) ? { id } : {}),
-          ...(Array.isArray(items) ? { items: sanitizeMenuEntries(items) } : {}),
-        };
-      });
-
-    for (const menuDef of menuDefs) {
-      try {
-        const menuFound = await Menu.findOneAndUpdate(
-          { client: reactoryClient._id, key: menuDef.key },
-          {
-            ...menuDef,
-            entries: sanitizeMenuEntries((menuDef as any).entries),
-            client: reactoryClient._id,
-          },
-          { upsert: true, new: true }
-        );
-
-        if (menuFound && (menuFound as any)._id) {
-          menuRefs.push((menuFound as any)._id);
-          if (telemetry.menuSyncCounter) {
-            telemetry.menuSyncCounter.add(1, {
-              clientKey: key,
-              menuKey: menuDef.key,
-            });
-          }
-        }
-      } catch (menuErr) {
-        logger.error(`Error synchronizing menu ${menuDef.key}`, menuErr);
-        if (telemetry.menuSyncErrorCounter) {
-          telemetry.menuSyncErrorCounter.add(1, {
-            clientKey: key,
-            menuKey: menuDef.key,
-          });
-        }
+      //@ts-ignore
+      reactoryClient.menus = menuSync.refs;
+      if (typeof reactoryClient.markModified === "function") {
+        reactoryClient.markModified("menus");
       }
-    }
 
-    //@ts-ignore
-    reactoryClient.menus = menuRefs;
-    if (typeof reactoryClient.markModified === "function") {
-      reactoryClient.markModified("menus");
+      if (menuSync.result.errors.length > 0) {
+        logger.warn(
+          `${menuSync.result.errors.length} errors during menu synchronization`,
+          menuSync.result.errors
+        );
+      }
+    } else {
+      logger.debug(`No menus to synchronize for ${reactoryClient.name}`);
     }
 
     // Save the final document with all updates
@@ -1011,10 +1179,13 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
           components: componentIds.map((c) => c._id),
         };
 
-        // Use the comprehensive upsert function
+        // Use the comprehensive upsert function. The seeded config is treated
+        // as the complete desired state so removals (routes, menus, whitelist,
+        // etc.) are reconciled against the database.
         let reactoryClient = await upsertFromConfig(
           clientDataWithComponents,
-          context
+          context,
+          { reconcile: true }
         );
 
         // Set password if provided
@@ -1070,6 +1241,22 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
           });
         }
       }
+    }
+
+    // Reconcile orphaned menus: remove menu documents whose owning client no
+    // longer exists (e.g. client renamed or removed from the enabled set).
+    try {
+      const knownClientIds = (
+        await ReactoryClientModel.find({}, { _id: 1 }).lean()
+      ).map((c: any) => c._id);
+      const orphaned = await Menu.deleteMany({ client: { $nin: knownClientIds } });
+      if (((orphaned as any)?.deletedCount ?? 0) > 0) {
+        logger.warn(
+          `Removed ${(orphaned as any).deletedCount} orphaned menu document(s) with no owning client`
+        );
+      }
+    } catch (orphanError) {
+      logger.error("Failed to clean up orphaned menus", orphanError);
     }
 
     const totalDuration = (Date.now() - startupStartTime) / 1000;

@@ -181,6 +181,11 @@ input ReactorySupportTicketFilter {
   Filter by request types
   """
   requestType: [String]
+  """
+  Show only tickets that have no assignee
+  """
+  unassignedOnly: Boolean
+
 }
 
 input ReactorySupportTicketDeleteInput {

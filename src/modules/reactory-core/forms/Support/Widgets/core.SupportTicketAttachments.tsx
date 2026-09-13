@@ -202,7 +202,20 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
             options: { body: `${uploadedFileIds.length} file(s) attached to ticket` }
           });
 
-          // Emit event to refresh ticket data
+          // Publish the canonical change event so the grid (Files column) and any other
+          // subscriber refresh their data for this ticket.
+          try {
+            reactory.emit('core.SupportTicketChanged', {
+              action: 'attached',
+              ticketId: ticket.id,
+              reference: ticket.reference,
+              changes: { documents: attachResult.data.ReactoryAttachFilesToTicket.attachedFiles }
+            });
+          } catch (emitError) {
+            reactory.log('SupportTicketAttachments: failed to emit core.SupportTicketChanged', { emitError }, 'warn');
+          }
+
+          // Legacy mirror for existing subscribers.
           reactory.emit('core.SupportTicketUpdated', { 
             ticketId: ticket.id,
             documents: attachResult.data.ReactoryAttachFilesToTicket.attachedFiles 

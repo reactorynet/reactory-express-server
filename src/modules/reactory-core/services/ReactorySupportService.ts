@@ -1,5 +1,5 @@
 import Reactory from '@reactorynet/reactory-core';
-import Hash from '@reactory/server-core/utils/hash';
+import { HashUnsigned } from '@reactory/server-core/utils/hash';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import moment from 'moment';
 import { QueryWithHelpers } from 'mongoose';
@@ -9,6 +9,32 @@ import ReactoryFileModel from '@reactory/server-modules/reactory-core/models/Cor
 import { InsufficientPermissions } from '@reactory/server-core/exceptions';
 import { ObjectId } from 'mongodb';
 import { service } from '@reactory/server-core/application/decorators';
+
+/**
+ * Support tickets are persisted with snake_case enumerations (e.g. `in_progress`)
+ * while some UI components were written against kebab-case (`in-progress`).
+ * Because the query layer performs an exact `$in` match, a casing mismatch makes
+ * filters silently return nothing (observed: the "Open" quick filter matched 0
+ * of 3 open tickets).
+ *
+ * `enumVariants` expands a requested value into every known casing variant so a
+ * lookup matches regardless of which convention produced the stored value.
+ */
+const enumVariants = (values: string | string[]): string[] => {
+  const variants = new Set<string>();
+  (Array.isArray(values) ? values : [values]).forEach((value) => {
+    const raw = String(value ?? '').trim().toLowerCase();
+    if (!raw) return;
+    variants.add(raw);
+    variants.add(raw.replace(/-/g, '_'));
+    variants.add(raw.replace(/_/g, '-'));
+  });
+  return Array.from(variants);
+};
+
+/** Canonical storage form for enumeration values: lowercase snake_case. */
+const canonicalEnum = (value: string): string =>
+  String(value ?? '').trim().toLowerCase().replace(/-/g, '_');
 
 @service({
   id: "core.ReactorySupportService@1.0.0",
@@ -51,7 +77,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
      // Apply updates
     if (updates.request) ticket.request = updates.request;
     if (updates.description) ticket.description = updates.description;
-    if (updates.status) ticket.status = updates.status;
+    if (updates.status) ticket.status = canonicalEnum(updates.status);
     if (updates.requestType) ticket.requestType = updates.requestType;
     if (updates.assignTo) ticket.assignedTo = new ObjectId(updates.assignTo) as any;
     if (updates.priority) ticket.priority = updates.priority;
@@ -170,15 +196,15 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
 
     if (filter) {
       if (filter.status && filter.status.length > 0) {
-        params.status = { $in: filter.status };
+        params.status = { $in: enumVariants(filter.status) };
       }
 
       if (filter.priority && filter.priority.length > 0) {
-        params.priority = { $in: filter.priority };
+        params.priority = { $in: enumVariants(filter.priority) };
       }
 
       if (filter.requestType && filter.requestType.length > 0) {
-        params.requestType = { $in: filter.requestType };
+        params.requestType = { $in: enumVariants(filter.requestType) };
       }
 
       if (filter.reference && filter.reference.length > 0) {
@@ -194,8 +220,35 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       }
 
       if (filter.showOverdueOnly === true) {
-        params.isOverdue = true;
+        // `isOverdue` is a Mongoose VIRTUAL derived from slaDeadline, so it cannot be used
+        // as a query predicate - filtering on it matched nothing. Query the underlying
+        // stored field instead.
+        params.slaDeadline = { $ne: null, $lt: new Date() };
       }
+
+      // The toolbar's "Unassigned" quick filter had no server representation, so it
+      // silently returned every ticket. Matches both an explicit null and a missing field.
+      if ((filter as any).unassignedOnly === true) {
+        params.assignedTo = null;
+      }
+
+      // startDate / endDate / dateFields are declared on ReactorySupportTicketFilter but
+      // were never applied, so date-scoped filters (e.g. "Resolved Today") could not
+      // narrow the result set at all.
+      const rawFilter: any = filter as any;
+      const dateRange: any = {};
+      if (rawFilter.startDate) dateRange.$gte = new Date(rawFilter.startDate);
+      if (rawFilter.endDate) dateRange.$lte = new Date(rawFilter.endDate);
+      if (Object.keys(dateRange).length > 0) {
+        const dateFields: string[] =
+          Array.isArray(rawFilter.dateFields) && rawFilter.dateFields.length > 0
+            ? rawFilter.dateFields
+            : ['updatedDate'];
+        params.$and = (params.$and || []).concat(
+          dateFields.map((field) => ({ [field]: dateRange })),
+        );
+      }
+
 
       if (filter?.searchString && filter.searchString.trim().length > 0) {
         const regex = { $regex: filter.searchString.trim(), $options: "i" };
@@ -237,7 +290,10 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       meta,
       formId,
       status: "new",
-      reference: `${this.context.partner.key}-${Hash(this.context.user._id)}/${moment().format('YYYYMMDD')}/${Hash(request)}`.toUpperCase(),
+      // HashUnsigned guarantees a non-negative numeric segment. String(user._id)
+      // is used so the hash input is stable (hashing a raw ObjectId previously
+      // produced 0, yielding the meaningless "REACTORY-0" prefix).
+      reference: `${this.context.partner.key}-${HashUnsigned(String(this.context.user._id))}/${moment().format('YYYYMMDD')}/${HashUnsigned(request)}`.toUpperCase(),
       createdBy: this.context.user,
       updatedBy: this.context.user,
       comments: [],

@@ -43,11 +43,11 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
       icon: "palette",
       title: "Themes",
     },
-    {
-      field: "statistics",
-      icon: "bar_chart",
-      title: "Statistics",
-    },
+    // {
+    //   field: "statistics",
+    //   icon: "bar_chart",
+    //   title: "Statistics",
+    // },
     {
       field: "routes",
       icon: "route",

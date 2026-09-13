@@ -36,7 +36,26 @@ class SystemService implements Reactory.Service.IReactorySystemService {
   }
 
   async getMenusForClient(client: Reactory.Models.TReactoryClient): Promise<Reactory.UX.IReactoryMenuConfig[]> {
-    return await Menu.find({ client }).clone();
+    // Prefer the client's hydrated menu references. Menus are reconciled
+    // against the source config on startup (see ReactoryClient.synchronizeMenus),
+    // so the reference array is the authoritative set for the tenant. Fall back
+    // to a client-field query when no references are present (e.g. legacy data
+    // that predates reconciliation) so we never regress to an empty menu.
+    const clientId = (client as any)?._id || client;
+    const refs: any[] | null = Array.isArray((client as any)?.menus)
+      ? (client as any).menus
+      : null;
+
+    if (refs && refs.length > 0) {
+      const ids = refs.map((ref: any) => (ref && ref._id ? ref._id : ref));
+      const menus = await Menu.find({ _id: { $in: ids } }).clone();
+      const order = new Map<string, number>(ids.map((id: any, index: number) => [String(id), index]));
+      return (menus as any[]).sort(
+        (a, b) => (order.get(String(a._id)) ?? 0) - (order.get(String(b._id)) ?? 0)
+      ) as Reactory.UX.IReactoryMenuConfig[];
+    }
+
+    return await Menu.find({ client: clientId }).clone();
   }
 
   query(query: string, variables: any): Promise<any> {

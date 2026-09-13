@@ -40,6 +40,16 @@ interface DetailPanelProps {
  *   }
  * }
  */
+/**
+ * Remembers the selected tab per ticket for the session.
+ *
+ * A data refresh (e.g. the grid re-querying after a change event) remounts the expanded
+ * detail panel, which would otherwise reset the user back to the first tab mid-task - for
+ * example right after they post a comment. Keying the state by ticket id means a remount
+ * restores the tab the user was actually looking at.
+ */
+const lastActiveTabByTicket: { [ticketId: string]: number } = {};
+
 const SupportTicketDetailPanel = (props: DetailPanelProps) => {
   const { reactory, ticket, useCase = 'grid', rowData } = props;
   
@@ -83,9 +93,39 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
     Badge,
   } = MaterialCore;
 
-  const [activeTab, setActiveTab] = React.useState(0);
+  const [activeTab, setActiveTab] = React.useState<number>(
+    () => lastActiveTabByTicket[ticket.id] ?? 0
+  );
+
+  // Live comment count for the Comments tab badge. Seeded from the ticket and kept
+  // in sync by the comments widget, which owns the fetched comment list -- adding a
+  // comment did not refetch the ticket and so the badge previously went stale.
+  const [commentCount, setCommentCount] = React.useState<number>(ticket.comments?.length || 0);
+
+  // Refresh token: bumped whenever the Support feature publishes a change for this ticket.
+  // Included in the active tab's key so a tab that owns its own data fetching (Comments,
+  // Related, Attachments, Activity) re-mounts and re-fetches instead of showing stale data.
+  const [refreshToken, setRefreshToken] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    const handleTicketChanged = (event: any) => {
+      // Ignore changes for other tickets; accept events with no ticketId (broadcasts).
+      if (event && event.ticketId && event.ticketId !== ticket.id) return;
+      setRefreshToken((token) => token + 1);
+    };
+
+    reactory.on('core.SupportTicketChanged', handleTicketChanged);
+    return () => {
+      reactory.off('core.SupportTicketChanged', handleTicketChanged);
+    };
+  }, [ticket.id, reactory]);
+
+  React.useEffect(() => {
+    setCommentCount(ticket.comments?.length || 0);
+  }, [ticket.id]);
 
   const handleTabChange = (event: any, newValue: number) => {
+    lastActiveTabByTicket[ticket.id] = newValue;
     setActiveTab(newValue);
   };
 
@@ -102,7 +142,7 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
       id: 'comments',
       label: 'Comments',
       icon: 'comment',
-      badge: ticket.comments?.length || 0,
+      badge: commentCount,
       component: SupportTicketComments,
     },
     {
@@ -250,8 +290,10 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
       <Box sx={{ p: 0 }}>
         {ActiveTabComponent && (
           <ActiveTabComponent 
+            key={`${ticket.id}:${refreshToken}`}
             ticket={ticket} 
             reactory={reactory}
+            onCommentCountChange={setCommentCount}
           />
         )}
       </Box>

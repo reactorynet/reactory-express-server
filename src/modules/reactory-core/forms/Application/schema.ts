@@ -137,15 +137,15 @@ const schema: Reactory.Schema.IObjectSchema = {
         }
       }
     },
-    statistics: {
-      type: "object",
-      properties: {
-        activeUsers: { type: "number", title: "Active Users" },
-        totalSessions: { type: "number", title: "Total Sessions" },
-        averageSessionDuration: { type: "number", title: "Average Session Duration (mins)" },
-        lastActivity: { type: "string", format: "date-time", title: "Last Activity" }
-      }
-    },
+    // statistics: {
+    //   type: "object",
+    //   properties: {
+    //     activeUsers: { type: "number", title: "Active Users" },
+    //     totalSessions: { type: "number", title: "Total Sessions" },
+    //     averageSessionDuration: { type: "number", title: "Average Session Duration (mins)" },
+    //     lastActivity: { type: "string", format: "date-time", title: "Last Activity" }
+    //   }
+    // },
     routes: {
       type: "object",
       properties: {

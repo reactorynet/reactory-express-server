@@ -42,12 +42,12 @@ describe('ReactoryClient Password, Routes, and Menus Upsert Processing', () => {
     });
   });
 
-  describe('Solar Compute Planner YAML Config Loading & Upserting', () => {
-    it('should load solar-compute-planner config.yaml without YAML errors', () => {
-      const result = loadClientConfigFromYaml('solar-compute-planner');
+  describe('Compute Planner YAML Config Loading & Upserting', () => {
+    it('should load compute-planner config.yaml without YAML errors', () => {
+      const result = loadClientConfigFromYaml('compute-planner');
       expect(result).toBeDefined();
       expect(result?.config).toBeDefined();
-      expect(result?.config.key).toBe('solar-compute-planner');
+      expect(result?.config.key).toBe('compute-planner');
       expect(result?.config.password).toBeDefined();
       expect(typeof result?.config.password).toBe('string');
       expect(result?.config.salt).toBe('generate');
@@ -57,8 +57,8 @@ describe('ReactoryClient Password, Routes, and Menus Upsert Processing', () => {
       expect(Array.isArray(result?.config.menus)).toBe(true);
     });
 
-    it('should process solar-compute-planner password, routes, and menus when applied to ReactoryClient model', () => {
-      const result = loadClientConfigFromYaml('solar-compute-planner');
+    it('should process compute-planner password, routes, and menus when applied to ReactoryClient model', () => {
+      const result = loadClientConfigFromYaml('compute-planner');
       expect(result).toBeDefined();
 
       const config = result!.config;

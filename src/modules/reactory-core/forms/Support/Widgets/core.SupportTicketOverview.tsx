@@ -114,7 +114,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     setUserSearchLoading(true);
     try {
       const result = await reactory.graphqlQuery<
-        { ReactoryUsers: { users: UserSearchResult[] } | { error: string } },
+        { ReactoryUsers: { users: UserSearchResult[] } | { message: string } },
         { filter: { searchString: string }, paging: { page: number, pageSize: number } }
       >(
         `query ReactoryUsers($filter: ReactoryUserFilterInput, $paging: PagingRequest) {
@@ -129,7 +129,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
               }
             }
             ... on ReactoryUserQueryFailed {
-              error
+              message
             }
           }
         }`,
@@ -138,6 +138,10 @@ const SupportTicketOverview = (props: OverviewProps) => {
       const data = result?.data?.ReactoryUsers;
       if (data && 'users' in data) {
         setUserSearchResults(data.users || []);
+      } else if (data && 'message' in data) {
+        // The resolver returned the failure variant of the ReactoryUserQueryResult
+        // union. Log it so an empty result list is never silent.
+        reactory.log(`User search failed: ${(data as { message: string }).message}`, {}, 'error');
       }
     } catch (err) {
       reactory.log('Error searching users', { err }, 'error');
@@ -175,7 +179,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     });
     setLoading(false);
     if (updated) {
-      reactory.amq.raiseReactoryPluginEvent('support_ticket_updated', { ticket: updated });
+      // Change notification is published by SupportTicketWorkflow (executeUpdate).
       handleClose();
     }
   };
@@ -189,7 +193,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     });
     setLoading(false);
     if (updated) {
-      reactory.amq.raiseReactoryPluginEvent('support_ticket_updated', { ticket: updated });
+      // Change notification is published by SupportTicketWorkflow (executeUpdate).
       handleClose();
     }
   };
@@ -203,7 +207,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     });
     setLoading(false);
     if (updated) {
-      reactory.amq.raiseReactoryPluginEvent('support_ticket_updated', { ticket: updated });
+      // Change notification is published by SupportTicketWorkflow (executeUpdate).
       handleClose();
     }
   };
@@ -232,7 +236,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     });
     setLoading(false);
     if (updated) {
-      reactory.amq.raiseReactoryPluginEvent('support_ticket_updated', { ticket: updated });
+      // Change notification is published by SupportTicketWorkflow (executeUpdate).
       handleClose();
     }
   };
@@ -243,7 +247,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     const closed = await SupportTicketWorkflow.closeTicket({ ticket });
     setLoading(false);
     if (closed) {
-      reactory.amq.raiseReactoryPluginEvent('support_ticket_updated', { ticket: { ...ticket, status: 'closed' } });
+      // Change notification is published by SupportTicketWorkflow (closeTicket).
       handleClose();
     }
   };

@@ -40,34 +40,15 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
 
     await startServices({}, context);
 
-    // Synchronize enabled client configs (routes, menus, settings, themes)
-    // into the database. Without this, config files drift from the persisted
-    // ReactoryClient/Menu documents — clients were previously only upserted
-    // on first creation (CLI init), so menu changes never reached the UI.
-    // Disable with REACTORY_SYNC_CLIENT_CONFIGS=false.
-    if (
-      process.env.REACTORY_SYNC_CLIENT_CONFIGS !== 'false' &&
-      context.state.isClientConfigurationMaster === true
-    ) {
-      try {
-        // Deferred import: loading the client configs triggers env interpolation.
-        const { clients: clientConfigs } = await import('@reactory/server-core/data');
-        for (const clientConfig of clientConfigs as Reactory.Server.IReactoryClientConfig[]) {
-          try {
-            // @ts-ignore upsertFromConfig is a model static
-            await ReactoryClient.upsertFromConfig(clientConfig, context);
-            logger.debug(`Client config synchronized: ${clientConfig.key}`);
-          } catch (clientError) {
-            logger.warn(`Failed to synchronize client config '${clientConfig.key}'`, clientError);
-          }
-        }
-        logger.info(`Synchronized ${(clientConfigs as unknown[]).length} client config(s) to the database`);
-        context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();
-      } catch (syncError) {
-        logger.warn('Client config synchronization failed', syncError);
-      }
-    } else if (process.env.REACTORY_SYNC_CLIENT_CONFIGS !== 'false') {
-      logger.info('Skipping client config synchronization because this pod is not the startup master');
+    // Client configuration hydration (routes, menus, whitelist, settings, ...)
+    // is owned by a single path: ReactoryClient.onStartup, which runs during
+    // startServices above via ReactoryModelRegistryService. That path reconciles
+    // the database against the source config, including removals, so this step
+    // must not repeat the upsert loop — it previously wrote every client, menu
+    // and route twice per boot.
+    if (context.state.isClientConfigurationMaster === true) {
+      // Refresh the in-memory partner: onStartup may have just reconciled it.
+      context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();
     }
         
     // Publish client env files if REACTORY_CLIENT is set
