@@ -76,6 +76,20 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
       exact: Boolean,
       redirect: String,
       componentFqn: String,
+      header: {
+        show: Boolean,
+        title: String,
+        componentFqn: String,
+        props: Mixed,
+        propsMap: Mixed,
+      },
+      footer: {
+        show: Boolean,
+        title: String,
+        componentFqn: String,
+        props: Mixed,
+        propsMap: Mixed,
+      },
       args: [
         Mixed,
       ],
