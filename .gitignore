@@ -60,3 +60,4 @@ coverage/coverage-final.json
 
 # Fixture tree created at test time by test/setup/testEnvironment.ts (APP_DATA_ROOT)
 src/reactory/test-data/
+backups/*
