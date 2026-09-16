@@ -122,9 +122,26 @@ export class RedisService implements Reactory.Service.IReactoryService {
   }
 
   /**
-   * Set a value in Redis
+   * Set a value in Redis.
+   *
+   * The TTL is the third argument: `set(key, value, ttlSeconds)`. This is *not*
+   * the raw node-redis signature — that one is `set(key, value, 'EX', seconds)`,
+   * and reaching for it here puts the literal string `'EX'` where the seconds
+   * belong. Redis then answers `ERR value is not an integer or out of range`,
+   * which names neither the caller nor the argument. A stray fourth argument is
+   * silently dropped, so the shape below is guarded rather than trusted.
    */
   async set(key: string, value: string, ttlSeconds?: number): Promise<'OK'> {
+    // Falsy (undefined, 0) keeps its established meaning: store with no expiry.
+    // Anything truthy that is not a positive number is a caller mistake.
+    if (ttlSeconds && (typeof ttlSeconds !== 'number' || !Number.isFinite(ttlSeconds) || ttlSeconds <= 0)) {
+      throw new TypeError(
+        `RedisService.set: ttlSeconds must be a positive number when supplied, ` +
+        `got ${JSON.stringify(ttlSeconds)} for key "${key}". ` +
+        `Did you mean set(key, value, ttlSeconds) rather than the raw client's set(key, value, 'EX', ttlSeconds)?`
+      );
+    }
+
     try {
       if (ttlSeconds) {
         return await this.client.setex(key, ttlSeconds, value);

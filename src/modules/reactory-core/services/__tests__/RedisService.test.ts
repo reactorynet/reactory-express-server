@@ -126,6 +126,34 @@ describe('RedisService', () => {
       expect(mockRedisClient.setex).toHaveBeenCalledWith('test-key', 60, 'test-value');
     });
 
+    it('rejects a non-numeric TTL instead of letting Redis fail on it', async () => {
+      // The raw node-redis client takes set(key, value, 'EX', seconds). Passing
+      // that shape to this wrapper puts the string 'EX' in the ttl slot, and
+      // Redis answers with an error that names neither caller nor argument.
+      await expect(
+        (service.set as any)('test-key', 'test-value', 'EX', 30)
+      ).rejects.toThrow(/ttlSeconds must be a positive number/);
+
+      expect(mockRedisClient.setex).not.toHaveBeenCalled();
+      expect(mockRedisClient.set).not.toHaveBeenCalled();
+    });
+
+    it('rejects a negative TTL', async () => {
+      await expect(service.set('test-key', 'test-value', -1)).rejects.toThrow(
+        /ttlSeconds must be a positive number/
+      );
+    });
+
+    it('treats a zero TTL as no expiry', async () => {
+      mockRedisClient.set.mockResolvedValue('OK');
+
+      const result = await service.set('test-key', 'test-value', 0);
+
+      expect(result).toBe('OK');
+      expect(mockRedisClient.set).toHaveBeenCalledWith('test-key', 'test-value');
+      expect(mockRedisClient.setex).not.toHaveBeenCalled();
+    });
+
     it('deletes a key', async () => {
       mockRedisClient.del.mockResolvedValue(1);
 
