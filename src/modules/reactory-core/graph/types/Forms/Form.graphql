@@ -746,6 +746,20 @@ type ReactoryForm {
     Indicates the src folder for the form
     """
     src: String
+
+    """
+    Engine-level and rendering options for the form.
+
+    Carries the per-form engine pin read by the client's
+    `EngineDispatchedForm` (`options.engine: 'v5' | 'fork'`) alongside any
+    other render options a form may declare. Without this field the pin is
+    dropped at the GraphQL boundary, so server-defined forms could never opt
+    onto the v5 form engine.
+
+    See reactory-pwa-client/src/components/reactory/docs/forms-engine for
+    the migration plan and ADR-0006 for the coexistence strategy.
+    """
+    options: Any
 }
 
 """
@@ -972,6 +986,13 @@ input ReactoryFormInput {
     form is depending on
     """
     dependencies: [ReactoryComponentDependencyInput]
+
+    """
+    Engine-level and rendering options for the form (e.g.
+    `{ engine: "v5" }`). Mirrors the `options` field on the ReactoryForm
+    type so the pin survives a save/publish round-trip.
+    """
+    options: Any
 }
 
 extend type Query {

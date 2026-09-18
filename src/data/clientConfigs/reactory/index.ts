@@ -89,12 +89,17 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
       roles: ['USER', 'ANON'],
     },
     {
-      // Forms-engine v5 adapter. Default off; flip value to true to opt
-      // every form (that does not pin itself via formDef.options.engine)
-      // onto the new engine. Per-form pin still wins over this flag.
+      // Forms-engine v5 adapter. Rolled out to the developer/admin pilot
+      // group first via `roles` below. `enabled` must be explicitly true:
+      // the embedded ReactoryFeatureFlagValue schema defaults it to false,
+      // and the client hook resolves `enabled !== false && value === true`
+      // — so a `value: true` with no `enabled` silently resolves to OFF.
+      //
+      // Per-form pin (`formDef.options.engine`) still wins over this flag.
       // See reactory-pwa-client/src/components/reactory/docs/forms-engine
       // for the full migration plan.
       feature: 'core.FormsEngineV5@1.0.0',
+      enabled: true,
       value: true,
       roles: ['ADMIN', 'DEVELOPER'],
     }
