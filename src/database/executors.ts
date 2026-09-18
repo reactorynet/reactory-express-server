@@ -1,7 +1,7 @@
 /**
  * Raw SQL execution against a client-configured connection.
  *
- * Used by the SQL Query Editor (`core.SQLQueryForm` via `ReactorySQLQuery`),
+ * Used by the SQL Query Editor (`core.SQLQueryEditor` via `ReactorySQLQuery`),
  * which runs a statement the user typed. This is the counterpart to
  * `sqlGuard.ts`: the guard decides *whether* a statement may run, this module
  * runs it against the right driver.

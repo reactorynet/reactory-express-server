@@ -1,7 +1,7 @@
 /**
  * Read-only SQL guard.
  *
- * The SQL Query Editor (core.SQLQueryForm) executes SQL typed by a user, and
+ * The SQL Query Editor (core.SQLQueryEditor) executes SQL typed by a user, and
  * the reactory-reactor AI data macros execute SQL proposed by a model. Both must
  * be held to the same rule, so this module is the single source of truth and
  * `ai/macro/data/utils.ts#validateQuery` delegates here.

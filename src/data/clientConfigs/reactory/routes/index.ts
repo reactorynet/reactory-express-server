@@ -352,7 +352,9 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     exact: false,
     public: false,
     roles: ["DEVELOPER", "ADMIN"],
-    componentFqn: "core.SQLQueryForm@1.0.0",
+    // Purpose-built component registered by the reactory-core client plugin.
+    // Replaces core.SQLQueryForm@1.0.0 (ReactoryForm-based).
+    componentFqn: "core.SQLQueryEditor@1.0.0",
   },
   {
     key: "graphiql",
