@@ -343,7 +343,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     exact: false,
     public: false,
     roles: ["DEVELOPER", "ADMIN"],
-    componentFqn: "core.GraphQLQueryForm@1.0.0",
+    componentFqn: "core.GraphQLEditor@1.0.0",
   },
   {
     key: "data-sql-editor",

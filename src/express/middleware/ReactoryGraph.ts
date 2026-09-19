@@ -10,6 +10,7 @@ import typeDefs from '@reactory/server-core/models/graphql/types';
 import resolvers from '@reactory/server-core/models/graphql/resolvers';
 import directiveProviders from '@reactory/server-core/models/graphql/directives';
 import plugins from '@reactory/server-core/models/graphql/plugins';
+import { setReactorySchema } from '@reactory/server-core/graph/schemaRegistry';
 import http from 'http';
 import express from 'express';
 import logger from '@reactory/server-core/logging';
@@ -196,7 +197,6 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
       logger.error(`Error compiling the schema: ${schemaError.message}`, schemaError);
       throw schemaError;
     }
-    
     directiveProviders.forEach((provider) => {
       try {
         logger.info(`Processing schema directive: "@${provider.name}"`);
@@ -205,6 +205,11 @@ const ReactoryGraphMiddleware = async (app: express.Application, httpServer: htt
         logger.error(`Error adding directive ${provider.name}`, directiveErr);
       }
     });
+
+    // Register the compiled schema so anything that needs to read the schema
+    // itself (introspection) can reach it. Set *after* the directive providers
+    // have run: they return a transformed schema, and that is the one served.
+    setReactorySchema(schema);
       
     const expressConfig: ApolloServerOptions<Reactory.Server.IReactoryContext> = {
       logger: logger,
