@@ -123,8 +123,31 @@ input SQLDelete {
   context: SQLContextInput
 }
 
+type SQLDataConnection {
+  "Setting name; pass as `connectionId` to ReactorySQLQuery."
+  connectionId: String
+  "Database variant backing the connection (postgres, mysql, mssql, databricks)."
+  variant: String
+  "Human readable display name for pickers. Falls back to the setting name."
+  label: String
+  "Human readable title from the client setting, when authored."
+  title: String
+  host: String
+  port: Int
+  database: String
+  description: String
+  "Roles required to use the connection. Empty means open to all callers."
+  roles: [String]
+}
+
 extend type Query {
   ReactorySQLQuery(input: SQLQuery): SQLQueryResult
+  """
+  Lists the SQL-capable database connections available to the caller,
+  resolved from the active partner's settings with role-aware filtering.
+  Credentials are never returned.
+  """
+  ReactorySQLDataConnections(variants: [String]): [SQLDataConnection]
 }
 
 extend type Mutation {

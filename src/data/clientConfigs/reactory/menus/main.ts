@@ -156,7 +156,7 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
       items: [
         {
           ordinal: 1,
-          title: "reactory:reactory.menu.graphiql",
+          title: "reactory:reactory.menu.graphql-editor",
           link: "/data/graphiql/",
           icon: "offline_bolt",
           roles: ["DEVELOPER", "ADMIN"],

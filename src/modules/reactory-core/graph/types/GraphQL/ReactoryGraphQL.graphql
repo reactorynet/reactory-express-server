@@ -19,3 +19,27 @@ extend type Query {
 extend type Mutation {
   ReactoryGraphQLQuery(input: GraphQLQueryInput!): GraphQLQueryResult
 }
+
+"""
+Read-only view of the compiled GraphQL schema.
+
+Exposed separately from `ReactoryGraphQLQuery` because Apollo Server disables
+introspection outside development (`introspection: NODE_ENV === 'development'`),
+so a `__schema` operation cannot be used to read the schema in production. This
+resolver runs against the in-process schema directly and is role-gated.
+"""
+type GraphQLSchemaInfo {
+  "The introspection result, directly consumable by graphql's `buildClientSchema`."
+  introspection: Any
+  "SDL rendering of the schema, for display and diffing."
+  sdl: String
+  "Count of named types, excluding GraphQL's built-in introspection types."
+  typeCount: Int
+  "ISO-8601 timestamp of when the schema was compiled."
+  compiledAt: String
+}
+
+extend type Query {
+  "Introspect the Reactory GraphQL schema. Requires DEVELOPER or ADMIN."
+  ReactoryGraphQLSchema: GraphQLSchemaInfo
+}

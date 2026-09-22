@@ -338,12 +338,12 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
 
   {
     key: "data-graphiql",
-    title: "GraphiQL",
+    title: "GraphQL Editor",
     path: "/data/graphiql/*",
     exact: false,
     public: false,
     roles: ["DEVELOPER", "ADMIN"],
-    componentFqn: "core.GraphQLQueryForm@1.0.0",
+    componentFqn: "core.GraphQLEditor@1.0.0",
   },
   {
     key: "data-sql-editor",
@@ -352,18 +352,10 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     exact: false,
     public: false,
     roles: ["DEVELOPER", "ADMIN"],
-    componentFqn: "core.SQLQueryForm@1.0.0",
+    // Purpose-built component registered by the reactory-core client plugin.
+    // Replaces core.SQLQueryForm@1.0.0 (ReactoryForm-based).
+    componentFqn: "core.SQLQueryEditor@1.0.0",
   },
-  {
-    key: "graphiql",
-    title: "GraphiQL",
-    path: "/graphiql/*",
-    exact: true,
-    public: true,
-    roles: ["ADMIN"],
-    componentFqn: "core.ReactoryGraphiQLExplorer@1.0.0",
-  },
-
   {
     key: "reactor",
     title: "Reactory Reactor",
