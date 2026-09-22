@@ -44,6 +44,7 @@ reactory-core/
 | `EmailService` | Send mail (SendGrid, etc.) |
 | `FetchService` | Abstracted URL calls with user credentials |
 | `FormService` | Form management and resolution |
+| `FormSubmission/` | Generic form submission pipeline (see its README) |
 | `OrganizationService` | Organization CRUD operations |
 | `PdfService` | PDF rendering and file storage |
 | `ReactoryAuditService` | Audit logging |
@@ -71,7 +72,7 @@ User, Organization, BusinessUnit, Team, Application, Menu, Notification, Templat
 
 ## GraphQL Resolvers (20 groups)
 
-ApiStatus, Cache, Comment, Emails, Menu, Organization, ReactoryCalendar, ReactoryContent, ReactoryFile, ReactoryForm, SQL, Support, System, Task, Template, User, Workflow.
+ApiStatus, Cache, Comment, Emails, Menu, Organization, ReactoryCalendar, ReactoryContent, ReactoryFile, ReactoryForm, ReactoryFormSubmission, SQL, Support, System, Task, Template, User, Workflow.
 
 ## Form Schemas (22 categories)
 
@@ -83,6 +84,7 @@ Application, Applications, Audit, EmailForms, EmailTemplate, Global, Organizatio
 - Models use Mongoose schemas for MongoDB
 - GraphQL types are defined in `graph/types/` with resolvers in `resolvers/`
 - Forms follow the JSON Schema-based ReactoryForm pattern
+- A form that only needs its data captured declares a `submission` block instead of a graphql mutation - see `services/FormSubmission/README.md`
 - CLI commands are registered via the module definition
 - Protobuf definitions support gRPC communication
 

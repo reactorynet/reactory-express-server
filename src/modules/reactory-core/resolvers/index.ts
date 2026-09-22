@@ -21,7 +21,7 @@ import Resources from './System/Resources';
 import Statistics from './System/Statistics';
 import { ReactoryClientResolver, ClientComponentResolver, ClientRouteResolver } from './System/ReactoryClientResolver';
 import ReactoryTranslationResolver from './System/ReactoryTranslation';
-import ReactoryForm from './ReactoryForm';
+import ReactoryForm, { ReactoryFormSubmissionResolver } from './ReactoryForm';
 import ReactoryMenuResolver from './Menu/MenuResolver';
 import NaturalResolver from './System/NaturalResolver';
 import WorkflowResolver from './Workflow/WorkflowResolver';
@@ -54,6 +54,7 @@ export default mergeGraphResolver([
   SupportResolver,
   CommentResolver,
   ReactoryForm,
+  ReactoryFormSubmissionResolver,
   Organization,
   ReactoryTranslationResolver,
   ReactoryMenuResolver,

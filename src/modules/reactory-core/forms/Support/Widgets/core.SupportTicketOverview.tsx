@@ -6,7 +6,6 @@ interface OverviewDependencies {
   StatusBadge: any,
   UserAvatar: any,
   RelativeTime: any,
-  ChipArray: any,
   useContentRender: any,
   SupportTicketWorkflow: any,
 }
@@ -46,7 +45,6 @@ const SupportTicketOverview = (props: OverviewProps) => {
     StatusBadge,
     UserAvatar,
     RelativeTime,
-    ChipArray,
     useContentRender,
     SupportTicketWorkflow,
   } = reactory.getComponents<OverviewDependencies>([
@@ -55,7 +53,6 @@ const SupportTicketOverview = (props: OverviewProps) => {
     'core.StatusBadge',
     'core.UserAvatar',
     'core.RelativeTime',
-    'core.ChipArray',
     'core.useContentRender',
     'core.SupportTicketWorkflow',
   ]);
@@ -92,6 +89,26 @@ const SupportTicketOverview = (props: OverviewProps) => {
   const { renderContent } = useContentRender ? useContentRender(reactory) : { 
     renderContent: (content: string) => content 
   };
+
+  const [currentTicket, setCurrentTicket] = React.useState(ticket);
+
+  React.useEffect(() => {
+    setCurrentTicket(ticket);
+  }, [ticket]);
+
+  React.useEffect(() => {
+    const handleTicketChanged = (event: any) => {
+      if (event && event.ticketId && event.ticketId !== ticket?.id) return;
+      if (event?.ticket) {
+        setCurrentTicket((prev: any) => ({ ...prev, ...event.ticket }));
+      }
+    };
+
+    reactory.on('core.SupportTicketChanged', handleTicketChanged);
+    return () => {
+      reactory.off('core.SupportTicketChanged', handleTicketChanged);
+    };
+  }, [ticket?.id, reactory]);
 
   const [activeDialog, setActiveDialog] = React.useState<DialogType>(null);
   const [loading, setLoading] = React.useState(false);
@@ -171,7 +188,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     if (!SupportTicketWorkflow) return;
     setLoading(true);
     const updated = await SupportTicketWorkflow.updateTicket({
-      ticket,
+      ticket: currentTicket,
       updates: {
         request: editForm.request,
         description: editForm.description,
@@ -188,7 +205,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     if (!SupportTicketWorkflow || !selectedUser) return;
     setLoading(true);
     const updated = await SupportTicketWorkflow.reassignTicket({
-      ticket,
+      ticket: currentTicket,
       assignTo: selectedUser.id,
     });
     setLoading(false);
@@ -202,7 +219,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     if (!SupportTicketWorkflow) return;
     setLoading(true);
     const updated = await SupportTicketWorkflow.changePriority({
-      ticket,
+      ticket: currentTicket,
       priority: selectedPriority,
     });
     setLoading(false);
@@ -231,7 +248,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     if (!SupportTicketWorkflow || newTags.length === 0) return;
     setLoading(true);
     const updated = await SupportTicketWorkflow.addTags({
-      ticket,
+      ticket: currentTicket,
       tags: newTags,
     });
     setLoading(false);
@@ -244,7 +261,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
   const handleCloseTicket = async () => {
     if (!SupportTicketWorkflow) return;
     setLoading(true);
-    const closed = await SupportTicketWorkflow.closeTicket({ ticket });
+    const closed = await SupportTicketWorkflow.closeTicket({ ticket: currentTicket });
     setLoading(false);
     if (closed) {
       // Change notification is published by SupportTicketWorkflow (closeTicket).
@@ -264,10 +281,10 @@ const SupportTicketOverview = (props: OverviewProps) => {
             color: 'text.primary'
           }}
         >
-          {ticket.request || 'No title'}
+          {currentTicket.request || 'No title'}
         </Typography>
         
-        {ticket.description && (
+        {currentTicket.description && (
           <Paper 
             variant="outlined" 
             sx={{ 
@@ -284,7 +301,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
             }}
           >
             {renderContent ? (
-              renderContent(ticket.description)
+              renderContent(currentTicket.description)
             ) : (
               <Typography 
                 variant="body1" 
@@ -293,7 +310,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
                   color: 'text.secondary'
                 }}
               >
-                {ticket.description}
+                {currentTicket.description}
               </Typography>
             )}
           </Paper>
@@ -310,9 +327,9 @@ const SupportTicketOverview = (props: OverviewProps) => {
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 Logged By
               </Typography>
-              {UserAvatar && ticket.createdBy ? (
+              {UserAvatar && currentTicket.createdBy ? (
                 <UserAvatar
-                  user={ticket.createdBy}
+                  user={currentTicket.createdBy}
                   uiSchema={{ 'ui:options': { variant: 'avatar-name', size: 'medium', showEmail: true } }}
                 />
               ) : (
@@ -330,12 +347,12 @@ const SupportTicketOverview = (props: OverviewProps) => {
               </Typography>
               {UserAvatar ? (
                 <UserAvatar
-                  user={ticket.assignedTo}
+                  user={currentTicket.assignedTo}
                   uiSchema={{ 'ui:options': { variant: 'avatar-name', size: 'medium', showEmail: true, unassignedText: 'Unassigned', unassignedIcon: 'person_add_disabled' } }}
                 />
               ) : (
                 <Typography variant="body2">
-                  {ticket.assignedTo ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}` : 'Unassigned'}
+                  {currentTicket.assignedTo ? `${currentTicket.assignedTo.firstName} ${currentTicket.assignedTo.lastName}` : 'Unassigned'}
                 </Typography>
               )}
             </CardContent>
@@ -348,9 +365,9 @@ const SupportTicketOverview = (props: OverviewProps) => {
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 Request Type
               </Typography>
-              {StatusBadge && ticket.requestType ? (
+              {StatusBadge && currentTicket.requestType ? (
                 <StatusBadge
-                  value={ticket.requestType}
+                  value={currentTicket.requestType}
                   uiSchema={{
                     'ui:options': {
                       variant: 'outlined', size: 'medium',
@@ -372,9 +389,9 @@ const SupportTicketOverview = (props: OverviewProps) => {
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 Created
               </Typography>
-              {RelativeTime && ticket.createdDate ? (
+              {RelativeTime && currentTicket.createdDate ? (
                 <RelativeTime
-                  date={ticket.createdDate}
+                  date={currentTicket.createdDate}
                   uiSchema={{ 'ui:options': { format: 'relative', tooltip: true, tooltipFormat: 'YYYY-MM-DD HH:mm:ss', variant: 'body1', icon: 'schedule' } }}
                 />
               ) : (
@@ -390,9 +407,9 @@ const SupportTicketOverview = (props: OverviewProps) => {
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 Last Updated
               </Typography>
-              {RelativeTime && ticket.updatedDate ? (
+              {RelativeTime && currentTicket.updatedDate ? (
                 <RelativeTime
-                  date={ticket.updatedDate}
+                  date={currentTicket.updatedDate}
                   uiSchema={{ 'ui:options': { format: 'relative', tooltip: true, tooltipFormat: 'YYYY-MM-DD HH:mm:ss', variant: 'body1', icon: 'update' } }}
                 />
               ) : (
@@ -408,15 +425,15 @@ const SupportTicketOverview = (props: OverviewProps) => {
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 SLA Status
               </Typography>
-              {ticket.slaDeadline ? (
+              {currentTicket.slaDeadline ? (
                 <Box>
                   {RelativeTime && (
                     <RelativeTime
-                      date={ticket.slaDeadline}
-                      uiSchema={{ 'ui:options': { format: 'relative', tooltip: true, variant: 'body1', icon: ticket.isOverdue ? 'warning' : 'timer' } }}
+                      date={currentTicket.slaDeadline}
+                      uiSchema={{ 'ui:options': { format: 'relative', tooltip: true, variant: 'body1', icon: currentTicket.isOverdue ? 'warning' : 'timer' } }}
                     />
                   )}
-                  {ticket.isOverdue && (
+                  {currentTicket.isOverdue && (
                     <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>OVERDUE</Typography>
                   )}
                 </Box>
@@ -427,21 +444,23 @@ const SupportTicketOverview = (props: OverviewProps) => {
           </Card>
         </Grid>
 
-        {ticket.tags && ticket.tags.length > 0 && (
+        {currentTicket.tags && currentTicket.tags.length > 0 && (
           <Grid item xs={12}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                   Tags
                 </Typography>
-                {ChipArray ? (
-                  <ChipArray
-                    formData={ticket.tags}
-                    uiSchema={{ 'ui:options': { labelFormat: '${item}', allowDelete: false, allowAdd: false } }}
-                  />
-                ) : (
-                  <Typography variant="body2">{ticket.tags.join(', ')}</Typography>
-                )}
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {currentTicket.tags.map((tag: string) => (
+                    <Chip
+                      key={tag}
+                      label={tag}
+                      size="small"
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
               </CardContent>
             </Card>
           </Grid>
@@ -457,7 +476,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
           startIcon={<Icon>edit</Icon>}
           size="small"
           onClick={() => {
-            setEditForm({ request: ticket.request || '', description: ticket.description || '' });
+            setEditForm({ request: currentTicket.request || '', description: currentTicket.description || '' });
             setActiveDialog('edit');
           }}
         >
@@ -476,7 +495,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
           startIcon={<Icon>flag</Icon>}
           size="small"
           onClick={() => {
-            setSelectedPriority(ticket.priority || 'medium');
+            setSelectedPriority(currentTicket.priority || 'medium');
             setActiveDialog('priority');
           }}
         >
@@ -490,7 +509,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
         >
           Add Tags
         </Button>
-        {ticket.status !== 'closed' && (
+        {currentTicket.status !== 'closed' && (
           <Button
             variant="outlined"
             color="success"
@@ -635,7 +654,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
           <Button
             onClick={handlePrioritySubmit}
             variant="contained"
-            disabled={loading || selectedPriority === ticket.priority}
+            disabled={loading || selectedPriority === currentTicket.priority}
           >
             {loading ? <CircularProgress size={20} /> : 'Update'}
           </Button>
@@ -666,13 +685,13 @@ const SupportTicketOverview = (props: OverviewProps) => {
               ))}
             </Box>
           )}
-          {ticket.tags && ticket.tags.length > 0 && (
+          {currentTicket.tags && currentTicket.tags.length > 0 && (
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 Existing tags
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {ticket.tags.map((tag: string) => (
+                {currentTicket.tags.map((tag: string) => (
                   <Chip key={tag} label={tag} size="small" />
                 ))}
               </Box>
@@ -696,7 +715,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
         <DialogTitle>Close Ticket</DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            Are you sure you want to close ticket <strong>#{ticket.reference}</strong>?
+            Are you sure you want to close ticket <strong>#{currentTicket.reference}</strong>?
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             This will mark the ticket as resolved. You can reopen it later if needed.

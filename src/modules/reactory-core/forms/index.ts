@@ -14,6 +14,7 @@ import SupportTickets from './Support/SupportTickets';
 import SupportticketDelete from './Support/SupportTicketDelete';
 import WorkflowForms from './Workflow'
 import UserForms from './User';
+import ReactoryFormSubmissions from './FormSubmissions';
 
 export default [
   Applications,
@@ -32,4 +33,5 @@ export default [
   SupportticketDelete,
   ...WorkflowForms,
   ...UserForms,
+  ReactoryFormSubmissions,
 ];

@@ -20,6 +20,7 @@ const CoreTypeDefinitions = loadGraphQLTypeDefinitions([
   'System/Region',
   'System/Natural',
   'Forms/Form',
+  'Forms/FormSubmission',
   'User/User',
   'User/Task',
   'User/Comment',

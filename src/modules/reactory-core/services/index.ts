@@ -32,6 +32,7 @@ import { ReactoryCalendarIntegrationService } from './ReactoryCalendarIntegratio
 import GeneratorServices from './generators';
 import SecurityService from './SecurityService';
 import ReactorySQLService from './ReactorySQLService';
+import ReactoryFormSubmissionService from './FormSubmission';
 
 
 const services = [
@@ -51,6 +52,7 @@ const services = [
   ReactorySupportService,
   SystemService.reactory,
   ReactoryFormService.reactory,
+  ReactoryFormSubmissionService,
   ReactoryModuleCompilerService.reactory,
   ReactoryTranslationService.reactory,
   ReactoryContentService.reactory,

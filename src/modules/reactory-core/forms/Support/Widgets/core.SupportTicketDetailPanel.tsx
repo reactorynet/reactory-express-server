@@ -51,11 +51,17 @@ interface DetailPanelProps {
 const lastActiveTabByTicket: { [ticketId: string]: number } = {};
 
 const SupportTicketDetailPanel = (props: DetailPanelProps) => {
-  const { reactory, ticket, useCase = 'grid', rowData } = props;
+  const { reactory, ticket: initialTicket, useCase = 'grid', rowData } = props;
   
-  if (!ticket) {
+  if (!initialTicket) {
     return <div>No ticket data available</div>;
   }
+
+  const [ticket, setTicket] = React.useState(initialTicket);
+
+  React.useEffect(() => {
+    setTicket(initialTicket);
+  }, [initialTicket]);
 
   const { 
     React, 
@@ -102,6 +108,9 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
   // comment did not refetch the ticket and so the badge previously went stale.
   const [commentCount, setCommentCount] = React.useState<number>(ticket.comments?.length || 0);
 
+  // Live related tickets count for the Related tab badge.
+  const [relatedCount, setRelatedCount] = React.useState<number>(0);
+
   // Refresh token: bumped whenever the Support feature publishes a change for this ticket.
   // Included in the active tab's key so a tab that owns its own data fetching (Comments,
   // Related, Attachments, Activity) re-mounts and re-fetches instead of showing stale data.
@@ -111,6 +120,9 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
     const handleTicketChanged = (event: any) => {
       // Ignore changes for other tickets; accept events with no ticketId (broadcasts).
       if (event && event.ticketId && event.ticketId !== ticket.id) return;
+      if (event && event.ticket) {
+        setTicket((prev: any) => ({ ...prev, ...event.ticket }));
+      }
       setRefreshToken((token) => token + 1);
     };
 
@@ -123,6 +135,26 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
   React.useEffect(() => {
     setCommentCount(ticket.comments?.length || 0);
   }, [ticket.id]);
+
+  React.useEffect(() => {
+    if (!ticket?.id) return;
+    reactory.graphqlQuery<{ getCommentsByContext: { paging: { total: number } } }, any>(`
+      query GetRelatedTicketCount($context: String!, $contextId: String!) {
+        getCommentsByContext(context: $context, contextId: $contextId, paging: { page: 1, pageSize: 1 }) {
+          paging {
+            total
+          }
+        }
+      }
+    `, {
+      context: 'ReactorySupportTicketRelated',
+      contextId: ticket.id,
+    }).then((res: any) => {
+      if (res?.data?.getCommentsByContext?.paging?.total !== undefined) {
+        setRelatedCount(res.data.getCommentsByContext.paging.total);
+      }
+    }).catch(() => {});
+  }, [ticket?.id, reactory, refreshToken]);
 
   const handleTabChange = (event: any, newValue: number) => {
     lastActiveTabByTicket[ticket.id] = newValue;
@@ -163,7 +195,7 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
       id: 'related',
       label: 'Related',
       icon: 'link',
-      badge: ticket.relatedTickets?.length || 0,
+      badge: relatedCount,
       component: SupportTicketRelated,
     },
   ];
@@ -294,6 +326,7 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
             ticket={ticket} 
             reactory={reactory}
             onCommentCountChange={setCommentCount}
+            onRelatedCountChange={setRelatedCount}
           />
         )}
       </Box>

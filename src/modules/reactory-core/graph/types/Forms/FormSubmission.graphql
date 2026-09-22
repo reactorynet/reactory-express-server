@@ -1,0 +1,222 @@
+"""
+A submission captured by the generic form submission pipeline.
+
+Forms that declare a `submission` block on their definition do not need to ship
+their own mutation - the form service injects the `ReactoryFormSubmit` mutation
+into the resolved definition and every submit is stored as one of these records.
+"""
+type ReactoryFormSubmission {
+  """
+  The unique id of the submission instance.
+  """
+  id: String!
+  """
+  The fully qualified name of the form that produced the submission,
+  i.e. contact.Form@1.0.0
+  """
+  fqn: String!
+  """
+  The id of the submitting user. Null when the submission was made
+  anonymously.
+  """
+  userId: String
+  """
+  The resolved user record for the submission. Null for anonymous
+  submissions or when the user has since been removed.
+  """
+  user: User
+  """
+  The submitted form data as a JSON document.
+  """
+  formData: Any
+  """
+  The remote address the submission originated from.
+  """
+  ipAddress: String
+  """
+  The ReactoryClient the submission was captured under.
+  """
+  clientKey: String
+  """
+  When the submission was first captured.
+  """
+  createdAt: Date
+  """
+  When the submission was last amended. Equal to createdAt for the
+  append only case.
+  """
+  updatedAt: Date
+}
+
+"""
+A single predicate evaluated against a path inside the submission's form data.
+
+The path is a dot / bracket expression into the JSON document, for example
+`address.country` or `lines[0].sku`. Paths and values are always passed to the
+database as bound parameters.
+"""
+input ReactoryFormSubmissionPredicateInput {
+  """
+  The path into the form data document.
+  """
+  path: String!
+  """
+  One of: eq, ne, gt, gte, lt, lte, contains, startsWith, endsWith,
+  in, nin, exists, isNull, between.
+  """
+  op: String!
+  """
+  The value to compare against. `in` / `nin` take an array, `between`
+  takes a [from, to] pair.
+  """
+  value: Any
+  """
+  How the stored value should be interpreted for the comparison.
+  One of: string (default), number, boolean, date. Date comparisons
+  are made against ISO-8601 strings.
+  """
+  valueType: String
+}
+
+"""
+A boolean grouping of submission predicates. Exactly one of `and`, `or` or
+`not` must be supplied, and groups may be nested.
+
+Because GraphQL input types cannot be recursive across a union, the structured
+query is accepted as an `Any` scalar on the filter. This type documents the
+shape that `Any` is expected to take.
+
+@example
+{ "and": [
+    { "path": "country", "op": "eq", "value": "ZA" },
+    { "path": "score", "op": "gte", "value": 80, "valueType": "number" }
+] }
+"""
+input ReactoryFormSubmissionQueryInput {
+  and: [ReactoryFormSubmissionPredicateInput]
+  or: [ReactoryFormSubmissionPredicateInput]
+  not: ReactoryFormSubmissionPredicateInput
+}
+
+"""
+The filter applied when listing submissions for a form.
+"""
+input ReactoryFormSubmissionFilter {
+  """
+  Only return submissions created on or after this instant.
+  """
+  from: Date
+  """
+  Only return submissions created on or before this instant.
+  """
+  to: Date
+  """
+  Restrict the result to a single submitting user.
+  """
+  userId: String
+  """
+  When true only anonymous submissions are returned, when false only
+  authenticated ones.
+  """
+  anonymous: Boolean
+  """
+  Case insensitive substring match across the whole form data document.
+  """
+  search: String
+  """
+  The structured predicate evaluated inside the form data document.
+  See ReactoryFormSubmissionQueryInput for the expected shape.
+  """
+  query: Any
+}
+
+"""
+Sorting for a submission listing. `field` accepts `createdAt`, `updatedAt` or a
+path into the form data document (optionally prefixed with `formData.`).
+"""
+input ReactoryFormSubmissionSortInput {
+  field: String
+  direction: String
+}
+
+"""
+A page of submissions for a single form.
+"""
+type PagedReactoryFormSubmissions {
+  paging: PagingResult
+  submissions: [ReactoryFormSubmission]
+}
+
+"""
+Summary counts for a form's submissions.
+"""
+type ReactoryFormSubmissionStats {
+  fqn: String!
+  total: Int
+  anonymousCount: Int
+  uniqueUsers: Int
+  firstSubmission: Date
+  lastSubmission: Date
+}
+
+"""
+The result of a generic form submission.
+"""
+type ReactoryFormSubmissionResponse {
+  success: Boolean!
+  message: String
+  submission: ReactoryFormSubmission
+}
+
+extend type Query {
+  """
+  Returns a page of submissions for the given form. The caller must hold one of
+  the roles listed in the form's `submission.readRoles` (default ADMIN).
+  """
+  ReactoryFormSubmissions(
+    fqn: String!,
+    filter: ReactoryFormSubmissionFilter,
+    paging: PagingRequest,
+    sort: ReactoryFormSubmissionSortInput
+  ): PagedReactoryFormSubmissions
+
+  """
+  Returns a single submission by id.
+  """
+  ReactoryFormSubmissionById(id: String!): ReactoryFormSubmission
+
+  """
+  Returns summary counts for a form's submissions.
+  """
+  ReactoryFormSubmissionStats(fqn: String!): ReactoryFormSubmissionStats
+}
+
+extend type Mutation {
+  """
+  The generic catch all submission handler. Stores the supplied form data
+  against the form's fully qualified name.
+
+  The form must declare `submission: { enabled: true }`; anonymous callers are
+  accepted only when it also declares `allowAnonymous: true`.
+  """
+  ReactoryFormSubmit(
+    """
+    The fully qualified name of the form being submitted.
+    """
+    fqn: String!,
+    """
+    The form data to store.
+    """
+    formData: Any!,
+    """
+    When supplied the existing submission is amended rather than a new one
+    created. Only honoured when the form declares `submission.allowUpdate`.
+    """
+    id: String
+  ): ReactoryFormSubmissionResponse
+
+  """
+  Deletes a submission. Requires one of the form's `submission.deleteRoles`.
+  """
+  ReactoryFormSubmissionDelete(id: String!): CoreSimpleResponse
+}
