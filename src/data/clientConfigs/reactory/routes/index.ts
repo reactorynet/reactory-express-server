@@ -415,6 +415,27 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       nodeId: "${route?.nodeId}",
     },
   },
+  // The left-nav "Reactor" group links to /reactor/ai/providers and
+  // /reactor/ai/models (see menus/main.ts). Both components were only bound
+  // under /admin/ai/*, so those menu items landed on "No route matched".
+  {
+    key: "reactor-ai-providers",
+    title: "AI Providers",
+    path: "/reactor/ai/providers",
+    exact: true,
+    public: false,
+    roles: ["USER", "DEVELOPER", "ADMIN"],
+    componentFqn: "reactor.AiProvidersGrid@1.0.0",
+  },
+  {
+    key: "reactor-ai-models",
+    title: "AI Models",
+    path: "/reactor/ai/models",
+    exact: true,
+    public: false,
+    roles: ["USER", "DEVELOPER", "ADMIN"],
+    componentFqn: "reactor.AiModelsGrid@1.0.0",
+  },
   {
     key: "admin-ai-budgets",
     title: "AI Usage Budgets",
