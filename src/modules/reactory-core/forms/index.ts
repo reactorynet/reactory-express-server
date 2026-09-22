@@ -16,6 +16,7 @@ import WorkflowForms from './Workflow'
 import UserForms from './User';
 import SQLQueryForm from './SQL';
 import GraphQLQueryForm from './GraphQL';
+import ReactoryFormSubmissions from './FormSubmissions';
 
 export default [
   Applications,
@@ -36,4 +37,5 @@ export default [
   ...UserForms,
   SQLQueryForm,
   GraphQLQueryForm,
+  ReactoryFormSubmissions,
 ];

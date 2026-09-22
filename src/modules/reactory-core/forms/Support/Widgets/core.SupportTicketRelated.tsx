@@ -11,16 +11,20 @@ interface RelatedDependencies {
 interface RelatedProps {
   reactory: Reactory.Client.IReactoryApi,
   ticket: Reactory.Models.IReactorySupportTicket,
+  onRelatedCountChange?: (count: number) => void,
 }
 
 interface RelatedTicket {
   id: string;
+  linkId?: string;
+  targetId?: string;
   reference: string;
   status: string;
   request: string;
   priority?: string;
   createdDate: Date | string;
   relationType: 'blocks' | 'blocked-by' | 'duplicate' | 'related-to' | 'parent' | 'child';
+  reciprocalLinkId?: string;
 }
 
 /**
@@ -40,7 +44,7 @@ interface RelatedTicket {
  * <SupportTicketRelated ticket={ticketData} reactory={api} />
  */
 const SupportTicketRelated = (props: RelatedProps) => {
-  const { reactory, ticket } = props;
+  const { reactory, ticket, onRelatedCountChange } = props;
 
   if (!ticket) {
     return <div>No ticket data available</div>;
@@ -83,25 +87,87 @@ const SupportTicketRelated = (props: RelatedProps) => {
     DialogContent,
     DialogActions,
     Chip,
+    CircularProgress,
   } = MaterialCore;
 
   const [addDialogOpen, setAddDialogOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [relationType, setRelationType] = React.useState<string>('related-to');
   const [searchResults, setSearchResults] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [searching, setSearching] = React.useState(false);
+  const [relatedTickets, setRelatedTickets] = React.useState<RelatedTicket[]>([]);
 
-  // Mock related tickets (in real implementation, fetch from server)
-  const [relatedTickets, setRelatedTickets] = React.useState<RelatedTicket[]>(
-    ticket.relatedTickets?.map((id, index) => ({
-      id: id,
-      reference: `REF-${1000 + index}`,
-      status: 'open',
-      request: 'Related ticket title',
-      priority: 'medium',
-      createdDate: new Date(),
-      relationType: 'related-to' as const
-    })) || []
-  );
+  const fetchRelatedTickets = React.useCallback(async () => {
+    if (!ticket?.id) return;
+    setLoading(true);
+    try {
+      const result = await reactory.graphqlQuery<{
+        getCommentsByContext: {
+          comments: Array<{
+            id: string;
+            text: string;
+            metadata: any;
+            when: string;
+          }>;
+          paging: { total: number };
+        };
+      }, { context: string; contextId: string }>(`
+        query GetRelatedTickets($context: String!, $contextId: String!) {
+          getCommentsByContext(context: $context, contextId: $contextId, paging: { page: 1, pageSize: 50 }) {
+            comments {
+              id
+              text
+              metadata
+              when
+            }
+            paging {
+              total
+            }
+          }
+        }
+      `, {
+        context: 'ReactorySupportTicketRelated',
+        contextId: ticket.id,
+      }).then();
+
+      const comments = result?.data?.getCommentsByContext?.comments || [];
+      const links: RelatedTicket[] = comments.map((c: any) => {
+        let meta = c.metadata;
+        if (typeof meta === 'string') {
+          try { meta = JSON.parse(meta); } catch (e) { meta = {}; }
+        } else if (!meta) {
+          meta = {};
+        }
+
+        return {
+          id: meta.targetId || c.id,
+          linkId: c.id,
+          targetId: meta.targetId,
+          reference: meta.reference || '',
+          status: meta.status || 'open',
+          request: meta.request || '',
+          priority: meta.priority,
+          createdDate: meta.createdDate || c.when,
+          relationType: meta.relationType || 'related-to',
+          reciprocalLinkId: meta.reciprocalLinkId,
+        };
+      });
+
+      setRelatedTickets(links);
+      if (onRelatedCountChange) {
+        onRelatedCountChange(links.length);
+      }
+    } catch (err) {
+      reactory.log('Error fetching related tickets', { err }, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [ticket?.id, reactory, onRelatedCountChange]);
+
+  React.useEffect(() => {
+    fetchRelatedTickets();
+  }, [fetchRelatedTickets]);
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) {
@@ -109,6 +175,7 @@ const SupportTicketRelated = (props: RelatedProps) => {
       return;
     }
 
+    setSearching(true);
     try {
       const result = await reactory.graphqlQuery(`
         query SearchSupportTickets($searchString: String!) {
@@ -131,33 +198,106 @@ const SupportTicketRelated = (props: RelatedProps) => {
       if (result.data?.ReactorySupportTickets?.tickets) {
         // Filter out current ticket and already related tickets
         const tickets = result.data.ReactorySupportTickets.tickets.filter(
-          (t: any) => t.id !== ticket.id && !relatedTickets.find(rt => rt.id === t.id)
+          (t: any) => t.id !== ticket.id && !relatedTickets.find(rt => (rt.targetId || rt.id) === t.id)
         );
         setSearchResults(tickets);
       }
     } catch (error) {
       reactory.log('Error searching tickets', { error }, 'error');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const getInverseRelationType = (type: string): string => {
+    switch (type) {
+      case 'blocks': return 'blocked-by';
+      case 'blocked-by': return 'blocks';
+      case 'parent': return 'child';
+      case 'child': return 'parent';
+      default: return type; // 'duplicate', 'related-to'
     }
   };
 
   const handleAddRelation = async (relatedTicket: any) => {
     try {
-      // TODO: Implement add relationship mutation
-      const newRelated: RelatedTicket = {
-        id: relatedTicket.id,
-        reference: relatedTicket.reference,
-        status: relatedTicket.status,
-        request: relatedTicket.request,
-        priority: relatedTicket.priority,
-        createdDate: relatedTicket.createdDate,
-        relationType: relationType as any
-      };
+      // 1. Create relation link on current ticket
+      const primaryResult = await reactory.graphqlMutation(`
+        mutation CreateTicketLink($input: CreateCommentInput!) {
+          createComment(input: $input) {
+            id
+            context
+            contextId
+            text
+            metadata
+            when
+          }
+        }
+      `, {
+        input: {
+          context: 'ReactorySupportTicketRelated',
+          contextId: ticket.id,
+          text: `${relationType}:${relatedTicket.id}`,
+          metadata: {
+            targetId: relatedTicket.id,
+            reference: relatedTicket.reference,
+            status: relatedTicket.status,
+            request: relatedTicket.request,
+            priority: relatedTicket.priority,
+            createdDate: relatedTicket.createdDate,
+            relationType: relationType,
+          }
+        }
+      });
 
-      setRelatedTickets([...relatedTickets, newRelated]);
+      const primaryId = primaryResult?.data?.createComment?.id;
+
+      // 2. Create reciprocal link on target ticket
+      const inverseType = getInverseRelationType(relationType);
+      await reactory.graphqlMutation(`
+        mutation CreateReciprocalTicketLink($input: CreateCommentInput!) {
+          createComment(input: $input) {
+            id
+            context
+            contextId
+            text
+            metadata
+            when
+          }
+        }
+      `, {
+        input: {
+          context: 'ReactorySupportTicketRelated',
+          contextId: relatedTicket.id,
+          text: `${inverseType}:${ticket.id}`,
+          metadata: {
+            targetId: ticket.id,
+            reference: ticket.reference,
+            status: ticket.status,
+            request: ticket.request,
+            priority: ticket.priority,
+            createdDate: ticket.createdDate,
+            relationType: inverseType,
+            reciprocalLinkId: primaryId,
+          }
+        }
+      });
+
+      // 3. Emit change event
+      try {
+        reactory.emit('core.SupportTicketChanged', {
+          action: 'related-changed',
+          ticketId: ticket.id,
+          reference: ticket.reference,
+          ticket,
+        });
+      } catch (e) {}
+
       setAddDialogOpen(false);
       setSearchQuery('');
       setSearchResults([]);
       
+      await fetchRelatedTickets();
       reactory.createNotification('Ticket linked successfully', { type: 'success' });
     } catch (error) {
       reactory.log('Error adding relationship', { error }, 'error');
@@ -165,10 +305,90 @@ const SupportTicketRelated = (props: RelatedProps) => {
     }
   };
 
-  const handleRemoveRelation = async (ticketId: string) => {
+  const handleRemoveRelation = async (related: RelatedTicket) => {
     try {
-      // TODO: Implement remove relationship mutation
-      setRelatedTickets(relatedTickets.filter(rt => rt.id !== ticketId));
+      // 1. Delete the primary link comment
+      if (related.linkId) {
+        await reactory.graphqlMutation(`
+          mutation DeleteTicketLink($input: DeleteCommentInput!) {
+            deleteComment(input: $input) {
+              ... on DeleteCommentSuccess {
+                success
+                commentId
+              }
+              ... on DeleteCommentError {
+                error
+                message
+              }
+            }
+          }
+        `, {
+          input: {
+            commentId: related.linkId,
+            softDelete: false,
+          }
+        });
+      }
+
+      // 2. Also clean up reciprocal link on target ticket if targetId is known
+      const targetId = related.targetId || related.id;
+      if (targetId) {
+        try {
+          const reciprocalQuery = await reactory.graphqlQuery(`
+            query GetReciprocalLinks($context: String!, $contextId: String!) {
+              getCommentsByContext(context: $context, contextId: $contextId, paging: { page: 1, pageSize: 50 }) {
+                comments {
+                  id
+                  metadata
+                }
+              }
+            }
+          `, {
+            context: 'ReactorySupportTicketRelated',
+            contextId: targetId,
+          });
+
+          const reciprocalComments = reciprocalQuery?.data?.getCommentsByContext?.comments || [];
+          for (const rc of reciprocalComments) {
+            let rMeta = rc.metadata;
+            if (typeof rMeta === 'string') {
+              try { rMeta = JSON.parse(rMeta); } catch (e) { rMeta = {}; }
+            } else if (!rMeta) {
+              rMeta = {};
+            }
+            if (rMeta.targetId === ticket.id) {
+              await reactory.graphqlMutation(`
+                mutation DeleteReciprocalLink($input: DeleteCommentInput!) {
+                  deleteComment(input: $input) {
+                    ... on DeleteCommentSuccess {
+                      success
+                    }
+                  }
+                }
+              `, {
+                input: {
+                  commentId: rc.id,
+                  softDelete: false,
+                }
+              });
+            }
+          }
+        } catch (recipErr) {
+          reactory.log('Error cleaning reciprocal link', { recipErr }, 'warn');
+        }
+      }
+
+      // 3. Emit change event
+      try {
+        reactory.emit('core.SupportTicketChanged', {
+          action: 'related-changed',
+          ticketId: ticket.id,
+          reference: ticket.reference,
+          ticket,
+        });
+      } catch (e) {}
+
+      await fetchRelatedTickets();
       reactory.createNotification('Relationship removed', { type: 'success' });
     } catch (error) {
       reactory.log('Error removing relationship', { error }, 'error');
@@ -246,7 +466,7 @@ const SupportTicketRelated = (props: RelatedProps) => {
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: '#fafafa' }}>
+              <TableRow sx={{ bgcolor: 'action.hover' }}>
                 <TableCell sx={{ fontWeight: 600 }}>Reference</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Relation</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
@@ -340,7 +560,7 @@ const SupportTicketRelated = (props: RelatedProps) => {
                         size="small"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRemoveRelation(related.id);
+                          handleRemoveRelation(related);
                         }}
                       >
                         <Icon fontSize="small">link_off</Icon>
@@ -398,7 +618,7 @@ const SupportTicketRelated = (props: RelatedProps) => {
             <TableContainer component={Paper} variant="outlined">
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ bgcolor: '#fafafa' }}>
+                  <TableRow sx={{ bgcolor: 'action.hover' }}>
                     <TableCell sx={{ fontWeight: 600 }}>Reference</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Title</TableCell>

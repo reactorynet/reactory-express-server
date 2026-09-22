@@ -1,4 +1,67 @@
 
+"""
+The generic submission configuration for a form.
+
+When `enabled` is true the form does not need its own graphql mutation - the
+form service injects the generic `ReactoryFormSubmit` mutation into the
+resolved definition and submissions are stored against the form's fqn.
+"""
+type ReactoryFormSubmissionConfig {
+    """
+    Whether the form uses the generic submission pipeline. Opt in is always
+    explicit - a form with no submission block never writes submissions.
+    """
+    enabled: Boolean
+    """
+    Whether users holding only the ANON role may submit the form.
+    """
+    allowAnonymous: Boolean
+    """
+    The roles permitted to submit the form. Defaults to the form's own roles.
+    """
+    submitRoles: [String]
+    """
+    The roles permitted to explore the captured submissions. Defaults to ADMIN.
+    """
+    readRoles: [String]
+    """
+    The roles permitted to delete submissions. Defaults to readRoles.
+    """
+    deleteRoles: [String]
+    """
+    Whether a submitter may amend their own submission.
+    """
+    allowUpdate: Boolean
+    """
+    Whether the calling user may explore this form's submissions. Resolved
+    against the current user's roles so that the client can show or hide the
+    explorer without duplicating the permission rules.
+    """
+    canExplore: Boolean
+    """
+    The notification title shown after a successful submission.
+    """
+    successMessage: String
+    """
+    An optional url the form redirects to after a successful submission.
+    """
+    onSuccessUrl: String
+}
+
+"""
+Input: the generic submission configuration for a form.
+"""
+input ReactoryFormSubmissionConfigInput {
+    enabled: Boolean
+    allowAnonymous: Boolean
+    submitRoles: [String]
+    readRoles: [String]
+    deleteRoles: [String]
+    allowUpdate: Boolean
+    successMessage: String
+    onSuccessUrl: String
+}
+
 type Property {
     title: String!
     type: String!
@@ -746,6 +809,13 @@ type ReactoryForm {
     Indicates the src folder for the form
     """
     src: String
+
+    """
+    The generic submission configuration for the form. When present and
+    enabled, the form submits through the generic ReactoryFormSubmit
+    mutation and its data can be explored per form.
+    """
+    submission: ReactoryFormSubmissionConfig
 }
 
 """
@@ -972,6 +1042,11 @@ input ReactoryFormInput {
     form is depending on
     """
     dependencies: [ReactoryComponentDependencyInput]
+
+    """
+    The generic submission configuration for the form.
+    """
+    submission: ReactoryFormSubmissionConfigInput
 }
 
 extend type Query {

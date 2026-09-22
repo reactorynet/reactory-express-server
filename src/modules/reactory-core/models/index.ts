@@ -31,6 +31,7 @@ import ReactoryClient from "./ReactoryClient";
 import ReactoryFeatureFlag from "./ReactoryFeatureFlag";
 import ReactoryModelMeta from "./ReactoryModelMeta";
 import ReactoryFileImportPackage from "./ReactoryFileImportPackage";
+import ReactoryFormSubmission from "./ReactoryFormSubmission";
 import ReactoryResource from "./ReactoryResource";
 import ReactorySupportTicket from "./ReactorySupportTicket";
 import ReactoryTranslation from "./ReactoryTranslation";
@@ -70,9 +71,34 @@ export const PostgresDataSource = new DataSource({
     ReactoryCalendarRecurrencePattern, 
     ReactoryCalendarWorkflowTrigger, 
     ReactoryCalendarServiceTrigger,
+    ReactoryFormSubmission,
     UserSession,
   ],
 });
+
+/**
+ * The generic form submission pipeline filters inside the `form_data` JSONB
+ * document (see SubmissionFilter.ts). TypeORM cannot express a GIN index
+ * through its decorators, so it is created alongside the schema sync. Without
+ * it every containment / key lookup degrades to a sequential scan once a
+ * popular form accumulates submissions.
+ */
+export const createFormSubmissionIndexes = async (
+  context?: Reactory.Server.IReactoryContext,
+): Promise<void> => {
+  try {
+    await PostgresDataSource.query(
+      'CREATE INDEX IF NOT EXISTS idx_reactory_form_submission_data ' +
+      'ON reactory_form_submission USING GIN (form_data jsonb_path_ops)',
+    );
+  } catch (indexErr) {
+    // A missing GIN index slows the explorer down, it does not break it, so a
+    // failure here must not take the whole startup with it.
+    const message = `Could not create the form submission JSONB index: ${indexErr.message}`;
+    if (context) context.log(message, { indexErr }, 'warn', 'ReactoryCoreModels');
+    else logger.warn(message);
+  }
+};
 
 export type CoreModelTypes =
   | typeof PostgresDataSource
@@ -85,6 +111,7 @@ export type CoreModelTypes =
   | typeof Cache
   | typeof CoreCategory
   | typeof ReactoryFileImportPackage
+  | typeof ReactoryFormSubmission
   | typeof ReactoryModelMeta
   | typeof CoreFile
   | typeof ReactorySupportTicket
@@ -162,6 +189,7 @@ export {
   ReactoryCalendarServiceTrigger 
 } from './ReactoryCalendar';
 export { default as UserSession } from './UserSession';
+export { default as ReactoryFormSubmission } from './ReactoryFormSubmission';
 
 export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTypes>[] =
   [
@@ -210,6 +238,7 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
         audit.createdAt = new Date();
         audit.signature = Hash(encoder.encodeState(audit)).toString();
         repo.save(audit);
+        await createFormSubmissionIndexes(context);
         context.debug("Postgres Data Source Synchronized");        
       },
     },
@@ -743,6 +772,20 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       description: "Provides a calendar workflow trigger model for the server",
       stem: "reactory-calendar-workflow-trigger",
       tags: ["reactory-calendar-workflow-trigger", "reactory", "system"],
+    },
+    {
+      nameSpace: "core",
+      name: "ReactoryFormSubmission",
+      version: "1.0.0",
+      component: ReactoryFormSubmission,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+      description:
+        "Stores submissions captured through the generic form submission pipeline",
+      stem: "reactory-form-submission",
+      tags: ["reactory-form-submission", "forms", "system"],
     },
     {
       nameSpace: "core",

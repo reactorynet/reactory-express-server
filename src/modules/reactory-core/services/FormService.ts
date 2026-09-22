@@ -4,6 +4,7 @@ import Reactory from '@reactorynet/reactory-core';
 import modules from '@reactory/server-core/modules';
 import ApiError from '@reactory/server-core/exceptions';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
+import { applySubmissionPipeline } from './FormSubmission/SubmissionConfig';
 
 class ReactoryFormService implements Reactory.Service.IReactoryFormService {
 
@@ -199,20 +200,45 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return overlay;
   }
 
+  /**
+   * Applies the generic submission pipeline to a resolved form.
+   *
+   * A form that declares `submission: { enabled: true }` does not need its own
+   * graphql mutation – the generic `ReactoryFormSubmit` mutation is merged into
+   * its graph definition here, so the client submits through the shared handler
+   * without any form specific wiring. A mutation the form declares itself is
+   * always left alone.
+   */
+  private withSubmissionPipeline(form: Reactory.Forms.IReactoryForm): Reactory.Forms.IReactoryForm {
+    if (!form) return form;
+    try {
+      return applySubmissionPipeline(form);
+    } catch (pipelineError) {
+      const errorMessage = pipelineError instanceof Error ? pipelineError.message : 'An unknown error occurred';
+      // A malformed submission block must not take the whole form definition
+      // down with it – the form still renders, it just will not submit.
+      this.getExecutionContext().log(
+        `Could not apply the submission pipeline to ${form.id}: ${errorMessage}`,
+        { pipelineError, id: form.id }, 'error', 'ReactoryFormService');
+      return form;
+    }
+  }
+
   async get(id: string): Promise<Reactory.Forms.IReactoryForm> {
     const codeForm = this.getCodeForm(id);
 
     if (codeForm) {
       const overlay = this.loadFormYaml(codeForm.nameSpace, codeForm.name, codeForm.version);
       if (overlay) {
-        return this.mergeFormOverlay(codeForm, overlay) as Reactory.Forms.IReactoryForm;
+        return this.withSubmissionPipeline(
+          this.mergeFormOverlay(codeForm, overlay) as Reactory.Forms.IReactoryForm);
       }
-      return codeForm;
+      return this.withSubmissionPipeline(codeForm);
     }
 
     // No code form – the id may reference a purely virtual (YAML only) form.
     const virtualForm = this.findYamlFormById(id);
-    return virtualForm;
+    return this.withSubmissionPipeline(virtualForm);
   }
 
   async search(form: Partial<Reactory.Forms.IReactoryForm>, targetModule?: string, where?: Reactory.Service.FormStore[]): Promise<Reactory.Forms.IReactoryForm[]> {
@@ -266,7 +292,10 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
       }
     });
 
-    const _forms = order.map((id) => byId.get(id)).filter((form) => !!form);
+    const _forms = order
+      .map((id) => byId.get(id))
+      .filter((form) => !!form)
+      .map((form) => that.withSubmissionPipeline(form));
     return Promise.resolve(_forms);
   }
 
