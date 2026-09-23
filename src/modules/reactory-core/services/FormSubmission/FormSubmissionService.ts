@@ -297,7 +297,7 @@ export class ReactoryFormSubmissionService implements Reactory.Service.IReactory
       });
     }
 
-    if (this.clientKey && existing.clientKey && existing.clientKey !== this.clientKey) {
+    if (this.clientKey && existing.clientKey !== this.clientKey) {
       throw new InsufficientPermissions('That submission belongs to another client', {
         where: 'ReactoryFormSubmissionService.update', id,
       });
@@ -341,13 +341,12 @@ export class ReactoryFormSubmissionService implements Reactory.Service.IReactory
 
     // Submissions are partitioned per ReactoryClient. A request that arrives
     // without a partner (the CLI, for instance) sees everything; a request made
-    // on behalf of a client only ever sees that client's rows.
+    // on behalf of a client only ever sees that client's rows. Rows without a
+    // client_key belong to no client and are not visible to any of them (they
+    // used to be visible to every client).
     const clientKey = this.clientKey;
     if (clientKey) {
-      query.andWhere(
-        `("${ALIAS}"."client_key" = :clientKey OR "${ALIAS}"."client_key" IS NULL)`,
-        { clientKey },
-      );
+      query.andWhere(`"${ALIAS}"."client_key" = :clientKey`, { clientKey });
     }
 
     if (filter.from) {
@@ -477,7 +476,7 @@ export class ReactoryFormSubmissionService implements Reactory.Service.IReactory
     }
 
     const clientKey = this.clientKey;
-    if (clientKey && entity.clientKey && entity.clientKey !== clientKey) {
+    if (clientKey && entity.clientKey !== clientKey) {
       throw new InsufficientPermissions('That submission belongs to another client', {
         where: 'ReactoryFormSubmissionService.get', id,
       });
@@ -505,7 +504,7 @@ export class ReactoryFormSubmissionService implements Reactory.Service.IReactory
     }
 
     const clientKey = this.clientKey;
-    if (clientKey && entity.clientKey && entity.clientKey !== clientKey) {
+    if (clientKey && entity.clientKey !== clientKey) {
       throw new InsufficientPermissions('That submission belongs to another client', {
         where: 'ReactoryFormSubmissionService.delete', id,
       });

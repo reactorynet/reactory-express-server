@@ -1,5 +1,5 @@
 {
-  "total": 3807,
+  "total": 3805,
   "files": {
     "src/application/decorators/audit/audit.ts": 3,
     "src/application/decorators/inject.ts": 1,
@@ -233,7 +233,6 @@
     "src/modules/reactory-core/models/OperationalGroup.ts": 3,
     "src/modules/reactory-core/models/Organigram.ts": 2,
     "src/modules/reactory-core/models/Organization.ts": 5,
-    "src/modules/reactory-core/models/ReactoryCalendar/ReactoryCalendar.ts": 2,
     "src/modules/reactory-core/models/ReactoryCalendar/ReactoryCalendarParticipant.ts": 3,
     "src/modules/reactory-core/models/ReactoryCalendar/ReactoryCalendarRecurrencePattern.ts": 11,
     "src/modules/reactory-core/models/ReactoryCalendar/ReactoryCalendarServiceTrigger.ts": 1,

@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn, UpdateDateColumn, BaseEntity } from "typeorm";
+import { CalendarVisibility } from './visibility';
 import { Brackets } from "typeorm";
 
 
@@ -95,8 +96,8 @@ export class ReactoryCalendar extends BaseEntity {
         new Brackets(qb => {
           qb.where('calendar.owner_id = :userId', { userId })
             .orWhere('calendar.allowed_user_ids @> :userArray', { userArray: [userId] })
-            .orWhere('calendar.visibility = :public', { public: Reactory.Models.ReactoryCalendarVisibility.PUBLIC })
-            .orWhere('calendar.visibility = :organization', { organization: Reactory.Models.ReactoryCalendarVisibility.ORGANIZATION });
+            .orWhere('calendar.visibility = :public', { public: CalendarVisibility.PUBLIC })
+            .orWhere('calendar.visibility = :organization', { organization: CalendarVisibility.ORGANIZATION });
         })
       );
 
