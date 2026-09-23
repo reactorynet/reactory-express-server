@@ -147,6 +147,14 @@ echo "   App Entry   : ${APP_DIR}/index.js"
 echo "   Runtime     : ${JS_RUNTIME} (${RUNTIME_VERSION})"
 echo "   Env File    : ${ENV_FILE:-none}"
 
+# Fail fast if the selected runtime cannot load the project's native addons —
+# e.g. an x86_64 bun under Rosetta shadowing a native arm64 install. Without this
+# the failure surfaces as a misleading "something went wrong installing sharp"
+# error from deep inside module loading.
+if type preflight_native_runtime_arch &>/dev/null; then
+  preflight_native_runtime_arch "${JS_RUNTIME}" "$(command -v "${JS_RUNTIME}")" "${SERVER_ROOT}" || exit 1
+fi
+
 # exec so the JS runtime (bun/node) replaces this shell: signals reach it
 # directly and no intermediate bash process lingers in the process group.
 if [[ "$USE_BUN" == "true" ]]; then

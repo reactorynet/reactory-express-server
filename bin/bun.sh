@@ -76,7 +76,17 @@ if [[ -z "$APP_DIR" || ! -f "${APP_DIR}/index.js" ]]; then
   exit 1
 fi
 
-ensure_bun "$BUN_VERSION" || exit 1
+# Prefer a bun that is already resolvable on PATH. ensure_bun() force-prepends
+# $HOME/.bun/bin, which can shadow a different (e.g. architecture-mismatched)
+# install and break native addons — only fall back to it when bun is absent.
+if ! has_command bun; then
+  if type ensure_bun &>/dev/null; then
+    ensure_bun "$BUN_VERSION" || exit 1
+  else
+    echo "❌ [bun] Error: Bun is not installed." >&2
+    exit 1
+  fi
+fi
 
 # Setup environment
 copy_env_file "$CLIENT_KEY" "$TARGET_ENV"
@@ -107,5 +117,13 @@ echo "🚀 [bun] Starting Reactory Express Server with Bun ($(bun --version))"
 echo "   Server Root : ${SERVER_ROOT}"
 echo "   App Entry   : ${APP_DIR}/index.js"
 echo "   Env File    : ${ENV_FILE:-none}"
+
+# Fail fast if the selected bun cannot load the project's native addons — e.g. an
+# x86_64 bun under Rosetta shadowing a native arm64 install. Without this the
+# failure surfaces as a misleading "something went wrong installing sharp" error
+# from deep inside module loading.
+if type preflight_native_runtime_arch &>/dev/null; then
+  preflight_native_runtime_arch "bun" "$(command -v bun)" "${SERVER_ROOT}" || exit 1
+fi
 
 env-cmd ${ENV_CMD_ARG} bun run "${APP_DIR}/index.js"

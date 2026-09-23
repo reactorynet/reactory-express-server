@@ -276,10 +276,11 @@ check_bun_command(){
 ensure_bun(){
   local target_version="${1:-}"
 
-  if [[ -d "$HOME/.bun/bin" && ":$PATH:" != *":$HOME/.bun/bin:"* ]]; then
-    export PATH="$HOME/.bun/bin:$PATH"
-  fi
-
+  # Prefer a bun that is already resolvable on PATH. Force-prepending
+  # $HOME/.bun/bin *before* the check below can shadow a deliberately
+  # installed, correctly architecture-matched bun (e.g. a native arm64 build)
+  # with a stale or mismatched one, which breaks native addons such as sharp.
+  # $HOME/.bun/bin is only prepended when no bun is resolvable at all.
   if has_command bun; then
     local current_version
     current_version="$(bun --version 2>/dev/null || echo "")"
@@ -292,6 +293,16 @@ ensure_bun(){
     fi
     echo "🟩 Bun is ready ($(bun --version 2>/dev/null || echo 'unknown'))"
     return 0
+  fi
+
+  # No bun on PATH — fall back to the standalone installer location before
+  # attempting a network install.
+  if [[ -d "$HOME/.bun/bin" && ":$PATH:" != *":$HOME/.bun/bin:"* ]]; then
+    export PATH="$HOME/.bun/bin:$PATH"
+    if has_command bun; then
+      echo "🟩 Bun is ready ($(bun --version 2>/dev/null || echo 'unknown'))"
+      return 0
+    fi
   fi
 
   echo "⚠️  Bun not found in PATH. Checking alternative installation methods..."
@@ -322,6 +333,158 @@ ensure_bun(){
 
   echo -e "${RED}Error: Bun is not installed and could not be auto-installed.${NC}" >&2
   echo "Please install bun manually: curl -fsSL https://bun.sh/install | bash" >&2
+  return 1
+}
+
+# ---------------------------------------------------------------------------
+# Native runtime / architecture preflight
+#
+# Native addons (sharp, @swc/core, sqlite3, ...) are compiled for a single CPU
+# architecture. If the selected JS runtime reports a different architecture
+# than the one the addons were installed for, module loading fails deep inside
+# the dependency with a misleading error such as:
+#
+#   Something went wrong installing the "sharp" module
+#   Cannot find module '../build/Release/sharp-darwin-x64.node'
+#
+# The usual cause is an x86_64 runtime binary — installed from a Rosetta
+# translated shell, where `uname -m` reports x86_64 — shadowing a native arm64
+# install on PATH. These helpers detect that and fail fast with a clear message.
+# ---------------------------------------------------------------------------
+
+# Maps a sharp platform/arch token (e.g. darwin-arm64v8) to a process.arch value.
+sharp_token_to_arch() {
+  case "$1" in
+    *-arm64v8|*-arm64|*-aarch64) echo "arm64" ;;
+    *-x64|*-x86_64|*-amd64) echo "x64" ;;
+    *-armv7) echo "arm" ;;
+    *-ia32) echo "ia32" ;;
+    *) echo "" ;;
+  esac
+}
+
+# Native CPU architecture of the host, resolving Rosetta translation to the real
+# (arm64) architecture rather than the translated x86_64 one.
+host_native_arch() {
+  local machine
+  machine="$(uname -m 2>/dev/null)"
+  case "$machine" in
+    arm64|aarch64) echo "arm64" ;;
+    x86_64|amd64)
+      if [[ "$(uname -s 2>/dev/null)" == "Darwin" && "$(sysctl -n sysctl.proc_translated 2>/dev/null)" == "1" ]]; then
+        echo "arm64"
+      else
+        echo "x64"
+      fi
+      ;;
+    *) echo "$machine" ;;
+  esac
+}
+
+# process.arch as reported by the given JS runtime binary (bun or node).
+runtime_js_arch() {
+  local runtime_bin="$1"
+  [[ -n "$runtime_bin" ]] || return 1
+  "$runtime_bin" -e 'process.stdout.write(process.arch)' 2>/dev/null
+}
+
+# Architecture the project's native addons were built for. Ground truth is the
+# sharp native binary present on disk; otherwise the arch of the node toolchain
+# used to install the tree, then the native host architecture. Returns nothing
+# (skip the check) when the project contains no native addons at all, so this
+# cannot produce false positives in a purely-JS tree.
+installed_native_arch() {
+  local root="${1:-.}"
+  local release_dir="${root}/node_modules/sharp/build/Release"
+  local f token arch
+
+  # 1. The sharp native binary is the most precise signal available.
+  if [[ -d "$release_dir" ]]; then
+    for f in "$release_dir"/sharp-*.node; do
+      [[ -f "$f" ]] || continue
+      token="$(basename "$f")"
+      token="${token#sharp-}"
+      token="${token%.node}"
+      arch="$(sharp_token_to_arch "$token")"
+      if [[ -n "$arch" ]]; then
+        echo "$arch"
+        return 0
+      fi
+    done
+  fi
+
+  # 2. No native addon present at all -> cannot judge. Return nothing so the
+  #    caller skips the check rather than risking a false positive.
+  if ! find "${root}/node_modules" -maxdepth 5 -name '*.node' -print -quit 2>/dev/null | grep -q .; then
+    return 0
+  fi
+
+  # 3. Addons exist but their architecture is undetermined: use the node
+  #    toolchain that installed the tree as the closest available proxy.
+  if has_command node; then
+    arch="$(node -e 'process.stdout.write(process.arch)' 2>/dev/null)"
+    if [[ -n "$arch" ]]; then
+      echo "$arch"
+      return 0
+    fi
+  fi
+
+  host_native_arch
+}
+
+# Fails fast when the selected runtime cannot load the project's native addons.
+# Returns 0 when compatible, or when the check cannot be performed; returns 1 on
+# a confirmed architecture mismatch. Bypass with REACTORY_SKIP_ARCH_CHECK=true.
+preflight_native_runtime_arch() {
+  local runtime_name="${1:-runtime}"
+  local runtime_bin="${2:-}"
+  local root="${3:-.}"
+
+  [[ "${REACTORY_SKIP_ARCH_CHECK:-}" == "true" ]] && return 0
+  [[ -n "$runtime_bin" ]] || return 0
+
+  if [[ "$runtime_bin" == */* ]]; then
+    [[ -x "$runtime_bin" ]] || return 0
+  else
+    has_command "$runtime_bin" || return 0
+  fi
+
+  local runtime_arch installed_arch host_arch translated=""
+  runtime_arch="$(runtime_js_arch "$runtime_bin")"
+  [[ -n "$runtime_arch" ]] || return 0
+
+  installed_arch="$(installed_native_arch "$root")"
+  [[ -n "$installed_arch" ]] || return 0
+
+  [[ "$runtime_arch" == "$installed_arch" ]] && return 0
+
+  host_arch="$(host_native_arch)"
+  if [[ "$(uname -s 2>/dev/null)" == "Darwin" && "$(sysctl -n sysctl.proc_translated 2>/dev/null)" == "1" ]]; then
+    translated=" (running under Rosetta translation)"
+  fi
+
+  {
+    echo ""
+    echo "❌ [${runtime_name}] Architecture mismatch — native addons will not load."
+    echo "   Runtime '${runtime_bin}' reports : ${runtime_arch}${translated}"
+    echo "   Native addons target            : ${installed_arch}"
+    echo "   Native host architecture        : ${host_arch}"
+    echo ""
+    echo "   'sharp', '@swc/core', 'sqlite3' and other native modules will fail."
+    echo "   This typically means the runtime on PATH is an '${runtime_arch}' binary"
+    echo "   shadowing an '${installed_arch}' install."
+    echo ""
+    echo "   Fixes:"
+    echo "     - Put the '${installed_arch}' ${runtime_name} first on PATH, e.g."
+    echo "         export PATH=\"<dir-containing-${installed_arch}-${runtime_name}>:\$PATH\""
+    if [[ "$(uname -s 2>/dev/null)" == "Darwin" ]]; then
+      echo "     - Or reinstall the runtime from a native shell:"
+      echo "         arch -arm64 /bin/zsh -lc 'curl -fsSL https://bun.sh/install | bash'"
+    fi
+    echo "     - Bypass this check (unsafe): export REACTORY_SKIP_ARCH_CHECK=true"
+    echo ""
+  } >&2
+
   return 1
 }
 

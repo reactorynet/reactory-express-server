@@ -320,7 +320,6 @@ describe('ReactorySQLQuery resolver — raw statement execution', () => {
     await expect(runSqlQuery(validInput)).rejects.toThrow(/relation "nope" does not exist/);
   });
 });
-});
 
 describe('ReactorySQL.graphql SDL', () => {
   const sdlPath = join(__dirname, '..', '..', '..', 'graph', 'types', 'SQL', 'ReactorySQL.graphql');
