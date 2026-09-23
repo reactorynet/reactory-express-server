@@ -1,4 +1,6 @@
 import { DataSource } from "typeorm";
+import { CORE_ENTITIES, CORE_MIGRATIONS } from "../migrations/typeorm/schema";
+import { prepareSchemaOrExit, resolveSynchronize } from "@reactory/server-core/database/migrationGovernance";
 import Audit from "./Audit";
 import RateLimit from "./RateLimit";
 import Application from "./Application";
@@ -61,19 +63,11 @@ export const PostgresDataSource = new DataSource({
   username: process.env.REACTORY_POSTGRES_USER || process.env.POSTGRES_USER || "reactory",
   password: process.env.REACTORY_POSTGRES_PASSWORD || process.env.POSTGRES_PASSWORD || "reactory",
   database: process.env.REACTORY_POSTGRES_DB || process.env.POSTGRES_DB || "reactory",
-  synchronize: true,
-  entities: [
-    Audit,
-    RateLimit,
-    ReactoryCalendar, 
-    ReactoryCalendarEntry, 
-    ReactoryCalendarParticipant, 
-    ReactoryCalendarRecurrencePattern, 
-    ReactoryCalendarWorkflowTrigger, 
-    ReactoryCalendarServiceTrigger,
-    ReactoryFormSubmission,
-    UserSession,
-  ],
+  // Schema changes go through migrations outside development; see
+  // src/database/migrationGovernance.ts. REACTORY_POSTGRES_SYNCHRONIZE overrides.
+  synchronize: false,
+  entities: CORE_ENTITIES,
+  ...CORE_MIGRATIONS,
 });
 
 /**
@@ -227,9 +221,12 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       domain: Reactory.ComponentDomain.model,
       overwrite: false,
       onStartup: async (context: Reactory.Server.IReactoryContext) => {
-        context.info("Synchronizing Postgres Data Source");
         await PostgresDataSource.initialize();
-        await PostgresDataSource.synchronize();
+        await prepareSchemaOrExit(PostgresDataSource, {
+          label: "reactory-core Postgres",
+          synchronize: resolveSynchronize(process.env.REACTORY_POSTGRES_SYNCHRONIZE),
+          log: (message) => context.info(message),
+        });
         const repo = PostgresDataSource.getRepository(Audit);
         const audit = new Audit();
         audit.user = "system";
@@ -239,7 +236,7 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
         audit.signature = Hash(encoder.encodeState(audit)).toString();
         repo.save(audit);
         await createFormSubmissionIndexes(context);
-        context.debug("Postgres Data Source Synchronized");        
+        context.debug("Postgres Data Source ready");        
       },
     },
     {

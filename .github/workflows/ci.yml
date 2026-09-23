@@ -88,3 +88,59 @@ jobs:
           name: server-coverage
           path: coverage/
           if-no-files-found: ignore
+
+  # WP-B3: every module's TypeORM migrations must apply to an empty Postgres and
+  # leave no drift against the entities; the startup governance integration
+  # test runs against a second empty database.
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: reactory
+          POSTGRES_PASSWORD: reactory
+          POSTGRES_DB: reactory
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U reactory"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      REACTORY_POSTGRES_HOST: localhost
+      REACTORY_POSTGRES_PORT: "5432"
+      REACTORY_POSTGRES_USER: reactory
+      REACTORY_POSTGRES_PASSWORD: reactory
+      PGPASSWORD: reactory
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "yarn"
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Create empty databases
+        run: |
+          psql -h localhost -U reactory -d reactory -c "CREATE DATABASE reactory_migrations_check"
+          psql -h localhost -U reactory -d reactory -c "CREATE DATABASE reactory_governance_test"
+
+      - name: Migrations apply and match the entities
+        env:
+          REACTORY_POSTGRES_DB: reactory_migrations_check
+        run: scripts/ci/check-migrations.sh
+
+      - name: Startup governance against a real database
+        env:
+          REACTORY_TEST_POSTGRES_DB: reactory_governance_test
+        run: yarn jest src/database/__tests__/migrationGovernance.test.ts --ci --forceExit
