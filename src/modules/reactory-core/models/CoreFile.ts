@@ -229,7 +229,7 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
       //no newline characters
       if (index === -1) {
         //we've reached the end of the file and no more newline chars available
-        ;
+        
         rs.close();
       } else {
 
@@ -268,7 +268,7 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
       // const parts = acc.split(acc.split('\n'));
       // acc = parts[1];
       // lines.push(parts[0]);
-      ;
+      
 
       resolve(lines);
     }).on('error', (err) => {

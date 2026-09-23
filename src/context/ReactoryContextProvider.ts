@@ -185,7 +185,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     } else {
       return false;
     }
-  };
+  }
 
   hasAnyRole(roles: string[], partner?: Reactory.Models.IPartner, organization?: Reactory.Models.IOrganizationDocument, businessUnit?: Reactory.Models.IBusinessUnitDocument):boolean {
     if (this.user ) {

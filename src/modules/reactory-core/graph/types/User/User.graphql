@@ -815,7 +815,7 @@ extend type Mutation {
     input: CreateUserInput!, 
     organizationId: String!, 
     password: String
-  ): User
+  ): User @auth(roles: ["USER", "ADMIN"])
   
   """
   Updates an existing user's profile data.
@@ -823,12 +823,12 @@ extend type Mutation {
   updateUser(
     id: String!, 
     profileData: UpdateUserInput!
-  ): User
+  ): User @auth(roles: ["USER", "ADMIN"])
   
   """
   Soft-deletes a user (sets deleted flag).
   """
-  deleteUser(id: String!): Boolean
+  deleteUser(id: String!): Boolean @auth(roles: ["ADMIN"])
   
   """
   Assigns a user to an organization explicitly.
@@ -836,7 +836,7 @@ extend type Mutation {
   setOrganizationForUser(
     id: String!, 
     organizationId: String
-  ) : Boolean
+  ) : Boolean @auth(roles: ["USER", "ADMIN"])
   
   """
   Sets the entire list of peers for a user in their active context.
@@ -845,7 +845,7 @@ extend type Mutation {
     id: String!, 
     peers: [PeerInput], 
     sendConfirmations: Boolean
-  ): UserPeers
+  ): UserPeers @auth(roles: ["USER", "ADMIN"])
   
   """
   Updates specific relationship type for a single peer.
@@ -855,7 +855,7 @@ extend type Mutation {
     peer: String!, 
     organization: String!, 
     relationship: PeerType
-  ): UserPeers
+  ): UserPeers @auth(roles: ["USER", "ADMIN"])
   
   """
   Removes a specific peer relationship.
@@ -864,17 +864,17 @@ extend type Mutation {
     id: String!, 
     peer: String!, 
     organization: String!
-  ): UserPeers
+  ): UserPeers @auth(roles: ["USER", "ADMIN"])
   
   """
   Hard remove a user (use cautiously). 
   """
-  removeUser(id: String!): Boolean
+  removeUser(id: String!): Boolean @auth(roles: ["ADMIN"])
   
   """
   Updates the user's password.
   """
-  setPassword(input: UpdatePasswordInput!): User
+  setPassword(input: UpdatePasswordInput!): User @auth(roles: ["USER", "ADMIN"])
   
   """
   Confirms the peer list for a user, finalizing a review or setup step.
@@ -883,7 +883,7 @@ extend type Mutation {
     id: String!, 
     organization: String!, 
     surveyId: String
-  ): UserPeers
+  ): UserPeers @auth(roles: ["USER", "ADMIN"])
   
   """
   Add a specific role to a user's membership in an organization/client.
@@ -895,7 +895,7 @@ extend type Mutation {
     organization: String, 
     role: String!, 
     clientId: String
-  ): [UserMembership]
+  ): [UserMembership] @auth(roles: ["ADMIN"])
   
   """
   Remove a specific role from a user's membership.
@@ -906,7 +906,7 @@ extend type Mutation {
     organization: String, 
     role: String!, 
     clientId: String
-  ): [UserMembership]
+  ): [UserMembership] @auth(roles: ["ADMIN"])
   
   """
   Adds custom authentication credentials/tokens for the user.
@@ -922,14 +922,14 @@ extend type Mutation {
     The credential data object.
     """
     props: Any
-  ): Boolean
+  ): Boolean @auth(roles: ["ADMIN"])
   
   """
   Removes stored credentials for a provider.
   """
   removeUserCredentials(
     provider: String!
-  ): Boolean
+  ): Boolean @auth(roles: ["ADMIN"])
   
   """
   Sets an explicit list of roles for a specific membership ID.
@@ -939,7 +939,7 @@ extend type Mutation {
     user_id: String!, 
     id: String!, 
     roles: [String]!
-  ): CoreSimpleResponse
+  ): CoreSimpleResponse @auth(roles: ["ADMIN"])
   
   """
   Creates a new membership record for a user.
@@ -950,14 +950,14 @@ extend type Mutation {
     organization: String, 
     businessUnit: String, 
     roles: [String]
-  ): UserMembership
+  ): UserMembership @auth(roles: ["ADMIN"])
   
   """
   Switches the user's active context to a specific membership.
   """
   ReactoryCoreSetActiveMembership(
     membership_id: String!
-  ): UserMembership
+  ): UserMembership @auth(roles: ["USER", "ADMIN"])
   
   """
   Removes a membership record entirely.
@@ -965,7 +965,7 @@ extend type Mutation {
   ReactoryCoreRemoveUserMembership(
     user_id: String!, 
     id: String!
-  ): CoreSimpleResponse
+  ): CoreSimpleResponse @auth(roles: ["ADMIN"])
 
   """
   Creates a new user and assigns them a membership for a specific ReactoryClient (application).
@@ -976,7 +976,7 @@ extend type Mutation {
     clientId: String!,
     password: String,
     roles: [String]
-  ): User
+  ): User @auth(roles: ["ADMIN"])
 
   """
   Updates social media profiles for a user.
@@ -984,7 +984,7 @@ extend type Mutation {
   ReactoryCoreUpdateUserSocials(
     userId: String!,
     socials: [SocialReferenceInput]!
-  ): User
+  ): User @auth(roles: ["ADMIN"])
 }
 
 """

@@ -78,7 +78,7 @@ const graph: any = {
     }
   },
   Query: {
-    // eslint-disable-next-line max-lens
+    // eslint-disable-next-line max-len
     ReactoryFileImportPackage: async (parent: any, params: UserFileImportStatusParams, context: Reactory.Server.IReactoryContext): Promise<Reactory.IReactoryFileImportPackage> => {
       const { user, partner } = context;
       let response: any = null;
@@ -237,7 +237,6 @@ const graph: any = {
       }: t_arg = args;
       
       try {
-        debugger
         const packman: Reactory.IReactoryImportPackageManager = context.getService('core.ReactoryFileImportPackageManager@1.0.0') as Reactory.IReactoryImportPackageManager
         const start_result = await packman.removeFile(workload_id, file_id);
         return start_result;

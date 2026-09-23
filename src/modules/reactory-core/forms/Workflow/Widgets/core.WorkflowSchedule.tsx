@@ -257,7 +257,6 @@ const formDataToCreateInput = (formData: any, workflow: any, properties?: any) =
  */
 const formDataToUpdateInput = (formData: any, workflow: any, properties?: any) => { 
   console.log('Form data to update input', formData, properties); 
-  debugger;
   return {
     name: formData.name,
     description: formData.description || undefined,

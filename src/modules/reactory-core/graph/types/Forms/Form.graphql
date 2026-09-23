@@ -1117,14 +1117,14 @@ extend type Mutation {
         Git options. If present reactory will 
         attempt to execute the relevant git actions
         """
-        git: ReactoryGitOptions): ReactoryForm
+        git: ReactoryGitOptions): ReactoryForm @auth(roles: ["ADMIN", "DEVELOPER"])
     
     """
     Clones a Form
     """
-    ReactoryFormClone(id: String!): ReactoryForm
+    ReactoryFormClone(id: String!): ReactoryForm @auth(roles: ["USER", "ADMIN"])
     """
     Deletes a Form
     """
-    ReactoryFormDelete(id: String!): CoreSimpleResponse
+    ReactoryFormDelete(id: String!): CoreSimpleResponse @auth(roles: ["ADMIN", "DEVELOPER"])
 }

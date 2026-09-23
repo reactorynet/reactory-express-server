@@ -4,6 +4,29 @@
 #   additional: String = "This item has been deprecated. No additional information is available."
 # ) on FIELD_DEFINITION | ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | ENUM_VALUE
 
-directive @auth(roles: [String] = ["ANON"]) on OBJECT | FIELD_DEFINITION
+"""
+Where a role passed to @auth must be held. A narrower scope inherits from
+the wider one: a tenant-wide membership satisfies ORGANIZATION and
+BUSINESS_UNIT checks.
+"""
+enum AuthScope {
+  TENANT
+  ORGANIZATION
+  BUSINESS_UNIT
+}
+
+"""
+Schema-level authorization. The caller needs any one of `roles` at `scope`.
+`orgArg` / `buArg` name the field argument (dotted paths allowed) that holds
+the organization / business unit id for scoped checks. Denial raises
+UNAUTHENTICATED (anonymous caller) or FORBIDDEN. On OBJECT it applies to every
+field without its own @auth.
+"""
+directive @auth(
+  roles: [String] = ["USER"]
+  scope: AuthScope = TENANT
+  orgArg: String
+  buArg: String
+) on OBJECT | FIELD_DEFINITION
 
 

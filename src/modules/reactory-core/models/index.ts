@@ -687,7 +687,7 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
             createdAt: new Date(),
             updatedAt: new Date(),
           });
-          sysAdminUser.setPassword(strongRandom(16));
+          await sysAdminUser.setPassword(strongRandom(16));
           await sysAdminUser.save().then();
         }
         context.state.sysAdmin = sysAdminUser;

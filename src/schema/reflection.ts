@@ -539,16 +539,6 @@ export function getPropertySchema<C, P>(
       schema.type = "string";
     } else if (typeof property === "boolean") {
       schema.type = "boolean";
-    } else if (typeof property === null || typeof property === undefined) {
-      // enum types report as null
-      // extract the enum values from the
-      // metadata
-      const enumType = Reflect.getMetadata("enumType", property);
-      if (enumType) {
-        schema.enum = Reflect.getMetadata("enumValues", property);
-      } else {
-        schema.enum = [];
-      }
     } else if (Array.isArray(property)) {
       //schema.type = Reflect.getMetadata('design:nullable', type) ? ["array", "null"] : "array";
       schema.type = "array";
@@ -670,10 +660,6 @@ export function getPropertyUISchema<C, P>(
     } else if (instance[key]?.constructor === String) {
     } else if (typeof property === "boolean") {
       //
-    } else if (typeof property === null || typeof property === undefined) {
-      // enum types report as null
-      // extract the enum values from the
-      // metadata
     } else if (Array.isArray(property)) {
       //schema.type = Reflect.getMetadata('design:nullable', type) ? ["array", "null"] : "array";      
     } else if (typeof property === "object" && property !== null) {

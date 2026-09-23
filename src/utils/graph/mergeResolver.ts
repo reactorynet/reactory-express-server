@@ -10,7 +10,7 @@ type ReactoryResolver = ReactoryResolverFunc | Reactory.Graph.IGraphShape
 
 function isResolverFunc(resolver: ReactoryResolver): resolver is ReactoryResolverFunc {
   return typeof (resolver as ReactoryResolverFunc) === "function";
-};
+}
 
 function isResolverObject(resolver: ReactoryResolver): resolver is Reactory.Graph.IGraphShape {
   // Object.keys(null) throws "Cannot convert undefined or null to object", so a
@@ -21,7 +21,7 @@ function isResolverObject(resolver: ReactoryResolver): resolver is Reactory.Grap
   if (resolver === null || resolver === undefined) return false;
   if (typeof resolver !== 'object') return false;
   return Object.keys(resolver as Reactory.Graph.IGraphShape).length > 0;
-};
+}
 
 function isResolverClass(resolver: ReactoryResolver): resolver is Reactory.Graph.IGraphShape {
   if (resolver === null || resolver === undefined) return false;

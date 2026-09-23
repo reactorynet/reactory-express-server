@@ -242,7 +242,7 @@ export const ReactoryAnonUser: Reactory.Models.IUserDocument = {
   fullName: function (email: boolean): string {
     return `${this.firstName} ${this.lastName}`;
   },
-  setPassword: function (password: string): void {
+  setPassword: function (password: string): Promise<void> {
     throw new Error("Function not implemented.");
   },
   hasRole: function (

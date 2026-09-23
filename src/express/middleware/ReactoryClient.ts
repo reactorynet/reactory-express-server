@@ -33,6 +33,16 @@ const bypassUri = [
   '/logout',
   '/health',
   '/telemetry',
+  // OAuth provider flows. An IdP redirect carries no tenant credential; these
+  // routes resolve the tenant themselves from the tenant key (start) or from
+  // the validated, session-bound CSRF state (callback). See
+  // src/authentication/strategies/tenantOAuth.ts.
+  '/auth/google/',
+  '/auth/github/',
+  '/auth/facebook/',
+  '/auth/linkedin/',
+  '/auth/okta/',
+  '/auth/microsoft/',
 ];
 
 if (NODE_ENV === 'development' || NODE_ENV === 'local' || NODE_ENV === 'test') {
@@ -66,12 +76,16 @@ const validatedClients: {
  * @param next 
  * @returns 
  */
-const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: Function) => {
+export const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: Function) => {
 
   const { headers, query, context, path } = req;  
   let bypass: boolean = false;
   if (req.originalUrl) {
-    bypass = bypassUri.some(uri => req.originalUrl.includes(uri));
+    // Match against the path only. Matching the whole URL let any request
+    // skip tenant authentication by carrying a bypass path in its query
+    // string, for example `/graphql?x=/login`.
+    const requestPath = req.originalUrl.split('?')[0];
+    bypass = bypassUri.some(uri => requestPath.includes(uri));
   }
 
   if (bypass === true) {
@@ -81,6 +95,8 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
 
   let clientId: string = headers['x-client-key'] as string;
   let clientPwd: string = headers['x-client-pwd'] as string;
+  let serviceKey: string = headers['x-service-key'] as string;
+  let clientPublicKey: string = headers['x-client-public-key'] as string;
   
   if( isNil(clientId) === true && 
       isNil(clientPwd) === true) {
@@ -91,6 +107,14 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
 
         if(queryKeys.includes('x-client-pwd') === true) {
           clientPwd = decodeURIComponent(query['x-client-pwd'] as string);
+        }
+
+        if(queryKeys.includes('x-service-key') === true) {
+          serviceKey = decodeURIComponent(query['x-service-key'] as string);
+        }
+
+        if(queryKeys.includes('x-client-public-key') === true) {
+          clientPublicKey = decodeURIComponent(query['x-client-public-key'] as string);
         }
   }
   //check if session storage is used
@@ -106,6 +130,10 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
         // @ts-ignore
         clientPwd = session['x-client-pwd'];
       }
+      if(sessionKeys.includes('x-client-public-key') === true) {
+        // @ts-ignore
+        clientPublicKey = session['x-client-public-key'];
+      }
 
       if(sessionKeys.includes('authState') === true ) {
         //@ts-ignore
@@ -114,6 +142,9 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
         if(isNil(stateData) === false) {
           clientId = stateData['x-client-key'];
           clientPwd = stateData['x-client-pwd'];
+          if (stateData['x-client-public-key']) {
+            clientPublicKey = stateData['x-client-public-key'];
+          }
         }
       }
     }
@@ -137,22 +168,44 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
     return; 
   } else {
     logger.debug(`ReactoryClientAuthenticationMiddleware:: extracted partner key: ${clientId}`);
+    const origin = (headers['origin'] || headers['referer'] || '') as string;
+    const cacheKey = `${clientId}:${clientPwd || serviceKey || ''}:${clientPublicKey ? `${clientPublicKey}@${origin}` : ''}`;
     try {
-      if (validatedClients[clientId] !== undefined && validatedClients[clientId].timestamp > Date.now() - 300000){
-        // @ts-ignore
-        req.partner = validatedClients[clientId].client;
-        context.partner = validatedClients[clientId].client;
-        next();
-        return;
+      if (clientPwd || serviceKey || (clientPublicKey && origin)) {
+        if (validatedClients[cacheKey] !== undefined && validatedClients[cacheKey].timestamp > Date.now() - 300000){
+          // @ts-ignore
+          req.partner = validatedClients[cacheKey].client;
+          context.partner = validatedClients[cacheKey].client;
+          next();
+          return;
+        }
       }
       
-      ReactoryClient.findOne({ key: clientId }).then((clientResult: any) => {
+      ReactoryClient.findOne({ key: clientId }).then(async (clientResult: any) => {
         if (isNil(clientResult) === true ) { 
           res.status(401).send({ 
             error: 'Credentials Invalid' });
           return;
         } 
-        if (clientResult.validatePassword(clientPwd) === false) {
+        let authenticated = false;
+        if (clientPwd && (await clientResult.validatePassword(clientPwd)) === true) {
+          const origin = (headers['origin'] || headers['referer'] || '') as string;
+          if (origin) {
+            logger.warn(
+              `[DEPRECATION] Client "${clientId}" is sending secret (x-client-pwd) over browser request (Origin: ${origin}). Migrate to x-client-public-key.`
+            );
+          }
+          authenticated = true;
+        } else if (serviceKey && typeof clientResult.validateServiceKey === 'function' && (await clientResult.validateServiceKey(serviceKey)) === true) {
+          authenticated = true;
+        } else if (clientPublicKey && typeof clientResult.validatePublicKey === 'function') {
+          const origin = (headers['origin'] || headers['referer'] || '') as string;
+          if (clientResult.validatePublicKey(clientPublicKey, origin) === true) {
+            authenticated = true;
+          }
+        }
+
+        if (!authenticated) {
           res.status(401).send({ error: 'Credentials Invalid' });
           return;
         }
@@ -160,7 +213,7 @@ const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExp
           // @ts-ignore
           req.partner = clientResult;
           context.partner = clientResult;
-          validatedClients[clientId] = { client: clientResult, timestamp: Date.now()};
+          validatedClients[cacheKey] = { client: clientResult, timestamp: Date.now()};
           next();
         }
       }).catch((clientGetError) => {

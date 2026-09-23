@@ -19,6 +19,14 @@ const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IR
   roles: [String],
 }, { _id: false });
 
+export const ServiceKeySchema = new mongoose.Schema({
+  label: { type: String, required: true },
+  keyHash: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  lastUsedAt: Date,
+  disabled: { type: Boolean, default: false },
+}, { _id: true });
+
 const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReactoryClient>({
   id: ObjectId,
   key: {
@@ -122,6 +130,16 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
   whitelist: [String],
   plugins: [ReactoryApplicationPluginSchema],
   featureFlags: [ReactoryFeatureFlagValueSchema],
+  serviceKeys: [ServiceKeySchema],
+  publicKey: {
+    type: String,
+    index: true,
+  },
+  browserAuth: {
+    type: String,
+    enum: ['origin', 'secret'],
+    default: 'origin',
+  },
 }, {
   methods,
   statics,

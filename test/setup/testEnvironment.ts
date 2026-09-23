@@ -20,6 +20,13 @@ const setupTestEnvironment = () => {
     process.env.APP_DATA_ROOT = testDataRoot;
   }
 
+  // Workflow YAML loading (loadYamlWorkflow) resolves the catalog under
+  // REACTORY_DATA at import time; without it every suite that imports a module
+  // index fails to load with "The path argument must be of type string".
+  if (!process.env.REACTORY_DATA) {
+    process.env.REACTORY_DATA = testDataRoot;
+  }
+
   // Create necessary directories if they don't exist
   const requiredDirs = [
     testDataRoot,

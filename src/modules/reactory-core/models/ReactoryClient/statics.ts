@@ -444,15 +444,44 @@ const synchronizeMenus = async (
 };
 
 /**
+ * Ensures a browser-facing public key exists on the tenant document (WP-A4).
+ * Precedence: explicit config value > existing stored value > generated value.
+ * Generation happens once; the value is logged so it can be copied into the
+ * PWA env (REACT_APP_CLIENT_PUBLIC_KEY) or exported via toClientEnv().
+ */
+export const ensurePublicKey = (
+  reactoryClient: Reactory.Models.ReactoryClientDocument,
+  clientConfig: Partial<Reactory.Models.IReactoryClient>
+) => {
+  const doc = reactoryClient as unknown as { publicKey?: string; browserAuth?: string; key: string; markModified?: (f: string) => void };
+  const configured = (clientConfig as { publicKey?: string }).publicKey;
+  if (configured && configured.trim() !== '') {
+    if (doc.publicKey !== configured) {
+      doc.publicKey = configured;
+      if (typeof doc.markModified === 'function') doc.markModified('publicKey');
+    }
+  } else if (!doc.publicKey) {
+    doc.publicKey = crypto.randomBytes(32).toString('hex');
+    if (typeof doc.markModified === 'function') doc.markModified('publicKey');
+    logger.warn(
+      `No publicKey configured for client "${doc.key}"; generated one. Set REACT_APP_CLIENT_PUBLIC_KEY=${doc.publicKey} in the PWA env, or add publicKey to the client config to pin it.`
+    );
+  }
+  if (!doc.browserAuth) {
+    doc.browserAuth = 'origin';
+  }
+};
+
+/**
  * Helper to re-process password and salt for a ReactoryClient document
  */
-const processClientPasswordAndSalt = (
+const processClientPasswordAndSalt = async (
   reactoryClient: Reactory.Models.ReactoryClientDocument,
   clientConfig: Partial<Reactory.Models.IReactoryClient>
 ) => {
   if (clientConfig.password) {
     // If the password in config is already a 128-char hex sha512 hash (e.g. from an exported config.yaml)
-    if (/^[0-9a-f]{128}$/i.test(clientConfig.password)) {
+    if (/^[0-9a-f]{128}$/i.test(clientConfig.password) || clientConfig.password.startsWith('pbkdf2$')) {
       reactoryClient.password = clientConfig.password;
       if (clientConfig.salt && clientConfig.salt !== 'generate') {
         reactoryClient.salt = clientConfig.salt;
@@ -467,7 +496,7 @@ const processClientPasswordAndSalt = (
         'sha512'
       ).toString('hex');
     } else {
-      reactoryClient.setPassword(clientConfig.password);
+      await reactoryClient.setPassword(clientConfig.password);
     }
   } else if (clientConfig.salt && clientConfig.salt !== 'generate' && reactoryClient.password) {
     reactoryClient.salt = clientConfig.salt;
@@ -566,6 +595,11 @@ const upsertFromConfig = async (
     delete input.routes; // We'll handle routes separately
     delete (input as { onStartup?: unknown }).onStartup;
     delete (input as { onShutdown?: unknown }).onShutdown;
+    // An unset publicKey in config (e.g. env var not provided) must not wipe a
+    // previously generated key on the stored document.
+    if (isNil((input as { publicKey?: string }).publicKey) || (input as { publicKey?: string }).publicKey === '') {
+      delete (input as { publicKey?: string }).publicKey;
+    }
 
     const sanitizeArrayOfSubdocs = (arr: any[]) => {
       if (!Array.isArray(arr)) return arr;
@@ -609,7 +643,8 @@ const upsertFromConfig = async (
 
         // Keep the stored credential in sync with the configured secret —
         // setPassword() re-salts and re-hashes as a pair.
-        processClientPasswordAndSalt(reactoryClient, clientConfig);
+        await processClientPasswordAndSalt(reactoryClient, clientConfig);
+        ensurePublicKey(reactoryClient, clientConfig);
 
         // Explicitly mark complex/mixed fields as modified to ensure Mongoose saves them.
         RECONCILABLE_COLLECTION_FIELDS.forEach((field) => {
@@ -645,7 +680,8 @@ const upsertFromConfig = async (
         logger.info(`Creating new client ${clientConfig.name}`);
         //@ts-ignore
         reactoryClient = new ReactoryClientModel(input);
-        processClientPasswordAndSalt(reactoryClient, clientConfig);
+        await processClientPasswordAndSalt(reactoryClient, clientConfig);
+        ensurePublicKey(reactoryClient, clientConfig);
         const validationResult = reactoryClient.validateSync();
         if (validationResult && validationResult.errors) {
           logger.error("Validation errors during creation", validationResult.errors);
@@ -1190,7 +1226,7 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
 
         // Set password if provided
         if (clientConfig.password && reactoryClient._id) {
-          processClientPasswordAndSalt(reactoryClient, clientConfig);
+          await processClientPasswordAndSalt(reactoryClient, clientConfig);
           await reactoryClient.save();
         }
 

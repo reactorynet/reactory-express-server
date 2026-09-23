@@ -15,7 +15,7 @@ import * as express from 'express';
   export interface PostalSubscription {
     unsubscribe: () => void;
     [key: string]: any;
-  };
+  }
 
 
   export interface PostalChannel {

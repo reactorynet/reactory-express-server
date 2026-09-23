@@ -245,13 +245,13 @@ class ApiStatus {
   @property("ApiStatus", "id")
   id(apiStatus: Reactory.Models.IApiStatus) {
     return apiStatus.id || 'anon'
-  };
+  }
 
   @property("ApiStatus", "menus")
   menus(_: Reactory.Models.IApiStatus, __: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.UX.IReactoryMenuConfig[]> {
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
     return systemService.getMenusForClient(context.partner)    
-  };
+  }
 
   @property("ApiStatus", "routes")
   async routes(apiStatus: Reactory.Models.IApiStatus, _: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.Routing.IReactoryRoute[]> {
@@ -309,7 +309,7 @@ class ApiStatus {
       mode: process.env.MODE,
       clients: clients,
     }
-  };
+  }
 
   @property("ApiStatus", "activeTheme")
   themeOptions(apiStatus: Reactory.Models.IApiStatus, args: { theme: string, mode: string }, context: Reactory.Server.IReactoryContext){    

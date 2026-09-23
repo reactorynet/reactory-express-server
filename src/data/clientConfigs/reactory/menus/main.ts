@@ -148,7 +148,7 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
       ],
     },
     {
-      ordinal: 7,
+      ordinal: 8,
       title: "reactory:reactory.menu.data",
       link: "/data/",
       icon: "code",
@@ -187,21 +187,21 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
       ],
     },
     {
-      ordinal: 4.5,
+      ordinal: 5,
       title: "reactory:reactory.menu.content-management",
       link: "/content",
       icon: "article",
       roles: ["USER", "CONTENT-EDITOR", "ADMIN", "DEVELOPER"],
     },
     {
-      ordinal: 5,
+      ordinal: 6,
       title: "reactory:reactory.menu.profile",
       link: "/profile/",
       icon: "badge",
       roles: ["USER"],
     },
     {
-      ordinal: 6,
+      ordinal: 7,
       title: "reactory:reactory.menu.organizations",
       link: "/organizations/",
       icon: "business",

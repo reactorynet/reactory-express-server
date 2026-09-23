@@ -276,7 +276,7 @@ export default {
               {
                 id: `ms-auth-login-${now}`,
                 title: 'Re-Authenticate',
-                action: `${process.env.API_URI_ROOT}auth/microsoft/openid/start/${context.partner.key}?x-client-key=${context.partner.key}&x-client-pwd=${context.partner.password}+${context.partner.salt}`,
+                action: `${process.env.API_URI_ROOT}auth/microsoft/openid/start/${context.partner.key}`,
               }
             ],
             via: 'notification',

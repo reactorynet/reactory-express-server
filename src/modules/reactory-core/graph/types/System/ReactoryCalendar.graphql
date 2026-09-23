@@ -399,25 +399,25 @@ type Query {
 # Mutations
 type Mutation {
   # Calendar mutations
-  CreateReactoryCalendar(input: CreateReactoryCalendarInput!): ReactoryCalendar!
-  UpdateReactoryCalendar(id: ID!, input: UpdateReactoryCalendarInput!): ReactoryCalendar!
-  DeleteReactoryCalendar(id: ID!): Boolean!
-  ShareReactoryCalendar(id: ID!, permissions: ReactoryCalendarPermissionsInput!): ReactoryCalendar!
-  SetDefaultReactoryCalendar(calendarId: ID!): ReactoryCalendar!
+  CreateReactoryCalendar(input: CreateReactoryCalendarInput!): ReactoryCalendar! @auth(roles: ["USER"])
+  UpdateReactoryCalendar(id: ID!, input: UpdateReactoryCalendarInput!): ReactoryCalendar! @auth(roles: ["USER"])
+  DeleteReactoryCalendar(id: ID!): Boolean! @auth(roles: ["USER"])
+  ShareReactoryCalendar(id: ID!, permissions: ReactoryCalendarPermissionsInput!): ReactoryCalendar! @auth(roles: ["USER"])
+  SetDefaultReactoryCalendar(calendarId: ID!): ReactoryCalendar! @auth(roles: ["USER"])
 
   # Calendar entry mutations
-  CreateReactoryCalendarEntry(input: CreateReactoryCalendarEntryInput!): ReactoryCalendarEntry!
-  UpdateReactoryCalendarEntry(id: ID!, input: UpdateReactoryCalendarEntryInput!): ReactoryCalendarEntry!
-  DeleteReactoryCalendarEntry(id: ID!): Boolean!
-  DuplicateReactoryCalendarEntry(id: ID!, input: DuplicateReactoryCalendarEntryInput): ReactoryCalendarEntry!
+  CreateReactoryCalendarEntry(input: CreateReactoryCalendarEntryInput!): ReactoryCalendarEntry! @auth(roles: ["USER"])
+  UpdateReactoryCalendarEntry(id: ID!, input: UpdateReactoryCalendarEntryInput!): ReactoryCalendarEntry! @auth(roles: ["USER"])
+  DeleteReactoryCalendarEntry(id: ID!): Boolean! @auth(roles: ["USER"])
+  DuplicateReactoryCalendarEntry(id: ID!, input: DuplicateReactoryCalendarEntryInput): ReactoryCalendarEntry! @auth(roles: ["USER"])
 
   # Participant mutations
-  InviteReactoryCalendarEntryParticipants(entryId: ID!, participants: [ReactoryCalendarParticipantInput!]!): ReactoryCalendarEntry!
-  UpdateReactoryCalendarEntryParticipantStatus(entryId: ID!, status: ReactoryCalendarRSVPStatus!): Boolean!
-  RemoveReactoryCalendarEntryParticipant(entryId: ID!, userId: ID!): Boolean!
+  InviteReactoryCalendarEntryParticipants(entryId: ID!, participants: [ReactoryCalendarParticipantInput!]!): ReactoryCalendarEntry! @auth(roles: ["USER"])
+  UpdateReactoryCalendarEntryParticipantStatus(entryId: ID!, status: ReactoryCalendarRSVPStatus!): Boolean! @auth(roles: ["USER"])
+  RemoveReactoryCalendarEntryParticipant(entryId: ID!, userId: ID!): Boolean! @auth(roles: ["USER"])
 
   # Bulk operations
-  BulkReactoryCalendarEntryCreateEntries(input: [CreateReactoryCalendarEntryInput!]!): [ReactoryCalendarEntry!]!
-  BulkReactoryCalendarEntryUpdateEntries(updates: [BulkReactoryCalendarEntryUpdate!]!): [ReactoryCalendarEntry!]!
-  BulkReactoryCalendarEntryDeleteEntries(ids: [ID!]!): Boolean!
+  BulkReactoryCalendarEntryCreateEntries(input: [CreateReactoryCalendarEntryInput!]!): [ReactoryCalendarEntry!]! @auth(roles: ["USER"])
+  BulkReactoryCalendarEntryUpdateEntries(updates: [BulkReactoryCalendarEntryUpdate!]!): [ReactoryCalendarEntry!]! @auth(roles: ["USER"])
+  BulkReactoryCalendarEntryDeleteEntries(ids: [ID!]!): Boolean! @auth(roles: ["USER"])
 }

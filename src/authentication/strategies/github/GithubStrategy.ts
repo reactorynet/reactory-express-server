@@ -5,15 +5,15 @@
  * Users can authenticate using their GitHub accounts.
  */
 
-import { encoder } from '@reactory/server-core/utils';
 import { Strategy as GitHubStrategy } from 'passport-github';
 import Helpers, { OnDoneCallback } from '../helpers';
-import { Application, Response } from 'express';
+import { Application, NextFunction, Response } from 'express';
 import passport from 'passport';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 import { StateManager, ErrorSanitizer, AuthAuditLogger } from '../security';
 import AuthTelemetry from '../telemetry';
+import { beginTenantOAuth, completeTenantOAuth, isCallbackFailure } from '../tenantOAuth';
 
 const {
   GITHUB_CLIENT_ID = 'GITHUB_CLIENT_ID',
@@ -23,16 +23,11 @@ const {
 } = process.env;
 
 /**
- * GitHub OAuth Strategy Configuration
- * Handles authentication via GitHub OAuth2
+ * GitHub verify callback. The callback route resolves the tenant from the
+ * validated CSRF state before passport calls this, so `context.partner` is
+ * normally set; the session fallback below is kept for direct callers.
  */
-const GitHubOAuthStrategy: passport.Strategy = new GitHubStrategy({
-  clientID: GITHUB_CLIENT_ID,
-  clientSecret: GITHUB_CLIENT_SECRET,
-  callbackURL: GITHUB_CLIENT_CALLBACK_URL,
-  passReqToCallback: true,
-  scope: GITHUB_OAUTH_SCOPE.split(','),
-}, async (
+export const githubVerifyCallback = async (
   req: Reactory.Server.ReactoryExpressRequest,
   accessToken: string,
   refreshToken: any,
@@ -224,7 +219,15 @@ const GitHubOAuthStrategy: passport.Strategy = new GitHubStrategy({
     const safeError = ErrorSanitizer.sanitizeError(error, { provider: 'github' });
     return done(new Error(safeError), false);
   }
-});
+};
+
+const GitHubOAuthStrategy: passport.Strategy = new GitHubStrategy({
+  clientID: GITHUB_CLIENT_ID,
+  clientSecret: GITHUB_CLIENT_SECRET,
+  callbackURL: GITHUB_CLIENT_CALLBACK_URL,
+  passReqToCallback: true,
+  scope: GITHUB_OAUTH_SCOPE.split(','),
+}, githubVerifyCallback);
 
 /**
  * Configure GitHub OAuth Routes
@@ -233,32 +236,21 @@ const GitHubOAuthStrategy: passport.Strategy = new GitHubStrategy({
 export const useGithubRoutes = (app: Application) => {
   /**
    * GitHub OAuth Start Endpoint
-   * Initiates the GitHub OAuth flow
+   * Resolves the tenant from `?x-client-key=`, mints a session-bound CSRF
+   * state and redirects to GitHub with the tenant's strategy.
    */
   app.get(
     '/auth/github/start',
-    (req: Reactory.Server.ReactoryExpressRequest, res: Response, next) => {
+    async (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: NextFunction) => {
       try {
-        // Create state for CSRF protection
-        const state = StateManager.createState({
-          'x-client-key': req.query['x-client-key'],
-          'x-client-pwd': req.query['x-client-pwd'],
-          flow: 'github',
-        });
+        const begun = await beginTenantOAuth(req, res, 'github');
+        if (!begun) return;
+        const { clientKey, strategyName, state } = begun;
 
-        // Store state in session
-        // @ts-ignore
-        req.session.authState = state;
+        logger.debug('Starting GitHub OAuth flow', { clientKey, strategyName });
 
-        logger.debug('Starting GitHub OAuth flow', {
-          clientKey: req.query['x-client-key'],
-          state,
-        });
-
-        // Redirect to GitHub
-        passport.authenticate('github', {
+        passport.authenticate(strategyName, {
           scope: GITHUB_OAUTH_SCOPE.split(','),
-          passReqToCallback: true,
           state,
         })(req, res, next);
       } catch (error) {
@@ -288,52 +280,56 @@ export const useGithubRoutes = (app: Application) => {
 
   /**
    * GitHub OAuth Callback Endpoint
-   * Handles the OAuth callback from GitHub
+   * Validates the CSRF state against the session, resolves the tenant named
+   * in it, then completes the exchange with that tenant's strategy.
    */
   app.get(
     '/auth/github/callback',
-    (req: Reactory.Server.ReactoryExpressRequest, res: Response) => {
-      const { context } = req;
-      const failureRedirectUrl = context.partner
-        ? `${context.partner.siteUrl}/auth/github/failure`
-        : '/auth/github/failure';
-
-      const onCompletion = (err: string, user: {
-        id: string;
-        firstName: string;
-        lastName: string;
-        token: string;
-      } | boolean) => {
-        if (err) {
-          logger.error('GitHub OAuth callback error', { error: err });
-          res.status(500).send({
-            error: 'An error occurred while trying to authenticate with GitHub',
+    async (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: NextFunction) => {
+      try {
+        const resolved = await completeTenantOAuth(req, 'github');
+        if (isCallbackFailure(resolved)) {
+          AuthTelemetry.recordCSRFValidation('github', false);
+          return res.status(resolved.status).send({
+            error: 'Authentication with GitHub failed',
+            reason: resolved.error,
             timestamp: new Date().toISOString(),
           });
-        } else {
-          if (!user) {
+        }
+        AuthTelemetry.recordCSRFValidation('github', true);
+
+        const { partner, strategyName } = resolved;
+        const failureRedirectUrl = `${partner.siteUrl}/auth/github/failure`;
+
+        const onCompletion = (err: any, user: { token: string } | false) => {
+          if (err) {
+            logger.error('GitHub OAuth callback error', { error: err });
+            res.status(500).send({
+              error: 'An error occurred while trying to authenticate with GitHub',
+              timestamp: new Date().toISOString(),
+            });
+          } else if (!user) {
             logger.warn('GitHub authentication returned no user');
             res.status(302).redirect(failureRedirectUrl);
           } else {
-            const successUrl = context.partner
-              ? `${context.partner.siteUrl}?auth_token=${(user as { token: string }).token}`
-              : `/?auth_token=${(user as { token: string }).token}`;
-
             logger.info('GitHub authentication complete, redirecting', {
-              successUrl: successUrl.split('?')[0], // Log URL without token
+              successUrl: partner.siteUrl,
             });
-
-            res.status(302).redirect(successUrl);
+            res.status(302).redirect(`${partner.siteUrl}?auth_token=${user.token}`);
           }
-        }
-      };
+        };
 
-      // Authenticate with GitHub
-      passport.authenticate('github', {
-        failureRedirect: failureRedirectUrl,
-        passReqToCallback: true,
-        scope: GITHUB_OAUTH_SCOPE.split(','),
-      }, onCompletion)(req, res);
+        passport.authenticate(strategyName, {
+          failureRedirect: failureRedirectUrl,
+          scope: GITHUB_OAUTH_SCOPE.split(','),
+        }, onCompletion)(req, res, next);
+      } catch (error) {
+        logger.error('GitHub OAuth callback error', { error });
+        res.status(500).send({
+          error: 'An error occurred while trying to authenticate with GitHub',
+          timestamp: new Date().toISOString(),
+        });
+      }
     }
   );
 };

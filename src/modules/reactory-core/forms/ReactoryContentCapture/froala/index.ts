@@ -32,7 +32,7 @@ export const froalaOptions = {
   imageUploadURL: '${formContext.reactory.API_ROOT}/froala/upload/image',
   requestHeaders: {
     'x-client-key': '${formContext.reactory.CLIENT_KEY}',
-    'x-client-pwd': '${formContext.reactory.CLIENT_PWD}',
+    'x-client-public-key': '${formContext.reactory.CLIENT_PUBLIC_KEY}',
   },
 };
 
@@ -65,7 +65,7 @@ export const minmalOptions = {
   imageUploadURL: '${formContext.reactory.API_ROOT}/froala/upload/image',
   requestHeaders: {
     'x-client-key': '${formContext.reactory.CLIENT_KEY}',
-    'x-client-pwd': '${formContext.reactory.CLIENT_PWD}',
+    'x-client-public-key': '${formContext.reactory.CLIENT_PUBLIC_KEY}',
   },
   quickInsertEnabled: false,
 };
@@ -99,7 +99,7 @@ export const minmalExtendedOptions = {
   imageUploadURL: '${formContext.reactory.API_ROOT}/froala/upload/image',
   requestHeaders: {
     'x-client-key': '${formContext.reactory.CLIENT_KEY}',
-    'x-client-pwd': '${formContext.reactory.CLIENT_PWD}',
+    'x-client-public-key': '${formContext.reactory.CLIENT_PUBLIC_KEY}',
   },
   quickInsertEnabled: true,
 };
@@ -135,7 +135,7 @@ export const inlineFroalaOptions = {
   imageUploadURL: '${formContext.reactory.API_ROOT}/froala/upload/image',
   requestHeaders: {
     'x-client-key': '${formContext.reactory.CLIENT_KEY}',
-    'x-client-pwd': '${formContext.reactory.CLIENT_PWD}',
+    'x-client-public-key': '${formContext.reactory.CLIENT_PUBLIC_KEY}',
   },
   quickInsertEnabled: true,
 };

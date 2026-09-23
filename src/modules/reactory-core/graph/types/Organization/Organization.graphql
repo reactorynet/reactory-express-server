@@ -161,7 +161,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  createOrganization(input: CreateOrganizationInput!): Organization
-  updateOrganization(id: String!, input: UpdateOrganizationInput!): Organization
-  SetOrganisationLookupData(lookupData: OrganizationLookupDataInput!): OrganizationLookupData
+  createOrganization(input: CreateOrganizationInput!): Organization @auth(roles: ["USER", "ADMIN"])
+  updateOrganization(id: String!, input: UpdateOrganizationInput!): Organization @auth(roles: ["USER", "ADMIN"])
+  SetOrganisationLookupData(lookupData: OrganizationLookupDataInput!): OrganizationLookupData @auth(roles: ["USER", "ADMIN"])
 }

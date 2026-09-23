@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import moment from 'moment';
-import ApiError, { OrganizationNotFoundError } from '@reactory/server-core/exceptions';;
+import ApiError, { OrganizationNotFoundError } from '@reactory/server-core/exceptions';
 
 import Reactory from '@reactorynet/reactory-core';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'

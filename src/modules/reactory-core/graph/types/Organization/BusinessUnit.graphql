@@ -80,9 +80,9 @@ extend type Query {
 }
 
 extend type Mutation {
-  createBusinessUnit(input: BusinessUnitInput!): BusinessUnit,
-  updateBusinessUnit(id: String!, input: BusinessUnitInput): BusinessUnit,
-  addMemberToBussinessUnit(id: String!, memberId: String!): Boolean,
-  addMemberToBusinessUnit(id: String!, memberId: String!): Boolean,
-  removeMemberFromBusinessUnit(id: String!, memberId: String!): Boolean,
+  createBusinessUnit(input: BusinessUnitInput!): BusinessUnit @auth(roles: ["USER", "ADMIN"]),
+  updateBusinessUnit(id: String!, input: BusinessUnitInput): BusinessUnit @auth(roles: ["USER", "ADMIN"]),
+  addMemberToBussinessUnit(id: String!, memberId: String!): Boolean @auth(roles: ["USER", "ADMIN"]),
+  addMemberToBusinessUnit(id: String!, memberId: String!): Boolean @auth(roles: ["USER", "ADMIN"]),
+  removeMemberFromBusinessUnit(id: String!, memberId: String!): Boolean @auth(roles: ["USER", "ADMIN"]),
 }

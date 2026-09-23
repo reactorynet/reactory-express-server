@@ -58,7 +58,7 @@ export interface ISetPersonalDemographicsParams {
   operationalGroup?: string
   businessUnit?: string
   team?: string
-}; 
+} 
 
 
 PersonalDemographicSchema.statics.SetLoggedInUserDemograpics = async function SetLoggedInUserDemograpics(args: any, context: Reactory.Server.IReactoryContext): Promise<any> {
