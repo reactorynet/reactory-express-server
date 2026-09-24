@@ -1,5 +1,5 @@
 {
-  "total": 3805,
+  "total": 3774,
   "files": {
     "src/application/decorators/audit/audit.ts": 3,
     "src/application/decorators/inject.ts": 1,
@@ -79,13 +79,6 @@
     "src/modules/reactory-classroom/graphql/resolvers/ReactoryClassroomProgressResolver.ts": 3,
     "src/modules/reactory-classroom/index.ts": 7,
     "src/modules/reactory-classroom/middleware/enrollment-check.ts": 10,
-    "src/modules/reactory-classroom/models/ReactoryClassroomAssignment.ts": 4,
-    "src/modules/reactory-classroom/models/ReactoryClassroomCourse.ts": 3,
-    "src/modules/reactory-classroom/models/ReactoryClassroomEnrollment.ts": 4,
-    "src/modules/reactory-classroom/models/ReactoryClassroomGrade.ts": 6,
-    "src/modules/reactory-classroom/models/ReactoryClassroomPersonalKB.ts": 4,
-    "src/modules/reactory-classroom/models/ReactoryClassroomProgress.ts": 5,
-    "src/modules/reactory-classroom/models/ReactoryClassroomSubmission.ts": 5,
     "src/modules/reactory-classroom/queues/assignment-processing.queue.ts": 12,
     "src/modules/reactory-classroom/routes/courses.ts": 7,
     "src/modules/reactory-classroom/routes/index.ts": 2,

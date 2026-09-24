@@ -242,6 +242,8 @@ export class TenantRepository<T extends ObjectLiteral> {
   }
 
   private stamp(entity: any): void {
+    // Not an entity: leave it to TypeORM to reject as before.
+    if (entity === null || typeof entity !== 'object') return;
     const current = entity?.[CLIENT_KEY_PROPERTY];
     if (current !== undefined && current !== null && current !== this.clientKey) {
       throw new TenantScopeError(
@@ -260,6 +262,7 @@ export class TenantRepository<T extends ObjectLiteral> {
     // An existing row id supplied by the caller must already be this tenant's.
     const primary = this.metadata.primaryColumns.map((c) => c.propertyName);
     for (const entity of list) {
+      if (entity === null || typeof entity !== 'object' || typeof this.repository.findOne !== 'function') continue;
       const id = primary.reduce((acc, key) => (entity[key] !== undefined ? { ...acc, [key]: entity[key] } : acc), {} as Record<string, unknown>);
       if (Object.keys(id).length === primary.length) {
         const owner = await this.repository.findOne({ where: id as any, select: [...primary, CLIENT_KEY_PROPERTY] as any });
@@ -284,6 +287,18 @@ export class TenantRepository<T extends ObjectLiteral> {
       return scopeWhere({ [primary.propertyName]: In(criteria) } as FindOptionsWhere<T>, this.clientKey, [this.clientKey]);
     }
     return scopeWhere(criteria as Where<T>, this.clientKey, [this.clientKey]);
+  }
+
+  /** Merge plain values into an entity; the owning client cannot be changed this way. */
+  merge(entity: T, ...entityLikes: DeepPartial<T>[]): T {
+    const likes = entityLikes.map((like: any) => {
+      if (like && CLIENT_KEY_PROPERTY in like && like[CLIENT_KEY_PROPERTY] !== this.clientKey) {
+        throw new TenantScopeError(`Refusing to move a ${this.metadata.name} row to another client`);
+      }
+      const { [CLIENT_KEY_PROPERTY]: _ignored, ...rest } = like || {};
+      return rest;
+    });
+    return this.repository.merge(entity, ...(likes as DeepPartial<T>[]));
   }
 
   /** Insert without the existing-row check of save(); rows are stamped first. */
