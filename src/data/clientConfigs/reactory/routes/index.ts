@@ -524,6 +524,18 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   },
 
   {
+    // Every ticket in the tenant, for support staff. /support/open lists only
+    // the caller's own.
+    key: "support-tickets-admin",
+    title: "All Support Tickets",
+    path: "/support/admin",
+    exact: true,
+    public: false,
+    roles: ["ADMIN", "SUPPORT_ADMIN", "SUPPORT"],
+    componentFqn: "core.SupportTicketsAdmin@1.0.0",
+  },
+
+  {
     key: "workflows-registry-management",
     title: "Workflows Registry Management",
     path: "/workflows/registry",

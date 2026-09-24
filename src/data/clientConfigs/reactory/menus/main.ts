@@ -221,6 +221,13 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
           icon: "support_agent",
           roles: ["USER"],
         },
+        {
+          ordinal: 96,
+          title: "reactory:reactory.menu.support-all-tickets",
+          link: "/support/admin",
+          icon: "admin_panel_settings",
+          roles: ["ADMIN", "SUPPORT_ADMIN", "SUPPORT"],
+        },
       ],
     },
     {

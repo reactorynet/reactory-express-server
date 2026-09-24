@@ -1,5 +1,5 @@
 {
-  "total": 3774,
+  "total": 3764,
   "files": {
     "src/application/decorators/audit/audit.ts": 3,
     "src/application/decorators/inject.ts": 1,
@@ -257,7 +257,7 @@
     "src/modules/reactory-core/resolvers/ReactoryCalendarResolver.ts": 15,
     "src/modules/reactory-core/resolvers/ReactoryContent/ReactoryContentResolver.ts": 3,
     "src/modules/reactory-core/resolvers/ReactoryFile/ReactoryFile.ts": 5,
-    "src/modules/reactory-core/resolvers/Support/SupportResolver.ts": 15,
+    "src/modules/reactory-core/resolvers/Support/SupportResolver.ts": 14,
     "src/modules/reactory-core/resolvers/System/AuditResolver.ts": 7,
     "src/modules/reactory-core/resolvers/System/FeatureFlagResolver.ts": 1,
     "src/modules/reactory-core/resolvers/System/NaturalResolver.ts": 1,
@@ -571,7 +571,6 @@
     "src/modules/reactory-reactor/services/mcp/MCPRegistryService.ts": 1,
     "src/modules/reactory-reactor/services/reactor/ReactorCapabilityService.ts": 4,
     "src/modules/reactory-reactor/services/reactor/ReactorConversationService.ts": 30,
-    "src/modules/reactory-reactor/services/reactor/ReactorUsageAnalyticsService.ts": 9,
     "src/modules/reactory-reactor/services/reactor/StreamingConversationService.ts": 2,
     "src/modules/reactory-reactor/services/reactor/StreamingEndpoints.ts": 31,
     "src/modules/reactory-reactor/services/reactor/StreamingTransport.ts": 2,
