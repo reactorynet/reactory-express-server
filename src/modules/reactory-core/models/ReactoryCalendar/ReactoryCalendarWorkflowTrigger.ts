@@ -1,3 +1,5 @@
+import { ClientKeyColumn } from '../../../../database/tenant/ClientKeyColumn';
+import type { CalendarRepository } from './repository';
 import { Entity, PrimaryGeneratedColumn, Column, Index, BaseEntity } from "typeorm";
 
 @Entity({ name: 'reactory_calendar_workflow_trigger' })
@@ -7,6 +9,10 @@ import { Entity, PrimaryGeneratedColumn, Column, Index, BaseEntity } from "typeo
 export class ReactoryCalendarWorkflowTrigger extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  /** Owning ReactoryClient key (WP-B2); set by the tenant repository. */
+  @ClientKeyColumn()
+  clientKey: string;
 
   @Column({ name: 'entry_id', type: 'integer', nullable: false })
   @Index()
@@ -36,39 +42,39 @@ export class ReactoryCalendarWorkflowTrigger extends BaseEntity {
   entry?: any; // Populated from PostgreSQL ReactoryCalendarEntry
 
   // Helper methods for trigger management
-  static findEntryTriggers(entryId: number) {
-    return this.find({
+  static findEntryTriggers(repo: CalendarRepository<ReactoryCalendarWorkflowTrigger>, entryId: number) {
+    return repo.find({
       where: { entryId },
       order: { triggerType: 'ASC' }
     });
   }
 
-  static findTimeBasedTriggers() {
-    return this.find({
+  static findTimeBasedTriggers(repo: CalendarRepository<ReactoryCalendarWorkflowTrigger>) {
+    return repo.find({
       where: { triggerType: Reactory.Models.ReactoryCalendarWorkflowTriggerType.TIME_BASED }
     });
   }
 
-  static findWorkflowTriggers(workflowId: string, workflowVersion?: string) {
+  static findWorkflowTriggers(repo: CalendarRepository<ReactoryCalendarWorkflowTrigger>, workflowId: string, workflowVersion?: string) {
     const where: any = { workflowId };
     if (workflowVersion) {
       where.workflowVersion = workflowVersion;
     }
-    return this.find({ where });
+    return repo.find({ where });
   }
 
-  static removeEntryTriggers(entryId: number) {
-    return this.delete({ entryId });
+  static removeEntryTriggers(repo: CalendarRepository<ReactoryCalendarWorkflowTrigger>, entryId: number) {
+    return repo.delete({ entryId });
   }
 
-  static createTrigger(entryId: number, triggerData: {
+  static createTrigger(repo: CalendarRepository<ReactoryCalendarWorkflowTrigger>, entryId: number, triggerData: {
     workflowId: string;
     workflowVersion: string;
     triggerType: Reactory.Models.ReactoryCalendarWorkflowTriggerType;
     triggerOffset?: number;
     parameters?: Record<string, any>;
   }) {
-    return this.create({
+    return repo.create({
       entryId,
       ...triggerData
     });

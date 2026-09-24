@@ -1,4 +1,5 @@
 import { DataSource } from "typeorm";
+import { registerTenantDataSource } from "@reactory/server-core/database/tenant/TenantRepository";
 import { CORE_ENTITIES, CORE_MIGRATIONS } from "../migrations/typeorm/schema";
 import { prepareSchemaOrExit, resolveSynchronize } from "@reactory/server-core/database/migrationGovernance";
 import Audit from "./Audit";
@@ -69,6 +70,9 @@ export const PostgresDataSource = new DataSource({
   entities: CORE_ENTITIES,
   ...CORE_MIGRATIONS,
 });
+
+// Lets getTenantRepository(context, Entity) find this DataSource (WP-B2).
+registerTenantDataSource(PostgresDataSource);
 
 /**
  * The generic form submission pipeline filters inside the `form_data` JSONB

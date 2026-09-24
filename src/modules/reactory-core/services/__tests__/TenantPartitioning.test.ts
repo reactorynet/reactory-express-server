@@ -44,9 +44,26 @@ const recordingQuery = (rows: any[] = [], raw: any = {}) => {
 
 describe('ReactoryCalendarService tenant partitioning', () => {
   let repo: any;
+  const initialised = Object.getOwnPropertyDescriptor(PostgresDataSource, 'isInitialized');
+
+  // getTenantRepository resolves the owning DataSource through the registry
+  // (models/index.ts registers PostgresDataSource); make it look live.
+  beforeEach(() => {
+    Object.defineProperty(PostgresDataSource, 'isInitialized', { value: true, configurable: true, writable: true });
+    jest.spyOn(PostgresDataSource, 'hasMetadata').mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    if (initialised) Object.defineProperty(PostgresDataSource, 'isInitialized', initialised);
+  });
 
   beforeEach(() => {
     repo = {
+      metadata: {
+        name: 'ReactoryCalendar',
+        findColumnWithPropertyName: (p: string) => (p === 'clientKey' ? { propertyName: 'clientKey' } : undefined),
+        primaryColumns: [{ propertyName: 'id' }],
+      },
       create: jest.fn((v) => v),
       save: jest.fn(async (v) => v),
       findOne: jest.fn(),
@@ -62,6 +79,7 @@ describe('ReactoryCalendarService tenant partitioning', () => {
     const service = new ReactoryCalendarService({}, contextFor());
     const saved = await service.createCalendar({ name: 'Cal', visibility: 'private' as any, clientId: 'client-b-id' }, 'user-1');
     expect(saved.clientId).toBe('client-a-id');
+    expect(saved.clientKey).toBe('tenant-a');
   });
 
   it('cannot move a calendar to another client on update', async () => {
@@ -76,7 +94,7 @@ describe('ReactoryCalendarService tenant partitioning', () => {
     repo.findOne.mockResolvedValue(null);
     const service = new ReactoryCalendarService({}, contextFor());
     await service.getCalendar(7);
-    expect(repo.findOne).toHaveBeenCalledWith({ where: { id: 7, isActive: true, clientId: 'client-a-id' } });
+    expect(repo.findOne).toHaveBeenCalledWith({ where: { id: 7, isActive: true, clientId: 'client-a-id', clientKey: 'tenant-a' } });
   });
 
   it('rejects ClientReactoryCalendars for another client', async () => {
@@ -89,8 +107,9 @@ describe('ReactoryCalendarService tenant partitioning', () => {
     const service = new ReactoryCalendarService({}, contextFor());
     await service.getClientCalendars('tenant-a');
     await service.getClientCalendars('client-a-id');
-    expect(find).toHaveBeenNthCalledWith(1, 'client-a-id');
-    expect(find).toHaveBeenNthCalledWith(2, 'client-a-id');
+    // The model helper now takes the tenant repository first (WP-B2).
+    expect(find).toHaveBeenNthCalledWith(1, expect.objectContaining({ clientKeys: ['tenant-a'] }), 'client-a-id');
+    expect(find).toHaveBeenNthCalledWith(2, expect.objectContaining({ clientKeys: ['tenant-a'] }), 'client-a-id');
   });
 
   it('actually filters by read access (the async predicate let everything through)', async () => {
@@ -142,7 +161,15 @@ describe('ReactoryFormSubmissionService tenant partitioning', () => {
   const initialised = Object.getOwnPropertyDescriptor(PostgresDataSource, 'isInitialized');
 
   beforeEach(() => {
-    repo = { findOne: jest.fn(), delete: jest.fn(), createQueryBuilder: jest.fn(), save: jest.fn() };
+    repo = {
+      findOne: jest.fn(), delete: jest.fn(), createQueryBuilder: jest.fn(), save: jest.fn(),
+      // Enough entity metadata for the TenantRepository wrapper.
+      metadata: {
+        name: 'ReactoryFormSubmission',
+        findColumnWithPropertyName: (p: string) => (p === 'clientKey' ? { propertyName: 'clientKey' } : undefined),
+        primaryColumns: [{ propertyName: 'id' }],
+      },
+    };
     jest.spyOn(PostgresDataSource, 'getRepository').mockReturnValue(repo);
     // The service refuses to run before the data source is up.
     Object.defineProperty(PostgresDataSource, 'isInitialized', { value: true, configurable: true, writable: true });
@@ -153,13 +180,20 @@ describe('ReactoryFormSubmissionService tenant partitioning', () => {
     if (initialised) Object.defineProperty(PostgresDataSource, 'isInitialized', initialised);
   });
 
-  it('partitions queries on client_key with no NULL exception', async () => {
+  it('partitions queries on the request client through the tenant repository', async () => {
     const qb = recordingQuery([], { total: '0' });
     repo.createQueryBuilder.mockReturnValue(qb);
     await service().stats('test.Form@1.0.0');
-    const partition = qb.clauses.find((c: any) => c.sql.includes('client_key'));
+    const partition = qb.clauses.find((c: any) => c.sql.includes('clientKey'));
     expect(partition.sql).not.toMatch(/IS NULL/);
-    expect(partition.params).toEqual({ clientKey: 'tenant-a' });
+    expect(partition.params).toEqual({ __reactoryTenantScope: 'tenant-a' });
+    // The service's own where() became an andWhere, so the tenant filter survived it.
+    expect(qb.clauses[0]).toBe(partition);
+  });
+
+  it('refuses a submission made without a client', async () => {
+    await expect(service(null).submit({ fqn: 'test.Form@1.0.0', formData: {} } as any))
+      .rejects.toThrow(/on behalf of a client/);
   });
 
   it('refuses to read a submission that has no client_key', async () => {

@@ -1,3 +1,5 @@
+import { ClientKeyColumn } from '../../../../database/tenant/ClientKeyColumn';
+import type { CalendarRepository } from './repository';
 import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn, BaseEntity } from "typeorm";
 
 
@@ -10,6 +12,10 @@ import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn, BaseEn
 export class ReactoryCalendarParticipant extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  /** Owning ReactoryClient key (WP-B2); set by the tenant repository. */
+  @ClientKeyColumn()
+  clientKey: string;
 
   @Column({ name: 'entry_id', type: 'integer', nullable: false })
   @Index()
@@ -47,15 +53,15 @@ export class ReactoryCalendarParticipant extends BaseEntity {
   user?: any; // Populated from MongoDB User
 
   // Helper methods for participant management
-  static findEntryParticipants(entryId: number) {
-    return this.find({
+  static findEntryParticipants(repo: CalendarRepository<ReactoryCalendarParticipant>, entryId: number) {
+    return repo.find({
       where: { entryId },
       order: { invitedAt: 'ASC' }
     });
   }
 
-  static findUserParticipations(userId: string, status?: Reactory.Models.ReactoryCalendarRSVPStatus[]) {
-    const query = this.createQueryBuilder('participant')
+  static findUserParticipations(repo: CalendarRepository<ReactoryCalendarParticipant>, userId: string, status?: Reactory.Models.ReactoryCalendarRSVPStatus[]) {
+    const query = repo.createQueryBuilder('participant')
       .where('participant.user_id = :userId', { userId })
       .orderBy('participant.invited_at', 'DESC');
 
@@ -66,8 +72,8 @@ export class ReactoryCalendarParticipant extends BaseEntity {
     return query.getMany();
   }
 
-  static findPendingResponses(userId: string) {
-    return this.find({
+  static findPendingResponses(repo: CalendarRepository<ReactoryCalendarParticipant>, userId: string) {
+    return repo.find({
       where: {
         userId,
         status: Reactory.Models.ReactoryCalendarRSVPStatus.PENDING
@@ -76,14 +82,14 @@ export class ReactoryCalendarParticipant extends BaseEntity {
     });
   }
 
-  static findParticipantsByRole(entryId: number, role: Reactory.Models.ReactoryCalendarParticipantRole) {
-    return this.find({
+  static findParticipantsByRole(repo: CalendarRepository<ReactoryCalendarParticipant>, entryId: number, role: Reactory.Models.ReactoryCalendarParticipantRole) {
+    return repo.find({
       where: { entryId, role }
     });
   }
 
-  static countParticipantsByStatus(entryId: number) {
-    return this.createQueryBuilder('participant')
+  static countParticipantsByStatus(repo: CalendarRepository<ReactoryCalendarParticipant>, entryId: number) {
+    return repo.createQueryBuilder('participant')
       .select('participant.status', 'status')
       .addSelect('COUNT(*)', 'count')
       .where('participant.entry_id = :entryId', { entryId })
@@ -91,8 +97,8 @@ export class ReactoryCalendarParticipant extends BaseEntity {
       .getRawMany();
   }
 
-  static updateParticipantStatus(entryId: number, userId: string, status: Reactory.Models.ReactoryCalendarRSVPStatus, notes?: string) {
-    return this.update(
+  static updateParticipantStatus(repo: CalendarRepository<ReactoryCalendarParticipant>, entryId: number, userId: string, status: Reactory.Models.ReactoryCalendarRSVPStatus, notes?: string) {
+    return repo.update(
       { entryId, userId },
       {
         status,
@@ -102,11 +108,11 @@ export class ReactoryCalendarParticipant extends BaseEntity {
     );
   }
 
-  static removeParticipant(entryId: number, userId: string) {
-    return this.delete({ entryId, userId });
+  static removeParticipant(repo: CalendarRepository<ReactoryCalendarParticipant>, entryId: number, userId: string) {
+    return repo.delete({ entryId, userId });
   }
 
-  static addParticipants(entryId: number, participants: Array<{
+  static addParticipants(repo: CalendarRepository<ReactoryCalendarParticipant>, entryId: number, participants: Array<{
     userId: string;
     role: Reactory.Models.ReactoryCalendarParticipantRole;
     notes?: string;
@@ -121,17 +127,17 @@ export class ReactoryCalendarParticipant extends BaseEntity {
       notes: participant.notes
     }));
 
-    return this.insert(participantEntities);
+    return repo.insert(participantEntities);
   }
 
-  static isUserParticipant(entryId: number, userId: string) {
-    return this.findOne({
+  static isUserParticipant(repo: CalendarRepository<ReactoryCalendarParticipant>, entryId: number, userId: string) {
+    return repo.findOne({
       where: { entryId, userId }
     });
   }
 
-  static findOrganizers(entryId: number) {
-    return this.find({
+  static findOrganizers(repo: CalendarRepository<ReactoryCalendarParticipant>, entryId: number) {
+    return repo.find({
       where: {
         entryId,
         role: Reactory.Models.ReactoryCalendarParticipantRole.ORGANIZER

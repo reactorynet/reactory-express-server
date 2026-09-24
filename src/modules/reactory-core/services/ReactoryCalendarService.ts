@@ -1,4 +1,5 @@
 import { Repository } from "typeorm";
+import { getTenantRepository, TenantRepository } from "@reactory/server-core/database/tenant/TenantRepository";
 import { CalendarVisibility } from '@reactory/server-modules/reactory-core/models/ReactoryCalendar/visibility';
 import { ReactoryCalendar } from "@reactory/server-modules/reactory-core/models/ReactoryCalendar";
 import { PostgresDataSource } from "@reactory/server-modules/reactory-core/models";
@@ -49,12 +50,14 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
   lifeCycle: string;
   props: any;
   context: Reactory.Server.IReactoryContext;
-  private calendarRepository: Repository<ReactoryCalendar>;
+  /** Tenant-scoped to the request client (WP-B2). */
+  private get calendarRepository(): TenantRepository<ReactoryCalendar> {
+    return getTenantRepository(this.context, ReactoryCalendar);
+  }
   
   constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
-    this.calendarRepository = PostgresDataSource.getRepository(ReactoryCalendar);
   }
 
   /**
@@ -272,7 +275,7 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Get user's calendars
    */
   async getUserCalendars(userId: string, includeShared: boolean = true): Promise<ReactoryCalendar[]> {
-    const calendars = await ReactoryCalendar.findUserCalendars(userId);
+    const calendars = await ReactoryCalendar.findUserCalendars(this.calendarRepository, userId);
     return calendars.filter((calendar) => this.inTenant(calendar));
   }
 
@@ -314,7 +317,7 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Get user's default calendar
    */
   async getUserDefaultCalendar(userId: string): Promise<ReactoryCalendar | null> {
-    const calendar = await ReactoryCalendar.findDefaultCalendar(userId);
+    const calendar = await ReactoryCalendar.findDefaultCalendar(this.calendarRepository, userId);
     return this.inTenant(calendar) ? calendar : null;
   }
 
@@ -345,7 +348,7 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Get organization calendars
    */
   async getOrganizationCalendars(organizationId: string, userId?: string): Promise<ReactoryCalendar[]> {
-    const calendars = await ReactoryCalendar.findOrganizationCalendars(organizationId);
+    const calendars = await ReactoryCalendar.findOrganizationCalendars(this.calendarRepository, organizationId);
     return this.filterReadable(calendars, userId);
   }
 
@@ -364,7 +367,7 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
       }
       effectiveClientId = tenantClientId;
     }
-    const calendars = await ReactoryCalendar.findClientCalendars(effectiveClientId);
+    const calendars = await ReactoryCalendar.findClientCalendars(this.calendarRepository, effectiveClientId);
     return this.filterReadable(calendars, userId);
   }
 }

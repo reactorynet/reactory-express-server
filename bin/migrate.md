@@ -166,7 +166,7 @@ bin/migrate.sh create reactory local --module=reactory-core --desc="add-feature-
 
 | Environment | Behaviour |
 |---|---|
-| `NODE_ENV` development / local / test | `synchronize()` as before |
+| `NODE_ENV` development / local / test | pending migrations, then `synchronize()` |
 | anything else | migrations only |
 | ... with `REACTORY_RUN_MIGRATIONS_ON_START=true` | apply pending migrations, then start |
 | ... without it | refuse to start (exit 1) and list the pending migrations |

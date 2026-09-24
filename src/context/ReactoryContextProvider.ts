@@ -1,4 +1,6 @@
 import { v4 as uuid } from "uuid";
+import type { EntityTarget, ObjectLiteral } from "typeorm";
+import { getTenantRepository, TenantRepository } from "@reactory/server-core/database/tenant/TenantRepository";
 import ServiceManager from '@reactory/server-core/services/ServiceManager';
 import logger from "@reactory/server-core/logging";
 import Hash from "@reactory/server-core/utils/hash";
@@ -172,6 +174,15 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
       this as unknown as Reactory.Server.IReactoryContext,
       lifeCycle
     ) as TService;
+  }
+
+  /**
+   * Tenant-scoped repository for a TypeORM entity with a clientKey column,
+   * scoped to this context's partner (WP-B2). See
+   * src/database/tenant/TenantRepository.ts.
+   */
+  getRepository<T extends ObjectLiteral>(entity: EntityTarget<T>): TenantRepository<T> {
+    return getTenantRepository(this as any, entity);
   }
 
   hasRole(role: string, partner?: Reactory.Models.IPartner, organization?: Reactory.Models.IOrganizationDocument, businessUnit?: Reactory.Models.IBusinessUnitDocument):boolean {

@@ -6,7 +6,7 @@
  * review and no record of what changed. That is acceptable on a developer's
  * machine and unacceptable against Aurora with production data.
  *
- *   development / local / test  -> synchronize, as before
+ *   development / local / test  -> pending migrations, then synchronize
  *   anything else               -> migrations only:
  *     REACTORY_RUN_MIGRATIONS_ON_START=true  apply pending migrations, start
  *     otherwise                              refuse to start while any
@@ -85,9 +85,14 @@ export const prepareSchema = async (dataSource: DataSource, options: PrepareSche
   } = options;
 
   if (synchronize) {
+    // Migrations first, then synchronize: a migration may backfill data that a
+    // synchronized constraint needs (for example client_key before NOT NULL),
+    // and the baselines are idempotent, so this is safe on a database that
+    // synchronize built.
+    const applied = (await dataSource.runMigrations({ transaction: 'each' })).map((m) => m.name);
     await dataSource.synchronize();
-    log(`${label}: schema synchronized (development mode)`);
-    return { mode: 'synchronize', applied: [] };
+    log(`${label}: ${applied.length} migration(s) applied, schema synchronized (development mode)`);
+    return { mode: 'synchronize', applied };
   }
 
   if (runOnStart) {

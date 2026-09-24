@@ -8,6 +8,7 @@ import {
 import { service } from "@reactory/server-core/application/decorators/service";
 import { PostgresDataSource } from "@reactory/server-modules/reactory-core/models";
 import { Repository } from "typeorm";
+import { getTenantRepository, tenantManager, TenantRepository } from "@reactory/server-core/database/tenant/TenantRepository";
 import { Models } from '@reactorynet/reactory-core';
 export interface CreateReactoryCalendarEntryInput {
   calendarId: number;
@@ -70,19 +71,29 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
   lifeCycle: string;
   props: any;
   context: Reactory.Server.IReactoryContext;
-  private entryRepository: Repository<ReactoryCalendarEntry>;
-  private participantRepository: Repository<ReactoryCalendarParticipant>;
-  private workflowTriggerRepository: Repository<ReactoryCalendarWorkflowTrigger>;
-  private serviceTriggerRepository: Repository<ReactoryCalendarServiceTrigger>;
-  private recurrenceRepository: Repository<ReactoryCalendarRecurrencePattern>;
+  /** Tenant-scoped to the request client (WP-B2). */
+  private get entryRepository(): TenantRepository<ReactoryCalendarEntry> {
+    return getTenantRepository(this.context, ReactoryCalendarEntry);
+  }
+  /** Tenant-scoped to the request client (WP-B2). */
+  private get participantRepository(): TenantRepository<ReactoryCalendarParticipant> {
+    return getTenantRepository(this.context, ReactoryCalendarParticipant);
+  }
+  /** Tenant-scoped to the request client (WP-B2). */
+  private get workflowTriggerRepository(): TenantRepository<ReactoryCalendarWorkflowTrigger> {
+    return getTenantRepository(this.context, ReactoryCalendarWorkflowTrigger);
+  }
+  /** Tenant-scoped to the request client (WP-B2). */
+  private get serviceTriggerRepository(): TenantRepository<ReactoryCalendarServiceTrigger> {
+    return getTenantRepository(this.context, ReactoryCalendarServiceTrigger);
+  }
+  /** Tenant-scoped to the request client (WP-B2). */
+  private get recurrenceRepository(): TenantRepository<ReactoryCalendarRecurrencePattern> {
+    return getTenantRepository(this.context, ReactoryCalendarRecurrencePattern);
+  }
   constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
-    this.entryRepository = PostgresDataSource.getRepository(ReactoryCalendarEntry);
-    this.participantRepository = PostgresDataSource.getRepository(ReactoryCalendarParticipant);
-    this.workflowTriggerRepository = PostgresDataSource.getRepository(ReactoryCalendarWorkflowTrigger);
-    this.serviceTriggerRepository = PostgresDataSource.getRepository(ReactoryCalendarServiceTrigger);
-    this.recurrenceRepository = PostgresDataSource.getRepository(ReactoryCalendarRecurrencePattern);
   }
   onStartup(context: Reactory.Server.IReactoryContext): Promise<void> {
     return Promise.resolve();
@@ -102,8 +113,9 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
    */
   async createEntry(input: CreateReactoryCalendarEntryInput, organizerId: string): Promise<ReactoryCalendarEntry> {
     return await PostgresDataSource.transaction(async transactionalEntityManager => {
+      const tx = tenantManager(this.context, transactionalEntityManager);
       // Create the calendar entry
-      const entry = transactionalEntityManager.create(ReactoryCalendarEntry, {
+      const entry = tx.create(ReactoryCalendarEntry, {
         ...input,
         organizerId,
         createdBy: organizerId,
@@ -116,31 +128,31 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
         metadata: input.metadata || {}
       });
 
-      const savedEntry = await transactionalEntityManager.save(ReactoryCalendarEntry, entry);
+      const savedEntry = await tx.save(ReactoryCalendarEntry, entry);
 
       // Create recurrence pattern if provided
       if (input.recurrence) {
-        const recurrence = transactionalEntityManager.create(ReactoryCalendarRecurrencePattern, input.recurrence);
-        await transactionalEntityManager.save(ReactoryCalendarRecurrencePattern, recurrence);
+        const recurrence = tx.create(ReactoryCalendarRecurrencePattern, input.recurrence);
+        await tx.save(ReactoryCalendarRecurrencePattern, recurrence);
         savedEntry.recurrence = recurrence;
       }
 
       // Create workflow trigger if provided
       if (input.workflowTrigger) {
-        const workflowTrigger = transactionalEntityManager.create(ReactoryCalendarWorkflowTrigger, {
+        const workflowTrigger = tx.create(ReactoryCalendarWorkflowTrigger, {
           ...input.workflowTrigger,
           entryId: savedEntry.id
         });
-        await transactionalEntityManager.save(ReactoryCalendarWorkflowTrigger, workflowTrigger);
+        await tx.save(ReactoryCalendarWorkflowTrigger, workflowTrigger);
       }
 
       // Create service trigger if provided
       if (input.serviceTrigger) {
-        const serviceTrigger = transactionalEntityManager.create(ReactoryCalendarServiceTrigger, {
+        const serviceTrigger = tx.create(ReactoryCalendarServiceTrigger, {
           ...input.serviceTrigger,
           entryId: savedEntry.id
         });
-        await transactionalEntityManager.save(ReactoryCalendarServiceTrigger, serviceTrigger);
+        await tx.save(ReactoryCalendarServiceTrigger, serviceTrigger);
       }
 
       return savedEntry;
@@ -152,14 +164,15 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
    */
   async updateEntry(id: number, input: UpdateReactoryCalendarEntryInput, userId: string): Promise<ReactoryCalendarEntry> {
     return await PostgresDataSource.transaction(async transactionalEntityManager => {
-      const entry = await transactionalEntityManager.findOne(ReactoryCalendarEntry, { where: { id } });
+      const tx = tenantManager(this.context, transactionalEntityManager);
+      const entry = await tx.findOne(ReactoryCalendarEntry, { where: { id } });
       if (!entry) {
         throw new Error(`Calendar entry with id ${id} not found`);
       }
 
       // Check permissions (organizer or participant can update)
       const isOrganizer = entry.organizerId === userId;
-      const isParticipant = await transactionalEntityManager.findOne(ReactoryCalendarParticipant, {
+      const isParticipant = await tx.findOne(ReactoryCalendarParticipant, {
         where: { entryId: id, userId }
       });
 
@@ -173,59 +186,59 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
         updatedAt: new Date()
       });
 
-      const savedEntry = await transactionalEntityManager.save(ReactoryCalendarEntry, entry);
+      const savedEntry = await tx.save(ReactoryCalendarEntry, entry);
 
       // Update recurrence pattern if provided
       if (input.recurrence) {
-        let recurrence = await transactionalEntityManager.findOne(ReactoryCalendarRecurrencePattern, {
+        let recurrence = await tx.findOne(ReactoryCalendarRecurrencePattern, {
           where: { entryId: id }
         });
 
         if (recurrence) {
           Object.assign(recurrence, input.recurrence);
-          await transactionalEntityManager.save(ReactoryCalendarRecurrencePattern, recurrence);
+          await tx.save(ReactoryCalendarRecurrencePattern, recurrence);
         } else {
-          recurrence = transactionalEntityManager.create(ReactoryCalendarRecurrencePattern, {
+          recurrence = tx.create(ReactoryCalendarRecurrencePattern, {
             ...input.recurrence,
             entryId: id
           });
-          await transactionalEntityManager.save(ReactoryCalendarRecurrencePattern, recurrence);
+          await tx.save(ReactoryCalendarRecurrencePattern, recurrence);
         }
         savedEntry.recurrence = recurrence;
       }
 
       // Update triggers if provided
       if (input.workflowTrigger) {
-        let workflowTrigger = await transactionalEntityManager.findOne(ReactoryCalendarWorkflowTrigger, {
+        let workflowTrigger = await tx.findOne(ReactoryCalendarWorkflowTrigger, {
           where: { entryId: id }
         });
 
         if (workflowTrigger) {
           Object.assign(workflowTrigger, input.workflowTrigger);
-          await transactionalEntityManager.save(ReactoryCalendarWorkflowTrigger, workflowTrigger);
+          await tx.save(ReactoryCalendarWorkflowTrigger, workflowTrigger);
         } else {
-          workflowTrigger = transactionalEntityManager.create(ReactoryCalendarWorkflowTrigger, {
+          workflowTrigger = tx.create(ReactoryCalendarWorkflowTrigger, {
             ...input.workflowTrigger,
             entryId: id
           });
-          await transactionalEntityManager.save(ReactoryCalendarWorkflowTrigger, workflowTrigger);
+          await tx.save(ReactoryCalendarWorkflowTrigger, workflowTrigger);
         }
       }
 
       if (input.serviceTrigger) {
-        let serviceTrigger = await transactionalEntityManager.findOne(ReactoryCalendarServiceTrigger, {
+        let serviceTrigger = await tx.findOne(ReactoryCalendarServiceTrigger, {
           where: { entryId: id }
         });
 
         if (serviceTrigger) {
           Object.assign(serviceTrigger, input.serviceTrigger);
-          await transactionalEntityManager.save(ReactoryCalendarServiceTrigger, serviceTrigger);
+          await tx.save(ReactoryCalendarServiceTrigger, serviceTrigger);
         } else {
-          serviceTrigger = transactionalEntityManager.create(ReactoryCalendarServiceTrigger, {
+          serviceTrigger = tx.create(ReactoryCalendarServiceTrigger, {
             ...input.serviceTrigger,
             entryId: id
           });
-          await transactionalEntityManager.save(ReactoryCalendarServiceTrigger, serviceTrigger);
+          await tx.save(ReactoryCalendarServiceTrigger, serviceTrigger);
         }
       }
 
@@ -238,14 +251,15 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
    */
   async deleteEntry(id: number, userId: string): Promise<boolean> {
     return await PostgresDataSource.transaction(async transactionalEntityManager => {
-      const entry = await transactionalEntityManager.findOne(ReactoryCalendarEntry, { where: { id } });
+      const tx = tenantManager(this.context, transactionalEntityManager);
+      const entry = await tx.findOne(ReactoryCalendarEntry, { where: { id } });
       if (!entry) {
         throw new Error(`Calendar entry with id ${id} not found`);
       }
 
       // Check permissions
       const isOrganizer = entry.organizerId === userId;
-      const isParticipant = await transactionalEntityManager.findOne(ReactoryCalendarParticipant, {
+      const isParticipant = await tx.findOne(ReactoryCalendarParticipant, {
         where: { entryId: id, userId }
       });
 
@@ -258,7 +272,7 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
       entry.updatedBy = userId;
       entry.updatedAt = new Date();
 
-      await transactionalEntityManager.save(ReactoryCalendarEntry, entry);
+      await tx.save(ReactoryCalendarEntry, entry);
       return true;
     });
   }
@@ -287,14 +301,14 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
    * Get calendar entries with filtering
    */
   async getCalendarEntries(calendarId: number, filter: Reactory.Models.ReactoryCalendarEntryFilter = {}): Promise<ReactoryCalendarEntry[]> {
-    return await ReactoryCalendarEntry.findCalendarEvents(calendarId, filter.startDate, filter.endDate, filter.status);
+    return await ReactoryCalendarEntry.findCalendarEvents(this.entryRepository, calendarId, filter.startDate, filter.endDate, filter.status);
   }
 
   /**
    * Get user's calendar entries
    */
   async getUserEntries(userId: string, filter: Reactory.Models.ReactoryCalendarEntryFilter = {}): Promise<ReactoryCalendarEntry[]> {
-    return await ReactoryCalendarEntry.findUserEvents(userId, filter.startDate || new Date(), filter.endDate || new Date(), filter.status);
+    return await ReactoryCalendarEntry.findUserEvents(this.entryRepository, userId, filter.startDate || new Date(), filter.endDate || new Date(), filter.status);
   }
 
   /**
@@ -302,7 +316,8 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
    */
   async inviteParticipants(entryId: number, participants: ReactoryCalendarParticipantInput[], organizerId: string): Promise<ReactoryCalendarEntry> {
     return await PostgresDataSource.transaction(async transactionalEntityManager => {
-      const entry = await transactionalEntityManager.findOne(ReactoryCalendarEntry, { where: { id: entryId } });
+      const tx = tenantManager(this.context, transactionalEntityManager);
+      const entry = await tx.findOne(ReactoryCalendarEntry, { where: { id: entryId } });
       if (!entry) {
         throw new Error(`Calendar entry with id ${entryId} not found`);
       }
@@ -322,7 +337,7 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
         notes: participant.notes
       }));
 
-      await transactionalEntityManager.insert(ReactoryCalendarParticipant, participantEntities);
+      await tx.insert(ReactoryCalendarParticipant, participantEntities);
 
       return entry;
     });
@@ -352,7 +367,7 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
    * Get availability for user across calendars
    */
   async getUserAvailability(userId: string, startDate: Date, endDate: Date, timeZone: string = 'UTC'): Promise<Reactory.Models.ReactoryCalendarTimeSlot[]> {
-    const entries = await ReactoryCalendarEntry.findUserEvents(userId, startDate, endDate);
+    const entries = await ReactoryCalendarEntry.findUserEvents(this.entryRepository, userId, startDate, endDate);
 
     const timeSlots: Reactory.Models.ReactoryCalendarTimeSlot[] = [];
     const currentDate = new Date(startDate);
@@ -392,7 +407,7 @@ export class ReactoryCalendarEntryService implements Reactory.Service.IReactoryD
    * Get calendar availability
    */
   async getCalendarAvailability(calendarId: number, startDate: Date, endDate: Date): Promise<Reactory.Models.ReactoryCalendarTimeSlot[]> {
-    const entries = await ReactoryCalendarEntry.findCalendarEvents(calendarId, startDate, endDate);
+    const entries = await ReactoryCalendarEntry.findCalendarEvents(this.entryRepository, calendarId, startDate, endDate);
 
     const timeSlots: Reactory.Models.ReactoryCalendarTimeSlot[] = [];
     const currentDate = new Date(startDate);

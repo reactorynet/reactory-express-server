@@ -44,12 +44,14 @@ describe('prepareSchema (stub data source)', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  it('synchronizes in development mode and never touches migrations', async () => {
+  it('runs pending migrations, then synchronizes, in development mode', async () => {
     const ds = stub(['A']);
+    const order: string[] = [];
+    (ds as any).runMigrations.mockImplementation(async () => { order.push('migrate'); return [{ name: 'A' }]; });
+    (ds as any).synchronize.mockImplementation(async () => { order.push('synchronize'); });
     const result = await prepareSchema(ds, { label: 'test', synchronize: true, log: () => undefined });
-    expect(result.mode).toBe('synchronize');
-    expect((ds as any).synchronize).toHaveBeenCalled();
-    expect((ds as any).runMigrations).not.toHaveBeenCalled();
+    expect(result).toEqual({ mode: 'synchronize', applied: ['A'] });
+    expect(order).toEqual(['migrate', 'synchronize']);
   });
 
   it('refuses with the pending migration names when not allowed to run them', async () => {

@@ -1,3 +1,4 @@
+import { ClientKeyColumn } from '../../../database/tenant/ClientKeyColumn';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -52,9 +53,8 @@ export default class ReactoryFormSubmission {
    * an administrator of one client could read another client's submissions
    * through the explorer.
    */
-  @Column({ type: 'varchar', length: 255, nullable: true, name: 'client_key' })
-  @Index()
-  clientKey?: string;
+  @ClientKeyColumn()
+  clientKey: string;
 
   /**
    * The MongoDB ObjectId string of the submitting user. Null when the form was

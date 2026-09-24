@@ -1,3 +1,5 @@
+import { ClientKeyColumn } from '../../../../database/tenant/ClientKeyColumn';
+import type { CalendarRepository } from './repository';
 import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn, UpdateDateColumn, BaseEntity } from "typeorm";
 import { CalendarVisibility } from './visibility';
 import { Brackets } from "typeorm";
@@ -13,6 +15,10 @@ import { Brackets } from "typeorm";
 export class ReactoryCalendar extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  /** Owning ReactoryClient key (WP-B2); set by the tenant repository. */
+  @ClientKeyColumn()
+  clientKey: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   name: string;
@@ -89,8 +95,8 @@ export class ReactoryCalendar extends BaseEntity {
   allowedTeams?: any[]; // Populated from MongoDB Teams
 
   // Helper methods for common queries
-  static findUserCalendars(userId: string, visibility?: Reactory.Models.ReactoryCalendarVisibility) {
-    const query = this.createQueryBuilder('calendar')
+  static findUserCalendars(repo: CalendarRepository<ReactoryCalendar>, userId: string, visibility?: Reactory.Models.ReactoryCalendarVisibility) {
+    const query = repo.createQueryBuilder('calendar')
       .where('calendar.is_active = :isActive', { isActive: true })
       .andWhere(
         new Brackets(qb => {
@@ -108,8 +114,8 @@ export class ReactoryCalendar extends BaseEntity {
     return query.getMany();
   }
 
-  static findDefaultCalendar(userId: string) {
-    return this.findOne({
+  static findDefaultCalendar(repo: CalendarRepository<ReactoryCalendar>, userId: string) {
+    return repo.findOne({
       where: {
         ownerId: userId,
         isDefault: true,
@@ -118,8 +124,8 @@ export class ReactoryCalendar extends BaseEntity {
     });
   }
 
-  static findOrganizationCalendars(organizationId: string, visibility?: Reactory.Models.ReactoryCalendarVisibility) {
-    const query = this.createQueryBuilder('calendar')
+  static findOrganizationCalendars(repo: CalendarRepository<ReactoryCalendar>, organizationId: string, visibility?: Reactory.Models.ReactoryCalendarVisibility) {
+    const query = repo.createQueryBuilder('calendar')
       .where('calendar.is_active = :isActive', { isActive: true })
       .andWhere('calendar.organization_id = :organizationId', { organizationId });
 
@@ -130,8 +136,8 @@ export class ReactoryCalendar extends BaseEntity {
     return query.getMany();
   }
 
-  static findClientCalendars(clientId: string, visibility?: Reactory.Models.ReactoryCalendarVisibility) {
-    const query = this.createQueryBuilder('calendar')
+  static findClientCalendars(repo: CalendarRepository<ReactoryCalendar>, clientId: string, visibility?: Reactory.Models.ReactoryCalendarVisibility) {
+    const query = repo.createQueryBuilder('calendar')
       .where('calendar.is_active = :isActive', { isActive: true })
       .andWhere('calendar.client_id = :clientId', { clientId });
 
