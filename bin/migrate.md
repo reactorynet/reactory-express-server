@@ -176,6 +176,9 @@ bin/migrate.sh create reactory local --module=reactory-core --desc="add-feature-
 
 The runtime DataSource and the CLI DataSource read the same
 `migrations/typeorm/schema.ts`, so "pending" means the same thing to both.
+They also share connection settings, including TLS (`REACTORY_POSTGRES_SSL`),
+so the CLI reaches Aurora the way the server does; see
+`bin/database-connections.md`.
 
 ### Baselines
 
