@@ -44,7 +44,10 @@ class SupportResolver {
        },
       context: Reactory.Server.IReactoryContext) {
 
-    return this.tickets({ ...params.filter, createdBy: context.user._id.toString() }, params.paging, context);
+    // Straight to the service: `tickets` is gated to support staff, and a user
+    // listing their own tickets is not.
+    const supportService: Reactory.Service.TReactorySupportService = context.getService("core.ReactorySupportService@1.0.0") as Reactory.Service.TReactorySupportService;
+    return supportService.pagedRequest({ ...params.filter, createdBy: context.user._id.toString() }, params.paging);
    }
 
    @property("ReactorySupportTicket", "id")

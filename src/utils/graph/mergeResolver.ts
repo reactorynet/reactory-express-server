@@ -33,7 +33,46 @@ function isResolverClass(resolver: ReactoryResolver): resolver is Reactory.Graph
   return false;
 }
 
-export type ResolverType = ReactoryResolverFunc | 
+/**
+ * Harvest a decorated resolver class into a resolver map whose functions are
+ * bound to one instance of the class.
+ *
+ * The @query / @mutation / @property decorators copy each method off the
+ * prototype into `prototype.resolver`, unbound. Merged as-is, `this` inside a
+ * resolver is whatever map graphql-tools calls it on, so every `this.helper()`
+ * call threw "this.helper is not a function" (13 resolver classes did this,
+ * the AI usage dashboard among them). Binding here fixes every class at once.
+ *
+ * The constructor still does not run, as before: instance fields are not
+ * initialised, but prototype methods are reachable through `this`.
+ *
+ * Returns fresh objects, so the merge below cannot delete entries from the
+ * shared `prototype.resolver` map. Values that are not plain objects (a
+ * GraphQLScalarType, for example) are passed through untouched.
+ */
+function harvestResolverClass(resolverClass: any): Reactory.Graph.IGraphShape {
+  const instance = Object.create(resolverClass.prototype);
+  const shape = instance.resolver || {};
+  const bound: Record<string, unknown> = {};
+
+  Object.keys(shape).forEach((typeName) => {
+    const fields = shape[typeName];
+    if (!fields || Object.getPrototypeOf(fields) !== Object.prototype) {
+      bound[typeName] = fields;
+      return;
+    }
+    const boundFields: Record<string, unknown> = {};
+    Object.keys(fields).forEach((fieldName) => {
+      const value = fields[fieldName];
+      boundFields[fieldName] = typeof value === 'function' ? value.bind(instance) : value;
+    });
+    bound[typeName] = boundFields;
+  });
+
+  return bound as Reactory.Graph.IGraphShape;
+}
+
+export type ResolverType =ReactoryResolverFunc | 
   Reactory.Graph.IGraphShape | 
   Reactory.Graph.IReactoryResolver |
   any;
@@ -67,9 +106,7 @@ const MergeGraphResolvers = (resolvers: ResolverType[] = []): Reactory.Graph.IGr
 
     if (isResolverFunc(resolver) === true) {
       if (isResolverClass(resolver) === true) {
-        //@ts-ignore
-        let instance = Object.create(resolver.prototype);
-        $resolver = instance.resolver;
+        $resolver = harvestResolverClass(resolver);
       } else {
         try {
           $resolver = (resolver as ReactoryResolverFunc)();
