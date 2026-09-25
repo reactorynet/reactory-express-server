@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { GraphQLScalarType } from 'graphql';
 import { query, mutation, property, resolver } from '@reactory/server-core/models/graphql/decorators/resolver';
 import MergeGraphResolvers from '../mergeResolver';
@@ -61,7 +63,10 @@ describe('MergeGraphResolvers', () => {
     expect(merged.TestScalar).toBe(Scalar);
   });
 
-  it('serves the AI usage summary, which calls this.scopeFilter()', async () => {
+  // The reactor module is its own repository; a server-only checkout lacks it.
+  const reactorPresent = fs.existsSync(path.resolve(__dirname, '../../../modules/reactory-reactor/index.ts'));
+
+  (reactorPresent ? it : it.skip)('serves the AI usage summary, which calls this.scopeFilter()', async () => {
     const UsageResolver = require('@reactory/server-modules/reactory-reactor/graphql/resolvers/ReactorAIUsage').default;
     const analytics = { getUsageSummary: jest.fn().mockResolvedValue({ totalTokens: 7 }) };
     const context: any = {

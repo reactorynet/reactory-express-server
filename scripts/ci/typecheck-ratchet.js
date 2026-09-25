@@ -11,10 +11,17 @@
  *
  *   node scripts/ci/typecheck-ratchet.js           # check (CI)
  *   node scripts/ci/typecheck-ratchet.js --update  # rewrite the baseline
+ *
+ * The baseline is written with every module present. In a checkout that lacks
+ * some (CI checks out the server alone), a file that imports an absent module
+ * cannot be type-checked meaningfully: it is reported as skipped, and so are
+ * the absent modules' own entries. --update refuses to run in that state.
  */
 const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+
+const { absentModuleIn, presentModules } = require('./moduleConfiguration');
 
 const ROOT = path.resolve(__dirname, '../..');
 const BASELINE = path.join(ROOT, 'typecheck-baseline.json');
@@ -42,7 +49,20 @@ if (tsc.status !== 0 && total === 0) {
   process.exit(2);
 }
 
+// Files that cannot resolve an import from a module this checkout lacks.
+const present = presentModules();
+const skipped = new Map();
+for (const line of output.split('\n')) {
+  const match = /^(.+?)\(\d+,\d+\): error TS2307: Cannot find module '([^']+)'/.exec(line);
+  const module = match && absentModuleIn(match[2], present);
+  if (module) skipped.set(match[1].replace(/\\/g, '/'), module);
+}
+
 if (update) {
+  if (skipped.size) {
+    console.error(`Refusing to rewrite the baseline: ${skipped.size} file(s) import modules this checkout lacks (${[...new Set(skipped.values())].join(', ')}). Update it from a checkout with every module.`);
+    process.exit(2);
+  }
   const sorted = Object.fromEntries(Object.keys(counts).sort().map((k) => [k, counts[k]]));
   fs.writeFileSync(BASELINE, JSON.stringify({ total, files: sorted }, null, 2) + '\n');
   console.log(`Baseline written: ${total} errors in ${Object.keys(counts).length} files.`);
@@ -52,16 +72,25 @@ if (update) {
 const baseline = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : { total: 0, files: {} };
 const regressions = [];
 const improvements = [];
+const notChecked = (file) => skipped.has(file) || Boolean(absentModuleIn(file, present));
 for (const [file, count] of Object.entries(counts)) {
+  if (notChecked(file)) continue;
   const allowed = baseline.files[file] || 0;
   if (count > allowed) regressions.push(`${file}: ${count} errors (baseline ${allowed})`);
 }
 for (const [file, allowed] of Object.entries(baseline.files)) {
+  if (notChecked(file)) continue;
   const count = counts[file] || 0;
   if (count < allowed) improvements.push(`${file}: ${count} (baseline ${allowed})`);
 }
 
 console.log(`Type errors: ${total} (baseline ${baseline.total}).`);
+if (skipped.size) {
+  const byModule = {};
+  for (const [file, module] of skipped) (byModule[module] = byModule[module] || []).push(file);
+  console.log(`\nNot checked: ${skipped.size} file(s) import modules this checkout lacks:`);
+  for (const [module, files] of Object.entries(byModule)) console.log(`  ${module}: ${files.join(', ')}`);
+}
 if (improvements.length) {
   console.log(`\n${improvements.length} file(s) improved; run with --update to lower the baseline:\n  ${improvements.join('\n  ')}`);
 }

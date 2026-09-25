@@ -14,16 +14,22 @@ jobs:
         with:
           submodules: true
 
+      # Corepack first: setup-node's Yarn cache lookup runs `yarn`, and the
+      # runner's global Yarn 1 refuses this repo's packageManager (yarn@4).
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
       - uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
           cache: "yarn"
 
-      - name: Enable Corepack (Yarn 4)
+      - name: Enable Corepack for the selected Node
         run: corepack enable
 
+      # Core-only: the modules under src/modules are separate repos and absent here, so yarn.lock (written with them) cannot match; resolve afresh.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --no-immutable
 
       # Ratchet against typecheck-baseline.json: fails on any new type error,
       # never on the pre-existing backlog. `yarn typecheck:full` shows it all.
@@ -37,16 +43,22 @@ jobs:
         with:
           submodules: true
 
+      # Corepack first: setup-node's Yarn cache lookup runs `yarn`, and the
+      # runner's global Yarn 1 refuses this repo's packageManager (yarn@4).
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
       - uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
           cache: "yarn"
 
-      - name: Enable Corepack (Yarn 4)
+      - name: Enable Corepack for the selected Node
         run: corepack enable
 
+      # Core-only: the modules under src/modules are separate repos and absent here, so yarn.lock (written with them) cannot match; resolve afresh.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --no-immutable
 
       # Correctness rules only (.eslintrc.ci.json). The airbnb style config
       # stays available as `yarn lint:style`.
@@ -60,16 +72,22 @@ jobs:
         with:
           submodules: true
 
+      # Corepack first: setup-node's Yarn cache lookup runs `yarn`, and the
+      # runner's global Yarn 1 refuses this repo's packageManager (yarn@4).
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
       - uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
           cache: "yarn"
 
-      - name: Enable Corepack (Yarn 4)
+      - name: Enable Corepack for the selected Node
         run: corepack enable
 
+      # Core-only: the modules under src/modules are separate repos and absent here, so yarn.lock (written with them) cannot match; resolve afresh.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --no-immutable
 
       - name: Run Tests
         run: yarn test:ci
@@ -119,16 +137,22 @@ jobs:
         with:
           submodules: true
 
+      # Corepack first: setup-node's Yarn cache lookup runs `yarn`, and the
+      # runner's global Yarn 1 refuses this repo's packageManager (yarn@4).
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
       - uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
           cache: "yarn"
 
-      - name: Enable Corepack (Yarn 4)
+      - name: Enable Corepack for the selected Node
         run: corepack enable
 
+      # Core-only: the modules under src/modules are separate repos and absent here, so yarn.lock (written with them) cannot match; resolve afresh.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --no-immutable
 
       - name: Create empty databases
         run: |

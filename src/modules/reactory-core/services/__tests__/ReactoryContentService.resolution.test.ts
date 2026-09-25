@@ -1,4 +1,5 @@
 import path from 'path';
+import { existsSync } from 'fs';
 import ReactoryContentService from '../ReactoryContentService';
 import { Content } from '@reactory/server-modules/reactory-core/models';
 
@@ -150,7 +151,17 @@ describe('ReactoryContentService resolution', () => {
     });
   });
 
-  describe('filesystem seeded content', () => {
+  // The seed lives in the sibling reactory-data checkout, which a server-only
+  // checkout such as CI does not have.
+  const seedPresent = existsSync(path.join(APP_DATA_ROOT, 'content/static-content/about-reactory.md'));
+
+  it('returns null for a slug with no record and no file', async () => {
+    mockFindOne(null);
+    const result = await service.getContentBySlug('no-such-content-anywhere');
+    expect(result).toBeNull();
+  });
+
+  (seedPresent ? describe : describe.skip)('filesystem seeded content', () => {
     beforeEach(() => mockFindOne(null));
 
     it('resolves the seed shipped in reactory-data', async () => {
@@ -185,9 +196,5 @@ describe('ReactoryContentService resolution', () => {
       expect(second.content).toEqual(first.content);
     });
 
-    it('returns null for a slug with no record and no file', async () => {
-      const result = await service.getContentBySlug('no-such-content-anywhere');
-      expect(result).toBeNull();
-    });
   });
 });
