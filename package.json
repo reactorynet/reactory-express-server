@@ -33,7 +33,7 @@
   "scripts": {
     "postinstall": "test -f node_modules/.bin/patch-package && patch-package || true",
     "test": "jest",
-    "test:ci": "jest -c jest.ci.config.ts --ci --coverage --coverageReporters=text-summary --coverageReporters=json-summary --coverageReporters=lcov --runInBand --forceExit",
+    "test:ci": "node scripts/ci/run-tests.js --ci --coverage --coverageReporters=text-summary --coverageReporters=json-summary --coverageReporters=lcov --runInBand --forceExit",
     "typecheck": "node scripts/ci/typecheck-ratchet.js",
     "lint": "eslint --no-eslintrc -c .eslintrc.ci.json src --ext .ts,.tsx",
     "typecheck:full": "tsc --noEmit -p tsconfig.json",
@@ -90,6 +90,7 @@
     "@types/ioredis": "^5.0.0",
     "@types/node-cron": "^3.0.11",
     "acorn": "8.7.0",
+    "ajv": "8.20.0",
     "ajv-formats": "^3.0.1",
     "apollo-upload-client": "18.0.1",
     "archiver": "7.0.1",
@@ -372,7 +373,7 @@
   "resolutions": {
     "string-width": "4.2.3",
     "node-gyp": "11.5.0",
-    "ajv": "8.20.0"
+    "ajv@^8": "8.20.0"
   },
   "nodemonConfig": {
     "ignore": [
