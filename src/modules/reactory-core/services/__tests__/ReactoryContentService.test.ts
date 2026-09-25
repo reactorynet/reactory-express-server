@@ -1,3 +1,5 @@
+import path from 'path';
+import { existsSync } from 'fs';
 import ReactoryContentService from '../ReactoryContentService';
 import { Content } from '@reactory/server-modules/reactory-core/models';
 
@@ -50,12 +52,17 @@ describe('ReactoryContentService Caching', () => {
   });
 
   describe('L1 Memory Cache & Static Content Fallback', () => {
-    it('should read static file on cache miss and hit cache on subsequent requests', async () => {
+    // The seed lives in the sibling reactory-data checkout, which a server-only
+    // checkout such as CI does not have.
+    const dataRoot = path.resolve(__dirname, '../../../../../../reactory-data');
+    const seedPresent = existsSync(path.join(dataRoot, 'content/static-content/about-reactory.md'));
+
+    (seedPresent ? it : it.skip)('should read static file on cache miss and hit cache on subsequent requests', async () => {
       (Content.findOne as jest.Mock).mockReturnValue({
         then: (cb: any) => Promise.resolve(cb(null)),
       });
 
-      process.env.APP_DATA_ROOT = '/Users/wweber/Source/reactory/reactory-data';
+      process.env.APP_DATA_ROOT = dataRoot;
 
       // First call -> Cache Miss, reads disk
       const content1 = await service.getContentBySlug('about-reactory');

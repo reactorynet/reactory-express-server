@@ -79,6 +79,11 @@ jobs:
             -keyout /tmp/ci-test-ca.key -out ./certificates/ci-test-ca.crt \
             -subj "/CN=reactory-ci-test-ca"
 
+      # config/reactory/.env.podman is gitignored in the devops submodule; the
+      # tracked sample (placeholder values) is enough to build.
+      - name: Use the sample podman environment
+        run: '[ -f config/reactory/.env.podman ] || cp config/reactory/env.podman-sample config/reactory/.env.podman'
+
       - name: Build server
         run: bin/build.sh reactory podman
 
