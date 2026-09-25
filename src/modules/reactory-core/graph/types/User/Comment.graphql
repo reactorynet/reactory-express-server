@@ -289,40 +289,40 @@ extend type Mutation {
   """
   Create a new comment attached to a context and contextId
   """
-  createComment(input: CreateCommentInput!): Comment
+  createComment(input: CreateCommentInput!): Comment @auth(roles: ["USER"])
 
   """
   Edit an existing comment (user must be the comment author)
   """
-  editComment(input: EditCommentInput!): Comment
+  editComment(input: EditCommentInput!): Comment @auth(roles: ["USER"])
   
   """
   Delete a comment (user must be the comment author or admin)
   """
-  deleteComment(input: DeleteCommentInput!): DeleteCommentResult
+  deleteComment(input: DeleteCommentInput!): DeleteCommentResult @auth(roles: ["USER"])
   
   """
   Toggle upvote on a comment
   """
-  upvoteComment(commentId: ObjID!): Comment
+  upvoteComment(commentId: ObjID!): Comment @auth(roles: ["USER"])
   
   """
   Toggle downvote on a comment
   """
-  downvoteComment(commentId: ObjID!): Comment
+  downvoteComment(commentId: ObjID!): Comment @auth(roles: ["USER"])
   
   """
   Toggle favorite on a comment
   """
-  favoriteComment(commentId: ObjID!): Comment
+  favoriteComment(commentId: ObjID!): Comment @auth(roles: ["USER"])
   
   """
   Generic toggle for any comment reaction type
   """
-  toggleCommentReaction(input: ToggleCommentReactionInput!): Comment
+  toggleCommentReaction(input: ToggleCommentReactionInput!): Comment @auth(roles: ["USER"])
   
   """
   Flag a comment for moderation
   """
-  flagComment(commentId: ObjID!, reason: String): Comment
+  flagComment(commentId: ObjID!, reason: String): Comment @auth(roles: ["USER"])
 }

@@ -137,6 +137,20 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
         admin: ['ADMIN']
       },
       form: 'core.WorkflowEditorFeatureFlagForm@1.0.0'
+    },
+    {
+      id: 'auth-directive-strict',
+      nameSpace: 'core',
+      name: 'AuthDirectiveStrict',
+      version: '1.0.0',
+      title: '@auth directive: strict denial',
+      description: 'When on (the default), a field denied by the @auth schema directive raises a GraphQL error with code FORBIDDEN or UNAUTHENTICATED. Set enabled: true, value: false on a tenant to keep the legacy behaviour, where a denied field resolves to null, while clients migrate. Transitional: removed after one release.',
+      permissions: {
+        viewer: ['ADMIN'],
+        editor: ['ADMIN'],
+        admin: ['ADMIN']
+      },
+      form: 'core.WorkflowEditorFeatureFlagForm@1.0.0'
     }
   ]
 };

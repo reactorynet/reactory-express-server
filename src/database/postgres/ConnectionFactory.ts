@@ -2,6 +2,7 @@ import ApiError from '@reactory/server-core/exceptions';
 import Postgres from 'postgres'
 import Reactory from '@reactorynet/reactory-core';
 import { resolveConnectionSettings } from '../connections';
+import { postgresJsOptions } from '../connectionOptions';
 import { IReactoryConnectionProvider } from '../types';
 
 /**
@@ -20,13 +21,8 @@ class ConnectionFactory implements IReactoryConnectionProvider<Postgres.Sql<{}>>
   private connections: Map<string, Postgres.Sql<{}>> = new Map();
 
   private constructor() {
-    ConnectionFactory.connection = Postgres({
-      host: process.env.REACTORY_POSTGRES_HOST || 'localhost',
-      port: parseInt(process.env.REACTORY_POSTGRES_PORT || '5432'),
-      username: process.env.REACTORY_POSTGRES_USER || 'reactory',
-      password: process.env.REACTORY_POSTGRES_PASSWORD || 'reactory',
-      database: process.env.REACTORY_POSTGRES_DB || 'reactory',
-    });
+    // Same settings, including TLS, as the TypeORM data sources (WP-B4).
+    ConnectionFactory.connection = Postgres(postgresJsOptions());
   }
 
   public static getInstance(): ConnectionFactory {

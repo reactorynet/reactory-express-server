@@ -257,43 +257,43 @@ extend type Mutation {
   Mutation to update the file status. Processors will have to be invoked via a workflow
   runner to perform any actions.
   """
-  SetReactoryFileImportPackageStatus(workload_id: String!, status: String!): ReactoryFileImportPackage
+  SetReactoryFileImportPackageStatus(workload_id: String!, status: String!): ReactoryFileImportPackage @auth(roles: ["USER", "ADMIN"])
   """
   Mutation to delete the workload item.  This will remove any files uploaded 
   and associated with the upload and should attempt to cancel any workloads in 
   progress.
   """
-  DeleteUserFileUpload(workload_id: String!): ReactoryFileImportPackage
+  DeleteUserFileUpload(workload_id: String!): ReactoryFileImportPackage @auth(roles: ["USER", "ADMIN"])
 
   """
   Upload and add a file to the package
   """
-  AddFileToImportPackage(file: Upload!, workload_id: String!): ImportFile
+  AddFileToImportPackage(file: Upload!, workload_id: String!): ImportFile @auth(roles: ["USER", "ADMIN"])
 
   """
   Remove file from a import package
   """
-  RemoveFileFromImportPackage(file_id: String!, workload_id: String!): CoreSimpleResponse
+  RemoveFileFromImportPackage(file_id: String!, workload_id: String!): CoreSimpleResponse @auth(roles: ["USER", "ADMIN"])
 
   """
   Starts a given import package
   """
-  StartImportPackage(workload_id: String): CoreSimpleResponse
+  StartImportPackage(workload_id: String): CoreSimpleResponse @auth(roles: ["USER", "ADMIN"])
 
   """
   Stops a given import package
   """
-  StopImportPackage(workload_id: String): CoreSimpleResponse
+  StopImportPackage(workload_id: String): CoreSimpleResponse @auth(roles: ["USER", "ADMIN"])
 
   """
   Starts a process for a package
   """
-  StartProcessForPackage(workload_id: String!, processors: [String] file_ids: [String]): CoreSimpleResponse
+  StartProcessForPackage(workload_id: String!, processors: [String] file_ids: [String]): CoreSimpleResponse @auth(roles: ["USER", "ADMIN"])
   
   """
   Generates a preview of the data
   """
-  PreviewImportFile(workload_id: String!, file_id: String!, processors: [String]): CoreSimpleResponse
+  PreviewImportFile(workload_id: String!, file_id: String!, processors: [String]): CoreSimpleResponse @auth(roles: ["USER", "ADMIN"])
 
 
 }

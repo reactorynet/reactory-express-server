@@ -19,10 +19,46 @@ Copy the variables you need to your `.env` file and update with your actual cred
 ### Required
 
 ```bash
-# CRITICAL: Set a strong, randomly generated secret key
-# Generate with: openssl rand -base64 32
+# CRITICAL: Set a strong, randomly generated secret key (32+ bytes)
+# Generate with: openssl rand -base64 48
 SECRET_SAUCE=your-secure-jwt-secret-key-change-this-in-production
 ```
+
+The server refuses to start when `SECRET_SAUCE` is missing or a known
+placeholder, and when it is shorter than 32 bytes outside `NODE_ENV`
+`development`/`local` (where a short secret is logged as an error instead).
+`NODE_ENV=test` skips the check. Rotating it invalidates issued JWTs, sessions
+and state-encrypted OAuth tokens.
+
+### Proxy / client IP
+
+```bash
+# Number of proxy hops that append X-Forwarded-For, or a list of trusted
+# proxy addresses/CIDRs. Default 1. req.ip feeds login-token IP binding,
+# rate limits and audit logs, so it must resolve to the client.
+#   AWS NLB/ALB -> Istio ingress gateway -> sidecar -> app : TRUST_PROXY=2
+#   (the Istio sidecar does not append on inbound traffic)
+TRUST_PROXY=1
+```
+
+### Anonymous account
+
+```bash
+# Password seeded for the anonymous accounts (anon@reactor.local,
+# anonymous@reactory.local). When unset, a random password is generated at
+# seed time and a warning is logged. The PWA signs in with the matching
+# REACT_APP_ANONUSER_PASSWORD, so that value is public by design; the accounts
+# hold only the ANON role.
+REACTORY_APPLICATION_ANONUSER_PASSWORD=
+```
+
+### Tenant credentials
+
+Browsers identify the tenant with `x-client-key` plus `x-client-public-key`;
+the public key is accepted only from an Origin on the tenant's whitelist.
+Servers use `x-client-key` plus `x-client-pwd` (the tenant secret) or
+`x-service-key` (per-service keys, `reactory service-keys mint`). The
+`x-reactory-pass` header is no longer accepted.
 
 ### Optional (with defaults)
 
@@ -143,6 +179,12 @@ MICROSOFT_TENANT_ID=common  # For multi-tenant apps
 OAUTH_REDIRECT_URI=https://yourdomain.com/auth/microsoft/openid/complete/
 ```
 
+A specific `MICROSOFT_TENANT_ID` enables issuer validation
+(`https://login.microsoftonline.com/<tenantId>/v2.0`). `common`,
+`organizations` and `consumers` have no single issuer, so validation stays off
+for them and a warning is logged at startup; use a specific tenant id in
+production.
+
 **Optional (Graph API):**
 ```bash
 OAUTH_AUTHORITY=https://login.microsoftonline.com/
@@ -260,7 +302,7 @@ See [README.md](./README.md) for comprehensive troubleshooting guide.
 - **GitHub**: https://docs.github.com/en/developers/apps/building-oauth-apps
 - **LinkedIn**: https://docs.microsoft.com/en-us/linkedin/shared/authentication/authentication
 - **Microsoft**: https://docs.microsoft.com/en-us/azure/active-directory/develop/
-- **Okta**: https://developer.okta.com/docs/guides/sign-into-web-app/
+- **Okta**: https://developer.okta.com/docs/guides/sign-into-web-app/ (per-tenant setup: [okta/readme.md](./strategies/okta/readme.md#per-tenant-configuration))
 
 ---
 

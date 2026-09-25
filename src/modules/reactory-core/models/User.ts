@@ -5,6 +5,7 @@ import * as lodash from 'lodash';
 
 import logger from '@reactory/server-core/logging';
 import Reactory from '@reactorynet/reactory-core';
+import PasswordHasher from '@reactory/server-core/authentication/password/PasswordHasher';
 
 
 const { ObjectId: ObjectIdSchema } = mongoose.Schema.Types;
@@ -190,13 +191,28 @@ const UserSchema = new mongoose.Schema({
   linked_agents: [LinkedAgentSchema],
 });
 
-UserSchema.methods.setPassword = function setPassword(password: string) {
+UserSchema.methods.setPassword = async function setPassword(password: string) {
   this.salt = crypto.randomBytes(16).toString('hex');
-  this.password = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
+  this.password = await PasswordHasher.hash(password);
+  if (typeof this.markModified === 'function') {
+    this.markModified('salt');
+    this.markModified('password');
+  }
 };
 
-UserSchema.methods.validatePassword = function validatePassword(password: string) {
-  return this.password === crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
+UserSchema.methods.validatePassword = async function validatePassword(password: string) {
+  const result = await PasswordHasher.verify(password, this.password, this.salt);
+  if (result.ok && result.needsRehash) {
+    await this.setPassword(password);
+    if (typeof this.save === 'function') {
+      try {
+        await this.save();
+      } catch (err) {
+        logger.warn('Failed to save upgraded password hash for user', err);
+      }
+    }
+  }
+  return result.ok;
 };
 
 UserSchema.methods.fullName = function fullName(email = false) {

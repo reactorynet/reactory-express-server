@@ -21,6 +21,10 @@ export function roles(allowedRoles: string[],
         case "this.context": {
           if (this && this.context) {
             context = this.context;
+          } else if (typeof arguments[2]?.hasRole === 'function') {
+            // A GraphQL resolver, (parent, args, context, info): resolver classes
+            // have no `this.context`, so the default key would always throw.
+            context = arguments[2];
           } else {
             throw new ApiError(`target.context does not exist on parent for ${propertyKey.toString()}`)
           }
@@ -47,7 +51,7 @@ export function roles(allowedRoles: string[],
       });
       
       if (passed) return original.apply(this, arguments);
-      else throw new InsufficientPermissions(`User [${context.user._id.toString()}] does not have permissions to execute ${propertyKey.toString()}`, { allowedRoles, contextKey })
+      else throw new InsufficientPermissions(`User [${context.user?._id?.toString() ?? 'anonymous'}] does not have permissions to execute ${propertyKey.toString()}`, { allowedRoles, contextKey })
     }
 
     return descriptor;

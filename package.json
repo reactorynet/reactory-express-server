@@ -31,7 +31,14 @@
     "url": "https://bitbucket.org/WernerWeber/reactory-server.git"
   },
   "scripts": {
-    "postinstall": "test -f node_modules/.bin/patch-package && patch-package || true"
+    "postinstall": "test -f node_modules/.bin/patch-package && patch-package || true",
+    "test": "jest",
+    "test:ci": "node scripts/ci/run-tests.js --ci --coverage --coverageReporters=text-summary --coverageReporters=json-summary --coverageReporters=lcov --runInBand --forceExit",
+    "typecheck": "node scripts/ci/typecheck-ratchet.js",
+    "lint": "eslint --no-eslintrc -c .eslintrc.ci.json src --ext .ts,.tsx",
+    "typecheck:full": "tsc --noEmit -p tsconfig.json",
+    "typecheck:update-baseline": "node scripts/ci/typecheck-ratchet.js --update",
+    "lint:style": "eslint src --ext .ts"
   },
   "dependencies": {
     "@apollo/client": "3.10.8",
@@ -83,6 +90,7 @@
     "@types/ioredis": "^5.0.0",
     "@types/node-cron": "^3.0.11",
     "acorn": "8.7.0",
+    "ajv": "8.20.0",
     "ajv-formats": "^3.0.1",
     "apollo-upload-client": "18.0.1",
     "archiver": "7.0.1",
@@ -223,7 +231,7 @@
     "tree-sitter-python": "0.23.6",
     "twilio": "^5.11.1",
     "typeorm": "0.3.20",
-    "typescript": "4.5.5",
+    "typescript": "5.5.3",
     "unfluff": "3.2.0",
     "unzip": "0.1.11",
     "uuid": "10.0.0",
@@ -327,6 +335,8 @@
     "@types/tar": "^6.1.5",
     "@types/uuid": "^3.4.6",
     "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "5.14.0",
+    "@typescript-eslint/parser": "5.14.0",
     "babel-eslint": "10.0.1",
     "babel-jest": "^29.5.0",
     "babel-loader": "8.0.6",
@@ -363,7 +373,7 @@
   "resolutions": {
     "string-width": "4.2.3",
     "node-gyp": "11.5.0",
-    "ajv": "8.20.0"
+    "ajv@^8": "8.20.0"
   },
   "nodemonConfig": {
     "ignore": [

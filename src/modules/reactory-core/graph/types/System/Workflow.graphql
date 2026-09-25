@@ -1240,71 +1240,71 @@ extend type Mutation {
   startWorkflow(
     workflowId: String!
     input: WorkflowExecutionInput
-  ): WorkflowInstance
+  ): WorkflowInstance @auth(roles: ["USER"])
 
   # Instance Management
-  pauseWorkflowInstance(instanceId: String!): WorkflowOperationResult
-  resumeWorkflowInstance(instanceId: String!): WorkflowOperationResult
-  cancelWorkflowInstance(instanceId: String!): WorkflowOperationResult
+  pauseWorkflowInstance(instanceId: String!): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
+  resumeWorkflowInstance(instanceId: String!): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
+  cancelWorkflowInstance(instanceId: String!): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
 
   # Event signalling (continue steps waiting for an event)
   publishWorkflowEvent(
     eventName: String!
     eventKey: String!
     eventData: JSON
-  ): WorkflowOperationResult
+  ): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
   signalWorkflowInstance(
     instanceId: String!
     stepId: String
     eventData: JSON
-  ): WorkflowOperationResult
+  ): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
 
   # Schedule Management
   createWorkflowSchedule(
     config: ScheduleConfigInput!
-  ): WorkflowSchedule
+  ): WorkflowSchedule @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
   updateWorkflowSchedule(
     scheduleId: String!
     updates: UpdateScheduleInput!
-  ): WorkflowSchedule
+  ): WorkflowSchedule @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
-  deleteWorkflowSchedule(scheduleId: String!): WorkflowOperationResult
+  deleteWorkflowSchedule(scheduleId: String!): WorkflowOperationResult @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
-  startSchedule(scheduleId: String!): WorkflowOperationResult
-  stopSchedule(scheduleId: String!): WorkflowOperationResult
-  reloadSchedules: WorkflowOperationResult
+  startSchedule(scheduleId: String!): WorkflowOperationResult @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
+  stopSchedule(scheduleId: String!): WorkflowOperationResult @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
+  reloadSchedules: WorkflowOperationResult @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
   # Workflow Execution History Management
   """
   Delete a single workflow execution history item by instance ID.
   """
-  deleteWorkflowExecutionHistory(instanceId: String!): WorkflowOperationResult
+  deleteWorkflowExecutionHistory(instanceId: String!): WorkflowOperationResult @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
   """
   Delete multiple workflow execution history items by instance IDs.
   """
-  deleteWorkflowExecutionHistoryBatch(instanceIds: [String!]!): WorkflowOperationResult
+  deleteWorkflowExecutionHistoryBatch(instanceIds: [String!]!): WorkflowOperationResult @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
   """
   Clear all workflow execution history for a specific workflow definition.
   Use with caution - this operation cannot be undone.
   """
-  clearWorkflowExecutionHistory(workflowDefinitionId: String!): WorkflowOperationResult
+  clearWorkflowExecutionHistory(workflowDefinitionId: String!): WorkflowOperationResult @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
   # Legacy compatibility
-  startWorkflowLegacy(name: String!, data: WorkflowInput): Boolean
+  startWorkflowLegacy(name: String!, data: WorkflowInput): Boolean @auth(roles: ["USER"])
 
   # ─── Workflow Definition CRUD ──────────────────────────────────────────────
   """Save (create or update) a workflow definition to the YAML catalog."""
-  saveWorkflowDefinition(definition: WorkflowDefinitionInput!): YamlWorkflowDefinition
+  saveWorkflowDefinition(definition: WorkflowDefinitionInput!): YamlWorkflowDefinition @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
   """Save raw YAML text directly to the YAML catalog, preserving formatting and comments."""
-  saveWorkflowYaml(input: SaveWorkflowYamlInput!): YamlWorkflowDefinition
+  saveWorkflowYaml(input: SaveWorkflowYamlInput!): YamlWorkflowDefinition @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
   """Delete a workflow definition from the YAML catalog."""
-  deleteWorkflowDefinition(nameSpace: String!, name: String!, version: String): WorkflowOperationResult
+  deleteWorkflowDefinition(nameSpace: String!, name: String!, version: String): WorkflowOperationResult @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
   """Validate a workflow definition without saving it."""
-  validateWorkflowDefinition(definition: WorkflowDefinitionInput!): WorkflowValidationResult
+  validateWorkflowDefinition(definition: WorkflowDefinitionInput!): WorkflowValidationResult @auth(roles: ["USER"])
 }

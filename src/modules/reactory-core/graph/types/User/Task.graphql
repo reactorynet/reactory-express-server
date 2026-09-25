@@ -75,8 +75,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  createTask(input: CreateTaskInput!): Task!
-  updateTask(id: String!, input: UpdateTaskInput!): Task!
-  completeWorkflowTask(taskId: String!, resultData: Any): CompleteWorkflowTaskResult!
-  deleteTask(id: String!): WorkflowOperationResult!
+  createTask(input: CreateTaskInput!): Task! @auth(roles: ["USER"])
+  updateTask(id: String!, input: UpdateTaskInput!): Task! @auth(roles: ["USER"])
+  completeWorkflowTask(taskId: String!, resultData: Any): CompleteWorkflowTaskResult! @auth(roles: ["USER"])
+  deleteTask(id: String!): WorkflowOperationResult! @auth(roles: ["USER"])
 }

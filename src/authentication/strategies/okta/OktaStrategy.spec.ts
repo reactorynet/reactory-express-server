@@ -2,21 +2,29 @@
  * Okta Authentication Strategy Tests
  */
 
+import passport from 'passport';
 import {
   createMockRequest,
   createMockUser,
   createMockPartner,
   createMockOAuthProfile,
   createMockUserService,
-  testData,
-} from '../__tests__/utils';
+} from '../__tests__/testUtils';
+import { oktaVerifyCallback, useOktaRoutes } from './OktaStrategy';
+import TenantStrategyRegistry from '../TenantStrategyRegistry';
+import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
+import Helpers from '../helpers';
 
-describe('OktaStrategy', () => {
+describe('WP-A5: OktaStrategy and TenantStrategyRegistry', () => {
+  beforeEach(() => {
+    TenantStrategyRegistry.clear();
+  });
+
   describe('Strategy Configuration', () => {
-    it('should be properly configured for OIDC', () => {
+    it('should be named okta, matching passport-okta-oauth20 registration', () => {
       const OktaStrategy = require('./OktaStrategy').default;
       expect(OktaStrategy).toBeDefined();
-      expect(OktaStrategy.name).toBe('openidconnect');
+      expect(OktaStrategy.name).toBe('okta');
     });
 
     it('should use correct Okta domain configuration', () => {
@@ -33,120 +41,216 @@ describe('OktaStrategy', () => {
     });
   });
 
-  describe('Authentication Callback', () => {
-    let mockRequest: any;
+  describe('Authentication Callback with req present', () => {
+    let mockReq: any;
+    let mockUserService: any;
 
     beforeEach(() => {
-      mockRequest = createMockRequest({
+      mockUserService = createMockUserService();
+      mockReq = createMockRequest({
+        ip: '127.0.0.1',
         context: {
-          getService: jest.fn(() => createMockUserService()),
-          partner: createMockPartner(),
+          getService: jest.fn(() => mockUserService),
+          partner: createMockPartner({ key: 'okta-tenant', _id: '507f1f77bcf86cd799439011' }),
+          user: createMockUser(),
         } as any,
       });
 
-      const ReactoryClient = require('@reactory/server-modules/reactory-core/models').ReactoryClient;
-      ReactoryClient.findOne = jest.fn().mockReturnValue({
-        exec: jest.fn().mockResolvedValue(createMockPartner()),
-      });
+      jest.spyOn(Helpers, 'generateLoginToken').mockResolvedValue('mock-login-token' as any);
     });
 
-    it('should create new user with Okta profile', () => {
-      const profile = createMockOAuthProfile('okta');
-      expect(profile.id).toBeDefined();
-      expect(profile.displayName).toBeDefined();
+    afterEach(() => {
+      jest.restoreAllMocks();
     });
 
-    it('should handle OIDC profile format', () => {
-      const profile = createMockOAuthProfile('okta', {
-        _json: {
-          email: 'test@company.com',
-          given_name: 'Test',
-          family_name: 'User',
-          sub: 'okta-user-id-123',
-        },
-      });
-      expect(profile._json.email).toBe('test@company.com');
-      expect(profile._json.sub).toBeDefined();
-    });
-
-    it('should store Okta user ID and issuer', () => {
-      const authProps = {
-        oktaId: 'okta-123',
-        sub: 'okta-user-id',
-        issuer: 'https://dev-123456.okta.com/oauth2/default',
-        access_token: 'token',
+    it('executes verify callback with req in scope without throwing ReferenceError', async () => {
+      const profile = {
+        id: 'okta-user-123',
+        displayName: 'Okta Test User',
+        emails: [{ value: 'okta.user@example.com' }],
       };
-      expect(authProps.oktaId).toBeDefined();
-      expect(authProps.issuer).toContain('okta.com');
+
+      const mockDone = jest.fn();
+
+      await oktaVerifyCallback(
+        mockReq,
+        'mock-access-token',
+        'mock-refresh-token',
+        { id_token: 'mock-id-token' },
+        profile,
+        mockDone,
+      );
+
+      expect(mockDone).toHaveBeenCalled();
+      const [err, token] = mockDone.mock.calls[0];
+      expect(err).toBeNull();
+      expect(token).toBe('mock-login-token');
     });
 
-    it('should extract email from various profile formats', () => {
-      const profile1 = { emails: [{ value: 'test1@company.com' }] };
-      const profile2 = { _json: { email: 'test2@company.com' } };
-      const profile3 = { _json: { preferred_username: 'test3@company.com' } };
+    it('fails verify callback with error when profile has no email', async () => {
+      const profile = {
+        id: 'okta-user-123',
+        displayName: 'No Email User',
+      };
 
-      expect(profile1.emails[0].value).toBe('test1@company.com');
-      expect(profile2._json.email).toBe('test2@company.com');
-      expect(profile3._json.preferred_username).toBe('test3@company.com');
+      const mockDone = jest.fn();
+
+      await oktaVerifyCallback(
+        mockReq,
+        'mock-access-token',
+        'mock-refresh-token',
+        {},
+        profile,
+        mockDone,
+      );
+
+      expect(mockDone).toHaveBeenCalledWith(
+        expect.any(Error),
+        false,
+      );
     });
   });
 
-  describe('Okta Routes', () => {
+  describe('TenantStrategyRegistry and Per-Tenant Okta Credentials', () => {
+    it('creates per-tenant strategy when partner has auth_config with okta properties', () => {
+      const partner = {
+        key: 'tenant-acme',
+        auth_config: [
+          {
+            provider: 'okta',
+            enabled: true,
+            properties: {
+              clientID: 'acme-okta-client-id',
+              clientSecret: 'acme-okta-client-secret',
+              domain: 'acme.okta.com',
+            },
+          },
+        ],
+      };
+
+      const name = TenantStrategyRegistry.getStrategyName('okta', partner);
+      expect(name).toBe('okta:tenant-acme');
+
+      // Verify strategy was registered with passport
+      const registeredStrategy = (passport as any)._strategies['okta:tenant-acme'];
+      expect(registeredStrategy).toBeDefined();
+      expect(registeredStrategy.name).toBe('okta');
+    });
+
+    it('returns default strategy name "okta" when partner has no okta auth_config', () => {
+      const partner = {
+        key: 'tenant-vanilla',
+        auth_config: [],
+      };
+
+      const name = TenantStrategyRegistry.getStrategyName('okta', partner);
+      expect(name).toBe('okta');
+    });
+
+    it('detects when okta provider is disabled for a tenant', () => {
+      const enabledPartner = {
+        key: 'tenant-on',
+        auth_config: [{ provider: 'okta', enabled: true, properties: {} }],
+      };
+      const disabledPartner = {
+        key: 'tenant-off',
+        auth_config: [{ provider: 'okta', enabled: false, properties: {} }],
+      };
+
+      expect(TenantStrategyRegistry.isProviderEnabled('okta', enabledPartner)).toBe(true);
+      expect(TenantStrategyRegistry.isProviderEnabled('okta', disabledPartner)).toBe(false);
+    });
+  });
+
+  describe('Okta Routes and Tenant-Gating', () => {
     let mockApp: any;
+    let routes: Record<string, Function>;
 
     beforeEach(() => {
-      mockApp = { get: jest.fn() };
-    });
-
-    it('should register all required endpoints', () => {
-      const { useOktaRoutes } = require('./OktaStrategy');
+      routes = {};
+      mockApp = {
+        get: jest.fn((path: string, handler: Function) => {
+          routes[path] = handler;
+        }),
+      };
       useOktaRoutes(mockApp);
+    });
 
-      expect(mockApp.get).toHaveBeenCalledWith(
-        '/auth/okta/start/:clientKey',
-        expect.any(Function)
-      );
-      expect(mockApp.get).toHaveBeenCalledWith(
-        '/auth/okta/callback',
-        expect.any(Function)
-      );
-      expect(mockApp.get).toHaveBeenCalledWith(
-        '/auth/okta/failure',
-        expect.any(Function)
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('returns 404 when Okta is disabled for the tenant', async () => {
+      const disabledPartner = {
+        key: 'disabled-client',
+        auth_config: [{ provider: 'okta', enabled: false }],
+      };
+
+      jest.spyOn(ReactoryClient, 'findOne').mockReturnValue({
+        exec: jest.fn().mockResolvedValue(disabledPartner),
+      } as any);
+
+      const req: any = {
+        params: { clientKey: 'disabled-client' },
+        context: {},
+        headers: {},
+      };
+      const res: any = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      await routes['/auth/okta/start/:clientKey'](req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Okta authentication is disabled for this tenant' }),
       );
     });
 
-    it('should use state manager for CSRF protection', () => {
-      const { useOktaRoutes } = require('./OktaStrategy');
-      const { StateManager } = require('../security');
-      
-      expect(StateManager).toBeDefined();
-      // StateManager is instantiated in useOktaRoutes
-      useOktaRoutes(mockApp);
-      expect(mockApp.get).toHaveBeenCalled();
-    });
-  });
+    it('calls passport.authenticate with okta:clientKey for tenant with custom Okta config', async () => {
+      const customPartner = {
+        key: 'custom-client',
+        _id: '507f1f77bcf86cd799439011',
+        auth_config: [
+          {
+            provider: 'okta',
+            enabled: true,
+            properties: {
+              clientID: 'custom-client-id',
+              clientSecret: 'custom-secret',
+              domain: 'custom.okta.com',
+            },
+          },
+        ],
+      };
 
-  describe('Okta-Specific Features', () => {
-    it('should support custom authorization server', () => {
-      const customIssuer = 'https://dev-123456.okta.com/oauth2/custom-auth-server';
-      process.env.OKTA_ISSUER = customIssuer;
-      
-      // Verify issuer can be customized
-      expect(process.env.OKTA_ISSUER).toBe(customIssuer);
-    });
+      jest.spyOn(ReactoryClient, 'findOne').mockReturnValue({
+        exec: jest.fn().mockResolvedValue(customPartner),
+      } as any);
 
-    it('should handle Okta domain format', () => {
-      const domains = [
-        'dev-123456.okta.com',
-        'company.okta.com',
-        'subdomain.oktapreview.com',
-      ];
+      const mockMiddleware = jest.fn();
+      const authenticateSpy = jest.spyOn(passport, 'authenticate').mockReturnValue(mockMiddleware as any);
 
-      domains.forEach(domain => {
-        expect(domain).toMatch(/^[\w-]+\.(okta\.com|oktapreview\.com)$/);
-      });
+      const req: any = {
+        params: { clientKey: 'custom-client' },
+        context: {},
+        headers: {},
+      };
+      const res: any = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      await routes['/auth/okta/start/:clientKey'](req, res, next);
+
+      expect(authenticateSpy).toHaveBeenCalledWith(
+        'okta:custom-client',
+        expect.objectContaining({ failureRedirect: '/auth/okta/failure?clientKey=custom-client' }),
+      );
+      expect(mockMiddleware).toHaveBeenCalledWith(req, res, next);
     });
   });
 });
-

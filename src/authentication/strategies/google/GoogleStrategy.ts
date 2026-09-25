@@ -1,15 +1,11 @@
-
-import { 
-  encoder 
-} from '@reactory/server-core/utils';
 //@ts-ignore
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import Helpers, { OnDoneCallback } from '../helpers';
-import { Application, Response } from 'express';
+import { Application, NextFunction, Response } from 'express';
 import passport from 'passport';
 import logger from '@reactory/server-core/logging';
-import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 import AuthTelemetry from '../telemetry';
+import { beginTenantOAuth, completeTenantOAuth, isCallbackFailure } from '../tenantOAuth';
 
 const { 
   GOOGLE_CLIENT_ID = 'GOOGLE_CLIENT_ID',
@@ -19,17 +15,17 @@ const {
   
 } = process.env
 
-const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
-  clientID: GOOGLE_CLIENT_ID,
-  clientSecret: GOOGLE_CLIENT_SECRET,
-  callbackURL: GOOLGE_CALLBACK_URL,
-  passReqToCallback: true,
-  scope: GOOGLE_OAUTH_SCOPE.split(' '),
-}, async (req: Reactory.Server.ReactoryExpressRequest, 
-    accessToken: string, 
-    refreshToken: any, 
-    profile: any, 
-    done: OnDoneCallback) => {
+/**
+ * Google verify callback. The callback route resolves the tenant from the
+ * validated CSRF state before passport calls this, so `context.partner` is set.
+ */
+export const googleVerifyCallback = async (
+  req: Reactory.Server.ReactoryExpressRequest,
+  accessToken: string,
+  refreshToken: any,
+  profile: any,
+  done: OnDoneCallback
+) => {
   const startTime = Date.now();
   let clientKey = 'api';
   
@@ -39,7 +35,7 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
         
     // const googleProfile = await getGoogleProfile(authority);
     logger.info('Google Profile', { profile })
-    const { context, session } = req;
+    const { context } = req;
     
     // Record OAuth callback received
     AuthTelemetry.recordOAuthCallback('google', clientKey);
@@ -55,43 +51,15 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
       context.user = await userService.findUserWithEmail(process.env.REACTORY_APPLICATION_EMAIL);
     }
     
-    if(!context.partner) {
-      // check if we have oauthState in the session
-      // @ts-ignore
-      if(!session.authState) {
-        const duration = (Date.now() - startTime) / 1000;
-        AuthTelemetry.recordFailure('google', clientKey, 'missing_state', duration);
-        return done(new Error('Invalid state'), false);
-      }
-      // @ts-ignore
-      const state = encoder.decodeState(session.oauthState as string);
-      if(!state) {
-        const duration = (Date.now() - startTime) / 1000;
-        AuthTelemetry.recordFailure('google', clientKey, 'invalid_state', duration);
-        AuthTelemetry.recordCSRFValidation('google', false);
-        return done(new Error('Invalid state'), false);
-      }
-
-      // Validate CSRF state
-      AuthTelemetry.recordCSRFValidation('google', true);
-
-      clientKey = state['x-client-key'];    
-
-      const partner: Reactory.Models.IReactoryClientDocument = await ReactoryClient.findOne({ 
-        key: clientKey 
-      }).exec() as Reactory.Models.IReactoryClientDocument;
-
-      if(!partner) {
-        const duration = (Date.now() - startTime) / 1000;
-        AuthTelemetry.recordFailure('google', clientKey, 'client_not_found', duration);
-        return done(new Error('Client not found'), false);
-      }
-
-      context.partner = partner;
-    } else {
-      clientKey = context.partner.key;
+    if (!context.partner) {
+      const duration = (Date.now() - startTime) / 1000;
+      logger.error('Missing partner in context for Google callback');
+      AuthTelemetry.recordFailure('google', clientKey, 'client_not_found', duration);
+      return done(new Error('Client not found'), false);
     }
-    
+
+    clientKey = context.partner.key;
+
     // Track attempt with actual client key
     AuthTelemetry.recordAttempt('google', clientKey);
   
@@ -155,68 +123,80 @@ const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
     logger.error('Google authentication error', error);
     return done(error as Error, false);
   }
-});
+};
 
-export const useGoogleRoutes = (app: Application) => { 
+const GoogleOAuthStrategy: passport.Strategy = new GoogleStrategy({
+  clientID: GOOGLE_CLIENT_ID,
+  clientSecret: GOOGLE_CLIENT_SECRET,
+  callbackURL: GOOLGE_CALLBACK_URL,
+  passReqToCallback: true,
+  scope: GOOGLE_OAUTH_SCOPE.split(' '),
+}, googleVerifyCallback);
+
+export const useGoogleRoutes = (app: Application) => {
+  /**
+   * Google Start Endpoint. The CSRF state is minted by StateManager, stored in
+   * the session and round-tripped through Google; the callback compares the
+   * two before resolving the tenant from it.
+   */
   app.get(
-    '/auth/google/start', 
-    (req: Reactory.Server.ReactoryExpressRequest, res: Response, next) => {
+    '/auth/google/start',
+    async (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: NextFunction) => {
       try {
-        const state = encoder.encodeState({
-          "x-client-key": req.query['x-client-key'],
-          "x-client-pwd": req.query['x-client-pwd'],
-          "flow": "google"
-        });
-        // @ts-ignore
-        req.session.authState = state;
-        passport.authenticate('google', { 
+        const begun = await beginTenantOAuth(req, res, 'google');
+        if (!begun) return;
+        const { clientKey, strategyName, state } = begun;
+
+        logger.debug('Starting Google OAuth flow', { clientKey, strategyName });
+
+        passport.authenticate(strategyName, {
           scope: GOOGLE_OAUTH_SCOPE.split(' '),
-          passReqToCallback: true,
-          state
+          state,
         })(req, res, next);
-      } catch (ex){
-        logger.error('An error occurred while trying to authenticate with Google', ex);        
-        res.status(500).send({ error: 'An error occurred while trying to authenticate with Google', ex });
+      } catch (ex) {
+        logger.error('An error occurred while trying to authenticate with Google', ex);
+        res.status(500).send({ error: 'An error occurred while trying to authenticate with Google' });
       }
-    } 
+    }
   );
 
-  app.get('/auth/google/failure', (req: Reactory.Server.ReactoryExpressRequest, res: Response) => { 
+  app.get('/auth/google/failure', (req: Reactory.Server.ReactoryExpressRequest, res: Response) => {
     res.status(401).send({ error: 'Authentication with Google failed' });
   });
 
   app.get(
-    '/auth/google/callback', (req: Reactory.Server.ReactoryExpressRequest, res: Response) => {
-      const { context } = req;
-      const failureRedirectUrl = `${context.partner.siteUrl}/auth/google/failure`;
-      
-      const onCompletion = (err: string, user: {
-        id: string,
-        firstName: string,
-        lastName: string,
-        token: string,
-      } | boolean) => {
-        if(err) {
-          logger.error('An error occurred while authenticating with Google', err);
-          res.status(500).send({ error: 'An error occurred while trying to authenticate with Google', err });
-        } else {
-          if(!user) { 
-            res.status(302)
-              .redirect(failureRedirectUrl);
-
-          } else {
-            res.status(302)
-              .redirect(`${context.partner.siteUrl}?auth_token=${(user as { token: string }).token}`);
-          }
-          
+    '/auth/google/callback',
+    async (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: NextFunction) => {
+      try {
+        const resolved = await completeTenantOAuth(req, 'google');
+        if (isCallbackFailure(resolved)) {
+          AuthTelemetry.recordCSRFValidation('google', false);
+          return res.status(resolved.status).send({ error: 'Authentication with Google failed', reason: resolved.error });
         }
-      };
+        AuthTelemetry.recordCSRFValidation('google', true);
 
-      passport.authenticate('google', { 
-        failureRedirect: failureRedirectUrl,
-        passReqToCallback: true,
-        scope: GOOGLE_OAUTH_SCOPE.split(' '),
-      }, onCompletion)(req, res);
+        const { partner, strategyName } = resolved;
+        const failureRedirectUrl = `${partner.siteUrl}/auth/google/failure`;
+
+        const onCompletion = (err: any, user: { token: string } | false) => {
+          if (err) {
+            logger.error('An error occurred while authenticating with Google', err);
+            res.status(500).send({ error: 'An error occurred while trying to authenticate with Google' });
+          } else if (!user) {
+            res.status(302).redirect(failureRedirectUrl);
+          } else {
+            res.status(302).redirect(`${partner.siteUrl}?auth_token=${user.token}`);
+          }
+        };
+
+        passport.authenticate(strategyName, {
+          failureRedirect: failureRedirectUrl,
+          scope: GOOGLE_OAUTH_SCOPE.split(' '),
+        }, onCompletion)(req, res, next);
+      } catch (ex) {
+        logger.error('Google OAuth callback error', ex);
+        res.status(500).send({ error: 'An error occurred while trying to authenticate with Google' });
+      }
     });
 };
 

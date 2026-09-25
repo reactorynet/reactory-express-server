@@ -10,7 +10,6 @@ import {
   ReactoryFormSubmissionResult,
   ReactoryFormSubmissionSort,
 } from '../../types/FormSubmission';
-import { errorMessage } from '@temporalio/common';
 
 /** The payload the ReactoryFormSubmit mutation resolves to. */
 interface SubmitResponse {

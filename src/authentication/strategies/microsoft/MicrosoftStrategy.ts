@@ -7,12 +7,16 @@
 
 import { OIDCStrategy } from 'passport-azure-ad';
 import passport from 'passport';
-import { Application, Response } from 'express';
+import { Application, NextFunction, Response } from 'express';
 import Helpers, { OnDoneCallback } from '../helpers';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
-import { StateManager, ErrorSanitizer, AuthAuditLogger } from '../security';
+import { ErrorSanitizer, AuthAuditLogger } from '../security';
 import AuthTelemetry from '../telemetry';
+import TenantStrategyRegistry from '../TenantStrategyRegistry';
+import { startClientKey } from '../tenantOAuth';
+
+const MICROSOFT_SESSION_CLIENT_KEY = 'microsoftAuthClientKey';
 
 const { 
   MICROSOFT_OAUTH_REDIRECT_URI = 'https://localhost:4000/auth/microsoft/openid/complete/',
@@ -31,22 +35,53 @@ const {
   MICROSOFT_OAUTH_ALLOW_HTTP_REDIRECT,
 } = process.env;
 
+const MULTI_TENANT_AUTHORITIES = ['common', 'organizations', 'consumers'];
+const warnedAuthorities = new Set<string>();
+
 /**
- * Microsoft Azure AD OIDC Strategy Configuration
- * Handles authentication via Azure AD OpenID Connect
+ * Issuer validation options for an Azure AD tenant id.
+ *
+ * A specific tenant id validates the token issuer against
+ * `https://login.microsoftonline.com/<tenantId>/v2.0`. The multi-tenant
+ * authorities (`common`, `organizations`, `consumers`) have no single issuer,
+ * so validation stays off for them and a warning is logged once per authority.
  */
-const MicrosoftOIDCStrategy = new OIDCStrategy({
-  identityMetadata: `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/v2.0/.well-known/openid-configuration`,
-  clientID: MICROSOFT_CLIENT_ID,
-  responseType: 'code id_token',
-  responseMode: 'form_post',
-  redirectUrl: OAUTH_REDIRECT_URI,
-  allowHttpForRedirectUrl: MICROSOFT_OAUTH_ALLOW_HTTP_REDIRECT === 'true' || OAUTH_REDIRECT_URI.startsWith('http://'),
-  clientSecret: MICROSOFT_CLIENT_SECRET,
-  validateIssuer: false, // Set to true for production with specific tenant
-  passReqToCallback: true,
-  scope: ['openid', 'profile', 'email'],
-}, async (
+export const microsoftIssuerOptions = (tenantId: string = 'common'): { validateIssuer: boolean; issuer?: string } => {
+  if (MULTI_TENANT_AUTHORITIES.includes(tenantId.toLowerCase())) {
+    if (!warnedAuthorities.has(tenantId)) {
+      warnedAuthorities.add(tenantId);
+      logger.warn(
+        `Microsoft OIDC is configured for the multi-tenant authority "${tenantId}"; issuer validation is disabled. ` +
+        'Set MICROSOFT_TENANT_ID (or the tenant auth_config tenantId) to a specific Azure AD tenant for production.'
+      );
+    }
+    return { validateIssuer: false };
+  }
+  return {
+    validateIssuer: true,
+    issuer: `https://login.microsoftonline.com/${tenantId}/v2.0`,
+  };
+};
+
+/**
+ * Path the Azure AD redirect is served on. OAUTH_REDIRECT_URI is a full URL
+ * (it is what Azure redirects the browser to); Express needs its pathname.
+ */
+export const microsoftCallbackPath = (redirectUri: string = OAUTH_REDIRECT_URI): string => {
+  let path: string;
+  try {
+    path = new URL(redirectUri).pathname;
+  } catch {
+    path = redirectUri;
+  }
+  return path.endsWith('/') ? path : `${path}/`;
+};
+
+/**
+ * Microsoft verify callback. Routes set `context.partner` before passport
+ * calls this.
+ */
+export const microsoftVerifyCallback = async (
   req: any,
   iss: string,
   sub: string,
@@ -207,109 +242,144 @@ const MicrosoftOIDCStrategy = new OIDCStrategy({
     const safeError = ErrorSanitizer.sanitizeError(error, { provider: 'microsoft' });
     return done(new Error(safeError), false);
   }
-});
+};
+
+/**
+ * Microsoft Azure AD OIDC Strategy Configuration (env-backed default)
+ */
+const MicrosoftOIDCStrategy = new OIDCStrategy({
+  identityMetadata: `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/v2.0/.well-known/openid-configuration`,
+  clientID: MICROSOFT_CLIENT_ID,
+  responseType: 'code id_token',
+  responseMode: 'form_post',
+  redirectUrl: OAUTH_REDIRECT_URI,
+  allowHttpForRedirectUrl: MICROSOFT_OAUTH_ALLOW_HTTP_REDIRECT === 'true' || OAUTH_REDIRECT_URI.startsWith('http://'),
+  clientSecret: MICROSOFT_CLIENT_SECRET,
+  ...microsoftIssuerOptions(MICROSOFT_TENANT_ID),
+  passReqToCallback: true,
+  scope: ['openid', 'profile', 'email'],
+}, microsoftVerifyCallback);
 
 /**
  * Configure Microsoft OAuth Routes
- * Handles OIDC flow with Azure AD
+ * Handles OIDC flow with Azure AD, per tenant.
+ *
+ * passport-azure-ad manages its own state and nonce in the session, so the
+ * tenant is carried in the redirect path (`<callback path>/:clientKey`) or,
+ * when the registered redirect URI has no key segment, in the session.
  */
 export const useMicrosoftRoutes = (app: Application) => {
-  /**
-   * Microsoft OIDC Start Endpoint
-   * Initiates the Microsoft/Azure AD authentication flow
-   */
-  app.get(
-    '/auth/microsoft/openid/start/:clientKey',
-    async (req: any, res: Response, next) => {
-      try {
-        const { clientKey = 'reactory' } = req.params;
+  const start = async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const clientKey = startClientKey(req);
+      if (!clientKey) {
+        return res.status(400).send({ error: 'Missing client key' });
+      }
 
-        // Resolve partner/client
-        const partner = await ReactoryClient.findOne({ key: clientKey }).exec();
-        if (!partner) {
-          logger.error('Client not found', { clientKey });
-          return res.status(404).send({ error: 'Client not found' });
+      const partner = await ReactoryClient.findOne({ key: clientKey }).exec();
+      if (!partner) {
+        logger.error('Client not found', { clientKey });
+        return res.status(404).send({ error: 'Client not found' });
+      }
+
+      req.partner = partner;
+      req.context.partner = partner;
+
+      if (!TenantStrategyRegistry.isProviderEnabled('microsoft', partner)) {
+        return res.status(404).send({ error: 'Microsoft authentication is disabled for this tenant' });
+      }
+
+      const strategyName = TenantStrategyRegistry.getStrategyName('microsoft', partner);
+      if (!strategyName) {
+        return res.status(503).send({ error: 'Microsoft authentication is not configured correctly for this tenant' });
+      }
+
+      if (req.session) {
+        req.session[MICROSOFT_SESSION_CLIENT_KEY] = clientKey;
+      }
+
+      logger.debug('Starting Microsoft OAuth flow', { clientKey, strategyName });
+
+      passport.authenticate(strategyName, {
+        prompt: 'login',
+        failureRedirect: `/auth/microsoft/openid/failure?x-client-key=${encodeURIComponent(clientKey)}`,
+        failureFlash: false,
+      })(req, res, next);
+    } catch (error) {
+      logger.error('Error starting Microsoft OAuth', { error });
+      res.status(500).send({
+        error: 'An error occurred while trying to authenticate with Microsoft',
+      });
+    }
+  };
+
+  app.get('/auth/microsoft/openid/start/:clientKey', start);
+  app.get('/auth/microsoft/start', start);
+
+  const callback = async (req: any, res: Response, next: NextFunction) => {
+    const clientKey: string | undefined = req.params.clientKey || req.session?.[MICROSOFT_SESSION_CLIENT_KEY];
+    const failureRedirect = `/auth/microsoft/openid/failure?x-client-key=${encodeURIComponent(clientKey || '')}`;
+    try {
+      if (!clientKey) {
+        logger.warn('Microsoft callback without a tenant key');
+        return res.redirect(failureRedirect);
+      }
+
+      const partner = await ReactoryClient.findOne({ key: clientKey }).exec();
+      if (!partner) {
+        logger.error('Client not found in callback', { clientKey });
+        return res.redirect(failureRedirect);
+      }
+
+      req.partner = partner;
+      req.context.partner = partner;
+
+      const strategyName = TenantStrategyRegistry.isProviderEnabled('microsoft', partner)
+        ? TenantStrategyRegistry.getStrategyName('microsoft', partner)
+        : null;
+      if (!strategyName) {
+        return res.redirect(failureRedirect);
+      }
+
+      logger.debug('Microsoft OAuth callback received', { clientKey, strategyName });
+
+      passport.authenticate(strategyName, {
+        failureRedirect,
+        failureFlash: false,
+      }, (err: any, user: any) => {
+        if (req.session) delete req.session[MICROSOFT_SESSION_CLIENT_KEY];
+
+        if (err) {
+          logger.error('Microsoft authentication error in callback', { error: err });
+          return res.redirect(failureRedirect);
         }
 
-        req.partner = partner;
-        req.context.partner = partner;
+        if (!user) {
+          logger.warn('Microsoft authentication returned no user');
+          return res.redirect(failureRedirect);
+        }
 
-        logger.debug('Starting Microsoft OAuth flow', {
+        const token = typeof user === 'object' && 'token' in user
+          ? user.token
+          : Helpers.jwtMake(Helpers.jwtTokenForUser(user));
+
+        logger.info('Microsoft authentication complete, redirecting', {
           clientKey,
-          tenant: MICROSOFT_TENANT_ID,
+          partnerId: partner._id,
         });
 
-        // Authenticate with Azure AD
-        passport.authenticate('azuread-openidconnect', {
-          prompt: 'login',
-          failureRedirect: `/auth/microsoft/openid/failure/${clientKey}`,
-          failureFlash: false,
-        })(req, res, next);
-      } catch (error) {
-        logger.error('Error starting Microsoft OAuth', { error });
-        res.status(500).send({
-          error: 'An error occurred while trying to authenticate with Microsoft',
-        });
-      }
+        res.clearCookie('connect.sid');
+        res.redirect(`${partner.siteUrl}/?auth_token=${token}`);
+      })(req, res, next);
+    } catch (error) {
+      logger.error('Microsoft OAuth callback error', { error });
+      res.redirect(failureRedirect);
     }
-  );
+  };
 
-  /**
-   * Microsoft OIDC Callback Endpoint
-   * Handles the callback from Azure AD
-   */
-  app.post(
-    `${OAUTH_REDIRECT_URI}:clientKey`,
-    async (req: any, res: Response, next) => {
-      try {
-        const { clientKey } = req.params;
-
-        logger.debug('Microsoft OAuth callback received', { clientKey });
-
-        // Resolve partner/client
-        const partner = await ReactoryClient.findOne({ key: clientKey }).exec();
-        if (!partner) {
-          logger.error('Client not found in callback', { clientKey });
-          return res.redirect(`/auth/microsoft/openid/failure?x-client-key=${clientKey}`);
-        }
-
-        req.partner = partner;
-        req.context.partner = partner;
-
-        // Authenticate and handle response
-        passport.authenticate('azuread-openidconnect', {
-          failureRedirect: `/auth/microsoft/openid/failure?x-client-key=${clientKey}`,
-          failureFlash: false,
-        }, (err: any, user: any) => {
-          if (err) {
-            logger.error('Microsoft authentication error in callback', { error: err });
-            return res.redirect(`/auth/microsoft/openid/failure?x-client-key=${clientKey}`);
-          }
-
-          if (!user) {
-            logger.warn('Microsoft authentication returned no user');
-            return res.redirect(`/auth/microsoft/openid/failure?x-client-key=${clientKey}`);
-          }
-
-          // Generate JWT token
-          const token = typeof user === 'object' && 'token' in user 
-            ? user.token 
-            : Helpers.jwtMake(Helpers.jwtTokenForUser(user));
-
-          logger.info('Microsoft authentication complete, redirecting', {
-            clientKey,
-            partnerId: partner._id,
-          });
-
-          res.clearCookie('connect.sid');
-          res.redirect(`${partner.siteUrl}/?auth_token=${token}`);
-        })(req, res, next);
-      } catch (error) {
-        logger.error('Microsoft OAuth callback error', { error });
-        res.redirect(`/auth/microsoft/openid/failure?x-client-key=${req.params.clientKey}`);
-      }
-    }
-  );
+  const callbackPath = microsoftCallbackPath();
+  app.post(`${callbackPath}:clientKey`, callback);
+  app.post(callbackPath, callback);
 
   /**
    * Microsoft OAuth Failure Endpoint

@@ -9,7 +9,7 @@ interface StatusWidgetDependencies {
   ReactoryForm: Reactory.Forms.IReactoryFormComponent,
   SupportTicketWorkflow: any,
   StatusBadge: any
-};
+}
 
 interface StatusWidgetProps {
   reactory: Reactory.Client.IReactoryApi,

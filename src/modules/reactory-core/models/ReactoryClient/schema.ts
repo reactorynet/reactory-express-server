@@ -4,7 +4,7 @@ import statics from './statics';
 import { ReactoryFeatureFlagValueSchema } from '../ReactoryFeatureFlag';
 const { ObjectId, Mixed } = mongoose.Schema.Types;
 
-const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IReactoryApplicationPlugin>({ 
+const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IReactoryApplicationPlugin & { integrity?: string }>({ 
   id: String,  
   name: String,
   nameSpace: String,
@@ -17,7 +17,17 @@ const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IR
   options: Mixed,
   enabled: Boolean,
   roles: [String],
+  // Explicit SRI for a plugin hosted outside this server's CDN (WP-C4).
+  integrity: String,
 }, { _id: false });
+
+export const ServiceKeySchema = new mongoose.Schema({
+  label: { type: String, required: true },
+  keyHash: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  lastUsedAt: Date,
+  disabled: { type: Boolean, default: false },
+}, { _id: true });
 
 const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReactoryClient>({
   id: ObjectId,
@@ -122,6 +132,16 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
   whitelist: [String],
   plugins: [ReactoryApplicationPluginSchema],
   featureFlags: [ReactoryFeatureFlagValueSchema],
+  serviceKeys: [ServiceKeySchema],
+  publicKey: {
+    type: String,
+    index: true,
+  },
+  browserAuth: {
+    type: String,
+    enum: ['origin', 'secret'],
+    default: 'origin',
+  },
 }, {
   methods,
   statics,

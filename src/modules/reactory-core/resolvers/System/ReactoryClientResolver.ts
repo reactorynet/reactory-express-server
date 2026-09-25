@@ -46,7 +46,7 @@ export class ReactoryClientResolver {
   menus(partner: Reactory.Models.IReactoryClientDocument, __: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.UX.IReactoryMenuConfig[]> {
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
     return systemService.getMenusForClient(partner)
-  };
+  }
 
   @property("ReactoryClient", "featureFlags")
   featureFlags(partner: Reactory.Models.IReactoryClientDocument, __: any, context: Reactory.Server.IReactoryContext): Reactory.Server.IReactoryFeatureFlagValue<unknown>[] {

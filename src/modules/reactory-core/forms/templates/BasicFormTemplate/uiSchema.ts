@@ -11,7 +11,7 @@ const froalaOptions = {
   imageUploadURL: '${formContext.reactory.API_ROOT}/froala/upload/image',
   requestHeaders: {
     'x-client-key': '${formContext.reactory.CLIENT_KEY}',
-    'x-client-pwd': '${formContext.reactory.CLIENT_PWD}',
+    'x-client-public-key': '${formContext.reactory.CLIENT_PUBLIC_KEY}',
   },
 };
 

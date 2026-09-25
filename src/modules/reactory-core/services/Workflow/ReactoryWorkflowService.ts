@@ -121,9 +121,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       this.context.log('REACTORY_DATA env var is not set – skipping YAML workflow sync', {}, 'warn');
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/prefer-node-protocol
     const { existsSync, mkdirSync, copyFileSync, statSync } = await import('fs');
-    // eslint-disable-next-line @typescript-eslint/prefer-node-protocol
     const path = await import('path');
     const fsDeps = { existsSync, mkdirSync, copyFileSync, statSync, path };
 
@@ -592,9 +590,7 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     name: string,
     version?: string
   ): Promise<IYamlWorkflowDefinitionResult> {
-    // eslint-disable-next-line @typescript-eslint/prefer-node-protocol
     const { readFileSync, existsSync } = await import('fs');
-    // eslint-disable-next-line @typescript-eslint/prefer-node-protocol
     const path = await import('path');
     const yaml = await import('js-yaml');
     const deps = { existsSync, path, readFileSync, yaml };

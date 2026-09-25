@@ -1,0 +1,65 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "import"
+  ],
+  "extends": [
+    "eslint:recommended"
+  ],
+  "env": {
+    "node": true,
+    "jest": true,
+    "es2022": true
+  },
+  "rules": {
+    "no-undef": "off",
+    "no-unused-vars": "off",
+    "no-redeclare": "off",
+    "no-dupe-class-members": "off",
+    "no-empty": "off",
+    "no-useless-escape": "off",
+    "no-prototype-builtins": "off",
+    "no-inner-declarations": "off",
+    "no-case-declarations": "off",
+    "no-fallthrough": "off",
+    "no-async-promise-executor": "off",
+    "no-cond-assign": "off",
+    "no-control-regex": "off",
+    "no-empty-pattern": "off",
+    "no-extra-boolean-cast": "off",
+    "no-misleading-character-class": "off",
+    "no-regex-spaces": "off",
+    "no-sparse-arrays": "off",
+    "no-unsafe-finally": "off",
+    "no-useless-catch": "off",
+    "no-with": "off",
+    "require-yield": "off",
+    "getter-return": "off",
+    "no-mixed-spaces-and-tabs": "off",
+    "no-constant-condition": "off",
+    "no-debugger": "error",
+    "no-irregular-whitespace": [
+      "error",
+      {
+        "skipComments": true,
+        "skipStrings": true,
+        "skipTemplates": true,
+        "skipRegExps": true
+      }
+    ]
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    "**/node_modules/**",
+    "build/",
+    "dist/",
+    "coverage/",
+    "**/*.d.ts"
+  ]
+}

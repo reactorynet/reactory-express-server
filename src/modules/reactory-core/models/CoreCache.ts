@@ -11,7 +11,7 @@ export interface ICache extends Document {
   partner: any,
   ttl: number,
   item: any | any[],
-};
+}
 
 export interface ICacheStatic {
   new(): Cache

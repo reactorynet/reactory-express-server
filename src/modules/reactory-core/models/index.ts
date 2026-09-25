@@ -1,4 +1,8 @@
 import { DataSource } from "typeorm";
+import { registerTenantDataSource } from "@reactory/server-core/database/tenant/TenantRepository";
+import { typeormPostgresOptions } from "@reactory/server-core/database/connectionOptions";
+import { CORE_ENTITIES, CORE_MIGRATIONS } from "../migrations/typeorm/schema";
+import { prepareSchemaOrExit, resolveSynchronize } from "@reactory/server-core/database/migrationGovernance";
 import Audit from "./Audit";
 import RateLimit from "./RateLimit";
 import Application from "./Application";
@@ -49,32 +53,20 @@ import { encoder, strongRandom } from "@reactory/server-core/utils";
 import Hash from "@reactory/server-core/utils/hash";
 
 
-// The REACTORY_POSTGRES_* names are the documented overrides, but the env files the
-// server actually ships (config/<client>/.env.*) define the POSTGRES_* names. Without
-// falling through to those, this DataSource authenticates with the literal default
-// "reactory" password and startup fails with `password authentication failed`, taking
-// the calendar entities (and everything else Postgres-backed) down with it.
+// Host, credentials and TLS come from src/database/connectionOptions.ts (WP-B4):
+// REACTORY_POSTGRES_* first, then the POSTGRES_* names the env files ship with.
 export const PostgresDataSource = new DataSource({
   type: "postgres",
-  host: process.env.REACTORY_POSTGRES_HOST || process.env.POSTGRES_DB_HOST || "localhost",
-  port: parseInt(process.env.REACTORY_POSTGRES_PORT || process.env.POSTGRES_DB_PORT || "5432"),
-  username: process.env.REACTORY_POSTGRES_USER || process.env.POSTGRES_USER || "reactory",
-  password: process.env.REACTORY_POSTGRES_PASSWORD || process.env.POSTGRES_PASSWORD || "reactory",
-  database: process.env.REACTORY_POSTGRES_DB || process.env.POSTGRES_DB || "reactory",
-  synchronize: true,
-  entities: [
-    Audit,
-    RateLimit,
-    ReactoryCalendar, 
-    ReactoryCalendarEntry, 
-    ReactoryCalendarParticipant, 
-    ReactoryCalendarRecurrencePattern, 
-    ReactoryCalendarWorkflowTrigger, 
-    ReactoryCalendarServiceTrigger,
-    ReactoryFormSubmission,
-    UserSession,
-  ],
+  ...typeormPostgresOptions(),
+  // Schema changes go through migrations outside development; see
+  // src/database/migrationGovernance.ts. REACTORY_POSTGRES_SYNCHRONIZE overrides.
+  synchronize: false,
+  entities: CORE_ENTITIES,
+  ...CORE_MIGRATIONS,
 });
+
+// Lets getTenantRepository(context, Entity) find this DataSource (WP-B2).
+registerTenantDataSource(PostgresDataSource);
 
 /**
  * The generic form submission pipeline filters inside the `form_data` JSONB
@@ -227,9 +219,12 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       domain: Reactory.ComponentDomain.model,
       overwrite: false,
       onStartup: async (context: Reactory.Server.IReactoryContext) => {
-        context.info("Synchronizing Postgres Data Source");
         await PostgresDataSource.initialize();
-        await PostgresDataSource.synchronize();
+        await prepareSchemaOrExit(PostgresDataSource, {
+          label: "reactory-core Postgres",
+          synchronize: resolveSynchronize(process.env.REACTORY_POSTGRES_SYNCHRONIZE),
+          log: (message) => context.info(message),
+        });
         const repo = PostgresDataSource.getRepository(Audit);
         const audit = new Audit();
         audit.user = "system";
@@ -239,7 +234,7 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
         audit.signature = Hash(encoder.encodeState(audit)).toString();
         repo.save(audit);
         await createFormSubmissionIndexes(context);
-        context.debug("Postgres Data Source Synchronized");        
+        context.debug("Postgres Data Source ready");        
       },
     },
     {
@@ -687,7 +682,7 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
             createdAt: new Date(),
             updatedAt: new Date(),
           });
-          sysAdminUser.setPassword(strongRandom(16));
+          await sysAdminUser.setPassword(strongRandom(16));
           await sysAdminUser.save().then();
         }
         context.state.sysAdmin = sysAdminUser;

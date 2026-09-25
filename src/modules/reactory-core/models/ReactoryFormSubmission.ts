@@ -1,3 +1,4 @@
+import { ClientKeyColumn } from '../../../database/tenant/ClientKeyColumn';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -23,6 +24,11 @@ import {
  * DSL, which compiles to JSONB operators (see `SubmissionFilter.ts`).
  */
 @Entity({ name: 'reactory_form_submission' })
+// GIN index over form_data for SubmissionFilter's containment / key lookups.
+// TypeORM cannot express jsonb_path_ops; the core baseline migration and
+// createFormSubmissionIndexes() create it, and synchronize: false stops schema
+// sync and migration:generate from dropping it.
+@Index('idx_reactory_form_submission_data', { synchronize: false })
 @Index(['fqn', 'createdAt'])
 @Index(['fqn', 'userId'])
 @Index(['clientKey', 'fqn', 'createdAt'])
@@ -47,9 +53,8 @@ export default class ReactoryFormSubmission {
    * an administrator of one client could read another client's submissions
    * through the explorer.
    */
-  @Column({ type: 'varchar', length: 255, nullable: true, name: 'client_key' })
-  @Index()
-  clientKey?: string;
+  @ClientKeyColumn()
+  clientKey: string;
 
   /**
    * The MongoDB ObjectId string of the submitting user. Null when the form was
@@ -63,7 +68,7 @@ export default class ReactoryFormSubmission {
    * The form data as submitted. Stored as JSONB so that the explorer can filter
    * and search inside the document in the database rather than in memory.
    */
-  @Column({ type: 'jsonb', nullable: false, name: 'form_data', default: () => "'{}'::jsonb" })
+  @Column({ type: 'jsonb', nullable: false, name: 'form_data', default: () => "'{}'" })
   formData!: Record<string, unknown>;
 
   /**

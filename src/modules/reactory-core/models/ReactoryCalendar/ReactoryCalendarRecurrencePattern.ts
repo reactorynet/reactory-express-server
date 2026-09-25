@@ -1,3 +1,4 @@
+import { ClientKeyColumn } from '../../../../database/tenant/ClientKeyColumn';
 import { Entity, PrimaryGeneratedColumn, Column, Index, BaseEntity } from "typeorm";
 
 
@@ -7,6 +8,10 @@ import { Entity, PrimaryGeneratedColumn, Column, Index, BaseEntity } from "typeo
 export class ReactoryCalendarRecurrencePattern extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  /** Owning ReactoryClient key (WP-B2); set by the tenant repository. */
+  @ClientKeyColumn()
+  clientKey: string;
 
   @Column({
     type: 'enum',

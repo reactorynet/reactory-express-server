@@ -128,6 +128,12 @@ type ReactoryFormUIResource {
     crossOrigin: Boolean
 
     """
+    Subresource Integrity (sha384-...) for a script resource, set on the
+    script tag so the browser refuses a file that does not match.
+    """
+    integrity: String
+
+    """
     The uniform resource identifier for this UI Resource item.  For a web client this would be
     a https://your.resource.com/package/script.js or for css https://your.resource.com/package/css.js
     For a native client this would be a resource identifier for a library include that can be a react-native 
@@ -190,6 +196,12 @@ input ReactoryFormUIResourceInput {
     Indicate whether or not this resource is being taken from a 3rd party
     """
     crossOrigin: Boolean
+
+    """
+    Subresource Integrity (sha384-...) for a script resource, set on the
+    script tag so the browser refuses a file that does not match.
+    """
+    integrity: String
 
     """
     The uniform resource identifier for this UI Resource item.  For a web client this would be
@@ -1117,14 +1129,14 @@ extend type Mutation {
         Git options. If present reactory will 
         attempt to execute the relevant git actions
         """
-        git: ReactoryGitOptions): ReactoryForm
+        git: ReactoryGitOptions): ReactoryForm @auth(roles: ["ADMIN", "DEVELOPER"])
     
     """
     Clones a Form
     """
-    ReactoryFormClone(id: String!): ReactoryForm
+    ReactoryFormClone(id: String!): ReactoryForm @auth(roles: ["USER", "ADMIN"])
     """
     Deletes a Form
     """
-    ReactoryFormDelete(id: String!): CoreSimpleResponse
+    ReactoryFormDelete(id: String!): CoreSimpleResponse @auth(roles: ["ADMIN", "DEVELOPER"])
 }

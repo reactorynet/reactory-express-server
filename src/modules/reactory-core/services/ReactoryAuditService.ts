@@ -2,7 +2,8 @@ import Reactory from '@reactorynet/reactory-core';
 import logger from '@reactory/server-core/logging';
 import AuditModel from '@reactory/server-modules/reactory-core/models/Audit';
 import { PostgresDataSource } from '@reactory/server-modules/reactory-core/models';
-import { Repository, Between, LessThanOrEqual, MoreThanOrEqual, In } from 'typeorm';
+import { Repository, Between, LessThan, LessThanOrEqual, MoreThanOrEqual, In } from 'typeorm';
+import { getTenantRepository, TenantRepository } from '@reactory/server-core/database/tenant/TenantRepository';
 import Hash from '@reactory/server-core/utils/hash';
 
 /**
@@ -80,11 +81,27 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
   description: string = 'Service for audit logging and compliance tracking';
   
   context: Reactory.Server.IReactoryContext;
-  private repository: Repository<AuditModel>;
 
   constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.context = context;
-    this.repository = PostgresDataSource.getRepository(AuditModel);
+  }
+
+  /**
+   * Audit rows are written with the request's client_key, or none for system
+   * events (startup, schedulers), so writes use the raw repository (WP-B2).
+   */
+  private get writeRepository(): Repository<AuditModel> {
+    return PostgresDataSource.getRepository(AuditModel);
+  }
+
+  /**
+   * Reads are tenant-scoped whenever the request has a partner: a tenant's
+   * administrators see that tenant's rows only. Only a context without a
+   * partner (CLI, system jobs) reads across tenants, including system rows.
+   */
+  private get readRepository(): TenantRepository<AuditModel> | Repository<AuditModel> {
+    if (this.context?.partner?.key) return getTenantRepository(this.context, AuditModel);
+    return this.writeRepository;
   }
 
   onStartup(): Promise<void> {
@@ -141,7 +158,8 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
       const signature = Hash(JSON.stringify(signatureData)).toString();
 
       // Create audit entry
-      const auditEntry = this.repository.create({
+      const auditEntry = this.writeRepository.create({
+        clientKey: this.context?.partner?.key ?? null,
         user: user || this.context.user?._id?.toString() || 'system',
         action,
         source,
@@ -164,7 +182,7 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
         moduleVersion
       });
 
-      const saved = await this.repository.save(auditEntry);
+      const saved = await this.writeRepository.save(auditEntry);
       
       logger.debug(`Audit event logged: ${action} on ${resourceType}/${resourceId} by ${auditEntry.actorId} [${moduleName}@${moduleVersion}]`);
       
@@ -207,7 +225,7 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
         sortOrder = 'DESC'
       } = filter;
 
-      const query = this.repository.createQueryBuilder('audit');
+      const query = this.readRepository.createQueryBuilder('audit');
 
       // Apply filters
       if (userId) {
@@ -396,11 +414,10 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
-      const result = await this.repository
-        .createQueryBuilder()
-        .delete()
-        .where('createdAt < :cutoffDate', { cutoffDate })
-        .execute();
+      // Scoped to the request's tenant: an administrator of one client must
+      // not purge another client's audit history. A context without a partner
+      // (the retention job) purges across tenants.
+      const result = await this.readRepository.delete({ createdAt: LessThan(cutoffDate) } as any);
 
       logger.info(`Purged ${result.affected} audit logs older than ${retentionDays} days`);
 
@@ -420,7 +437,7 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
    */
   async getResourceAuditTrail(resourceType: string, resourceId: string): Promise<AuditModel[]> {
     try {
-      const logs = await this.repository.find({
+      const logs = await this.readRepository.find({
         where: { resourceType, resourceId },
         order: { createdAt: 'ASC' }
       });

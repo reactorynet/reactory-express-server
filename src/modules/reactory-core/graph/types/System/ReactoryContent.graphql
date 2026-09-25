@@ -183,16 +183,16 @@ extend type Query {
 }
 
 extend type Mutation {
-  ReactoryCreateContent(createInput: CreateContentInput!): ReactoryContent
-  ReactorySaveContent(reactoryInput: ReactoryContentInput!): ReactoryContent
+  ReactoryCreateContent(createInput: CreateContentInput!): ReactoryContent @auth(roles: ["USER"])
+  ReactorySaveContent(reactoryInput: ReactoryContentInput!): ReactoryContent @auth(roles: ["USER"])
   """
   Creates or replaces a single translation on a content item without
   rewriting the source content.
   """
-  ReactorySaveContentTranslation(slug: String!, translation: ReactoryContentTranslationInput!): ReactoryContent
+  ReactorySaveContentTranslation(slug: String!, translation: ReactoryContentTranslationInput!): ReactoryContent @auth(roles: ["USER"])
   """
   Removes a translation for the given language from a content item.
   """
-  ReactoryDeleteContentTranslation(slug: String!, lang: String!): ReactoryContent
-  ReactorySaveImageData(folder: String, filename: String, svg: String, png: String, width: Int, height: Int): ReactorySaveImageDataResponse
+  ReactoryDeleteContentTranslation(slug: String!, lang: String!): ReactoryContent @auth(roles: ["USER"])
+  ReactorySaveImageData(folder: String, filename: String, svg: String, png: String, width: Int, height: Int): ReactorySaveImageDataResponse @auth(roles: ["USER"])
 }

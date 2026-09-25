@@ -20,6 +20,7 @@ const classroomTestHelpers = {
   // resolver tests fail with "Cannot return null for non-nullable field" - a schema-shape
   // problem that reads as a resolver bug.
   createMockCourse: (overrides: any = {}) => ({
+    clientKey: 'booktutor',
     id: 'course-123',
     title: 'Test Course',
     description: 'A test course',
@@ -44,6 +45,7 @@ const classroomTestHelpers = {
   }),
 
   createMockEnrollment: (overrides: any = {}) => ({
+    clientKey: 'booktutor',
     id: 'enrollment-123',
     courseId: 'course-123',
     studentId: 'student-123',
@@ -63,6 +65,7 @@ const classroomTestHelpers = {
   }),
 
   createMockAssignment: (overrides: any = {}) => ({
+    clientKey: 'booktutor',
     id: 'assignment-123',
     courseId: 'course-123',
     title: 'Test Assignment',
@@ -113,6 +116,7 @@ const classroomTestHelpers = {
    */
   createMockProgress: (overrides: any = {}) => {
     const progress: any = {
+      clientKey: 'booktutor',
       id: 'progress-123',
       enrollmentId: 'enrollment-123',
       progressPercentage: 45,
@@ -270,8 +274,20 @@ const kbTestHelpers = {
   }),
 };
 
-// Context helper for creating mock contexts with required methods
+/**
+ * Entity metadata a mocked TypeORM repository needs to pass through the
+ * tenant repository wrapper (WP-B2): a clientKey column and a primary key.
+ */
+const tenantMetadata = (name: string = 'MockEntity', primary: string = 'id') => ({
+  name,
+  findColumnWithPropertyName: (property: string) => (property === 'clientKey' ? { propertyName: 'clientKey' } : undefined),
+  primaryColumns: [{ propertyName: primary }],
+});
+
+// Context helper for creating mock contexts with required methods. Carries a
+// partner, because tenant-scoped repositories refuse a context without one.
 const createMockContext = (overrides?: any) => ({
+  partner: { key: 'booktutor', _id: 'booktutor-client-id' },
   user: kbTestHelpers.createMockUser({ _id: 'user-123' }),
   getService: jest.fn().mockReturnValue(null),
   log: jest.fn(),
@@ -284,4 +300,5 @@ const createMockContext = (overrides?: any) => ({
   ...classroomTestHelpers,
   ...kbTestHelpers,
   createMockContext,
+  tenantMetadata,
 };

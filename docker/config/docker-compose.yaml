@@ -7,7 +7,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-reactory}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-reactory-core}
-      MONGO_INITDB_DATABASE: ${MONGO_DB:reactory-local-reactory}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-reactory-local-reactory}
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
@@ -43,7 +43,65 @@ services:
       - ${REACTORY_SERVER}/certificates:/etc/ssl/certs
     networks:
       - reactory-network
-  
+
+  # TLS-only Postgres, refusing plain text as Aurora does with rds.force_ssl=1
+  # (WP-B4). Opt in with `--profile tls`; run bin/dev-tls-certs.sh first. The
+  # key is copied so the server can own it with the 0600 mode Postgres demands.
+  reactory_postgres_tls:
+    profiles: ["tls"]
+    image: postgres:${POSTGRES_VERSION:-17}
+    container_name: reactory-postgres-tls
+    environment:
+      POSTGRES_USER: ${REACTORY_POSTGRES_USER:-reactory}
+      POSTGRES_PASSWORD: ${REACTORY_POSTGRES_PASSWORD:-reactory}
+      POSTGRES_DB: ${REACTORY_POSTGRES_DB:-reactory}
+    entrypoint:
+      - bash
+      - -c
+      - >-
+        install -o postgres -g postgres -m 600 /tls/server.key /var/lib/postgresql/server.key &&
+        exec docker-entrypoint.sh postgres -c ssl=on -c ssl_cert_file=/tls/server.crt
+        -c ssl_key_file=/var/lib/postgresql/server.key -c hba_file=/tls/pg_hba.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${REACTORY_POSTGRES_USER:-reactory}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    ports:
+      - "${POSTGRES_TLS_PORT:-5433}:5432"
+    volumes:
+      - ${REACTORY_SERVER:-../..}/docker/config/tls:/tls:ro
+    networks:
+      - reactory-network
+
+  # TLS-only MongoDB for the DocumentDB connection path (WP-B4). Same profile
+  # and certificates. Clients need not present a certificate, as with DocumentDB.
+  reactory_mongodb_tls:
+    profiles: ["tls"]
+    image: mongo:${MONGO_VERSION:-7.0}
+    container_name: reactory-mongodb-tls
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-reactory}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-reactory-core}
+    command:
+      - --tlsMode=requireTLS
+      - --tlsCertificateKeyFile=/tls/server.pem
+      - --tlsCAFile=/tls/ca.pem
+      - --tlsAllowConnectionsWithoutCertificates
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--tls", "--tlsCAFile", "/tls/ca.pem", "--host", "localhost", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    ports:
+      - "${MONGO_TLS_PORT:-27018}:27017"
+    volumes:
+      - ${REACTORY_SERVER:-../..}/docker/config/tls:/tls:ro
+    networks:
+      - reactory-network
+
   reactory_meilisearch:
     image: getmeili/meilisearch:${MEILISEARCH_VERSION:-v1.13}
     container_name: reactory-meilisearch

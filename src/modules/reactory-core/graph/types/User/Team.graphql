@@ -56,9 +56,9 @@ extend type Query {
 
 
 extend type Mutation {
-  createTeam(input: TeamInput): Team
-  updateTeam(id: String!, input: TeamInput): Team
-  addMemberToTeam(id: String!, memberId: String!): Boolean
-  removeMemberFromTeam(id: String!, memberId: String!): Boolean
-  deleteTeam(id: String!): Boolean
+  createTeam(input: TeamInput): Team @auth(roles: ["USER", "ADMIN"])
+  updateTeam(id: String!, input: TeamInput): Team @auth(roles: ["USER", "ADMIN"])
+  addMemberToTeam(id: String!, memberId: String!): Boolean @auth(roles: ["USER", "ADMIN"])
+  removeMemberFromTeam(id: String!, memberId: String!): Boolean @auth(roles: ["USER", "ADMIN"])
+  deleteTeam(id: String!): Boolean @auth(roles: ["USER", "ADMIN"])
 }

@@ -53,6 +53,6 @@ extend type Query {
 }
 
 extend type Mutation {
-  ReactoryUpdateTemplateContent(id: String, content: String): Template  
-  ReactorySetEmailTemplate(emailTemplate: EmailTemplateInput): EmailTemplate
+  ReactoryUpdateTemplateContent(id: String, content: String): Template @auth(roles: ["USER", "ADMIN"])  
+  ReactorySetEmailTemplate(emailTemplate: EmailTemplateInput): EmailTemplate @auth(roles: ["USER", "ADMIN"])
 }
