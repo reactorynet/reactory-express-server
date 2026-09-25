@@ -28,12 +28,14 @@ import WorkflowResolver from './Workflow/WorkflowResolver';
 import TaskResolver from './Task/TaskResolver';
 import AuditResolver from './System/AuditResolver';
 import FeatureFlagResolver from './System/FeatureFlagResolver';
+import SubresourceIntegrityResolver from './System/SubresourceIntegrityResolver';
 
 import { mergeGraphResolver } from '@reactory/server-core/utils';
 
 export default mergeGraphResolver([
   ApiStatus,
   ReactoryClientResolver,
+  SubresourceIntegrityResolver,
   ClientComponentResolver,
   ClientRouteResolver,
   BusinessUnitResolver,

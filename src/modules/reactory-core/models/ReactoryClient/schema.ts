@@ -4,7 +4,7 @@ import statics from './statics';
 import { ReactoryFeatureFlagValueSchema } from '../ReactoryFeatureFlag';
 const { ObjectId, Mixed } = mongoose.Schema.Types;
 
-const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IReactoryApplicationPlugin>({ 
+const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IReactoryApplicationPlugin & { integrity?: string }>({ 
   id: String,  
   name: String,
   nameSpace: String,
@@ -17,6 +17,8 @@ const ReactoryApplicationPluginSchema = new mongoose.Schema<Reactory.Platform.IR
   options: Mixed,
   enabled: Boolean,
   roles: [String],
+  // Explicit SRI for a plugin hosted outside this server's CDN (WP-C4).
+  integrity: String,
 }, { _id: false });
 
 export const ServiceKeySchema = new mongoose.Schema({
