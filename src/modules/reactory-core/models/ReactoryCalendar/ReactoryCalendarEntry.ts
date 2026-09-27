@@ -1,3 +1,5 @@
+import { ClientKeyColumn } from '../../../../database/tenant/ClientKeyColumn';
+import type { CalendarRepository } from './repository';
 import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn, UpdateDateColumn, BaseEntity } from "typeorm";
 import { Brackets } from "typeorm";
 import { Models } from '@reactorynet/reactory-core'
@@ -12,6 +14,10 @@ import { Models } from '@reactorynet/reactory-core'
 export class ReactoryCalendarEntry extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  /** Owning ReactoryClient key (WP-B2); set by the tenant repository. */
+  @ClientKeyColumn()
+  clientKey: string;
 
   @Column({ name: 'calendar_id', type: 'integer', nullable: false })
   @Index()
@@ -101,8 +107,8 @@ export class ReactoryCalendarEntry extends BaseEntity {
   participants?: any[]; // Populated from PostgreSQL
 
   // Optimized query methods for calendar views
-  static findInDateRange(calendarIds: number[], startDate: Date, endDate: Date, status?: Reactory.Models.ReactoryCalendarEntryStatus[]) {
-    const query = this.createQueryBuilder('entry')
+  static findInDateRange(repo: CalendarRepository<ReactoryCalendarEntry>, calendarIds: number[], startDate: Date, endDate: Date, status?: Reactory.Models.ReactoryCalendarEntryStatus[]) {
+    const query = repo.createQueryBuilder('entry')
       .where('entry.calendar_id IN (:...calendarIds)', { calendarIds })
       .andWhere('entry.status != :cancelled', { cancelled: Models.ReactoryCalendarEntryStatus.CANCELLED })
       .andWhere(
@@ -120,8 +126,8 @@ export class ReactoryCalendarEntry extends BaseEntity {
     return query.getMany();
   }
 
-  static findUserEvents(userId: string, startDate: Date, endDate: Date, status?: Reactory.Models.ReactoryCalendarEntryStatus[]) {
-    const query = this.createQueryBuilder('entry')
+  static findUserEvents(repo: CalendarRepository<ReactoryCalendarEntry>, userId: string, startDate: Date, endDate: Date, status?: Reactory.Models.ReactoryCalendarEntryStatus[]) {
+    const query = repo.createQueryBuilder('entry')
       .innerJoin('reactory_calendar_participant', 'participant',
         'participant.entry_id = entry.id AND participant.user_id = :userId', { userId })
       .where('entry.status != :cancelled', { cancelled: Models.ReactoryCalendarEntryStatus.CANCELLED })
@@ -136,8 +142,8 @@ export class ReactoryCalendarEntry extends BaseEntity {
     return query.getMany();
   }
 
-  static findOrganizerEvents(organizerId: string, startDate?: Date, endDate?: Date, status?: Reactory.Models.ReactoryCalendarEntryStatus[]) {
-    const query = this.createQueryBuilder('entry')
+  static findOrganizerEvents(repo: CalendarRepository<ReactoryCalendarEntry>, organizerId: string, startDate?: Date, endDate?: Date, status?: Reactory.Models.ReactoryCalendarEntryStatus[]) {
+    const query = repo.createQueryBuilder('entry')
       .where('entry.organizer_id = :organizerId', { organizerId })
       .orderBy('entry.start_date', 'ASC');
 
@@ -153,8 +159,8 @@ export class ReactoryCalendarEntry extends BaseEntity {
     return query.getMany();
   }
 
-  static findCalendarEvents(calendarId: number, startDate?: Date, endDate?: Date, status?: Reactory.Models.ReactoryCalendarEntryStatus[]) {
-    const query = this.createQueryBuilder('entry')
+  static findCalendarEvents(repo: CalendarRepository<ReactoryCalendarEntry>, calendarId: number, startDate?: Date, endDate?: Date, status?: Reactory.Models.ReactoryCalendarEntryStatus[]) {
+    const query = repo.createQueryBuilder('entry')
       .where('entry.calendar_id = :calendarId', { calendarId })
       .orderBy('entry.start_date', 'ASC');
 
@@ -170,8 +176,8 @@ export class ReactoryCalendarEntry extends BaseEntity {
     return query.getMany();
   }
 
-  static findConflictingEvents(calendarIds: number[], startDate: Date, endDate: Date, excludeEntryId?: number) {
-    const query = this.createQueryBuilder('entry')
+  static findConflictingEvents(repo: CalendarRepository<ReactoryCalendarEntry>, calendarIds: number[], startDate: Date, endDate: Date, excludeEntryId?: number) {
+    const query = repo.createQueryBuilder('entry')
       .where('entry.calendar_id IN (:...calendarIds)', { calendarIds })
       .andWhere('entry.status = :confirmed', { confirmed: Models.ReactoryCalendarEntryStatus.CONFIRMED })
       .andWhere(
@@ -188,8 +194,8 @@ export class ReactoryCalendarEntry extends BaseEntity {
     return query.getMany();
   }
 
-  static findByTags(tags: string[], calendarIds?: number[]) {
-    const query = this.createQueryBuilder('entry')
+  static findByTags(repo: CalendarRepository<ReactoryCalendarEntry>, tags: string[], calendarIds?: number[]) {
+    const query = repo.createQueryBuilder('entry')
       .where('entry.tags @> :tags', { tags: JSON.stringify(tags) });
 
     if (calendarIds && calendarIds.length > 0) {
@@ -199,8 +205,8 @@ export class ReactoryCalendarEntry extends BaseEntity {
     return query.getMany();
   }
 
-  static searchEntries(searchTerm: string, calendarIds?: number[], limit: number = 50) {
-    const query = this.createQueryBuilder('entry')
+  static searchEntries(repo: CalendarRepository<ReactoryCalendarEntry>, searchTerm: string, calendarIds?: number[], limit: number = 50) {
+    const query = repo.createQueryBuilder('entry')
       .where('entry.title ILIKE :searchTerm OR entry.description ILIKE :searchTerm', {
         searchTerm: `%${searchTerm}%`
       })

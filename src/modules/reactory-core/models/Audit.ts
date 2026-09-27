@@ -1,3 +1,4 @@
+import { ClientKeyColumn } from '../../../database/tenant/ClientKeyColumn';
 import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn } from "typeorm"
 
 @Entity({ name: 'reactory_audit' })
@@ -9,6 +10,13 @@ export default class AuditModel {
 
   @PrimaryGeneratedColumn()
   id: number
+
+  /**
+   * Owning ReactoryClient key (WP-B2). Nullable on purpose: system events
+   * (startup, schedulers) belong to no tenant and are written unscoped.
+   */
+  @ClientKeyColumn({ nullable: true })
+  clientKey?: string | null
   
   @Column({ 
     length: 255,

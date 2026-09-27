@@ -69,14 +69,33 @@ describe('ReactoryAuditService', () => {
     expect(report.statistics).toBeDefined();
   });
 
-  it('purges old logs', async () => {
-    // Directly stub the internal repository to avoid deep query-builder mocking
-    (service as any).repository = {
-      createQueryBuilder: () => ({
-        delete: () => ({ where: () => ({ execute: async () => ({ affected: 5 }) }) }),
-      }),
-    };
+  it('purges old logs across tenants when the context has no tenant (retention job)', async () => {
+    mockRepo.delete = jest.fn().mockResolvedValue({ affected: 5 });
     const res = await service.purgeOldAuditLogs(30);
     expect(res).toBe(5);
+    expect(mockRepo.delete).toHaveBeenCalledWith({ createdAt: expect.anything() });
+  });
+
+  it('stamps the request tenant on audit rows, and none for system events', async () => {
+    mockRepo.create.mockImplementation((v: any) => v);
+    mockRepo.save.mockImplementation(async (v: any) => v);
+    const tenantService = new ReactoryAuditService({}, { ...mockContext, partner: { _id: 'p1', key: 'tenant-a' } });
+    const tenantRow: any = await tenantService.logAuditEvent({ action: 'x', source: 's' } as any);
+    expect(tenantRow.clientKey).toBe('tenant-a');
+    const systemRow: any = await service.logAuditEvent({ action: 'x', source: 's' } as any);
+    expect(systemRow.clientKey).toBeNull();
+  });
+
+  it('scopes purge and reads to the request tenant when there is one', async () => {
+    const tenantRepo = { delete: jest.fn().mockResolvedValue({ affected: 2 }), find: jest.fn().mockResolvedValue([]) };
+    const tenancy = require('@reactory/server-core/database/tenant/TenantRepository');
+    const spy = jest.spyOn(tenancy, 'getTenantRepository').mockReturnValue(tenantRepo);
+    const tenantService = new ReactoryAuditService({}, { ...mockContext, partner: { _id: 'p1', key: 'tenant-a' } });
+    await expect(tenantService.purgeOldAuditLogs(30)).resolves.toBe(2);
+    await tenantService.getResourceAuditTrail('Thing', '1');
+    expect(tenantRepo.delete).toHaveBeenCalled();
+    expect(tenantRepo.find).toHaveBeenCalled();
+    expect(mockRepo.delete).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

@@ -3,6 +3,7 @@ import { Repository, SelectQueryBuilder } from 'typeorm';
 import { service } from '@reactory/server-core/application/decorators/service';
 import ApiError, { InsufficientPermissions } from '@reactory/server-core/exceptions';
 import ReactoryFormSubmission from '../../models/ReactoryFormSubmission';
+import { getTenantRepository } from '@reactory/server-core/database/tenant/TenantRepository';
 import { PostgresDataSource } from '../../models';
 import {
   ReactoryFormSubmissionConfig,
@@ -42,6 +43,18 @@ export interface SubmitArgs {
  * permission model for both writing and reading submissions so that the
  * resolver stays a thin transport layer.
  */
+/**
+ * What the service needs from its repository; satisfied by both the
+ * TenantRepository (requests with a partner) and the raw one (CLI).
+ */
+interface SubmissionStore {
+  create(entityLike: Partial<ReactoryFormSubmission>): ReactoryFormSubmission;
+  save(entity: ReactoryFormSubmission): Promise<ReactoryFormSubmission>;
+  findOne(options: { where: Record<string, unknown> }): Promise<ReactoryFormSubmission | null>;
+  createQueryBuilder(alias: string): SelectQueryBuilder<ReactoryFormSubmission>;
+  delete(criteria: Record<string, unknown>): Promise<unknown>;
+}
+
 @service({
   id: 'core.ReactoryFormSubmissionService@1.0.0',
   nameSpace: 'core',
@@ -94,14 +107,20 @@ export class ReactoryFormSubmissionService implements Reactory.Service.IReactory
     return true;
   }
 
-  private get repository(): Repository<ReactoryFormSubmission> {
+  /**
+   * Tenant-scoped whenever the request has a partner (WP-B2): reads, updates
+   * and deletes only ever see the request client's rows, and saves are stamped
+   * with its key. A context without a partner (the CLI) reads across clients.
+   */
+  private get repository(): SubmissionStore {
     if (PostgresDataSource.isInitialized !== true) {
       throw new ApiError(
         'The Postgres data source is not initialised, form submissions are unavailable',
         { where: 'ReactoryFormSubmissionService' },
       );
     }
-    return PostgresDataSource.getRepository(ReactoryFormSubmission);
+    const raw = PostgresDataSource.getRepository(ReactoryFormSubmission);
+    return (this.clientKey ? getTenantRepository(this.context, ReactoryFormSubmission, raw) : raw) as SubmissionStore;
   }
 
   /**
@@ -231,6 +250,12 @@ export class ReactoryFormSubmissionService implements Reactory.Service.IReactory
     const { fqn, formData, id } = args;
     const { config } = await this.requireSubmissionForm(fqn);
 
+    if (!this.clientKey) {
+      throw new ApiError('A form submission must be made on behalf of a client', {
+        where: 'ReactoryFormSubmissionService.submit', fqn,
+      });
+    }
+
     const userId = this.currentUserId;
 
     if (userId === null && config.allowAnonymous !== true) {
@@ -297,7 +322,7 @@ export class ReactoryFormSubmissionService implements Reactory.Service.IReactory
       });
     }
 
-    if (this.clientKey && existing.clientKey && existing.clientKey !== this.clientKey) {
+    if (this.clientKey && existing.clientKey !== this.clientKey) {
       throw new InsufficientPermissions('That submission belongs to another client', {
         where: 'ReactoryFormSubmissionService.update', id,
       });
@@ -339,16 +364,8 @@ export class ReactoryFormSubmissionService implements Reactory.Service.IReactory
       .createQueryBuilder(ALIAS)
       .where(`"${ALIAS}"."fqn" = :fqn`, { fqn });
 
-    // Submissions are partitioned per ReactoryClient. A request that arrives
-    // without a partner (the CLI, for instance) sees everything; a request made
-    // on behalf of a client only ever sees that client's rows.
-    const clientKey = this.clientKey;
-    if (clientKey) {
-      query.andWhere(
-        `("${ALIAS}"."client_key" = :clientKey OR "${ALIAS}"."client_key" IS NULL)`,
-        { clientKey },
-      );
-    }
+    // Partitioned per ReactoryClient by the tenant repository (see the
+    // repository getter); a request without a partner (the CLI) sees all.
 
     if (filter.from) {
       query.andWhere(`"${ALIAS}"."created_at" >= :from`, { from: new Date(filter.from) });
@@ -477,7 +494,7 @@ export class ReactoryFormSubmissionService implements Reactory.Service.IReactory
     }
 
     const clientKey = this.clientKey;
-    if (clientKey && entity.clientKey && entity.clientKey !== clientKey) {
+    if (clientKey && entity.clientKey !== clientKey) {
       throw new InsufficientPermissions('That submission belongs to another client', {
         where: 'ReactoryFormSubmissionService.get', id,
       });
@@ -505,7 +522,7 @@ export class ReactoryFormSubmissionService implements Reactory.Service.IReactory
     }
 
     const clientKey = this.clientKey;
-    if (clientKey && entity.clientKey && entity.clientKey !== clientKey) {
+    if (clientKey && entity.clientKey !== clientKey) {
       throw new InsufficientPermissions('That submission belongs to another client', {
         where: 'ReactoryFormSubmissionService.delete', id,
       });

@@ -4,6 +4,7 @@ import Reactory from '@reactorynet/reactory-core';
 import { ObjectId } from 'mongodb';
 import lodash from 'lodash';
 import crypto from 'crypto';
+import { InsufficientPermissions } from '@reactory/server-core/exceptions';
 import { PagedUserResults, ReactoryUserFilterInput, ReactoryUserQueryFailed, ReactoryUserQueryResult } from './types';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
@@ -153,7 +154,14 @@ class UserResolver {
 
   @mutation('updateUser')
   async updateUser(obj: any, { id, profileData }: any, context: Reactory.Server.IReactoryContext) {
-    return context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0').updateUser(profileData);
+    // UserService.updateUser has no guard of its own: without this check any
+    // signed-in user could rewrite any other user's profile by id.
+    const targetId = String(profileData?.id || id || '');
+    const selfId = context.user?._id?.toString();
+    if (!targetId || (targetId !== selfId && context.hasRole('ADMIN') !== true)) {
+      throw new InsufficientPermissions(`User [${selfId}] may only update their own profile`, { targetId });
+    }
+    return context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0').updateUser({ ...profileData, id: targetId });
   }
 
   @mutation('setPassword')

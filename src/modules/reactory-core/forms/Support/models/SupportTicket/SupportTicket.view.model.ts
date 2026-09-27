@@ -36,7 +36,7 @@ const FroalaOptions = (context: Reactory.Server.IReactoryContext) => ({
   imageUploadURL: `${API_ROOT}/froala/upload/image`,
   requestHeaders: {
      'x-client-key': `${context.partner.key}`,
-     'x-client-pwd': `${context.partner.password}`,
+     'x-client-public-key': `${(context.partner as any).publicKey}`,
     }
 });
 
@@ -100,7 +100,7 @@ class SupportTicketComment {
     this.comment = props.comment || "";
     this.createdAt = props.createdAt || new Date();
     this.createdBy = props.createdBy;
-   };
+   }
 }
 
 export enum SupportTicketStatus {
@@ -154,7 +154,7 @@ export namespace SupportTicketStatus {
     const key = SupportTicketStatus.getKey(value);
     return i18n.t(key);
    }
-};
+}
 
 export type SupportTicketModelConstructorArgs = {
   id?: string

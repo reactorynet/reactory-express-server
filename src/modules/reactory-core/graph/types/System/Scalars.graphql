@@ -177,5 +177,5 @@ type Subscription {
 }
 
 type Mutation {
-  ReactorySetUserDefaultTheme(theme: String, mode: String): ApplicationTheme
+  ReactorySetUserDefaultTheme(theme: String, mode: String): ApplicationTheme @auth(roles: ["USER", "ADMIN"])
 }

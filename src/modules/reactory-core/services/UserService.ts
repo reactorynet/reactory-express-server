@@ -1,4 +1,5 @@
 import Reactory from "@reactorynet/reactory-core";
+import { anonymousAccountSeeds, warnGeneratedAnonymousPassword } from '@reactory/server-core/authentication/password/anonymousAccounts';
 import { ObjectId } from "mongodb";
 import ApiError, {
   RecordNotFoundError,
@@ -128,7 +129,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
             createdAt: new Date(),
             updatedAt: new Date(),
           });
-          foundUser.setPassword(password);
+          await foundUser.setPassword(password);
           await foundUser.save().then();
         }
 
@@ -221,7 +222,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
       result.errors.push(createError.message);
       return result;
     }
-  };
+  }
 
   @roles(["ORG-ADMIN::${arguments[2].id}", "USER::${arguments[0].id}"])
   async setUserPeers(
@@ -814,17 +815,14 @@ class UserService implements Reactory.Service.IReactoryUserService {
         dateOfBirth: new Date(),
       });
     
-      user.setPassword(REACTORY_APPLICATION_PASSWORD);
+      await user.setPassword(REACTORY_APPLICATION_PASSWORD);
       await user.addRole(reactoryClient._id.toString(),'SYSTEM');
       await user.save();
       log(`System user initialized successfully`, {}, 'info');
     }
 
     // Automatically seed anonymous users required by client boot
-    const anonUsers = [
-      { email: 'anon@reactor.local', password: 'anonymousepassword', firstName: 'Anonymous', lastName: 'User', username: 'anon' },
-      { email: 'anonymous@reactory.local', password: 'anonymous-password', firstName: 'Anonymous', lastName: 'Local', username: 'anonymous' },
-    ];
+    const anonUsers = anonymousAccountSeeds();
 
     for (const anonData of anonUsers) {
       //@ts-ignore
@@ -849,7 +847,8 @@ class UserService implements Reactory.Service.IReactoryUserService {
             provider: 'LOCAL',
           }],
         });
-        anonUser.setPassword(anonData.password);
+        await anonUser.setPassword(anonData.password);
+        warnGeneratedAnonymousPassword(anonData, reactoryClient.key);
         await anonUser.save();
         log(`Seeded anonymous user ${anonData.email} with ANON role on ${reactoryClient.key}`, {}, 'info');
       } else {
@@ -1090,7 +1089,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
     const user = await User.findById(userId).exec() as Reactory.Models.IUserDocument;
     if (!user) throw new ApiError('User not found');
     if (typeof user.setPassword === 'function') {
-      user.setPassword(password);
+      await user.setPassword(password);
     } else {
       throw new ApiError('User model does not support setPassword');
     }
@@ -1160,7 +1159,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    newUser.setPassword(userInput.password);
+    await newUser.setPassword(userInput.password);
     await newUser.save();
 
     // 5. Assign memberships

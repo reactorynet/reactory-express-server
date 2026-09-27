@@ -4,11 +4,12 @@ import ColorScheme from 'color-scheme';
 import { find, isNil } from 'lodash';
 import ReactoryConstants from '@reactory/server-core/constants';
 import logger from '@reactory/server-core/logging';
+import PasswordHasher from '@reactory/server-core/authentication/password/PasswordHasher';
 
 
-const setPassword = function setPassword(password: string) {
+const setPassword = async function setPassword(password: string) {
   this.salt = crypto.randomBytes(16).toString('hex');
-  this.password = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
+  this.password = await PasswordHasher.hash(password);
   if (typeof this.markModified === 'function') {
     this.markModified('salt');
     this.markModified('password');
@@ -65,8 +66,64 @@ const getSetting = function getSetting<T>(
   return { data: defaultValue };
 };
 
-const validatePassword = function validatePassword(password: string) {
-  return this.password === crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
+const validatePassword = async function validatePassword(password: string) {
+  const result = await PasswordHasher.verify(password, this.password, this.salt);
+  if (result.ok && result.needsRehash) {
+    await this.setPassword(password);
+    if (typeof this.save === 'function') {
+      try {
+        await this.save();
+      } catch (err) {
+        logger.warn('Failed to save upgraded password hash for client', err);
+      }
+    }
+  }
+  return result.ok;
+};
+
+const validateServiceKey = async function validateServiceKey(rawKey: string): Promise<boolean> {
+  if (!rawKey || typeof rawKey !== 'string' || !Array.isArray(this.serviceKeys) || this.serviceKeys.length === 0) {
+    return false;
+  }
+  for (const sk of this.serviceKeys) {
+    if (sk.disabled) continue;
+    const result = await PasswordHasher.verify(rawKey, sk.keyHash);
+    if (result.ok) {
+      sk.lastUsedAt = new Date();
+      if (typeof this.save === 'function') {
+        try {
+          await this.save();
+        } catch (err) {
+          logger.warn('Failed to update serviceKey lastUsedAt', err);
+        }
+      }
+      return true;
+    }
+  }
+  return false;
+};
+
+const validatePublicKey = function validatePublicKey(rawPublicKey: string, origin?: string): boolean {
+  if (!rawPublicKey || !this.publicKey || this.publicKey !== rawPublicKey) {
+    return false;
+  }
+  if (this.browserAuth === 'secret') {
+    return false;
+  }
+  if (!origin) {
+    return false;
+  }
+  const globalWhitelist = (process.env.REACTORY_APP_WHITELIST || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+  const allowedList = [...(this.whitelist || []), ...globalWhitelist];
+  return allowedList.some((allowed: string) => {
+    try {
+      // Exact origin match only. A prefix match would let http://localhost:3000
+      // authorise http://localhost:30001.
+      return new URL(origin).origin === new URL(allowed).origin;
+    } catch {
+      return origin === allowed;
+    }
+  });
 };
 
 const colorScheme = function colorScheme(colorvalue: string = null) {
@@ -140,7 +197,9 @@ const toClientEnv = function toClientEnv(options?: {
     || '';
 
   const clientAnonUserEmail = process.env[`${upperKey}_ANONUSER_EMAIL`] || process.env.REACTORY_APPLICATION_ANONUSER_EMAIL || 'anon@reactor.local';
-  const clientAnonUserPassword = process.env[`${upperKey}_ANONUSER_PASSWORD`] || process.env.REACTORY_APPLICATION_ANONUSER_PASSWORD || 'anonymousepassword';
+  // No literal fallback: the seeded anonymous accounts get a generated password
+  // when this is unset (see authentication/password/anonymousAccounts.ts).
+  const clientAnonUserPassword = process.env[`${upperKey}_ANONUSER_PASSWORD`] || process.env.REACTORY_APPLICATION_ANONUSER_PASSWORD || '';
 
   // Extract primary color and background from the active theme
   let themePrimary = '#1a2049';
@@ -180,14 +239,13 @@ const toClientEnv = function toClientEnv(options?: {
     `# The short name of the app`,
     `REACT_APP_SHORTNAME=${client.name || client.key}`,
     ``,
-    `# The client password`,
-    `REACT_APP_CLIENT_PASSWORD=${clientPassword}`,
+    `# The client public key for browser authentication`,
+    `REACT_APP_CLIENT_PUBLIC_KEY=${client.publicKey || ''}`,
     ``,
-    `# The anonymous user email`,
-    `REACTORY_APPLICATION_ANONUSER_EMAIL=${clientAnonUserEmail}`,
-    ``,
-    `# The anonymous user password`,
-    `REACTORY_APPLICATION_ANONUSER_PASSWORD=${clientAnonUserPassword}`,
+    `# The anonymous user the PWA signs in as before login. This value ships in`,
+    `# the bundle; the account must only hold the ANON role.`,
+    `REACT_APP_ANONUSER_EMAIL=${clientAnonUserEmail}`,
+    `REACT_APP_ANONUSER_PASSWORD=${clientAnonUserPassword}`,
     ``,
     `# The primary color for the theme`,
     `REACT_APP_THEME_PRIMARY=${themePrimary}`,
@@ -216,6 +274,8 @@ export default {
   getDefaultUserRoles,
   getSetting,
   validatePassword,
+  validateServiceKey,
+  validatePublicKey,
   colorScheme,
   toClientEnv,
 }

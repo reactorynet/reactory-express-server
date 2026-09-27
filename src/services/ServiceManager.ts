@@ -312,7 +312,6 @@ class ServiceManager {
       let promises = [];
       for (const service of services) {
         context.log(`Checking service ${service.id} for onStartup...`, {}, "info", "ServiceManager");
-        if (service.nameSpace === "reactor") debugger;
         const instance = getService<Reactory.Service.IReactoryDefaultService>(service.id, props, context);
         if (instance.onStartup && typeof instance.onStartup === "function") {
           await instance.onStartup(context);

@@ -34,7 +34,8 @@ const authenticate: BasicVerifyFunctionWithRequest = async (req: Reactory.Server
     }
 
     // @ts-ignore
-    if (user.validatePassword(password) === true) {
+    const isValidPassword = await user.validatePassword(password);
+    if (isValidPassword === true) {
       // Update membership lastLogin if partner exists.
       //
       // Written with an atomic positional update rather than user.save(): a full

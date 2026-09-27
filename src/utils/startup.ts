@@ -34,7 +34,7 @@ const startup = async (): Promise<Reactory.Server.IReactoryContext> => {
       throw new Error('System user password is incorrect. Cannot continue startup process.');
     } else {
       context.state.auth_token = await Helpers.generateLoginToken(systemUser);
-    };
+    }
     context.user = systemUser;
     context.partner = await ReactoryClient.findOne({ key: 'reactory' }).exec();
 

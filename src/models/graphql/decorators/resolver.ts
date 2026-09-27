@@ -7,8 +7,29 @@ import Reactory from '@reactorynet/reactory-core';
  * @param constructor 
  */
 export function resolver() {
-  //does nothing, we simply use it to flag Resovler classes.  
+  //does nothing, we simply use it to flag Resovler classes.
 }
+
+/**
+ * The resolver map entry for a decorated method.
+ *
+ * Method decorators all run before the class property is redefined, so
+ * `target[propertyKey]` is still the undecorated method. Storing it directly
+ * dropped every wrapping decorator, whichever side of `@query` it was written
+ * on: no `@roles` on any resolver was ever enforced. The entry looks the method
+ * up when it is called instead, so it runs the fully decorated method.
+ *
+ * `this` is the resolver instance when MergeGraphResolvers bound it, otherwise
+ * the prototype, so `this.helper()` works either way.
+ */
+const delegateTo = (target: any, propertyKey: string | symbol) => {
+  const entry = function (this: any, ...args: any[]) {
+    const self = this instanceof target.constructor ? this : target;
+    return target[propertyKey].apply(self, args);
+  };
+  Object.defineProperty(entry, 'name', { value: String(propertyKey) });
+  return entry;
+};
 
 /**
  * Property decorator wires a function up to a graph Object property.
@@ -50,22 +71,22 @@ export function property(objectKey: string, property: string) {
 
       if(objectKey === "Query") {
         target.resolver.Query ??= {};
-        target.resolver.Query[property] = target[propertyKey];
+        target.resolver.Query[property] = delegateTo(target, propertyKey);
       }
 
       if(objectKey === "Mutation") {
         target.resolver.Mutation ??= {};
-        target.resolver.Mutation[property] = target[propertyKey];
+        target.resolver.Mutation[property] = delegateTo(target, propertyKey);
       }
 
       if(objectKey === "Subscription") {
         target.resolver.Subscription ??= {};
-        target.resolver.Subscription[property] = target[propertyKey];
+        target.resolver.Subscription[property] = delegateTo(target, propertyKey);
       }
 
       if(objectKey !== "Query" && objectKey !== "Mutation" && objectKey !== "Subscription") {
         if(!target.resolver[objectKey]) target.resolver[objectKey] = {};
-        target.resolver[objectKey][property] = target[propertyKey];
+        target.resolver[objectKey][property] = delegateTo(target, propertyKey);
       }
       
     }
@@ -115,7 +136,7 @@ export function query(name: string) {
 
       if (!target.Query) target.Query = {};
 
-      target.resolver.Query[name] = target[propertyKey];
+      target.resolver.Query[name] = delegateTo(target, propertyKey);
 
     }
     return descriptor;
@@ -161,7 +182,7 @@ export function mutation(name: string) {
 
       if (!target.Mutation) target.Mutation = {};
 
-      target.resolver.Mutation[name] = target[propertyKey];
+      target.resolver.Mutation[name] = delegateTo(target, propertyKey);
     }
 
     return descriptor;
@@ -210,7 +231,7 @@ export function subscription(name: string) {
 
       if (!target.Subscription) target.Subscription = {};
 
-      target.resolver.Subscription[name] = target[propertyKey];
+      target.resolver.Subscription[name] = delegateTo(target, propertyKey);
     }
 
     return descriptor;

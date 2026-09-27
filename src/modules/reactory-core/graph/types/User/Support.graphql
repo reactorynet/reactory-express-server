@@ -283,24 +283,24 @@ extend type Mutation {
   """
   Creates a new support for the logged in user
   """
-  ReactoryCreateSupportTicket(request: String!, description: String!, requestType: String, meta: Any, formId: String): ReactorySupportTicket
+  ReactoryCreateSupportTicket(request: String!, description: String!, requestType: String, meta: Any, formId: String): ReactorySupportTicket @auth(roles: ["USER"])
   """
   Updates a ticket with either a status update, assignment change or comment add
   """
-  ReactoryUpdateSupportTicket(ticket_id: String, updates: ReactorySupportTicketUpdate): ReactorySupportTicket
+  ReactoryUpdateSupportTicket(ticket_id: String, updates: ReactorySupportTicketUpdate): ReactorySupportTicket @auth(roles: ["USER"])
 
   """
   Deletes a / multiple support tickets
   """
-  ReactoryDeleteSupportTicket(deleteInput: ReactorySupportTicketDeleteInput!): ReactorySupportTicketDeleteResult
+  ReactoryDeleteSupportTicket(deleteInput: ReactorySupportTicketDeleteInput!): ReactorySupportTicketDeleteResult @auth(roles: ["USER"])
   
   """
   Adds a comment to a support ticket
   """
-  ReactoryAddSupportTicketComment(input: ReactorySupportTicketCommentInput!): Comment
+  ReactoryAddSupportTicketComment(input: ReactorySupportTicketCommentInput!): Comment @auth(roles: ["USER"])
   
   """
   Attaches files to a support ticket
   """
-  ReactoryAttachFilesToTicket(input: ReactorySupportTicketAttachmentInput!): ReactorySupportTicketAttachmentResult
+  ReactoryAttachFilesToTicket(input: ReactorySupportTicketAttachmentInput!): ReactorySupportTicketAttachmentResult @auth(roles: ["USER"])
 }

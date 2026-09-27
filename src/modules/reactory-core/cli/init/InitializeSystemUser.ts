@@ -1,4 +1,5 @@
 import Reactory from '@reactorynet/reactory-core';
+import { anonymousAccountSeeds, warnGeneratedAnonymousPassword } from '@reactory/server-core/authentication/password/anonymousAccounts';
 import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
 import ReactoryUser from '@reactory/server-modules/reactory-core/models/User';
 import lodash from 'lodash';
@@ -50,7 +51,7 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
     log('Initial user already exists', {}, 'warning');    
     // set the password just in case it was changed
     if(await user.validatePassword(REACTORY_APPLICATION_PASSWORD)===false) {
-      user.setPassword(REACTORY_APPLICATION_PASSWORD);      
+      await user.setPassword(REACTORY_APPLICATION_PASSWORD);      
       log('System user password updated successfully', {}, 'info');
     } else {
       log('System user password is already correct', {}, 'info');
@@ -82,17 +83,14 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
     dateOfBirth: new Date(),
   });
 
-  user.setPassword(REACTORY_APPLICATION_PASSWORD);
+  await user.setPassword(REACTORY_APPLICATION_PASSWORD);
   await user.addRole(reactoryClient._id.toString(), 'SYSTEM');
   await user.save();
 
   log(`System user initialized successfully`, {}, 'info');
 
   // Provision anonymous users
-  const anonUsers = [
-    { email: 'anon@reactor.local', password: 'anonymousepassword', firstName: 'Anonymous', lastName: 'User', username: 'anon' },
-    { email: 'anonymous@reactory.local', password: 'anonymous-password', firstName: 'Anonymous', lastName: 'Local', username: 'anonymous' },
-  ];
+  const anonUsers = anonymousAccountSeeds();
 
   for (const anonData of anonUsers) {
     //@ts-ignore
@@ -117,7 +115,8 @@ const InitializeSystemUser: InitializeSystemUserCliApp = async (vargs: string[],
           provider: 'LOCAL',
         }],
       });
-      anonUser.setPassword(anonData.password);
+      await anonUser.setPassword(anonData.password);
+      warnGeneratedAnonymousPassword(anonData, reactoryClient.key);
       await anonUser.save();
       log(`Seeded anonymous user ${anonData.email} with ANON role on ${reactoryClient.key}`, {}, 'info');
     } else {

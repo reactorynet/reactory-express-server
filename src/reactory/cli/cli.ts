@@ -320,7 +320,7 @@ const ReactoryCli = async (vargs: string[]): Promise<void> => {
     if(vargs.length === 0) {
       console.error(colors.red('No arguments provided.'));
       process.exit(1);
-    };
+    }
 
     await MongooseConnection();
 

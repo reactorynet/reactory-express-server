@@ -375,29 +375,29 @@ type Query {
 }
 
 type Mutation {
-  ReactoryUploadFile(file: Upload!, alias: String, path: String, uploadContext: String): ReactoryFileUploadResult
-  ReactoryUpdateFile(id: String!, alias: String, path: String, filename: String, mimetype: String, size: Int): ReactoryFileUpdateResult
-  ReactoryDeleteFile(input: ReactoryFileDeleteInput!): ReactoryFileDeleteResult
-  ReactorySyncFileToRemote(id: String!, remoteId: String!): ReactoryFileRemoteSyncResult
-  ReactoryCreateFolder(name: String!, path: String!): ReactoryFolderCreateResult
-  ReactoryDeleteFolder(path: String!): ReactoryFolderDeleteResult
-  ReactoryMoveItem(itemPath: String!, newPath: String!, itemType: String!): ReactoryItemMoveResult
+  ReactoryUploadFile(file: Upload!, alias: String, path: String, uploadContext: String): ReactoryFileUploadResult @auth(roles: ["USER", "ADMIN"])
+  ReactoryUpdateFile(id: String!, alias: String, path: String, filename: String, mimetype: String, size: Int): ReactoryFileUpdateResult @auth(roles: ["USER", "ADMIN"])
+  ReactoryDeleteFile(input: ReactoryFileDeleteInput!): ReactoryFileDeleteResult @auth(roles: ["USER", "ADMIN"])
+  ReactorySyncFileToRemote(id: String!, remoteId: String!): ReactoryFileRemoteSyncResult @auth(roles: ["USER", "ADMIN"])
+  ReactoryCreateFolder(name: String!, path: String!): ReactoryFolderCreateResult @auth(roles: ["USER", "ADMIN"])
+  ReactoryDeleteFolder(path: String!): ReactoryFolderDeleteResult @auth(roles: ["USER", "ADMIN"])
+  ReactoryMoveItem(itemPath: String!, newPath: String!, itemType: String!): ReactoryItemMoveResult @auth(roles: ["USER", "ADMIN"])
 
   """
   Writes a text file for the <File /> live editor. ADMIN/DEVELOPER only.
   Supports optimistic concurrency via `baseRevision`; pass `force: true` to override.
   """
-  ReactoryWriteFile(input: ReactoryWriteFileInput!): ReactoryWriteFileResult
+  ReactoryWriteFile(input: ReactoryWriteFileInput!): ReactoryWriteFileResult @auth(roles: ["USER", "ADMIN"])
 
   """
   Opens an SSE session for live file updates. Returns endpoint + token the
   client passes on `GET /reactory/files/sse/:sessionId?token=...`.
   `scope` mirrors ReactoryReadFile / ReactoryWriteFile.
   """
-  ReactoryOpenFileSession(path: String!, scope: ReactoryFileScope = server): ReactoryOpenFileSessionResult
+  ReactoryOpenFileSession(path: String!, scope: ReactoryFileScope = server): ReactoryOpenFileSessionResult @auth(roles: ["USER", "ADMIN"])
 
   """
   Explicit best-effort close of an SSE session. Safe to call on unmount.
   """
-  ReactoryCloseFileSession(sessionId: String!): ReactoryCloseFileSessionResult
+  ReactoryCloseFileSession(sessionId: String!): ReactoryCloseFileSessionResult @auth(roles: ["USER", "ADMIN"])
 }

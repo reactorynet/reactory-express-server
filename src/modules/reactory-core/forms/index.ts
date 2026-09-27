@@ -11,6 +11,7 @@ import shared from './shared';
 import { Login } from './Security';
 import SupportForm from './Support/SupportRequest';
 import SupportTickets from './Support/SupportTickets';
+import SupportTicketsAdmin from './Support/SupportTicketsAdmin';
 import SupportticketDelete from './Support/SupportTicketDelete';
 import WorkflowForms from './Workflow'
 import UserForms from './User';
@@ -30,6 +31,7 @@ export default [
   ...shared,
   SupportForm,
   SupportTickets,  
+  SupportTicketsAdmin,
   SupportticketDelete,
   ...WorkflowForms,
   ...UserForms,

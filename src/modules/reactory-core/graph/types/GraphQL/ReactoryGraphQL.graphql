@@ -17,7 +17,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  ReactoryGraphQLQuery(input: GraphQLQueryInput!): GraphQLQueryResult
+  ReactoryGraphQLQuery(input: GraphQLQueryInput!): GraphQLQueryResult @auth(roles: ["ADMIN", "DEVELOPER"])
 }
 
 """

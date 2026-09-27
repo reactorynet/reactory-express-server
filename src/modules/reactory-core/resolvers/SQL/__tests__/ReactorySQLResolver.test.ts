@@ -90,7 +90,9 @@ type Mutation {
 }
 `;
 
-const buildTestSchema = (sdl: string) => buildASTSchema(parse(`${BASE_SDL}\n${sdl}`));
+// The SDL carries @auth, so the directive definitions are part of the base.
+const DIRECTIVES_SDL = readFileSync(join(__dirname, '..', '..', '..', 'graph', 'types', 'System', 'Directives.graphql'), 'utf-8');
+const buildTestSchema = (sdl: string) => buildASTSchema(parse(`${BASE_SDL}\n${DIRECTIVES_SDL}\n${sdl}`));
 
 describe('ReactorySQLDataConnections resolver', () => {
   it('returns the SQL-capable connections for an authorised caller', async () => {

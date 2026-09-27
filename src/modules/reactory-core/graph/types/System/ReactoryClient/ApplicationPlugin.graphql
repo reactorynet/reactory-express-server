@@ -65,4 +65,11 @@ type ApplicationPlugin {
   and can reduce the amount of data downloads 
   """
   roles: [String]
+  """
+  Subresource Integrity (sha384-...) for the plugin script. The client sets
+  it on the script tag so the browser refuses a file that does not match.
+  An explicit value on the plugin record wins; otherwise it is the hash of the
+  file this server's CDN serves (see REACTORY_PLUGIN_SRI).
+  """
+  integrity: String
 }

@@ -8,6 +8,7 @@ export default async (): Promise<JestConfigWithTsJest> => {
 
   const transformerOptions: TsJestTransformerOptions = {
      diagnostics: false,
+     isolatedModules: true,
      babelConfig: {
        presets: [
          ['@babel/react', { modules: false }],
@@ -106,6 +107,8 @@ export default async (): Promise<JestConfigWithTsJest> => {
       '/__tests__/manual/',
       '/__tests__/helpers/',
       '/__tests__/testUtils\\.ts$',
+      // Hand-run smoke scripts that live beside the suites (no test blocks).
+      '/__tests__/smoke[^/]*\\.ts$',
     ],
     setupFilesAfterEnv: ['<rootDir>/test/setup/init.ts'],
     // Coverage configuration

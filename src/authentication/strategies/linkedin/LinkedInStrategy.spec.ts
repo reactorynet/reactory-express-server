@@ -9,7 +9,7 @@ import {
   createMockOAuthProfile,
   createMockUserService,
   testData,
-} from '../__tests__/utils';
+} from '../__tests__/testUtils';
 import { StateManager } from '../security';
 
 describe('LinkedInStrategy', () => {

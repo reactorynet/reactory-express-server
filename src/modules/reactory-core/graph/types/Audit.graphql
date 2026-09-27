@@ -122,6 +122,6 @@ extend type Mutation {
   """
   Manually trigger audit log purge (admin only)
   """
-  purgeOldAuditLogs(retentionDays: Int!): Int!
+  purgeOldAuditLogs(retentionDays: Int!): Int! @auth(roles: ["ADMIN"])
 }
 

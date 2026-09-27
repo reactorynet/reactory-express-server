@@ -213,10 +213,10 @@ extend type Mutation {
     created. Only honoured when the form declares `submission.allowUpdate`.
     """
     id: String
-  ): ReactoryFormSubmissionResponse
+  ): ReactoryFormSubmissionResponse @auth(roles: ["ANON", "USER", "ADMIN"])
 
   """
   Deletes a submission. Requires one of the form's `submission.deleteRoles`.
   """
-  ReactoryFormSubmissionDelete(id: String!): CoreSimpleResponse
+  ReactoryFormSubmissionDelete(id: String!): CoreSimpleResponse @auth(roles: ["USER", "ADMIN"])
 }

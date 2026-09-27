@@ -1,0 +1,23 @@
+# Minimal YAML tenant used by ReactoryClientPassword.spec.ts. Real tenant
+# configs under src/data/clientConfigs are gitignored, so the spec cannot rely
+# on one being present.
+key: yaml-tenant
+name: YAML Tenant
+username: yaml-tenant
+email: yaml-tenant@example.com
+password: yaml-tenant-test-password
+salt: generate
+siteUrl: http://localhost:3000
+routes:
+  - key: home
+    title: Home
+    path: /
+    public: true
+    roles: [ANON, USER]
+    componentFqn: core.Home@1.0.0
+menus:
+  - name: Main
+    key: main
+    target: left-nav
+    roles: [USER]
+    entries: []

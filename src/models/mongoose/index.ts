@@ -1,4 +1,5 @@
 import mongoose, { ConnectOptions } from 'mongoose';
+import { mongoClientOptions } from '@reactory/server-core/database/connectionOptions';
 
 
 const {
@@ -9,15 +10,18 @@ const {
     SERVER_ID
   } = process.env;
 
+// TLS, CA bundle and retryWrites for DocumentDB come from
+// src/database/connectionOptions.ts (WP-B4); unset variables leave the URI in charge.
 export const options: ConnectOptions = {
     user: MONGO_USER,
     pass: MONGO_PASSWORD,
     appName: `reactory[${SERVER_ID}@${DOMAIN_NAME}]]`,
+    ...mongoClientOptions(),
 };
 
 export let connection: typeof mongoose;
 
-const getConnection = async () => { 
+const getConnection = async () => {
     try {
         connection = await mongoose.connect(MONGOOSE, options);
         return connection;
@@ -27,4 +31,3 @@ const getConnection = async () => {
 }
 
 export default getConnection;
-

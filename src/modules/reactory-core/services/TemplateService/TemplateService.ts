@@ -709,7 +709,7 @@ export class ReactoryTemplateService implements IEnhancedTemplateService {
         await Promise.all(existingTemplate.elements.map(patchContent)).then();
 
         if (bodySet === false) {
-          const _bodyTemplate = new Template() as Reactory.Models.ITemplateDocument;;
+          const _bodyTemplate = new Template() as Reactory.Models.ITemplateDocument;
           _bodyTemplate._id = new ObjectId();
 
           _bodyTemplate.client = client;

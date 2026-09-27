@@ -74,7 +74,7 @@ class ReactoryExcelWriterService implements Reactory.Service.IExcelWriterService
     if (cell.font) cell.font = font
 
     return cell;
-  };
+  }
 
   async writeAsStream(options: Reactory.Service.IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<Boolean> {
 
@@ -101,9 +101,9 @@ class ReactoryExcelWriterService implements Reactory.Service.IExcelWriterService
     await workbook.xlsx.writeFile(options.filename).then();
 
     return true;
-  };
+  }
 
-};
+}
 
 export const ReactoryExcelWriterServiceDefinition: Reactory.Service.IReactoryServiceDefinition<ReactoryExcelWriterService> = {
   id: 'core.ReactoryExcelWriterService@1.0.0',

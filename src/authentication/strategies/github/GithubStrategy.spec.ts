@@ -10,7 +10,7 @@ import {
   createMockUserService,
   authAssertions,
   testData,
-} from '../__tests__/utils';
+} from '../__tests__/testUtils';
 import { StateManager } from '../security';
 
 describe('GithubStrategy', () => {

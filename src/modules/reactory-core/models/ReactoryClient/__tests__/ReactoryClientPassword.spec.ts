@@ -1,10 +1,11 @@
+import { join } from 'path';
 import mongoose from 'mongoose';
 import ReactoryClientModel from '../index';
 import { loadClientConfigFromYaml } from '../../../../../data/clientConfigs/helpers/configLoader';
 
 describe('ReactoryClient Password, Routes, and Menus Upsert Processing', () => {
   describe('ReactoryClient Methods', () => {
-    it('should set salt and hashed password when setPassword is called', () => {
+    it('should set salt and hashed password when setPassword is called', async () => {
       const client = new ReactoryClientModel({
         key: 'test-solar-compute',
         name: 'Test Solar Compute Planner',
@@ -13,7 +14,7 @@ describe('ReactoryClient Password, Routes, and Menus Upsert Processing', () => {
       expect(client.password).toBeUndefined();
       expect(client.salt).toBeUndefined();
 
-      client.setPassword('computeplanner');
+      await client.setPassword('computeplanner');
 
       expect(client.salt).toBeDefined();
       expect(typeof client.salt).toBe('string');
@@ -21,33 +22,35 @@ describe('ReactoryClient Password, Routes, and Menus Upsert Processing', () => {
 
       expect(client.password).toBeDefined();
       expect(typeof client.password).toBe('string');
-      expect(client.password.length).toBe(128);
+      expect(client.password).toMatch(/^pbkdf2\$sha512\$/);
 
-      expect(client.validatePassword('computeplanner')).toBe(true);
-      expect(client.validatePassword('wrongpassword')).toBe(false);
+      expect(await client.validatePassword('computeplanner')).toBe(true);
+      expect(await client.validatePassword('wrongpassword')).toBe(false);
     });
 
-    it('should support updating password and salt for existing document', () => {
+    it('should support updating password and salt for existing document', async () => {
       const client = new ReactoryClientModel({
         key: 'test-solar-compute',
         name: 'Test Solar Compute Planner',
       });
 
-      client.setPassword('initialpass');
-      expect(client.validatePassword('initialpass')).toBe(true);
+      await client.setPassword('initialpass');
+      expect(await client.validatePassword('initialpass')).toBe(true);
 
-      client.setPassword('updatedpass');
-      expect(client.validatePassword('updatedpass')).toBe(true);
-      expect(client.validatePassword('initialpass')).toBe(false);
+      await client.setPassword('updatedpass');
+      expect(await client.validatePassword('updatedpass')).toBe(true);
+      expect(await client.validatePassword('initialpass')).toBe(false);
     });
   });
 
-  describe('Compute Planner YAML Config Loading & Upserting', () => {
-    it('should load compute-planner config.yaml without YAML errors', () => {
-      const result = loadClientConfigFromYaml('compute-planner');
+  describe('YAML tenant config loading & upserting', () => {
+    const fixtureOptions = { clientConfigsDir: join(__dirname, 'fixtures', 'clientConfigs') };
+
+    it('should load a tenant config.yaml without YAML errors', () => {
+      const result = loadClientConfigFromYaml('yaml-tenant', fixtureOptions);
       expect(result).toBeDefined();
       expect(result?.config).toBeDefined();
-      expect(result?.config.key).toBe('compute-planner');
+      expect(result?.config.key).toBe('yaml-tenant');
       expect(result?.config.password).toBeDefined();
       expect(typeof result?.config.password).toBe('string');
       expect(result?.config.salt).toBe('generate');
@@ -57,8 +60,8 @@ describe('ReactoryClient Password, Routes, and Menus Upsert Processing', () => {
       expect(Array.isArray(result?.config.menus)).toBe(true);
     });
 
-    it('should process compute-planner password, routes, and menus when applied to ReactoryClient model', () => {
-      const result = loadClientConfigFromYaml('compute-planner');
+    it('should process the tenant password, routes, and menus when applied to ReactoryClient model', async () => {
+      const result = loadClientConfigFromYaml('yaml-tenant', fixtureOptions);
       expect(result).toBeDefined();
 
       const config = result!.config;
@@ -72,7 +75,7 @@ describe('ReactoryClient Password, Routes, and Menus Upsert Processing', () => {
       });
 
       if (config.password && config.password !== 'generate') {
-        client.setPassword(config.password);
+        await client.setPassword(config.password);
       }
 
       // Mark routes and menus as modified
@@ -81,7 +84,7 @@ describe('ReactoryClient Password, Routes, and Menus Upsert Processing', () => {
 
       expect(client.salt).toBeDefined();
       expect(client.password).toBeDefined();
-      expect(client.validatePassword(config.password!)).toBe(true);
+      expect(await client.validatePassword(config.password!)).toBe(true);
       expect(client.isModified('routes')).toBe(true);
       expect(client.isModified('menus')).toBe(true);
     });

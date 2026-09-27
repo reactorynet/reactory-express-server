@@ -16,6 +16,8 @@ import ConfigureViews from '@reactory/server-core/express/views';
 import colors from 'colors/safe';
 import http from 'http';
 import ReactoryClient from '@reactory/server-modules/reactory-core/models/ReactoryClient';
+import { JWTValidator } from '@reactory/server-core/authentication/strategies/security';
+import { describeConnectionSecurity } from '@reactory/server-core/database/connectionOptions';
 
 // set theme
 colors.setTheme({
@@ -75,6 +77,12 @@ export const ReactoryServer = async (): Promise<{
   workflowHost: WorkflowRunner,
   stop: () => void
 }> => {
+
+  // Refuse to boot with a missing or weak JWT secret (WP-A6).
+  JWTValidator.enforceAtStartup();
+
+  // Also validates the TLS settings, so a typo fails here by name (WP-B4).
+  logger.info(`Database connections: ${describeConnectionSecurity()}`);
 
   const reactoryExpress: Application = express();
   const httpServer: http.Server = http.createServer(reactoryExpress);

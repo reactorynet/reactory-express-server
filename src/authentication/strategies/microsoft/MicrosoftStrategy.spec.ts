@@ -9,7 +9,7 @@ import {
   createMockOAuthProfile,
   createMockUserService,
   testData,
-} from '../__tests__/utils';
+} from '../__tests__/testUtils';
 
 describe('MicrosoftStrategy', () => {
   describe('Strategy Configuration', () => {
@@ -19,10 +19,16 @@ describe('MicrosoftStrategy', () => {
       expect(MicrosoftStrategy.name).toBe('azuread-openidconnect');
     });
 
-    it('should use correct tenant configuration', () => {
+    it('should validate the issuer unless the tenant is a multi-tenant authority', () => {
+      const { microsoftIssuerOptions } = require('./MicrosoftStrategy');
       const tenantId = process.env.MICROSOFT_TENANT_ID || 'common';
-      expect(['common', 'organizations', 'consumers']).toContain(tenantId.toLowerCase()) || 
-        expect(tenantId).toMatch(/^[a-f0-9-]{36}$/i); // GUID format for specific tenant
+      const options = microsoftIssuerOptions(tenantId);
+      if (['common', 'organizations', 'consumers'].includes(tenantId.toLowerCase())) {
+        expect(options.validateIssuer).toBe(false);
+      } else {
+        expect(tenantId).toMatch(/^[a-f0-9-]{36}$/i);
+        expect(options).toEqual({ validateIssuer: true, issuer: `https://login.microsoftonline.com/${tenantId}/v2.0` });
+      }
     });
   });
 

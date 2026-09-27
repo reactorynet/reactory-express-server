@@ -19,6 +19,9 @@ const {
   REACTORY_APPLICATION_USERNAME = 'reactory', 
   REACTORY_APPLICATION_EMAIL = 'machine@reactory.net',
   REACTORY_APPLICATION_PASSWORD,
+  // Browser-facing public key (WP-A4). Non-secret, origin-bound. Must be a
+  // different value from REACTORY_APPLICATION_PASSWORD.
+  REACTORY_CLIENT_PUBLIC_KEY = 'reactory-local-public-key',
 } = process.env as unknown as Reactory.Server.ExtendedEnvironment<[Reactory.Server.ReactoryDefaultClientEnvironment]>;
 
 // Validate required environment variables
@@ -34,6 +37,8 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   email: REACTORY_APPLICATION_EMAIL,
   salt: 'generate',
   password: REACTORY_APPLICATION_PASSWORD,
+  publicKey: REACTORY_CLIENT_PUBLIC_KEY,
+  browserAuth: 'origin',
   siteUrl: REACTORY_SITE_URL || 'http://localhost:3000', 
   emailSendVia: process.env.REACTORY_EMAIL_SEND_VIA || 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY as string,

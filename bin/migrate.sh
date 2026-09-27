@@ -12,23 +12,23 @@
 #
 # Options:
 #   --module=<key>         target a specific module's migrations/mongo dir
-#   --server               target the server-level (root ./migrations) dir only
 #   --desc=<description>   migration description (required for create)
 #   --validate             after `up`, verify no pending migrations remain per target
 #
 # Defaults: client_key=reactory  target_env=local
-# When no --module or --server flag is given, 'up' and 'status' run across
-# the server-level dir AND every active module that has a migrations/mongo dir.
-# 'down' and 'create' require --module or --server to avoid ambiguity.
+# When no --module flag is given, 'up' and 'status' run across every active
+# module that has a migrations/mongo dir. 'down' and 'create' require --module.
+#
+# There is no server-level target: every Mongo migration is module-scoped
+# (src/modules/<key>/migrations/mongo). The old root ./migrations target
+# pointed at a migrate-mongo-config.js that never existed (WP-B3).
 #
 # Examples:
 #   bin/migrate.sh status
 #   bin/migrate.sh status reactory local
 #   bin/migrate.sh up reactory local
 #   bin/migrate.sh down reactory local --module=reactory-core
-#   bin/migrate.sh down reactory local --server
 #   bin/migrate.sh create reactory local --module=reactory-core --desc="add-user-email-index"
-#   bin/migrate.sh create reactory local --server --desc="server-wide-baseline"
 
 source ./bin/shared/shell-utils.sh
 check_env_vars
@@ -39,7 +39,6 @@ shift
 CLIENT_KEY="reactory"
 TARGET_ENV="local"
 ONLY_MODULE=""
-SERVER_ONLY=false
 DESCRIPTION=""
 VALIDATE=false
 _CLIENT_SET=0
@@ -51,7 +50,9 @@ BUN_VERSION=""
 for arg in "$@"; do
   case "$arg" in
     --module=*)  ONLY_MODULE="${arg#*=}" ;;
-    --server)    SERVER_ONLY=true ;;
+    --server)
+      echo "Error: --server was removed; Mongo migrations are module-scoped. Use --module=<key>."
+      exit 1 ;;
     --desc=*)    DESCRIPTION="${arg#*=}" ;;
     --validate)  VALIDATE=true ;;
     --bun)       USE_BUN=true ;;
@@ -96,13 +97,13 @@ fi
 
 # ── guard ambiguous commands ──────────────────────────────────────────────────
 
-if [[ "$COMMAND" == "down" && -z "$ONLY_MODULE" && "$SERVER_ONLY" == "false" ]]; then
-  echo "Error: 'down' requires --module=<key> or --server to avoid rolling back all modules at once."
+if [[ "$COMMAND" == "down" && -z "$ONLY_MODULE" ]]; then
+  echo "Error: 'down' requires --module=<key> to avoid rolling back all modules at once."
   exit 1
 fi
 
-if [[ "$COMMAND" == "create" && -z "$ONLY_MODULE" && "$SERVER_ONLY" == "false" ]]; then
-  echo "Error: 'create' requires --module=<key> or --server to target a migrations directory."
+if [[ "$COMMAND" == "create" && -z "$ONLY_MODULE" ]]; then
+  echo "Error: 'create' requires --module=<key> to target a migrations directory."
   exit 1
 fi
 
@@ -191,10 +192,6 @@ validate_target() {
   return 0
 }
 
-run_server_level() {
-  run_for_target "server-level  [./migrations]" "./migrate-mongo-config.js" "no"
-}
-
 run_module() {
   local module_key="$1"
   local migrations_dir="${MODULES_DIR}/${module_key}/migrations/mongo"
@@ -246,11 +243,6 @@ run_and_track() {
 
 echo "migrate | command: ${COMMAND} | client: ${CLIENT_KEY} | env: ${TARGET_ENV}"
 
-if [[ "$SERVER_ONLY" == "true" ]]; then
-  run_and_track "server-level  [./migrations]" "./migrate-mongo-config.js" "no"
-  exit $?
-fi
-
 if [[ -n "$ONLY_MODULE" ]]; then
   module_migrations_dir="${MODULES_DIR}/${ONLY_MODULE}/migrations/mongo"
   if [[ ! -d "$module_migrations_dir" ]]; then
@@ -262,8 +254,7 @@ if [[ -n "$ONLY_MODULE" ]]; then
   exit $?
 fi
 
-# No filter — run server-level then every active module that has migrations.
-run_and_track "server-level  [./migrations]" "./migrate-mongo-config.js" "no"
+# No filter — run every active module that has migrations.
 
 active_modules=$(get_active_module_keys "$CLIENT_KEY" "$MODULES_DIR")
 while IFS= read -r module_key; do

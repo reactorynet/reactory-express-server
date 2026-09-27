@@ -151,7 +151,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  ReactorySQLInsert(input: SQLInsert): SQLInsertResult
-  ReactorySQLUpdate(input: SQLUpdate): SQLUpdateResult
-  ReactorySQLDelete(input: SQLDelete): SQLDeleteResult
+  ReactorySQLInsert(input: SQLInsert): SQLInsertResult @auth(roles: ["ADMIN", "DEVELOPER"])
+  ReactorySQLUpdate(input: SQLUpdate): SQLUpdateResult @auth(roles: ["ADMIN", "DEVELOPER"])
+  ReactorySQLDelete(input: SQLDelete): SQLDeleteResult @auth(roles: ["ADMIN", "DEVELOPER"])
 }

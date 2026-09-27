@@ -47,7 +47,7 @@ class GoogleMapsService implements Reactory.Service.IReactoryContextAwareService
 
 
 
-  };
+  }
 
   async getPlaceDetails(placeId: string) {
 

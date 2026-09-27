@@ -8,6 +8,11 @@ import {
   IWorkflowHost,
 } from '@reactorynet/workflow-es';
 import { MongoDBPersistence } from '@reactorynet/workflow-es-mongodb';
+import {
+  mongoClientOptions,
+  postgresUrl,
+  sequelizePostgresOptions,
+} from '@reactory/server-core/database/connectionOptions';
 import { RedisQueueProvider, RedisLockManager } from '@reactorynet/workflow-es-redis';
 import Redis from 'ioredis';
 import { isArray } from 'lodash';
@@ -544,7 +549,9 @@ export class WorkflowRunner {
    * sqlite   — SqlitePersistence; uses WORKFLOW_SQLITE_PATH or
    *             $APP_DATA_ROOT/workflows/workflow.db.
    * postgres — PostgresPersistence; uses WORKFLOW_POSTGRES_URL,
-   *             REACTORY_POSTGRES_URL, or POSTGRES_URL (first non-empty wins).
+   *             REACTORY_POSTGRES_URL, or POSTGRES_URL (first non-empty wins),
+   *             else the REACTORY_POSTGRES_* / POSTGRES_* settings. TLS from
+   *             REACTORY_POSTGRES_SSL (src/database/connectionOptions.ts).
    * memory   — returns null (no durability; history unavailable).
    */
   private async getPersistenceProvider(): Promise<IPersistenceProvider | null> {
@@ -561,7 +568,8 @@ export class WorkflowRunner {
           return null;
         }
         logger.debug('Using MongoDB for Workflow Persistence');
-        const mongoPersistence = new MongoDBPersistence(MONGOOSE);
+        // Same TLS / retryWrites settings as Mongoose (WP-B4).
+        const mongoPersistence = new MongoDBPersistence(MONGOOSE, mongoClientOptions());
         await mongoPersistence.connect;
         return mongoPersistence;
       }
@@ -595,17 +603,12 @@ export class WorkflowRunner {
 
       // ── Postgres ───────────────────────────────────────────────────────────
       if (provider === 'postgres') {
-        const connectionString = WORKFLOW_POSTGRES_URL || REACTORY_POSTGRES_URL || POSTGRES_URL;
-        if (!connectionString) {
-          logger.warn(
-            'WORKFLOW_PERSISTENCE_PROVIDER=postgres but no connection URL found. ' +
-            'Set WORKFLOW_POSTGRES_URL (or REACTORY_POSTGRES_URL / POSTGRES_URL) — falling back to in-memory.'
-          );
-          return null;
-        }
+        // A URL wins; otherwise the platform's own Postgres settings, as the
+        // header comment always said. TLS follows REACTORY_POSTGRES_SSL (WP-B4).
+        const connectionString = WORKFLOW_POSTGRES_URL || REACTORY_POSTGRES_URL || POSTGRES_URL || postgresUrl();
         const { PostgresPersistence } = await import('@reactorynet/workflow-es-postgres');
         logger.debug('Using PostgreSQL for Workflow Persistence');
-        const postgresPersistence = new PostgresPersistence(connectionString);
+        const postgresPersistence = new PostgresPersistence(connectionString, sequelizePostgresOptions(process.env, connectionString));
         await postgresPersistence.connect;
         return postgresPersistence;
       }

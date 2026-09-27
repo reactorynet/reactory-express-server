@@ -167,9 +167,9 @@ extend type Mutation {
   """
   Set a translation.  If the key does not exist it will be created
   """
-  ReactorySetTranslation(translation: ReactoryTranslationInput): ReactoryTranslation
+  ReactorySetTranslation(translation: ReactoryTranslationInput): ReactoryTranslation @auth(roles: ["USER", "ADMIN"])
   """
   Delete a translation
   """
-  ReactoryDeleteTranslation(id: String): Boolean
+  ReactoryDeleteTranslation(id: String): Boolean @auth(roles: ["USER", "ADMIN"])
 }

@@ -50,7 +50,6 @@ export const clientFor = async (context: Reactory.Server.IReactoryContext): Prom
   //         Host: process.env.SERVER_ID,
   //         Referer: process.env.SERVER_ID,
   //         'x-client-key': partner.key,
-  //         'x-reactory-pass': `${partner.password}+${partner.salt}`,
   //         'authorization': token ? `Bearer ${token}` : "",
   //       }
   //     }

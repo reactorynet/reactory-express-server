@@ -5,15 +5,15 @@
  * Users can authenticate using their Facebook accounts.
  */
 
-import { encoder } from '@reactory/server-core/utils';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 import Helpers, { OnDoneCallback } from '../helpers';
-import { Application, Response } from 'express';
+import { Application, NextFunction, Response } from 'express';
 import passport from 'passport';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 import { StateManager, ErrorSanitizer, AuthAuditLogger } from '../security';
 import AuthTelemetry from '../telemetry';
+import { beginTenantOAuth, completeTenantOAuth, isCallbackFailure } from '../tenantOAuth';
 
 const {
   FACEBOOK_APP_ID = 'FACEBOOK_APP_ID',
@@ -23,17 +23,11 @@ const {
 } = process.env;
 
 /**
- * Facebook OAuth Strategy Configuration
- * Handles authentication via Facebook OAuth2
+ * Facebook verify callback. The callback route resolves the tenant from the
+ * validated CSRF state before passport calls this, so `context.partner` is
+ * normally set; the session fallback below is kept for direct callers.
  */
-const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
-  clientID: FACEBOOK_APP_ID,
-  clientSecret: FACEBOOK_APP_SECRET,
-  callbackURL: FACEBOOK_APP_CALLBACK_URL,
-  profileFields: ['id', 'emails', 'name', 'displayName', 'picture.type(large)'],
-  passReqToCallback: true,
-  scope: FACEBOOK_OAUTH_SCOPE.split(','),
-}, async (
+export const facebookVerifyCallback = async (
   req: Reactory.Server.ReactoryExpressRequest,
   accessToken: string,
   refreshToken: any,
@@ -204,7 +198,16 @@ const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
     const safeError = ErrorSanitizer.sanitizeError(error, { provider: 'facebook' });
     return done(new Error(safeError), false);
   }
-});
+};
+
+const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
+  clientID: FACEBOOK_APP_ID,
+  clientSecret: FACEBOOK_APP_SECRET,
+  callbackURL: FACEBOOK_APP_CALLBACK_URL,
+  profileFields: ['id', 'emails', 'name', 'displayName', 'picture.type(large)'],
+  passReqToCallback: true,
+  scope: FACEBOOK_OAUTH_SCOPE.split(','),
+}, facebookVerifyCallback);
 
 /**
  * Configure Facebook OAuth Routes
@@ -213,32 +216,21 @@ const FacebookOAuthStrategy: passport.Strategy = new FacebookStrategy({
 export const useFacebookRoutes = (app: Application) => {
   /**
    * Facebook OAuth Start Endpoint
-   * Initiates the Facebook OAuth flow
+   * Resolves the tenant from `?x-client-key=`, mints a session-bound CSRF
+   * state and redirects to Facebook with the tenant's strategy.
    */
   app.get(
     '/auth/facebook/start',
-    (req: Reactory.Server.ReactoryExpressRequest, res: Response, next) => {
+    async (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: NextFunction) => {
       try {
-        // Create state for CSRF protection
-        const state = StateManager.createState({
-          'x-client-key': req.query['x-client-key'],
-          'x-client-pwd': req.query['x-client-pwd'],
-          flow: 'facebook',
-        });
+        const begun = await beginTenantOAuth(req, res, 'facebook');
+        if (!begun) return;
+        const { clientKey, strategyName, state } = begun;
 
-        // Store state in session
-        // @ts-ignore
-        req.session.authState = state;
+        logger.debug('Starting Facebook OAuth flow', { clientKey, strategyName });
 
-        logger.debug('Starting Facebook OAuth flow', {
-          clientKey: req.query['x-client-key'],
-          state,
-        });
-
-        // Redirect to Facebook
-        passport.authenticate('facebook', {
+        passport.authenticate(strategyName, {
           scope: FACEBOOK_OAUTH_SCOPE.split(','),
-          passReqToCallback: true,
           state,
         })(req, res, next);
       } catch (error) {
@@ -268,52 +260,56 @@ export const useFacebookRoutes = (app: Application) => {
 
   /**
    * Facebook OAuth Callback Endpoint
-   * Handles the OAuth callback from Facebook
+   * Validates the CSRF state against the session, resolves the tenant named
+   * in it, then completes the exchange with that tenant's strategy.
    */
   app.get(
     '/auth/facebook/callback',
-    (req: Reactory.Server.ReactoryExpressRequest, res: Response) => {
-      const { context } = req;
-      const failureRedirectUrl = context.partner
-        ? `${context.partner.siteUrl}/auth/facebook/failure`
-        : '/auth/facebook/failure';
-
-      const onCompletion = (err: string, user: {
-        id: string;
-        firstName: string;
-        lastName: string;
-        token: string;
-      } | boolean) => {
-        if (err) {
-          logger.error('Facebook OAuth callback error', { error: err });
-          res.status(500).send({
-            error: 'An error occurred while trying to authenticate with Facebook',
+    async (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: NextFunction) => {
+      try {
+        const resolved = await completeTenantOAuth(req, 'facebook');
+        if (isCallbackFailure(resolved)) {
+          AuthTelemetry.recordCSRFValidation('facebook', false);
+          return res.status(resolved.status).send({
+            error: 'Authentication with Facebook failed',
+            reason: resolved.error,
             timestamp: new Date().toISOString(),
           });
-        } else {
-          if (!user) {
+        }
+        AuthTelemetry.recordCSRFValidation('facebook', true);
+
+        const { partner, strategyName } = resolved;
+        const failureRedirectUrl = `${partner.siteUrl}/auth/facebook/failure`;
+
+        const onCompletion = (err: any, user: { token: string } | false) => {
+          if (err) {
+            logger.error('Facebook OAuth callback error', { error: err });
+            res.status(500).send({
+              error: 'An error occurred while trying to authenticate with Facebook',
+              timestamp: new Date().toISOString(),
+            });
+          } else if (!user) {
             logger.warn('Facebook authentication returned no user');
             res.status(302).redirect(failureRedirectUrl);
           } else {
-            const successUrl = context.partner
-              ? `${context.partner.siteUrl}?auth_token=${(user as { token: string }).token}`
-              : `/?auth_token=${(user as { token: string }).token}`;
-
             logger.info('Facebook authentication complete, redirecting', {
-              successUrl: successUrl.split('?')[0], // Log URL without token
+              successUrl: partner.siteUrl,
             });
-
-            res.status(302).redirect(successUrl);
+            res.status(302).redirect(`${partner.siteUrl}?auth_token=${user.token}`);
           }
-        }
-      };
+        };
 
-      // Authenticate with Facebook
-      passport.authenticate('facebook', {
-        failureRedirect: failureRedirectUrl,
-        passReqToCallback: true,
-        scope: FACEBOOK_OAUTH_SCOPE.split(','),
-      }, onCompletion)(req, res);
+        passport.authenticate(strategyName, {
+          failureRedirect: failureRedirectUrl,
+          scope: FACEBOOK_OAUTH_SCOPE.split(','),
+        }, onCompletion)(req, res, next);
+      } catch (error) {
+        logger.error('Facebook OAuth callback error', { error });
+        res.status(500).send({
+          error: 'An error occurred while trying to authenticate with Facebook',
+          timestamp: new Date().toISOString(),
+        });
+      }
     }
   );
 };

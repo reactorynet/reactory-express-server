@@ -18,6 +18,19 @@
         "@reactory/server-core/*": ["src/*"],
         "@reactory/server-modules/*": ["src/modules/*"],
         "test/*": ["test/*"],
-      }
-  },    
+      },
+      "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "certificates",
+    "docker",
+    "data"
+  ]
 }

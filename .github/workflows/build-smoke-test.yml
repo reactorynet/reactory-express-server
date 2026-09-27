@@ -38,15 +38,21 @@ jobs:
           # the Dockerfile actually being built lives there, not in this repo.
           submodules: true
 
+      # Corepack first: setup-node's Yarn cache lookup runs `yarn`, and the
+      # runner's global Yarn 1 refuses this repo's packageManager (yarn@4).
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
       - uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
 
-      - name: Enable Corepack (Yarn 4)
+      - name: Enable Corepack for the selected Node
         run: corepack enable
 
+      # Core-only: the modules under src/modules are separate repos and absent here, so yarn.lock (written with them) cannot match; resolve afresh.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --no-immutable
 
       - name: Install jq
         run: sudo apt-get update -y && sudo apt-get install -y jq
@@ -72,6 +78,11 @@ jobs:
           openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
             -keyout /tmp/ci-test-ca.key -out ./certificates/ci-test-ca.crt \
             -subj "/CN=reactory-ci-test-ca"
+
+      # config/reactory/.env.podman is gitignored in the devops submodule; the
+      # tracked sample (placeholder values) is enough to build.
+      - name: Use the sample podman environment
+        run: '[ -f config/reactory/.env.podman ] || cp config/reactory/env.podman-sample config/reactory/.env.podman'
 
       - name: Build server
         run: bin/build.sh reactory podman

@@ -33,16 +33,10 @@ This keeps migration scope aligned with what the server actually loads for a giv
 
 ## Directory Layout
 
-### Server-Level (root)
-
-Use root-level migrations only for server-wide concerns.
-
-- Mongo root baseline: `migrations/`
-- Mongo root config: `migrate-mongo-config.js`
-
 ### Module-Level
 
-Each module should own its own migration directories.
+Every migration is module-scoped; there is no server-level (root) target.
+Each module owns its own migration directories.
 
 Example:
 
@@ -52,8 +46,9 @@ src/modules/reactory-core/
     mongo/
       20260516013514-baseline-reactory-clients.js
     typeorm/
-      data-source.ts
-      20260516021500-CreateReactoryAuditTable.ts
+      schema.ts          # entities + migrations table, shared with the runtime DataSource
+      data-source.ts     # CLI DataSource used by bin/migrate-typeorm.sh
+      20260923120000-CoreBaseline.ts
 ```
 
 ## Environment Resolution
@@ -97,18 +92,13 @@ Optional validation flag:
 
 ### Safety Rules
 
-- `down` requires one of:
-  - `--module=<module-key>`
-  - `--server`
-- `create` requires one of:
-  - `--module=<module-key>`
-  - `--server`
+- `down` requires `--module=<module-key>`
+- `create` requires `--module=<module-key>`
 - `create` also requires:
   - `--desc=<description>`
 
 ### Mongo Changelog Collections
 
-- Server-level root migrations: `reactory_migrations_server`
 - Module migrations: `reactory_migrations_<module-key>`
 
 ### Mongo Examples
@@ -125,7 +115,7 @@ Run status for a specific client/env:
 bin/migrate.sh status reactory local
 ```
 
-Apply all pending root + active module migrations:
+Apply all pending active module migrations:
 
 ```bash
 bin/migrate.sh up reactory local
@@ -143,22 +133,10 @@ Revert one migration for a specific module:
 bin/migrate.sh down reactory local --module=reactory-core
 ```
 
-Revert one migration for root-only migrations:
-
-```bash
-bin/migrate.sh down reactory local --server
-```
-
 Create a module migration:
 
 ```bash
 bin/migrate.sh create reactory local --module=reactory-core --desc="add-feature-flags-default"
-```
-
-Create a server-level migration:
-
-```bash
-bin/migrate.sh create reactory local --server --desc="server-global-baseline"
 ```
 
 ## TypeORM Migrations
@@ -181,10 +159,55 @@ bin/migrate.sh create reactory local --server --desc="server-global-baseline"
   - `--module=<module-key>`
   - `--name=<migration-name>`
 
+### Startup Governance
+
+`src/database/migrationGovernance.ts` decides what each Postgres DataSource
+(reactory-core, reactory-reactor, reactory-classroom) does at boot:
+
+| Environment | Behaviour |
+|---|---|
+| `NODE_ENV` development / local / test | pending migrations, then `synchronize()` |
+| anything else | migrations only |
+| ... with `REACTORY_RUN_MIGRATIONS_ON_START=true` | apply pending migrations, then start |
+| ... without it | refuse to start (exit 1) and list the pending migrations |
+
+`<PREFIX>_POSTGRES_SYNCHRONIZE=true|false` (`REACTORY_`, `REACTOR_`,
+`CLASSROOM_`) overrides the environment default for one DataSource.
+
+The runtime DataSource and the CLI DataSource read the same
+`migrations/typeorm/schema.ts`, so "pending" means the same thing to both.
+They also share connection settings, including TLS (`REACTORY_POSTGRES_SSL`),
+so the CLI reaches Aurora the way the server does; see
+`bin/database-connections.md`.
+
+### Baselines
+
+`20260923120000-*Baseline.ts` in each module were generated from the entities
+and made idempotent (`IF NOT EXISTS`, guarded enum types, constraints and index
+renames). Every existing database was built by `synchronize`; running the
+baselines against one changes nothing except recording them. Against an empty
+database they create the full schema.
+
+Indexes TypeORM cannot express (trigram, partial JSONB, GIN `jsonb_path_ops`)
+are declared on the entity with `@Index(name, cols, { synchronize: false })` and
+created by migrations, so neither `synchronize` nor `migration:generate` drops
+them.
+
+### Drift Check
+
+CI (`migrations` job) runs every module's migrations against an empty Postgres
+and then `migration:generate --check`, which fails when an entity changed
+without a migration. Locally:
+
+```bash
+scripts/ci/check-migrations.sh
+```
+
 ### TypeORM Module Requirements
 
 For a module to participate in TypeORM migrations, it must define:
 
+- `src/modules/<module-key>/migrations/typeorm/schema.ts` (entities + migration options)
 - `src/modules/<module-key>/migrations/typeorm/data-source.ts`
 
 That data source should:

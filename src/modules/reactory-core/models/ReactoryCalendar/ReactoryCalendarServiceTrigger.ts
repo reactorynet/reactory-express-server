@@ -1,3 +1,5 @@
+import { ClientKeyColumn } from '../../../../database/tenant/ClientKeyColumn';
+import type { CalendarRepository } from './repository';
 import { Entity, PrimaryGeneratedColumn, Column, Index, BaseEntity } from "typeorm";
 
 @Entity({ name: 'reactory_calendar_service_trigger' })
@@ -7,6 +9,10 @@ import { Entity, PrimaryGeneratedColumn, Column, Index, BaseEntity } from "typeo
 export class ReactoryCalendarServiceTrigger extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  /** Owning ReactoryClient key (WP-B2); set by the tenant repository. */
+  @ClientKeyColumn()
+  clientKey: string;
 
   @Column({ name: 'entry_id', type: 'integer', nullable: false })
   @Index()
@@ -39,32 +45,32 @@ export class ReactoryCalendarServiceTrigger extends BaseEntity {
   entry?: any; // Populated from PostgreSQL ReactoryCalendarEntry
 
   // Helper methods for trigger management
-  static findEntryTriggers(entryId: number) {
-    return this.find({
+  static findEntryTriggers(repo: CalendarRepository<ReactoryCalendarServiceTrigger>, entryId: number) {
+    return repo.find({
       where: { entryId },
       order: { triggerType: 'ASC' }
     });
   }
 
-  static findTimeBasedTriggers() {
-    return this.find({
+  static findTimeBasedTriggers(repo: CalendarRepository<ReactoryCalendarServiceTrigger>) {
+    return repo.find({
       where: { triggerType: Reactory.Models.ReactoryCalendarServiceTriggerType.TIME_BASED }
     });
   }
 
-  static findServiceTriggers(serviceId: string, serviceVersion?: string) {
+  static findServiceTriggers(repo: CalendarRepository<ReactoryCalendarServiceTrigger>, serviceId: string, serviceVersion?: string) {
     const where: any = { serviceId };
     if (serviceVersion) {
       where.serviceVersion = serviceVersion;
     }
-    return this.find({ where });
+    return repo.find({ where });
   }
 
-  static removeEntryTriggers(entryId: number) {
-    return this.delete({ entryId });
+  static removeEntryTriggers(repo: CalendarRepository<ReactoryCalendarServiceTrigger>, entryId: number) {
+    return repo.delete({ entryId });
   }
 
-  static createTrigger(entryId: number, triggerData: {
+  static createTrigger(repo: CalendarRepository<ReactoryCalendarServiceTrigger>, entryId: number, triggerData: {
     serviceId: string;
     serviceVersion: string;
     method: string;
@@ -72,7 +78,7 @@ export class ReactoryCalendarServiceTrigger extends BaseEntity {
     triggerOffset?: number;
     parameters?: Record<string, any>;
   }) {
-    return this.create({
+    return repo.create({
       entryId,
       ...triggerData
     });

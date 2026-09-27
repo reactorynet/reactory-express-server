@@ -1,5 +1,6 @@
 
 import { Repository } from "typeorm";
+import { getTenantRepository, TenantRepository } from "@reactory/server-core/database/tenant/TenantRepository";
 import { 
   ReactoryCalendarEntry,
   ReactoryCalendarWorkflowTrigger,
@@ -30,16 +31,22 @@ export class ReactoryCalendarIntegrationService implements Reactory.Service.IRea
   props: any;
   context: Reactory.Server.IReactoryContext;
 
-  private workflowTriggerRepository: Repository<ReactoryCalendarWorkflowTrigger>;
-  private serviceTriggerRepository: Repository<ReactoryCalendarServiceTrigger>;
-  private participantRepository: Repository<ReactoryCalendarParticipant>;
+  /** Tenant-scoped to the request client (WP-B2). */
+  private get workflowTriggerRepository(): TenantRepository<ReactoryCalendarWorkflowTrigger> {
+    return getTenantRepository(this.context, ReactoryCalendarWorkflowTrigger);
+  }
+  /** Tenant-scoped to the request client (WP-B2). */
+  private get serviceTriggerRepository(): TenantRepository<ReactoryCalendarServiceTrigger> {
+    return getTenantRepository(this.context, ReactoryCalendarServiceTrigger);
+  }
+  /** Tenant-scoped to the request client (WP-B2). */
+  private get participantRepository(): TenantRepository<ReactoryCalendarParticipant> {
+    return getTenantRepository(this.context, ReactoryCalendarParticipant);
+  }
 
   constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
-    this.workflowTriggerRepository = PostgresDataSource.getRepository(ReactoryCalendarWorkflowTrigger);
-    this.serviceTriggerRepository = PostgresDataSource.getRepository(ReactoryCalendarServiceTrigger);
-    this.participantRepository = PostgresDataSource.getRepository(ReactoryCalendarParticipant);
   }
   onStartup(): Promise<void> {
     return Promise.resolve();
@@ -225,7 +232,7 @@ export class ReactoryCalendarIntegrationService implements Reactory.Service.IRea
     for (const trigger of dueTriggers) {
       try {
         // Get the associated calendar entry
-        const entry = await PostgresDataSource.getRepository(ReactoryCalendarEntry).findOne({
+        const entry = await getTenantRepository(this.context, ReactoryCalendarEntry).findOne({
           where: { id: trigger.entryId }
         });
 
@@ -322,7 +329,7 @@ export class ReactoryCalendarIntegrationService implements Reactory.Service.IRea
   private async isTriggerDue(trigger: ReactoryCalendarWorkflowTrigger, currentTime: Date): Promise<boolean> {
     try {
       // Get the associated calendar entry
-      const entry = await PostgresDataSource.getRepository(ReactoryCalendarEntry).findOne({
+      const entry = await getTenantRepository(this.context, ReactoryCalendarEntry).findOne({
         where: { id: trigger.entryId }
       });
 

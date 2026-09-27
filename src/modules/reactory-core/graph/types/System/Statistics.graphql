@@ -348,7 +348,7 @@ extend type Mutation {
 
     Returns a StatisticsReceipt.
   """
-  CorePublishStatistics(entries: [StatisticsInput]!): StatisticsPackage
+  CorePublishStatistics(entries: [StatisticsInput]!): StatisticsPackage @auth(roles: ["USER"])
 
   """
     CoreProcessStatistics - process statistics
@@ -360,18 +360,18 @@ extend type Mutation {
 
     Returns a StatisticsPackage. This package contains the processed statistics.
   """
-  CoreProcessStatistics(reference: String!, processor: String!, params: Any): StatisticsPackage
+  CoreProcessStatistics(reference: String!, processor: String!, params: Any): StatisticsPackage @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
 
   """
     CoreUpdateStatistic - update statistic
     @param input - input for updating statistic
   """
-  CoreUpdateStatistic(input: StatisticUpdateInput!): Statistic
+  CoreUpdateStatistic(input: StatisticUpdateInput!): Statistic @auth(roles: ["USER"])
 
   """
     CoreUpdateStatisticsPackage - update statistics package
     @param input - input for updating statistics package
   """
-  CoreUpdateStatisticsPackage(input: StatisticsPackageUpdateInput!): StatisticsPackage
+  CoreUpdateStatisticsPackage(input: StatisticsPackageUpdateInput!): StatisticsPackage @auth(roles: ["USER"])
 }

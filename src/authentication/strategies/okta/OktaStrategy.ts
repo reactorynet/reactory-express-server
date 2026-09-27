@@ -7,12 +7,13 @@
 
 import { Strategy as OktaOAuthStrategy } from 'passport-okta-oauth20';
 import passport from 'passport';
-import { Application, Response } from 'express';
+import { Application, NextFunction, Response } from 'express';
 import Helpers, { OnDoneCallback } from '../helpers';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
-import { StateManager, ErrorSanitizer, AuthAuditLogger } from '../security';
+import { ErrorSanitizer, AuthAuditLogger, VerifiedStateStore } from '../security';
 import AuthTelemetry from '../telemetry';
+import { beginTenantOAuth, completeTenantOAuth, isCallbackFailure } from '../tenantOAuth';
 
 const {
   OKTA_CLIENT_ID = 'OKTA_CLIENT_ID',
@@ -28,13 +29,8 @@ const issuerUrl = OKTA_ISSUER || `https://${OKTA_DOMAIN}/oauth2/default`;
 /**
  * Okta OAuth 2.0 Strategy Configuration
  */
-const OktaStrategy = new OktaOAuthStrategy({
-  audience: `https://${OKTA_DOMAIN}`,
-  clientID: OKTA_CLIENT_ID,
-  clientSecret: OKTA_CLIENT_SECRET,
-  callbackURL: OKTA_CALLBACK_URL,
-  scope: ['openid', 'profile', 'email'],
-}, async (
+export const oktaVerifyCallback = async (
+  req: any,
   accessToken: string,
   refreshToken: string,
   params: any,
@@ -199,109 +195,86 @@ const OktaStrategy = new OktaOAuthStrategy({
     const safeError = ErrorSanitizer.sanitizeError(error, { provider: 'okta' });
     return done(new Error(safeError), false);
   }
-});
+};
+
+/**
+ * Okta OAuth 2.0 Strategy Configuration
+ */
+const OktaStrategy = new OktaOAuthStrategy({
+  audience: `https://${OKTA_DOMAIN}`,
+  clientID: OKTA_CLIENT_ID,
+  clientSecret: OKTA_CLIENT_SECRET,
+  callbackURL: OKTA_CALLBACK_URL,
+  scope: ['openid', 'profile', 'email'],
+  passReqToCallback: true,
+  // State is minted and verified by the tenant OAuth routes; see VerifiedStateStore.
+  store: new VerifiedStateStore(),
+} as any, oktaVerifyCallback);
 
 /**
  * Configure Okta OAuth Routes
- * Handles OIDC flow with Okta
+ * Handles the authorization-code flow with Okta, per tenant.
  */
 export const useOktaRoutes = (app: Application) => {
-  const stateManager = new StateManager();
-
   /**
-   * Okta OIDC Start Endpoint
-   * Initiates the Okta authentication flow
+   * Okta Start Endpoint
+   * Initiates the Okta authentication flow for the tenant named by
+   * `:clientKey` (or `?x-client-key=` as sent by the login buttons).
    */
-  app.get(
-    '/auth/okta/start/:clientKey',
-    async (req: any, res: Response, next) => {
-      try {
-        const { clientKey = 'reactory' } = req.params;
+  const start = async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const begun = await beginTenantOAuth(req, res, 'okta');
+      if (!begun) return;
+      const { clientKey, strategyName, state } = begun;
 
-        // Resolve partner/client
-        const partner = await ReactoryClient.findOne({ key: clientKey }).exec();
-        if (!partner) {
-          logger.error('Client not found', { clientKey });
-          return res.status(404).send({ error: 'Client not found' });
-        }
+      logger.debug('Starting Okta OAuth flow', { clientKey, strategyName });
 
-        req.partner = partner;
-        req.context.partner = partner;
-
-        // Generate state for CSRF protection
-        const state = stateManager.encode({ clientKey, partnerId: partner._id.toString() });
-
-        logger.debug('Starting Okta OAuth flow', {
-          clientKey,
-          issuer: issuerUrl,
-        });
-
-        // Authenticate with Okta
-        passport.authenticate('openidconnect', {
-          state,
-          failureRedirect: `/auth/okta/failure?clientKey=${clientKey}`,
-        })(req, res, next);
-      } catch (error) {
-        logger.error('Error starting Okta OAuth', { error });
-        res.status(500).send({
-          error: 'An error occurred while trying to authenticate with Okta',
-        });
-      }
+      passport.authenticate(strategyName, {
+        state,
+        failureRedirect: `/auth/okta/failure?clientKey=${encodeURIComponent(clientKey)}`,
+      })(req, res, next);
+    } catch (error) {
+      logger.error('Error starting Okta OAuth', { error });
+      res.status(500).send({
+        error: 'An error occurred while trying to authenticate with Okta',
+      });
     }
-  );
+  };
+
+  app.get('/auth/okta/start/:clientKey', start);
+  app.get('/auth/okta/start', start);
 
   /**
-   * Okta OIDC Callback Endpoint
+   * Okta Callback Endpoint
    * Handles the callback from Okta
    */
   app.get(
     '/auth/okta/callback',
-    async (req: any, res: Response, next) => {
+    async (req: any, res: Response, next: NextFunction) => {
       try {
-        // Validate state parameter
-        const stateParam = req.query.state as string;
-        if (!stateParam) {
-          logger.warn('Missing state parameter in Okta callback');
-          return res.redirect('/auth/okta/failure?error=missing_state');
+        const resolved = await completeTenantOAuth(req, 'okta');
+        if (isCallbackFailure(resolved)) {
+          return res.redirect(`/auth/okta/failure?error=${resolved.error}`);
         }
 
-        const stateData = stateManager.decode(stateParam);
-        if (!stateData || !stateData.clientKey) {
-          logger.warn('Invalid state parameter in Okta callback');
-          return res.redirect('/auth/okta/failure?error=invalid_state');
-        }
+        const { clientKey, partner, strategyName } = resolved;
+        const failureRedirect = `/auth/okta/failure?clientKey=${encodeURIComponent(clientKey)}`;
 
-        const { clientKey } = stateData;
+        logger.debug('Okta OAuth callback received', { clientKey, strategyName });
 
-        logger.debug('Okta OAuth callback received', { clientKey });
-
-        // Resolve partner/client
-        const partner = await ReactoryClient.findOne({ key: clientKey }).exec();
-        if (!partner) {
-          logger.error('Client not found in callback', { clientKey });
-          return res.redirect(`/auth/okta/failure?clientKey=${clientKey}`);
-        }
-
-        req.partner = partner;
-        req.context.partner = partner;
-
-        // Authenticate and handle response
-        passport.authenticate('openidconnect', {
-          failureRedirect: `/auth/okta/failure?clientKey=${clientKey}`,
-        }, (err: any, user: any) => {
+        passport.authenticate(strategyName, { failureRedirect }, (err: any, user: any) => {
           if (err) {
             logger.error('Okta authentication error in callback', { error: err });
-            return res.redirect(`/auth/okta/failure?clientKey=${clientKey}`);
+            return res.redirect(failureRedirect);
           }
 
           if (!user) {
             logger.warn('Okta authentication returned no user');
-            return res.redirect(`/auth/okta/failure?clientKey=${clientKey}`);
+            return res.redirect(failureRedirect);
           }
 
-          // Generate JWT token
-          const token = typeof user === 'object' && 'token' in user 
-            ? user.token 
+          const token = typeof user === 'object' && 'token' in user
+            ? user.token
             : Helpers.jwtMake(Helpers.jwtTokenForUser(user));
 
           logger.info('Okta authentication complete, redirecting', {
@@ -314,8 +287,7 @@ export const useOktaRoutes = (app: Application) => {
         })(req, res, next);
       } catch (error) {
         logger.error('Okta OAuth callback error', { error });
-        const clientKey = req.query.clientKey || 'reactory';
-        res.redirect(`/auth/okta/failure?clientKey=${clientKey}`);
+        res.redirect('/auth/okta/failure?error=callback_error');
       }
     }
   );

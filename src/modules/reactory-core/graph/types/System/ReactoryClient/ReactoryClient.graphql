@@ -569,60 +569,60 @@ extend type Mutation {
   """
   Creates a new ReactoryClient application
   """
-  ReactoryClientCreate(input: CreateReactoryClient!): ReactoryClientCreateResult!
+  ReactoryClientCreate(input: CreateReactoryClient!): ReactoryClientCreateResult! @auth(roles: ["ADMIN"])
 
   """
   Adds a new route to the specified ReactoryClient. Restricted to ADMIN roles.
   """
-  ReactoryClientAddRoute(clientId: String!, route: ClientRouteInput!): ReactoryClient!
+  ReactoryClientAddRoute(clientId: String!, route: ClientRouteInput!): ReactoryClient! @auth(roles: ["ADMIN"])
 
   """
   Updates an existing route on the specified ReactoryClient. Restricted to ADMIN roles.
   """
-  ReactoryClientUpdateRoute(clientId: String!, routeId: String!, route: ClientRouteInput!): ReactoryClient!
+  ReactoryClientUpdateRoute(clientId: String!, routeId: String!, route: ClientRouteInput!): ReactoryClient! @auth(roles: ["ADMIN"])
 
   """
   Deletes a route from the specified ReactoryClient. Restricted to ADMIN roles.
   """
-  ReactoryClientDeleteRoute(clientId: String!, routeId: String!): ReactoryClient!
+  ReactoryClientDeleteRoute(clientId: String!, routeId: String!): ReactoryClient! @auth(roles: ["ADMIN"])
 
   """
   Reorders routes on the specified ReactoryClient by providing the desired order of route IDs. Restricted to ADMIN roles.
   """
-  ReactoryClientReorderRoutes(clientId: String!, routeIds: [String!]!): ReactoryClient!
+  ReactoryClientReorderRoutes(clientId: String!, routeIds: [String!]!): ReactoryClient! @auth(roles: ["ADMIN"])
 
   """
   Replaces the menus for the specified ReactoryClient. Restricted to ADMIN roles.
   """
-  ReactoryClientUpdateMenus(clientId: String!, menus: [MenuInput!]!): ReactoryClient!
+  ReactoryClientUpdateMenus(clientId: String!, menus: [MenuInput!]!): ReactoryClient! @auth(roles: ["ADMIN"])
 
   """
   Replaces the application roles for the specified ReactoryClient. Restricted to ADMIN roles.
   """
-  ReactoryClientUpdateRoles(clientId: String!, roles: [String!]!): ReactoryClient!
+  ReactoryClientUpdateRoles(clientId: String!, roles: [String!]!): ReactoryClient! @auth(roles: ["ADMIN"])
 
   """
   Replaces the settings for the specified ReactoryClient. Restricted to ADMIN roles.
   """
-  ReactoryClientUpdateSettings(clientId: String!, settings: [ReactoryClientSettingInput!]!): ReactoryClient!
+  ReactoryClientUpdateSettings(clientId: String!, settings: [ReactoryClientSettingInput!]!): ReactoryClient! @auth(roles: ["ADMIN"])
 
   """
   Sets the default active theme for the specified ReactoryClient. Restricted to ADMIN roles.
   """
-  ReactoryClientSetActiveTheme(clientId: String!, themeName: String!): ReactoryClient!
+  ReactoryClientSetActiveTheme(clientId: String!, themeName: String!): ReactoryClient! @auth(roles: ["ADMIN"])
 
   """
   Creates or updates a theme on the specified ReactoryClient. Restricted to ADMIN roles.
   """
-  ReactoryClientSaveTheme(clientId: String!, theme: ApplicationThemeInput!): ReactoryClient!
+  ReactoryClientSaveTheme(clientId: String!, theme: ApplicationThemeInput!): ReactoryClient! @auth(roles: ["ADMIN"])
 
   """
   Deletes a theme from the specified ReactoryClient. Restricted to ADMIN roles.
   """
-  ReactoryClientDeleteTheme(clientId: String!, themeName: String!): ReactoryClient!
+  ReactoryClientDeleteTheme(clientId: String!, themeName: String!): ReactoryClient! @auth(roles: ["ADMIN"])
 
   """
   Publishes custom CSS for a theme directly to the theme folder on disk. Restricted to ADMIN roles.
   """
-  ReactoryClientPublishThemeCss(clientId: String, themeName: String!, cssContent: String!): Boolean!
+  ReactoryClientPublishThemeCss(clientId: String, themeName: String!, cssContent: String!): Boolean! @auth(roles: ["ADMIN"])
 }

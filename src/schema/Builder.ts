@@ -314,7 +314,7 @@ export default class Builder implements ISchemaBuilder {
   $number(name: string, title: string, description: string, minValue: number | "null" = null, maxValue: number | "null" = null, uiSchema: Reactory.Schema.IUISchema = null): ISchemaBuilder {
     NumberProperty(title, description, minValue, maxValue, this._schema, name);
     return this;
-  };
+  }
 
   $object(name: string, title: string, description: string, schema: Reactory.Schema.IObjectSchema, uiSchema: Reactory.Schema.IUISchema = null, readOnly: Boolean = false, props: any = {}): ISchemaBuilder {
     const objectProperty = ObjectProperty(title, description, schema && schema.properties ? schema.properties : {}, null, null);

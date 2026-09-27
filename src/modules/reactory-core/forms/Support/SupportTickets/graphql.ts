@@ -82,8 +82,10 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
   queries: {
     openTickets: {
       name: 'ReactorySupportTickets',
+      // The caller's own tickets. ReactorySupportTickets is the support-staff
+      // list of every ticket in the tenant; aliased so the result key is unchanged.
       text: `query ReactoryMySupportTickets($filter: ReactorySupportTicketFilter, $paging: PagingRequest) {
-        ReactorySupportTickets(filter: $filter, paging: $paging) {
+        ReactorySupportTickets: ReactoryMySupportTickets(filter: $filter, paging: $paging) {
           paging {
             page
             pageSize

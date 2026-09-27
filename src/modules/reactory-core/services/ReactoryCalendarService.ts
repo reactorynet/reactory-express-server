@@ -1,9 +1,12 @@
 import { Repository } from "typeorm";
+import { getTenantRepository, TenantRepository } from "@reactory/server-core/database/tenant/TenantRepository";
+import { CalendarVisibility } from '@reactory/server-modules/reactory-core/models/ReactoryCalendar/visibility';
 import { ReactoryCalendar } from "@reactory/server-modules/reactory-core/models/ReactoryCalendar";
 import { PostgresDataSource } from "@reactory/server-modules/reactory-core/models";
 import { service } from "@reactory/server-core/application/decorators/service";
 import { Server } from "@reactorynet/reactory-core";
 import { Models } from '@reactorynet/reactory-core';
+import { InsufficientPermissions } from "@reactory/server-core/exceptions";
 
 export interface CreateReactoryCalendarInput {
   name: string;
@@ -47,12 +50,46 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
   lifeCycle: string;
   props: any;
   context: Reactory.Server.IReactoryContext;
-  private calendarRepository: Repository<ReactoryCalendar>;
+  /** Tenant-scoped to the request client (WP-B2). */
+  private get calendarRepository(): TenantRepository<ReactoryCalendar> {
+    return getTenantRepository(this.context, ReactoryCalendar);
+  }
   
   constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
-    this.calendarRepository = PostgresDataSource.getRepository(ReactoryCalendar);
+  }
+
+  /**
+   * The ReactoryClient `_id` of the request. Calendars are partitioned by it:
+   * a calendar is stored with the creating request's client and is only ever
+   * read or changed on behalf of that client. The value never comes from the
+   * caller's input.
+   *
+   * A context without a partner (CLI, system jobs) is not tenant-scoped.
+   */
+  private get tenantClientId(): string | null {
+    const partner = this.context?.partner as { _id?: { toString(): string } } | undefined;
+    return partner?._id ? partner._id.toString() : null;
+  }
+
+  private tenantWhere<T extends Record<string, unknown>>(where: T): T & { clientId?: string } {
+    const clientId = this.tenantClientId;
+    return clientId ? { ...where, clientId } : where;
+  }
+
+  private inTenant(calendar: ReactoryCalendar | null | undefined): boolean {
+    const clientId = this.tenantClientId;
+    return !!calendar && (!clientId || calendar.clientId === clientId);
+  }
+
+  private async filterReadable(calendars: ReactoryCalendar[], userId?: string): Promise<ReactoryCalendar[]> {
+    const scoped = calendars.filter((calendar) => this.inTenant(calendar));
+    if (!userId) return scoped;
+    // checkCalendarAccess is async: filter on the resolved values, not on the
+    // promises (a promise is always truthy, which let every calendar through).
+    const readable = await Promise.all(scoped.map((calendar) => this.checkCalendarAccess(calendar.id, userId, 'read')));
+    return scoped.filter((_, index) => readable[index]);
   }
   onStartup(context: Reactory.Server.IReactoryContext): Promise<void> {
     return Promise.resolve();
@@ -71,8 +108,10 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Create a new calendar
    */
   async createCalendar(input: CreateReactoryCalendarInput, ownerId: string): Promise<ReactoryCalendar> {
+    const { clientId: _ignoredClientId, ...rest } = input;
     const calendar = this.calendarRepository.create({
-      ...input,
+      ...rest,
+      clientId: this.tenantClientId ?? undefined,
       ownerId,
       createdBy: ownerId,
       updatedBy: ownerId,
@@ -89,7 +128,7 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Update an existing calendar
    */
   async updateCalendar(id: number, input: UpdateReactoryCalendarInput, userId: string): Promise<ReactoryCalendar> {
-    const calendar = await this.calendarRepository.findOne({ where: { id } });
+    const calendar = await this.calendarRepository.findOne({ where: this.tenantWhere({ id }) });
     if (!calendar) {
       throw new Error(`Calendar with id ${id} not found`);
     }
@@ -99,8 +138,10 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
       throw new Error('Insufficient permissions to update calendar');
     }
 
+    // The owning client is fixed at creation; an update cannot move a calendar.
+    const { clientId: _ignoredClientId, ...changes } = input as UpdateReactoryCalendarInput & { clientId?: string };
     Object.assign(calendar, {
-      ...input,
+      ...changes,
       updatedBy: userId,
       updatedAt: new Date()
     });
@@ -112,7 +153,7 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Delete a calendar (soft delete by setting inactive)
    */
   async deleteCalendar(id: number, userId: string): Promise<boolean> {
-    const calendar = await this.calendarRepository.findOne({ where: { id } });
+    const calendar = await this.calendarRepository.findOne({ where: this.tenantWhere({ id }) });
     if (!calendar) {
       throw new Error(`Calendar with id ${id} not found`);
     }
@@ -134,7 +175,7 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Get a calendar by ID
    */
   async getCalendar(id: number, userId?: string): Promise<ReactoryCalendar | null> {
-    const calendar = await this.calendarRepository.findOne({ where: { id, isActive: true } });
+    const calendar = await this.calendarRepository.findOne({ where: this.tenantWhere({ id, isActive: true }) });
     if (!calendar) return null;
 
     // Check access if userId provided
@@ -165,7 +206,15 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
       query.andWhere('calendar.organization_id = :organizationId', { organizationId: filter.organizationId });
     }
 
-    if (filter.clientId) {
+    // Always the request's client; a filter.clientId naming another client
+    // matches nothing rather than widening the query.
+    const tenantClientId = this.tenantClientId;
+    if (tenantClientId) {
+      query.andWhere('calendar.client_id = :tenantClientId', { tenantClientId });
+      if (filter.clientId && filter.clientId !== tenantClientId) {
+        return [];
+      }
+    } else if (filter.clientId) {
       query.andWhere('calendar.client_id = :clientId', { clientId: filter.clientId });
     }
 
@@ -181,8 +230,8 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
         new (await import("typeorm")).Brackets(qb => {
           qb.where('calendar.owner_id = :userId', { userId })
             .orWhere('calendar.allowed_user_ids @> :userArray', { userArray: [userId] })
-            .orWhere('calendar.visibility = :public', { public: Models.ReactoryCalendarVisibility.PUBLIC })
-            .orWhere('calendar.visibility = :organization', { organization: Models.ReactoryCalendarVisibility.ORGANIZATION });
+            .orWhere('calendar.visibility = :public', { public: CalendarVisibility.PUBLIC })
+            .orWhere('calendar.visibility = :organization', { organization: CalendarVisibility.ORGANIZATION });
         })
       );
     }
@@ -204,7 +253,7 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Share calendar with permissions
    */
   async shareCalendar(id: number, permissions: Reactory.Models.ReactoryCalendarPermissions, userId: string): Promise<ReactoryCalendar> {
-    const calendar = await this.calendarRepository.findOne({ where: { id } });
+    const calendar = await this.calendarRepository.findOne({ where: this.tenantWhere({ id }) });
     if (!calendar) {
       throw new Error(`Calendar with id ${id} not found`);
     }
@@ -226,14 +275,15 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Get user's calendars
    */
   async getUserCalendars(userId: string, includeShared: boolean = true): Promise<ReactoryCalendar[]> {
-    return await ReactoryCalendar.findUserCalendars(userId);
+    const calendars = await ReactoryCalendar.findUserCalendars(this.calendarRepository, userId);
+    return calendars.filter((calendar) => this.inTenant(calendar));
   }
 
   /**
    * Check calendar access permissions
    */
   async checkCalendarAccess(calendarId: number, userId: string, action: 'read' | 'write' | 'admin' = 'read'): Promise<boolean> {
-    const calendar = await this.calendarRepository.findOne({ where: { id: calendarId, isActive: true } });
+    const calendar = await this.calendarRepository.findOne({ where: this.tenantWhere({ id: calendarId, isActive: true }) });
     if (!calendar) return false;
 
     // Owner has full access
@@ -241,21 +291,21 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
 
     // Check visibility-based access
     switch (calendar.visibility) {
-      case Models.ReactoryCalendarVisibility.PRIVATE:
+      case CalendarVisibility.PRIVATE:
         return false; // Only owner has access
 
-      case Models.ReactoryCalendarVisibility.SHARED:
+      case CalendarVisibility.SHARED:
         return calendar.allowedUserIds?.includes(userId) || false;
 
-      case Models.ReactoryCalendarVisibility.APPLICATION:
+      case CalendarVisibility.APPLICATION:
         // Would need to check if user belongs to the application
         return calendar.allowedUserIds?.includes(userId) || false;
 
-      case Models.ReactoryCalendarVisibility.ORGANIZATION:
+      case CalendarVisibility.ORGANIZATION:
         // Would need to check if user belongs to the organization
         return calendar.allowedUserIds?.includes(userId) || false;
 
-      case Models.ReactoryCalendarVisibility.PUBLIC:
+      case CalendarVisibility.PUBLIC:
         return action === 'read'; // Public calendars are read-only for non-owners
 
       default:
@@ -267,7 +317,8 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Get user's default calendar
    */
   async getUserDefaultCalendar(userId: string): Promise<ReactoryCalendar | null> {
-    return await ReactoryCalendar.findDefaultCalendar(userId);
+    const calendar = await ReactoryCalendar.findDefaultCalendar(this.calendarRepository, userId);
+    return this.inTenant(calendar) ? calendar : null;
   }
 
   /**
@@ -276,12 +327,12 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
   async setUserDefaultCalendar(calendarId: number, userId: string): Promise<ReactoryCalendar> {
     // First, unset any existing default calendar for this user
     await this.calendarRepository.update(
-      { ownerId: userId, isDefault: true },
+      this.tenantWhere({ ownerId: userId, isDefault: true }),
       { isDefault: false, updatedBy: userId, updatedAt: new Date() }
     );
 
     // Set the new default calendar
-    const calendar = await this.calendarRepository.findOne({ where: { id: calendarId, ownerId: userId } });
+    const calendar = await this.calendarRepository.findOne({ where: this.tenantWhere({ id: calendarId, ownerId: userId }) });
     if (!calendar) {
       throw new Error('Calendar not found or not owned by user');
     }
@@ -297,27 +348,26 @@ export class ReactoryCalendarService implements Reactory.Service.IReactoryDefaul
    * Get organization calendars
    */
   async getOrganizationCalendars(organizationId: string, userId?: string): Promise<ReactoryCalendar[]> {
-    const calendars = await ReactoryCalendar.findOrganizationCalendars(organizationId);
-
-    // Filter by user access if userId provided
-    if (userId) {
-      return calendars.filter(calendar => this.checkCalendarAccess(calendar.id, userId, 'read'));
-    }
-
-    return calendars;
+    const calendars = await ReactoryCalendar.findOrganizationCalendars(this.calendarRepository, organizationId);
+    return this.filterReadable(calendars, userId);
   }
 
   /**
    * Get client calendars
    */
   async getClientCalendars(clientId: string, userId?: string): Promise<ReactoryCalendar[]> {
-    const calendars = await ReactoryCalendar.findClientCalendars(clientId);
-
-    // Filter by user access if userId provided
-    if (userId) {
-      return calendars.filter(calendar => this.checkCalendarAccess(calendar.id, userId, 'read'));
+    // The request's client, never the argument: the argument is accepted only
+    // when it names that same client (by _id or key).
+    const tenantClientId = this.tenantClientId;
+    let effectiveClientId = clientId;
+    if (tenantClientId) {
+      const partnerKey = (this.context?.partner as { key?: string } | undefined)?.key;
+      if (clientId && clientId !== tenantClientId && clientId !== partnerKey) {
+        throw new InsufficientPermissions('Calendars of another client cannot be listed', { clientId });
+      }
+      effectiveClientId = tenantClientId;
     }
-
-    return calendars;
+    const calendars = await ReactoryCalendar.findClientCalendars(this.calendarRepository, effectiveClientId);
+    return this.filterReadable(calendars, userId);
   }
 }

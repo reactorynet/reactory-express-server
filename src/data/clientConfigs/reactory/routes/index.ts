@@ -41,7 +41,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
               props: {
                 url: safeUrl([
                   process?.env?.API_URI_ROOT ?? "http://localhost:4000",
-                  "auth/google/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}",
+                  "auth/google/start?x-client-key=\${reactory.CLIENT_KEY}",
                 ]),
               },
             },
@@ -51,7 +51,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
               props: {
                 url: safeUrl([
                   process?.env?.API_URI_ROOT ?? "http://localhost:4000",
-                  "auth/microsoft/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}",
+                  "auth/microsoft/start?x-client-key=\${reactory.CLIENT_KEY}",
                 ]),
               },
             },
@@ -61,7 +61,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
               props: {
                 url: safeUrl([
                   process?.env?.API_URI_ROOT ?? "http://localhost:4000",
-                  "auth/github/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}",
+                  "auth/github/start?x-client-key=\${reactory.CLIENT_KEY}",
                 ]),
               },
             },
@@ -71,7 +71,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
               props: {
                 url: safeUrl([
                   process?.env?.API_URI_ROOT ?? "http://localhost:4000",
-                  "auth/okta/start?x-client-key=\${reactory.CLIENT_KEY}&x-client-pwd=\${encodeURIComponent(reactory.CLIENT_PWD)}",
+                  "auth/okta/start?x-client-key=\${reactory.CLIENT_KEY}",
                 ]),
               },
             },
@@ -542,6 +542,18 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
         },
       },
     ],
+  },
+
+  {
+    // Every ticket in the tenant, for support staff. /support/open lists only
+    // the caller's own.
+    key: "support-tickets-admin",
+    title: "All Support Tickets",
+    path: "/support/admin",
+    exact: true,
+    public: false,
+    roles: ["ADMIN", "SUPPORT_ADMIN", "SUPPORT"],
+    componentFqn: "core.SupportTicketsAdmin@1.0.0",
   },
 
   {

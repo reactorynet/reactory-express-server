@@ -5,15 +5,15 @@
  * Updated for LinkedIn API v2 with new OAuth scopes.
  */
 
-import { encoder } from '@reactory/server-core/utils';
 import { Strategy as LinkedInStrategy } from 'passport-linkedin-oauth2';
 import Helpers, { OnDoneCallback } from '../helpers';
-import { Application, Response } from 'express';
+import { Application, NextFunction, Response } from 'express';
 import passport from 'passport';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
 import { StateManager, ErrorSanitizer, AuthAuditLogger } from '../security';
 import AuthTelemetry from '../telemetry';
+import { beginTenantOAuth, completeTenantOAuth, isCallbackFailure } from '../tenantOAuth';
 
 const {
   LINKEDIN_CLIENT_ID = 'LINKEDIN_CLIENT_ID',
@@ -24,16 +24,11 @@ const {
 } = process.env;
 
 /**
- * LinkedIn OAuth Strategy Configuration
- * Handles authentication via LinkedIn OAuth2 (API v2)
+ * LinkedIn verify callback. The callback route resolves the tenant from the
+ * validated CSRF state before passport calls this, so `context.partner` is
+ * normally set; the session fallback below is kept for direct callers.
  */
-const LinkedInOAuthStrategy: passport.Strategy = new LinkedInStrategy({
-  clientID: LINKEDIN_CLIENT_ID,
-  clientSecret: LINKEDIN_CLIENT_SECRET,
-  callbackURL: LINKEDIN_CALLBACK_URL,
-  scope: LINKEDIN_OAUTH_SCOPE.split(','),
-  passReqToCallback: true,
-}, async (
+export const linkedinVerifyCallback = async (
   req: Reactory.Server.ReactoryExpressRequest,
   accessToken: string,
   refreshToken: any,
@@ -203,33 +198,37 @@ const LinkedInOAuthStrategy: passport.Strategy = new LinkedInStrategy({
     const safeError = ErrorSanitizer.sanitizeError(error, { provider: 'linkedin' });
     return done(new Error(safeError), false);
   }
-});
+};
+
+const LinkedInOAuthStrategy: passport.Strategy = new LinkedInStrategy({
+  clientID: LINKEDIN_CLIENT_ID,
+  clientSecret: LINKEDIN_CLIENT_SECRET,
+  callbackURL: LINKEDIN_CALLBACK_URL,
+  scope: LINKEDIN_OAUTH_SCOPE.split(','),
+  passReqToCallback: true,
+}, linkedinVerifyCallback);
 
 /**
  * Configure LinkedIn OAuth Routes
  */
 export const useLinkedInRoutes = (app: Application) => {
+  /**
+   * LinkedIn OAuth Start Endpoint
+   * Resolves the tenant from `?x-client-key=`, mints a session-bound CSRF
+   * state and redirects to LinkedIn with the tenant's strategy.
+   */
   app.get(
     '/auth/linkedin/start',
-    (req: Reactory.Server.ReactoryExpressRequest, res: Response, next) => {
+    async (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: NextFunction) => {
       try {
-        const state = StateManager.createState({
-          'x-client-key': req.query['x-client-key'],
-          'x-client-pwd': req.query['x-client-pwd'],
-          flow: 'linkedin',
-        });
+        const begun = await beginTenantOAuth(req, res, 'linkedin');
+        if (!begun) return;
+        const { clientKey, strategyName, state } = begun;
 
-        // @ts-ignore
-        req.session.authState = state;
+        logger.debug('Starting LinkedIn OAuth flow', { clientKey, strategyName });
 
-        logger.debug('Starting LinkedIn OAuth flow', {
-          clientKey: req.query['x-client-key'],
-          state,
-        });
-
-        passport.authenticate('linkedin', {
+        passport.authenticate(strategyName, {
           scope: LINKEDIN_OAUTH_SCOPE.split(','),
-          passReqToCallback: true,
           state,
         })(req, res, next);
       } catch (error) {
@@ -241,6 +240,10 @@ export const useLinkedInRoutes = (app: Application) => {
     }
   );
 
+  /**
+   * LinkedIn OAuth Failure Endpoint
+   * Handles authentication failures
+   */
   app.get('/auth/linkedin/failure', (req: Reactory.Server.ReactoryExpressRequest, res: Response) => {
     logger.warn('LinkedIn authentication failed', {
       query: req.query,
@@ -253,49 +256,58 @@ export const useLinkedInRoutes = (app: Application) => {
     });
   });
 
+  /**
+   * LinkedIn OAuth Callback Endpoint
+   * Validates the CSRF state against the session, resolves the tenant named
+   * in it, then completes the exchange with that tenant's strategy.
+   */
   app.get(
     '/auth/linkedin/callback',
-    (req: Reactory.Server.ReactoryExpressRequest, res: Response) => {
-      const { context } = req;
-      const failureRedirectUrl = context.partner
-        ? `${context.partner.siteUrl}/auth/linkedin/failure`
-        : '/auth/linkedin/failure';
-
-      const onCompletion = (err: string, user: {
-        id: string;
-        firstName: string;
-        lastName: string;
-        token: string;
-      } | boolean) => {
-        if (err) {
-          logger.error('LinkedIn OAuth callback error', { error: err });
-          res.status(500).send({
-            error: 'An error occurred while trying to authenticate with LinkedIn',
+    async (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: NextFunction) => {
+      try {
+        const resolved = await completeTenantOAuth(req, 'linkedin');
+        if (isCallbackFailure(resolved)) {
+          AuthTelemetry.recordCSRFValidation('linkedin', false);
+          return res.status(resolved.status).send({
+            error: 'Authentication with LinkedIn failed',
+            reason: resolved.error,
             timestamp: new Date().toISOString(),
           });
-        } else {
-          if (!user) {
+        }
+        AuthTelemetry.recordCSRFValidation('linkedin', true);
+
+        const { partner, strategyName } = resolved;
+        const failureRedirectUrl = `${partner.siteUrl}/auth/linkedin/failure`;
+
+        const onCompletion = (err: any, user: { token: string } | false) => {
+          if (err) {
+            logger.error('LinkedIn OAuth callback error', { error: err });
+            res.status(500).send({
+              error: 'An error occurred while trying to authenticate with LinkedIn',
+              timestamp: new Date().toISOString(),
+            });
+          } else if (!user) {
             logger.warn('LinkedIn authentication returned no user');
             res.status(302).redirect(failureRedirectUrl);
           } else {
-            const successUrl = context.partner
-              ? `${context.partner.siteUrl}?auth_token=${(user as { token: string }).token}`
-              : `/?auth_token=${(user as { token: string }).token}`;
-
             logger.info('LinkedIn authentication complete, redirecting', {
-              successUrl: successUrl.split('?')[0],
+              successUrl: partner.siteUrl,
             });
-
-            res.status(302).redirect(successUrl);
+            res.status(302).redirect(`${partner.siteUrl}?auth_token=${user.token}`);
           }
-        }
-      };
+        };
 
-      passport.authenticate('linkedin', {
-        failureRedirect: failureRedirectUrl,
-        passReqToCallback: true,
-        scope: LINKEDIN_OAUTH_SCOPE.split(','),
-      }, onCompletion)(req, res);
+        passport.authenticate(strategyName, {
+          failureRedirect: failureRedirectUrl,
+          scope: LINKEDIN_OAUTH_SCOPE.split(','),
+        }, onCompletion)(req, res, next);
+      } catch (error) {
+        logger.error('LinkedIn OAuth callback error', { error });
+        res.status(500).send({
+          error: 'An error occurred while trying to authenticate with LinkedIn',
+          timestamp: new Date().toISOString(),
+        });
+      }
     }
   );
 };

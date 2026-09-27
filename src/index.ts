@@ -29,4 +29,9 @@ ReactoryServer().then((result: any) => {
   logger.info(`Reactory Server started.`);
 }).catch((err) => {
   logger.error(`Reactory Server startup failed. (${err.message})`, err);
+  // A refused security precondition (for example a weak SECRET_SAUCE) must
+  // stop the process, not leave the gRPC server running without the API.
+  if (typeof err?.message === 'string' && err.message.startsWith('SECURITY ERROR')) {
+    process.exit(1);
+  }
 });

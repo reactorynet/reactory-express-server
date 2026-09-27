@@ -372,7 +372,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
           value: null,
           label: 'Null (Empty / None)'
         })
-      };
+      }
 
       defaultSelectedColumns.push({
         field: tableColumn.name,
@@ -383,7 +383,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
     });
 
     propertiesUISchema.data["ui:options"].columns = tableWidgetColumns;
-  };
+  }
 
   return {
     id: `Generated.LIST_${table.schemaName}_${table.tableName}@${connectionId}`,
@@ -554,7 +554,7 @@ const formDefinitionFromTableConnection = (table: GeneratorTableDefinition, conn
         },
       }
     });
-  };
+  }
 
 
 

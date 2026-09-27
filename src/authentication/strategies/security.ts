@@ -141,6 +141,32 @@ export class StateManager {
 }
 
 /**
+ * passport-oauth2 state store for strategies whose routes manage state with
+ * StateManager (see tenantOAuth.ts).
+ *
+ * passport-okta-oauth20 forces `state: true`, which makes passport-oauth2
+ * check its own session nonce on callback. The start route passes an explicit
+ * StateManager state instead, so that nonce is never written and every
+ * callback would fail. This store accepts exactly the state the callback
+ * route has already compared with the session and consumed
+ * (`req.verifiedOAuthState`), and nothing else.
+ */
+export class VerifiedStateStore {
+  store(req: any, meta: any, callback: (err: Error | null, state?: string) => void): void {
+    callback(new Error('OAuth state must be created by the tenant OAuth start route'));
+  }
+
+  verify(req: any, providedState: string, meta: any, callback: (err: Error | null, ok: boolean, info?: any) => void): void {
+    const expected = req?.verifiedOAuthState;
+    if (typeof expected === 'string' && expected.length > 0 && expected === providedState) {
+      callback(null, true);
+      return;
+    }
+    callback(null, false, { message: 'Unable to verify authorization request state.' });
+  }
+}
+
+/**
  * Error Sanitizer
  * Ensures authentication errors don't leak sensitive information
  */
@@ -251,6 +277,47 @@ export class JWTValidator {
 
     logger.info('JWT secret configuration validated successfully');
   }
+
+  /**
+   * Startup gate for SECRET_SAUCE (the JWT, session and state-encryption key).
+   *
+   * - NODE_ENV=test: skipped.
+   * - Missing, or a known placeholder value: refuse to start in every other
+   *   environment.
+   * - Shorter than 32 bytes: refuse to start, except in `development` and
+   *   `local` where it is logged as an error. Rotating the key invalidates
+   *   every issued JWT, session and state-encrypted OAuth token, so a
+   *   developer's existing database is not bricked by upgrading.
+   *
+   * Throws on refusal; the caller exits.
+   */
+  static enforceAtStartup(env: NodeJS.ProcessEnv = process.env): void {
+    const nodeEnv = (env.NODE_ENV || '').toLowerCase();
+    if (nodeEnv === 'test') return;
+
+    const secret = env.SECRET_SAUCE;
+    const remedy = 'Generate one with: openssl rand -base64 48';
+
+    if (!secret) {
+      throw new Error(`SECURITY ERROR: SECRET_SAUCE is not set. The server will not start without a JWT secret. ${remedy}`);
+    }
+
+    if (this.DEFAULT_SECRETS.some(d => d.toLowerCase() === secret.toLowerCase())) {
+      throw new Error(`SECURITY ERROR: SECRET_SAUCE is set to a well-known placeholder value. ${remedy}`);
+    }
+
+    const bytes = Buffer.byteLength(secret, 'utf8');
+    if (bytes < JWTValidator.MIN_SECRET_BYTES) {
+      const message = `SECRET_SAUCE is ${bytes} bytes; at least ${JWTValidator.MIN_SECRET_BYTES} are required. ${remedy}`;
+      if (nodeEnv === 'development' || nodeEnv === 'local') {
+        logger.error(`SECURITY WARNING (allowed in ${nodeEnv} only): ${message}`);
+        return;
+      }
+      throw new Error(`SECURITY ERROR: ${message}`);
+    }
+  }
+
+  static readonly MIN_SECRET_BYTES = 32;
 
   /**
    * Validate with warning instead of error (for development)
@@ -542,6 +609,7 @@ export class AuthAuditLogger {
  * Export all security utilities
  */
 export default {
+  VerifiedStateStore,
   StateManager,
   ErrorSanitizer,
   JWTValidator,

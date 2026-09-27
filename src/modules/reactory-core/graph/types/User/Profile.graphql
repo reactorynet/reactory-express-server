@@ -35,5 +35,5 @@ extend type Mutation {
   """
   Sets or update the Personal Demographics
   """
-  CoreSetPersonalDemographics(personalDemographics: PersonalDemographicsInput!): CoreSimpleResponse
+  CoreSetPersonalDemographics(personalDemographics: PersonalDemographicsInput!): CoreSimpleResponse @auth(roles: ["USER", "ADMIN"])
 }

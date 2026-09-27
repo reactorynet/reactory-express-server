@@ -405,7 +405,7 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
     $package.spellcheck = this.spellcheck(input, lang);
     
     return $package;
-  };
+  }
 
   /**
    * do any initialization work for natural language processing service
