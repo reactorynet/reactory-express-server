@@ -1,5 +1,4 @@
 import Reactory from '@reactorynet/reactory-core';
-
 interface DetailPanelDependencies {
   React: Reactory.React,
   Material: Reactory.Client.Web.IMaterialModule,
@@ -57,19 +56,10 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
     return <div>No ticket data available</div>;
   }
 
-  const [ticket, setTicket] = React.useState(initialTicket);
-
-  React.useEffect(() => {
-    setTicket(initialTicket);
-  }, [initialTicket]);
-
-  const { 
-    React, 
+  const {
+    React,
     Material,
     StatusBadge,
-    UserAvatar,
-    RelativeTime,
-    CountBadge,
     SupportTicketOverview,
     SupportTicketComments,
     SupportTicketAttachments,
@@ -89,13 +79,19 @@ const SupportTicketDetailPanel = (props: DetailPanelProps) => {
     'core.SupportTicketRelated',
   ]);
 
+  const [ticket, setTicket] = React.useState(initialTicket);
+
+  React.useEffect(() => {
+    setTicket(initialTicket);
+  }, [initialTicket]);
+
   const { MaterialCore } = Material;
-  const { 
-    Box, 
-    Tabs, 
-    Tab, 
-    Typography, 
-    Icon, 
+  const {
+    Box,
+    Tabs,
+    Tab,
+    Typography,
+    Icon,
     Badge,
   } = MaterialCore;
 

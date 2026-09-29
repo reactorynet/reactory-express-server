@@ -249,7 +249,7 @@ export class JWTValidator {
     }
 
     // Check minimum length
-    if (secret.length < 32) {
+    if (secret.length < 32 && process.env.NODE_ENV === "production") {
       logger.warn('JWT secret is shorter than recommended minimum (32 characters)', {
         length: secret.length,
       });
