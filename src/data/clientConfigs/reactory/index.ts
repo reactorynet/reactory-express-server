@@ -80,7 +80,7 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
     },
     {
       provider: 'GOOGLE',
-      enabled: false,
+      enabled: true,
       options: {},
     },
   ],
