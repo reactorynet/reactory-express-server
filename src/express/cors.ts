@@ -2,6 +2,7 @@ import logger from '../logging';
 import { CorsOptions, CorsOptionsDelegate } from 'cors';
 import Reactory from '@reactorynet/reactory-core';
 import EnabledClients from '@reactory/server-core/data/clientConfigs';
+import { clientIp, evaluateRouteAccess, getRouteAccessPolicies } from './routeAccess';
 
 const {
   CDN_ROOT,
@@ -10,17 +11,9 @@ const {
   REACTORY_APP_WHITELIST = '',
 } = process.env as Reactory.Server.ReactoryEnvironment;
 
-const bypassUri = [
-  `${CDN_ROOT}content/`,
-  `${CDN_ROOT}plugins/`,
-  `${CDN_ROOT}profiles/`,
-  `${CDN_ROOT}organization/`,
-  `${CDN_ROOT}themes/`,
-  `${CDN_ROOT}ui/`,
-  `${CDN_ROOT}/favicon.ico`,
-  `${CDN_ROOT}/auth/microsoft/openid`,
-  API_ROOT,
-];
+// The CORS exemptions are no longer hardwired here. They come from the shared
+// route-access policy (`./routeAccess`), the same source the tenant-auth middleware
+// uses — previously the two carried separate, drifting `bypassUri` lists.
 
 type CORSCallback = (error: Error | null, pass: boolean) => void;
 
@@ -123,12 +116,36 @@ const CorsDelegate: CorsOptionsDelegate = (
         return;
       }
 
-      // Path only: a bypass path inside the query string must not skip CORS.
+      // CORS exemptions come from the same route-access policy the tenant-auth
+      // middleware uses, so the two cannot drift apart. Path only: a bypass path
+      // inside the query string must not skip CORS.
       const requestPath = (request.url || '').split('?')[0];
-      if (bypassUri.some((uri) => uri && requestPath.indexOf(uri) > -1)) {
-        if (CORS_DEBUG === 'true') logger.info(`[CORS] Bypassing CORS for ${request.url}`);
-        callback(null, true);
-        return;
+      const candidateKey: string | undefined =
+        request.partner?.key ||
+        ((request.headers && (request.headers['x-client-key'] || request.headers['X-Client-Key'])) as string) ||
+        (request.query && request.query['x-client-key']
+          ? decodeURIComponent(request.query['x-client-key'] as string)
+          : undefined);
+
+      try {
+        const policies = getRouteAccessPolicies(candidateKey);
+        const access = evaluateRouteAccess(
+          {
+            path: requestPath,
+            method: request.method,
+            ip: clientIp(request),
+            clientId: candidateKey,
+          },
+          policies,
+        );
+        if (access.corsRequired === false) {
+          if (CORS_DEBUG === 'true') logger.info(`[CORS] Bypassing CORS for ${request.url}`);
+          callback(null, true);
+          return;
+        }
+      } catch (routeAccessError) {
+        // Never allow on a policy failure — fall through to the origin check.
+        logger.warn(`[CORS] route access evaluation failed: ${(routeAccessError as Error).message}`);
       }
 
       const globalWhitelistRaw = process.env.REACTORY_APP_WHITELIST || REACTORY_APP_WHITELIST || '';

@@ -250,6 +250,22 @@ input CommentFilterInput {
 }
 
 """
+A count of a user's comments within a single context category.
+Used to drive facet/badge counts on the "My Comments" surface.
+"""
+type CommentContextStat {
+  """
+  The context category (e.g. 'ReactoryContent', 'ReactorChat', 'ReactorySupportTicket')
+  """
+  context: String
+
+  """
+  Number of (non-removed) comments the user authored in this context
+  """
+  count: Int
+}
+
+"""
 Paged comments result
 """
 type PagedComments {
@@ -283,6 +299,25 @@ extend type Query {
     includeRemoved: Boolean
     paging: PagingRequest
   ): PagedComments
+
+  """
+  Get comments authored by the currently authenticated user, across all contexts.
+  Scoped to the caller — never accepts an arbitrary user id.
+  Ordered newest first; supports optional context filter, free-text search
+  (text/quote) and pagination.
+  """
+  getMyComments(
+    context: String
+    searchTerm: String
+    includeRemoved: Boolean
+    paging: PagingRequest
+  ): PagedComments
+
+  """
+  Counts of the current user's (non-removed) comments grouped by context.
+  Drives the context facets on the "My Comments" surface.
+  """
+  getMyCommentStats: [CommentContextStat]
 }
 
 extend type Mutation {

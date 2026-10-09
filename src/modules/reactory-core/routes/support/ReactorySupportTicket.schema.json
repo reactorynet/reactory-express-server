@@ -30,11 +30,19 @@
       "enum": [
         "New",
         "Open",
+        "In Progress",
+        "Blocked",
         "Closed",
         "Resolved",
         "Withdrawn",
         "Rejected"
       ]
+    },
+    "priority": {
+      "type": "string",
+      "title": "Priority",
+      "description": "Priority level of the ticket",
+      "enum": ["critical", "high", "medium", "low"]
     },
     "reference": {
       "type": "string",
@@ -72,6 +80,48 @@
       "type": "string",
       "title": "Form ID",
       "description": "The ID of the form that was used to create the ticket"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "title": "Tags",
+      "description": "Tags associated with the ticket"
+    },
+    "slaDeadline": {
+      "type": "string",
+      "format": "date-time",
+      "title": "SLA Deadline",
+      "description": "The SLA deadline for the ticket"
+    },
+    "triage": {
+      "type": "object",
+      "title": "AI Triage",
+      "description": "First-class AI triage bookkeeping (populated by the support triage workflow).",
+      "properties": {
+        "triagedAt": { "type": "string", "format": "date-time", "title": "Triaged At", "description": "When triage completed; presence marks the ticket as triaged" },
+        "triagedBy": { "type": "string", "title": "Triaged By", "description": "Persona or user id that triaged it" },
+        "category": { "type": "string", "title": "Category", "description": "Classified category" },
+        "priority": { "type": "string", "title": "Priority", "description": "Priority the triage applied" },
+        "assignedToUserId": { "type": "string", "title": "Assigned To (User Id)", "description": "Owner user id assigned by triage" },
+        "ownerEmail": { "type": "string", "title": "Owner Email", "description": "Owner email resolved from support-routing.yaml" },
+        "ownerRationale": { "type": "string", "title": "Owner Rationale", "description": "Why that owner/priority was chosen" },
+        "followUpRequired": { "type": "boolean", "title": "Follow-up Required" },
+        "delegatedPersona": { "type": "string", "title": "Delegated Persona" },
+        "confidence": { "type": "number", "title": "Confidence", "description": "Model confidence 0-1 where reported" },
+        "summary": { "type": "string", "title": "Summary", "description": "Short triage summary" }
+      }
+    },
+    "escalation": {
+      "type": "object",
+      "title": "SLA Escalation",
+      "description": "First-class SLA escalation bookkeeping (populated by the escalation workflow).",
+      "properties": {
+        "level": { "type": "integer", "title": "Level", "description": "Current escalation level" },
+        "lastEscalatedAt": { "type": "string", "format": "date-time", "title": "Last Escalated At" },
+        "actions": { "type": "array", "items": { "type": "string" }, "title": "Actions" },
+        "holdUntil": { "type": "string", "format": "date-time", "title": "Hold Until", "description": "Escalation is skipped until this instant" },
+        "history": { "type": "array", "items": { "type": "object" }, "title": "History", "description": "Append-only escalation trail" }
+      }
     },
     "comments": {
       "type": "array",

@@ -77,6 +77,13 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
           icon: "speed",
           roles: ["USER"],
         },
+        {
+          ordinal: 10,
+          title: "reactory:reactory.menu.my-ai-budget",
+          link: "/profile/budget",
+          icon: "account_balance_wallet",
+          roles: ["USER"],
+        },
       ],
     },
     {
@@ -205,6 +212,13 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
       title: "reactory:reactory.menu.organizations",
       link: "/organizations/",
       icon: "business",
+      roles: ["USER"],
+    },
+    {
+      ordinal: 9,
+      title: "reactory:reactory.menu.my-comments",
+      link: "/my/comments",
+      icon: "forum",
       roles: ["USER"],
     },
     {

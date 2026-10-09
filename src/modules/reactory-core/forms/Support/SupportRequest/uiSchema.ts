@@ -32,8 +32,9 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
    },
   'ui:grid-layout': [
      {
-      requestType: { xs: 12, sm: 6, md: 6, lg: 6 },
-      request: { xs: 12, sm: 6, md: 6, lg: 6 },
+      requestType: { xs: 12, sm: 4, md: 4, lg: 4 },
+      priority: { xs: 12, sm: 4, md: 4, lg: 4 },
+      request: { xs: 12, sm: 4, md: 4, lg: 4 },
      },
      {
       description: { xs: 12, sm: 12, md: 12, lg: 12 },
@@ -54,6 +55,18 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
          { key: 'documentation', value: 'documentation', label: 'Documentation', icon: 'book' },
          { key: 'security', value: 'security', label: 'Security', icon: 'shield' },
          { key: 'other', value: 'other', label: 'Other', icon: 'abc' },
+        ],
+     }
+    },
+   priority: {
+     'ui:widget': 'SelectWidget',
+     'ui:options': {
+      showLabel: true,
+      selectOptions: [
+         { key: 'low', value: 'low', label: 'Low', icon: 'arrow-downward' },
+         { key: 'medium', value: 'medium', label: 'Medium', icon: 'remove' },
+         { key: 'high', value: 'high', label: 'High', icon: 'arrow-upward' },
+         { key: 'critical', value: 'critical', label: 'Critical', icon: 'priority-high' },
         ],
      }
     },

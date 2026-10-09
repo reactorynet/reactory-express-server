@@ -1,0 +1,200 @@
+# core.SupportAIAgentProcessNewTicket@1.0.0
+#
+# TRIAGE a single inbound support ticket using the Support Susan persona.
+#
+# Susan has the support tools she needs to determine ticket OWNERSHIP and act on
+# it (searchUser / getUser / getSupportTicket / listSupportTickets /
+# updateSupportTicket / addSupportTicketComment). She performs the assignment,
+# priority, status transition and triage comment; this workflow computes the
+# deterministic owner candidates, hands them to her, and then reconciles +
+# stamps bookkeeping as a safety net.
+#
+# WHY THE OWNER CANDIDATES COME FROM THE WORKFLOW
+# -----------------------------------------------
+# `structuredOutput` and tool-calling are mutually exclusive on the Gemini
+# provider, so the triage turn runs WITH TOOLS and WITHOUT structured output.
+# The least-loaded owner selection (per ~/.reactor/support-routing.yaml) is
+# therefore computed deterministically by the workflow service and passed to
+# Susan as context; she applies it via `updateSupportTicket`.
+#
+# IDEMPOTENCY
+# -----------
+# The workflow is safe to re-run (engine retries / dispatcher fan-out replays):
+# already-triaged tickets are skipped unless `force: true`. The reconcile step
+# only fills gaps, it never overwrites a decision already applied.
+#
+# EXECUTION IDENTITY
+# ------------------
+# Must run as a user with SUPPORT / SUPPORT_ADMIN / ADMIN roles (the support
+# tools are role-gated). Scheduled callers set this via the schedule `runAs`
+# block (default: the system account); invoked callers inherit the parent's
+# identity. See WorkflowRunner.buildYamlWorkflowData.
+#
+# INPUTS
+#   ticketId  — ticket id to triage  (one of ticketId / reference required)
+#   reference — ticket reference      (alternative lookup key)
+#   force     — re-triage even if already triaged (default false)
+
+nameSpace: core
+name: SupportAIAgentProcessNewTicket
+version: 1.0.0
+description: >-
+  AI triage of a single support ticket. Loads the ticket, resolves the
+  least-loaded owner from support-routing.yaml, has the Support Susan agent
+  assign/prioritise/comment via her tools, then reconciles and stamps triage
+  bookkeeping.
+author: Reactory
+tags: [support, ticket, triage, ai, agent, core]
+
+metadata:
+  timeout: 600000
+
+inputs:
+  ticketId:
+    type: string
+    required: false
+    description: The support ticket id to triage.
+  reference:
+    type: string
+    required: false
+    description: The ticket reference (alternative to ticketId).
+  force:
+    type: boolean
+    required: false
+    default: false
+    description: Re-triage even when the ticket already carries triage data.
+
+steps:
+  # 1. Load the ticket under the execution identity.
+  - id: loadTicket
+    name: Load ticket
+    type: service_invoke
+    config:
+      service: core.ReactorySupportWorkflowService@1.0.0
+      method: loadTicket
+      params:
+        id: "${input.ticketId}"
+        reference: "${input.reference}"
+
+  # 2. Deterministically resolve the least-loaded owner for this requestType.
+  - id: resolveOwner
+    name: Resolve owner (least-loaded)
+    type: service_invoke
+    dependsOn: loadTicket
+    config:
+      service: core.ReactorySupportWorkflowService@1.0.0
+      method: resolveOwner
+      params:
+        requestType: "${steps.loadTicket.result.requestType}"
+
+  # 3. Guard: only triage when the ticket exists and has not been triaged yet
+  #    (unless force). `steps.*` resolves to each step's `outputs`.
+  - id: guard
+    name: Triage guard
+    type: condition
+    dependsOn: resolveOwner
+    config:
+      condition: 'steps.loadTicket.result && !(steps.loadTicket.result.triage && steps.loadTicket.result.triage.triagedAt) || input.force === true'
+      thenSteps:
+        # 3a. AI triage turn — Support Susan WITH TOOLS (no structured output).
+        - id: triage
+          name: Support Susan triage
+          type: agent_conversation
+          config:
+            personaId: support
+            # Provider/model pin for the triage turn. Support Susan's module persona
+            # is configured for Google, but the triage pipeline must not depend on
+            # the global GOOGLE_AI_STUDIO_MODEL_ID / Google credentials. DeepSeek is
+            # OpenAI-compatible (routed via the OpenAI-compatible service) and
+            # `deepseek-flash` declares function-calling support, which the triage
+            # turn requires. The step override is applied per-turn via
+            # setChatModelProvider before the message is sent.
+            provider: deepseek
+            model: deepseek-flash
+            toolApprovalMode: auto
+            maxToolIterations: 25
+            instructions: |-
+              You are Support Susan, the support triage specialist for the Reactory platform.
+              You are processing exactly ONE inbound support ticket. Your job is to:
+
+                1. CLASSIFY the ticket (bug / feature-request / billing / account /
+                   performance / integration / documentation / security / general).
+                2. SET the priority using the priority matrix: critical, high, medium, low.
+                3. ASSIGN the single best owner — a HUMAN user account. NEVER assign an
+                   agent/persona. Ownership must always resolve to a valid user id.
+                4. TRANSITION the status from `new` to `open` (canonical snake_case).
+                5. ADD a short, professional triage comment explaining your decision.
+
+              Use your tools to do this: `searchUser` / `getUser` to resolve a user id,
+              `updateSupportTicket` to set status, priority, assignTo and add the comment,
+              and `addSupportTicketComment` if you need a separate note.
+
+              ROUTING RULE: the workflow has already computed the least-loaded owner
+              candidates from support-routing.yaml and included them in the message.
+              You MUST assign the top candidate (the first entry). If it is missing or
+              cannot be resolved to a user account, fall back to the next candidate.
+              Do NOT invent an owner and do NOT assign yourself.
+
+              Reply with a concise summary of what you did. Do not use markdown code
+              fences around the whole reply.
+            message: |-
+              Triage the following support ticket.
+
+              ## Ticket
+              ${steps.loadTicket.result}
+
+              ## Owner routing (least-loaded candidates, best first)
+              ${steps.resolveOwner.result}
+
+              Assign the first candidate as owner via `updateSupportTicket`, set the
+              priority per the matrix, move status to `open`, and add a triage comment.
+
+        # 3b. Reconcile + stamp triage bookkeeping (deterministic safety net).
+        - id: applyTriage
+          name: Reconcile & stamp triage
+          type: service_invoke
+          dependsOn: triage
+          config:
+            service: core.ReactorySupportWorkflowService@1.0.0
+            method: applyTriage
+            params:
+              ticketId: "${steps.loadTicket.result.id}"
+              triagedBy: support
+              decision:
+                assignedToUserId: "${steps.resolveOwner.result.userId}"
+                ownerEmail: "${steps.resolveOwner.result.email}"
+                ownerRationale: "least-loaded owner resolved from support-routing.yaml"
+                category: "${steps.loadTicket.result.requestType}"
+                status: open
+
+        # 3c. Notify per the notifications routing rules (communicator queue).
+        - id: notifyTriaged
+          name: Notify triaged
+          type: service_invoke
+          dependsOn: applyTriage
+          config:
+            service: core.ReactorySupportWorkflowService@1.0.0
+            method: notify
+            params:
+              event: ticket.triaged
+              ticketId: "${steps.loadTicket.result.id}"
+
+        - id: logTriaged
+          name: Log triage complete
+          type: log
+          dependsOn: notifyTriaged
+          config:
+            level: info
+            message: "Triaged ticket ${steps.loadTicket.result.reference} (owner: ${steps.applyTriage.result.assignedTo})"
+
+      elseSteps:
+        - id: logSkip
+          name: Log skip
+          type: log
+          config:
+            level: info
+            message: "Ticket already triaged — skipping (set force=true to re-triage)."
+
+  - id: done
+    name: Done
+    type: end

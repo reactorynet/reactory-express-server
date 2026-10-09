@@ -6,6 +6,18 @@ import UserModel from '../../models/User';
 import { ObjectId } from 'mongodb';
 import { InsufficientPermissions } from '@reactory/server-core/exceptions';
 
+const REGEX_SPECIALS = ['.', '*', '+', '?', '^', '$', '{', '}', '(', ')', '|', '[', ']', String.fromCharCode(92)];
+
+/**
+ * Escapes a user supplied search string for safe use inside a `RegExp`.
+ * Prevents regex injection / catastrophic backtracking from search terms.
+ */
+const escapeRegExp = (value: string): string =>
+  value
+    .split('')
+    .map((ch) => (REGEX_SPECIALS.indexOf(ch) >= 0 ? String.fromCharCode(92) + ch : ch))
+    .join('');
+
 /**
  * Comment Resolver
  * 
@@ -878,6 +890,111 @@ class CommentResolver {
     }, 'warn');
 
     return comment;
+  }
+
+  // ============================================================================
+  // "MY COMMENTS" — user-scoped lookup surface
+  // ============================================================================
+
+  /**
+   * Get comments authored by the currently authenticated user, across all
+   * contexts.
+   *
+   * Always scoped to `context.user._id`: the caller can never request another
+   * user's comments (no arbitrary `userId` is accepted, so there is no IDOR
+   * vector). Ordered newest first and supports an optional context filter, a
+   * free-text search over the comment text and quoted selection, and paging.
+   */
+  @roles(["USER"], 'args.context')
+  @query("getMyComments")
+  async getMyComments(
+    obj: any,
+    args: {
+      context?: string;
+      searchTerm?: string;
+      includeRemoved?: boolean;
+      paging?: Reactory.Models.IPagingRequest;
+    },
+    context: Reactory.Server.IReactoryContext
+  ): Promise<{ comments: Reactory.Models.IReactoryCommentDocument[]; paging: any }> {
+    const { context: ctx, searchTerm, includeRemoved = false, paging } = args || ({} as any);
+
+    const query: any = { user: context.user._id };
+
+    if (typeof ctx === 'string' && ctx.trim().length > 0) {
+      query.context = ctx.trim();
+    }
+
+    // Removed comments are hidden by default. The author may opt to include
+    // their own removed comments; they can still only ever see their own.
+    if (!includeRemoved) {
+      query.removed = { $ne: true };
+    }
+
+    const term = typeof searchTerm === 'string' ? searchTerm.trim() : '';
+    if (term.length > 0) {
+      const rx = new RegExp(escapeRegExp(term), 'i');
+      query.$or = [{ text: rx }, { quote: rx }];
+    }
+
+    const page = Math.max(1, Number(paging?.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(paging?.pageSize) || 20));
+    const skip = (page - 1) * pageSize;
+
+    try {
+      const total = await CommentModel.countDocuments(query).exec();
+
+      const comments = await CommentModel
+        .find(query)
+        .populate('user')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .exec();
+
+      return {
+        comments,
+        paging: { page, pageSize, total, hasNext: total > page * pageSize },
+      };
+    } catch (error) {
+      context.log('Error fetching current user comments', { error }, 'error');
+      return {
+        comments: [],
+        paging: { page: 1, pageSize, total: 0, hasNext: false },
+      };
+    }
+  }
+
+  /**
+   * Counts of the current user's (non-removed) comments grouped by context.
+   * Drives the context facets/badges on the "My Comments" surface.
+   */
+  @roles(["USER"], 'args.context')
+  @query("getMyCommentStats")
+  async getMyCommentStats(
+    obj: any,
+    args: any,
+    context: Reactory.Server.IReactoryContext
+  ): Promise<Array<{ context: string; count: number }>> {
+    try {
+      // `$match` in an aggregation pipeline does not cast, so the id must be a
+      // real ObjectId to compare against the stored `user` reference.
+      const userId = new ObjectId(context.user._id.toString());
+
+      const rows = await CommentModel.aggregate([
+        { $match: { user: userId, removed: { $ne: true } } },
+        { $group: { _id: '$context', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]).exec();
+
+      return (rows || []).map((row: any) => ({
+        context: row?._id || 'Unknown',
+        count: row?.count || 0,
+      }));
+    } catch (error) {
+      context.log('Error fetching current user comment stats', { error }, 'error');
+      return [];
+    }
   }
 }
 

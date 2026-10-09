@@ -78,7 +78,7 @@
     "license": "commercial",
     "git": "git@github.com:reactorynet/reactory-communicator.git",
     "shop": "https://reactory.net/shop/modules/reactory-communicator"
-  },  
+  },
   {
     "id": "reactory-kb",
     "name": "Reactory KB",
@@ -148,5 +148,25 @@
     "license": "commercial",
     "git": "git@github.com:reactorynet/reactory-zepz-quotes.git",
     "shop": "https://reactory.net/shop/modules/reactory-zepz-quotes"
-  } 
+  },
+  {
+    "id": "reactory-payment",
+    "name": "Reactory Payment",
+    "key": "reactory-payment",
+    "fqn": "payment.ReactoryPayment@1.0.0",
+    "moduleEntry": "reactory-payment/index.ts",
+    "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-payment.git",
+    "shop": "https://reactory.net/shop/modules/reactory-payment"
+  },
+  {
+    "id": "reactory-product",
+    "name": "Reactory Product",
+    "key": "reactory-product",
+    "fqn": "product.ReactoryProduct@1.0.0",
+    "moduleEntry": "reactory-product/index.ts",
+    "license": "commercial",
+    "git": "git@github.com:reactorynet/reactory-product.git",
+    "shop": "https://reactory.net/shop/modules/reactory-product"
+  }
 ]

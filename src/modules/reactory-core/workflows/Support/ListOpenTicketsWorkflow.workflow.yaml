@@ -1,0 +1,125 @@
+# core.ListOpenTicketsWorkflow@1.0.0
+#
+# INTAKE DISPATCHER — finds support tickets awaiting triage and dispatches each
+# one to the AI triage workflow (Support Susan).
+#
+# Runs on a schedule (see the schedule file
+# `core.listopenticketsworkflow-1.0.0-schedule.yaml`, cron `*/10 * * * *`), and is
+# also safe to run manually.
+#
+# Design notes
+# ------------
+# * Discovery is a role-gated service read (`findNewTickets`), not a `mongo_query`
+#   step — mongo steps are not usable in this deployment and the read must run
+#   under a user identity.
+# * Fan-out uses `for_each` (a structural combinator on the durable engine) with a
+#   nested `invoke_workflow` per ticket. `for_each` is SEQUENTIAL, so the batch is
+#   bounded by `limit` to keep a single run short and stay inside the provider's
+#   rate limits.
+# * Each child triage run is IDEMPOTENT (it skips tickets already carrying
+#   `triage.triagedAt`), so a replayed dispatch or a retry cannot double-triage.
+# * The child inherits this run's execution identity (the invoking step forwards its
+#   rehydrated Reactory context), so it runs with the same support/service account.
+#
+# INPUTS
+#   limit        — max tickets to dispatch per run (default 5)
+#   sinceMinutes — discovery look-back window (default 7 days)
+
+nameSpace: core
+name: ListOpenTicketsWorkflow
+version: 1.0.0
+description: >-
+  Intake dispatcher for support tickets: finds new, unassigned tickets and
+  dispatches each to the AI triage workflow.
+author: Reactory
+tags: [support, ticket, intake, dispatcher, core, scheduled]
+
+metadata:
+  timeout: 1200000
+
+inputs:
+  limit:
+    type: number
+    required: false
+    default: 5
+    description: Maximum number of tickets to dispatch in a single run.
+  sinceMinutes:
+    type: number
+    required: false
+    default: 10080
+    description: Only consider tickets created within this many minutes (default 7 days).
+
+steps:
+  - id: logStart
+    name: Log start
+    type: log
+    config:
+      level: info
+      message: "Support intake: discovering new unassigned tickets…"
+
+  # 1. Discover tickets awaiting triage (status `new`, unassigned, recent).
+  - id: findNewTickets
+    name: Find new tickets
+    type: service_invoke
+    dependsOn: logStart
+    config:
+      service: core.ReactorySupportWorkflowService@1.0.0
+      method: findNewTickets
+      params:
+        limit: "${input.limit}"
+        sinceMinutes: "${input.sinceMinutes}"
+
+  # 2. Dispatch each candidate to the triage workflow (skip when the batch is empty).
+  - id: dispatch
+    name: Dispatch triage
+    type: condition
+    dependsOn: findNewTickets
+    config:
+      condition: "steps.findNewTickets.result.count > 0"
+      thenSteps:
+        - id: eachTicket
+          name: Dispatch each ticket
+          type: for_each
+          config:
+            items: "${steps.findNewTickets.result.tickets}"
+            itemVariable: ticket
+            steps:
+              - id: triageTicket
+                name: Triage ticket
+                type: invoke_workflow
+                config:
+                  workflowId: core.SupportAIAgentProcessNewTicket@1.0.0
+                  waitForCompletion: true
+                  timeout: 600000
+                  # NOTE: the for_each item is exposed as the `ticket` workflow
+                  # VARIABLE, so references must be qualified as `variables.ticket.*`.
+                  # A bare dotted reference (`${ticket.id}`) is NOT resolvable by the
+                  # step template resolver and would arrive as an unresolved token.
+                  input:
+                    ticketId: "${variables.ticket.id}"
+                    reference: "${variables.ticket.reference}"
+              - id: logTicketDispatched
+                name: Log ticket dispatched
+                type: log
+                dependsOn: triageTicket
+                config:
+                  level: info
+                  message: "Triaged ${variables.ticket.reference} (child ${steps.triageTicket.instanceId})"
+        - id: logDispatched
+          name: Log dispatched
+          type: log
+          dependsOn: eachTicket
+          config:
+            level: info
+            message: "Dispatched ${steps.findNewTickets.result.count} ticket(s) for triage."
+      elseSteps:
+        - id: logEmpty
+          name: Log nothing to do
+          type: log
+          config:
+            level: info
+            message: "Support intake: no new unassigned tickets to triage."
+
+  - id: done
+    name: Done
+    type: end

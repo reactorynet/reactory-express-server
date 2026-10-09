@@ -47,6 +47,20 @@ export interface IScheduleConfig {
   };
   properties?: Record<string, any>;
   propertiesFormId?: string; // Optional form ID for UI to render properties.  
+  /**
+   * Execution identity for scheduled runs. The workflow (and every service /
+   * tool it invokes) executes as this user account, so role-gated operations
+   * and AI agent tools have a real user context.
+   *
+   * When omitted, the run defaults to the system account
+   * (`SYSTEM_USER_EMAIL`). See WorkflowRunner.buildYamlWorkflowData.
+   */
+  runAs?: {
+    /** Email of the user account to execute as. */
+    email?: string;
+    /** Optional tenant (ReactoryClient key) to execute against. */
+    partnerKey?: string;
+  };
   retry?: {
     attempts: number;
     delay: number; // in seconds
@@ -564,12 +578,25 @@ export class WorkflowScheduler {
         nameSpace: config.workflow.nameSpace,
       };
 
+      // Resolve the execution identity. Scheduled runs default to the system
+      // account so role-gated service calls and AI agent tools have a real user
+      // context; a schedule may override this with `runAs.email`.
+      const runAsEmail = config.runAs?.email || process.env.SYSTEM_USER_EMAIL;
+      const identity =
+        runAsEmail || config.runAs?.partnerKey
+          ? { userEmail: runAsEmail, partnerKey: config.runAs?.partnerKey }
+          : undefined;
+      logger.debug(
+        `Schedule ${config.id} executing as: ${runAsEmail || '(system context)'}`
+      );
+
       // Execute the workflow with retry logic
       await this.executeWorkflowWithRetry(
         config.workflow.id,
         config.workflow.version,
         workflowData,
-        config.retry
+        config.retry,
+        identity
       );
 
       // Update next run time
@@ -593,14 +620,15 @@ export class WorkflowScheduler {
     workflowId: string,
     version: string,
     data: any,
-    retryConfig?: { attempts: number; delay: number }
+    retryConfig?: { attempts: number; delay: number },
+    identity?: { userEmail?: string; partnerKey?: string }
   ): Promise<void> {
     const maxAttempts = retryConfig?.attempts || 1;
     const delaySeconds = retryConfig?.delay || 0;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        await this.workflowRunner.startWorkflow(workflowId, version, data);
+        await this.workflowRunner.startWorkflow(workflowId, version, data, undefined, identity);
         return; // Success, exit retry loop
       } catch (error) {
         if (attempt === maxAttempts) {

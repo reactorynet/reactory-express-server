@@ -280,8 +280,34 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     return result;
    }
 
-  async createRequest(request: string, description: string, requestType?: string, meta?: any, formId?: string): Promise<Reactory.Models.IReactorySupportTicket> {
-    this.context.log('Creating new Support Request', { request, description }, 'debug', 'core.ReactorySupportService@1.0.0');
+  async createRequest(
+    request: string,
+    description: string,
+    requestType?: string,
+    meta?: any,
+    formId?: string,
+    /**
+     * Ticket priority (critical | high | medium | low). Optional and trailing so
+     * existing 5-arg callers keep working. When omitted we fall back to
+     * `meta.priority` (callers such as the createSupportTicket tool carry it
+     * through `meta`), then to the model default ('medium').
+     *
+     * Previously this argument did not exist and `priority` was never applied —
+     * every ticket was created with the schema default 'medium'.
+     */
+    priority?: string,
+  ): Promise<Reactory.Models.IReactorySupportTicket> {
+    this.context.log('Creating new Support Request', { request, description, priority }, 'debug', 'core.ReactorySupportService@1.0.0');
+
+    // Normalise priority to the canonical set; anything unrecognised (or absent)
+    // is left undefined so the model default applies.
+    const VALID_PRIORITIES = ['critical', 'high', 'medium', 'low'];
+    const requestedPriority = String(
+      priority ?? (meta && (meta as any).priority) ?? '',
+    ).trim().toLowerCase();
+    const resolvedPriority = VALID_PRIORITIES.includes(requestedPriority)
+      ? requestedPriority
+      : undefined;
 
     const ticket = new ReactorySupportTicketModel({
       request,
@@ -290,6 +316,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       meta,
       formId,
       status: "new",
+      ...(resolvedPriority ? { priority: resolvedPriority } : {}),
       // HashUnsigned guarantees a non-negative numeric segment. String(user._id)
       // is used so the hash input is stable (hashing a raw ObjectId previously
       // produced 0, yielding the meaningless "REACTORY-0" prefix).

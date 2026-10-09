@@ -35,6 +35,14 @@ const schema: Reactory.IObjectSchema = {
         ],
       default: 'general',
      },
+    priority: {
+      type: 'string',
+      title: 'Priority',
+      description: 'How urgent is this request?',
+      enum: ['low', 'medium', 'high', 'critical'],
+      enumNames: ['Low', 'Medium', 'High', 'Critical'],
+      default: 'medium',
+     },
     request: {
       type: 'string',
       title: 'Request',

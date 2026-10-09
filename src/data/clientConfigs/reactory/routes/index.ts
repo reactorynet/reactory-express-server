@@ -242,6 +242,19 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       components: [],
     },
   },
+  // "My Comments" lookup surface — lists every comment the signed-in user has
+  // authored, with a back-link to the originating content, chat session or
+  // support ticket. Back-links are derived from the comment's context +
+  // contextId (see core.MyComments / commentResourceLinks).
+  {
+    key: "my-comments",
+    title: "My Comments",
+    path: "/my/comments",
+    public: false,
+    exact: true,
+    roles: ["USER"],
+    componentFqn: "core.MyComments@1.0.0",
+  },
   {
     key: "forms_with_mode_and_id",
     title: "Form with mode and id",
@@ -492,8 +505,28 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     public: false,
     roles: ["USER"],
     componentFqn: "reactor.UsageDashboardForm@1.0.0",
+    // `scope: 'self'` tells the dashboard widget to derive the viewer's id from
+    // the ApiStatus payload (`reactory.getUser().loggedIn.user.id`). The previous
+    // `${reactory.user.id}` binding was never resolvable — `processTemplateStrings`
+    // only exposes `{ route, location, query }` — and the top-level `id` on the
+    // API status is the application id, not the user id.
     componentProps: {
-      userId: "${reactory.user.id}",
+      scope: "self",
+    },
+  },
+  {
+    key: "profile-ai-budget",
+    title: "My AI Budget",
+    path: "/profile/budget",
+    exact: true,
+    public: false,
+    roles: ["USER"],
+    componentFqn: "reactor.UserBudgetAdminForm@1.0.0",
+    // `scope: 'self'` renders the read-only personal budget view. It reads
+    // `ReactorUserUsageStatus` (available to every authenticated user); the
+    // admin overview query and the mutations are admin-gated and are not called.
+    componentProps: {
+      scope: "self",
     },
   },
   {

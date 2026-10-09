@@ -5,6 +5,12 @@ import {
 } from '@reactory/server-core/utils';
 import logger from '@reactory/server-core/logging';
 import { Request, Response, Application } from 'express';
+import {
+  clientIp,
+  evaluateRouteAccess,
+  getRouteAccessPolicies,
+  IResolvedRouteAccess,
+} from '../routeAccess';
 
 
 const { NODE_ENV  } = process.env
@@ -16,40 +22,12 @@ const { NODE_ENV  } = process.env
 // for images and other static content are not authenticated with headers
 // or query parameters, but we should check the host and validate the request
 // based on the host.
-const bypassUri = [
-  '/cdn/content/',
-  '/cdn/plugins/',
-  '/cdn/profiles/',
-  '/cdn/organization/',
-  '/cdn/themes/',
-  '/cdn/ui/',
-  '/cdn/fonts/',
-  '/cdn/i18n/',
-  '/cdn/wordnet/',
-  '/cdn/forms/images/',
-  '/cdn/forms/icons/',
-  '/favicon.ico',
-  '/login',
-  '/logout',
-  '/health',
-  '/telemetry',
-  // OAuth provider flows. An IdP redirect carries no tenant credential; these
-  // routes resolve the tenant themselves from the tenant key (start) or from
-  // the validated, session-bound CSRF state (callback). See
-  // src/authentication/strategies/tenantOAuth.ts.
-  '/auth/google/',
-  '/auth/github/',
-  '/auth/facebook/',
-  '/auth/linkedin/',
-  '/auth/okta/',
-  '/auth/microsoft/',
-];
-
-if (NODE_ENV === 'development' || NODE_ENV === 'local' || NODE_ENV === 'test') {
-  bypassUri.push('/swagger');
-  bypassUri.push('/telemetry/metrics');
-  bypassUri.push('/telemetry/health');
-}
+// Route exemptions are no longer hardwired here. They are resolved per request
+// from the route-access policy (`src/express/routeAccess.ts`), which reads the
+// built-in defaults, the `REACTORY_ROUTE_ACCESS` seed and the tenant's `routeAccess`
+// client setting — so an operator can open a route (and restrict it to an IP range)
+// without a code change or a deploy. The defaults reproduce the list that used to
+// live here.
 
 /**
  * A list of validated clients
@@ -79,16 +57,51 @@ const validatedClients: {
 export const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.ReactoryExpressRequest, res: Response, next: Function) => {
 
   const { headers, query, context, path } = req;  
-  let bypass: boolean = false;
-  if (req.originalUrl) {
-    // Match against the path only. Matching the whole URL let any request
-    // skip tenant authentication by carrying a bypass path in its query
-    // string, for example `/graphql?x=/login`.
-    const requestPath = req.originalUrl.split('?')[0];
-    bypass = bypassUri.some(uri => requestPath.includes(uri));
+  // Resolve the candidate tenant key WITHOUT validating it: a tenant may have its
+  // own route-access policies, and we need them before deciding whether a credential
+  // is required at all. An invalid key simply fails the credential check below.
+  const candidateKey: string | undefined =
+    (headers['x-client-key'] as string) ||
+    (query && query['x-client-key'] ? decodeURIComponent(query['x-client-key'] as string) : undefined);
+
+  let access: IResolvedRouteAccess;
+  try {
+    // Synchronous and I/O-free on purpose: this runs for every request, so it reads
+    // the cached static policies (defaults + env seed + in-memory client config).
+    // Database-managed overrides arrive via refreshRouteAccessPolicies, warmed at
+    // startup — never awaited here.
+    access = evaluateRouteAccess(
+      {
+        path: req.originalUrl || req.url || '',
+        method: req.method,
+        ip: clientIp(req),
+        clientId: candidateKey,
+      },
+      getRouteAccessPolicies(candidateKey),
+    );
+  } catch (routeAccessError) {
+    // Never fall through to the credentialed path on a policy failure: a policy
+    // that cannot be evaluated must not silently open a route.
+    logger.error(`Route access evaluation failed: ${(routeAccessError as Error).message}`);
+    res.status(503).send({ error: 'Server Error' });
+    return;
   }
 
-  if (bypass === true) {
+  // An IP-restricted route is refused before any credential work, so a public
+  // route (a payment callback) is still unreachable from outside its ranges.
+  if (access.ipAllowed === false) {
+    logger.warn(
+      `Route access denied for ${req.originalUrl} from ${clientIp(req) || 'unknown'} ` +
+        `(policy: ${access.matchedPath || 'default'})`,
+    );
+    res.status(403).send({
+      error: 'Forbidden',
+      description: 'Source address is not permitted for this route.',
+    });
+    return;
+  }
+
+  if (access.tenantAuthRequired === false) {
     next();
     return;
   }
@@ -162,7 +175,10 @@ export const ReactoryClientAuthenticationMiddleware = (req: Reactory.Server.Reac
         break;
       case 'text/html': 
       default:
-        res.render('errors/401', { });
+        // 401, not 200: `res.render` alone left the status at 200, so an
+        // unauthenticated browser request looked like SUCCESS to monitoring,
+        // proxies and clients. The JSON branch always set it.
+        res.status(401).render('errors/401', { });
         break;
     }
     return; 

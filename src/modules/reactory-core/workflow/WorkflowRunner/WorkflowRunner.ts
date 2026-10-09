@@ -764,7 +764,7 @@ export class WorkflowRunner {
    * Start a specific workflow with enhanced error handling.
    * Routes YAML workflows to YamlWorkflowExecutor and CODE workflows to the workflow-es host.
    */
-  public async startWorkflow(id: string, version: string, data: any, context?: Reactory.Server.IReactoryContext): Promise<any> {
+  public async startWorkflow(id: string, version: string, data: any, context?: Reactory.Server.IReactoryContext, identity?: { userEmail?: string; partnerKey?: string }): Promise<any> {
     // Check if this is a YAML workflow
     const workflow = this.state.workflows.find(w => {
       const workflowId = `${w.nameSpace}.${w.name}@${w.version}`;
@@ -772,7 +772,7 @@ export class WorkflowRunner {
     });
 
     if (workflow?.workflowType === 'YAML') {
-      return this.startYamlWorkflow(workflow, data, context);
+      return this.startYamlWorkflow(workflow, data, context, identity);
     }
 
     const errorContext: IErrorContext = {
@@ -867,6 +867,7 @@ export class WorkflowRunner {
     definition: YamlWorkflowDefinition,
     input: any,
     ctx: Reactory.Server.IReactoryContext,
+    identityOverride?: { userEmail?: string; partnerKey?: string },
   ): Record<string, any> {
     return {
       inputs: applyYamlInputDefaults(definition.inputs as any, input),
@@ -874,9 +875,13 @@ export class WorkflowRunner {
       stepResults: {},
       env: {},
       outputs: {},
+      // `identityOverride` (e.g. a schedule's `runAs` user) wins over the start
+      // context. Every step rebuilds its Reactory context from this identity via
+      // createWorkflowContext(), so services, role checks and AI agent tools all
+      // execute as that user. Falls back to the start-context user when absent.
       __identity: {
-        userEmail: (ctx?.user as any)?.email,
-        partnerKey: (ctx?.partner as any)?.key,
+        userEmail: identityOverride?.userEmail || (ctx?.user as any)?.email,
+        partnerKey: identityOverride?.partnerKey || (ctx?.partner as any)?.key,
       },
       __workflow: {
         id: engineWorkflowId(definition),
@@ -900,6 +905,7 @@ export class WorkflowRunner {
     workflow: IWorkflow,
     data: any,
     context?: Reactory.Server.IReactoryContext,
+    identityOverride?: { userEmail?: string; partnerKey?: string },
   ): Promise<string> {
     if (!this.state.host) {
       throw new Error('Workflow host not initialized');
@@ -920,7 +926,7 @@ export class WorkflowRunner {
       data && typeof data === 'object' && !Array.isArray(data) && data.input !== undefined
         ? data.input
         : data;
-    const tdata = this.buildYamlWorkflowData(definition, payload, ctx);
+    const tdata = this.buildYamlWorkflowData(definition, payload, ctx, identityOverride);
 
     const instanceId = await this.state.host.startWorkflow(engineId, version, tdata, tenantId);
     logger.info(`YAML workflow ${engineId} started via engine (instance: ${instanceId})`);

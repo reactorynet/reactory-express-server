@@ -2,6 +2,7 @@ import CleanCacheWorkflow from './CleanCacheWorkflow';
 import { loadYamlWorkflow } from '@reactory/server-modules/reactory-core/workflow/YamlFlow/YamlToWorkflow';
 import exampleWorkflows from './examples';
 import devWorkflows from './dev';
+import supportWorkflows from './Support';
 
 // ─────────────────────────────────────────────
 // Load all YAML workflow definitions
@@ -25,6 +26,9 @@ workflows.push(...exampleWorkflows);
 
 // Development utility workflows (reactory-dev namespace)
 workflows.push(...devWorkflows);
+
+// Support ticket triage & escalation workflows (core namespace)
+workflows.push(...supportWorkflows);
 
 export default workflows;
 

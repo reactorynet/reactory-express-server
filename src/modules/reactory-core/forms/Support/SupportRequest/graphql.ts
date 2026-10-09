@@ -5,8 +5,8 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
   mutation: {
     new: {
       name: 'ReactoryCreateSupportTicket',
-      text: `mutation ReactoryCreateSupportTicket($request: String!, $description: String!, $requestType: String, $meta: Any) {
-        ReactoryCreateSupportTicket(request: $request, description: $description, requestType: $requestType, meta: $meta) {
+      text: `mutation ReactoryCreateSupportTicket($request: String!, $description: String!, $requestType: String, $priority: String, $meta: Any) {
+        ReactoryCreateSupportTicket(request: $request, description: $description, requestType: $requestType, priority: $priority, meta: $meta) {
           id
           reference
           status
@@ -16,6 +16,7 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
         'formData.request': 'request',
         'formData.description': 'description',
         'formData.requestType': 'requestType',
+        'formData.priority': 'priority',
       },
       resultMap: {
         'reference': 'reference',

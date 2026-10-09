@@ -8,7 +8,7 @@ import ReactoryContentList from './ReactoryContentList';
 import TemplateList from './EmailTemplate/TemplateList';
 import EmailForms from './EmailForms';
 import shared from './shared';
-import { Login } from './Security';
+import { Login, RouteAccess } from './Security';
 import SupportForm from './Support/SupportRequest';
 import SupportTickets from './Support/SupportTickets';
 import SupportTicketsAdmin from './Support/SupportTicketsAdmin';
@@ -27,6 +27,7 @@ export default [
   ReactoryContentList,
   TemplateList,
   Login,
+  RouteAccess,
   ...EmailForms,
   ...shared,
   SupportForm,

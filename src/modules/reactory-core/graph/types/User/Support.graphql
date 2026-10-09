@@ -75,6 +75,69 @@ type ReactorySupportTicket {
   Whether the ticket is overdue
   """
   isOverdue: Boolean
+  """
+  AI triage bookkeeping (first-class)
+  """
+  triage: ReactorySupportTicketTriage
+  """
+  SLA escalation bookkeeping (first-class)
+  """
+  escalation: ReactorySupportTicketEscalation
+}
+
+"""
+AI triage bookkeeping for a support ticket (first-class field).
+"""
+type ReactorySupportTicketTriage {
+  """When the ticket was triaged (presence marks it as triaged)"""
+  triagedAt: Date
+  """Who/what triaged it (persona or user id)"""
+  triagedBy: String
+  """Classified category"""
+  category: String
+  """Priority the triage applied"""
+  priority: String
+  """Owner user id the triage assigned"""
+  assignedToUserId: String
+  """Owner email resolved from support-routing.yaml"""
+  ownerEmail: String
+  """Why that owner/priority was chosen"""
+  ownerRationale: String
+  """Whether follow-up work was flagged"""
+  followUpRequired: Boolean
+  """Specialised persona consulted, if any"""
+  delegatedPersona: String
+  """Model confidence (0-1) where reported"""
+  confidence: Float
+  """Short triage summary"""
+  summary: String
+}
+
+"""
+A single escalation event in the ticket's escalation trail.
+"""
+type ReactorySupportTicketEscalationEntry {
+  level: Int
+  at: Date
+  actions: [String]
+}
+
+"""
+SLA escalation bookkeeping for a support ticket (first-class field).
+"""
+type ReactorySupportTicketEscalation {
+  """Current escalation level"""
+  level: Int
+  """When the ticket was last escalated"""
+  lastEscalatedAt: Date
+  """Actions applied at the last escalation"""
+  actions: [String]
+  """Explicit hold — escalation skipped until this instant"""
+  holdUntil: Date
+  """Snapshot of the escalation policy in force"""
+  policy: Any
+  """Append-only escalation trail"""
+  history: [ReactorySupportTicketEscalationEntry]
 }
 
 """
@@ -283,7 +346,7 @@ extend type Mutation {
   """
   Creates a new support for the logged in user
   """
-  ReactoryCreateSupportTicket(request: String!, description: String!, requestType: String, meta: Any, formId: String): ReactorySupportTicket @auth(roles: ["USER"])
+  ReactoryCreateSupportTicket(request: String!, description: String!, requestType: String, priority: String, meta: Any, formId: String): ReactorySupportTicket @auth(roles: ["USER"])
   """
   Updates a ticket with either a status update, assignment change or comment add
   """

@@ -18,11 +18,14 @@ class SupportResolver {
     @roles(["USER"], 'args.context')
     @mutation("ReactoryCreateSupportTicket")
   async createTicket(obj: any,
-    params: { request: string, description: string, requestType?: string, meta?: any, formId?: string },
+    params: { request: string, description: string, requestType?: string, priority?: string, meta?: any, formId?: string },
     context: Reactory.Server.IReactoryContext): Promise<Reactory.Models.IReactorySupportTicket | Reactory.Models.IReactorySupportTicketDocument> {
-    const { request, description, requestType = 'general', meta, formId } = params;
+    const { request, description, requestType = 'general', priority, meta, formId } = params;
     const supportService: Reactory.Service.TReactorySupportService = context.getService("core.ReactorySupportService@1.0.0") as Reactory.Service.TReactorySupportService;
-    return supportService.createRequest(request, description, requestType, meta, formId);
+    // `priority` is cast: the published TReactorySupportService interface still
+    // declares the 5-arg signature, but the implementation now accepts priority
+    // (trailing optional arg) and applies it to the ticket field.
+    return (supportService as any).createRequest(request, description, requestType, meta, formId, priority);
    }
 
     @roles(["USER"], 'args.context')

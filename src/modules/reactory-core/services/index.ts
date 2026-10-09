@@ -13,6 +13,7 @@ import WorkflowService from './Workflow/ReactoryWorkflowService';
 import FetchService from './FetchService';
 import PdfService from './PdfService';
 import ReactorySupportService from "./ReactorySupportService";
+import ReactorySupportWorkflowService from "./ReactorySupportWorkflowService";
 import SystemService from './SystemService';
 import ReactoryFormService from './FormService';
 import ReactoryModuleCompilerService from './ReactoryModuleCompilerService';
@@ -50,6 +51,7 @@ const services = [
   FetchService.reactory,
   PdfService.reactory,
   ReactorySupportService,
+  ReactorySupportWorkflowService,
   SystemService.reactory,
   ReactoryFormService.reactory,
   ReactoryFormSubmissionService,

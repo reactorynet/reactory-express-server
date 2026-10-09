@@ -1,0 +1,134 @@
+# core.TicketEscalationWorkflow@1.0.0
+#
+# BASELINE ESCALATION PROTOCOL
+#   A ticket must be touched (updated) within 24 hours of being logged, and then
+#   updated at least once every 24 hours until it reaches a terminal status.
+#   Per-priority windows and the clock definition live in the `priorityMatrix` /
+#   `clocks` sections of ~/.reactor/support-routing.yaml.
+#
+# Runs hourly (see the schedule file
+# `core.ticketescalationworkflow-1.0.0-schedule.yaml`, cron `0 * * * *`), and is
+# also safe to run manually.
+#
+# Each run:
+#   1. finds ACTIVE tickets whose last update is older than their priority's
+#      update-interval target (`findSlaBreaches`);
+#   2. walks each breaching ticket up the escalation ladder:
+#        L1  comment + notify + `sla-breach` tag
+#        L2  the above + priority bump
+#        L3  the above + reassign (support lead / team)
+#
+# Idempotency: `applyEscalation` stamps `escalation.lastEscalatedAt` and the
+# escalation comment updates `updatedDate`, so a replayed run does not re-escalate
+# a ticket that was already touched.
+#
+# INPUTS
+#   limit — max breaching tickets to escalate per run (default 50).
+
+nameSpace: core
+name: TicketEscalationWorkflow
+version: 1.0.0
+description: >-
+  Hourly SLA escalation for support tickets: finds tickets that missed their
+  update interval and escalates them up the L1/L2/L3 ladder with a comment,
+  notification, priority bump and reassignment.
+author: Reactory
+tags: [support, ticket, escalation, sla, core, scheduled]
+
+metadata:
+  timeout: 1800000
+
+inputs:
+  limit:
+    type: number
+    required: false
+    default: 50
+    description: Maximum number of breaching tickets to escalate in a single run.
+
+steps:
+  - id: logStart
+    name: Log start
+    type: log
+    config:
+      level: info
+      message: "Support escalation: checking for SLA breaches…"
+
+  # 1. Discover active tickets that have missed their update interval.
+  - id: findSlaBreaches
+    name: Find SLA breaches
+    type: service_invoke
+    dependsOn: logStart
+    config:
+      service: core.ReactorySupportWorkflowService@1.0.0
+      method: findSlaBreaches
+      params:
+        limit: "${input.limit}"
+
+  # 2. Escalate each breach (skip when there are none).
+  - id: escalate
+    name: Escalate breaches
+    type: condition
+    dependsOn: findSlaBreaches
+    config:
+      condition: "steps.findSlaBreaches.result.count > 0"
+      thenSteps:
+        - id: eachBreach
+          name: Escalate each breach
+          type: for_each
+          config:
+            items: "${steps.findSlaBreaches.result.breaches}"
+            itemVariable: breach
+            steps:
+              # Applies the ladder's side effects (tag, priority bump, reassign)
+              # and stamps the first-class `escalation` subdocument. The actions for
+              # the level are resolved
+              # from the escalation policy in support-routing.yaml.
+              - id: applyEscalation
+                name: Apply escalation
+                type: service_invoke
+                config:
+                  service: core.ReactorySupportWorkflowService@1.0.0
+                  method: applyEscalation
+                  # The for_each item is a workflow VARIABLE — reference it as
+                  # `variables.breach.*` (a bare `${breach.id}` will not resolve).
+                  params:
+                    ticketId: "${variables.breach.id}"
+                    level: "${variables.breach.level}"
+              # Route the breach notification (communicator queue) per the
+              # `notifications` rules, which select on escalation.level.
+              - id: notifyBreach
+                name: Notify breach
+                type: service_invoke
+                dependsOn: applyEscalation
+                config:
+                  service: core.ReactorySupportWorkflowService@1.0.0
+                  method: notify
+                  params:
+                    event: ticket.sla.breach
+                    ticketId: "${variables.breach.id}"
+                    level: "${variables.breach.level}"
+              - id: logBreach
+                name: Log breach
+                type: log
+                dependsOn: notifyBreach
+                config:
+                  level: warn
+                  message: "Escalated ${variables.breach.reference} to L${variables.breach.level} (${variables.breach.hoursSinceUpdate}h since last update, priority ${variables.breach.priority})"
+        - id: logSummary
+          name: Log summary
+          type: log
+          dependsOn: eachBreach
+          config:
+            level: info
+            message: "Escalated ${steps.findSlaBreaches.result.count} SLA breach(es)."
+      elseSteps:
+        - id: logNone
+          name: Log no breaches
+          type: log
+          config:
+            level: info
+            message: "Support escalation: no SLA breaches — all active tickets are within their update interval."
+
+  - id: done
+    name: Done
+    type: end

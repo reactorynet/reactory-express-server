@@ -1,3 +1,5 @@
+import RouteAccessSetting from './routeAccess';
+
 const {
   REACTORY_POSTGRES_USER = 'reactory',
   REACTORY_POSTGRES_PASSWORD = 'reactory',
@@ -110,5 +112,8 @@ export default [
       token: process.env.REACTORY_GRAFANA_TOKEN || '',
     },
     roles: ['ADMIN'],
-  }
+  },
+  // Route exemptions and per-route IP allow-lists. Consumed by the tenant-auth
+  // and CORS middleware via src/express/routeAccess.ts.
+  RouteAccessSetting,
 ];
