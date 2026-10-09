@@ -171,18 +171,23 @@ class SystemService implements Reactory.Service.IReactorySystemService {
 
     type SearchableComponent = Partial<Reactory.IReactoryComponentDefinition<any>> & { id: string };
        
-    const componentToSearchModel = (component: Reactory.IReactoryComponentDefinition<any>, group: string): SearchableComponent  => { 
+    // Returns null when a component cannot be resolved to an FQN/id. Callers MUST
+    // skip nulls: a null in the payload makes Meilisearch reject the entire batch
+    // ("The `json` payload provided is malformed ... data are neither an object
+    // nor a list of objects").
+    const componentToSearchModel = (component: Reactory.IReactoryComponentDefinition<any>, group: string): SearchableComponent | null => {
       let definition = component;
-      if(component.prototype?.COMPONENT_DEFINITION) {
+      if (component.prototype?.COMPONENT_DEFINITION) {
         definition = component.prototype.COMPONENT_DEFINITION;
       }
-       let componentFqn: string;
-       let componentId: number;
+      let componentFqn: string;
+      let componentId: number;
       try {
         componentFqn = ComponentFQN(definition);
         componentId = FQN2ID(componentFqn);
       } catch (ex) {
-        context.error(`Error converting component ${componentFqn} to search model: ${ex.message}`);
+        // `componentFqn` is undefined on this path — name the group so the log is useful.
+        context.error(`Error converting a ${group} component to a search model: ${ex.message}`);
         return null;
       }
 
@@ -240,7 +245,13 @@ class SystemService implements Reactory.Service.IReactorySystemService {
                 componentDefinition = componentDefinition.prototype.reactory;
               }
 
-              docs.push(componentToSearchModel(componentDefinition, group));
+              const searchModel = componentToSearchModel(componentDefinition, group);
+              if (searchModel) {
+                docs.push(searchModel);
+              } else {
+                // Never push null: a single null poisons the whole index batch.
+                context.warn(`Skipping a ${group} component on module ${module?.nameSpace || 'unknown'}.${module?.name} — no search model could be derived`);
+              }
             } else {
               context.error(`Module ${module?.nameSpace || 'unknown'}.${module?.name } has a ${group} that is not defined at index ${idx}`);
             }
@@ -251,7 +262,15 @@ class SystemService implements Reactory.Service.IReactorySystemService {
             context.warn(`Module ${module?.nameSpace || 'unknown'}.${module?.name } has no ${group} defined it is recommended that you define at least one ${group} for each module or provide an empty array.`);
         }
       });
-      searchService.index(`reactory_${group}`, docs);
+      if (!searchService) {
+        context.warn(`No search service available; skipping index reactory_${group}`);
+        return;
+      }
+      // index() resolves to { success:false, error } on provider failure; this guard
+      // also absorbs a rejected promise so onStartup cannot raise an unhandled rejection.
+      Promise.resolve(searchService.index(`reactory_${group}`, docs)).catch((ex: any) =>
+        context.error(`Indexing reactory_${group} failed: ${ex?.message || ex}`),
+      );
     });
    
     return Promise.resolve(true);
