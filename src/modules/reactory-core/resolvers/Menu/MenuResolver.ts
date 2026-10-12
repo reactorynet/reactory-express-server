@@ -109,52 +109,31 @@ class ReactoryMenuResolver {
   }
 
   /**
-   * Resolver for menu item title text
-   * @param menuItem 
-   * @param params 
-   * @param context 
-   * @returns 
+   * Resolver for the title of a menu item.
+   *
+   * Titles are stored as translation keys — optionally namespaced, e.g.
+   * `booktutor:reactory.menu.home` — or as literal text, and are returned
+   * unresolved. Translation is the client's job: it owns the user's active
+   * language and re-renders its menus when that changes.
+   *
+   * Translating here was actively harmful. `context.i18n` is the process-wide
+   * i18next singleton rather than a per-request instance (the request context
+   * is built without the request), so its language is not the caller's: it is
+   * whatever locale was loaded last, and GraphQL requests never pass through the
+   * language-detecting middleware at all. The result was a menu pinned to an
+   * arbitrary locale, with the client unable to correct it because the key was
+   * already gone.
+   *
+   * @param menuItem
+   * @returns the stored title, or an empty string when there is none
    */
-
   @roles(["USER", "ANON"], 'args.context')
   @property("MenuItem", "title")
   async getMenuItemTitle(menuItem: Reactory.UX.IMenuItem,
     params: any,
     context: Reactory.Server.IReactoryContext,
   ): Promise<string> {
-    if (!menuItem?.title) return '';
-    const translated = context.i18n.t(menuItem.title);
-    if (translated && translated !== menuItem.title && !translated.startsWith('reactory.menu.')) {
-      return translated;
-    }
-
-    const stripped = menuItem.title.replace(/^[^:]+:/, '');
-    const strippedTranslated = context.i18n.t(stripped);
-    if (strippedTranslated && strippedTranslated !== stripped && !strippedTranslated.startsWith('reactory.menu.')) {
-      return strippedTranslated;
-    }
-
-    const fallbacks: Record<string, string> = {
-      'reactory.menu.my-owned-courses': 'Courses Owned',
-      'reactory.menu.classes': 'Classes & Cohorts',
-      'reactory.menu.create-course': 'Create Course',
-      'reactory.menu.create-assignment': 'Create Assignment',
-      'reactory.menu.course-enroll': 'Course Enrollment',
-      'reactory.menu.markbook': 'Classroom Markbook',
-      'reactory.menu.my-schedule': 'Schedule',
-      'reactory.menu.my-courses': 'My Courses',
-      'reactory.menu.my-tutors': 'My Tutors',
-      'reactory.menu.my-students': 'My Students',
-      'reactory.menu.assignments': 'Assignments',
-      'reactory.menu.home': 'Home',
-      'reactory.menu.library': 'Library',
-      'reactory.menu.courses': 'Courses',
-      'reactory.menu.my-profile': 'Profile',
-    };
-
-    if (fallbacks[stripped]) return fallbacks[stripped];
-
-    return translated || menuItem.title;
+    return menuItem?.title || '';
   }
 
   /**
