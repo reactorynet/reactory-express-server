@@ -3,6 +3,7 @@ import Application from './Application';
 import ApplicationUsers from './Application/ApplicationUsers';
 import ApplicationOrganizations from './Application/ApplicationOrganizations';
 import ApplicationRouteEditor from './Application/ApplicationRouteEditor';
+import StaticContentInputForm from './StaticContentInputForm';
 import ReactoryContentCapture from './ReactoryContentCapture';
 import ReactoryContentList from './ReactoryContentList';
 import TemplateList from './EmailTemplate/TemplateList';
@@ -23,6 +24,7 @@ export default [
   ApplicationUsers,
   ApplicationOrganizations,
   ApplicationRouteEditor,
+  StaticContentInputForm,
   ReactoryContentCapture,
   ReactoryContentList,
   TemplateList,

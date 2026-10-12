@@ -1,4 +1,6 @@
 import WorkflowResolver from '../WorkflowResolver';
+import * as fs from 'fs';
+import * as path from 'path';
 import { 
   IReactoryWorkflowService,
   IWorkflowExecutionInput,
@@ -236,6 +238,65 @@ describe('WorkflowResolver', () => {
 
         expect(result).toEqual(mockInstance);
         expect(mockWorkflowService.getWorkflowInstance).toHaveBeenCalledWith('inst-123');
+      });
+    });
+
+    describe('getWorkflowInstanceLogFileUrl', () => {
+      it('forwards the tenant public key and a short-lived JWT for the protected CDN log path', async () => {
+        const dataRoot = process.env.REACTORY_DATA || process.env.APP_DATA_ROOT;
+        const nameSpace = 'demo';
+        const name = 'LoggingWorkflow';
+        const version = '1.0.0';
+        const instanceId = `test-instance-${Date.now()}`;
+        const logDir = path.join(dataRoot, 'workflows', 'catalog', nameSpace, name, version, 'logs');
+        const logPath = path.join(logDir, `${instanceId}.log`);
+
+        fs.mkdirSync(logDir, { recursive: true });
+        fs.writeFileSync(logPath, '[2026-01-01T00:00:00.000Z] [INFO] hello\n');
+
+        mockWorkflowService.getWorkflowHistoryById.mockResolvedValue({
+          workflowDefinitionId: `${nameSpace}.${name}@${version}`,
+        });
+
+        const ctx: any = {
+          ...mockContext,
+          user: { _id: instanceId, firstName: 'Test', lastName: 'User' },
+          request: {
+            headers: {
+              'x-client-id': 'reactory',
+              'x-client-key': 'reactory',
+              'x-client-public-key': 'reactory-local-public-key',
+            },
+          },
+        };
+
+        const url = await resolver.getWorkflowInstanceLogFileUrl({}, { instanceId }, ctx);
+
+        expect(url).toContain(
+          `/workflows/catalog/${nameSpace}/${name}/${version}/logs/${instanceId}.log`,
+        );
+        // The tenant credential must travel on the URL — /cdn/workflows/ is not an
+        // exempt route, so the public key is what the tenant middleware validates.
+        expect(url).toContain('x-client-key=reactory');
+        expect(url).toContain('x-client-public-key=reactory-local-public-key');
+        // A user-scoped token is minted for the download (and it is not the 24h default).
+        expect(url).toContain('auth_token=');
+
+        fs.unlinkSync(logPath);
+      });
+
+      it('returns null when the instance has no log file', async () => {
+        mockWorkflowService.getWorkflowHistoryById.mockResolvedValue({
+          workflowDefinitionId: 'demo.LoggingWorkflow@1.0.0',
+        });
+
+        const url = await resolver.getWorkflowInstanceLogFileUrl(
+          {},
+          { instanceId: `missing-${Date.now()}` },
+          mockContext,
+        );
+
+        expect(url).toBeNull();
       });
     });
   });

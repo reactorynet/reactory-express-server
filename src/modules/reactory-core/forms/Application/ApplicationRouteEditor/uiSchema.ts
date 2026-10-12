@@ -5,7 +5,6 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
     showSubmit: true,
     showHelp: false,
     showRefresh: false,
-    submitText: 'Save Route',
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -14,6 +13,8 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
     { exact: { xs: 6, sm: 3 }, public: { xs: 6, sm: 3 }, redirect: { xs: 12, sm: 6 } },
     { roles: { xs: 12 } },
     { componentProps: { xs: 12 } },
+    { header: { xs: 12 } },
+    { footer: { xs: 12 } },
   ],
   id: {
     'ui:widget': 'hidden',
@@ -43,7 +44,10 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
     },
   },
   roles: {
-    'ui:widget': 'TagsWidget',
+    // ChipArrayWidget is a registered catalogue widget. The previous
+    // 'TagsWidget' name did not exist in any catalogue, which is one of the
+    // reasons this form was non-functional.
+    'ui:widget': 'ChipArrayWidget',
     'ui:options': {
       helperText: 'Roles required to access this route',
       placeholder: 'Add a role...',
@@ -56,9 +60,51 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
     },
   },
   componentProps: {
-    'ui:widget': 'JSONEditorWidget',
+    'ui:widget': 'JsonEditorWidget',
     'ui:options': {
       helperText: 'JSON properties to pass to the component',
+    },
+  },
+  header: {
+    'ui:options': { variant: 'section' },
+    'ui:grid-layout': [
+      {
+        show: { xs: 12, sm: 4 },
+        title: { xs: 12, sm: 4 },
+        componentFqn: { xs: 12, sm: 4 },
+      },
+      { props: { xs: 12 } },
+      { propsMap: { xs: 12 } },
+    ],
+    show: { 'ui:widget': 'CheckboxWidget' },
+    props: {
+      'ui:widget': 'JsonEditorWidget',
+      'ui:options': { helperText: 'Props passed to the header component' },
+    },
+    propsMap: {
+      'ui:widget': 'JsonEditorWidget',
+      'ui:options': { helperText: 'Declarative props mapping for the header component' },
+    },
+  },
+  footer: {
+    'ui:options': { variant: 'section' },
+    'ui:grid-layout': [
+      {
+        show: { xs: 12, sm: 4 },
+        title: { xs: 12, sm: 4 },
+        componentFqn: { xs: 12, sm: 4 },
+      },
+      { props: { xs: 12 } },
+      { propsMap: { xs: 12 } },
+    ],
+    show: { 'ui:widget': 'CheckboxWidget' },
+    props: {
+      'ui:widget': 'JsonEditorWidget',
+      'ui:options': { helperText: 'Props passed to the footer component' },
+    },
+    propsMap: {
+      'ui:widget': 'JsonEditorWidget',
+      'ui:options': { helperText: 'Declarative props mapping for the footer component' },
     },
   },
 };

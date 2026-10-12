@@ -50,6 +50,28 @@ const schema: Reactory.Schema.ISchema = {
       title: 'Component Props',
       additionalProperties: true,
     },
+    header: {
+      type: 'object',
+      title: 'Header Slot',
+      properties: {
+        show: { type: 'boolean', title: 'Show', default: true },
+        title: { type: 'string', title: 'Title' },
+        componentFqn: { type: 'string', title: 'Component FQN' },
+        props: { type: 'object', title: 'Props', additionalProperties: true },
+        propsMap: { type: 'object', title: 'Props Map', additionalProperties: true },
+      },
+    },
+    footer: {
+      type: 'object',
+      title: 'Footer Slot',
+      properties: {
+        show: { type: 'boolean', title: 'Show', default: true },
+        title: { type: 'string', title: 'Title' },
+        componentFqn: { type: 'string', title: 'Component FQN' },
+        props: { type: 'object', title: 'Props', additionalProperties: true },
+        propsMap: { type: 'object', title: 'Props Map', additionalProperties: true },
+      },
+    },
   },
 };
 

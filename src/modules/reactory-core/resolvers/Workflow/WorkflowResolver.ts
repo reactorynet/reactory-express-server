@@ -21,6 +21,7 @@ import { YamlWorkflowExecutor } from '@reactory/server-modules/reactory-core/wor
 import { WorkflowRunner } from '@reactory/server-modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
 import { InstanceResourceManager } from '@reactory/server-modules/reactory-core/workflow/InstanceResourceManager';
 import safeUrl from '@reactory/server-core/utils/url/safeUrl';
+import Helpers from '@reactory/server-core/authentication/strategies/helpers';
 
 
 
@@ -256,12 +257,46 @@ class WorkflowResolver {
     const dataRoot = process.env.REACTORY_DATA || process.env.APP_DATA_ROOT || '';
     const path = await import('node:path');
     const relPath = path.relative(dataRoot, logPath);
-    // path is protected so we need to add a jwt token for
-    // the authenticated user
-    // get the x-client-id from the request headers to include in the token for auditing purposes
-    const clientId = context?.request?.headers?.['x-client-id'] || '';
-    const clientKey = context?.request?.headers?.['x-client-key'] || '';    
-    return safeUrl([process.env.CDN_ROOT || 'http://localhost:4000/cdn', `${relPath}?x-client-id=${encodeURIComponent(clientId)}&x-client-key=${encodeURIComponent(clientKey)}`]);
+
+    // `/cdn/workflows/...` is NOT in the route-access exemption list, so the
+    // browser's file fetch has to satisfy two gates on its own:
+    //   1. the tenant-auth middleware (a valid client credential), and
+    //   2. the CDN router's passport guard.
+    // A `fetch()` from the PWA cannot attach the headers the GraphQL client
+    // normally sends, so the credentials must travel on the URL. Forward the
+    // tenant credential the caller already used — the public key is the modern
+    // browser credential and `validatePublicKey()` matches it against the
+    // request Origin — and mint a short-lived JWT so the download is
+    // attributable to the requesting user rather than the anonymous identity
+    // the CDN router would otherwise assign.
+    const headers = context?.request?.headers || {};
+    const clientId = (headers['x-client-id'] as string) || '';
+    const clientKey = (headers['x-client-key'] as string) || '';
+    const clientPublicKey = (headers['x-client-public-key'] as string) || '';
+
+    const query: string[] = [
+      `x-client-id=${encodeURIComponent(clientId)}`,
+      `x-client-key=${encodeURIComponent(clientKey)}`,
+    ];
+
+    if (clientPublicKey) {
+      query.push(`x-client-public-key=${encodeURIComponent(clientPublicKey)}`);
+    }
+
+    if (context?.user) {
+      // Signed out-of-band token (no `sid`): the CDN route is a plain file
+      // fetch and session-revocation checks cannot see a token minted here, so
+      // keep the window deliberately short rather than the 24h default.
+      const authToken = Helpers.getJwtTokenForUser(context.user, {
+        exp: Date.now() + 5 * 60 * 1000,
+      });
+      query.push(`auth_token=${encodeURIComponent(authToken)}`);
+    }
+
+    return safeUrl([
+      process.env.CDN_ROOT || 'http://localhost:4000/cdn',
+      `${relPath}?${query.join('&')}`,
+    ]);
   }
 
   @roles(["USER"], 'args.context')
