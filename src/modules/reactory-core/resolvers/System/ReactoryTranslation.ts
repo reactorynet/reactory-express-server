@@ -1,6 +1,7 @@
 import Reactory from '@reactorynet/reactory-core';
 import { roles } from '@reactory/server-core/authentication/decorators';
-import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
+import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver';
+import { resolveLanguage } from '@reactory/server-core/express/i18n/language';
 
 interface IReactoryTranslantionParams {
   lang: string
@@ -25,7 +26,11 @@ class ReactoryTranslationResolver {
       const fs = require('fs');
       const path = require('path');
       const APP_DATA_ROOT = process.env.APP_DATA_ROOT || path.resolve(process.cwd(), '../reactory-data');
-      const locale = lang || i18n.language || 'en';
+      // Resolved against the configured locales rather than normalised: this
+      // value is interpolated into a filesystem path below, and `lang` is
+      // caller-supplied on an ANON-reachable query. Normalising alone leaves
+      // `/` and `.` intact, so `lang: "../../etc"` escaped APP_DATA_ROOT.
+      const locale = resolveLanguage(lang || i18n.language);
 
       if (result && result.i18n && Array.isArray(result.i18n)) {
         result.i18n.forEach((bundle: any) => {

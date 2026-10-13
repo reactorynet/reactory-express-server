@@ -1,5 +1,10 @@
 import Reactory from '@reactorynet/reactory-core';
 import i18n from "i18next";
+import {
+  getAvailableLanguages,
+  resolveLanguage,
+} from '@reactory/server-core/express/i18n/language';
+import { ReactoryTranslations } from '@reactory/server-modules/reactory-core/types/Translation';
 import modules from '@reactory/server-core/modules';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 interface IUserTranslationMap {
@@ -60,14 +65,19 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
     });
   }
 
-  async getTranslations(locale?: string): Promise<Reactory.Models.IReactoryTranslations> {
+  async getTranslations(locale?: string): Promise<ReactoryTranslations> {
     
-    let translations: Reactory.Models.IReactoryTranslations = {
-      id: locale,
-      locale,
+    // Normalised so a regional tag (af-ZA) resolves against the af bundles,
+    // matching how translatable content is keyed.
+    const resolvedLocale = resolveLanguage(locale || this.context?.i18n?.language);
+
+    let translations: ReactoryTranslations = {
+      id: resolvedLocale,
+      locale: resolvedLocale,
       resources: {},
       translations: [],
       i18n: [],
+      languages: getAvailableLanguages(),
     };
 
     // translations.translations = await ReactoryTranslation.find({ locale: locale, partner: this.context.partner as Reactory.IReactoryClientDocument }).then()
@@ -78,9 +88,10 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
       i18n
     } = this.context;
 
-    if (i18n && typeof i18n.changeLanguage === 'function' && i18n.isInitialized && i18n.language !== locale) {
-      await i18n.changeLanguage(locale);
-    }
+    // Deliberately no changeLanguage call here. This used to mutate whichever
+    // instance the context held — the process-wide one — so a single caller's
+    // request changed the language every other caller rendered in. The bundle
+    // below is read for resolvedLocale explicitly and needs no active language.
     
     let ns: string[] = [];
     if (i18n && i18n.options && Array.isArray(i18n.options.ns)) {
@@ -102,11 +113,11 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
 
     if (Array.isArray(ns)) {
       ns.forEach($ns => {
-        let resourceBundle = { ...(i18n && typeof i18n.getResourceBundle === 'function' ? i18n.getResourceBundle(locale || 'en-US', $ns) || {} : {}) };    
+        let resourceBundle = { ...(i18n && typeof i18n.getResourceBundle === 'function' ? i18n.getResourceBundle(resolvedLocale, $ns) || {} : {}) };    
         
         // Merge fresh translations from disk
         const candidates = [
-          path.resolve(APP_DATA_ROOT, `i18n/${locale}/${$ns}.json`),
+          path.resolve(APP_DATA_ROOT, `i18n/${resolvedLocale}/${$ns}.json`),
           path.resolve(APP_DATA_ROOT, `i18n/en/${$ns}.json`),
           path.resolve(APP_DATA_ROOT, `i18n/en-US/${$ns}.json`),
         ];
@@ -120,7 +131,7 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
           }
         }
 
-        bundles.push({ id: `${locale}.${$ns}`, ns: $ns, translations: resourceBundle });
+        bundles.push({ id: `${resolvedLocale}.${$ns}`, ns: $ns, translations: resourceBundle });
       });
 
       translations.i18n = bundles;
