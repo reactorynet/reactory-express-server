@@ -117,6 +117,11 @@ type ReactoryTranslations {
   A transformed resources object
   """
   resources: Any
+  """
+  Languages the server can serve, derived from the configured locale folders.
+  Clients select from this list rather than carrying their own.
+  """
+  languages: [String]
 }
 
 """

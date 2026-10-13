@@ -52,9 +52,27 @@ const allowedHeadersString = [
   'x-client-version',
   'apollo-require-preflight',
   'x-apollo-operation-name',
+  // Carries the user's language choice so server-authored strings (form
+  // titles, schemas, default data) render in it. Without an entry here the
+  // preflight is rejected and the request never reaches /graph.
+  'x-reactory-language',
+  'X-Reactory-Language',
+  'accept-language',
+  'Accept-Language',
 ].join(',');
 
 const proxyHeaderString = 'X-Real-IP,X-Forwarded-For,X-Forwarded-Host,X-Forwarded-Proto';
+
+/**
+ * Headers a browser may send to this API.
+ *
+ * Exported so the set can be asserted: a header the client sends that is absent
+ * here fails the CORS preflight, and the request never leaves the browser.
+ */
+export const getAllowedCorsHeaders = (): string[] => [
+  ...allowedHeadersString.split(','),
+  ...proxyHeaderString.split(','),
+];
 
 export const tenantWhitelistCache: Record<string, { whitelist: string[]; timestamp: number }> = {};
 
@@ -216,7 +234,7 @@ const CorsDelegate: CorsOptionsDelegate = (
       }
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [...allowedHeadersString.split(','), ...proxyHeaderString.split(',')],
+    allowedHeaders: getAllowedCorsHeaders(),
     exposedHeaders: [
       'X-Client-Key',
       'X-Client-Pwd',

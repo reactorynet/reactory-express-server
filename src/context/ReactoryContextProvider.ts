@@ -10,6 +10,7 @@ import colors from "colors/safe";
 import { ReactoryContainer } from "@reactory/server-core/ioc";
 import modules from "@reactory/server-core/modules";
 import i18next, { t } from "i18next";
+import { createRequestI18n, getAvailableLanguages } from '@reactory/server-core/express/i18n/language';
 import Reactory, { React } from "@reactorynet/reactory-core";
 import Cache from "@reactory/server-modules/reactory-core/models/CoreCache";
 import ReactoryClientModel from "@reactory/server-modules/reactory-core/models/ReactoryClient";
@@ -76,9 +77,13 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
     this.session = currentContext?.session || session; 
     this.request = currentContext?.request || null;
     this.response = currentContext?.response || null;
-    this.i18n = currentContext?.i18n || i18next;
+    // Each request gets its own translation instance. Sharing the process-wide
+    // one meant any caller's `changeLanguage` changed what every other caller
+    // rendered, so server-authored strings (form titles, schemas, greetings)
+    // could not honour the language the user actually selected.
     this.lang = currentContext?.lang || process.env.DEFAULT_LOCALE || "en";
-    this.languages = currentContext?.languages || [this.lang];
+    this.i18n = currentContext?.i18n || createRequestI18n(this.lang);
+    this.languages = currentContext?.languages || getAvailableLanguages();
     this.theme = currentContext?.theme || null;
     this.modules = currentContext?.modules || modules.enabled;
     this.utils = {
