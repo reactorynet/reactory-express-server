@@ -1,9 +1,10 @@
 /**
  * Request-scoped language resolution.
  *
- * Kept free of module-level and logging imports on purpose: the context
- * provider and the translation service both depend on this, and pulling in the
- * module registry would create an import cycle.
+ * Deliberately free of module-registry imports: the context provider and the
+ * translation service both depend on this file, and importing the registry
+ * would create a cycle. The logger is a leaf module (winston + fs), so it is
+ * safe to use here.
  */
 import i18next from 'i18next';
 import fs from 'fs';

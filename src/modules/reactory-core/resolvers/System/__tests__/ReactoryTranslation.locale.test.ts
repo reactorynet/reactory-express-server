@@ -98,8 +98,11 @@ describe('ReactoryTranslation locale path safety', () => {
     expect(translationsOf(result)['reactory.menu.home']).toBe(EN_SENTINEL);
   });
 
-  it('does not read outside the root for an encoded traversal tag', async () => {
-    const result = await runResolver('..%2foutside');
+  it('does not read outside the root for a nested traversal tag', async () => {
+    // `i18n/sub/../../outside` resolves to `<root>/outside`. The encoded
+    // variant (`..%2f`) is never percent-decoded, so it escapes nothing and
+    // would pass whether or not the resolver is safe.
+    const result = await runResolver('sub/../../outside');
 
     expect(JSON.stringify(translationsOf(result))).not.toContain(OUTSIDE_SENTINEL);
   });
