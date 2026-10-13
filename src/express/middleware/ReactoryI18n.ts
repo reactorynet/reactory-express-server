@@ -12,10 +12,10 @@ const ReactoryI18nMiddlewareDefinition: Reactory.Server.ReactoryMiddlewareDefini
   name: 'ReactoryI18n',
   nameSpace: 'Reactory',
   version: '1.0.0',
-  // Registered ahead of the GraphQL middleware (ordinal -60) so request
-  // language detection applies to /graph as well. At 98 it ran after every
-  // request had already been handled, so detection never took effect.
-  ordinal: 0,
+  // Must sort before ReactoryGraph (-60): middleware is ordered ascending, and
+  // at 98 (or 0) this ran after every request had already been handled, so
+  // request language detection never applied to /graph.
+  ordinal: -85,
   type: 'configuration',
   async: false,
   component: ReactoryI18n,

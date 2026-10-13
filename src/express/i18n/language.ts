@@ -8,6 +8,7 @@
 import i18next from 'i18next';
 import fs from 'fs';
 import path from 'path';
+import logger from '@reactory/server-core/logging';
 
 /** Language used when nothing else can be resolved. */
 export const DEFAULT_LANGUAGE = process.env.DEFAULT_LOCALE || 'en';
@@ -40,15 +41,48 @@ let cachedLanguages: string[] | null = null;
 export const getAvailableLanguages = (): string[] => {
   if (cachedLanguages && cachedLanguages.length > 0) return cachedLanguages;
 
-  try {
-    const entries = fs.readdirSync(path.resolve(dataRoot(), 'i18n'), { withFileTypes: true });
-    const found = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
-    cachedLanguages = found.length > 0 ? found : [DEFAULT_LANGUAGE];
-  } catch (error) {
-    cachedLanguages = [DEFAULT_LANGUAGE];
-  }
+  const fallback = [normaliseLanguage(DEFAULT_LANGUAGE)];
+  const i18nRoot = path.resolve(dataRoot(), 'i18n');
 
-  return cachedLanguages;
+  try {
+    const entries = fs.readdirSync(i18nRoot, { withFileTypes: true });
+
+    // Normalised and de-duplicated: the folder listing can hold regional
+    // variants of one language (en alongside en-US), which would otherwise
+    // appear as separate choices and push the default out of first position.
+    const seen: { [code: string]: boolean } = {};
+    const found: string[] = [];
+
+    entries
+      .filter((entry) => entry.isDirectory())
+      .forEach((entry) => {
+        const normalised = normaliseLanguage(entry.name);
+        if (!normalised || seen[normalised]) return;
+        seen[normalised] = true;
+        found.push(normalised);
+      });
+
+    if (found.length === 0) {
+      logger.warn('No locale folders found under ' + i18nRoot + '; defaulting to ' + fallback[0]);
+      return fallback;
+    }
+
+    // Default language first so the selector leads with it.
+    const ordered = [
+      ...found.filter((language) => language === fallback[0]),
+      ...found.filter((language) => language !== fallback[0]).sort(),
+    ];
+
+    cachedLanguages = ordered;
+    return cachedLanguages;
+  } catch (error) {
+    // Not cached, so a later call can succeed once the path is corrected.
+    logger.warn(
+      'Could not read locale folders under ' + i18nRoot + '; falling back to ' + fallback[0],
+      { error },
+    );
+    return fallback;
+  }
 };
 
 /** Clears the memoised language scan. Intended for tests. */
@@ -91,7 +125,11 @@ export const languageFromHeaders = (
   const raw = Array.isArray(explicit) ? explicit[0] : explicit || headers['accept-language'];
   const value = Array.isArray(raw) ? raw[0] : raw;
   if (!value) return undefined;
-  return value.split(',')[0].trim() || undefined;
+
+  // `af;q=0.9` and `af-ZA,af;q=0.9` both denote `af`. Keeping the quality value
+  // meant the tag never matched a configured locale and fell back to English.
+  const tag = value.split(',')[0].split(';')[0].trim();
+  return tag || undefined;
 };
 
 /**

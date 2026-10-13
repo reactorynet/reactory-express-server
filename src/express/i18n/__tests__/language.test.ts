@@ -49,6 +49,8 @@ describe('getAvailableLanguages', () => {
   });
 
   it('returns the same memoised list on repeat calls', () => {
+    // Memoised deliberately: the folder listing is stable for a process, and a
+    // restart is required to pick up a new locale folder.
     expect(getAvailableLanguages()).toBe(getAvailableLanguages());
   });
 });
@@ -125,5 +127,72 @@ describe('createRequestI18n', () => {
     } finally {
       Object.defineProperty(i18next, 'isInitialized', { configurable: true, value: previous });
     }
+  });
+});
+
+
+describe('resolveLanguage rejects path-shaped input (MF-3)', () => {
+  /**
+   * The resolver interpolates the resolved locale into a filesystem path, and
+   * `ReactoryTranslation(lang:)` is reachable by ANON. `normaliseLanguage` only
+   * trims/lowercases/splits, so it left `/` and `.` intact and `lang:
+   * "../../../../etc"` escaped APP_DATA_ROOT. Routing through `resolveLanguage`
+   * makes the value always one of the configured locales.
+   */
+  it('does not pass traversal sequences through', () => {
+    const resolved = resolveLanguage('../../../../etc');
+
+    expect(resolved).not.toContain('/');
+    expect(resolved).not.toContain('..');
+    expect(resolved).toBe(normaliseLanguage(DEFAULT_LANGUAGE));
+  });
+
+  it('only ever returns a configured language', () => {
+    const configured = getAvailableLanguages().map(normaliseLanguage);
+
+    ['../../etc', '..%2f..', 'af/../../..', 'nope', '', undefined].forEach((candidate) => {
+      expect(configured).toContain(resolveLanguage(candidate as string));
+    });
+  });
+
+  it('still resolves a legitimate regional tag', () => {
+    expect(resolveLanguage('af-ZA')).toBe('af');
+  });
+});
+
+describe('languageFromHeaders quality values', () => {
+  it('strips a quality value attached to a single tag', () => {
+    // Previously `af;q=0.9` was kept whole, matched no configured locale and
+    // silently fell back to English.
+    expect(languageFromHeaders({ 'accept-language': 'af;q=0.9' })).toBe('af');
+  });
+
+  it('strips the quality value from the first tag of a list', () => {
+    expect(languageFromHeaders({ 'accept-language': 'af-ZA,af;q=0.9,en;q=0.8' })).toBe('af-ZA');
+  });
+
+  it('still prefers the explicit client header', () => {
+    expect(
+      languageFromHeaders({ [LANGUAGE_HEADER]: 'af', 'accept-language': 'en;q=0.9' })
+    ).toBe('af');
+  });
+});
+
+describe('getAvailableLanguages ordering', () => {
+  it('de-duplicates regional variants onto the primary subtag', () => {
+    const languages = getAvailableLanguages();
+
+    // `en` and `en-US` folders both normalise to `en`.
+    expect(languages.filter((language) => normaliseLanguage(language) === 'en')).toHaveLength(1);
+  });
+
+  it('places the default language first', () => {
+    expect(getAvailableLanguages()[0]).toBe(normaliseLanguage(DEFAULT_LANGUAGE));
+  });
+
+  it('returns only normalised codes', () => {
+    getAvailableLanguages().forEach((language) => {
+      expect(language).toBe(normaliseLanguage(language));
+    });
   });
 });
