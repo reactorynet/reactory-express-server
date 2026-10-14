@@ -10817,7 +10817,6 @@ __metadata:
     human-number: "npm:2.0.4"
     i18next: "npm:^21.6.5"
     i18next-fs-backend: "npm:^1.1.5"
-    i18next-http-middleware: "npm:^3.2.1"
     ignore: "npm:^5.3.2"
     image-size: "npm:^0.7.4"
     image-type: "npm:^4.1.0"
@@ -22951,13 +22950,6 @@ __metadata:
   version: 1.2.0
   resolution: "i18next-fs-backend@npm:1.2.0"
   checksum: 10c0/6edf866f806214194add07906b644e243e7ecc1af8c4e9d24dd139bd6fb97b778ed18a2106eb809c0d8386b3d9a3db1c3c03d326fd21cd1213c24db010adea72
-  languageName: node
-  linkType: hard
-
-"i18next-http-middleware@npm:^3.2.1":
-  version: 3.9.8
-  resolution: "i18next-http-middleware@npm:3.9.8"
-  checksum: 10c0/0a19ad29226634a22d0a5b457bd6a5d90d9e1192a9300282de0bb8a76c6f22710207f0099b66e69ae072adb8e58a42402b6dcc2e0f1456a70acc38e1b0fc8a83
   languageName: node
   linkType: hard
 

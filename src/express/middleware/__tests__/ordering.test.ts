@@ -1,4 +1,4 @@
-import ReactoryI18n from '../ReactoryI18n';
+import ReactoryContext from '../ReactoryContext';
 import ReactoryGraph from '../ReactoryGraph';
 
 jest.mock('@reactory/server-core/logging', () => ({
@@ -11,23 +11,30 @@ jest.mock('@reactory/server-core/logging', () => ({
 /**
  * Middleware is sorted **ascending** by ordinal, and the GraphQL middleware
  * never calls `next()` — so anything registered after it is unreachable for
- * `/graph`. The i18n middleware sat at 98, and later 0, both of which sort after
- * `ReactoryGraph` at -60, so request language detection never applied to
- * GraphQL. A comment claimed it did while the declared value said otherwise,
- * which is why the order is asserted rather than trusted.
+ * `/graph`.
+ *
+ * Request language is resolved in `ReactoryContext`, so that middleware has to
+ * sort before `ReactoryGraph` or the resolution never applies to GraphQL. This
+ * is not hypothetical: the language detector used to live in a `ReactoryI18n`
+ * middleware that declared ordinal 98 (and later 0), both of which sort after
+ * `ReactoryGraph` at -60, while a comment claimed the opposite. The order is
+ * asserted rather than trusted.
+ *
+ * (`ReactoryI18n` has since been removed — its own detection was dead, nothing
+ * read `req.i18n`/`req.t`/`req.lng`, and it duplicated this path.)
  */
 describe('middleware ordering', () => {
-  it('declares an ordinal before the GraphQL middleware', () => {
-    expect(ReactoryI18n.ordinal).toBeLessThan(ReactoryGraph.ordinal);
+  it('resolves the request context before the GraphQL middleware', () => {
+    expect(ReactoryContext.ordinal).toBeLessThan(ReactoryGraph.ordinal);
   });
 
   it('sorts ahead of GraphQL with the real ascending comparator', () => {
-    const sorted = [ReactoryGraph, ReactoryI18n]
+    const sorted = [ReactoryGraph, ReactoryContext]
       .slice()
       .sort((a, b) => a.ordinal - b.ordinal);
 
     expect(sorted.map((middleware) => middleware.name)).toEqual([
-      'ReactoryI18n',
+      'ReactoryContextMiddleWare',
       'ReactoryGraphMiddleware',
     ]);
   });

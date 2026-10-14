@@ -1,8 +1,8 @@
 import i18next from 'i18next';
-import i18nextHttp from 'i18next-http-middleware';
 import i18nextFSBackend from 'i18next-fs-backend';
 import logger from "@reactory/server-core/logging";
 import { getModuleDefinitions } from "@reactory/server-core/modules/helpers/moduleImportFactory";
+import { DEFAULT_LANGUAGE, getAvailableLanguages, normaliseLanguage } from './language';
 
 const {
   APP_DATA_ROOT = "",
@@ -48,15 +48,31 @@ const backendOptions = {
   addPath: `${APP_DATA_ROOT}/i18n/{{lng}}/{{ns}}.missing.json`
 };
 
-i18next
-  .use(i18nextHttp.LanguageDetector)
-  .use(i18nextFSBackend)
-  .init({
-    preload: ['en-US', 'af'],
-    lng: "en-US",
-    fallbackLng: 'en-US',
-    ns: getNamesSpaces(),
-    backend: backendOptions
-  });
+/**
+ * Options the i18next instance is initialised with.
+ *
+ * Exported so the reconciliation between the instance default and
+ * `DEFAULT_LANGUAGE` can be asserted directly.
+ */
+export const i18nextInitOptions = {
+  // Derived from the same source the per-request resolver uses, so the instance
+  // default and `DEFAULT_LANGUAGE` cannot drift. Previously the instance
+  // defaulted to the regional `en-US` while every resolved request used `en`,
+  // so which bundles loaded depended on whether the request context was ready.
+  //
+  // No language detector is registered: the request language is resolved from
+  // the headers in `ReactoryContext` (preferring `x-reactory-language`), and
+  // `lng` is always passed explicitly, so a detector would be a second,
+  // divergent path — it reads only `accept-language`.
+  preload: getAvailableLanguages(),
+  lng: normaliseLanguage(DEFAULT_LANGUAGE),
+  fallbackLng: normaliseLanguage(DEFAULT_LANGUAGE),
+  ns: getNamesSpaces(),
+  backend: backendOptions
+};
+
+// `i18next.init` mutates the options it is given (it normalises `fallbackLng`
+// into an array), so hand it a copy and keep the exported object as authored.
+i18next.use(i18nextFSBackend).init({ ...i18nextInitOptions });
 
 export default i18next;
