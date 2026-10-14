@@ -13,15 +13,15 @@ jest.mock('@reactory/server-core/logging', () => ({
  * never calls `next()` — so anything registered after it is unreachable for
  * `/graph`.
  *
- * Request language is resolved in `ReactoryContext`, so that middleware has to
- * sort before `ReactoryGraph` or the resolution never applies to GraphQL. This
- * is not hypothetical: the language detector used to live in a `ReactoryI18n`
- * middleware that declared ordinal 98 (and later 0), both of which sort after
- * `ReactoryGraph` at -60, while a comment claimed the opposite. The order is
- * asserted rather than trusted.
+ * `ReactoryContext` resolves the request language, so it has to sort before
+ * `ReactoryGraph` for that resolution to apply. This asserts the ordering only,
+ * not the resolution — but the ordering is what broke before: the detector once
+ * lived in a `ReactoryI18n` middleware declaring ordinal 98 (later 0), both
+ * after `ReactoryGraph` at -60, while a comment claimed otherwise. The order is
+ * therefore asserted rather than trusted.
  *
- * (`ReactoryI18n` has since been removed — its own detection was dead, nothing
- * read `req.i18n`/`req.t`/`req.lng`, and it duplicated this path.)
+ * (`ReactoryI18n` has since been removed: its detection was dead, nothing read
+ * `req.i18n`/`req.t`/`req.lng`, and it duplicated this path.)
  */
 describe('middleware ordering', () => {
   it('resolves the request context before the GraphQL middleware', () => {

@@ -2,10 +2,12 @@
  * The i18n instance default and `DEFAULT_LANGUAGE` used to disagree: the
  * instance was initialised with the regional `en-US` while the request resolver
  * normalises to `en`, so which bundles loaded depended on whether the request
- * context was ready. They now derive from the same constant.
+ * context was ready. They now derive from the same constant — and resolve to a
+ * *folder the backend can load*, since the fs backend matches `{{lng}}` against
+ * literal folder names rather than normalised codes.
  */
 import { i18nextInitOptions } from '../index';
-import { DEFAULT_LANGUAGE, normaliseLanguage } from '../language';
+import { DEFAULT_LANGUAGE, getLocaleFolders, normaliseLanguage } from '../language';
 
 jest.mock('@reactory/server-core/logging', () => ({
   debug: jest.fn(),
@@ -15,23 +17,32 @@ jest.mock('@reactory/server-core/logging', () => ({
 }));
 
 describe('i18n instance default language', () => {
-  const expected = normaliseLanguage(DEFAULT_LANGUAGE);
+  const folders = getLocaleFolders();
 
-  it('uses the shared default language for the instance language', () => {
-    expect(i18nextInitOptions.lng).toBe(expected);
+  it('preloads exactly the on-disk locale folders', () => {
+    // Literal folder names, not normalised codes: a normalised list would drop
+    // `en-US` (which normalises to `en`), and the backend resolves `{{lng}}`
+    // against the folder name, so it would silently load nothing for it.
+    if (folders.length > 0) {
+      expect(i18nextInitOptions.preload).toEqual(folders);
+    }
   });
 
-  it('uses the shared default language as the fallback', () => {
-    expect(i18nextInitOptions.fallbackLng).toBe(expected);
+  it('preloads the language it defaults to', () => {
+    expect(i18nextInitOptions.preload).toContain(i18nextInitOptions.lng);
   });
 
-  it('preloads the default language', () => {
-    expect(i18nextInitOptions.preload).toContain(expected);
+  it('resolves the default to a folder the backend can actually load', () => {
+    if (folders.length > 0) {
+      expect(folders).toContain(i18nextInitOptions.lng);
+      expect(folders).toContain(i18nextInitOptions.fallbackLng);
+    }
   });
 
-  it('uses a primary subtag, not a regional variant', () => {
-    // `en-US` is the shape that caused the drift; the resolver never returns it.
-    expect(i18nextInitOptions.lng).not.toContain('-');
-    expect(String(i18nextInitOptions.fallbackLng)).not.toContain('-');
+  it('agrees with the shared default language', () => {
+    expect(normaliseLanguage(i18nextInitOptions.lng)).toBe(normaliseLanguage(DEFAULT_LANGUAGE));
+    expect(normaliseLanguage(i18nextInitOptions.fallbackLng)).toBe(
+      normaliseLanguage(DEFAULT_LANGUAGE)
+    );
   });
 });

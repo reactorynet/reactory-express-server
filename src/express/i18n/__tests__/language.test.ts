@@ -4,9 +4,11 @@ import {
   LANGUAGE_HEADER,
   createRequestI18n,
   getAvailableLanguages,
+  getLocaleFolders,
   languageFromHeaders,
   normaliseLanguage,
   resolveLanguage,
+  resolveLocaleFolder,
 } from '../language';
 
 jest.mock('@reactory/server-core/logging', () => ({
@@ -194,5 +196,51 @@ describe('getAvailableLanguages ordering', () => {
     getAvailableLanguages().forEach((language) => {
       expect(language).toBe(normaliseLanguage(language));
     });
+  });
+});
+
+describe('getLocaleFolders', () => {
+  it('returns literal on-disk folder names, sorted', () => {
+    const folders = getLocaleFolders();
+
+    expect(Array.isArray(folders)).toBe(true);
+    expect(folders.length).toBeGreaterThan(0);
+    expect(folders.every((folder) => typeof folder === 'string' && folder.length > 0)).toBe(true);
+    expect(folders).toEqual([...folders].sort());
+  });
+
+  it('includes the folders the selector normalises away', () => {
+    // The i18next backend loads by literal folder name, so a regional folder
+    // (`en-US`) has to be visible here even though the selector only offers `en`.
+    expect(getLocaleFolders().map(normaliseLanguage)).toContain(normaliseLanguage(DEFAULT_LANGUAGE));
+  });
+});
+
+describe('resolveLocaleFolder', () => {
+  it('prefers an exact folder', () => {
+    expect(resolveLocaleFolder('en', ['af', 'en', 'en-US'])).toBe('en');
+  });
+
+  it('falls back to a regional folder sharing the primary subtag', () => {
+    // The silent-failure case: `en` has no folder of its own, so resolving to
+    // the bare code would load nothing for every request while the selector
+    // still offered English.
+    expect(resolveLocaleFolder('en', ['af', 'en-US'])).toBe('en-US');
+  });
+
+  it('returns undefined when no folder matches', () => {
+    expect(resolveLocaleFolder('de', ['af', 'en'])).toBeUndefined();
+  });
+
+  it('returns undefined for empty input', () => {
+    expect(resolveLocaleFolder(undefined, ['en'])).toBeUndefined();
+  });
+});
+
+describe('languageFromHeaders header casing', () => {
+  it('reads the header from the lower-cased name Node delivers', () => {
+    // Node lower-cases incoming header names, so the lookup is keyed on the
+    // lower-cased constant.
+    expect(languageFromHeaders({ [LANGUAGE_HEADER.toLowerCase()]: 'af' })).toBe('af');
   });
 });
