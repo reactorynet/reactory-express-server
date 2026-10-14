@@ -77,7 +77,7 @@ const namespaces = [...new Set(locales.flatMap(namespacesOf))].sort();
 const isEnglish = (locale) => locale.split(/[-_]/)[0] === reference.split(/[-_]/)[0];
 
 const report = {
-  reference, i18nRoot, locales, coverage: [], alignment: [], filled: []
+  reference, i18nRoot, locales, coverage: [], alignment: [], untranslated: [], filled: []
 };
 
 namespaces.forEach((ns) => {
@@ -90,6 +90,17 @@ namespaces.forEach((ns) => {
       missing: locales.filter((locale) => !present.includes(locale)),
     });
     return;
+  }
+
+  // Present in more than one locale, so not a coverage defect — but a locale may
+  // still have no file for it at all, in which case that locale silently falls
+  // back to the reference language for every key in the namespace. Reported
+  // explicitly so a "coverage: complete" line cannot hide it. Informational: it
+  // does not fail the check, because translating a namespace is a choice.
+  if (present.includes(reference)) {
+    locales
+      .filter((locale) => locale !== reference && !present.includes(locale))
+      .forEach((locale) => report.untranslated.push({ namespace: ns, locale }));
   }
 
   if (!present.includes(reference)) return;
@@ -145,6 +156,11 @@ if (asJson) {
   console.log('Coverage (namespace declared by some locales but not others):');
   if (report.coverage.length === 0) console.log('  complete');
   report.coverage.forEach(({ namespace, present, missing }) => console.log(`  ${namespace}: present [${present.join(', ')}], missing [${missing.join(', ')}]`),);
+
+  console.log('\nUntranslated namespaces (reference namespace a locale has no file for;');
+  console.log('English fallback applies to every key in it):');
+  if (report.untranslated.length === 0) console.log('  none');
+  report.untranslated.forEach(({ namespace, locale }) => console.log(`  ${locale}: ${namespace}`));
 
   console.log('\nKey alignment:');
   if (report.alignment.length === 0) console.log('  aligned');
