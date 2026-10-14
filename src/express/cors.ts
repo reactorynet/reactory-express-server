@@ -2,6 +2,7 @@ import logger from '../logging';
 import { CorsOptions, CorsOptionsDelegate } from 'cors';
 import Reactory from '@reactorynet/reactory-core';
 import EnabledClients from '@reactory/server-core/data/clientConfigs';
+import { LANGUAGE_HEADER } from './i18n/language';
 import { clientIp, evaluateRouteAccess, getRouteAccessPolicies } from './routeAccess';
 
 const {
@@ -54,11 +55,14 @@ const allowedHeadersString = [
   'x-apollo-operation-name',
   // Carries the user's language choice so server-authored strings (form
   // titles, schemas, default data) render in it. Without an entry here the
-  // preflight is rejected and the request never reaches /graph.
-  'x-reactory-language',
-  'X-Reactory-Language',
+  // preflight is rejected and the request never reaches /graph. Taken from the
+  // shared core constant so it cannot drift from the name the client sends.
+  LANGUAGE_HEADER,
+  // `Accept-Language` is CORS-safelisted and so never needed an entry to pass
+  // the preflight; it is listed because it is the fallback the server reads when
+  // the client sends no explicit choice. CORS matches header names
+  // case-insensitively, so a single spelling covers both.
   'accept-language',
-  'Accept-Language',
 ].join(',');
 
 const proxyHeaderString = 'X-Real-IP,X-Forwarded-For,X-Forwarded-Host,X-Forwarded-Proto';

@@ -4,7 +4,6 @@ import logger from '@reactory/server-core/logging';
 import ReactoryModules from '@reactory/server-core/modules';
 import ReactoryBodyParser from './ReactoryBodyParser';
 import ReactoryCors from './ReactoryCors';
-import ReactoryI18n from './ReactoryI18n';
 import ReactoryClient from './ReactoryClient';
 import ReactoryContext from './ReactoryContext';
 import ReactoryErrorHandler from './ReactoryErrorHandler';
@@ -14,7 +13,6 @@ import ReactorySession from './ReactorySession';
 import ReactorySwagger  from './ReactorySwagger';
 const DEFAULT_MIDDLEWARE = [
   ReactoryCors,
-  ReactoryI18n,
   ReactoryClient,
   ReactoryContext,
   ReactoryErrorHandler,

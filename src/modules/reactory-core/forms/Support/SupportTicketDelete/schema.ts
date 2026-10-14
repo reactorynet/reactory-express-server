@@ -41,7 +41,7 @@ export const SupportTicketDeleteActionSchemaResolver = async (form: Reactory.For
     schema.properties = {
       error: {
         type: 'string',
-        title: i18n.t('reactory:support-ticket-delete-action', {
+        title: i18n.t('reactory:support-ticket-delete-action-error', {
           defaultValue: 'Error getting ticket',
         }),
         default: 'Ticket ID not provided'
@@ -60,7 +60,8 @@ export const SupportTicketDeleteActionSchemaResolver = async (form: Reactory.For
     (schema.properties as any)['ticketReference'] =  {
       type: 'string',
       title: i18n.t('reactory:support-ticket-delete-action-ticket-ref', {
-        defaultValue: `Ticket Ref: ${ticket.reference}`.trim(),          
+        defaultValue: 'Ticket ref: {{ticketRef}}',
+        ticketRef: ticket.reference,
       }),
       default: ticket.reference
     };
@@ -91,7 +92,7 @@ export const SupportTicketDeleteActionSchemaResolver = async (form: Reactory.For
       schema.properties = {
         error: {
           type: 'string',
-          title: i18n.t('reactory:support-ticket-delete-action', {
+          title: i18n.t('reactory:support-ticket-delete-action-error', {
             defaultValue: 'Error getting ticket',
           }),
           default: error.message

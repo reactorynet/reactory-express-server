@@ -4,9 +4,11 @@ import {
   LANGUAGE_HEADER,
   createRequestI18n,
   getAvailableLanguages,
+  getLocaleFolders,
   languageFromHeaders,
   normaliseLanguage,
   resolveLanguage,
+  resolveLocaleFolder,
 } from '../language';
 
 jest.mock('@reactory/server-core/logging', () => ({
@@ -130,7 +132,6 @@ describe('createRequestI18n', () => {
   });
 });
 
-
 describe('resolveLanguage rejects path-shaped input (MF-3)', () => {
   /**
    * The resolver interpolates the resolved locale into a filesystem path, and
@@ -194,5 +195,37 @@ describe('getAvailableLanguages ordering', () => {
     getAvailableLanguages().forEach((language) => {
       expect(language).toBe(normaliseLanguage(language));
     });
+  });
+});
+
+describe('getLocaleFolders', () => {
+  it('returns literal on-disk folder names, sorted', () => {
+    const folders = getLocaleFolders();
+
+    expect(Array.isArray(folders)).toBe(true);
+    expect(folders.length).toBeGreaterThan(0);
+    expect(folders.every((folder) => typeof folder === 'string' && folder.length > 0)).toBe(true);
+    expect(folders).toEqual([...folders].sort());
+  });
+});
+
+describe('resolveLocaleFolder', () => {
+  it('prefers an exact folder', () => {
+    expect(resolveLocaleFolder('en', ['af', 'en', 'en-US'])).toBe('en');
+  });
+
+  it('falls back to a regional folder sharing the primary subtag', () => {
+    // The silent-failure case: `en` has no folder of its own, so resolving to
+    // the bare code would load nothing for every request while the selector
+    // still offered English.
+    expect(resolveLocaleFolder('en', ['af', 'en-US'])).toBe('en-US');
+  });
+
+  it('returns undefined when no folder matches', () => {
+    expect(resolveLocaleFolder('de', ['af', 'en'])).toBeUndefined();
+  });
+
+  it('returns undefined for empty input', () => {
+    expect(resolveLocaleFolder(undefined, ['en'])).toBeUndefined();
   });
 });

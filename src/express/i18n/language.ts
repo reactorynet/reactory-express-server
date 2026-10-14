@@ -9,13 +9,22 @@
 import i18next from 'i18next';
 import fs from 'fs';
 import path from 'path';
+import Reactory from '@reactorynet/reactory-core';
 import logger from '@reactory/server-core/logging';
 
 /** Language used when nothing else can be resolved. */
 export const DEFAULT_LANGUAGE = process.env.DEFAULT_LOCALE || 'en';
 
-/** Header a client sets to state the language the user actually chose. */
-export const LANGUAGE_HEADER = 'x-reactory-language';
+/**
+ * Header a client sets to state the language the user actually chose.
+ *
+ * Taken from the shared core constant rather than a literal so that this and
+ * the CORS allowlist (`express/cors`) and the client's request headers all name
+ * the same header. When the two sides drifted, the header fell out of the
+ * allowlist and every GraphQL request failed its preflight — which presents as
+ * "all GraphQL is broken" rather than a localisation problem.
+ */
+export const { LANGUAGE_HEADER } = Reactory;
 
 /**
  * Reduces a tag to its lowercase primary subtag (`af-ZA` -> `af`), matching how
@@ -30,7 +39,57 @@ const dataRoot = (): string =>
   process.env.REACTORY_DATA ||
   path.resolve(process.cwd(), '../reactory-data');
 
+/** Root folder holding the per-locale bundle directories. */
+export const getI18nRoot = (): string => path.resolve(dataRoot(), 'i18n');
+
 let cachedLanguages: string[] | null = null;
+let cachedFolders: string[] | null = null;
+
+/**
+ * Locale folder names exactly as they exist on disk (`en`, `en-US`, `af`).
+ *
+ * `getAvailableLanguages` normalises these to language codes for the selector
+ * and the language filter (`en-US` -> `en`). The bundle *loader* needs the
+ * literal folder, which is what `resolveLocaleFolder` provides — the two are
+ * deliberately separate: a code is a stable filter identity, a folder is a
+ * storage detail.
+ */
+export const getLocaleFolders = (): string[] => {
+  if (cachedFolders) return cachedFolders;
+
+  try {
+    const entries = fs.readdirSync(getI18nRoot(), { withFileTypes: true });
+    cachedFolders = entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+  } catch (error) {
+    // Not cached, so a later call can succeed once the path is corrected.
+    cachedFolders = null;
+    return [];
+  }
+
+  return cachedFolders;
+};
+
+/**
+ * Maps a language code onto a locale folder the backend can actually load.
+ *
+ * An exact folder wins (`en` -> `en`); otherwise a regional folder sharing the
+ * primary subtag is used (`en` -> `en-US`). Without this, resolution can return
+ * a code that is not on disk, and every request silently loads no translations
+ * while the selector still offers the language.
+ */
+export const resolveLocaleFolder = (language?: string, folders?: string[]): string | undefined => {
+  const normalised = normaliseLanguage(language);
+  if (!normalised) return undefined;
+
+  const candidates = folders || getLocaleFolders();
+  return (
+    candidates.find((folder) => folder === normalised)
+    || candidates.find((folder) => normaliseLanguage(folder) === normalised)
+  );
+};
 
 /**
  * The languages that actually have translation folders on disk.
@@ -43,57 +102,50 @@ export const getAvailableLanguages = (): string[] => {
   if (cachedLanguages && cachedLanguages.length > 0) return cachedLanguages;
 
   const fallback = [normaliseLanguage(DEFAULT_LANGUAGE)];
-  const i18nRoot = path.resolve(dataRoot(), 'i18n');
+  const folders = getLocaleFolders();
 
-  try {
-    const entries = fs.readdirSync(i18nRoot, { withFileTypes: true });
-
-    // Normalised and de-duplicated: the folder listing can hold regional
-    // variants of one language (en alongside en-US), which would otherwise
-    // appear as separate choices and push the default out of first position.
-    const seen: { [code: string]: boolean } = {};
-    const found: string[] = [];
-
-    entries
-      .filter((entry) => entry.isDirectory())
-      .forEach((entry) => {
-        const normalised = normaliseLanguage(entry.name);
-        if (!normalised || seen[normalised]) return;
-        seen[normalised] = true;
-        found.push(normalised);
-      });
-
-    if (found.length === 0) {
-      logger.warn('No locale folders found under ' + i18nRoot + '; defaulting to ' + fallback[0]);
-      return fallback;
-    }
-
-    // Default language first so the selector leads with it.
-    const ordered = [
-      ...found.filter((language) => language === fallback[0]),
-      ...found.filter((language) => language !== fallback[0]).sort(),
-    ];
-
-    cachedLanguages = ordered;
-    return cachedLanguages;
-  } catch (error) {
-    // Not cached, so a later call can succeed once the path is corrected.
-    logger.warn(
-      'Could not read locale folders under ' + i18nRoot + '; falling back to ' + fallback[0],
-      { error },
-    );
+  if (folders.length === 0) {
+    logger.warn(`No locale folders found under ${getI18nRoot()}; defaulting to ${fallback[0]}`);
     return fallback;
   }
+
+  // Normalised and de-duplicated: the folder listing can hold regional variants
+  // of one language (en alongside en-US), which would otherwise appear as
+  // separate choices and push the default out of first position.
+  const seen: { [code: string]: boolean } = {};
+  const found: string[] = [];
+
+  folders.forEach((name) => {
+    const normalised = normaliseLanguage(name);
+    if (!normalised || seen[normalised]) return;
+    seen[normalised] = true;
+    found.push(normalised);
+  });
+
+  // Default language first so the selector leads with it.
+  const ordered = [
+    ...found.filter((language) => language === fallback[0]),
+    ...found.filter((language) => language !== fallback[0]).sort(),
+  ];
+
+  cachedLanguages = ordered;
+  return cachedLanguages;
 };
 
-/** Clears the memoised language scan. Intended for tests. */
+/** Clears the memoised scans. Intended for tests. */
 export const resetAvailableLanguages = (): void => {
   cachedLanguages = null;
+  cachedFolders = null;
 };
 
 /**
  * Resolves a requested tag against the configured languages, falling back to
  * the default. Accepts regional variants (`af-ZA` resolves to `af`).
+ *
+ * Returns the normalised language code, which is the stable identity used for
+ * the language filter (bundle `locale`, `context.i18n.language`) and by the
+ * selector. It is deliberately *not* a folder name: the loader maps codes onto
+ * on-disk folders, so a regional folder (`en-US`) never leaks into the filter.
  */
 export const resolveLanguage = (requested?: string): string => {
   const available = getAvailableLanguages();
@@ -122,7 +174,10 @@ export const languageFromHeaders = (
   headers?: { [key: string]: string | string[] | undefined }
 ): string | undefined => {
   if (!headers) return undefined;
-  const explicit = headers[LANGUAGE_HEADER];
+  // Node lower-cases incoming header names, so look the constant up in lower
+  // case rather than assuming it is already lower-case — otherwise a casing
+  // change in the shared constant would stop the header being read at all.
+  const explicit = headers[LANGUAGE_HEADER.toLowerCase()];
   const raw = Array.isArray(explicit) ? explicit[0] : explicit || headers['accept-language'];
   const value = Array.isArray(raw) ? raw[0] : raw;
   if (!value) return undefined;
