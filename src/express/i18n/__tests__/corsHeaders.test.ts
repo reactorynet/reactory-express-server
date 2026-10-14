@@ -23,6 +23,17 @@ describe('CORS allowed headers', () => {
     expect(headers).toContain(LANGUAGE_HEADER.toLowerCase());
   });
 
+  it('lists the language header exactly once', () => {
+    // Header names are matched case-insensitively, so a second spelling is
+    // redundant — and a stale variant is what makes the allowlist look correct
+    // while the header the client actually sends is absent.
+    const listed = getAllowedCorsHeaders().filter(
+      (header) => header.toLowerCase() === LANGUAGE_HEADER.toLowerCase(),
+    );
+
+    expect(listed).toHaveLength(1);
+  });
+
   it('allows the browser language header as a fallback', () => {
     expect(headers).toContain('accept-language');
   });

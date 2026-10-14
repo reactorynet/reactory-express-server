@@ -71,7 +71,7 @@
     "@opentelemetry/sdk-metrics": "^1.30.0",
     "@opentelemetry/sdk-node": "^0.55.0",
     "@opentelemetry/semantic-conventions": "^1.28.0",
-    "@reactorynet/reactory-core": "1.1.9",
+    "@reactorynet/reactory-core": "1.1.10",
     "@reactorynet/workflow-es": "3.0.0",
     "@reactorynet/workflow-es-azure": "3.0.0",
     "@reactorynet/workflow-es-mongodb": "2.0.0",

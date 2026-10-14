@@ -9,13 +9,22 @@
 import i18next from 'i18next';
 import fs from 'fs';
 import path from 'path';
+import Reactory from '@reactorynet/reactory-core';
 import logger from '@reactory/server-core/logging';
 
 /** Language used when nothing else can be resolved. */
 export const DEFAULT_LANGUAGE = process.env.DEFAULT_LOCALE || 'en';
 
-/** Header a client sets to state the language the user actually chose. */
-export const LANGUAGE_HEADER = 'x-reactory-language';
+/**
+ * Header a client sets to state the language the user actually chose.
+ *
+ * Taken from the shared core constant rather than a literal so that this and
+ * the CORS allowlist (`express/cors`) and the client's request headers all name
+ * the same header. When the two sides drifted, the header fell out of the
+ * allowlist and every GraphQL request failed its preflight — which presents as
+ * "all GraphQL is broken" rather than a localisation problem.
+ */
+export const { LANGUAGE_HEADER } = Reactory;
 
 /**
  * Reduces a tag to its lowercase primary subtag (`af-ZA` -> `af`), matching how
