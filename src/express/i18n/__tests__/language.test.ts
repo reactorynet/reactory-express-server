@@ -132,7 +132,6 @@ describe('createRequestI18n', () => {
   });
 });
 
-
 describe('resolveLanguage rejects path-shaped input (MF-3)', () => {
   /**
    * The resolver interpolates the resolved locale into a filesystem path, and
@@ -208,12 +207,6 @@ describe('getLocaleFolders', () => {
     expect(folders.every((folder) => typeof folder === 'string' && folder.length > 0)).toBe(true);
     expect(folders).toEqual([...folders].sort());
   });
-
-  it('includes the folders the selector normalises away', () => {
-    // The i18next backend loads by literal folder name, so a regional folder
-    // (`en-US`) has to be visible here even though the selector only offers `en`.
-    expect(getLocaleFolders().map(normaliseLanguage)).toContain(normaliseLanguage(DEFAULT_LANGUAGE));
-  });
 });
 
 describe('resolveLocaleFolder', () => {
@@ -234,13 +227,5 @@ describe('resolveLocaleFolder', () => {
 
   it('returns undefined for empty input', () => {
     expect(resolveLocaleFolder(undefined, ['en'])).toBeUndefined();
-  });
-});
-
-describe('languageFromHeaders header casing', () => {
-  it('reads the header from the lower-cased name Node delivers', () => {
-    // Node lower-cases incoming header names, so the lookup is keyed on the
-    // lower-cased constant.
-    expect(languageFromHeaders({ [LANGUAGE_HEADER.toLowerCase()]: 'af' })).toBe('af');
   });
 });

@@ -1,13 +1,25 @@
 /**
- * The i18n instance default and `DEFAULT_LANGUAGE` used to disagree: the
- * instance was initialised with the regional `en-US` while the request resolver
- * normalises to `en`, so which bundles loaded depended on whether the request
- * context was ready. They now derive from the same constant — and resolve to a
- * *folder the backend can load*, since the fs backend matches `{{lng}}` against
- * literal folder names rather than normalised codes.
+ * The i18n instance used to disagree with `DEFAULT_LANGUAGE`: it was
+ * initialised with the regional `en-US` while the request resolver normalises to
+ * `en`, so which bundles loaded depended on whether the request context was
+ * ready.
+ *
+ * The two concerns are now separate and both are pinned here:
+ *   - the *filter identity* is the normalised language code (`en`), used by the
+ *     selector, the bundle `locale` and the `language` argument; and
+ *   - the *loader* maps that code onto the folder that actually holds the
+ *     bundle, so a code with no folder of its own (`en` when the bundle lives in
+ *     `en-US/`) still loads instead of silently resolving to nothing.
  */
 import { i18nextInitOptions } from '../index';
-import { DEFAULT_LANGUAGE, getLocaleFolders, normaliseLanguage } from '../language';
+import {
+  DEFAULT_LANGUAGE,
+  getAvailableLanguages,
+  getI18nRoot,
+  getLocaleFolders,
+  normaliseLanguage,
+  resolveLocaleFolder,
+} from '../language';
 
 jest.mock('@reactory/server-core/logging', () => ({
   debug: jest.fn(),
@@ -16,33 +28,39 @@ jest.mock('@reactory/server-core/logging', () => ({
   error: jest.fn(),
 }));
 
-describe('i18n instance default language', () => {
+describe('i18n instance language', () => {
   const folders = getLocaleFolders();
 
-  it('preloads exactly the on-disk locale folders', () => {
-    // Literal folder names, not normalised codes: a normalised list would drop
-    // `en-US` (which normalises to `en`), and the backend resolves `{{lng}}`
-    // against the folder name, so it would silently load nothing for it.
-    if (folders.length > 0) {
-      expect(i18nextInitOptions.preload).toEqual(folders);
-    }
+  it('preloads the language codes the selector offers', () => {
+    // Codes, not folder names: the set has to match `getAvailableLanguages`, so
+    // that everything the selector offers is loaded and nothing else.
+    expect(i18nextInitOptions.preload).toEqual(getAvailableLanguages());
   });
 
-  it('preloads the language it defaults to', () => {
-    expect(i18nextInitOptions.preload).toContain(i18nextInitOptions.lng);
+  it('defaults to the shared default language code, not a regional variant', () => {
+    const expected = normaliseLanguage(DEFAULT_LANGUAGE);
+
+    expect(i18nextInitOptions.lng).toBe(expected);
+    expect(i18nextInitOptions.fallbackLng).toBe(expected);
+    // `en-US` is the shape that caused the original drift.
+    expect(i18nextInitOptions.lng).not.toContain('-');
   });
 
-  it('resolves the default to a folder the backend can actually load', () => {
-    if (folders.length > 0) {
-      expect(folders).toContain(i18nextInitOptions.lng);
-      expect(folders).toContain(i18nextInitOptions.fallbackLng);
-    }
-  });
+  it('maps a loaded language code onto the folder that holds it', () => {
+    if (folders.length === 0) return;
 
-  it('agrees with the shared default language', () => {
-    expect(normaliseLanguage(i18nextInitOptions.lng)).toBe(normaliseLanguage(DEFAULT_LANGUAGE));
-    expect(normaliseLanguage(i18nextInitOptions.fallbackLng)).toBe(
-      normaliseLanguage(DEFAULT_LANGUAGE)
+    const { loadPath } = i18nextInitOptions.backend as { loadPath: Function };
+    expect(typeof loadPath).toBe('function');
+
+    // The code stays the code; only the resolved path knows about the folder.
+    expect(loadPath(i18nextInitOptions.lng, 'common')).toBe(
+      `${getI18nRoot()}/${resolveLocaleFolder(i18nextInitOptions.lng)}/common.json`
     );
+  });
+
+  it('has a folder for the language it defaults to', () => {
+    if (folders.length > 0) {
+      expect(resolveLocaleFolder(DEFAULT_LANGUAGE)).toBeDefined();
+    }
   });
 });

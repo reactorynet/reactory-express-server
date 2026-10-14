@@ -1,10 +1,12 @@
+import path from 'path';
 import i18next from 'i18next';
 import i18nextFSBackend from 'i18next-fs-backend';
 import logger from "@reactory/server-core/logging";
 import { getModuleDefinitions } from "@reactory/server-core/modules/helpers/moduleImportFactory";
 import {
   DEFAULT_LANGUAGE,
-  getLocaleFolders,
+  getAvailableLanguages,
+  getI18nRoot,
   normaliseLanguage,
   resolveLocaleFolder,
 } from './language';
@@ -47,22 +49,35 @@ export const getNamesSpaces = (): string[] => {
 }
 
 
-const backendOptions = {
-  // load all translations found in the modules.
-  loadPath: `${APP_DATA_ROOT}/i18n/{{lng}}/{{ns}}.json`,
-  addPath: `${APP_DATA_ROOT}/i18n/{{lng}}/{{ns}}.missing.json`
+const i18nRoot = getI18nRoot();
+
+/**
+ * Builds a bundle path resolver that maps the language *code* onto the folder
+ * that actually holds it.
+ *
+ * The code is the filter identity (the selector, the bundle `locale`, the
+ * `language` argument on the translations query); the folder is a storage
+ * detail. A code with no folder of its own (`en` when the bundle lives in
+ * `en-US/`) must still load, which a fixed `{{lng}}` template cannot express.
+ */
+const localeBundlePath = (suffix: string) => (lng: string, ns: string): string => {
+  const folder = resolveLocaleFolder(lng) || normaliseLanguage(lng);
+  return path.join(i18nRoot, folder, `${ns}${suffix}`);
 };
 
-const localeFolders = getLocaleFolders();
-const defaultLanguage = resolveLocaleFolder(DEFAULT_LANGUAGE)
-  || normaliseLanguage(DEFAULT_LANGUAGE);
+const backendOptions = {
+  // load all translations found in the modules.
+  loadPath: localeBundlePath('.json'),
+  addPath: localeBundlePath('.missing.json')
+};
 
-if (localeFolders.length > 0 && !resolveLocaleFolder(DEFAULT_LANGUAGE)) {
+const defaultCode = normaliseLanguage(DEFAULT_LANGUAGE);
+
+if (getAvailableLanguages().length > 0 && !resolveLocaleFolder(defaultCode)) {
   // Loud, not silent: with no folder for the default language, every request
-  // that resolves to it (the selector still offers it) loads no translations.
-  const defaultCode = normaliseLanguage(DEFAULT_LANGUAGE);
+  // that resolves to it (the selector still offers it) loads nothing.
   logger.error(
-    `No locale folder matches the default language "${defaultCode}" under ${APP_DATA_ROOT}/i18n`
+    `No locale folder matches the default language "${defaultCode}" under ${i18nRoot}`
     + ` — requests resolving to it would load no translations; add an ${defaultCode}/ folder.`
   );
 }
@@ -74,20 +89,19 @@ if (localeFolders.length > 0 && !resolveLocaleFolder(DEFAULT_LANGUAGE)) {
  * `DEFAULT_LANGUAGE` can be asserted directly.
  */
 export const i18nextInitOptions = {
-  // Literal folder names, because the backend resolves `{{lng}}` against on-disk
-  // folders. Preloading normalised codes would silently load nothing when a
-  // locale exists only under a regional folder (`en-US` with no `en`).
-  preload: localeFolders.length > 0 ? localeFolders : [defaultLanguage],
-  // A folder the backend can load, not merely a normalised code. Derived from
-  // the same source the per-request resolver uses, so the instance default and
+  // Language codes — the same set the selector offers and the filter accepts.
+  // The backend maps each code onto its folder via `localeBundlePath`.
+  preload: getAvailableLanguages(),
+  // The normalised code, matching what `resolveLanguage` returns for a request.
+  // Derived from the same constant, so the instance default and
   // `DEFAULT_LANGUAGE` cannot drift.
   //
   // No language detector is registered: the request language is resolved from
   // the headers in `ReactoryContext` (preferring `x-reactory-language`), and
   // `lng` is always passed explicitly, so a detector would be a second,
   // divergent path — it reads only `accept-language`.
-  lng: defaultLanguage,
-  fallbackLng: defaultLanguage,
+  lng: defaultCode,
+  fallbackLng: defaultCode,
   ns: getNamesSpaces(),
   backend: backendOptions
 };

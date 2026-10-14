@@ -39,22 +39,26 @@ const dataRoot = (): string =>
   process.env.REACTORY_DATA ||
   path.resolve(process.cwd(), '../reactory-data');
 
+/** Root folder holding the per-locale bundle directories. */
+export const getI18nRoot = (): string => path.resolve(dataRoot(), 'i18n');
+
 let cachedLanguages: string[] | null = null;
 let cachedFolders: string[] | null = null;
 
 /**
  * Locale folder names exactly as they exist on disk (`en`, `en-US`, `af`).
  *
- * `getAvailableLanguages` normalises these for the selector (`en-US` -> `en`),
- * but the i18next backend resolves `{{lng}}` against literal folder names
- * (`{dataRoot}/i18n/{{lng}}/{{ns}}.json`). Anything handed to i18next must
- * therefore be one of these, not a normalised code.
+ * `getAvailableLanguages` normalises these to language codes for the selector
+ * and the language filter (`en-US` -> `en`). The bundle *loader* needs the
+ * literal folder, which is what `resolveLocaleFolder` provides — the two are
+ * deliberately separate: a code is a stable filter identity, a folder is a
+ * storage detail.
  */
 export const getLocaleFolders = (): string[] => {
   if (cachedFolders) return cachedFolders;
 
   try {
-    const entries = fs.readdirSync(path.resolve(dataRoot(), 'i18n'), { withFileTypes: true });
+    const entries = fs.readdirSync(getI18nRoot(), { withFileTypes: true });
     cachedFolders = entries
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
@@ -101,8 +105,7 @@ export const getAvailableLanguages = (): string[] => {
   const folders = getLocaleFolders();
 
   if (folders.length === 0) {
-    const i18nRoot = path.resolve(dataRoot(), 'i18n');
-    logger.warn(`No locale folders found under ${i18nRoot}; defaulting to ${fallback[0]}`);
+    logger.warn(`No locale folders found under ${getI18nRoot()}; defaulting to ${fallback[0]}`);
     return fallback;
   }
 
@@ -139,8 +142,10 @@ export const resetAvailableLanguages = (): void => {
  * Resolves a requested tag against the configured languages, falling back to
  * the default. Accepts regional variants (`af-ZA` resolves to `af`).
  *
- * Returns a locale folder name the i18next backend can load, not necessarily a
- * normalised code: with only `en-US/` on disk, `en` resolves to `en-US`.
+ * Returns the normalised language code, which is the stable identity used for
+ * the language filter (bundle `locale`, `context.i18n.language`) and by the
+ * selector. It is deliberately *not* a folder name: the loader maps codes onto
+ * on-disk folders, so a regional folder (`en-US`) never leaks into the filter.
  */
 export const resolveLanguage = (requested?: string): string => {
   const available = getAvailableLanguages();
@@ -148,15 +153,14 @@ export const resolveLanguage = (requested?: string): string => {
 
   if (normalised) {
     const match = available.find((language) => normaliseLanguage(language) === normalised);
-    if (match) return resolveLocaleFolder(match) || normaliseLanguage(match);
+    if (match) return normaliseLanguage(match);
   }
 
   const fallback = available.find(
     (language) => normaliseLanguage(language) === normaliseLanguage(DEFAULT_LANGUAGE)
   );
 
-  const fallbackCode = normaliseLanguage(fallback || DEFAULT_LANGUAGE);
-  return resolveLocaleFolder(fallbackCode) || fallbackCode;
+  return normaliseLanguage(fallback || DEFAULT_LANGUAGE);
 };
 
 /**
