@@ -34,3 +34,47 @@ describe('support ticket forms', () => {
     expect(ids).toEqual(expect.arrayContaining(['core.SupportTickets@1.0.0', 'core.SupportTicketsAdmin@1.0.0']));
   });
 });
+
+/**
+ * REACTORY-302016408/20261014/2327145804.
+ *
+ * `message` is a data-only property: the `openTickets`/`users` queries carry a
+ * `message` field for failures, but it is not something the user fills in. The
+ * legacy engine never displayed it because `ui:grid-layout` is the render list
+ * and it does not name `message`. It must stay in the schema (result mapping and
+ * payload shape) while being kept out of the form by every engine path.
+ */
+describe('support ticket form — message is not a rendered field', () => {
+  const layoutNames = (form: any, uiSchemaKey?: string): string[] => {
+    const ui = uiSchemaKey
+      ? form.uiSchemas.find((entry: any) => entry.key === uiSchemaKey).uiSchema
+      : form.uiSchema;
+    return (ui['ui:grid-layout'] as Array<Record<string, unknown>>).flatMap((row) => Object.keys(row));
+  };
+
+  // `SupportTickets.schema` is the async resolver, so resolve it the way the
+  // form loader does before inspecting the properties.
+  const resolveSchema = async (): Promise<any> =>
+    await (SupportTickets.schema as any)(
+      SupportTickets,
+      {},
+      { i18n: { t: (key: string) => key }, user: {} },
+      {},
+    );
+
+  it('keeps message in the schema so query results still map', async () => {
+    const schema = await resolveSchema();
+    expect(schema.properties.message).toEqual({ type: 'string' });
+  });
+
+  it('does not declare message in the grid layout', () => {
+    expect(layoutNames(SupportTickets)).not.toContain('message');
+  });
+
+  it('marks message hidden on the grid and list view schemas', () => {
+    expect((SupportTickets.uiSchema as any).message).toEqual({ 'ui:hidden': true });
+    expect(
+      (SupportTickets.uiSchemas.find((entry: any) => entry.key === 'list').uiSchema as any).message,
+    ).toEqual({ 'ui:hidden': true });
+  });
+});

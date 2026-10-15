@@ -20,33 +20,13 @@
       "issue": "REACTORY-302016408/20261014/2622906482"
     },
     {
-      "path": "src/context/__tests__/ReactoryContextProvider.test.ts",
-      "reason": "9 failing test(s), e.g. \"should get values from Redis\": TypeError: CoreCache_1.default.getItem is not a function",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
       "path": "src/modules/reactory-queue/services/queue/QueueProvider.spec.ts",
       "reason": "2 failing test(s), e.g. \"should receive messages from default provider\": Error: Queue test-queue does not exist.",
       "issue": "REACTORY-302016408/20261014/2622906482"
     },
     {
-      "path": "src/modules/reactory-reactor/__tests__/unit/SystemGraphManagerTraversal.unit.test.ts",
-      "reason": "2 failing test(s), e.g. \"finds a path and reconstructs nodes + edges in order\": TypeError: ReactorGraphNode_1.ReactorNodeModel.find(...).select is not a function",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
       "path": "src/modules/reactory-zepz-quotes/ai/macros/__tests__/TalonOneMacros.test.ts",
       "reason": "1 failing test(s), e.g. \"folds corridor arguments into the session attributes the rules read\": Error: expect(received).toMatchObject(expected)",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/modules/reactory-slack/__tests__/unit/SlackWriterMacros.unit.test.ts",
-      "reason": "48 failing test(s), e.g. \"exports a registry with correct name and tool name\": TypeError: Cannot destructure property 'SlackWriteMessageRegistry' of 'macros' as it is undefined.",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/modules/reactory-reactor/__tests__/unit/GraphMacros.unit.test.ts",
-      "reason": "3 failing test(s), e.g. \"exposes six macros, spread into the MacroRegistry\": Error: expect(received).toHaveLength(expected)",
       "issue": "REACTORY-302016408/20261014/2622906482"
     },
     {
@@ -57,11 +37,6 @@
     {
       "path": "src/modules/reactory-zepz-quotes/services/__tests__/TalonOneService.test.ts",
       "reason": "1 failing test(s), e.g. \"defaults to a dry run and asks for the response content the digest needs\": Error: expect(received).toEqual(expected) // deep equality",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/services/__tests__/ServiceManager.test.ts",
-      "reason": "5 failing test(s), e.g. \"should create new instance for different context\": Error: expect(received).not.toBe(expected) // Object.is equality",
       "issue": "REACTORY-302016408/20261014/2622906482"
     },
     {
@@ -92,11 +67,6 @@
     {
       "path": "src/authentication/strategies/google/GoogleStrategy.spec.ts",
       "reason": "Integration suite: boots the full ReactoryServer (Mongo, module specification file). Needs an integration job, not a unit run.",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/application/__tests__/index.test.ts",
-      "reason": "Suite fails to load: src/application/index.ts imports './admin', which does not exist.",
       "issue": "REACTORY-302016408/20261014/2622906482"
     }
   ]
