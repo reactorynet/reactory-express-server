@@ -192,8 +192,11 @@ describe('@traced decorator', () => {
     }
 
     const service = new TestService();
-    
-    await expect(service.testMethod()).rejects.toThrow('string error');
+
+    // A non-Error rejection carries no `.message`, so `.rejects.toThrow(string)`
+    // cannot match it - it reports the promise as not throwing at all. Assert the
+    // propagated value directly: the decorator must rethrow it unchanged.
+    await expect(service.testMethod()).rejects.toBe('string error');
 
     expect(spanMock.setStatus).toHaveBeenCalledWith({
       code: SpanStatusCode.ERROR,

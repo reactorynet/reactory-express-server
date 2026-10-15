@@ -552,10 +552,14 @@ describe('ReactoryWorkflowService', () => {
 
     describe('getWorkflowSchedules', () => {
       it('should return paginated schedules', async () => {
-        const mockSchedules = [
-          { id: 'schedule1', name: 'Schedule 1' },
-          { id: 'schedule2', name: 'Schedule 2' }
-        ];
+        // The real contract is getSchedules(): Map<string, IScheduledWorkflow>
+        // (Scheduler.ts:763) and the service maps [key, value] entries. Feeding it
+        // a plain array of objects made every entry resolve to undefined, so the
+        // page came back empty - which is why this asserted 2 and received 0.
+        const mockSchedules = new Map<string, any>([
+          ['schedule1', { config: { id: 'schedule1', name: 'Schedule 1' } }],
+          ['schedule2', { config: { id: 'schedule2', name: 'Schedule 2' } }],
+        ]);
         mockScheduler.getSchedules.mockReturnValue(mockSchedules);
 
         const result = await service.getWorkflowSchedules({ page: 1, limit: 10 });
@@ -563,6 +567,9 @@ describe('ReactoryWorkflowService', () => {
         expect(result).toHaveProperty('schedules');
         expect(result).toHaveProperty('pagination');
         expect(result.pagination.total).toBe(2);
+        // The entries survived the tuple mapping instead of being dropped.
+        expect(result.schedules).toHaveLength(2);
+        expect(result.schedules.map((s: any) => s.id)).toEqual(['schedule1', 'schedule2']);
       });
     });
 

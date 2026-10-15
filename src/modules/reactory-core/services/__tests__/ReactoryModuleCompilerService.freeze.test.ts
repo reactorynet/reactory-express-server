@@ -21,7 +21,7 @@ describe('ReactoryModuleCompilerService Production Guardrails', () => {
     process.env.NODE_ENV = originalEnv;
   });
 
-  it('prohibits build invocation and returns failure resource when compiled widget is missing in production', async () => {
+  it('prohibits build invocation and returns the bundle url without writing to disk when the compiled widget is missing in production', async () => {
     process.env.NODE_ENV = 'production';
     const fakeModule: any = {
       id: 'test.MissingWidget@1.0.0',
@@ -31,31 +31,42 @@ describe('ReactoryModuleCompilerService Production Guardrails', () => {
       ]
     };
 
-    const res = await service.compileModule(fakeModule);
-
-    expect(res).toBeDefined();
-    expect(res.uri).toContain('error=true');
-    expect(mockContext.log).toHaveBeenCalledWith(
-      expect.stringContaining('[Production Freeze]'),
-      expect.any(Object),
-      'error',
-      expect.any(String)
-    );
-
-    // Verify fallback script file was written
+    // Precondition: no compiled bundle on disk, so the production branch is the
+    // one under test rather than the "serve the existing asset" branch.
     const dataRoot = getDataRoot();
     const compiledFile = path.join(dataRoot, 'plugins', '__runtime__', `lib/${fakeModule.id}.min.js`);
-    expect(fs.existsSync(compiledFile)).toBe(true);
-    const content = fs.readFileSync(compiledFile, 'utf8');
-    expect(content).toContain('Component Unavailable: test.MissingWidget');
-    expect(content).toContain('$reactory.createNotification');
-
-    // Clean up
     try {
       fs.unlinkSync(compiledFile);
     } catch {
-      // ignore
+      // ignore - absent is what we want
     }
+    expect(fs.existsSync(compiledFile)).toBe(false);
+
+    const res = await service.compileModule(fakeModule);
+
+    expect(res).toBeDefined();
+
+    // The point of the production freeze: never build, and never touch the data
+    // volume. The previous revision of this test asserted the opposite - that a
+    // "Component Unavailable" failure stub had been written to disk - which is
+    // exactly what 184cd73a set out to stop. Asserting the file is still absent
+    // pins that guarantee rather than a presentation detail.
+    expect(fs.existsSync(compiledFile)).toBe(false);
+
+    // It still hands back a servable script resource for the module.
+    expect(res.type).toBe('script');
+    expect(res.uri).toContain(`lib/${fakeModule.id}.min.js`);
+    expect(res.id).toBe(fakeModule.id);
+    expect(res.signed).toBe(true);
+
+    // And it says so, at warn level: a missing bundle in production is a
+    // degraded state, not a crash.
+    expect(mockContext.log).toHaveBeenCalledWith(
+      expect.stringContaining('[Production Freeze]'),
+      expect.any(Object),
+      'warn',
+      expect.any(String)
+    );
   });
 
   it('serves existing compiled widget in production without invoking compilation', async () => {
