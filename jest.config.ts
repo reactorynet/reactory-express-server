@@ -4,6 +4,12 @@ import type {
   TsJestTransformerOptions 
 } from 'ts-jest'
 
+// This config is the unit pass. Suites that need live infrastructure are listed
+// in test/integrationSuites.js, ignored below, and run by
+// jest.integration.config.ts (`yarn test:integration`) instead.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const integrationSuites = require('./test/integrationSuites');
+
 export default async (): Promise<JestConfigWithTsJest> => {
 
   const transformerOptions: TsJestTransformerOptions = {
@@ -109,6 +115,9 @@ export default async (): Promise<JestConfigWithTsJest> => {
       '/__tests__/testUtils\\.ts$',
       // Hand-run smoke scripts that live beside the suites (no test blocks).
       '/__tests__/smoke[^/]*\\.ts$',
+      // Integration suites: they need live infrastructure and run separately
+      // (jest.integration.config.ts). Categorised, not quarantined.
+      ...integrationSuites.integrationIgnorePatterns(),
     ],
     setupFilesAfterEnv: ['<rootDir>/test/setup/init.ts'],
     // Coverage configuration

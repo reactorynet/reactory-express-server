@@ -34,6 +34,7 @@
     "postinstall": "test -f node_modules/.bin/patch-package && patch-package || true",
     "test": "jest",
     "test:ci": "node scripts/ci/run-tests.js --ci --coverage --coverageReporters=text-summary --coverageReporters=json-summary --coverageReporters=lcov --runInBand --forceExit",
+    "test:integration": "jest -c jest.integration.config.ts --forceExit",
     "typecheck": "node scripts/ci/typecheck-ratchet.js",
     "lint": "eslint --no-eslintrc -c .eslintrc.ci.json src --ext .ts,.tsx",
     "typecheck:full": "tsc --noEmit -p tsconfig.json",
