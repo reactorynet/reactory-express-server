@@ -107,6 +107,85 @@ jobs:
           path: coverage/
           if-no-files-found: ignore
 
+  # The integration suites (test/integrationSuites.js): they boot the full
+  # ReactoryServer or read and write a live database, so they need real services
+  # and cannot run in the `test` job. Run on demand (Actions -> CI -> Run
+  # workflow) until they have been shown green here consistently; promoting this
+  # to a pull_request gate is a separate change.
+  #
+  # On demand, NOT a pull_request gate, and EXPECTED RED as things stand: with
+  # --runInBand a failure in seed_apex takes the whole run down, and seed_apex
+  # cannot pass against the empty databases provisioned here (see its
+  # test/quarantine.json entry). This job therefore yields a signal on
+  # GoogleStrategy only once that entry is removed. Read this job's own result -
+  # the `test` job also runs on a dispatch and currently fails, so the workflow
+  # conclusion is not a signal about these suites. Promoting it to a gate is a
+  # separate change, and needs a disposable database: seed_apex resets real
+  # account passwords and deletes rows.
+  integration:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: reactory
+          POSTGRES_PASSWORD: reactory
+          POSTGRES_DB: reactory
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U reactory"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      mongo:
+        image: mongo:7
+        env:
+          MONGO_INITDB_ROOT_USERNAME: reactory
+          MONGO_INITDB_ROOT_PASSWORD: reactorycore
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ping:1})'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # seed_apex resolves Mongo through MONGOOSE and Postgres through the
+      # REACTORY_POSTGRES_* variables; GoogleStrategy boots ReactoryServer, which
+      # needs both plus the URL its supertest agent targets.
+      MONGOOSE: mongodb://reactory:reactorycore@localhost:27017/reactory-integration?authSource=admin
+      REACTORY_POSTGRES_HOST: localhost
+      REACTORY_POSTGRES_PORT: "5432"
+      REACTORY_POSTGRES_USER: reactory
+      REACTORY_POSTGRES_PASSWORD: reactory
+      REACTORY_POSTGRES_DB: reactory
+      API_URI_ROOT: http://localhost:4000
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      # Corepack first: setup-node's Yarn cache lookup runs `yarn`, and the
+      # runner's global Yarn 1 refuses this repo's packageManager (yarn@4).
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "yarn"
+
+      - name: Enable Corepack for the selected Node
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --no-immutable
+
+      - name: Run integration suites
+        run: yarn test:integration
+
   # WP-B3: every module's TypeORM migrations must apply to an empty Postgres and
   # leave no drift against the entities; the startup governance integration
   # test runs against a second empty database.
