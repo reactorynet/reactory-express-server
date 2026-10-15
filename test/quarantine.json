@@ -7,11 +7,6 @@
   ],
   "suites": [
     {
-      "path": "src/modules/reactory-reactor/services/reactor/__tests__/ImageToolProviderResolution.test.ts",
-      "reason": "Source defect, not test drift. The spec asserts the ImageMacro is registered (alias 'image'); it is not. Commit a523647 added it to ai/macro/index.ts deliberately ('register ImageMacro in server registry'), 133bf07 restored it after an accidental drop, and 13a94ee removed it again as collateral in an unrelated hunk - it is now in no registry, so the image tool is no longer advertised to the model. Filed separately; do not relax the assertion.",
-      "issue": "REACTORY-302016408/20261015/1251049777"
-    },
-    {
       "path": "src/utils/__tests__/hash.test.ts",
       "reason": "Source defect, narrow. Hash is declared `(e: any): number` but Hash(null) returns null (typeof 'object'): the guard `!isNaN(unkType)` is satisfied because Number(null) === 0, so null is returned as if it were a number. The test encodes the correct contract. Filed separately; do not relax the assertion.",
       "issue": "REACTORY-302016408/20261015/3764778823"
@@ -20,16 +15,6 @@
       "path": "src/modules/reactory-core/services/__tests__/ReactoryFileService.workspace.test.ts",
       "reason": "Source defect in workspace mode. An absolute subfolder path that is one of the workspace's own folders is not recognised (the workspace branch only returns for '/', '' or the workspace file/dir), so it falls through to an APP_DATA_ROOT listing and returns 0 files; and a missing workspace file falls through to the same listing (66 files) instead of degrading to empty. Filed separately; do not relax the assertions.",
       "issue": "REACTORY-302016408/20261015/3071700252"
-    },
-    {
-      "path": "src/modules/reactory-zepz-quotes/ai/macros/__tests__/TalonOneMacros.test.ts",
-      "reason": "Unverifiable in this checkout: src/modules/reactory-zepz-quotes is not present (src/modules/* is git-ignored; only reactory-core is tracked by this repo). Cannot run, fix or classify until that module is checked out. Entry retained rather than removed on an unverified assumption.",
-      "issue": "REACTORY-302016408/20261014/2189816003"
-    },
-    {
-      "path": "src/modules/reactory-zepz-quotes/services/__tests__/TalonOneService.test.ts",
-      "reason": "Unverifiable in this checkout: src/modules/reactory-zepz-quotes is not present (src/modules/* is git-ignored; only reactory-core is tracked by this repo). Cannot run, fix or classify until that module is checked out. Entry retained rather than removed on an unverified assumption.",
-      "issue": "REACTORY-302016408/20261014/2189816003"
     },
     {
       "path": "src/modules/reactory-classroom/tests/unit/seed_apex.test.ts",
