@@ -61,6 +61,15 @@ const ticketsListUISchema: Reactory.Schema.IUISchema = {
 
 
 const BaseUISchema: Reactory.Schema.IFormUISchema = {
+  // `message` is a schema-level data field (a GraphQL result / error carrier —
+  // see the `ReactoryUserQueryFailed { message }` fragment in ./graphql.ts), not
+  // a form input. It is intentionally absent from `ui:grid-layout`, which the
+  // engine treats as the render list; marking it hidden as well keeps it out of
+  // the form even on engines/paths that enumerate the schema. It must stay in
+  // the schema so result mapping and validation are unaffected.
+  message: {
+    'ui:hidden': true,
+  },
   'ui:form': {
     componentType: "div",
     showSubmit: false,

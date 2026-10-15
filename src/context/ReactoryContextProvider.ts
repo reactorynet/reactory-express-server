@@ -32,10 +32,9 @@ colors.setTheme({
   error: "red",
 });
 
-const {
-  USE_REDIS_CACHE = 'false',
-  EMIT_STACK_FRAME_GENERATION = 'true',
-} = process.env;
+// Read the Redis-cache toggle at call time (not at module load) so callers and
+// tests can switch the backing store without a module reload.
+const { EMIT_STACK_FRAME_GENERATION = 'true' } = process.env;
 
 export class ReactoryContext implements Reactory.Server.IReactoryContext {
   id: string;
@@ -212,7 +211,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 
   getValue<T>(key: string, defaultValue?: Promise<T>): Promise<T> {
-    if (USE_REDIS_CACHE === 'true') {
+    if (process.env.USE_REDIS_CACHE === 'true') {
       const { _id } = this.partner;
       const partnerKey = _id ? _id.toString() : 'global';
       const redisKey = `partner:${partnerKey}:context:${key}`;
@@ -229,7 +228,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 
   async setValue<T>(key: string, value: T, ttl?: number): Promise<void> {
-    if (USE_REDIS_CACHE === 'true') {
+    if (process.env.USE_REDIS_CACHE === 'true') {
       const { _id } = this.partner;
       const partnerKey = _id ? _id.toString() : 'global';
       const redisKey = `partner:${partnerKey}:context:${key}`;
@@ -243,7 +242,7 @@ export class ReactoryContext implements Reactory.Server.IReactoryContext {
   }
 
   async removeValue(key: string): Promise<void> {
-    if (USE_REDIS_CACHE === 'true') {
+    if (process.env.USE_REDIS_CACHE === 'true') {
       const { _id } = this.partner;
       const partnerKey = _id ? _id.toString() : 'global';
       const redisKey = `partner:${partnerKey}:context:${key}`;

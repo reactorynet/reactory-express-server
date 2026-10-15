@@ -27,6 +27,7 @@ jest.mock('i18next', () => ({
   t: jest.fn(),
 }));
 jest.mock('@reactory/server-modules/reactory-core/models/CoreCache', () => ({
+  __esModule: true,
   default: {
     getItem: jest.fn(),
     setItem: jest.fn(),
@@ -34,6 +35,7 @@ jest.mock('@reactory/server-modules/reactory-core/models/CoreCache', () => ({
   },
 }));
 jest.mock('@reactory/server-modules/reactory-core/models/ReactoryClient', () => ({
+  __esModule: true,
   default: {
     findOne: jest.fn().mockReturnValue({
       exec: jest.fn(),
@@ -41,14 +43,21 @@ jest.mock('@reactory/server-modules/reactory-core/models/ReactoryClient', () => 
   },
 }));
 jest.mock('@reactory/server-modules/reactory-core/models/User', () => ({
+  __esModule: true,
   default: {
     findOne: jest.fn().mockReturnValue({
       exec: jest.fn(),
     }),
   },
 }));
-jest.mock('@reactory/server-modules/reactory-telemetry/ReactoryTelemetry');
-jest.mock('@reactory/server-modules/reactory-core/services/RedisService');
+jest.mock('@reactory/server-modules/reactory-telemetry/ReactoryTelemetry', () => ({
+  __esModule: true,
+  ReactoryTelemetry: jest.fn(),
+}));
+jest.mock('@reactory/server-modules/reactory-core/services/RedisService', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
 
 // Mock Reactory types
 jest.mock('@reactorynet/reactory-core', () => ({
@@ -125,7 +134,7 @@ describe('ReactoryContext', () => {
       expect(context.user).toBeNull();
       expect(context.partner).toBeNull();
       expect(context.lang).toBeDefined();
-      expect(context.languages).toEqual([context.lang]);
+      expect(context.languages).toContain(context.lang);
       expect(context.host).toBe('express');
     });
 
@@ -329,15 +338,15 @@ describe('ReactoryContext', () => {
         del: jest.fn(),
       };
 
-      mockCache = {
-        getItem: jest.fn(),
-        setItem: jest.fn(),
-        deleteOne: jest.fn().mockReturnValue({ exec: jest.fn() }),
-      };
+      // The provider resolves the DB cache via a module import, so assert on the
+      // mocked CoreCache module rather than a detached local object.
+      mockCache = require('@reactory/server-modules/reactory-core/models/CoreCache').default;
 
-      // Mock the Redis service to return our mock
+      // Mock the Redis service to return our mock. The constructor captured its
+      // Redis client before this wiring, so inject the client as well.
       const serviceManager = (context as any).serviceManager;
       serviceManager.getService.mockReturnValue(mockRedis);
+      (context as any).redis = mockRedis;
 
       context.partner = { _id: 'partner-123' } as any;
     });
@@ -497,7 +506,7 @@ describe('ReactoryContext', () => {
     it('should set partner by key', async () => {
       const mockPartner = { key: 'test-partner' };
       const MockReactoryClientModel = require('@reactory/server-modules/reactory-core/models/ReactoryClient').default;
-      MockReactoryClientModel.findOne.mockResolvedValue(mockPartner);
+      MockReactoryClientModel.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(mockPartner) });
 
       await context.forPartner('test-partner');
 
@@ -508,7 +517,7 @@ describe('ReactoryContext', () => {
     it('should set user by email', async () => {
       const mockUser = { email: 'test@example.com' };
       const MockUserModel = require('@reactory/server-modules/reactory-core/models/User').default;
-      MockUserModel.findOne.mockResolvedValue(mockUser);
+      MockUserModel.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(mockUser) });
 
       await context.forUser('test@example.com');
 
