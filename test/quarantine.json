@@ -2,7 +2,8 @@
   "_comment": [
     "Suites excluded from `yarn test:ci` (WP-A8). Every entry failed on the Track A baseline of 2026-09-23, before any Track A change touched it.",
     "Remove an entry when its suite is fixed; add one only with a reason and an issue link. `yarn test` still runs everything.",
-    "This ledger is for suites that are broken. Suites that need live infrastructure are not broken and do not belong here - they are listed in test/integrationSuites.js and excluded by jest.config.ts."
+    "This ledger is for suites that are broken. Suites that need live infrastructure are not broken and do not belong here - they are listed in test/integrationSuites.js and excluded by jest.config.ts.",
+    "A suite can be both: seed_apex needs live Mongo and Postgres AND is currently broken, so it appears in both places."
   ],
   "suites": [
     {
@@ -54,6 +55,11 @@
       "path": "src/modules/reactory-core/services/__tests__/ReactoryModuleCompilerService.freeze.test.ts",
       "reason": "1 failing test(s), e.g. \"prohibits build invocation and returns failure resource when compiled widget is missing in production\": Error: expect(received).toContain(expected) // indexOf",
       "issue": "REACTORY-302016408/20261014/2622906482"
+    },
+    {
+      "path": "src/modules/reactory-classroom/tests/unit/seed_apex.test.ts",
+      "reason": "Broken as well as integration, so it is listed here and in test/integrationSuites.js. It cannot pass against an empty database: it inserts ReactoryClassroomClass through the raw repository without a clientKey, but @ClientKeyColumn on ReactoryClassroomClass plus the client_key tenancy migration make that column NOT NULL. It only appears to pass where the 10A-10F rows it seeds already exist, because its findOne guard then skips the insert. The recorded symptom (\"password authentication failed for user reactory\") was a misreading of a different failure. Fix the insert (or use the tenant repository), then remove this entry.",
+      "issue": "REACTORY-302016408/20261014/346444039"
     }
   ]
 }

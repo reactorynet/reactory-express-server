@@ -22,9 +22,23 @@ const INTEGRATION_SUITES = [
   },
   {
     path: 'src/modules/reactory-classroom/tests/unit/seed_apex.test.ts',
-    needs: 'a live MongoDB and Postgres with the classroom migrations applied; it seeds data rather than asserting behaviour',
+    needs: 'a live MongoDB and Postgres - and a DISPOSABLE one: it sets real accounts passwords and deletes markbook rows. It also currently fails against an empty database, so it is still listed in test/quarantine.json.',
   },
 ];
+
+// Both projects derive their patterns from this list, so a path that is not a
+// literal breaks the guarantee that they cannot overlap: the ignore side is a
+// regex (escaped) while the testMatch side is a glob (not). Reject such a path
+// here rather than letting a suite silently fall into both projects, or neither.
+for (const { path } of INTEGRATION_SUITES) {
+  if (/[*?[\]{}]/.test(path)) {
+    throw new Error(
+      `Integration suite path contains a glob metacharacter: ${path}. ` +
+        'The ignore and testMatch patterns are derived from it in different ' +
+        'languages and would no longer agree.',
+    );
+  }
+}
 
 const escapeForRegex = (pattern) => pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 

@@ -112,6 +112,13 @@ jobs:
   # and cannot run in the `test` job. Run on demand (Actions -> CI -> Run
   # workflow) until they have been shown green here consistently; promoting this
   # to a pull_request gate is a separate change.
+  #
+  # On demand, NOT a pull_request gate, and NOT yet proven: `yarn test:integration`
+  # has never been run against real services. Read this job's own result - the
+  # `test` job also runs on a dispatch and currently fails, so the workflow
+  # conclusion is not a signal about these suites. Promoting it to a gate is a
+  # separate change, and needs a disposable database: seed_apex resets real
+  # account passwords and deletes rows.
   integration:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
