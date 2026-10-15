@@ -7,58 +7,18 @@
   ],
   "suites": [
     {
-      "path": "src/modules/reactory-reactor/services/reactor/__tests__/StreamingTransportManager.test.ts",
-      "reason": "1 failing test(s), e.g. \"should throw and buffer when a connected transport send fails\": Error: expect(received).rejects.toThrow()",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/modules/reactory-core/services/Workflow/__tests__/ReactoryWorkflowService.test.ts",
-      "reason": "1 failing test(s), e.g. \"should return paginated schedules\": Error: expect(received).toBe(expected) // Object.is equality",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/modules/reactory-reactor/services/reactor/__tests__/ImageToolProviderResolution.test.ts",
-      "reason": "1 failing test(s), e.g. \"registers the ImageMacro in MacroRegistry with alias image\": Error: expect(received).toBeDefined()",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/modules/reactory-zepz-quotes/ai/macros/__tests__/TalonOneMacros.test.ts",
-      "reason": "1 failing test(s), e.g. \"folds corridor arguments into the session attributes the rules read\": Error: expect(received).toMatchObject(expected)",
-      "issue": "REACTORY-302016408/20261014/2622906482"
+      "path": "src/utils/__tests__/hash.test.ts",
+      "reason": "Source defect, narrow. Hash is declared `(e: any): number` but Hash(null) returns null (typeof 'object'): the guard `!isNaN(unkType)` is satisfied because Number(null) === 0, so null is returned as if it were a number. The test encodes the correct contract. Filed separately; do not relax the assertion.",
+      "issue": "REACTORY-302016408/20261015/3764778823"
     },
     {
       "path": "src/modules/reactory-core/services/__tests__/ReactoryFileService.workspace.test.ts",
-      "reason": "1 failing test(s), e.g. \"lists contents of a specific subfolder when rootPath is an absolute subfolder path\": Error: expect(received).toHaveLength(expected)",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/modules/reactory-zepz-quotes/services/__tests__/TalonOneService.test.ts",
-      "reason": "1 failing test(s), e.g. \"defaults to a dry run and asks for the response content the digest needs\": Error: expect(received).toEqual(expected) // deep equality",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/modules/reactory-reactor/ai/macro/data/__tests__/pgsql.test.ts",
-      "reason": "1 failing test(s), e.g. \"should reject non-SELECT queries\": Error: expect(received).toContain(expected) // indexOf",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/utils/__tests__/hash.test.ts",
-      "reason": "1 failing test(s), e.g. \"should handle null\": Error: expect(received).toBe(expected) // Object.is equality",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/application/decorators/telemetry/__tests__/traced.test.ts",
-      "reason": "1 failing test(s), e.g. \"should handle non-Error exceptions\": Error: expect(received).rejects.toThrow(expected)",
-      "issue": "REACTORY-302016408/20261014/2622906482"
-    },
-    {
-      "path": "src/modules/reactory-core/services/__tests__/ReactoryModuleCompilerService.freeze.test.ts",
-      "reason": "1 failing test(s), e.g. \"prohibits build invocation and returns failure resource when compiled widget is missing in production\": Error: expect(received).toContain(expected) // indexOf",
-      "issue": "REACTORY-302016408/20261014/2622906482"
+      "reason": "Source defect in workspace mode. An absolute subfolder path that is one of the workspace's own folders is not recognised (the workspace branch only returns for '/', '' or the workspace file/dir), so it falls through to an APP_DATA_ROOT listing and returns 0 files; and a missing workspace file falls through to the same listing (66 files) instead of degrading to empty. Filed separately; do not relax the assertions.",
+      "issue": "REACTORY-302016408/20261015/3071700252"
     },
     {
       "path": "src/modules/reactory-classroom/tests/unit/seed_apex.test.ts",
-      "reason": "Broken as well as integration, so it is listed here and in test/integrationSuites.js. It cannot pass against an empty database: it inserts ReactoryClassroomClass through the raw repository without a clientKey, and the entity declares that column NOT NULL (@ClientKeyColumn defaults to nullable: false) - the value normally comes from the tenant repository wrapper, which this path bypasses. It only appears to pass where the 10A-10F rows it seeds already exist, because its findOne guard then skips the insert. The recorded symptom (\"password authentication failed for user reactory\") was a misreading of a different failure. Fix the insert (or use the tenant repository), then remove this entry.",
+      "reason": "Broken as well as integration, so it is listed here and in test/integrationSuites.js. It cannot pass against an empty database: it inserts ReactoryClassroomClass through the raw repository without a clientKey, and the entity declares that column NOT NULL (@ClientKeyColumn defaults to nullable: false) - the value normally comes from the tenant repository wrapper, which this path bypasses. It only appears to pass where the 10A-10F rows it seeds already exist, because its findOne guard then skips the insert. Fix the insert (or use the tenant repository), then remove this entry.",
       "issue": "REACTORY-302016408/20261015/3041367428"
     }
   ]
