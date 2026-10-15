@@ -58,8 +58,8 @@
     },
     {
       "path": "src/modules/reactory-classroom/tests/unit/seed_apex.test.ts",
-      "reason": "Broken as well as integration, so it is listed here and in test/integrationSuites.js. It cannot pass against an empty database: it inserts ReactoryClassroomClass through the raw repository without a clientKey, but @ClientKeyColumn on ReactoryClassroomClass plus the client_key tenancy migration make that column NOT NULL. It only appears to pass where the 10A-10F rows it seeds already exist, because its findOne guard then skips the insert. The recorded symptom (\"password authentication failed for user reactory\") was a misreading of a different failure. Fix the insert (or use the tenant repository), then remove this entry.",
-      "issue": "REACTORY-302016408/20261014/346444039"
+      "reason": "Broken as well as integration, so it is listed here and in test/integrationSuites.js. It cannot pass against an empty database: it inserts ReactoryClassroomClass through the raw repository without a clientKey, and the entity declares that column NOT NULL (@ClientKeyColumn defaults to nullable: false) - the value normally comes from the tenant repository wrapper, which this path bypasses. It only appears to pass where the 10A-10F rows it seeds already exist, because its findOne guard then skips the insert. The recorded symptom (\"password authentication failed for user reactory\") was a misreading of a different failure. Fix the insert (or use the tenant repository), then remove this entry.",
+      "issue": "REACTORY-302016408/20261015/3041367428"
     }
   ]
 }

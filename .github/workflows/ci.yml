@@ -113,9 +113,12 @@ jobs:
   # workflow) until they have been shown green here consistently; promoting this
   # to a pull_request gate is a separate change.
   #
-  # On demand, NOT a pull_request gate, and NOT yet proven: `yarn test:integration`
-  # has never been run against real services. Read this job's own result - the
-  # `test` job also runs on a dispatch and currently fails, so the workflow
+  # On demand, NOT a pull_request gate, and EXPECTED RED as things stand: with
+  # --runInBand a failure in seed_apex takes the whole run down, and seed_apex
+  # cannot pass against the empty databases provisioned here (see its
+  # test/quarantine.json entry). This job therefore yields a signal on
+  # GoogleStrategy only once that entry is removed. Read this job's own result -
+  # the `test` job also runs on a dispatch and currently fails, so the workflow
   # conclusion is not a signal about these suites. Promoting it to a gate is a
   # separate change, and needs a disposable database: seed_apex resets real
   # account passwords and deletes rows.
