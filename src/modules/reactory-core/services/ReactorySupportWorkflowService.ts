@@ -41,12 +41,70 @@ import UserModel from '../models/User';
 import CommunicatorMessageModel from '@reactory/server-modules/reactory-communicator/models/Message';
 
 const SUPPORT_SERVICE_ID = 'core.ReactorySupportService@1.0.0';
+const WORKFLOW_SERVICE_ID = 'core.ReactoryWorkflowService@1.0.0';
 const COMMUNICATOR_QUEUE_SERVICE_ID = 'communicator.CommunicatorQueueService@1.0.0';
 const COMMUNICATOR_MESSAGE_SERVICE_ID = 'communicator.MessageService@1.0.0';
 
 /** Canonical storage form for enumeration values: lowercase snake_case. */
 const canonicalEnum = (value: string): string =>
   String(value ?? '').trim().toLowerCase().replace(/-/g, '_');
+
+/**
+ * Normalise a list parameter that may arrive from a workflow as a real array, a
+ * JSON array string (`["a","b"]`) or a comma-separated string (`a,b`).
+ *
+ * `service_invoke` renders an array reference as JSON TEXT, so without this a
+ * policy-driven tag list would arrive as a single bogus tag and match nothing.
+ */
+const asList = (value: any, fallback: string[]): string[] => {
+  if (Array.isArray(value)) return value.map((v) => String(v)).filter(Boolean);
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return fallback;
+    // An UNRESOLVED optional `${...}` token is passed through verbatim by the step
+    // template resolver (by design, so callers can detect "not supplied"). Treat it
+    // as ABSENT here — otherwise it becomes a one-element list containing the literal
+    // token (e.g. tags: ["${input.tags}"]), which silently matches nothing and makes
+    // the dispatcher find zero eligible tickets on the normal path.
+    if (trimmed.includes('${')) return fallback;
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.map((v) => String(v)).filter(Boolean);
+      } catch {
+        /* fall through to the comma split */
+      }
+    }
+    return trimmed
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+  return fallback;
+};
+
+/**
+ * Expand `${VAR}` / `${VAR:-default}` tokens against the process environment.
+ *
+ * Keeps routing configs portable between machines (and lets the pipeline point at
+ * a different checkout per environment) without the service hard-coding paths.
+ */
+const expandEnv = (value: any): any => {
+  if (typeof value === 'string') {
+    return value.replace(/\$\{([A-Za-z0-9_]+)(?::-([^}]*))?\}/g, (_m, name, dflt) => {
+      const v = process.env[name];
+      if (v && String(v).trim() !== '') return String(v);
+      return dflt !== undefined ? String(dflt) : '';
+    });
+  }
+  if (Array.isArray(value)) return value.map((item) => expandEnv(item));
+  if (value && typeof value === 'object') {
+    const out: Record<string, any> = {};
+    for (const key of Object.keys(value)) out[key] = expandEnv(value[key]);
+    return out;
+  }
+  return value;
+};
 
 /** Both kebab and snake variants, so filters match either stored convention. */
 const enumVariants = (values: string | string[]): string[] => {
@@ -182,6 +240,33 @@ export const loadSupportRoutingConfig = (): ISupportRoutingConfig => {
   }
 };
 
+/** Cached AI engineering routing config (mtime-keyed, same pattern as support-routing). */
+let aiEngineeringRoutingCache: IRoutingConfigCache | null = null;
+
+/** Resolve the AI engineering routing config path (~/.reactor/ai-engineering-routing.yaml). */
+export const resolveAiEngineeringRoutingConfigPath = (): string =>
+  path.join(process.env.HOME || '/', '.reactor', 'ai-engineering-routing.yaml');
+
+/**
+ * Load `~/.reactor/ai-engineering-routing.yaml`, re-reading only when the file's
+ * mtime changes. Any failure degrades to the last good config, or `{}` — a
+ * missing routing file must never crash a dispatch run.
+ */
+export const loadAiEngineeringRoutingConfig = (): any => {
+  const filePath = resolveAiEngineeringRoutingConfigPath();
+  try {
+    const stat = fs.statSync(filePath);
+    if (aiEngineeringRoutingCache && aiEngineeringRoutingCache.mtimeMs === stat.mtimeMs) {
+      return aiEngineeringRoutingCache.config;
+    }
+    const parsed = (yaml.load(fs.readFileSync(filePath, 'utf8')) || {}) as any;
+    aiEngineeringRoutingCache = { mtimeMs: stat.mtimeMs, config: parsed };
+    return parsed;
+  } catch {
+    return aiEngineeringRoutingCache?.config ?? {};
+  }
+};
+
 /** Statuses considered "open work" (used for owner load and escalation). */
 const loadStatuses = (config: ISupportRoutingConfig): string[] =>
   config?.ownerRouting?.assignment?.loadStatuses?.length
@@ -255,6 +340,49 @@ export interface IEscalationApplyParams {
 export interface IFindSlaBreachesParams {
   /** Max breaches to return per run (default 50). */
   limit?: number;
+}
+
+export interface IAddCommentParams {
+  ticketId: string;
+  comment: string;
+}
+
+export interface IPlanDispatchParams {
+  tags?: string[] | string;
+  statuses?: string[] | string;
+  limit?: number;
+}
+
+export interface IDispatchAiTicketsParams extends IPlanDispatchParams {
+  /** When true, build the plan but start NOTHING. */
+  dryRun?: boolean | string;
+}
+
+export interface IFindDispatchableTicketsParams {
+  /** Opt-in tags that mark a ticket as AI-workable (default: ['ai-auto']). */
+  tags?: string[];
+  /** Statuses eligible for pickup. */
+  statuses?: string[];
+  /** Max tickets to return (default 25, capped at 200). */
+  limit?: number;
+  /** Look-back window in minutes (default 7 days). */
+  sinceMinutes?: number;
+}
+
+export interface IResolveExecutionIdentityParams {
+  ticketId: string;
+}
+
+export interface IResolveExecutionIdentityResult {
+  userId: string | null;
+  email: string | null;
+  /**
+   * True when the resolved identity is the SYSTEM account. Callers MUST refuse
+   * to run: chat sessions are user-scoped, so a run under the system account
+   * produces conversations nobody can see in their chat history.
+   */
+  isSystemUser: boolean;
+  source: 'assignee' | 'reporter' | 'assignee-system' | 'reporter-system' | 'none';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -897,6 +1025,593 @@ class ReactorySupportWorkflowService {
       this.log('error', `notify(${event}) failed to enqueue: ${e?.message}`);
       return { queued: false, ruleId: rule.id, reason: e?.message };
     }
+  }
+
+  /**
+   * Append a comment to a ticket FROM A WORKFLOW.
+   *
+   * WHY THIS WRAPPER EXISTS
+   * -----------------------
+   * `appendComment(ticketId, comment)` takes TWO positional arguments, but the
+   * `service_invoke` workflow step calls `svc[method](paramsObject)` — a SINGLE
+   * object argument. Invoking the two-arg method from a workflow therefore
+   * passed the params object as `ticketId` and `undefined` as `comment`, so it
+   * silently returned null: no comment written, and no error raised. That is a
+   * quiet failure of an AUDIT-TRAIL write, which is the worst kind — the
+   * pickup notice, review outcome and completion summary all vanished while the
+   * workflow reported success.
+   *
+   * This single-object-arg method is the workflow-callable form. `appendComment`
+   * is left untouched for its existing in-process callers.
+   */
+  @roles(['ADMIN', 'SUPPORT_ADMIN', 'SUPPORT'])
+  async addComment(params: IAddCommentParams): Promise<any> {
+    const ticketId = cleanArg(params?.ticketId);
+    const comment = cleanArg(params?.comment);
+    if (!ticketId || !comment) {
+      this.log('warn', 'addComment called without ticketId or comment');
+      return null;
+    }
+    return this.appendComment(String(ticketId), String(comment));
+  }
+
+  /**
+   * Find tickets ELIGIBLE for the AI engineering pipeline.
+   *
+   * Mirrors `findNewTickets` but keys on TAGS rather than "unassigned", because
+   * AI pickup is opt-in: the tag is the human's explicit "let an agent work
+   * this". Returns full serialized snapshots (the dispatcher needs the assignee
+   * and reporter to resolve the execution identity).
+   */
+  @roles(['ADMIN', 'SUPPORT_ADMIN', 'SUPPORT'])
+  async findDispatchableTickets(
+    params: IFindDispatchableTicketsParams = {},
+  ): Promise<{ tickets: any[]; count: number }> {
+    const tags = asList(params?.tags, ['ai-auto']);
+    const statuses = asList(params?.statuses, ['new', 'open', 'in_progress', 'triaged']);
+    const { limit = 25, sinceMinutes = 7 * 24 * 60 } = params || {};
+
+    const createdAfter = new Date(Date.now() - sinceMinutes * 60 * 1000);
+    const filter: any = {
+      tags: { $in: enumVariants(tags) },
+      status: { $in: enumVariants(statuses) },
+      createdDate: { $gte: createdAfter },
+    };
+
+    const rows = await ReactorySupportTicketModel.find(filter)
+      .sort({ createdDate: 1 })
+      .limit(Math.max(1, Math.min(limit, 200)))
+      .populate('assignedTo createdBy')
+      .lean()
+      .exec();
+
+    const tickets = (rows || []).map((t: any) => this.serializeTicket(t));
+
+    this.log('info', `findDispatchableTickets: ${tickets.length} candidate(s)`, {
+      tags,
+      statuses,
+      limit,
+    });
+    return { tickets, count: tickets.length };
+  }
+
+  /**
+   * Resolve the REAL user account an AI run should execute as.
+   *
+   * Chat sessions are strictly user-scoped (`getConversations` filters on
+   * `context.user` plus the client scope), so this identity decides whether the
+   * engineering and review conversations appear in a human's chat history —
+   * and therefore whether the run is viewable, inspectable and interactable.
+   *
+   * Preference order:
+   *   1. the ticket ASSIGNEE, when it resolves to a real user;
+   *   2. otherwise the REPORTER (`createdBy`).
+   *
+   * The SYSTEM account is DETECTED and reported rather than silently used: a
+   * run under it would bury the sessions where nobody can see them, so the
+   * caller must refuse instead.
+   */
+  @roles(['ADMIN', 'SUPPORT_ADMIN', 'SUPPORT'])
+  async resolveExecutionIdentity(
+    params: IResolveExecutionIdentityParams,
+  ): Promise<IResolveExecutionIdentityResult> {
+    const ticketId = cleanArg(params?.ticketId);
+    if (!ticketId) {
+      return { userId: null, email: null, isSystemUser: false, source: 'none' };
+    }
+
+    const ticket: any = await ReactorySupportTicketModel.findById(ticketId)
+      .populate('assignedTo createdBy')
+      .lean()
+      .exec();
+    if (!ticket) {
+      return { userId: null, email: null, isSystemUser: false, source: 'none' };
+    }
+
+    const systemEmail = String(process.env.SYSTEM_USER_EMAIL || '').trim().toLowerCase();
+    const systemId = String(process.env.SYSTEM_USER_ID || '').trim();
+
+    const asCandidate = (doc: any, source: 'assignee' | 'reporter') => {
+      if (!doc) return null;
+      // `doc` may be a populated user document or a bare ObjectId.
+      const userId = doc._id?.toString?.() ?? String(doc);
+      const email = String(doc.email || '').trim().toLowerCase();
+      const isSystemUser =
+        (!!systemEmail && email === systemEmail) || (!!systemId && userId === systemId);
+      return {
+        userId: userId || null,
+        email: email || null,
+        isSystemUser,
+        source: (isSystemUser ? `${source}-system` : source) as IResolveExecutionIdentityResult['source'],
+      };
+    };
+
+    const assignee = asCandidate(ticket.assignedTo, 'assignee');
+    if (assignee?.userId && !assignee.isSystemUser) {
+      this.log('info', `resolveExecutionIdentity(${ticketId}) → assignee ${assignee.email}`, {
+        source: assignee.source,
+      });
+      return assignee;
+    }
+    // System assignee is REPORTED (not silently replaced) so the caller can refuse.
+    if (assignee?.isSystemUser) {
+      this.log('warn', `resolveExecutionIdentity(${ticketId}): assignee is the SYSTEM account`, {
+        email: assignee.email,
+      });
+      return assignee;
+    }
+
+    const reporter = asCandidate(ticket.createdBy, 'reporter');
+    if (reporter?.userId) {
+      this.log('info', `resolveExecutionIdentity(${ticketId}) → reporter ${reporter.email}`, {
+        source: reporter.source,
+      });
+      return reporter;
+    }
+
+    this.log('warn', `resolveExecutionIdentity(${ticketId}): no real user could be resolved`);
+    return { userId: null, email: null, isSystemUser: false, source: 'none' };
+  }
+
+  /**
+   * Return the AI engineering routing/policy config
+   * (`~/.reactor/ai-engineering-routing.yaml`) to a workflow.
+   *
+   * The dispatcher needs ONE deterministic source for: which tags opt a ticket
+   * into AI work, which agent + repository each tag maps to, the run limits, the
+   * oversight default, and the git policy. Loading it here (rather than having a
+   * workflow shell out to parse YAML) keeps the same mtime-cached, fail-safe
+   * pattern as `support-routing.yaml`, and means a routing change is picked up
+   * without restarting the server.
+   */
+  @roles(['ADMIN', 'SUPPORT_ADMIN', 'SUPPORT'])
+  async getAiEngineeringRouting(_params: any = {}): Promise<any> {
+    const config = loadAiEngineeringRoutingConfig();
+    const present = !!(config && Object.keys(config).length > 0);
+    if (!present) {
+      this.log('warn', 'AI engineering routing config is absent or empty — dispatch will use built-in defaults');
+    }
+    return { present, config };
+  }
+
+  /**
+   * Return the identity this workflow instance is EXECUTING as.
+   *
+   * Durable workflow data exposes the instance's `__identity` (email + partner),
+   * but NOT to templates — `evalExpression` only binds
+   * input/variables/env/steps/stepResults/workflow. The dispatcher therefore
+   * needs the running user handed to it explicitly so it can decide whether a
+   * ticket's resolved owner is the identity it is actually running as.
+   *
+   * That distinction matters because a workflow instance has ONE fixed identity:
+   * it cannot switch user per ticket mid-run. A ticket owned by someone else is
+   * therefore NOT run here — it is raised as a task for its owner instead, so the
+   * run happens in THEIR name and the sessions land in THEIR chat history.
+   */
+  @roles(['ADMIN', 'SUPPORT_ADMIN', 'SUPPORT'])
+  async getRunningIdentity(_params: any = {}): Promise<{
+    userId: string | null;
+    email: string | null;
+    roles: string[];
+  }> {
+    const user: any = (this.context as any)?.user;
+    return {
+      userId: user?._id ? String(user._id) : null,
+      email: user?.email ? String(user.email).toLowerCase() : null,
+      roles: Array.isArray(user?.roles)
+        ? user.roles.map((r: any) => String(r?.name || r)).filter(Boolean)
+        : [],
+    };
+  }
+
+  /**
+   * Build the DISPATCH PLAN for the AI engineering pipeline.
+   *
+   * This is the whole routing decision, in one typed, testable place — rather
+   * than a workflow trying to parse the routing YAML and reason about it inside
+   * shell snippets.
+   *
+   * Decision tree per candidate ticket (matches the agreed policy):
+   *   1. resolve the execution identity — the ticket OWNER, else the REPORTER;
+   *   2. if that identity is the SYSTEM account and `refuseWhenSystemUser`,
+   *      DO NOT RUN — raise a human routing task instead;
+   *   3. resolve the route TAG FIRST; an unmapped tag or no tag at all NEVER
+   *      guesses — raise a human routing task instead;
+   *   4. a route was found, but the owner is a DIFFERENT user from the identity
+   *      this instance is running as — a workflow instance has ONE fixed
+   *      identity and cannot switch per ticket, so offer the run to the owner
+   *      instead of executing it in the wrong name;
+   *   5. otherwise the ticket is dispatchable.
+   *
+   * Returns plain, JSON-serializable data — safe for durable instance state.
+   */
+  @roles(['ADMIN', 'SUPPORT_ADMIN', 'SUPPORT'])
+  async planDispatch(params: IPlanDispatchParams = {}): Promise<any> {
+    const config = loadAiEngineeringRoutingConfig();
+    const pipeline: any = (config as any)?.pipeline || {};
+    const eligibility: any = pipeline.eligibility || {};
+    const routing: any = pipeline.routing || {};
+    const identityCfg: any = pipeline.identity || {};
+    const limits: any = pipeline.limits || {};
+    const oversight: any = pipeline.oversight || {};
+    const reviewCfg: any = pipeline.review || {};
+
+    const norm = (v: any): string => String(v ?? '').trim().toLowerCase();
+
+    const tags = asList(params?.tags, asList(eligibility.tags, ['ai-auto']));
+    const statuses = asList(params?.statuses, asList(eligibility.statuses, ['new', 'open', 'in_progress', 'triaged']));
+    const configuredLimit = Number(eligibility.maxPerRun);
+    const limit =
+      typeof params?.limit === 'number' && params.limit > 0
+        ? Math.floor(params.limit)
+        : Number.isFinite(configuredLimit) && configuredLimit > 0
+          ? Math.floor(configuredLimit)
+          : 25;
+    const sinceMinutes = Number(eligibility.sinceMinutes) || 10080;
+
+    const { tickets } = await this.findDispatchableTickets({ tags, statuses, limit, sinceMinutes });
+
+    const runningUser: any = (this.context as any)?.user;
+    const runningEmail = norm(runningUser?.email);
+    const runningId = runningUser?._id ? String(runningUser._id) : null;
+
+    // The system identity must be CONFIGURED to be refused. When it is not, the
+    // guard cannot fire — say so loudly instead of pretending to protect.
+    const systemEmails = [
+      ...asList(identityCfg.systemEmails, []),
+      String(process.env.SYSTEM_USER_EMAIL || ''),
+    ]
+      .map(norm)
+      .filter(Boolean);
+    const systemIdentityConfigured = systemEmails.length > 0;
+    const refuseSystem = identityCfg.refuseWhenSystemUser !== false;
+    if (refuseSystem && !systemIdentityConfigured) {
+      this.log(
+        'warn',
+        'planDispatch: no system identity is configured (set SYSTEM_USER_EMAIL or identity.systemEmails) — the system-owner refusal guard CANNOT fire',
+      );
+    }
+
+    // ── FAIL CLOSED: the dispatcher itself must be a real user ──────────────
+    //
+    // The platform does NOT enforce this. `createWorkflowContext()` in
+    // YamlFlowRuntime rebuilds each step's context from `__identity.userEmail`
+    // and, on an ABSENT identity **or a rehydration failure**, silently falls
+    // back to `state.systemContext`. So an unresolvable user does not fail the
+    // run — it quietly BECOMES a system-context run, and any AI sessions it
+    // creates land where no human can see them.
+    //
+    // A schedule with no `runAs` does exactly this: Scheduler falls back to
+    // `process.env.SYSTEM_USER_EMAIL`, which is currently UNSET — so the run has
+    // no identity at all. That is a silent fail-open, and the only place it can
+    // be caught is here.
+    //
+    // `runAsEmail` from the dispatcher's own authentication is the authority:
+    // no valid user → dispatch NOTHING and say why. Do not infer an owner and do
+    // not fall back to a service account.
+    if (!runningEmail && !runningId) {
+      this.log(
+        'warn',
+        'planDispatch: the dispatcher has NO valid user identity — refusing to dispatch anything',
+      );
+      return {
+        runningIdentity: { userId: null, email: null },
+        policy: {
+          systemIdentityConfigured,
+          refuseWhenSystemUser: refuseSystem,
+          eligibilityTags: tags,
+          eligibilityStatuses: statuses,
+          maxPerRun: limit,
+        },
+        counts: {
+          candidates: tickets.length,
+          dispatch: 0,
+          needsHuman: tickets.length,
+          skipped: 0,
+        },
+        identityBlocked: true,
+        needsHuman: tickets.map((ticket: any) => ({
+          ticketId: ticket.id,
+          reference: ticket.reference,
+          request: ticket.request,
+          requestType: ticket.requestType,
+          ownerEmail: norm(ticket.assignedToEmail) || norm(ticket.createdByEmail) || null,
+          reason: 'dispatcher_identity_invalid',
+          detail:
+            'The dispatcher has no valid user identity, so no AI run could be attributed to a real account. ' +
+            'This happens when a schedule runs without a runAs owner and SYSTEM_USER_EMAIL is unset. ' +
+            'Nothing was started. Give the schedule (or the caller) a real user, then re-run.',
+        })),
+        dispatch: [],
+        skipped: [],
+      };
+    }
+
+    const byTag: Record<string, any> = routing.byTag || {};
+    const byRequestType: Record<string, any> = routing.byRequestType || {};
+    const supervisedTags = asList(oversight.supervisedTags, []).map(norm);
+    const defaultOversight = norm(oversight.default) === 'supervised' ? 'supervised' : 'auto';
+    const fallbackToReporter = identityCfg.fallbackToReporter !== false;
+    const requireHumanRouting = routing.requireHumanRoutingWhenUnmapped !== false;
+
+    const dispatch: any[] = [];
+    const needsHuman: any[] = [];
+    const skipped: any[] = [];
+
+    for (const ticket of tickets) {
+      const ticketTags = asList(ticket.tags, []).map(norm);
+      const ownerEmail = norm(ticket.assignedToEmail);
+      const reporterEmail = norm(ticket.createdByEmail);
+      const base = {
+        ticketId: ticket.id,
+        reference: ticket.reference,
+        request: ticket.request,
+        requestType: ticket.requestType,
+      };
+
+      // 1. Execution identity — owner first, then reporter.
+      let execEmail = ownerEmail;
+      let execSource = 'assignee';
+      if (!execEmail && fallbackToReporter) {
+        execEmail = reporterEmail;
+        execSource = 'reporter';
+      }
+
+      // 2. Never run in the system account's name.
+      const isSystemUser = !!execEmail && systemEmails.includes(execEmail);
+      if (isSystemUser && refuseSystem) {
+        needsHuman.push({
+          ...base,
+          ownerEmail: execEmail || null,
+          reason: 'system_owner',
+          detail:
+            'The ticket owner resolves to the system account (' +
+            execEmail +
+            '). An AI run must belong to a real user, so no run was started. Assign a real owner, then re-run the dispatcher.',
+        });
+        continue;
+      }
+
+      // 3. Routing — TAG first, then requestType. Never guess.
+      const tagHit = ticketTags.map((t: string) => byTag[t]).find(Boolean);
+      let route: any = tagHit;
+      let routeSource: string | null = tagHit ? 'tag' : null;
+      if (!route) {
+        route = byRequestType[norm(ticket.requestType)] || byRequestType.default;
+        routeSource = route ? 'requestType' : null;
+      }
+      if (!route || !route.agentId) {
+        if (requireHumanRouting) {
+          needsHuman.push({
+            ...base,
+            ownerEmail: execEmail || reporterEmail || null,
+            reason: 'unmapped',
+            detail:
+              'No agent/repository mapping for tag(s) [' +
+              ticketTags.join(', ') +
+              '] or requestType ' +
+              norm(ticket.requestType) +
+              '. Choose the agent and repository for this ticket.',
+          });
+          continue;
+        }
+        skipped.push({ ...base, reason: 'no_route' });
+        continue;
+      }
+
+      // 4. A ticket can only be executed when it resolves to a VALID ACCOUNT.
+      //
+      // This is the enforcement of "run only when a real user account exists".
+      // `assignedToEmail` / `createdByEmail` come from a POPULATED mongoose
+      // reference, so a non-empty value means the account really exists — a
+      // dangling id populates to null and lands here as an empty string.
+      // Without this branch the old condition fell through and dispatched the
+      // ticket anyway, which the platform would then run under the SYSTEM
+      // context (see the fail-open note above).
+      if (!execEmail) {
+        needsHuman.push({
+          ...base,
+          ownerEmail: null,
+          reason: 'no_valid_owner',
+          detail:
+            'The ticket does not resolve to a valid user account (no assignee and no reporter account). ' +
+            'An AI run must be attributable to a real user, so nothing was started. Assign the ticket to a real user, then re-run.',
+        });
+        continue;
+      }
+
+      // 5. One instance = one identity. Offer other owners their own run.
+      if (runningEmail && execEmail !== runningEmail) {
+        needsHuman.push({
+          ...base,
+          ownerEmail: execEmail,
+          reason: 'different_owner',
+          detail:
+            'This ticket is owned by ' +
+            execEmail +
+            ' but the dispatcher is running as ' +
+            runningEmail +
+            '. A workflow instance cannot switch identity per ticket, so the run is offered to the owner instead — starting it in their name is what keeps the AI sessions visible in their chat history.',
+        });
+        continue;
+      }
+
+      // 5. Dispatchable.
+      const supervised = ticketTags.some((t: string) => supervisedTags.includes(t));
+      dispatch.push({
+        ...base,
+        agentId: route.agentId,
+        workdir: route.workdir ? expandEnv(route.workdir) : null,
+        taskType: route.taskType || 'feature',
+        oversightMode: supervised ? 'supervised' : defaultOversight,
+        reviewerId: reviewCfg.reviewerId || 'QualityQuinn',
+        maxReviewCycles: Number(limits.maxReviewCycles) || 3,
+        routeSource,
+        executionIdentity: execEmail || null,
+        executionIdentitySource: execSource,
+      });
+    }
+
+    const plan = {
+      runningIdentity: { userId: runningId, email: runningEmail || null },
+      policy: {
+        systemIdentityConfigured,
+        refuseWhenSystemUser: refuseSystem,
+        eligibilityTags: tags,
+        eligibilityStatuses: statuses,
+        maxPerRun: limit,
+      },
+      counts: {
+        candidates: tickets.length,
+        dispatch: dispatch.length,
+        needsHuman: needsHuman.length,
+        skipped: skipped.length,
+      },
+      dispatch,
+      needsHuman,
+      skipped,
+    };
+
+    this.log('info', 'planDispatch: plan built', plan.counts);
+    return plan;
+  }
+
+  /**
+   * Plan, then START, the AI engineering runs for all dispatchable tickets.
+   *
+   * WHY THIS LIVES IN THE SERVICE AND NOT IN THE WORKFLOW
+   * ----------------------------------------------------
+   * The obvious workflow shape would be `for_each` over the plan, invoking a
+   * child per ticket with field mapping like `${job.workdir}`. That does NOT work:
+   * `BaseYamlStep.resolveExpression` resolves literals, `env.X`, `input(s).X`,
+   * `steps.<id>.X`, `variables.X` and BARE variable names — but NOT an arbitrary
+   * dotted path such as `job.workdir`. Every such reference would silently
+   * resolve to undefined and the literal `${job.workdir}` token would be passed
+   * to the child (or dropped), producing runs against the wrong workdir.
+   *
+   * Starting the children here keeps the mapping in typed code, where a missing
+   * field is a compile-time concern rather than a silent runtime `undefined`.
+   *
+   * Identity note: `startWorkflow` starts the child under the CALLER's identity,
+   * which is exactly the behaviour we want — the child run (and therefore its
+   * chat sessions) belongs to the identity the dispatcher is executing as. Only
+   * tickets whose resolved owner MATCHES that identity are dispatched; the rest
+   * are raised as tasks for their owner.
+   */
+  @roles(['ADMIN', 'SUPPORT_ADMIN', 'SUPPORT'])
+  async dispatchAiTickets(params: IDispatchAiTicketsParams = {}): Promise<any> {
+    const dryRun =
+      params?.dryRun === true || String((params as any)?.dryRun ?? '').trim().toLowerCase() === 'true';
+
+    const plan = await this.planDispatch({
+      tags: params?.tags,
+      statuses: params?.statuses,
+      limit: params?.limit,
+    });
+
+    if (dryRun) {
+      this.log('info', 'dispatchAiTickets: DRY RUN — nothing started', plan.counts);
+      return { dryRun: true, plan, started: [], humanTasks: [] };
+    }
+
+    const workflowService: any = this.context.getService(WORKFLOW_SERVICE_ID);
+    if (!workflowService || typeof workflowService.startWorkflow !== 'function') {
+      this.log('error', `dispatchAiTickets: ${WORKFLOW_SERVICE_ID} is unavailable`);
+      return {
+        dryRun: false,
+        plan,
+        started: [],
+        humanTasks: [],
+        error: `Workflow service (${WORKFLOW_SERVICE_ID}) is unavailable`,
+      };
+    }
+
+    const started: any[] = [];
+    for (const job of plan.dispatch) {
+      try {
+        const input: Record<string, any> = {
+          ticketId: job.ticketId,
+          agentId: job.agentId,
+          taskType: job.taskType,
+          oversightMode: job.oversightMode,
+          reviewerId: job.reviewerId,
+          maxReviewCycles: job.maxReviewCycles,
+        };
+        // Omit workdir entirely when unset so the child falls back to its own
+        // cwd — passing an empty/`null` string would be taken as a real path.
+        if (job.workdir) input.workdir = job.workdir;
+
+        const child = await workflowService.startWorkflow('core.ProcessAITicket@1.2.0', { input });
+        started.push({
+          ticketId: job.ticketId,
+          reference: job.reference,
+          agentId: job.agentId,
+          instanceId: child?.id || null,
+        });
+      } catch (err: any) {
+        this.log('error', `dispatchAiTickets: failed to start run for ${job.reference}: ${err?.message}`);
+        started.push({
+          ticketId: job.ticketId,
+          reference: job.reference,
+          error: err?.message ? String(err.message) : String(err),
+        });
+      }
+    }
+
+    const humanTasks: any[] = [];
+    for (const request of plan.needsHuman) {
+      try {
+        const input: Record<string, any> = {
+          ticketId: request.ticketId,
+          reason: request.reason,
+          detail: request.detail,
+        };
+        if (request.ownerEmail) input.ownerEmail = request.ownerEmail;
+
+        const child = await workflowService.startWorkflow('core.RequestAIRouting@1.0.0', { input });
+        humanTasks.push({
+          ticketId: request.ticketId,
+          reference: request.reference,
+          reason: request.reason,
+          instanceId: child?.id || null,
+        });
+      } catch (err: any) {
+        this.log('error', `dispatchAiTickets: failed to raise routing task for ${request.reference}: ${err?.message}`);
+        humanTasks.push({
+          ticketId: request.ticketId,
+          reference: request.reference,
+          reason: request.reason,
+          error: err?.message ? String(err.message) : String(err),
+        });
+      }
+    }
+
+    this.log('info', 'dispatchAiTickets: dispatch complete', {
+      started: started.length,
+      humanTasks: humanTasks.length,
+    });
+
+    return { dryRun: false, plan, started, humanTasks };
   }
 
   // ───────────────────────────────────────────────────────────────────────────

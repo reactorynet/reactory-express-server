@@ -70,7 +70,11 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
       'ui:options': {
         size: { xs: 12, sm: 12, md: 6, lg: 4, xl: 4 },
         sx: { padding: 1, margin: 1 }, 
-        moreRoute: "/applications/${id}?tab=overview"
+        moreRoute: "/applications/${id}?tab=overview",
+        // Bound the (potentially long) application introduction and offer an
+        // expand/collapse toggle. Set `collapsible: false` to render it in full.
+        collapsible: true,
+        collapsedHeight: 160
       }
     }
   },

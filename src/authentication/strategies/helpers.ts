@@ -265,6 +265,56 @@ export default class Helpers {
   }
 
   /**
+   * Record a user's sign-in with an OAuth provider **without** rewriting the
+   * whole document.
+   *
+   * The strategies used to `await user.save()`. A full-document save writes every
+   * path the loaded document still considers modified, and the login path mutates
+   * `user.sessionInfo` in memory (see `addSession`), so a save here can overwrite
+   * `sessionInfo` with the copy read at the top of the callback and silently drop
+   * a session another client application established in the meantime — exactly the
+   * multi-tenant hazard `LocalStrategy` avoids with an atomic positional update.
+   * This performs the same edits with targeted `$set`s, leaving `sessionInfo` to
+   * the atomic append path.
+   */
+  static recordProviderLogin = async (
+    user: Reactory.Models.IUserDocument,
+    options: { clientId?: string } = {}
+  ): Promise<void> => {
+    const userId = resolveUserId(user);
+    const now = new Date();
+
+    // No id to address (an unsaved or mocked document) — fall back to a document
+    // save, which cannot carry a stale session array in that case.
+    if (!userId) {
+      await (user as any).save?.();
+      return;
+    }
+
+    const _id = (user as any)._id ?? userId;
+    const set: Record<string, any> = {
+      authentications: (user as any).authentications ?? [],
+      lastLogin: now,
+    };
+
+    if ((user as any).avatar !== undefined) set.avatar = (user as any).avatar;
+    if ((user as any).avatarProvider !== undefined) set.avatarProvider = (user as any).avatarProvider;
+
+    await (User as any).updateOne({ _id }, { $set: set }).exec();
+
+    // Stamp the matching membership in the same request, atomically. Sessions
+    // and other clients' memberships are left untouched.
+    if (options.clientId) {
+      await (User as any)
+        .updateOne(
+          { _id, 'memberships.clientId': options.clientId },
+          { $set: { 'memberships.$.lastLogin': now } }
+        )
+        .exec();
+    }
+  };
+
+  /**
    * Recover from losing the race for a session slot by re-signing the session
    * the winner created.
    *

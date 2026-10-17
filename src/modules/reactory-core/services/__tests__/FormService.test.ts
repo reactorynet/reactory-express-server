@@ -353,3 +353,71 @@ describe('ReactoryFormService.save – YAML persistence', () => {
     ).rejects.toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Role visibility parity: list() and get(id) must agree.
+//
+// `reactory.MyApplications@1.0.0` declares `roles: ['USER']`. It was absent from
+// the role-filtered list while `getCodeForm` (used by get(id)) only ever set
+// `allow_form = true`, so the two paths disagreed: hidden in the list, reachable
+// by id. Both now share one predicate — roles gate visibility *and* reachability.
+// ---------------------------------------------------------------------------
+describe('ReactoryFormService – role visibility parity between list() and get()', () => {
+  const FORM_ID = 'reactory.MyApplications@1.0.0';
+
+  const registerRoleGatedForm = () => {
+    setModuleForms([
+      {
+        id: FORM_ID,
+        nameSpace: 'reactory',
+        name: 'MyApplications',
+        version: '1.0.0',
+        title: 'My Applications',
+        roles: ['USER'],
+      },
+    ]);
+  };
+
+  it('excludes a role-gated form from the list and denies it by id when the role is not held', async () => {
+    registerRoleGatedForm();
+    const service = createService([]);
+
+    const listed = await service.list();
+    expect(listed.map((form: any) => form.id)).not.toContain(FORM_ID);
+
+    const resolved = await service.get(FORM_ID);
+    expect(resolved).toBeNull();
+  });
+
+  it('includes the form in the list and resolves it by id when the role is held', async () => {
+    registerRoleGatedForm();
+    const service = createService(['USER']);
+
+    const listed = await service.list();
+    expect(listed.map((form: any) => form.id)).toContain(FORM_ID);
+
+    const resolved = await service.get(FORM_ID);
+    expect(resolved).not.toBeNull();
+    expect(resolved.id).toBe(FORM_ID);
+  });
+
+  it('keeps a form with no roles visible to everyone, in both the list and by id', async () => {
+    setModuleForms([
+      {
+        id: 'core.Public@1.0.0',
+        nameSpace: 'core',
+        name: 'Public',
+        version: '1.0.0',
+        title: 'Public',
+        roles: [],
+      },
+    ]);
+    const service = createService([]);
+
+    const listed = await service.list();
+    expect(listed.map((form: any) => form.id)).toContain('core.Public@1.0.0');
+
+    const resolved = await service.get('core.Public@1.0.0');
+    expect(resolved).not.toBeNull();
+  });
+});

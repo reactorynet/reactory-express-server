@@ -171,8 +171,12 @@ export const githubVerifyCallback = async (
       });
     }
 
-    // Save user
-    await user.save();
+    // Persist the provider sign-in without a full-document save, which can drop a
+    // session another client application added concurrently. `recordProviderLogin`
+    // updates lastLogin, the provider record and the membership atomically.
+    await Helpers.recordProviderLogin(user, {
+      clientId: context.partner?._id?.toString(),
+    });
 
     // Log successful authentication
     AuthAuditLogger.logSuccess(user._id.toString(), 'github', {
@@ -180,17 +184,6 @@ export const githubVerifyCallback = async (
       githubId,
       username,
     });
-
-    // Update membership lastLogin if partner exists
-    if (context.partner) {
-      const membership = user.memberships.find(m => 
-        m.clientId.toString() === context.partner._id.toString()
-      );
-      if (membership) {
-        membership.lastLogin = new Date();
-        await user.save(); // Save again after updating membership
-      }
-    }
 
     // Generate login token
     const loginToken = await Helpers.generateLoginToken(user, req.ip, clientKey, req.context);

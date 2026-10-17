@@ -7,7 +7,7 @@
  */
 
 import passport from 'passport';
-import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
+import { ReactoryClient, User } from '@reactory/server-modules/reactory-core/models';
 import TenantStrategyRegistry from '../TenantStrategyRegistry';
 import { StateManager, VerifiedStateStore } from '../security';
 import { beginTenantOAuth, completeTenantOAuth, isCallbackFailure } from '../tenantOAuth';
@@ -54,6 +54,15 @@ const mockTenantLookup = () =>
     exec: jest.fn().mockResolvedValue(tenants[query.key] || null),
   })) as any);
 
+/**
+ * The OAuth sign-in path persists with a targeted atomic write rather than a
+ * full-document save; stub it so route tests never reach Mongo.
+ */
+const mockUserWrites = () =>
+  jest.spyOn(User as any, 'updateOne').mockReturnValue({
+    exec: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
+  } as any);
+
 const collectRoutes = (register: (app: any) => void) => {
   const routes: Record<string, Function> = {};
   const app: any = {
@@ -96,6 +105,7 @@ describe('WP-A5: tenant-scoped OAuth', () => {
     TenantStrategyRegistry.clear();
     StateManager.clearAll();
     mockTenantLookup();
+    mockUserWrites();
   });
 
   afterEach(() => {

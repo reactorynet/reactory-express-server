@@ -8,6 +8,7 @@ interface OverviewDependencies {
   RelativeTime: any,
   useContentRender: any,
   SupportTicketWorkflow: any,
+  SupportTicketAIAction: any,
 }
 
 interface OverviewProps {
@@ -47,6 +48,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     RelativeTime,
     useContentRender,
     SupportTicketWorkflow,
+    SupportTicketAIAction,
   } = reactory.getComponents<OverviewDependencies>([
     'react.React',
     'material-ui.Material',
@@ -55,6 +57,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     'core.RelativeTime',
     'core.useContentRender',
     'core.SupportTicketWorkflow',
+    'core.SupportTicketAIAction',
   ]);
 
   const { MaterialCore } = Material;
@@ -519,6 +522,13 @@ const SupportTicketOverview = (props: OverviewProps) => {
           >
             Close Ticket
           </Button>
+        )}
+        {SupportTicketAIAction && (
+          <SupportTicketAIAction
+            reactory={reactory}
+            ticket={currentTicket}
+            defaultWorkdir={currentTicket?.meta && (currentTicket.meta as any).aiWorkdir}
+          />
         )}
       </Box>
 

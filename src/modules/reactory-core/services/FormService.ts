@@ -44,16 +44,12 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
       if (isArray(module.forms) === true) {
         module.forms.forEach((form: Reactory.Forms.IReactoryForm) => {
           if (form && form.id === id) {
-            let allow_form: boolean = true;
-            if (form.roles && form.roles.length > 0) {
-              form.roles.forEach((role: string) => {
-                if (that.getExecutionContext().hasRole(role) === true) {
-                  allow_form = true;
-                }
-              });
-            }
-
-            if (allow_form === true && form) {
+            // Reuse the same predicate as `list()` so a form's visibility in the
+            // list and its reachability by id can never disagree. The previous
+            // inline check initialised `allow_form = true` and only ever set it
+            // to true, so it was dead code that never denied — meaning a
+            // role-gated form was hidden from `list()` but returned by `get()`.
+            if (that.isFormAllowed(form) === true) {
               _form = form;
             }
           }
