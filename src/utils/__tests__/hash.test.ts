@@ -58,11 +58,27 @@ describe('Hash Function', () => {
     it('should handle null', () => {
       const result = Hash(null);
       expect(typeof result).toBe('number');
+      // The contract is also *stable*: the same input must keep hashing to the
+      // same id, so a null cannot be assigned a different identifier per call.
+      expect(Number.isInteger(result)).toBe(true);
+      expect(Hash(null)).toBe(result);
     });
 
     it('should handle undefined', () => {
       const result = Hash(undefined);
       expect(typeof result).toBe('number');
+      expect(Number.isInteger(result)).toBe(true);
+      expect(Hash(undefined)).toBe(result);
+    });
+
+    it('should not leak a non-numeric coercible through the numeric fast path', () => {
+      // Regression guard for the same defect class as `Hash(null)`: the old
+      // `!isNaN(value)` test is satisfied by every value that coerces to a
+      // number, so booleans were returned unchanged from a `: number` function
+      // (`Number(true) === 1`). The guard is now an explicit type check.
+      expect(typeof Hash(true)).toBe('number');
+      expect(typeof Hash(false)).toBe('number');
+      expect(Hash(true)).not.toBe(true as any);
     });
   });
 });

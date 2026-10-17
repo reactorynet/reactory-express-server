@@ -35,11 +35,26 @@ const Hash = (e: any) : number => {
     if (ex === undefined) {
       ex = [];
     }
-    if (!isNaN(unkType) && typeof unkType !== 'string') {
+    // Numeric fast-path: pass genuine numbers straight through (preserving the
+    // existing behaviour for tested values such as 42, 0 and -1). The check is
+    // an explicit type guard rather than a coercion-sensitive `!isNaN(unkType)`
+    // test: `Number(null) === 0`, so the old guard accepted `null` and returned
+    // it unchanged, violating the declared `: number` return type. Requiring
+    // `typeof unkType === 'number'` keeps `null`, booleans and other coercibles
+    // off this path, and `!Number.isNaN(...)` still forwards `NaN` to the
+    // string-hash branch below (as before).
+    if (typeof unkType === 'number' && !Number.isNaN(unkType)) {
       return unkType;
     }
     switch (typeof unkType) {
       case 'object':
+        // `typeof null === 'object'`, but `null` has no keys to walk and
+        // `Object.keys(null)` throws a TypeError. Fold it through the string
+        // branch exactly as `undefined` is handled so the contract holds and
+        // `Hash(null)` yields a stable number.
+        if (unkType === null) {
+          return stringHash(String(unkType));
+        }
         return objectHash(unkType as object, ex);
       default:
         return stringHash(String(unkType));
