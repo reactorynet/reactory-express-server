@@ -39,6 +39,13 @@ import { roles } from '@reactory/server-core/authentication/decorators';
 import ReactorySupportTicketModel from '../models/ReactorySupportTicket';
 import UserModel from '../models/User';
 import CommunicatorMessageModel from '@reactory/server-modules/reactory-communicator/models/Message';
+import {
+  PROCESS_AI_TICKET_WORKFLOW_ID,
+  REQUEST_AI_ROUTING_WORKFLOW_ID,
+} from './supportWorkflowIds';
+
+// Re-exported so callers can reach the workflow ids through the service module.
+export { PROCESS_AI_TICKET_WORKFLOW_ID, REQUEST_AI_ROUTING_WORKFLOW_ID };
 
 const SUPPORT_SERVICE_ID = 'core.ReactorySupportService@1.0.0';
 const WORKFLOW_SERVICE_ID = 'core.ReactoryWorkflowService@1.0.0';
@@ -1546,6 +1553,17 @@ class ReactorySupportWorkflowService {
       };
     }
 
+    // Fail once, before starting anything, when the target workflow id is not
+    // registered. Otherwise every ticket in the plan produces its own identical
+    // start error, which reads like N per-ticket problems rather than one bad id.
+    if (plan.dispatch.length > 0) {
+      const missing = await this.checkWorkflowRegistered(workflowService, PROCESS_AI_TICKET_WORKFLOW_ID);
+      if (missing) {
+        this.log('error', `dispatchAiTickets: ${missing}`);
+        return { dryRun: false, plan, started: [], humanTasks: [], error: missing };
+      }
+    }
+
     const started: any[] = [];
     for (const job of plan.dispatch) {
       try {
@@ -1561,7 +1579,7 @@ class ReactorySupportWorkflowService {
         // cwd — passing an empty/`null` string would be taken as a real path.
         if (job.workdir) input.workdir = job.workdir;
 
-        const child = await workflowService.startWorkflow('core.ProcessAITicket@1.2.0', { input });
+        const child = await workflowService.startWorkflow(PROCESS_AI_TICKET_WORKFLOW_ID, { input });
         started.push({
           ticketId: job.ticketId,
           reference: job.reference,
@@ -1579,7 +1597,22 @@ class ReactorySupportWorkflowService {
     }
 
     const humanTasks: any[] = [];
-    for (const request of plan.needsHuman) {
+    let routingError: string | null = null;
+    if (plan.needsHuman.length > 0) {
+      routingError = await this.checkWorkflowRegistered(workflowService, REQUEST_AI_ROUTING_WORKFLOW_ID);
+      if (routingError) {
+        // Runs may already have started above, so this is reported alongside them
+        // rather than aborting: the caller must know the needsHuman items were NOT
+        // raised, instead of assuming the routing tasks exist.
+        this.log('error', `dispatchAiTickets: ${routingError}`);
+      }
+    }
+
+    // Routing tasks are skipped (not attempted) when the routing workflow id is
+    // unregistered; `routingError` is surfaced on the result so the caller does not
+    // assume they were raised.
+    const routingRequests = routingError ? [] : plan.needsHuman;
+    for (const request of routingRequests) {
       try {
         const input: Record<string, any> = {
           ticketId: request.ticketId,
@@ -1588,7 +1621,7 @@ class ReactorySupportWorkflowService {
         };
         if (request.ownerEmail) input.ownerEmail = request.ownerEmail;
 
-        const child = await workflowService.startWorkflow('core.RequestAIRouting@1.0.0', { input });
+        const child = await workflowService.startWorkflow(REQUEST_AI_ROUTING_WORKFLOW_ID, { input });
         humanTasks.push({
           ticketId: request.ticketId,
           reference: request.reference,
@@ -1611,12 +1644,48 @@ class ReactorySupportWorkflowService {
       humanTasks: humanTasks.length,
     });
 
-    return { dryRun: false, plan, started, humanTasks };
+    return {
+      dryRun: false,
+      plan,
+      started,
+      humanTasks,
+      ...(routingError ? { error: routingError } : {}),
+    };
   }
 
   // ───────────────────────────────────────────────────────────────────────────
   // Helpers
   // ───────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Returns `null` when `workflowId` is registered, otherwise a human-readable
+   * error.
+   *
+   * `startWorkflow` matches the id verbatim (no "latest" resolution), so an
+   * unregistered version throws per child. Checking once up front turns that into
+   * a single actionable failure before anything is started.
+   *
+   * When the service does not expose the lookup (an older or stubbed
+   * implementation) this returns `null` and lets `startWorkflow` report the
+   * problem — a preflight must never be the reason a valid dispatch is refused.
+   */
+  private async checkWorkflowRegistered(
+    workflowService: any,
+    workflowId: string,
+  ): Promise<string | null> {
+    if (typeof workflowService?.getWorkflowWithId !== 'function') return null;
+    try {
+      await workflowService.getWorkflowWithId(workflowId);
+      return null;
+    } catch (err: any) {
+      const detail = err?.message ? String(err.message) : String(err);
+      return (
+        `Workflow ${workflowId} is not registered (${detail}). ` +
+        'No run was started. Check the version against ' +
+        'reactory-reactor/workflow/index.ts (REACTOR_YAML_WORKFLOWS).'
+      );
+    }
+  }
 
   private matchRule(rules: any[], event: string, level: number | undefined, ticket: any): any | null {
     for (const rule of rules) {
