@@ -7,11 +7,6 @@
   ],
   "suites": [
     {
-      "path": "src/utils/__tests__/hash.test.ts",
-      "reason": "Source defect, narrow. Hash is declared `(e: any): number` but Hash(null) returns null (typeof 'object'): the guard `!isNaN(unkType)` is satisfied because Number(null) === 0, so null is returned as if it were a number. The test encodes the correct contract. Filed separately; do not relax the assertion.",
-      "issue": "REACTORY-302016408/20261015/3764778823"
-    },
-    {
       "path": "src/modules/reactory-core/services/__tests__/ReactoryFileService.workspace.test.ts",
       "reason": "Source defect in workspace mode. An absolute subfolder path that is one of the workspace's own folders is not recognised (the workspace branch only returns for '/', '' or the workspace file/dir), so it falls through to an APP_DATA_ROOT listing and returns 0 files; and a missing workspace file falls through to the same listing (66 files) instead of degrading to empty. Filed separately; do not relax the assertions.",
       "issue": "REACTORY-302016408/20261015/3071700252"
