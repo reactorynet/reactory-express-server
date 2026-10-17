@@ -339,6 +339,12 @@ The `/bin` folder contains comprehensive utilities for managing your Reactory in
 | `bin/podman-compose.sh` | Legacy podman-compose wrapper (superseded by `compose.sh`) | `bin/podman-compose.sh [client] [env]` |
 | `bin/restore2.sh` | Legacy MongoDB-only restore (superseded by `restore.sh`) | `bin/restore2.sh <dbFrom> <dbTo> <file>` |
 
+### Static analysis
+
+`yarn typecheck` is a **per-file** ratchet against `typecheck-baseline.json`, not a
+check on the total error count. Read [TYPECHECK_RATCHET.md](./TYPECHECK_RATCHET.md)
+before refreshing the baseline or interpreting a red job.
+
 ---
 
 ## Production / Other

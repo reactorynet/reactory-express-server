@@ -12,16 +12,24 @@
  *   node scripts/ci/typecheck-ratchet.js           # check (CI)
  *   node scripts/ci/typecheck-ratchet.js --update  # rewrite the baseline
  *
- * The baseline is written with every module present. In a checkout that lacks
- * some (CI checks out the server alone), a file that imports an absent module
- * cannot be type-checked meaningfully: it is reported as skipped, and so are
- * the absent modules' own entries. --update refuses to run in that state.
+ * A file that imports a module this checkout lacks cannot be type-checked
+ * meaningfully: it is reported as skipped, as are the entries of the absent
+ * modules themselves, and neither counts as a regression nor as an
+ * improvement. `--update` carries those entries over unchanged instead of
+ * dropping them, so it is safe to run in a checkout that does not contain
+ * every module — including this one, where some modules (reactory-email,
+ * reactory-sms, reactory-whatsapp) are optional and absent from every
+ * checkout, so refusing outright made the documented refresh impossible.
+ *
+ * The rules themselves live in typecheckRatchet.js, where a test can exercise
+ * them against fixtures without running tsc over the whole repository.
  */
 const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const { absentModuleIn, presentModules } = require('./moduleConfiguration');
+const { presentModules } = require('./moduleConfiguration');
+const { parseTscOutput, findSkippedFiles, compareWithBaseline, mergeBaseline } = require('./typecheckRatchet');
 
 const ROOT = path.resolve(__dirname, '../..');
 const BASELINE = path.join(ROOT, 'typecheck-baseline.json');
@@ -34,15 +42,7 @@ const tsc = spawnSync(
 );
 
 const output = `${tsc.stdout || ''}${tsc.stderr || ''}`;
-const counts = {};
-let total = 0;
-for (const line of output.split('\n')) {
-  const match = /^(.+?)\(\d+,\d+\): error TS\d+:/.exec(line);
-  if (!match) continue;
-  const file = match[1].replace(/\\/g, '/');
-  counts[file] = (counts[file] || 0) + 1;
-  total += 1;
-}
+const { counts, total } = parseTscOutput(output);
 
 if (tsc.status !== 0 && total === 0) {
   console.error('tsc failed without reporting type errors:\n' + output);
@@ -51,52 +51,58 @@ if (tsc.status !== 0 && total === 0) {
 
 // Files that cannot resolve an import from a module this checkout lacks.
 const present = presentModules();
-const skipped = new Map();
-for (const line of output.split('\n')) {
-  const match = /^(.+?)\(\d+,\d+\): error TS2307: Cannot find module '([^']+)'/.exec(line);
-  const module = match && absentModuleIn(match[2], present);
-  if (module) skipped.set(match[1].replace(/\\/g, '/'), module);
-}
+const skipped = findSkippedFiles(output, present);
 
-if (update) {
-  if (skipped.size) {
-    console.error(`Refusing to rewrite the baseline: ${skipped.size} file(s) import modules this checkout lacks (${[...new Set(skipped.values())].join(', ')}). Update it from a checkout with every module.`);
-    process.exit(2);
-  }
-  const sorted = Object.fromEntries(Object.keys(counts).sort().map((k) => [k, counts[k]]));
-  fs.writeFileSync(BASELINE, JSON.stringify({ total, files: sorted }, null, 2) + '\n');
-  console.log(`Baseline written: ${total} errors in ${Object.keys(counts).length} files.`);
-  process.exit(0);
-}
-
-const baseline = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : { total: 0, files: {} };
-const regressions = [];
-const improvements = [];
-const notChecked = (file) => skipped.has(file) || Boolean(absentModuleIn(file, present));
-for (const [file, count] of Object.entries(counts)) {
-  if (notChecked(file)) continue;
-  const allowed = baseline.files[file] || 0;
-  if (count > allowed) regressions.push(`${file}: ${count} errors (baseline ${allowed})`);
-}
-for (const [file, allowed] of Object.entries(baseline.files)) {
-  if (notChecked(file)) continue;
-  const count = counts[file] || 0;
-  if (count < allowed) improvements.push(`${file}: ${count} (baseline ${allowed})`);
-}
-
-console.log(`Type errors: ${total} (baseline ${baseline.total}).`);
-if (skipped.size) {
+const reportSkipped = () => {
+  if (!skipped.size) return;
   const byModule = {};
   for (const [file, module] of skipped) (byModule[module] = byModule[module] || []).push(file);
   console.log(`\nNot checked: ${skipped.size} file(s) import modules this checkout lacks:`);
   for (const [module, files] of Object.entries(byModule)) console.log(`  ${module}: ${files.join(', ')}`);
+};
+
+const baseline = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : { total: 0, files: {} };
+
+if (update) {
+  const merged = mergeBaseline({ counts, skipped, present, previous: baseline });
+  fs.writeFileSync(BASELINE, JSON.stringify({ total: merged.total, files: merged.files }, null, 2) + '\n');
+  console.log(`Baseline written: ${merged.total} allowed errors in ${Object.keys(merged.files).length} files.`);
+
+  reportSkipped();
+
+  const preserved = Object.entries(merged.preserved);
+  if (preserved.length) {
+    const modules = [...new Set(preserved.map(([file]) => skipped.get(file)).filter(Boolean))];
+    console.log(
+      `\n${preserved.length} baseline entr${preserved.length === 1 ? 'y' : 'ies'} carried over unchanged ` +
+        `(file(s) this checkout cannot check${modules.length ? `: ${modules.join(', ')}` : ''}).`,
+    );
+  }
+  process.exit(0);
 }
+
+const { regressions, improvements } = compareWithBaseline({ counts, skipped, present, baseline });
+
+// baseline.total is the sum of the allowances written to the file, which
+// includes entries carried over for files this checkout cannot check; it is a
+// baseline budget, not a second opinion on the current error count.
+console.log(`Type errors: ${total} (baseline allows ${baseline.total} in ${Object.keys(baseline.files || {}).length} files).`);
+reportSkipped();
+
 if (improvements.length) {
-  console.log(`\n${improvements.length} file(s) improved; run with --update to lower the baseline:\n  ${improvements.join('\n  ')}`);
+  console.log(
+    `\n${improvements.length} file(s) improved; run with --update to lower the baseline:\n  ` +
+      improvements.map(({ file, count, allowed }) => `${file}: ${count} (baseline ${allowed})`).join('\n  '),
+  );
 }
 if (regressions.length) {
-  console.error(`\nNew type errors in ${regressions.length} file(s):\n  ${regressions.join('\n  ')}`);
-  const newLines = output.split('\n').filter((l) => regressions.some((r) => l.startsWith(r.split(':')[0] + '(')));
+  console.error(
+    `\nNew type errors in ${regressions.length} file(s):\n  ` +
+      regressions.map(({ file, count, allowed }) => `${file}: ${count} errors (baseline ${allowed})`).join('\n  '),
+  );
+  const newLines = output
+    .split('\n')
+    .filter((line) => regressions.some(({ file }) => line.startsWith(`${file}(`)));
   console.error('\n' + newLines.join('\n'));
   process.exit(1);
 }
