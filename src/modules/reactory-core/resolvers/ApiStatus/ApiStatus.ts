@@ -247,6 +247,20 @@ class ApiStatus {
     return apiStatus.id || 'anon'
   }
 
+  /**
+   * Why a session-backed bearer token was refused on this request, if it was.
+   *
+   * Set on the request context by the JWT strategy (`session_revoked` — the
+   * session ended; `session_client_mismatch` — the token was minted for another
+   * application). Lets the client distinguish "signed in with the wrong app"
+   * from "signed out" instead of inferring it from an anonymous status.
+   */
+  @property("ApiStatus", "authReason")
+  authReason(_: Reactory.Models.IApiStatus, __: any, context: Reactory.Server.IReactoryContext): string | null {
+    const failure = (context as any)?.authFailure;
+    return failure?.reason ?? null;
+  }
+
   @property("ApiStatus", "menus")
   menus(_: Reactory.Models.IApiStatus, __: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.UX.IReactoryMenuConfig[]> {
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;

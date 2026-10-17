@@ -267,6 +267,49 @@ describe('JWT Strategy', () => {
       );
     });
 
+    it('records why a token was refused on the request context', async () => {
+      // The request still proceeds unauthenticated, but the reason is captured so
+      // the response can distinguish "wrong application" from "signed out"
+      // instead of surfacing an unexplained anonymous status.
+      mockRequest.context.getService.mockReturnValue(
+        securityService({ resolveSessionState: jest.fn().mockResolvedValue('client_mismatch') })
+      );
+
+      verify(sessionPayload());
+      await flush();
+
+      expect(mockRequest.context.authFailure).toEqual(
+        expect.objectContaining({
+          state: 'client_mismatch',
+          reason: 'session_client_mismatch',
+          clientKey: 'test-client',
+        })
+      );
+    });
+
+    it('records a revocation distinctly from a client mismatch', async () => {
+      mockRequest.context.getService.mockReturnValue(
+        securityService({ resolveSessionState: jest.fn().mockResolvedValue('revoked') })
+      );
+
+      verify(sessionPayload());
+      await flush();
+
+      expect(mockRequest.context.authFailure).toEqual(
+        expect.objectContaining({ state: 'revoked', reason: 'session_revoked' })
+      );
+    });
+
+    it('leaves the failure unset on a successful authentication', async () => {
+      mockRequest.context.getService.mockReturnValue(securityService());
+
+      verify(sessionPayload());
+      await flush();
+
+      expect(mockRequest.context.authFailure).toBeUndefined();
+      expect(mockDone).toHaveBeenCalledWith(null, mockUser);
+    });
+
     it('falls back to validateSession on a service that predates resolveSessionState', async () => {
       const service: any = securityService();
       delete service.resolveSessionState;

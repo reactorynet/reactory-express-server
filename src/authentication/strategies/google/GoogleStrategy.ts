@@ -94,17 +94,12 @@ export const googleVerifyCallback = async (
     // Update user last login
     user.lastLogin = new Date();
     
-    // Update membership lastLogin if partner exists
-    if (context.partner) {
-      const membership = user.memberships.find(m => 
-        m.clientId.toString() === context.partner._id.toString()
-      );
-      if (membership) {
-        membership.lastLogin = new Date();
-      }
-    }
-
-    await user.save();
+    // Persist the provider sign-in without a full-document save, which can drop a
+    // session another client application added concurrently. `recordProviderLogin`
+    // updates lastLogin and the matching membership's lastLogin atomically.
+    await Helpers.recordProviderLogin(user, {
+      clientId: context.partner?._id?.toString(),
+    });
     
     Helpers.generateLoginToken(user, req.ip, clientKey, req.context).then((loginToken) => {
       const duration = (Date.now() - startTime) / 1000;

@@ -8,6 +8,9 @@ const mockIndex = {
 const mockMeiliClient = {
   index: jest.fn(() => mockIndex),
   createIndex: jest.fn(),
+  updateIndex: jest.fn(),
+  getRawIndex: jest.fn(),
+  waitForTask: jest.fn(),
   deleteIndexIfExists: jest.fn(),
   health: jest.fn(),
 };
@@ -30,7 +33,15 @@ const mockContext = { error: jest.fn(), warn: jest.fn() } as any;
 const makeProvider = () => new MeiliSearchProvider({}, mockContext);
 
 describe('MeiliSearchProvider', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Default: the index already exists and is keyed on `id`; tasks succeed.
+    mockMeiliClient.getRawIndex.mockResolvedValue({ uid: 'articles', primaryKey: 'id' });
+    mockMeiliClient.waitForTask.mockResolvedValue({ uid: 1, status: 'succeeded', error: null });
+    mockMeiliClient.createIndex.mockResolvedValue({ uid: 'articles', taskUid: 1, status: 'enqueued' });
+    mockMeiliClient.updateIndex.mockResolvedValue({ uid: 'articles', taskUid: 2, status: 'enqueued' });
+    mockIndex.addDocuments.mockResolvedValue({ indexUid: 'articles', taskUid: 1, status: 'enqueued' });
+  });
 
   it('has the meilisearch id', () => {
     expect(makeProvider().id).toBe('meilisearch');
@@ -92,7 +103,10 @@ describe('MeiliSearchProvider', () => {
 
   describe('createIndex / configureIndex', () => {
     it('creates the index with a primary key and applies attribute settings', async () => {
-      mockMeiliClient.createIndex.mockResolvedValue({ taskUid: 1 });
+      mockMeiliClient.getRawIndex.mockRejectedValue(
+        Object.assign(new Error('Index `articles` not found'), { cause: { code: 'index_not_found' } }),
+      );
+      mockMeiliClient.createIndex.mockResolvedValue({ uid: 'articles', taskUid: 1, status: 'enqueued' });
       mockIndex.updateSettings.mockResolvedValue({ taskUid: 2 });
       const res = await makeProvider().createIndex('articles', {
         primaryKey: 'id',
@@ -110,10 +124,39 @@ describe('MeiliSearchProvider', () => {
     });
 
     it('reports failure when createIndex throws', async () => {
+      mockMeiliClient.getRawIndex.mockRejectedValue(
+        Object.assign(new Error('Index `articles` not found'), { cause: { code: 'index_not_found' } }),
+      );
       mockMeiliClient.createIndex.mockRejectedValue(new Error('exists'));
       const res = await makeProvider().createIndex('articles');
       expect(res.success).toBe(false);
       expect(res.error).toBe('exists');
+    });
+
+    it('creates the index with a primary key when it does not exist', async () => {
+      const notFound = Object.assign(new Error('Index `graph` not found'), {
+        cause: { code: 'index_not_found' },
+      });
+      mockMeiliClient.getRawIndex.mockRejectedValue(notFound);
+      const res = await makeProvider().createIndex('graph', { primaryKey: 'nodeId' });
+      expect(mockMeiliClient.createIndex).toHaveBeenCalledWith('graph', { primaryKey: 'nodeId' });
+      expect(res.success).toBe(true);
+    });
+
+    it('reconciles the primary key on an existing keyless index (the broken-index case)', async () => {
+      mockMeiliClient.getRawIndex.mockResolvedValue({ uid: 'graph', primaryKey: null });
+      const res = await makeProvider().createIndex('graph', { primaryKey: 'nodeId' });
+      expect(mockMeiliClient.updateIndex).toHaveBeenCalledWith('graph', { primaryKey: 'nodeId' });
+      expect(mockMeiliClient.createIndex).not.toHaveBeenCalled();
+      expect(res.success).toBe(true);
+    });
+
+    it('is idempotent when the index already has the requested primary key', async () => {
+      mockMeiliClient.getRawIndex.mockResolvedValue({ uid: 'graph', primaryKey: 'nodeId' });
+      const res = await makeProvider().createIndex('graph', { primaryKey: 'nodeId' });
+      expect(mockMeiliClient.createIndex).not.toHaveBeenCalled();
+      expect(mockMeiliClient.updateIndex).not.toHaveBeenCalled();
+      expect(res.success).toBe(true);
     });
 
     it('configureIndex only sends provided attribute settings', async () => {
@@ -143,18 +186,26 @@ describe('MeiliSearchProvider', () => {
   });
 
   describe('index', () => {
-    it('reports success for an enqueued task', async () => {
-      mockIndex.addDocuments.mockResolvedValue({ indexUid: 'articles', status: 'enqueued' });
+    it('reports success once the addition task settles', async () => {
       const provider = makeProvider();
       const res = await provider.index('articles', [{ id: 1 }]);
       expect(mockIndex.addDocuments).toHaveBeenCalledWith([{ id: 1 }]);
+      expect(mockMeiliClient.waitForTask).toHaveBeenCalledWith(1, expect.any(Object));
       expect(res).toEqual({ id: 'articles', success: true });
     });
 
-    it('reports failure for a failed task status', async () => {
-      mockIndex.addDocuments.mockResolvedValue({ indexUid: 'articles', status: 'failed' });
-      const res = await makeProvider().index('articles', [{ id: 1 }]);
+    it('reports failure when the settled task failed (async failure is not swallowed)', async () => {
+      mockMeiliClient.waitForTask.mockResolvedValue({
+        uid: 1,
+        status: 'failed',
+        error: { message: 'The primary key inference failed', code: 'index_primary_key_no_candidate_found' },
+      });
+      const res = await makeProvider().index('articles', [{ id: 1, nodeId: 2 }]);
       expect(res.success).toBe(false);
+      expect(res.error).toBe('The primary key inference failed');
+      expect(mockContext.error).toHaveBeenCalledWith(
+        expect.stringContaining('The primary key inference failed'),
+      );
     });
 
     it('captures errors and returns a failure result', async () => {
@@ -171,7 +222,6 @@ describe('MeiliSearchProvider', () => {
     });
 
     it('splits large document sets into multiple addDocuments calls (payload limit)', async () => {
-      mockIndex.addDocuments.mockResolvedValue({ indexUid: 'articles', status: 'enqueued' });
       // 2500 docs exceeds the 1000-doc batch cap -> expect 3 batches.
       const docs = Array.from({ length: 2500 }, (_, i) => ({ id: i, name: `doc-${i}` }));
       const res = await makeProvider().index('articles', docs);
@@ -182,13 +232,14 @@ describe('MeiliSearchProvider', () => {
       expect(mockIndex.addDocuments.mock.calls.every((c) => c[0].length <= 1000)).toBe(true);
     });
 
-    it('stops and reports failure when a batch task fails', async () => {
-      mockIndex.addDocuments
-        .mockResolvedValueOnce({ indexUid: 'articles', status: 'enqueued' })
-        .mockResolvedValueOnce({ indexUid: 'articles', status: 'failed' });
+    it('stops and reports failure when a later batch task fails', async () => {
+      mockMeiliClient.waitForTask
+        .mockResolvedValueOnce({ uid: 1, status: 'succeeded', error: null })
+        .mockResolvedValueOnce({ uid: 2, status: 'failed', error: { message: 'batch failed' } });
       const docs = Array.from({ length: 1500 }, (_, i) => ({ id: i }));
       const res = await makeProvider().index('articles', docs);
       expect(res.success).toBe(false);
+      expect(res.error).toBe('batch failed');
     });
   });
 

@@ -12,7 +12,7 @@ import {
 } from '../__tests__/testUtils';
 import { oktaVerifyCallback, useOktaRoutes } from './OktaStrategy';
 import TenantStrategyRegistry from '../TenantStrategyRegistry';
-import { ReactoryClient } from '@reactory/server-modules/reactory-core/models';
+import { ReactoryClient, User } from '@reactory/server-modules/reactory-core/models';
 import Helpers from '../helpers';
 
 describe('WP-A5: OktaStrategy and TenantStrategyRegistry', () => {
@@ -57,6 +57,11 @@ describe('WP-A5: OktaStrategy and TenantStrategyRegistry', () => {
       });
 
       jest.spyOn(Helpers, 'generateLoginToken').mockResolvedValue('mock-login-token' as any);
+      // The OAuth sign-in path now persists with a targeted atomic write rather
+      // than a full-document save (which could clobber sessionInfo).
+      jest.spyOn(User as any, 'updateOne').mockReturnValue({
+        exec: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
+      } as any);
     });
 
     afterEach(() => {

@@ -217,4 +217,12 @@ type ApiStatus {
     Server public key
     """
     publicKey: String
+
+    """
+    When the presented bearer token was session-backed but refused, the reason it
+    was refused: "session_revoked" (the session ended) or
+    "session_client_mismatch" (the token was minted for a different application).
+    Null when the request carried no rejected session-backed token.
+    """
+    authReason: String
 }

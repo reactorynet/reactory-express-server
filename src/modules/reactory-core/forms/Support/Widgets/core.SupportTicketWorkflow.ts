@@ -21,6 +21,37 @@ interface ISupportTicketUpdateResult {
   ReactoryUpdateSupportTicket: Reactory.Models.IReactorySupportTicket
 }
 
+/** Parameters for launching an AI engineering run from a support ticket. */
+interface ILaunchAIActionArgs {
+  /** The ticket the agent should work. */
+  ticket: Reactory.Models.IReactorySupportTicket,
+  /** The AI agent/persona id that performs the engineering work. */
+  agentId: string,
+  /** Optional reviewer persona id (defaults to QualityQuinn). */
+  reviewerId?: string,
+  /** Branch prefix for the isolated worktree: feature | bug | chore. */
+  taskType?: string,
+  /** Absolute repository path the agent works in. */
+  workdir?: string,
+  /** auto = tools run unattended; supervised = risky tools raise approval tasks. */
+  oversightMode?: string,
+  /** Hard bound on engineer/reviewer hand-back cycles. */
+  maxReviewCycles?: number,
+  /** Raise a human sign-off task before the run is considered complete. */
+  requireSignoff?: boolean,
+  /** Extra context/instruction appended to the agent's brief. */
+  context?: string,
+  /** Workflow id to run (overridable so a version bump needs no code change). */
+  workflowId?: string,
+}
+
+interface ILaunchAIActionResult {
+  instanceId: string | null,
+  status: string | null,
+  workflowId: string,
+  error?: string,
+}
+
 interface ISupportTicketWorkflowModule {  
   openTicket(args: ISupportTickeArgs): Promise<Reactory.Models.IReactorySupportTicket>
   closeTicket(args: ISupportTickeArgs): Promise<boolean>
@@ -36,6 +67,15 @@ interface ISupportTicketWorkflowModule {
   reassignTicket(args: { ticket: Reactory.Models.IReactorySupportTicket, assignTo: string }): Promise<Reactory.Models.IReactorySupportTicket | null>
   changePriority(args: { ticket: Reactory.Models.IReactorySupportTicket, priority: string }): Promise<Reactory.Models.IReactorySupportTicket | null>
   addTags(args: { ticket: Reactory.Models.IReactorySupportTicket, tags: string[] }): Promise<Reactory.Models.IReactorySupportTicket | null>
+  /**
+   * Launch an AI engineering run against a ticket (`core.ProcessAITicket`).
+   *
+   * Returns the started workflow instance so the caller can link to it. The run
+   * executes as the CALLING user (the workflow engine stamps the start context's
+   * identity), which is what makes the agent conversations appear in that user's
+   * chat history - so this is deliberately not proxied through a service account.
+   */
+  launchAIAction(args: ILaunchAIActionArgs): Promise<ILaunchAIActionResult>
   /**
    * Publish a "this ticket changed" notification on the reactory event bus.
    *
@@ -306,6 +346,89 @@ const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTick
       { state: {}, replace: false });
   };
 
+  /**
+   * Launch an AI engineering run (`core.ProcessAITicket`) against a ticket.
+   *
+   * This is the single implementation of "trigger the AI from a ticket". The widget
+   * owns the form; this owns the mutation so a toolbar, a bulk action or a future
+   * integration can start the same run without duplicating the contract.
+   *
+   * Two behaviours are deliberate:
+   *  - Optional parameters are OMITTED rather than sent empty. The workflow treats
+   *    an absent workdir as "use the repo it was started from", and an empty
+   *    reviewerId would override the persona default rather than defer to it.
+   *  - The run executes as the CALLING user. The engine stamps the start context's
+   *    identity onto the instance, which is what makes the agent conversations
+   *    appear in that user's chat history (and therefore inspectable later).
+   */
+  const launchAIAction = async (args: ILaunchAIActionArgs): Promise<ILaunchAIActionResult> => {
+    const workflowId = args.workflowId || 'core.ProcessAITicket@1.3.0';
+    const ticket = args.ticket;
+
+    if (!ticket || !ticket.id) {
+      reactory.createNotification('Cannot start an AI run: no ticket id available', { type: 'error' });
+      return { instanceId: null, status: null, workflowId, error: 'No ticket id available' };
+    }
+    if (!args.agentId) {
+      reactory.createNotification('Cannot start an AI run: no agent selected', { type: 'error' });
+      return { instanceId: null, status: null, workflowId, error: 'No agent selected' };
+    }
+
+    const input: Record<string, any> = {
+      ticketId: `${ticket.id}`,
+      agentId: args.agentId,
+      taskType: args.taskType || 'feature',
+      oversightMode: args.oversightMode || 'auto',
+      maxReviewCycles: typeof args.maxReviewCycles === 'number' ? args.maxReviewCycles : 3,
+      requireSignoff: args.requireSignoff !== false,
+    };
+    if (args.reviewerId) input.reviewerId = args.reviewerId;
+    if (args.workdir) input.workdir = args.workdir;
+    if (args.context) input.context = args.context;
+
+    try {
+      const result: any = await reactory.graphqlMutation(`
+        mutation StartAIEngineeringRun($workflowId: String!, $input: WorkflowExecutionInput) {
+          startWorkflow(workflowId: $workflowId, input: $input) {
+            id
+            name
+            status
+          }
+        }`, {
+        workflowId,
+        input: {
+          input,
+          tags: ['ai-run', 'launched-from-ui', `ticket:${ticket.reference || ticket.id}`],
+          priority: 1,
+        },
+      }).then();
+
+      const started = result?.data?.startWorkflow;
+      if (!started?.id) {
+        const message = result?.errors?.[0]?.message || 'Failed to start the AI run';
+        reactory.createNotification(message, { type: 'error' });
+        reactory.log('SupportTicketWorkflow: launchAIAction returned no instance', { result }, 'error');
+        return { instanceId: null, status: null, workflowId, error: message };
+      }
+
+      reactory.createNotification(`AI run started for ${ticket.reference || ticket.id}`, { type: 'success' });
+      // The ticket itself is not modified synchronously, but the run writes a pickup
+      // comment shortly after starting - publish the change so the Comments/Activity
+      // tabs refresh without the user hunting for a manual reload.
+      emitTicketChange('ai-run-started', {
+        ticket,
+        changes: { workflowInstanceId: started.id, agentId: args.agentId, workflowId },
+      });
+
+      return { instanceId: started.id, status: started.status || 'RUNNING', workflowId };
+    } catch (error: any) {
+      const message = error?.message || 'Failed to start the AI run';
+      reactory.createNotification(message, { type: 'error' });
+      reactory.log('SupportTicketWorkflow: launchAIAction failed', { error }, 'error');
+      return { instanceId: null, status: null, workflowId, error: message };
+    }
+  };
+
   const deleteTicket = async (args: ISupportTicketDeleteArgs): Promise<void> => {
     try {
       // ReactorySupportTicketDelete(ids) does not exist. The schema exposes
@@ -341,6 +464,7 @@ const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTick
 
   return {
     notifyTicketChange: emitTicketChange,
+    launchAIAction,
     openTicket,
     closeTicket,
     commentTicket,

@@ -160,6 +160,17 @@ const JWTAuthentication = new JwtStrategy(JwtOptions, (request: Reactory.Server.
           logger.debug(
             `JWT session rejected for user ${payload.userId} on client ${clientKey}: ${reason}`
           );
+
+          // Record *why* the token was refused so the request can report it. The
+          // request still continues unauthenticated (as before), but an operator
+          // or client can now tell "wrong application" apart from "signed out"
+          // instead of seeing an unexplained anonymous status.
+          const authFailure = { state, reason, clientKey, userId: payload.userId };
+          (request as any).authFailure = authFailure;
+          if (request.context) {
+            (request.context as any).authFailure = authFailure;
+          }
+
           return done(null, false);
         }
       }

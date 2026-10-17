@@ -153,26 +153,66 @@ export class MeiliSearchProvider implements ISearchProvider {
     return batches;
   }
 
+  /** How long to wait for a single enqueued MeiliSearch task to settle. */
+  private static readonly TASK_WAIT_TIMEOUT_MS = 60_000;
+
+  /**
+   * Waits for an enqueued MeiliSearch task to reach a terminal state.
+   *
+   * This is essential: `addDocuments` / `createIndex` / `updateIndex` resolve as
+   * soon as the task is *enqueued*, so an asynchronous failure (e.g. an invalid
+   * primary key) would otherwise be silently mistaken for success. We must wait
+   * for the terminal status and surface `failed` / `canceled` outcomes.
+   */
+  private async settleTask(
+    taskUid: number,
+    label: string,
+  ): Promise<{ ok: boolean; error?: string }> {
+    const task = await this.client.waitForTask(taskUid, {
+      timeOutMs: MeiliSearchProvider.TASK_WAIT_TIMEOUT_MS,
+    });
+    if (task.status === TaskStatus.TASK_SUCCEEDED) return { ok: true };
+    const error =
+      (task.error as any)?.message ?? `${label} ended with task status '${task.status}'`;
+    this.context.error(`MeiliSearch ${label} failed: ${error}`);
+    return { ok: false, error };
+  }
+
+  /** True when an error is MeiliSearch's `index_not_found` (missing index). */
+  private static isIndexNotFound(ex: any): boolean {
+    const code = ex?.cause?.code ?? ex?.code;
+    return code === 'index_not_found' || /not found/i.test(ex?.message ?? '');
+  }
+
+  /**
+   * Returns the raw index object, or `undefined` when the index does not exist.
+   * Any other backend error is rethrown.
+   */
+  private async rawIndexOrUndefined(
+    index: string,
+  ): Promise<{ primaryKey?: string | null } | undefined> {
+    try {
+      return await this.client.getRawIndex(index);
+    } catch (ex) {
+      if (MeiliSearchProvider.isIndexNotFound(ex)) return undefined;
+      throw ex;
+    }
+  }
+
   async index<T>(index: string, data: T[]): Promise<Reactory.Service.ISearchIndexResult> {
     if (!data || data.length === 0) {
       return { id: index, success: true };
     }
-    const taskIsOkay = (status: TaskStatus): boolean =>
-      status === TaskStatus.TASK_PROCESSING ||
-      status === TaskStatus.TASK_SUCCEEDED ||
-      status === TaskStatus.TASK_ENQUEUED;
     try {
       const batches = MeiliSearchProvider.chunkForIndexing(data as any[]);
       let indexUid: string = index;
       for (const batch of batches) {
         const task = await this.client.index(index).addDocuments(batch);
         indexUid = task.indexUid ?? indexUid;
-        if (!taskIsOkay(task.status)) {
-          return {
-            id: indexUid,
-            success: false,
-            error: `addDocuments returned task status '${task.status}'`,
-          };
+
+        const settled = await this.settleTask(task.taskUid, `addDocuments(${index})`);
+        if (!settled.ok) {
+          return { id: indexUid, success: false, error: settled.error };
         }
       }
       return { id: indexUid, success: true };
@@ -187,10 +227,26 @@ export class MeiliSearchProvider implements ISearchProvider {
     config?: IndexConfig,
   ): Promise<Reactory.Service.ISearchIndexResult> {
     try {
-      await this.client.createIndex(
-        index,
-        config?.primaryKey ? { primaryKey: config.primaryKey } : undefined,
-      );
+      const existing = await this.rawIndexOrUndefined(index);
+      if (!existing) {
+        const task = await this.client.createIndex(
+          index,
+          config?.primaryKey ? { primaryKey: config.primaryKey } : undefined,
+        );
+        const settled = await this.settleTask(task.taskUid, `createIndex(${index})`);
+        if (!settled.ok) {
+          return { id: index, success: false, error: settled.error };
+        }
+      } else if (config?.primaryKey && existing.primaryKey !== config.primaryKey) {
+        // Reconcile a missing/incorrect primary key. MeiliSearch only permits
+        // re-keying while the index holds no documents; on a populated index
+        // this settles as a task failure, which we surface.
+        const task = await this.client.updateIndex(index, { primaryKey: config.primaryKey });
+        const settled = await this.settleTask(task.taskUid, `updateIndex(${index})`);
+        if (!settled.ok) {
+          return { id: index, success: false, error: settled.error };
+        }
+      }
       if (config && (config.searchableAttributes || config.filterableAttributes || config.sortableAttributes)) {
         await this.configureIndex(index, config);
       }

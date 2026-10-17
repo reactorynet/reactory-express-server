@@ -61,6 +61,13 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
   },
   {
     compilerOptions: {},
+    id: 'core.SupportTicketAIAction@1.0.0',
+    src:  fileAsString(path.resolve(__dirname, `../../Widgets/core.SupportTicketAIAction.tsx`)),
+    compiler: 'rollup',
+    fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
     id: 'core.SupportTicketsToolbar@1.0.0',
     src:  fileAsString(path.resolve(__dirname, `../components/SupportTicketsToolbar.tsx`)),
     compiler: 'rollup',

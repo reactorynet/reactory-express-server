@@ -560,6 +560,15 @@ export const findSessionBySlot = (
  * the JWT strategy tell "this token was session-backed and its session is gone"
  * (reject) from "this token was never session-backed" (an out-of-band link or
  * CLI token — accept on signature and expiry alone).
+ *
+ * `client` is written into the signed payload too. The server already refuses a
+ * session-backed token presented under the wrong client (see
+ * `clientScopeMatches`), but that refusal degrades to an anonymous request — the
+ * caller cannot tell "wrong application" from "signed out". Carrying the client
+ * in the signed token lets the *client* reject a token minted for another
+ * application before it is ever sent, and lets it report the real reason when
+ * the server does refuse it. Tokens minted before this claim existed carry none
+ * and remain accepted on signature and session membership alone.
  */
 export const buildSessionEntry = (
   payload: Record<string, unknown>,
@@ -568,7 +577,7 @@ export const buildSessionEntry = (
   sessionId: string = uuid(),
   slotKey: string = sessionSlotKey(clientKey, host)
 ): { session: SessionInfoEntry; payload: Record<string, unknown> } => {
-  const signedPayload = { ...payload, sid: sessionId };
+  const signedPayload = { ...payload, sid: sessionId, client: clientKey };
 
   return {
     payload: signedPayload,

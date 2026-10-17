@@ -437,6 +437,22 @@ describe('Authentication Helpers', () => {
         expect(JSON.parse(stored.jwtPayloadJson).sid).toBe(stored.id);
       });
 
+      it('stamps a client claim naming the application', async () => {
+        await Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a');
+
+        const stored = storedSessions()[0];
+        expect(stored.jwtPayload.client).toBe('partner-a');
+        expect(JSON.parse(stored.jwtPayloadJson).client).toBe('partner-a');
+      });
+
+      it('names each application in its own token', async () => {
+        await Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a');
+        await Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-b');
+
+        const clients = storedSessions().map((s: any) => JSON.parse(s.jwtPayloadJson).client);
+        expect(clients.sort()).toEqual(['partner-a', 'partner-b']);
+      });
+
       it('leaves out-of-band tokens session-free and without a sid', () => {
         const payload = Helpers.jwtTokenForUser(mockUser);
 
@@ -557,6 +573,52 @@ describe('Authentication Helpers', () => {
       it('does not require a context at all', async () => {
         const result = await Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a');
         expect(result.token).toEqual(expect.any(String));
+      });
+    });
+
+    describe('recordProviderLogin (OAuth sign-in path)', () => {
+      // The OAuth strategies used to `await user.save()`. `generateLoginToken`
+      // mutates `user.sessionInfo` in memory, so a full-document save on the same
+      // request could rewrite the array and drop a session another client had
+      // just established. `recordProviderLogin` must update the user without ever
+      // writing `sessionInfo`.
+      it('never writes sessionInfo, so a concurrent session survives', async () => {
+        const first = await Helpers.generateLoginToken(mockUser, '10.0.0.1', 'partner-a');
+        const sessionIdBefore = storedSessions()[0].id;
+        mockUpdateOne.mockClear();
+
+        mockUser.authentications = [{ provider: 'google', lastLogin: new Date(), props: {} }];
+        mockUser.lastLogin = new Date();
+        await Helpers.recordProviderLogin(mockUser, { clientId: 'partner-a' });
+
+        const updates = mockUpdateOne.mock.calls.map(([, update]: any[]) => update);
+        expect(updates.some((u: any) => u.$set?.sessionInfo !== undefined)).toBe(false);
+        expect(updates.some((u: any) => u.$set?.authentications !== undefined)).toBe(true);
+        // The session established for partner-a is still there and unchanged.
+        expect(storedSessions().map((s: any) => s.id)).toContain(sessionIdBefore);
+        expect(first.token).toEqual(expect.any(String));
+      });
+
+      it('stamps the matching membership lastLogin in the same request', async () => {
+        mockUser.authentications = [];
+        await Helpers.recordProviderLogin(mockUser, { clientId: 'partner-a' });
+
+        const filters = mockUpdateOne.mock.calls.map(([filter]: any[]) => filter);
+        expect(filters.some((f: any) => f['memberships.clientId'] === 'partner-a')).toBe(true);
+      });
+
+      it('issues no membership update when no client is in play', async () => {
+        mockUser.authentications = [];
+        await Helpers.recordProviderLogin(mockUser, {});
+
+        const filters = mockUpdateOne.mock.calls.map(([filter]: any[]) => filter);
+        expect(filters.every((f: any) => f['memberships.clientId'] === undefined)).toBe(true);
+      });
+
+      it('falls back to a document save when the user has no id', async () => {
+        const save = jest.fn().mockResolvedValue(undefined);
+        await Helpers.recordProviderLogin({ authentications: [], save } as any, {});
+        expect(save).toHaveBeenCalled();
       });
     });
   });
