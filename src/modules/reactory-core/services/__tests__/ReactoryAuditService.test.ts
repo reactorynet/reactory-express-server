@@ -60,6 +60,70 @@ describe('ReactoryAuditService', () => {
     const filter: IAuditQueryFilter = { action: ['create'], startDate: new Date(), limit: 10 };
     const res = await service.queryAuditLogs(filter);
     expect(res.total).toBe(0);
+    expect(qb.orderBy).toHaveBeenCalledWith('audit.createdAt', 'DESC');
+  });
+
+  describe('sorting', () => {
+    const makeQueryBuilder = () => {
+      const qb: any = {
+        andWhere: jest.fn().mockReturnThis(),
+        // Mirror TypeORM's SelectQueryBuilder.addOrderBy, which throws unless
+        // the direction is exactly ASC or DESC.
+        orderBy: jest.fn((column: string, direction: string) => {
+          if (direction !== 'ASC' && direction !== 'DESC') {
+            throw new Error(
+              'SelectQueryBuilder.addOrderBy "order" can accept only "ASC" and "DESC" values.',
+            );
+          }
+          return qb;
+        }),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+      };
+      return qb;
+    };
+
+    it.each(['desc', 'DESC', 'Desc'])('normalises a %s sort direction for TypeORM', async (sortOrder) => {
+      const qb = makeQueryBuilder();
+      mockRepo.createQueryBuilder.mockReturnValue(qb);
+
+      // The GraphQL input types sortOrder as String, so lowercase reaches the
+      // service at runtime even though the interface says ASC | DESC.
+      await service.queryAuditLogs({ sortBy: 'createdAt', sortOrder: sortOrder as any });
+
+      expect(qb.orderBy).toHaveBeenCalledWith('audit.createdAt', 'DESC');
+    });
+
+    it('normalises a lowercase asc sort direction', async () => {
+      const qb = makeQueryBuilder();
+      mockRepo.createQueryBuilder.mockReturnValue(qb);
+
+      await service.queryAuditLogs({ sortBy: 'action', sortOrder: 'asc' as any });
+
+      expect(qb.orderBy).toHaveBeenCalledWith('audit.action', 'ASC');
+    });
+
+    it('falls back to createdAt for an unknown sortBy instead of interpolating it', async () => {
+      const qb = makeQueryBuilder();
+      mockRepo.createQueryBuilder.mockReturnValue(qb);
+
+      await service.queryAuditLogs({ sortBy: 'createdAt; DROP TABLE reactory_audit' });
+
+      expect(qb.orderBy).toHaveBeenCalledWith('audit.createdAt', 'DESC');
+      expect(qb.orderBy).not.toHaveBeenCalledWith(
+        'audit.createdAt; DROP TABLE reactory_audit',
+        expect.anything(),
+      );
+    });
+
+    it('does not throw for an invalid sortOrder and falls back to DESC', async () => {
+      const qb = makeQueryBuilder();
+      mockRepo.createQueryBuilder.mockReturnValue(qb);
+
+      await expect(service.queryAuditLogs({ sortBy: 'action', sortOrder: 'sideways' as any })).resolves.toMatchObject({ total: 0 });
+      expect(qb.orderBy).toHaveBeenCalledWith('audit.action', 'DESC');
+    });
   });
 
   it('generates compliance report', async () => {

@@ -49,9 +49,73 @@ export interface IAuditQueryFilter {
   organizationId?: string;
   limit?: number;
   offset?: number;
+  /**
+   * Column to order by. Must be one of {@link AUDIT_SORTABLE_COLUMNS}; any
+   * other value falls back to `createdAt` (never interpolated into SQL).
+   */
   sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  /**
+   * Sort direction. GraphQL delivers this as a plain String, so it may arrive
+   * in any case ("asc", "Desc", ...). Values other than ASC/DESC fall back
+   * to DESC.
+   */
+  sortOrder?: string;
 }
+
+/**
+ * Columns callers are allowed to sort audit logs by.
+ *
+ * A caller supplied `sortBy` is only used to look up a fixed column name in
+ * this allow-list; the request value itself is never interpolated into the
+ * query, which keeps the orderBy clause free of column injection.
+ */
+export const AUDIT_SORTABLE_COLUMNS = [
+  'id',
+  'createdAt',
+  'user',
+  'action',
+  'source',
+  'actorType',
+  'actorId',
+  'resourceType',
+  'resourceId',
+  'eventType',
+  'moduleName',
+  'moduleVersion',
+  'ipAddress',
+  'success',
+  'organizationId',
+] as const;
+
+export type AuditSortColumn = (typeof AUDIT_SORTABLE_COLUMNS)[number];
+
+const AUDIT_SORTABLE_COLUMN_SET: ReadonlySet<string> = new Set(AUDIT_SORTABLE_COLUMNS);
+
+/** Column used whenever `sortBy` is omitted or not allow-listed. */
+export const DEFAULT_AUDIT_SORT_COLUMN: AuditSortColumn = 'createdAt';
+
+/**
+ * Normalise a caller supplied sort direction to a value TypeORM accepts.
+ *
+ * TypeORM throws unless the value is exactly `ASC` or `DESC`, while the
+ * GraphQL input is a plain String (so clients legitimately send "desc").
+ * Anything that is not ASC (any case) resolves to DESC.
+ */
+export const normalizeAuditSortOrder = (sortOrder?: unknown): 'ASC' | 'DESC' => {
+  const direction = String(sortOrder ?? '').trim().toUpperCase();
+  return direction === 'ASC' ? 'ASC' : 'DESC';
+};
+
+/**
+ * Resolve a caller supplied `sortBy` to an allow-listed column, falling back
+ * to `createdAt`. The returned value always comes from the allow-list.
+ */
+export const resolveAuditSortColumn = (sortBy?: unknown): AuditSortColumn => {
+  const candidate = typeof sortBy === 'string' ? sortBy.trim() : '';
+  return AUDIT_SORTABLE_COLUMN_SET.has(candidate)
+    ? (candidate as AuditSortColumn)
+    : DEFAULT_AUDIT_SORT_COLUMN;
+};
 
 /**
  * Interface for compliance report parameters
@@ -221,9 +285,14 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
         organizationId,
         limit = 50,
         offset = 0,
-        sortBy = 'createdAt',
-        sortOrder = 'DESC'
+        sortBy,
+        sortOrder
       } = filter;
+
+      // Normalise caller input: the GraphQL layer types these as String, so a
+      // lowercase "desc" or an arbitrary column name can reach us at runtime.
+      const order = normalizeAuditSortOrder(sortOrder);
+      const column = resolveAuditSortColumn(sortBy);
 
       const query = this.readRepository.createQueryBuilder('audit');
 
@@ -300,9 +369,11 @@ export class ReactoryAuditService implements Reactory.Service.IReactoryDefaultSe
         query.andWhere('audit.organizationId = :organizationId', { organizationId });
       }
 
-      // Apply pagination and sorting
+      // Apply pagination and sorting. `column` and `order` are both resolved
+      // through allow-lists above, so only known column names and ASC/DESC can
+      // reach the query builder.
       query
-        .orderBy(`audit.${sortBy}`, sortOrder)
+        .orderBy(`audit.${column}`, order)
         .skip(offset)
         .take(limit);
 
