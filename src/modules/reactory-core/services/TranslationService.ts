@@ -4,6 +4,10 @@ import {
   getAvailableLanguages,
   resolveLanguage,
 } from '@reactory/server-core/express/i18n/language';
+import {
+  bundleFromTranslations,
+  resolveTranslationBundle,
+} from '@reactory/server-core/express/i18n/translationLayers';
 import { ReactoryTranslations } from '@reactory/server-modules/reactory-core/types/Translation';
 import modules from '@reactory/server-core/modules';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
@@ -65,6 +69,32 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
     });
   }
 
+  /**
+   * Reads the CMS-persisted translations for one locale/namespace pair.
+   *
+   * Wrapped and best-effort on purpose: translation reads must not fail because
+   * Mongo is unavailable (CLI commands and unit tests run without a
+   * connection), and an unreadable store should fall back to the shipped
+   * bundles rather than serve nothing.
+   */
+  private async cmsTranslations(locale: string, ns: string): Promise<any> {
+    try {
+      const mongoose = require('mongoose');
+      if (!mongoose || !mongoose.connection || mongoose.connection.readyState !== 1) return {};
+
+      const { default: ReactoryTranslation } = require('@reactory/server-modules/reactory-core/models/ReactoryTranslation');
+      if (!ReactoryTranslation || typeof ReactoryTranslation.find !== 'function') return {};
+
+      const query: any = { locale };
+      if (ns) query.namespace = ns;
+
+      const rows = await ReactoryTranslation.find(query).lean().exec();
+      return bundleFromTranslations(rows);
+    } catch (error) {
+      return {};
+    }
+  }
+
   async getTranslations(locale?: string): Promise<ReactoryTranslations> {
     
     // Normalised so a regional tag (af-ZA) resolves against the af bundles,
@@ -112,27 +142,43 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
     let bundles: Reactory.Models.IReactoryI18nResource[] = []
 
     if (Array.isArray(ns)) {
-      ns.forEach($ns => {
-        let resourceBundle = { ...(i18n && typeof i18n.getResourceBundle === 'function' ? i18n.getResourceBundle(resolvedLocale, $ns) || {} : {}) };    
-        
-        // Merge fresh translations from disk
+      for (const $ns of ns) {
+        // The module layer: translations compiled into the loaded modules.
+        // Lowest authority — it is the fallback for keys no bundle carries.
+        const moduleBundle = { ...(i18n && typeof i18n.getResourceBundle === 'function' ? i18n.getResourceBundle(resolvedLocale, $ns) || {} : {}) };
+
+        // The file layer: the shipped, reviewed bundle for this locale. The
+        // candidates are ordered by intent — the locale itself, then the
+        // default language, then the regional English folder that the loader
+        // uses as a last resort when `en/` is absent. The first existing file
+        // wins, exactly as the backend loader resolves folders.
         const candidates = [
           path.resolve(APP_DATA_ROOT, `i18n/${resolvedLocale}/${$ns}.json`),
           path.resolve(APP_DATA_ROOT, `i18n/en/${$ns}.json`),
           path.resolve(APP_DATA_ROOT, `i18n/en-US/${$ns}.json`),
         ];
+        let fileBundle: any = {};
         for (const filePath of candidates) {
           if (fs.existsSync(filePath)) {
             try {
-              const fileContent = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-              resourceBundle = { ...resourceBundle, ...fileContent };
+              fileBundle = JSON.parse(fs.readFileSync(filePath, 'utf8'));
             } catch (e) {}
             break;
           }
         }
 
+        // The CMS layer: rows a translator/editor persisted through the CMS.
+        // Highest authority, so a CMS correction is never shadowed by a file.
+        const cmsBundle = await this.cmsTranslations(resolvedLocale, $ns);
+
+        const resourceBundle = resolveTranslationBundle({
+          module: moduleBundle,
+          file: fileBundle,
+          cms: cmsBundle,
+        });
+
         bundles.push({ id: `${resolvedLocale}.${$ns}`, ns: $ns, translations: resourceBundle });
-      });
+      }
 
       translations.i18n = bundles;
     }

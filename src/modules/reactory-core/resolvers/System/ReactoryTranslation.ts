@@ -2,6 +2,7 @@ import Reactory from '@reactorynet/reactory-core';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver';
 import { resolveLanguage } from '@reactory/server-core/express/i18n/language';
+import { resolveTranslationBundle } from '@reactory/server-core/express/i18n/translationLayers';
 
 interface IReactoryTranslantionParams {
   lang: string
@@ -44,7 +45,14 @@ class ReactoryTranslationResolver {
             if (fs.existsSync(filePath)) {
               try {
                 const fileContent = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-                bundle.translations = { ...(bundle.translations || {}), ...fileContent };
+                // The service already merged module + file + CMS values, so
+                // its output is the higher-authority layer. Spreading the raw
+                // file over it (the old behaviour) let a committed JSON bundle
+                // shadow a CMS edit — see `express/i18n/translationLayers`.
+                bundle.translations = resolveTranslationBundle({
+                  file: fileContent,
+                  cms: bundle.translations,
+                });
               } catch (e) {}
               break;
             }
