@@ -6,6 +6,9 @@ import { BusinessUnit, UserDemographic, Region, Team } from '@reactory/server-mo
 import Demographic from '@reactory/server-modules/reactory-core/models/demographics/Demographic';
 import { find } from 'lodash';
 import e from 'connect-flash';
+// Type-only import (erased): the concrete service takes an explicit execution
+// context on its mutating methods.
+import type { OrganizationService } from '@reactory/server-modules/reactory-core/services/OrganizationService';
 
 
 const OrganizationDemographicsEnabledQuery = `query MoresGetOrgnizationDemographicsSetting($id: String!){
@@ -76,7 +79,7 @@ class UserDemographicsProcessor implements Reactory.Service.IProcessor {
 
   fileService: Reactory.Service.IReactoryFileService;
   packageManager: Reactory.IReactoryImportPackageManager;
-  organizationService: Reactory.Service.IReactoryOrganizationService;
+  organizationService: OrganizationService;
   userService: Reactory.Service.IReactoryUserService;
 
   constructor(props: any, context: Reactory.Server.IReactoryContext) {
@@ -168,7 +171,7 @@ class UserDemographicsProcessor implements Reactory.Service.IProcessor {
 
           if ($business_unit === null || $business_unit === undefined) {
             that.context.log(`Business unit ${demographics.businessUnit} not found creating new entry`, {}, 'debug', 'UserDemographicsProcessor');
-            $business_unit = await that.organizationService.createBusinessUnit(organization._id, demographics.businessUnit.trim());  
+            $business_unit = await that.organizationService.createBusinessUnit(organization._id, demographics.businessUnit.trim(), that.context);  
             all_business_units.push($business_unit);
           } else {
             that.context.log(`Business unit ${demographics.businessUnit} found`, {}, 'debug', 'UserDemographicsProcessor')
@@ -204,7 +207,7 @@ class UserDemographicsProcessor implements Reactory.Service.IProcessor {
           $team = find(all_teams, (t) =>  t.name.trim() === demographics.team.trim() )
           if ($team === null || $team === undefined) {
             that.context.log(`Team ${demographics.team} not found creating new entry`, {}, 'debug, "UserDemographicsProcessior');
-            $team = await that.organizationService.createTeam(organization._id, demographics.team.trim());
+            $team = await that.organizationService.createTeam(organization._id, demographics.team.trim(), that.context);
             all_teams.push($team);
           }
           

@@ -119,7 +119,7 @@ class TeamResolver {
     const { input } = args;
     if (input.organization) {
       const organizationService = context.getService('core.OrganizationService@1.0.0') as any;
-      return await organizationService.createTeam(input.organization, input.name || input.title);
+      return await organizationService.createTeam(input.organization, input.name || input.title, context);
     }
     throw new ValidationError('Could not validate the input');
   }
@@ -129,7 +129,7 @@ class TeamResolver {
     const { id, input } = args;
     if (id && input) {
       const organizationService = context.getService('core.OrganizationService@1.0.0') as any;
-      return await organizationService.updateTeam(id, input);
+      return await organizationService.updateTeam(id, input, context);
     }
     return null;
   }
@@ -138,21 +138,21 @@ class TeamResolver {
   async addMemberToTeam(parent: any, args: { id: any, memberId: any }, context: any) {
     const { id, memberId } = args;
     const organizationService = context.getService('core.OrganizationService@1.0.0') as any;
-    return await organizationService.addMemberToTeam(id, memberId);
+    return await organizationService.addMemberToTeam(id, memberId, context);
   }
 
   @mutation('removeMemberFromTeam')
   async removeMemberFromTeam(parent: any, args: { id: any, memberId: any }, context: any) {
     const { id, memberId } = args;
     const organizationService = context.getService('core.OrganizationService@1.0.0') as any;
-    return await organizationService.removeMemberFromTeam(id, memberId);
+    return await organizationService.removeMemberFromTeam(id, memberId, context);
   }
 
   @mutation('deleteTeam')
   async deleteTeam(parent: any, args: { id: any }, context: any) {
     const { id } = args;
     const organizationService = context.getService('core.OrganizationService@1.0.0') as any;
-    return await organizationService.deleteTeam(id);
+    return await organizationService.deleteTeam(id, context);
   }
 }
 
