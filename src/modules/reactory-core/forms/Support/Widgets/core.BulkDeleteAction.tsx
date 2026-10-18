@@ -1,4 +1,5 @@
 import Reactory from '@reactorynet/reactory-core';
+import { getSelectedTicketsListSx } from './bulkActionTheme';
 
 interface BulkDeleteActionDependencies {
   React: Reactory.React;
@@ -261,7 +262,7 @@ const BulkDeleteAction = (props: BulkDeleteActionProps) => {
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Tickets to Delete:
               </Typography>
-              <List dense sx={{ maxHeight: 250, overflow: 'auto', bgcolor: 'grey.50', borderRadius: 1 }}>
+              <List dense sx={getSelectedTicketsListSx({ maxHeight: 250 })}>
                 {selectedTickets.map((ticket) => (
                   <ListItem key={ticket.id}>
                     <ListItemText
