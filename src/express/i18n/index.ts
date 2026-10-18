@@ -16,7 +16,7 @@ const {
   I18N_NS = ""
 } = process.env as Reactory.Server.ReactoryEnvironment;
 
-const DEFAULT_I18N_NAMESPACES = ['common', 'forms', 'models', 'services', 'workflow', 'schemas', 'cli'];
+const DEFAULT_I18N_NAMESPACES = ['common', 'forms', 'models', 'services', 'workflow', 'schemas', 'cli', 'emails'];
 
 /**
  * Returns all the i18n namespaces that needs to be loaded into the i18n provider.
