@@ -21,6 +21,7 @@ import {
   clients,
 } from '@reactory/server-core/data'
 import Constants from '@reactory/server-core/constants';
+import { validateUserLocale } from '@reactory/server-modules/reactory-core/utils/userLanguage';
 import fs from 'fs';
 import path from 'path';
 
@@ -669,7 +670,31 @@ class UserService implements Reactory.Service.IReactoryUserService {
     user.mobileNumber = userInput.mobileNumber || user.mobileNumber;
     user.avatar = userInput.avatar || user.avatar;
 
-    // check if the avatar is a valid URL or base64 string
+    // Localisation preferences.
+    //
+    // The locale is validated against the shipped languages: storing an
+    // arbitrary tag would pin the account to a locale with no bundles and the
+    // user would silently be back in English on every device. A rejected value
+    // throws rather than being ignored, so a caller cannot believe the choice
+    // was saved when it was not. The remaining fields are presentation
+    // preferences and are copied as given.
+    if (userInput.il8n && typeof userInput.il8n === 'object') {
+      const requestedLocale = (userInput.il8n as any).locale;
+      const locale = requestedLocale === undefined ? undefined : validateUserLocale(requestedLocale);
+
+      if (requestedLocale !== undefined && locale === null) {
+        throw new ApiError(`Unsupported language "${requestedLocale}"`);
+      }
+
+      (user as any).il8n = {
+        ...((user as any).il8n || {}),
+        ...(locale ? { locale } : {}),
+        ...((userInput.il8n as any).dateFormat !== undefined ? { dateFormat: (userInput.il8n as any).dateFormat } : {}),
+        ...((userInput.il8n as any).timeFormat !== undefined ? { timeFormat: (userInput.il8n as any).timeFormat } : {}),
+        ...((userInput.il8n as any).dateTimeFormat !== undefined ? { dateTimeFormat: (userInput.il8n as any).dateTimeFormat } : {}),
+      };
+    }
+
     if (userInput.avatar && !/^https?:\/\//.test(userInput.avatar) && !/^data:image\//.test(userInput.avatar)) {
       throw new ApiError("Invalid avatar URL or base64 string");
     }

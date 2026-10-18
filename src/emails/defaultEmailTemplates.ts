@@ -14,7 +14,11 @@ export default [
         view: 'activation-email/subject',
         kind: 'email',
         format: 'text',
-        content: 'Welcome to <%= applicationTitle %> <%= user.firstName %>, please confirm your account',
+        // Rendered with `t` bound to the *recipient's* language — see
+        // `emails/i18n.ts`. A template seeded from an earlier release still
+        // holds the hardcoded English string; `renderLocalisedSubject`
+        // recognises that and substitutes the translated default.
+        content: "<%= t('emails.activation.subject', { applicationTitle: applicationTitle, firstName: user.firstName }) %>",
         parameters: [
           {
             name: 'applicationTitle',
@@ -62,7 +66,7 @@ export default [
         view: 'forgot-password-email/subject',
         kind: 'email',
         format: 'text',
-        content: 'Follow the steps below to reset your password for <%= applicationTitle %>.',
+        content: "<%= t('emails.forgotPassword.subject', { applicationTitle: applicationTitle }) %>",
         parameters: [
           {
             name: 'applicationTitle',

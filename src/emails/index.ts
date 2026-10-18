@@ -10,6 +10,11 @@ import lodash, { isNil } from 'lodash';
 import ApiError, { RecordNotFoundError, OrganizationNotFoundError } from '../exceptions';
 import { Template, ReactoryClient, EmailQueue, User, Organization } from '../models';
 import defaultEmailTemplates from './defaultEmailTemplates';
+import {
+  createEmailTranslator,
+  emailTemplateProperties,
+  renderLocalisedSubject as renderLocalisedSubjectWith,
+} from './i18n';
 import AuthConfig from '../authentication';
 import logger from '../logging';
 
@@ -67,53 +72,86 @@ export const resolveUserEmailAddress = (user, reactoryClient) => {
 /**
  * Activation email sender, currently not in use. Only reference is in prototype
  * MS based chat bot.
- * @param {*} user 
- * @param {*} context 
+ *
+ * The message is rendered in the *recipient's* language (`user.il8n.locale`),
+ * not the language of whichever request triggered the send — see
+ * `./i18n`. This used to be hardcoded English, so a user who had selected
+ * Afrikaans still received an English activation email.
+ *
+ * @param {*} user
+ * @param {*} context
  */
 const sendActivationEmail = (user, context) => {
   return new Promise((resolve, reject) => {
     try {
       const { partner } = context;
-      loadEmailTemplate(TemplateViews.ActivationEmail, null, partner._id).then((templateResult) => {
-        sgMail.setApiKey(partner.emailApiKey);
-        const properties = {
-          partner,
-          user,
-          applicationTitle: partner.name,
-          activateLink: '',
-        };
-        let bodyTemplate = null;
-        let subjectTemplate = null;
-        let textTemplate = null;
+      loadEmailTemplate(TemplateViews.ActivationEmail, null, partner._id)
+        .then(async (templateResult) => {
+          sgMail.setApiKey(partner.emailApiKey);
 
-        templateResult.elements.forEach((templateElement) => {
-          switch (templateElement.view) {
-            case `${TemplateViews.ActivationEmail}/subject`: subjectTemplate = templateElement; break;
-            case `${TemplateViews.ActivationEmail}/body`: bodyTemplate = templateElement; break;
-            case `${TemplateViews.ActivationEmail}/text`: textTemplate = templateElement; break;
-            default: break;
-          }
+          const translator = await createEmailTranslator(user);
+          const properties = emailTemplateProperties(translator, {
+            partner,
+            user,
+            applicationTitle: partner.name,
+            // The shipped template references `activationLink`; `activateLink`
+            // is kept because an already-installed template may use it.
+            activationLink: '',
+            activateLink: '',
+          });
+
+          let bodyTemplate = null;
+          let subjectTemplate = null;
+          let textTemplate = null;
+
+          templateResult.elements.forEach((templateElement) => {
+            switch (templateElement.view) {
+              case `${TemplateViews.ActivationEmail}/subject`: subjectTemplate = templateElement; break;
+              case `${TemplateViews.ActivationEmail}/body`: bodyTemplate = templateElement; break;
+              case `${TemplateViews.ActivationEmail}/text`: textTemplate = templateElement; break;
+              default: break;
+            }
+          });
+
+          const msg = {
+            to: user.email,
+            from: partner.email,
+            // `renderTemplate` unwraps the element's `content` and resolves
+            // `$ref://` files. The previous `ejs.render(subjectTemplate, ...)`
+            // passed the element *object*, so the subject rendered as
+            // `[object Object]` rather than the template text.
+            subject: renderLocalisedSubject(subjectTemplate, properties, translator.t, {
+              key: 'emails.activation.subject',
+              params: { applicationTitle: partner.name, firstName: user.firstName },
+            }),
+            text: textTemplate ? renderTemplate(textTemplate, properties) : undefined,
+            html: bodyTemplate ? renderTemplate(bodyTemplate, properties) : templateResult.content,
+            ...resolveUserEmailAddress(user, partner),
+          };
+
+          sgMail.send(msg);
+          resolve({ sent: true });
+        })
+        .catch((loadError) => {
+          reject(loadError);
         });
-
-        const msg = {
-          to: user.email,
-          from: partner.email,
-          subject: ejs.render(subjectTemplate, properties),
-          text: ejs.render(textTemplate, properties),
-          html: ejs.render(bodyTemplate, properties),
-          ...resolveUserEmailAddress(user, partner),
-        };
-
-        sgMail.send(msg);
-        resolve({ sent: true });
-      }).catch((loadError) => {
-        reject(loadError);
-      });
     } catch (mailError) {
       reject(mailError);
     }
   });
 };
+
+/**
+ * `renderLocalisedSubject` is defined in `./i18n` so the rule can be tested
+ * without pulling in the mail transport. This binds the template renderer the
+ * senders use.
+ */
+const renderLocalisedSubject = (
+  subjectTemplate: any,
+  properties: { [key: string]: any },
+  translate: (key: string, params?: { [key: string]: any }) => string,
+  fallback: { key: string; params?: { [key: string]: any } }
+): string => renderLocalisedSubjectWith(subjectTemplate, properties, translate, fallback, renderTemplate);
 
 const sendProductQueryEmail = async ({ to, from, subject, message }, context) => {
   return new Promise((resolve, reject) => {
@@ -269,7 +307,7 @@ const sendForgotPasswordEmail = (user, organization = null, context) => {
   return new Promise((resolve, reject) => {
     try {
       const { partner } = context;
-      loadEmailTemplate(TemplateViews.ForgotPassword, organization, partner).then((templateResult) => {
+      loadEmailTemplate(TemplateViews.ForgotPassword, organization, partner).then(async (templateResult) => {
         if (lodash.isNil(templateResult)) throw new RecordNotFoundError('Could not find a template matching the search criteria', 'Template', { criteria: { view: TemplateViews.ForgotPassword, organization } });
         logger.info(`Template Found ${templateResult._id}`, templateResult);
         try {
@@ -277,12 +315,17 @@ const sendForgotPasswordEmail = (user, organization = null, context) => {
         } catch (sgError) {
           logger.error('Error setting API key', sgError);
         }
-        const properties = {
+
+        // The recipient's stored preference decides the language — not the
+        // request that triggered the reset.
+        const translator = await createEmailTranslator(user);
+
+        const properties = emailTemplateProperties(translator, {
           partner,
           user,
           applicationTitle: partner.name,
           resetLink: `${partner.siteUrl}${partner.resetEmailRoute}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user, { exp: moment().add('1', 'h').valueOf(), }))}`,
-        };
+        });
 
         let bodyTemplate = null;
         let subjectTemplate = null;
@@ -295,18 +338,16 @@ const sendForgotPasswordEmail = (user, organization = null, context) => {
         });
 
         const msg = {
-          to: `${user.fistName} ${user.lastName}<${user.email}>`,
           from: `${partner.name}<${partner.email}>`,
           ...resolveUserEmailAddress(user, partner),
         };
 
-        try {
-          if (lodash.isNil(subjectTemplate) === false) {
-            msg.subject = renderTemplate(subjectTemplate, properties);
-          }
-        } catch (renderError) {
-          reject(new ApiError('Error rendering subject', { original: renderError.message }));
-        }
+        // Localised even when the installed template is a legacy hardcoded
+        // English one — see `renderLocalisedSubject`.
+        msg.subject = renderLocalisedSubject(subjectTemplate, properties, translator.t, {
+          key: 'emails.forgotPassword.subject',
+          params: { applicationTitle: partner.name },
+        });
 
         try {
           if (lodash.isNil(bodyTemplate) === false) {

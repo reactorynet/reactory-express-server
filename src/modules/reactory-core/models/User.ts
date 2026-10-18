@@ -45,6 +45,36 @@ const LinkedAgentSchema = new mongoose.Schema({
   description: String,
 });
 
+/**
+ * The user's localisation preferences.
+ *
+ * `locale` is what makes a language choice survive a new browser or device.
+ * Before this existed the client stored the choice in `localStorage` only, so a
+ * user who picked Afrikaans on their laptop was back in English on their phone
+ * even though the server knew exactly who they were. `localStorage` remains the
+ * pre-auth/first-paint fallback; this field is the durable record.
+ *
+ * The value is the normalised language *code* (`af`, not `af-ZA`), because that
+ * is the identity the bundle loader, the language filter and the selector all
+ * agree on. `validateUserLocale` in `utils/userLanguage` is the only writer.
+ */
+const Il8nSchema = new mongoose.Schema(
+  {
+    locale: {
+      type: String,
+      required: false,
+      trim: true,
+      lowercase: true,
+    },
+    // Optional presentation preferences. Kept here (not invented) so a stored
+    // profile has one place to record how dates and times should render.
+    dateFormat: String,
+    timeFormat: String,
+    dateTimeFormat: String,
+  },
+  { _id: false }
+);
+
 const UserSchema = new mongoose.Schema({
   id: ObjectIdSchema,
   username: {
@@ -189,6 +219,7 @@ const UserSchema = new mongoose.Schema({
   meta,
   socials: [SocialsSchema],
   linked_agents: [LinkedAgentSchema],
+  il8n: Il8nSchema,
 });
 
 UserSchema.methods.setPassword = async function setPassword(password: string) {
