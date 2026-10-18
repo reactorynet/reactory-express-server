@@ -87,7 +87,13 @@ input AuditQueryFilter {
   organizationId: String
   limit: Int
   offset: Int
+  """
+  Column to order by. Unknown values fall back to createdAt.
+  """
   sortBy: String
+  """
+  Sort direction, case-insensitive (ASC or DESC). Invalid values fall back to DESC.
+  """
   sortOrder: String
 }
 
