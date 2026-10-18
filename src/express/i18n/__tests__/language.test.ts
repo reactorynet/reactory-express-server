@@ -1,12 +1,17 @@
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 import i18next from 'i18next';
+import { createI18nFixture, removeI18nFixture } from './support/i18nFixture';
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_HEADER,
   createRequestI18n,
   getAvailableLanguages,
+  getI18nRoot,
   getLocaleFolders,
   languageFromHeaders,
   normaliseLanguage,
+  resetAvailableLanguages,
   resolveLanguage,
   resolveLocaleFolder,
 } from '../language';
@@ -19,14 +24,63 @@ jest.mock('@reactory/server-core/logging', () => ({
 }));
 
 /**
+ * Locale folders this suite asserts against, created under a temporary
+ * APP_DATA_ROOT.
+ *
+ * These tests used to read whatever happened to be under the machine's data
+ * root: a developer machine pointed APP_DATA_ROOT at the real `reactory-data`
+ * (with `af`, `en`, `en-US`, …) so they passed, while CI — which checks out the
+ * server alone and points APP_DATA_ROOT at a gitignored, empty
+ * `src/reactory/test-data/i18n` — saw no folders at all and failed three
+ * assertions. The behaviour under test (folder listing, de-duplication,
+ * regional resolution) is a property of the resolver, not of the machine, so it
+ * is pinned against a controlled tree instead.
+ *
+ * `en` alongside `en-US` exercises the de-duplication, `af` exercises regional
+ * tag resolution, and `README.md` is a plain file that must not be treated as a
+ * locale.
+ */
+const FIXTURE_FOLDERS = ['af', 'en', 'en-US'];
+
+let fixtureRoot: string;
+let previousAppDataRoot: string | undefined;
+
+/**
  * These pin the fix for server-rendered strings following a shared language:
  * every request must get its own translation instance, so one caller cannot
  * change what another caller renders.
  */
 beforeAll(async () => {
+  previousAppDataRoot = process.env.APP_DATA_ROOT;
+  fixtureRoot = createI18nFixture(FIXTURE_FOLDERS);
+
+  // A plain file in the bundle root: only directories are locales.
+  writeFileSync(join(fixtureRoot, 'i18n', 'README.md'), 'not a locale folder');
+
+  process.env.APP_DATA_ROOT = fixtureRoot;
+
+  // `language.ts` memoises the directory scan, so it has to be cleared before
+  // the first read. `jest.resetModules()` is deliberately *not* used here: the
+  // createRequestI18n assertions compare against the i18next instance this file
+  // initialised, and a fresh module registry would hand `language.ts` a second,
+  // uninitialised copy of i18next.
+  resetAvailableLanguages();
+
   if (i18next.isInitialized !== true) {
     await i18next.init({ lng: DEFAULT_LANGUAGE, resources: {} });
   }
+});
+
+afterAll(() => {
+  resetAvailableLanguages();
+
+  if (previousAppDataRoot === undefined) {
+    delete process.env.APP_DATA_ROOT;
+  } else {
+    process.env.APP_DATA_ROOT = previousAppDataRoot;
+  }
+
+  removeI18nFixture(fixtureRoot);
 });
 
 describe('normaliseLanguage', () => {
@@ -41,6 +95,17 @@ describe('normaliseLanguage', () => {
   });
 });
 
+describe('bundle root', () => {
+  it('resolves the i18n root from APP_DATA_ROOT', () => {
+    // The suite is hermetic: it reads the fixture, not the developer machine.
+    expect(getI18nRoot()).toBe(join(fixtureRoot, 'i18n'));
+  });
+
+  it('lists only the fixture folders', () => {
+    expect(getLocaleFolders()).toEqual(FIXTURE_FOLDERS);
+  });
+});
+
 describe('getAvailableLanguages', () => {
   it('lists the configured locale folders and includes the default', () => {
     const languages = getAvailableLanguages();
@@ -50,20 +115,32 @@ describe('getAvailableLanguages', () => {
     expect(languages.map(normaliseLanguage)).toContain(normaliseLanguage(DEFAULT_LANGUAGE));
   });
 
+  it('normalises and orders the fixture folders, default first', () => {
+    // `en` and `en-US` collapse onto `en`; the default leads, the rest sort.
+    expect(getAvailableLanguages()).toEqual(['en', 'af']);
+  });
+
   it('returns the same memoised list on repeat calls', () => {
     // Memoised deliberately: the folder listing is stable for a process, and a
     // restart is required to pick up a new locale folder.
     expect(getAvailableLanguages()).toBe(getAvailableLanguages());
   });
+
+  it('rescans after the cache is cleared', () => {
+    const first = getAvailableLanguages();
+
+    resetAvailableLanguages();
+    const second = getAvailableLanguages();
+
+    expect(second).toEqual(first);
+    expect(second).not.toBe(first);
+  });
 });
 
 describe('resolveLanguage', () => {
   it('resolves a regional variant to its configured base language', () => {
-    const languages = getAvailableLanguages();
-
-    if (languages.some((language) => normaliseLanguage(language) === 'af')) {
-      expect(resolveLanguage('af-ZA')).toBe('af');
-    }
+    expect(getAvailableLanguages()).toContain('af');
+    expect(resolveLanguage('af-ZA')).toBe('af');
   });
 
   it('falls back to the default for an unconfigured language', () => {
@@ -157,6 +234,9 @@ describe('resolveLanguage rejects path-shaped input (MF-3)', () => {
   });
 
   it('still resolves a legitimate regional tag', () => {
+    // Unconditional now that the fixture guarantees an `af` folder: under the
+    // old machine-dependent setup a checkout without `af` silently turned this
+    // into a test of nothing.
     expect(resolveLanguage('af-ZA')).toBe('af');
   });
 });
@@ -206,6 +286,8 @@ describe('getLocaleFolders', () => {
     expect(folders.length).toBeGreaterThan(0);
     expect(folders.every((folder) => typeof folder === 'string' && folder.length > 0)).toBe(true);
     expect(folders).toEqual([...folders].sort());
+    // Files in the bundle root (the fixture's README.md) are not locales.
+    expect(folders).toEqual(FIXTURE_FOLDERS);
   });
 });
 
