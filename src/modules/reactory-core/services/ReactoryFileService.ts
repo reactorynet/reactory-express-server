@@ -34,6 +34,14 @@ interface IFileDownloadResult {
   size?: number;
 }
 
+/**
+ * True when `candidate` is `parent` itself or lives underneath it.
+ */
+function isPathInsideOrEqual(candidate: string, parent: string): boolean {
+  const relative = path.relative(parent, candidate);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
 function stripJsonComments(jsonString: string): string {
   let insideString = false;
   let insideSingleComment = false;
@@ -174,48 +182,89 @@ export class ReactoryFileService
         }
       }
 
-      if (fs.existsSync(workspaceFilePath)) {
-        const workspaceDir = path.dirname(workspaceFilePath);
-        if (
-          _rootPath === "/" ||
-          _rootPath === "" ||
-          _rootPath === workspaceFilePath ||
-          _rootPath === workspaceDir
-        ) {
-          try {
-            const fileContent = fs.readFileSync(workspaceFilePath, "utf8");
-            const cleanContent = stripJsonComments(fileContent);
-            const workspaceJson = JSON.parse(cleanContent);
+      const emptyWorkspaceListing = (): {
+        path: string;
+        workspace?: string;
+        files: Reactory.Models.IReactoryFile[];
+        folders: { name: string; path: string }[];
+      } => ({ path: rootPath, workspace: options.workspace, files: [], folders: [] });
 
-            let workspaceFolders: { name: string; path: string }[] = [];
-            if (Array.isArray(workspaceJson.folders)) {
-              workspaceJson.folders.forEach((f: { name?: string; path: string }) => {
-                if (!f || !f.path) return;
-                let resolvedFolderPath: string;
-                if (path.isAbsolute(f.path)) {
-                  resolvedFolderPath = f.path;
-                } else {
-                  resolvedFolderPath = path.resolve(workspaceDir, f.path);
-                }
-                const folderName = f.name || path.basename(resolvedFolderPath);
-                if (fs.existsSync(resolvedFolderPath)) {
-                  workspaceFolders.push({
-                    name: folderName,
-                    path: resolvedFolderPath,
-                  });
-                }
+      // A workspace was requested but cannot be resolved. Degrade to an empty
+      // listing instead of silently falling through to the user's home folder,
+      // which would present an unrelated root as if it were the workspace.
+      if (!fs.existsSync(workspaceFilePath)) {
+        logger.warn(
+          `ReactoryFileService.getUserFiles: Workspace file ${options.workspace} could not be resolved; returning an empty listing`
+        );
+        return emptyWorkspaceListing();
+      }
+
+      const workspaceDir = path.dirname(workspaceFilePath);
+      let workspaceFolders: { name: string; path: string }[] = [];
+
+      try {
+        const fileContent = fs.readFileSync(workspaceFilePath, "utf8");
+        const cleanContent = stripJsonComments(fileContent);
+        const workspaceJson = JSON.parse(cleanContent);
+
+        if (Array.isArray(workspaceJson.folders)) {
+          workspaceJson.folders.forEach((f: { name?: string; path: string }) => {
+            if (!f || !f.path) return;
+            let resolvedFolderPath: string;
+            if (path.isAbsolute(f.path)) {
+              resolvedFolderPath = f.path;
+            } else {
+              resolvedFolderPath = path.resolve(workspaceDir, f.path);
+            }
+            const folderName = f.name || path.basename(resolvedFolderPath);
+            if (fs.existsSync(resolvedFolderPath)) {
+              workspaceFolders.push({
+                name: folderName,
+                path: resolvedFolderPath,
               });
             }
+          });
+        }
+      } catch (err) {
+        logger.error(`ReactoryFileService.getUserFiles: Failed to parse workspace file ${workspaceFilePath}`, err);
+        return emptyWorkspaceListing();
+      }
 
-            return {
-              path: rootPath,
-              workspace: options.workspace,
-              files: [],
-              folders: workspaceFolders,
-            };
-          } catch (err) {
-            logger.error(`ReactoryFileService.getUserFiles: Failed to parse workspace file ${workspaceFilePath}`, err);
+      if (
+        _rootPath === "/" ||
+        _rootPath === "" ||
+        _rootPath === workspaceFilePath ||
+        _rootPath === workspaceDir
+      ) {
+        // The workspace root itself: expose the resolved workspace folders.
+        return {
+          path: rootPath,
+          workspace: options.workspace,
+          files: [],
+          folders: workspaceFolders,
+        };
+      }
+
+      // A workspace explorer also requests folders by absolute path - either one
+      // of the workspace's own folders or a directory nested inside one. Treat
+      // those as a request to list that folder rather than as a path beneath the
+      // user's home root, which is what the default branch below would do.
+      if (path.isAbsolute(_rootPath)) {
+        const requestedFolder = path.resolve(_rootPath);
+        const withinWorkspace = workspaceFolders.some((folder) =>
+          isPathInsideOrEqual(requestedFolder, path.resolve(folder.path))
+        );
+
+        if (withinWorkspace) {
+          if (!fs.existsSync(requestedFolder) || !fs.statSync(requestedFolder).isDirectory()) {
+            return emptyWorkspaceListing();
           }
+
+          return {
+            path: rootPath,
+            workspace: options.workspace,
+            ...this.listDirectoryContents(requestedFolder, requestedFolder, userId, includeHidden, rootPath),
+          };
         }
       }
     }
@@ -250,10 +299,31 @@ export class ReactoryFileService
       return { path: _rootPath, files: [], folders: [] };
     }
 
-    let files: Reactory.Models.IReactoryFile[] = [];
-    let folders: { name: string; path: string }[] = [];
+    return {
+      path: rootPath,
+      ...this.listDirectoryContents(rootFolder, _rootPath, userId, includeHidden, rootPath),
+    };
+  }
 
-    fs.readdirSync(rootFolder, { withFileTypes: true }).forEach((dirent) => {
+  /**
+   * Reads one directory and shapes its entries the way `getUserFiles` returns
+   * them. `folderPathBase` is prefixed onto child folder paths, and
+   * `linkRootPath` is the virtual root used to build file links.
+   */
+  private listDirectoryContents(
+    absoluteFolder: string,
+    folderPathBase: string,
+    userId: string | ObjectId,
+    includeHidden: boolean,
+    linkRootPath: string
+  ): {
+    files: Reactory.Models.IReactoryFile[];
+    folders: { name: string; path: string }[];
+  } {
+    const files: Reactory.Models.IReactoryFile[] = [];
+    const folders: { name: string; path: string }[] = [];
+
+    fs.readdirSync(absoluteFolder, { withFileTypes: true }).forEach((dirent) => {
       const isHiddenName = dirent.name.startsWith(".");
       if (isHiddenName && !includeHidden) {
         return;
@@ -261,10 +331,10 @@ export class ReactoryFileService
       if (dirent.isDirectory()) {
         folders.push({
           name: dirent.name,
-          path: path.join(_rootPath, dirent.name),
+          path: path.join(folderPathBase, dirent.name),
         });
       } else if (dirent.isFile()) {
-        const filePath = path.join(rootFolder, dirent.name);
+        const filePath = path.join(absoluteFolder, dirent.name);
         const stats = fs.statSync(filePath);
         const ext = path.extname(dirent.name).replace(".", "");
         //@ts-ignore
@@ -278,7 +348,7 @@ export class ReactoryFileService
             "profiles",
             userId.toString(),
             "home",
-            rootPath,
+            linkRootPath,
             dirent.name
           )),
           hash: Hash(filePath),
@@ -294,11 +364,7 @@ export class ReactoryFileService
       }
     });
 
-    return {
-      path: rootPath,
-      files,
-      folders,
-    };
+    return { files, folders };
   }
 
   /**

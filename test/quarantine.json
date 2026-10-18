@@ -7,11 +7,6 @@
   ],
   "suites": [
     {
-      "path": "src/modules/reactory-core/services/__tests__/ReactoryFileService.workspace.test.ts",
-      "reason": "Source defect in workspace mode. An absolute subfolder path that is one of the workspace's own folders is not recognised (the workspace branch only returns for '/', '' or the workspace file/dir), so it falls through to an APP_DATA_ROOT listing and returns 0 files; and a missing workspace file falls through to the same listing (66 files) instead of degrading to empty. Filed separately; do not relax the assertions.",
-      "issue": "REACTORY-302016408/20261015/3071700252"
-    },
-    {
       "path": "src/modules/reactory-classroom/tests/unit/seed_apex.test.ts",
       "reason": "Broken as well as integration, so it is listed here and in test/integrationSuites.js. It cannot pass against an empty database: it inserts ReactoryClassroomClass through the raw repository without a clientKey, and the entity declares that column NOT NULL (@ClientKeyColumn defaults to nullable: false) - the value normally comes from the tenant repository wrapper, which this path bypasses. It only appears to pass where the 10A-10F rows it seeds already exist, because its findOne guard then skips the insert. Fix the insert (or use the tenant repository), then remove this entry.",
       "issue": "REACTORY-302016408/20261015/3041367428"
