@@ -77,8 +77,44 @@ const namespaces = [...new Set(locales.flatMap(namespacesOf))].sort();
 const isEnglish = (locale) => locale.split(/[-_]/)[0] === reference.split(/[-_]/)[0];
 
 const report = {
-  reference, i18nRoot, locales, coverage: [], alignment: [], untranslated: [], filled: []
+  reference, i18nRoot, locales, coverage: [], alignment: [], untranslated: [], filled: [],
+  // Keys that interpolate a count must carry plural forms, otherwise English
+  // renders "1 tool calls" for a single item. Checked per locale because a
+  // language can need more forms than English (`_few`/`_many`).
+  plurals: [],
 };
+
+/**
+ * A key "bears a count" when its text interpolates `{{count}}`.
+ *
+ * `{{count}}` specifically, not any interpolation: i18next selects a plural
+ * suffix from the `count` option only. A `{{selected.length}}` reference cannot
+ * drive pluralisation and is therefore handled by the count-bearing key
+ * itself (see `report.countInterpolations` below).
+ */
+const COUNT_PATTERN = /\{\{\s*count\s*\}\}/;
+
+/** Plural suffixes i18next may select for a language. */
+const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
+
+const pluralRoots = (bundle) => {
+  const roots = new Set();
+  Object.keys(bundle).forEach((key) => {
+    if (PLURAL_SUFFIX.test(key)) roots.add(key.replace(PLURAL_SUFFIX, ''));
+  });
+  return roots;
+};
+
+/**
+ * Keys that interpolate an array length instead of `count`.
+ *
+ * These cannot be pluralised by i18next as written, so they are reported
+ * separately: they need a `count` option at the call site before plural forms
+ * can be added. Surfacing them keeps the gap visible instead of silently
+ * "passing" the plural check.
+ */
+const LENGTH_PATTERN = /\{\{\s*[\w$.]+\.length\s*\}\}/;
+report.countInterpolations = [];
 
 namespaces.forEach((ns) => {
   const present = locales.filter((locale) => namespacesOf(locale).includes(ns));
@@ -107,6 +143,49 @@ namespaces.forEach((ns) => {
 
   const refBundle = read(reference, ns);
   const refKeys = Object.keys(refBundle);
+
+  // Plural audit for every locale that carries this namespace (including the
+  // reference): a count-bearing key must resolve to a plural pair.
+  present.forEach((locale) => {
+    const bundle = read(locale, ns);
+    const roots = pluralRoots(bundle);
+
+    // A partial pair (`_one` present, `_other` absent) leaves no base key, so
+    // the plural roots have to be audited too — otherwise a bundle could look
+    // "pluralised" while still rendering a raw key for a plural count.
+    const audited = Object.keys(bundle).filter((key) => !PLURAL_SUFFIX.test(key));
+    roots.forEach((root) => {
+      if (audited.indexOf(root) < 0) audited.push(root);
+    });
+
+    audited.forEach((key) => {
+      const value = bundle[key];
+
+      if (typeof value === 'string' && LENGTH_PATTERN.test(value)) {
+        report.countInterpolations.push({ namespace: ns, locale, key, reason: 'interpolates an array length; needs a count option' });
+        return;
+      }
+
+      const needsPlural = (typeof value === 'string' && COUNT_PATTERN.test(value)) || roots.has(key);
+      if (!needsPlural) return;
+
+      const hasOne = Object.prototype.hasOwnProperty.call(bundle, `${key}_one`);
+      const hasOther = Object.prototype.hasOwnProperty.call(bundle, `${key}_other`);
+      // English (and the reference generally) needs `_one` + `_other`; a
+      // language with more forms still has to supply those two at minimum.
+      if (!hasOne || !hasOther) {
+        report.plurals.push({
+          namespace: ns,
+          locale,
+          key,
+          missing: [
+            ...(hasOne ? [] : ['_one']),
+            ...(hasOther ? [] : ['_other']),
+          ],
+        });
+      }
+    });
+  });
 
   present
     .filter((locale) => locale !== reference)
@@ -162,6 +241,16 @@ if (asJson) {
   if (report.untranslated.length === 0) console.log('  none');
   report.untranslated.forEach(({ namespace, locale }) => console.log(`  ${locale}: ${namespace}`));
 
+  console.log('\nPlural forms (count-bearing keys must carry _one and _other):');
+  if (report.plurals.length === 0) console.log('  complete');
+  report.plurals.forEach(({ namespace, locale, key, missing }) => console.log(
+    `  ${locale}/${namespace}: ${key} missing [${missing.join(', ')}]`,
+  ));
+
+  console.log('\nCount interpolations that cannot be pluralised as written:');
+  if (report.countInterpolations.length === 0) console.log('  none');
+  report.countInterpolations.forEach(({ namespace, locale, key }) => console.log(`  ${locale}/${namespace}: ${key}`));
+
   console.log('\nKey alignment:');
   if (report.alignment.length === 0) console.log('  aligned');
   report.alignment.forEach(({
@@ -178,4 +267,11 @@ if (asJson) {
   });
 }
 
-process.exit(report.coverage.length > 0 || report.alignment.length > 0 ? 1 : 0);
+process.exit(
+  report.coverage.length > 0
+  || report.alignment.length > 0
+  || report.plurals.length > 0
+  || report.countInterpolations.length > 0
+    ? 1
+    : 0,
+);
