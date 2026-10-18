@@ -26,7 +26,7 @@ import { service } from '@reactory/server-core/application/decorators/service';
     { id: 'core.ReactoryModelRegistry@1.0.0', alias: 'modelService' }
   ],
 })
-class OrganizationService implements Reactory.Service.IReactoryOrganizationService {
+export class OrganizationService implements Reactory.Service.IReactoryOrganizationService {
 
   name: string = 'OrganizationService';
   nameSpace: string = 'core';
@@ -40,6 +40,38 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   constructor(props: any, context: any) {
     this.context = context;
 
+  }
+
+  /**
+   * Resolves the execution context that owns this call. Callers should pass
+   * their request context explicitly; `this.context` remains the fallback for
+   * legacy call sites and is, by design, the caller's context when resolved
+   * through ServiceManager (singletons are exposed through a per-caller
+   * facade).
+   */
+  private resolveExecutionContext(
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Reactory.Server.IReactoryContext {
+    const context = executionContext || this.context;
+    if (!context) {
+      throw new ApiError('An execution context is required to determine the acting user');
+    }
+    return context;
+  }
+
+  /**
+   * Returns the id of the user performing the operation. An unresolved actor
+   * is an error: silently attributing work to the system user is exactly the
+   * defect this exists to prevent.
+   */
+  private resolveActorId(
+    executionContext?: Reactory.Server.IReactoryContext
+  ): any {
+    const { user } = this.resolveExecutionContext(executionContext);
+    if (!user || !user._id) {
+      throw new ApiError('An authenticated user is required to determine the acting user');
+    }
+    return user._id;
   }
 
   /***
@@ -88,7 +120,11 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 
   @roles(['BUSINESS_UNIT_ADMIN', 'ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
-  async createBusinessUnit(organization_id: string | number | ObjectId, name: string): Promise<Reactory.Models.IBusinessUnitDocument> {
+  async createBusinessUnit(
+    organization_id: string | number | ObjectId,
+    name: string,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IBusinessUnitDocument> {
     
       if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
 
@@ -122,7 +158,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
         createdAt: $now,
         updatedAt: $now,
         deleted: false,
-        owner: this.context.user._id
+        owner: this.resolveActorId(executionContext)
       });
       await $business_unit.save().then();
       if (!organization.businessUnits) organization.businessUnits = [];
@@ -163,7 +199,11 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
-  async createTeam(organization_id: string | number | ObjectId, name: string): Promise<Reactory.Models.ITeamDocument> {
+  async createTeam(
+    organization_id: string | number | ObjectId,
+    name: string,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.ITeamDocument> {
     
     if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
 
@@ -191,6 +231,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
     // add a new business unit if we do not find any matches
     let $now = Date.now();
+    const actorId = this.resolveActorId(executionContext);
     $team = new Team({
       _id: new ObjectId(),
       organization: new ObjectId(organization_id),
@@ -200,13 +241,13 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
       createdAt: $now,
       updatedAt: $now,
       deleted: false,
-      owner: this.context.user._id
+      owner: actorId
     });
     organization.teams = organization.teams || [];
     organization.teams.push($team);
     $team.organization = organization._id;
-    $team.createdBy = this.context.user._id;
-    $team.updatedBy = this.context.user._id;    
+    $team.createdBy = actorId;
+    $team.updatedBy = actorId;    
     await $team.save().then();
     await organization.save().then()
 
@@ -281,7 +322,11 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
-  async updateTeam(team_id: string | number | ObjectId, updates: any): Promise<Reactory.Models.ITeamDocument> {
+  async updateTeam(
+    team_id: string | number | ObjectId,
+    updates: any,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.ITeamDocument> {
     
     if (ObjectId.isValid(team_id) === false) throw new ApiError(`param team_id is not a valid ${team_id}`);
 
@@ -297,14 +342,18 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     if (updates.avatar) team.avatar = updates.avatar;
 
     team.updatedAt = Date.now();
-    team.updatedBy = this.context.user._id;
+    team.updatedBy = this.resolveActorId(executionContext);
 
     await team.save().then();
     return team;
   }
 
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
-  async addMemberToTeam(team_id: string | number | ObjectId, member_id: string | number | ObjectId): Promise<boolean> {
+  async addMemberToTeam(
+    team_id: string | number | ObjectId,
+    member_id: string | number | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<boolean> {
     
     if (ObjectId.isValid(team_id) === false) throw new ApiError(`param team_id is not a valid ${team_id}`);
     if (ObjectId.isValid(member_id) === false) throw new ApiError(`param member_id is not a valid ${member_id}`);
@@ -327,14 +376,18 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     team.members = team.members || [];
     team.members.push(user._id);
     team.updatedAt = Date.now();
-    team.updatedBy = this.context.user._id;
+    team.updatedBy = this.resolveActorId(executionContext);
 
     await team.save().then();
     return true;
   }
 
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
-  async removeMemberFromTeam(team_id: string | number | ObjectId, member_id: string | number | ObjectId): Promise<boolean> {
+  async removeMemberFromTeam(
+    team_id: string | number | ObjectId,
+    member_id: string | number | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<boolean> {
     
     if (ObjectId.isValid(team_id) === false) throw new ApiError(`param team_id is not a valid ${team_id}`);
     if (ObjectId.isValid(member_id) === false) throw new ApiError(`param member_id is not a valid ${member_id}`);
@@ -353,7 +406,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     if (team.members) {
       team.members = team.members.filter((memberId: any) => !memberId.equals(user._id));
       team.updatedAt = Date.now();
-      team.updatedBy = this.context.user._id;
+      team.updatedBy = this.resolveActorId(executionContext);
       await team.save().then();
     }
 
@@ -361,7 +414,10 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
-  async deleteTeam(team_id: string | number | ObjectId): Promise<boolean> {
+  async deleteTeam(
+    team_id: string | number | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<boolean> {
     
     if (ObjectId.isValid(team_id) === false) throw new ApiError(`param team_id is not a valid ${team_id}`);
 
@@ -373,7 +429,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     // Soft delete
     team.deleted = true;
     team.updatedAt = Date.now();
-    team.updatedBy = this.context.user._id;
+    team.updatedBy = this.resolveActorId(executionContext);
 
     await team.save().then();
     return true;
@@ -475,7 +531,12 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
-  async uploadOrganizationImage(id: string, file: Reactory.Service.IFile, imageType: string): Promise<Reactory.Models.IOrganizationDocument> {
+  async uploadOrganizationImage(
+    id: string,
+    file: Reactory.Service.IFile,
+    imageType: string,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IOrganizationDocument> {
 
     if (!id) {
       throw new ApiError('Cannot upload image for null id')
@@ -489,7 +550,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     let virtualPath = `/organization/${organization._id}/`;
     let filename = `${imageType}_${organization._id}_default`;
 
-    const fileSvc: Reactory.Service.IReactoryFileService = this.context.getService('core.ReactoryFileService@1.0.0');
+    const fileSvc: Reactory.Service.IReactoryFileService = this.resolveExecutionContext(executionContext).getService('core.ReactoryFileService@1.0.0');
 
     const reactoryFile: Reactory.Models.IReactoryFile = await fileSvc.uploadFile({
       catalog: false,
@@ -512,8 +573,13 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 
   @roles(['USER'])
-  async getOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc'): Promise<Reactory.Models.IOrganizationDocument[]> {
-    const { user, partner } = this.context;
+  async getOrganizationsForLoggedInUser(
+    search: string,
+    sort: string,
+    direction: string = 'asc',
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IOrganizationDocument[]> {
+    const { user, partner } = this.resolveExecutionContext(executionContext);
     const sortByf = sort || 'name';
   
     if (user.hasAnyRole(partner._id) === false) return [];
@@ -526,7 +592,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     }
 
     const _membershipOrganizationIds: any[] = [];
-    this.context.user.memberships.forEach((membership) => {
+    user.memberships.forEach((membership) => {
       if (
         membership.organizationId &&
         membership.clientId.equals(partner._id) &&
@@ -549,9 +615,10 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     sort: string,
     direction: string = 'asc',
     paging: Reactory.Models.IPagingRequest,
+    executionContext?: Reactory.Server.IReactoryContext,
   ): Promise<{ paging: Reactory.Models.IPagingResult; organizations: Reactory.Models.IOrganizationDocument[] }> {
 
-    const { user, partner } = this.context;
+    const { user, partner } = this.resolveExecutionContext(executionContext);
     const sortBy = sort || 'name';
     const page = paging?.page ?? 1;
     const pageSize = paging?.pageSize ?? 10;
@@ -574,7 +641,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
     if (!isAdmin) {
       const _membershipOrganizationIds: any[] = [];
-      this.context.user.memberships.forEach((membership) => {
+      user.memberships.forEach((membership) => {
         if (
           membership.organizationId &&
           membership.clientId.equals(partner._id) &&

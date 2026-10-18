@@ -2,18 +2,23 @@ import Reactory from "@reactorynet/reactory-core";
 import logger from "@reactory/server-core/logging";
 import modules from "@reactory/server-core/modules";
 import ApiError from "@reactory/server-core/exceptions";
+import {
+  getContextBoundInstance,
+  unwrapContextBoundInstance,
+} from "@reactory/server-core/services/serviceExecutionContext";
 
 type DependencySetter = <T>(deps: T) => void;
 
 class ServiceManager {
   private services: Reactory.Service.IReactoryServiceDefinition<any>[] = [];
   private serviceRegister: Reactory.Service.IReactoryServiceRegister = {};
-  private context: Reactory.Server.IReactoryContext;
   private instances: any = {};
   private static instance: ServiceManager;
 
-  private constructor(context: Reactory.Server.IReactoryContext) {
-    this.context = context;
+  // The manager itself is process-wide (its first caller's context is not used):
+  // the caller context is a per-request concern and is applied per resolution,
+  // never stored. The parameter is kept for API compatibility.
+  private constructor(_context: Reactory.Server.IReactoryContext) {
     this.getAlias = this.getAlias.bind(this);
     this.getService = this.getService.bind(this);
     this.init = this.init.bind(this);
@@ -173,8 +178,13 @@ class ServiceManager {
        * that are for the entire life period of the service uptime.
        */
       const singleton_key = `svc_instance::${id}`;
-      if (instances[singleton_key] && effectiveLifeCycle === "singleton") {        
-        return instances[singleton_key];
+      if (instances[singleton_key] && effectiveLifeCycle === "singleton") {
+        // The cached instance was constructed once (usually with the system
+        // context). Return a facade bound to THIS caller so `this.context`
+        // inside the service resolves to the calling user/partner. Mutating
+        // the shared instance's context instead would race between
+        // interleaved requests.
+        return getContextBoundInstance(instances[singleton_key], context);
       }
 
       let svcProps = {};
@@ -211,13 +221,13 @@ class ServiceManager {
             try {
               // Call the setter function
               //@ts-ignore
-              svc[setterName]($deps[dependcyAlias]);
+              svc[setterName](unwrapContextBoundInstance($deps[dependcyAlias]));
             } catch (setterError) {
               // if there is an error, we log it and continue
               // we set the dependency on the service object
               // directly.
               //@ts-ignore
-              svc[dependcyAlias] = $deps[dependcyAlias];
+              svc[dependcyAlias] = unwrapContextBoundInstance($deps[dependcyAlias]);
               context.warn(
                 `🚨 Setter error ${setterName}; ${setterError?.message ?? "Unknown"} 🚨`,
                 { service_id: id, props, setterError },
@@ -228,7 +238,7 @@ class ServiceManager {
             // if there is no setter function, we set the dependency on the service object
             // directly.
             //@ts-ignore
-            svc[dependcyAlias] = $deps[dependcyAlias];
+            svc[dependcyAlias] = unwrapContextBoundInstance($deps[dependcyAlias]);
           }
         }
       });
@@ -295,6 +305,12 @@ class ServiceManager {
       // add telemetry shortcut to the service
       if (!svc.telemetry || typeof svc.telemetry !== "object") {
         svc.telemetry = context.telemetry;
+      }
+
+      if (effectiveLifeCycle === "singleton") {
+        // Same contract as the cache-hit path above: the singleton is shared,
+        // the execution context is not.
+        return getContextBoundInstance(svc, context);
       }
 
       return svc;

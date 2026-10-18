@@ -12,6 +12,10 @@ import User from "../User";
 import { strongRandom } from "@reactory/server-core/utils";
 import { ObjectId } from "mongodb";
 import { acquireMasterLock, MasterLock } from "../../utils/MasterLock";
+// Type-only import (erased at runtime, so no models <- service cycle): the
+// concrete service accepts an explicit execution context on its mutating
+// methods, which the shared interface does not declare yet.
+import type { OrganizationService } from "../../services/OrganizationService";
 
 const { clients } = CoreData;
 const CLIENT_CONFIGURATION_LOCK = "reactory-client-configuration-startup";
@@ -885,10 +889,9 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
         let businessUnitDocument: Reactory.Models.IBusinessUnitDocument | null =
           null;
         let teamDocuments: Reactory.Models.ITeamDocument[] = [];
-        const orgService =
-          context.getService<Reactory.Service.IReactoryOrganizationService>(
-            "core.OrganizationService@1.0.0"
-          );
+        const orgService = context.getService<OrganizationService>(
+          "core.OrganizationService@1.0.0"
+        );
 
         // check the type of the organization and then load / create it if it does not exist
         if (organization) {
@@ -945,7 +948,8 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
               } else {
                 businessUnitDocument = await orgService.createBusinessUnit(
                   organizationDocument._id,
-                  businessUnit
+                  businessUnit,
+                  context
                 );
               }
             }
@@ -963,7 +967,8 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
             } else {
               businessUnitDocument = await orgService.createBusinessUnit(
                 organizationDocument._id,
-                (businessUnit as unknown as Reactory.Models.IBusinessUnit).name
+                (businessUnit as unknown as Reactory.Models.IBusinessUnit).name,
+                context
               );
             }
           }
@@ -1003,7 +1008,8 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
                 } else {
                   const newTeam = await orgService.createTeam(
                     organizationDocument._id,
-                    team
+                    team,
+                    context
                   );
                   teamDocuments.push(newTeam);
                 }
@@ -1020,7 +1026,8 @@ const onStartup = async (context: Reactory.Server.IReactoryContext) => {
               } else {
                 const newTeam = await orgService.createTeam(
                   organizationDocument._id,
-                  teamName
+                  teamName,
+                  context
                 );
                 teamDocuments.push(newTeam);
               }
