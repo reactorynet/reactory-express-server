@@ -678,9 +678,6 @@ input InvitePeer {
 }
 
 """
-Input payload for updating basic user information.
-"""
-"""
 The user's localisation preferences.
 """
 type UserIl8n {
@@ -713,6 +710,9 @@ input UserIl8nInput {
   dateTimeFormat: String
 }
 
+"""
+Input payload for updating basic user information.
+"""
 input UpdateUserInput {
   id: String
   email: String
