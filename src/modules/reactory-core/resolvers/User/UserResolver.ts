@@ -4,7 +4,9 @@ import Reactory from '@reactorynet/reactory-core';
 import { ObjectId } from 'mongodb';
 import lodash from 'lodash';
 import crypto from 'crypto';
-import { InsufficientPermissions } from '@reactory/server-core/exceptions';
+import ApiError, { InsufficientPermissions } from '@reactory/server-core/exceptions';
+import { getAvailableLanguages } from '@reactory/server-core/express/i18n/language';
+import { validateUserLocale } from '@reactory/server-modules/reactory-core/utils/userLanguage';
 import { PagedUserResults, ReactoryUserFilterInput, ReactoryUserQueryFailed, ReactoryUserQueryResult } from './types';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
@@ -173,6 +175,38 @@ class UserResolver {
     if (typeof password !== 'string') throw new Error('password expects string input');
     if (password !== confirmPassword) throw new Error('Passwords do not match');
     return context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0').setUserPassword(context.user._id, password, authToken);
+  }
+
+  /**
+   * Persists the signed-in user's language choice.
+   *
+   * Self-service on purpose: the target is always `context.user`, so this cannot
+   * be used to rewrite someone else's preference. The value is validated
+   * against the shipped locales — accepting an arbitrary tag would store a
+   * locale with no bundles and silently pin the account to English forever.
+   *
+   * A language the server does not ship is rejected rather than ignored: a
+   * silent success would leave the client believing the choice was saved.
+   */
+  @mutation('setUserLanguage')
+  async setUserLanguage(
+    obj: any,
+    { language }: { language: string },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const userId = context.user?._id?.toString();
+    if (!userId) throw new InsufficientPermissions('A signed-in user is required to set a language');
+
+    const locale = validateUserLocale(language);
+    if (!locale) {
+      throw new ApiError(`Unsupported language \"${language}\"`, {
+        available: getAvailableLanguages(),
+      });
+    }
+
+    return context
+      .getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0')
+      .updateUser({ id: userId, il8n: { locale } } as any);
   }
 
   @mutation('deleteUser')

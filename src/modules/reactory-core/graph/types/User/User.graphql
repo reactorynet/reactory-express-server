@@ -399,6 +399,12 @@ type User {
   AI agents linked to this user.
   """
   linked_agents: [ReactoryUserLinkedAgent]
+
+  """
+  The user's persisted localisation preferences, including the language the
+  account should render in on any device.
+  """
+  il8n: UserIl8n
 }
 
 """
@@ -674,6 +680,39 @@ input InvitePeer {
 """
 Input payload for updating basic user information.
 """
+"""
+The user's localisation preferences.
+"""
+type UserIl8n {
+  """
+  Normalised language code (`af`, not `af-ZA`), validated against the shipped
+  locale folders when written.
+  """
+  locale: String
+  """
+  Date format preference, if the user has set one.
+  """
+  dateFormat: String
+  """
+  Time format preference, if the user has set one.
+  """
+  timeFormat: String
+  """
+  Date and time format preference, if the user has set one.
+  """
+  dateTimeFormat: String
+}
+
+"""
+Input for updating the user's localisation preferences.
+"""
+input UserIl8nInput {
+  locale: String
+  dateFormat: String
+  timeFormat: String
+  dateTimeFormat: String
+}
+
 input UpdateUserInput {
   id: String
   email: String
@@ -686,6 +725,7 @@ input UpdateUserInput {
   providerId: String
   lastLogin: Date
   deleted: Boolean
+  il8n: UserIl8nInput
 }
 
 """
@@ -875,6 +915,12 @@ extend type Mutation {
   Updates the user's password.
   """
   setPassword(input: UpdatePasswordInput!): User @auth(roles: ["USER", "ADMIN"])
+
+  """
+  Persists the signed-in user's language preference so it follows them to a
+  new browser or device. Rejects a language the server does not ship.
+  """
+  setUserLanguage(language: String!): User @auth(roles: ["USER", "ADMIN"])
   
   """
   Confirms the peer list for a user, finalizing a review or setup step.
