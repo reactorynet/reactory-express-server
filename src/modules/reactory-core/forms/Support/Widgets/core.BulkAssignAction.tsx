@@ -1,4 +1,5 @@
 import Reactory from '@reactorynet/reactory-core';
+import { getSelectedTicketsListSx } from './bulkActionTheme';
 
 interface BulkAssignActionDependencies {
   React: Reactory.React;
@@ -325,7 +326,7 @@ const BulkAssignAction = (props: BulkAssignActionProps) => {
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Selected Tickets:
               </Typography>
-              <List dense sx={{ maxHeight: 200, overflow: 'auto', bgcolor: 'grey.50', borderRadius: 1 }}>
+              <List dense sx={getSelectedTicketsListSx()}>
                 {selectedTickets.map((ticket) => (
                   <ListItem key={ticket.id}>
                     <ListItemText

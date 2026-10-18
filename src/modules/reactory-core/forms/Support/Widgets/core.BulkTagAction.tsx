@@ -1,4 +1,5 @@
 import Reactory from '@reactorynet/reactory-core';
+import { getSelectedTicketsListSx } from './bulkActionTheme';
 
 interface BulkTagActionDependencies {
   React: Reactory.React;
@@ -321,7 +322,7 @@ const BulkTagAction = (props: BulkTagActionProps) => {
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Selected Tickets:
               </Typography>
-              <List dense sx={{ maxHeight: 200, overflow: 'auto', bgcolor: 'grey.50', borderRadius: 1 }}>
+              <List dense sx={getSelectedTicketsListSx()}>
                 {selectedTickets.map((ticket) => (
                   <ListItem key={ticket.id}>
                     <ListItemText
