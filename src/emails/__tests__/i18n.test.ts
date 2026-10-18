@@ -95,9 +95,16 @@ describe('resolveEmailLocale', () => {
     expect(resolveEmailLocale(null, 'en')).toBe('en');
   });
 
-  it('ignores a stored language that is no longer shipped', () => {
-    // `zz` has no locale folder; keeping it would render raw keys forever.
-    expect(resolveEmailLocale({ il8n: { locale: 'zz' } }, 'en')).toBe('en');
+  it('does not depend on the locale folders being mounted', () => {
+    // Regression: resolving validated the stored locale against the on-disk
+    // locale list, so a checkout or deployment without the i18n data volume
+    // silently reverted every recipient to English. A missing bundle is handled
+    // per key by fallbackLng, so the account's choice is returned as-is.
+    expect(resolveEmailLocale({ il8n: { locale: 'zz' } }, 'en')).toBe('zz');
+  });
+
+  it('discards a stored value that is not a language tag', () => {
+    expect(resolveEmailLocale({ il8n: { locale: '../../etc/passwd' } }, 'en')).toBe('en');
   });
 });
 

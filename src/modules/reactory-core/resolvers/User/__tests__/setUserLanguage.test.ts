@@ -1,4 +1,8 @@
+import { mkdirSync, mkdtempSync, readdirSync, rmdirSync, unlinkSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import UserResolver from '../UserResolver';
+import { resetAvailableLanguages } from '@reactory/server-core/express/i18n/language';
 
 jest.mock('@reactory/server-core/logging', () => ({
   debug: jest.fn(),
@@ -14,7 +18,22 @@ jest.mock('@reactory/server-core/logging', () => ({
  *
  *   * the target is always the *caller* — it cannot be pointed at another user;
  *   * only a language the server actually ships may be stored.
+ *
+ * The shipped list is derived from the locale folders on disk, so the test owns
+ * that tree. Without a fixture this passes on a developer machine (which has
+ * `reactory-data/i18n/af`) and fails in the server-only CI checkout, where the
+ * only "available" language is the default — the exact class of
+ * environment-dependent test the i18n suite's fixture helper exists to prevent.
  */
+const removeTree = (directory: string): void => {
+  readdirSync(directory, { withFileTypes: true }).forEach((entry) => {
+    const entryPath = join(directory, entry.name);
+    if (entry.isDirectory()) removeTree(entryPath);
+    else unlinkSync(entryPath);
+  });
+  rmdirSync(directory);
+};
+
 const setUserLanguage = async (language: string, context: any) => {
   const instance: any = Object.create((UserResolver as any).prototype);
   return instance.setUserLanguage({}, { language }, context);
@@ -23,6 +42,24 @@ const setUserLanguage = async (language: string, context: any) => {
 const makeContext = (userId: string | null, updateUser = jest.fn()) => ({
   user: userId ? { _id: { toString: () => userId } } : null,
   getService: jest.fn().mockReturnValue({ updateUser }),
+});
+
+let dataRoot: string;
+
+beforeEach(() => {
+  dataRoot = mkdtempSync(join(tmpdir(), 'reactory-user-language-'));
+  mkdirSync(join(dataRoot, 'i18n', 'en'), { recursive: true });
+  mkdirSync(join(dataRoot, 'i18n', 'af'), { recursive: true });
+
+  process.env.APP_DATA_ROOT = dataRoot;
+  // The language scan is memoised, so it must be cleared for the new tree.
+  resetAvailableLanguages();
+});
+
+afterEach(() => {
+  delete process.env.APP_DATA_ROOT;
+  resetAvailableLanguages();
+  removeTree(dataRoot);
 });
 
 describe('setUserLanguage', () => {
@@ -35,13 +72,9 @@ describe('setUserLanguage', () => {
     expect(updateUser).toHaveBeenCalledWith({ id: 'user-1', il8n: { locale: 'af' } });
   });
 
-  /**
-   * The value is validated against the built-in list, which is where `af`
-   * comes from in this test environment. An unsupported tag must be rejected
-   * rather than stored: a locale with no bundles would silently pin the account
-   * to English on every device.
-   */
   it('rejects a language the server does not ship', async () => {
+    // `zz` has no locale folder. Storing it would pin the account to a language
+    // with no bundles, so the write is rejected rather than silently accepted.
     const updateUser = jest.fn();
     const context = makeContext('user-1', updateUser);
 

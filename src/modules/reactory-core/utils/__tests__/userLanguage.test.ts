@@ -46,10 +46,19 @@ describe('resolveUserLocale', () => {
     expect(resolveUserLocale(null, 'en')).toBe('en');
   });
 
-  it('returns the fallback when the stored language is no longer shipped', () => {
-    // A locale folder removed after a user chose it must not pin the account to
-    // a language with no bundles.
-    expect(resolveUserLocale({ il8n: { locale: 'zz' } }, 'en')).toBe('en');
+  it('returns a stored language even when no bundle is present on disk', () => {
+    // Deliberately NOT validated against the shipped locales here. What this
+    // process has mounted is not a property of the account: validating on read
+    // meant a deployment without the data volume (or a CI checkout with no
+    // i18n/ tree) silently reverted every user to English. A missing bundle is
+    // handled per key by i18next's fallbackLng instead.
+    expect(resolveUserLocale({ il8n: { locale: 'zz' } }, 'en')).toBe('zz');
+  });
+
+  it('discards a stored value that is not a language tag', () => {
+    // A hand-edited or corrupted field must not become a bundle lookup path.
+    expect(resolveUserLocale({ il8n: { locale: '../../etc/passwd' } }, 'en')).toBe('en');
+    expect(resolveUserLocale({ il8n: { locale: '  ' } }, 'en')).toBe('en');
   });
 
   it('normalises the fallback', () => {
