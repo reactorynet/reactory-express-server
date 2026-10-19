@@ -10,10 +10,14 @@ schema and resolvers, the CLI and the migrations.
 
 The canonical documentation for this module is **not** in this file. Read it here:
 
-- **[Module page](../../../docs/06-modules/reactory-core/README.md)** — purpose, status, data model,
-  operations, limitations and the evidence index.
-- **[Generated reference](../../../docs/07-reference/modules/reactory-core.md)** — every service,
-  GraphQL type, root field, form, workflow, CLI command, feature flag and migration, with `file:line`.
+- **[Module page](https://github.com/reactorynet/reactory-docs/blob/master/06-modules/reactory-core/README.md)** — purpose, status, data model, operations,
+  limitations and the evidence index.
+- **[Generated reference](https://github.com/reactorynet/reactory-docs/blob/master/07-reference/modules/reactory-core.md)** — every service, GraphQL type,
+  root field, form, workflow, CLI command, feature flag and migration, with `file:line`.
+
+Both live in the `reactory-docs` repository, which owns narrative documentation; this
+repository keeps only contributor detail. There is no `docs/06-modules/` or
+`docs/07-reference/` here — do not create one. If the two disagree, the module page wins.
 
 This README is contributor-oriented only: how to work in the module. Behaviour claims belong on the
 module page.
@@ -52,16 +56,20 @@ yarn typecheck
 
 ## Regenerating the reference
 
-The tables in the generated reference are parsed from this directory. After changing a service
-definition, an SDL file, a form, a workflow or the module's feature flags:
+The tables in the generated reference are parsed from this directory, but the generator and
+the output both live in `reactory-docs`. After changing a service definition, an SDL file, a
+form, a workflow or the module's feature flags, run this **in the `reactory-docs` checkout**
+with `REACTORY_SERVER_ROOT` pointing here:
 
 ```bash
-node scripts/docs/generate-core-module-reference.js
+node scripts/generate-core-module-reference.js           # regenerate
+node scripts/generate-core-module-reference.js --check    # exit 1 if stale
+node scripts/verify-docs.js --require-source             # full documentation guard
 ```
 
-Commit the regenerated `docs/07-reference/modules/reactory-core.md` and
-`docs/06-modules/index.md` with your change. `test/docs/module-documentation.test.ts` fails if they are
-stale — an out-of-date table is a CI failure, not a review comment.
+Commit the regenerated `07-reference/modules/reactory-core.md` and
+`06-modules/index.md` in `reactory-docs` alongside the change that caused them. A stale table
+is a CI failure there, not a review comment here.
 
 ## Conventions
 

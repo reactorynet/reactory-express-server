@@ -3,10 +3,13 @@
 Repo-local working context for agents editing this module. Behaviour documentation lives in the central
 docs corpus, not here:
 
-- **[Module page](../../../docs/06-modules/reactory-core/README.md)** — purpose, status, data model,
+- **[Module page](https://github.com/reactorynet/reactory-docs/blob/master/06-modules/reactory-core/README.md)** — purpose, status, data model,
   operations, limitations, evidence index.
-- **[Generated reference](../../../docs/07-reference/modules/reactory-core.md)** — services, GraphQL
-  surface, forms, workflows, CLI, feature flags, migrations. Generated; never hand-edited.
+- **[Generated reference](https://github.com/reactorynet/reactory-docs/blob/master/07-reference/modules/reactory-core.md)** — services, GraphQL surface,
+  forms, workflows, CLI, feature flags, migrations. Generated; never hand-edited.
+
+Both live in the `reactory-docs` repository. `06-modules/` and `07-reference/` are **not**
+in this repository — do not create them here.
 
 If this file and the module page disagree, **the module page is right.**
 
@@ -38,8 +41,9 @@ listed in §2 of the generated reference.
 5. **Adding a workflow?** Drop the YAML in `workflows/` and add an entry to `WORKFLOW_FILES` in
    `workflows/index.ts`. Note the loader **drops invalid YAML silently** — check the registry after
    adding one.
-6. **Changing any of the above?** Re-run `node scripts/docs/generate-core-module-reference.js` and
-   commit the regenerated reference. `test/docs/module-documentation.test.ts` enforces it.
+6. **Changing any of the above?** Regenerate the reference in the `reactory-docs` checkout:
+   `node scripts/generate-core-module-reference.js --check` there reports whether the
+   committed tables are stale. `scripts/verify-docs.js` in that repo is the full guard.
 
 ## Conventions
 
@@ -60,7 +64,6 @@ listed in §2 of the generated reference.
 ./bin/jest.sh reactory local 'src/modules/reactory-core'   # module tests
 ./bin/jest.sh reactory local 'UserService'                 # one suite
 yarn typecheck                                            # ratchet check
-node scripts/docs/generate-core-module-reference.js        # regenerate docs tables
 ```
 
 ## Known traps
