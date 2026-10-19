@@ -139,6 +139,35 @@ The support request form can be invoked from anywhere in the application.
 
 ### Support Ticket
 
+A single ticket, viewed on its own page. The page is addressed by the ticket
+reference and mounted like the workflow details page:
+
+```ts
+{
+  key: 'support-ticket-details',
+  // References look like `REACTORY-302016408/20261019/3365961056` and contain
+  // forward slashes, so a `:reference` segment can never match one. The splat
+  // captures the reference verbatim; the form receives it as `ticketReference`.
+  path: '/support/tickets/*',
+  exact: true,
+  public: false,
+  roles: ['USER', 'ADMIN', 'SUPPORT_ADMIN', 'SUPPORT'],
+  componentFqn: 'core.SupportTicketDetails@1.0.0',
+  componentProps: {
+    ticketReference: "${route['*']}",
+  },
+}
+```
+
+The form runs `ReactorySupportTicketByReference(reference:)` — the single-ticket
+query, which applies the same read rules as the service's `getTicket` (support
+staff read any ticket, everybody else only their own or assigned tickets) — and
+renders `core.SupportTicketDetailPanel@1.0.0`, the very widget the grids use as
+their expanded detail panel. The reference column in both grids links here.
+
+The reference/URL rules live in [`shared/ticketReference.ts`](./shared/ticketReference.ts)
+so the route, the page and the grids cannot drift apart.
+
 ### Support Tickets
 
 Grid form that supports searching, grouping and bulk actions on the support tickets

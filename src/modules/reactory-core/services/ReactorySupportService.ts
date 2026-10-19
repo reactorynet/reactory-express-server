@@ -332,6 +332,31 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     return ticket;
    }
 
+  /**
+   * Read authorisation shared by every single-ticket lookup.
+   *
+   * Support staff see the whole tenant; everybody else may only read a ticket
+   * they created or are assigned to. `createdBy`/`assignedTo` may be a raw
+   * ObjectId or a populated document depending on how the caller loaded the
+   * ticket, so both shapes are handled.
+   */
+  private assertCanViewTicket(ticket: Reactory.Models.ReactorySupportDocument): void {
+    if (this.isAdminUser(this.context)) return;
+
+    const userId = String(this.context.user._id);
+    const idOf = (value: any): string => {
+      if (value === null || value === undefined) return '';
+      return String(value._id ?? value);
+    };
+
+    const isCreator = idOf(ticket.createdBy) === userId;
+    const isAssignee = idOf(ticket.assignedTo) === userId;
+
+    if (!isCreator && !isAssignee) {
+      throw new InsufficientPermissions('User does not have permission to view ticket');
+     }
+   }
+
   @roles(["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"])
   async getTicket(id: string): Promise<Reactory.Models.ReactorySupportDocument> {
 
@@ -342,18 +367,36 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       throw new Error('Ticket not found');
      }
 
-     // Admin/support users can view any ticket
-    if (this.isAdminUser(this.context)) {
-      return ticket;
-     }
+    this.assertCanViewTicket(ticket);
 
-     // Non-admin users can only view tickets they created or are assigned to
-    const isCreator = (ticket.createdBy as ObjectId).equals(this.context.user._id);
-    const isAssignee = (ticket.assignedTo as ObjectId)?.equals(this.context.user._id);
+    return ticket;
+   }
 
-    if (!isCreator && !isAssignee) {
-      throw new InsufficientPermissions('User does not have permission to view ticket');
-     }
+  /**
+   * Load a single ticket by its reference.
+   *
+   * The reference is the ticket's shareable identifier and the key the details
+   * page is addressed by. It is matched exactly (references are stored
+   * upper-case) after stripping the whitespace/slashes a URL can introduce.
+   *
+   * Returns `null` when nothing matches so the details page can render a
+   * "ticket not found" state; a ticket that exists but belongs to somebody else
+   * throws `InsufficientPermissions`, exactly like `getTicket`.
+   */
+  @roles(["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"])
+  async getTicketByReference(reference: string): Promise<Reactory.Models.ReactorySupportDocument | null> {
+    // A URL may arrive with surrounding whitespace or with the trailing slash a
+    // copied link can pick up (the splat captures `/REF/` verbatim). Neither is
+    // part of the stored reference.
+    const normalisedReference = String(reference ?? '').trim().replace(/^\/+|\/+$/g, '');
+    if (normalisedReference.length === 0) return null;
+
+    const ticket = await ReactorySupportTicketModel.findOne({ reference: normalisedReference })
+        .exec() as Reactory.Models.ReactorySupportDocument;
+
+    if (!ticket) return null;
+
+    this.assertCanViewTicket(ticket);
 
     return ticket;
    }

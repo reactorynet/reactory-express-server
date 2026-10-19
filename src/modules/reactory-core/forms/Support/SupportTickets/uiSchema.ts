@@ -1,4 +1,5 @@
 import Reactory from "@reactorynet/reactory-core";
+import { SUPPORT_TICKET_DETAILS_LINK_FORMAT } from '../shared/ticketReference';
 
 const ListUIOptions: Reactory.Client.Components.IMaterialListWidgetOptions = {      
     primaryText: '${itemIndex + 1}. ${item.reference}',
@@ -121,22 +122,30 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
     onClick: 'core.SupportTicketWorkflow@1.0.0/deleteTicket'
   },  
   columns: [
-    // Reference Number - Copyable
+    // Reference — the ticket's shareable identity, and the only sensible link
+    // target for a details page. References contain forward slashes
+    // (PARTNER-HASH/YYYYMMDD/HASH); the details route captures them with a
+    // splat, so the reference is interpolated verbatim (see
+    // ../shared/ticketReference).
     {
       title: 'Ref',
       field: 'reference',
-      width: 120,
-      component: 'core.LabelComponent@1.0.0',
+      width: 240,
+      component: 'LinkFieldWidget',
       props: {
         uiSchema: {
           'ui:options': {
-            variant: 'body2',
-            format: '${rowData.reference}',
-            copyToClipboard: true,
-            style: {
+            component: 'link',
+            format: SUPPORT_TICKET_DETAILS_LINK_FORMAT,
+            title: '${rowData.reference}',
+            icon: 'open_in_new',
+            iconPosition: 'right',
+            iconOptions: { fontSize: 'small' },
+            showLabel: false,
+            sx: {
               fontFamily: 'monospace',
               fontWeight: 600,
-              color: '#1976d2'
+              fontSize: '0.8rem',
             }
           }
         }

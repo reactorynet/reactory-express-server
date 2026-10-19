@@ -53,6 +53,22 @@ class SupportResolver {
     return supportService.pagedRequest({ ...params.filter, createdBy: context.user._id.toString() }, params.paging);
    }
 
+  /**
+   * A single ticket addressed by its human readable reference — the identifier
+   * the details page link carries. The service applies the read rules: support
+   * staff see any ticket in the tenant, everyone else only their own/assigned
+   * tickets. Returns null when the reference matches nothing.
+   */
+  @roles(["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"], 'args.context')
+  @query("ReactorySupportTicketByReference")
+  async ticketByReference(
+      obj: any,
+      params: { reference: string },
+      context: Reactory.Server.IReactoryContext) {
+    const supportService: Reactory.Service.TReactorySupportService = context.getService("core.ReactorySupportService@1.0.0") as Reactory.Service.TReactorySupportService;
+    return (supportService as any).getTicketByReference(params?.reference);
+   }
+
    @property("ReactorySupportTicket", "id")
   ticketId(obj: Reactory.Models.IReactorySupportTicketDocument) {
     return obj._id;
