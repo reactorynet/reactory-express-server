@@ -1,96 +1,78 @@
-# reactory-core -- Server Module Agent Context
+# reactory-core — agent context
 
-## What Is This Module
+Repo-local working context for agents editing this module. Behaviour documentation lives in the central
+docs corpus, not here:
 
-The foundational module of the Reactory server, providing all essential data models, core services, GraphQL resolvers, and pre-built forms that every other module depends on. This module has **priority 0** (loads first) and no dependencies.
+- **[Module page](https://github.com/reactorynet/reactory-docs/blob/master/06-modules/reactory-core/README.md)** — purpose, status, data model,
+  operations, limitations, evidence index.
+- **[Generated reference](https://github.com/reactorynet/reactory-docs/blob/master/07-reference/modules/reactory-core.md)** — services, GraphQL surface,
+  forms, workflows, CLI, feature flags, migrations. Generated; never hand-edited.
 
-- **Module ID**: `reactory-core`
-- **Namespace**: `core`
-- **FQN**: `core.ReactoryServer@1.0.0`
-- **Version**: `1.0.0`
-- **Priority**: `0` (highest -- loads first)
-- **Dependencies**: None
+Both live in the `reactory-docs` repository. `06-modules/` and `07-reference/` are **not**
+in this repository — do not create them here.
 
-## Directory Structure
+If this file and the module page disagree, **the module page is right.**
 
-```
-reactory-core/
-  index.ts              # ReactoryModuleDefinition entry point
-  graph/
-    types/              # GraphQL type definitions
-    directives/         # Custom GraphQL directives
-    queries/            # GraphQL query definitions
-  resolvers/            # GraphQL resolvers (20 resolver groups)
-  services/             # Business logic services (30 entries)
-  models/               # Mongoose/database models (38 entries)
-  forms/                # UI form schema definitions (22 entries)
-  routes/               # Express route definitions
-  cli/                  # CLI command definitions
-  views/                # Server-side view templates
-  middleware/            # Module-specific middleware
-  schema/               # Schema definitions
-  types/                # TypeScript type definitions
-  workflow/             # Workflow engine
-  workflows/            # Workflow definitions
-  protobuf/             # gRPC/protobuf definitions
-  data/                 # Static data (translations)
-  build/                # Build assets
-```
+## Identity
 
-## Key Services
-
-| Service | Purpose |
+| Field | Value |
 |---|---|
-| `EmailService` | Send mail (SendGrid, etc.) |
-| `FetchService` | Abstracted URL calls with user credentials |
-| `FormService` | Form management and resolution |
-| `FormSubmission/` | Generic form submission pipeline (see its README) |
-| `OrganizationService` | Organization CRUD operations |
-| `PdfService` | PDF rendering and file storage |
-| `ReactoryAuditService` | Audit logging |
-| `ReactoryCalendarService` | Calendar management |
-| `ReactoryContentService` | Content management |
-| `ReactoryFileService` | File system operations |
-| `ReactoryModelRegistryService` | Dynamic model registration |
-| `ReactoryModuleCompilerService` | Runtime module compilation (JIT) |
-| `ReactoryNLPService` | Natural language processing |
-| `ReactorySearchService` | Search abstraction |
-| `ReactorySupportService` | Support ticket management |
-| `RedisService` | Redis cache operations |
-| `SystemService` | System-level operations |
-| `TemplateService` | Template rendering (EJS) |
-| `TranslationService` | i18n translation management |
-| `UserService` | User CRUD and authentication |
-| `Workflow/` | Workflow execution engine |
-| `ETL/` | ETL processor services |
-| `Statistics/` | Statistics aggregation |
-| `location/` | Google Maps / geolocation search |
+| `id` | `reactory-core` |
+| `nameSpace` | `core` |
+| `name` | `ReactoryServer` |
+| `version` | `1.0.0` |
+| FQN | `core.ReactoryServer@1.0.0` |
+| `priority` | `0` — loads first |
+| `dependencies` | none |
 
-## Key Models (38 total)
+`index.ts` is the reference implementation of `Reactory.Server.IReactoryModule`. Every extension point
+it contributes — and the four it leaves empty (`clientPlugins`, `serverPlugins`, `grpc`, `pdfs`) — is
+listed in §2 of the generated reference.
 
-User, Organization, BusinessUnit, Team, Application, Menu, Notification, Template, Content, Comment, Task, Project, ProjectBoard, Audit, ReactoryClient, ReactoryCalendar, CoreFile, EmailQueue, ReactorySupportTicket, ReactoryTranslation, Statistic, Theme, Region, PersonalDemographic, UserDemographics, and more.
+## Before you change something
 
-## GraphQL Resolvers (20 groups)
+1. **Adding a service?** Add it to `services/index.ts`. A file that is not in that array is dead code.
+   Give it `lifeCycle` and `serviceType`; do not rely on the defaults.
+2. **Adding SDL?** Add the file to the module list in `graph/types/index.ts`, or it will never load.
+3. **Adding a resolver?** Add the resolver object to the array in `resolvers/index.ts`. SDL and resolvers
+   are maintained separately, so a field with no resolver is possible and will fail at runtime.
+4. **Adding a form?** Add it to `forms/index.ts` and set `registerAsComponent: true` if the client must
+   resolve it by FQN.
+5. **Adding a workflow?** Drop the YAML in `workflows/` and add an entry to `WORKFLOW_FILES` in
+   `workflows/index.ts`. Note the loader **drops invalid YAML silently** — check the registry after
+   adding one.
+6. **Changing any of the above?** Regenerate the reference in the `reactory-docs` checkout:
+   `node scripts/generate-core-module-reference.js --check` there reports whether the
+   committed tables are stale. `scripts/verify-docs.js` in that repo is the full guard.
 
-ApiStatus, Cache, Comment, Emails, Menu, Organization, ReactoryCalendar, ReactoryContent, ReactoryFile, ReactoryForm, ReactoryFormSubmission, SQL, Support, System, Task, Template, User, Workflow.
+## Conventions
 
-## Form Schemas (22 categories)
+- Dependency injection is declared, not imported: `{ id: 'core.X@1.0.0', alias: 'x' }` and the instance
+  arrives as `this.x`.
+- Tenancy: a tenant is a `ReactoryClient`; `context.partner` is the resolved document. Every query that
+  returns tenant data must filter on it.
+- Authorisation: use the `@auth(roles, scope, orgArg, buArg)` directive in SDL. Do not add resolver-level
+  role checks alongside it. Denial throws `UNAUTHENTICATED` or `FORBIDDEN`.
+- Mongo for documents, TypeORM for `reactory_audit`, `reactory_form_submission`, `reactory_user_sessions`,
+  `reactory_rate_limits` and the calendar tables. Check which before writing a query.
+- Services in this directory may be namespaced `reactory.*` rather than `core.*` — resolve by declared
+  FQN, not by path.
 
-Application, Applications, Audit, EmailForms, EmailTemplate, Global, Organization, ReactoryAdmin, ReactoryContentCapture, ReactoryContentList, Samples, Security, Support, User, Widgets, Workflow.
+## Commands
 
-## Coding Conventions
-
-- All services follow the Reactory service pattern with dependency injection
-- Models use Mongoose schemas for MongoDB
-- GraphQL types are defined in `graph/types/` with resolvers in `resolvers/`
-- Forms follow the JSON Schema-based ReactoryForm pattern
-- A form that only needs its data captured declares a `submission` block instead of a graphql mutation - see `services/FormSubmission/README.md`
-- CLI commands are registered via the module definition
-- Protobuf definitions support gRPC communication
-
-## Testing
-
-Tests are run via the server's test infrastructure:
 ```bash
-$REACTORY_SERVER/bin/jest.sh reactory local
+./bin/jest.sh reactory local 'src/modules/reactory-core'   # module tests
+./bin/jest.sh reactory local 'UserService'                 # one suite
+yarn typecheck                                            # ratchet check
 ```
+
+## Known traps
+
+All verified against the current tree; details and evidence in §9 of the module page.
+
+- `services/ETL/Processors/UserImportFileValidation.ts` calls `path.join()` with no arguments and
+  cannot succeed. Do not add it to an import package.
+- `forms/Workflow/SystemDashboard/graphql.ts` declares `pauseWorkflowSystem`,
+  `resumeWorkflowSystem` and `reloadWorkflowConfigurations`; none exist in the schema.
+- `cli/module/module-init.ts`, `cli/module/module-install.ts` and `cli/proto-srv/ProtoServerCli.ts` are
+  not exported from `cli/index.ts`, so they are unreachable from the `reactory` binary.
