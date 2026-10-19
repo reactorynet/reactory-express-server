@@ -1,35 +1,84 @@
-# Reactory Core
-The Reactory Core Module is a collection of reusable building blocks that are used to build applications on the Reactory platform. The module is designed to provide a set of core functionalities that are essential to most applications, such as resolvers, types, directives, workflows, forms, and services.
+# reactory-core
 
+The foundational server module for the Reactory platform: the user/organisation/tenancy model, files
+and CDN, templates and email, SQL/search/cache services, the workflow engine host, the core GraphQL
+schema and resolvers, the CLI and the migrations.
 
-# Workflows
-The core module ships with a CleanCache workflow which is a basic workflow that executes periodically to expunge data from the built in cache.
+**FQN:** `core.ReactoryServer@1.0.0` · **nameSpace:** `core` · **priority:** `0` · **dependencies:** none
 
-# Forms
-The Reactory Core Module provides a set of pre-built forms that can be used to collect and validate user input. These forms are customizable and can be extended to meet the needs of specific applications, however it is suggested that customizations are made in your own custom modules.
+## Documentation
 
-### Services
-The module provides a set of core services that can be used to interact with external systems and APIs. These services provide a consistent API for accessing and manipulating data in external systems. Below is a service list. (Check the services folder in this module, the list below is not complete.)
+The canonical documentation for this module is **not** in this file. Read it here:
 
-* GoogleMapsService - lightweight location search service.
-* ETL Processors (ETL processor experimental - these are used to import users and demographics)
-* EmailService can send mail via sendgrid. Will be updated to send via different service providers.
-* TemplateService - the template service provides the means to manage native reactory templates.
-* FileService - A file system services that allows reactory to write to the reactory data storage folders
-* OrganizationService - An organisation service provides the means to manage organisations in a manner that relates to the system usage.
-* ReactoryPackageManager (ETL package manager - experimental)
-* UserService - A service for user management functions
-* WorkflowService - A service that provides workflow management functions
-* FetchService - A fetch services that abtstract url calls and provides functionality to add user credentials for the logged in user.
-* PdfService - A service used to render PDFs, allows for piping over the stream or creating a PDF and storing in file
-* ReactorySupportService - A basic support management tool that allows tracking of requests specific to the application. The support services are used generally as illustration how to build according to the convention, configuration and customization way of thinking.
-* SystemService - Self explanatory
-* ReactoryFormService - Provides functionality to manage forms.
-* ReactoryModuleCompilerService - Module compiler service used for runtime compilations 
-* ReactoryTranslationService - Provides translation management capability
+- **[Module page](https://github.com/reactorynet/reactory-docs/blob/master/06-modules/reactory-core/README.md)** — purpose, status, data model, operations,
+  limitations and the evidence index.
+- **[Generated reference](https://github.com/reactorynet/reactory-docs/blob/master/07-reference/modules/reactory-core.md)** — every service, GraphQL type,
+  root field, form, workflow, CLI command, feature flag and migration, with `file:line`.
 
+Both live in the `reactory-docs` repository, which owns narrative documentation; this
+repository keeps only contributor detail. There is no `docs/06-modules/` or
+`docs/07-reference/` here — do not create one. If the two disagree, the module page wins.
 
-# Translations
-Current translations is working via i18n translations. Translation files are loaded from the CDN. Translation services updates are in progress that will allow runtime management of translation file via database augmentation.
+This README is contributor-oriented only: how to work in the module. Behaviour claims belong on the
+module page.
 
-The translation service is a work in progress to enhance the features provided by i18n. Allow for user defined translations or provide different translations depending on the execution context of the user.
+## Layout
+
+```
+reactory-core/
+  index.ts        module definition — the reference implementation of IReactoryModule
+  graph/          SDL modules, the @auth directive, resolvers
+  resolvers/      GraphQL resolver map
+  services/       business logic, registered through index.ts
+  models/         mongoose schemas and TypeORM entities
+  forms/          ReactoryForm definitions rendered by the PWA client
+  workflows/      YAML flows + the CleanCache code workflow
+  workflow/       the workflow engine (lifecycle, scheduler, security, YAML steps)
+  migrations/     mongo and TypeORM migrations
+  cli/            CLI command definitions
+  routes/         Express routers (/support, /workflow, /useraccount)
+  middleware/     file SSE transport
+  data/           translations
+```
+
+## Build, test, verify
+
+```bash
+# unit tests for this module
+./bin/jest.sh reactory local 'src/modules/reactory-core'
+
+# a single suite
+./bin/jest.sh reactory local 'UserService'
+
+# typecheck (ratchet against typecheck-baseline.json)
+yarn typecheck
+```
+
+## Regenerating the reference
+
+The tables in the generated reference are parsed from this directory, but the generator and
+the output both live in `reactory-docs`. After changing a service definition, an SDL file, a
+form, a workflow or the module's feature flags, run this **in the `reactory-docs` checkout**
+with `REACTORY_SERVER_ROOT` pointing here:
+
+```bash
+node scripts/generate-core-module-reference.js           # regenerate
+node scripts/generate-core-module-reference.js --check    # exit 1 if stale
+node scripts/verify-docs.js --require-source             # full documentation guard
+```
+
+Commit the regenerated `07-reference/modules/reactory-core.md` and
+`06-modules/index.md` in `reactory-docs` alongside the change that caused them. A stale table
+is a CI failure there, not a review comment here.
+
+## Conventions
+
+- Services declare `id`, `nameSpace`, `name`, `version`, `dependencies` and — ideally — `lifeCycle`
+  and `serviceType`. Two declaration styles exist (`@service({...})` and a `static reactory` object);
+  prefer the decorator in new code.
+- Dependencies are injected by `{ id, alias }`; the alias is the property name on the instance.
+- A tenant is a `ReactoryClient`. Tenant-scoped queries filter by `context.partner._id`.
+- `@auth(roles, scope, orgArg, buArg)` is the only directive. Strict denial is the default; do not
+  add ad-hoc role checks to resolvers that already carry `@auth`.
+- A form that only needs to capture data declares a `submission` block rather than a GraphQL mutation —
+  see `services/FormSubmission/README.md`.
