@@ -30,6 +30,35 @@ const LOCK_TTL_MS: number =
 // Import cron-parser using require to avoid TypeScript import issues
 const CronParser = require('cron-parser');
 
+/**
+ * Validates a timezone against the runtime's IANA database.
+ *
+ * `node-cron` resolves the timezone through `Intl.DateTimeFormat`, which accepts
+ * only IANA zone names such as `Africa/Johannesburg` or `Europe/Berlin`. A
+ * human-friendly offset such as `UTC+2` or `GMT+02:00` throws a `RangeError`
+ * inside `cron.schedule`, which previously aborted `startSchedule` — leaving the
+ * schedule persisted and displayed as ENABLED but with no cron task, so it
+ * silently never ran. Validating up front turns that into a clear error at the
+ * point the operator sets the schedule.
+ */
+export function isValidTimezone(timeZone: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Message used whenever a caller supplies a non-IANA timezone. */
+export function invalidTimezoneMessage(timeZone: string): string {
+  return (
+    `Invalid timezone '${timeZone}'. Schedules require an IANA timezone name ` +
+    `(for example 'Africa/Johannesburg' for UTC+2, or 'Europe/Berlin'), not a ` +
+    `UTC offset.`
+  );
+}
+
 export interface IScheduleConfig {
   id: string;
   name: string;
@@ -353,6 +382,13 @@ export class WorkflowScheduler {
       throw new Error(`Invalid cron expression: ${config.schedule.cron}`);
     }
 
+    // Reject a non-IANA timezone here rather than letting cron.schedule throw
+    // inside startSchedule, which would leave the schedule persisted and showing
+    // as ENABLED while never actually running.
+    if (config.schedule.timezone && !isValidTimezone(config.schedule.timezone)) {
+      throw new Error(invalidTimezoneMessage(config.schedule.timezone));
+    }
+
     // Persist to disk
     this.saveScheduleToFile(config);
 
@@ -409,6 +445,10 @@ export class WorkflowScheduler {
 
     if (!cron.validate(updatedConfig.schedule.cron)) {
       throw new Error(`Invalid cron expression: ${updatedConfig.schedule.cron}`);
+    }
+
+    if (updatedConfig.schedule.timezone && !isValidTimezone(updatedConfig.schedule.timezone)) {
+      throw new Error(invalidTimezoneMessage(updatedConfig.schedule.timezone));
     }
 
     // Stop the current schedule if running
@@ -482,7 +522,14 @@ export class WorkflowScheduler {
 
     try {
       const { config } = scheduledWorkflow;
-      
+
+      // Defensive: a schedule loaded from a hand-edited YAML file never went
+      // through createSchedule. Fail with an actionable message instead of the
+      // raw RangeError, and do not leave the schedule looking ENABLED.
+      if (config.schedule.timezone && !isValidTimezone(config.schedule.timezone)) {
+        throw new Error(invalidTimezoneMessage(config.schedule.timezone));
+      }
+
       // Create the cron task
       const task = cron.schedule(
         config.schedule.cron,

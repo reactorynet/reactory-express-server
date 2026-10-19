@@ -1,4 +1,4 @@
-import { WorkflowScheduler, IScheduleConfig } from '../Scheduler';
+import { WorkflowScheduler, IScheduleConfig, isValidTimezone, invalidTimezoneMessage } from '../Scheduler';
 import { WorkflowRunner } from '../../WorkflowRunner/WorkflowRunner';
 import fs from 'fs';
 import path from 'path';
@@ -15,6 +15,9 @@ jest.mock('node-cron', () => ({
 
 jest.mock('js-yaml', () => ({
   load: jest.fn(),
+  // createSchedule/updateScheduleConfig persist via yaml.dump; without it the
+  // mock is incomplete and any test that writes a schedule throws.
+  dump: jest.fn(() => 'yaml: content'),
 }));
 
 jest.mock('fs', () => ({
@@ -22,6 +25,9 @@ jest.mock('fs', () => ({
   mkdirSync: jest.fn(),
   readdirSync: jest.fn(),
   readFileSync: jest.fn(),
+  // Persisting a schedule writes it; the mock must cover the write path too.
+  writeFileSync: jest.fn(),
+  unlinkSync: jest.fn(),
   watch: jest.fn(),
 }));
 
@@ -650,9 +656,74 @@ describe('WorkflowScheduler', () => {
         schedule: { ...mockScheduleConfig.schedule, cron: 'invalid-cron' },
       });
       
-      await scheduler.initialize();
-      
-      expect(scheduler.getStats().totalSchedules).toBe(0);
+      try {
+        await scheduler.initialize();
+
+        expect(scheduler.getStats().totalSchedules).toBe(0);
+      } finally {
+        // The mock is module-scoped: leaving validate() returning false would
+        // make every later suite reject perfectly valid cron expressions.
+        validate.mockReturnValue(true);
+      }
     });
   });
-}); 
+});
+
+describe('timezone validation', () => {
+  // Self-contained: do not inherit cron.validate state from earlier suites.
+  beforeEach(() => {
+    const { validate } = require('node-cron');
+    validate.mockReturnValue(true);
+  });
+
+  // Regression: a schedule configured with a UTC offset ('UTC+2') was accepted by
+  // the UI and persisted as ENABLED, but node-cron resolves the zone through
+  // Intl.DateTimeFormat, which only accepts IANA names. cron.schedule threw a
+  // RangeError, startSchedule aborted, and the schedule silently never ran.
+
+  it('accepts IANA timezone names', () => {
+    expect(isValidTimezone('Africa/Johannesburg')).toBe(true);
+    expect(isValidTimezone('Europe/Berlin')).toBe(true);
+    expect(isValidTimezone('UTC')).toBe(true);
+    expect(isValidTimezone('America/New_York')).toBe(true);
+  });
+
+  it('rejects UTC offsets, which node-cron cannot resolve', () => {
+    expect(isValidTimezone('UTC+2')).toBe(false);
+    expect(isValidTimezone('GMT+2')).toBe(false);
+    expect(isValidTimezone('+02:00')).toBe(false);
+    expect(isValidTimezone('not a zone')).toBe(false);
+  });
+
+  it('explains what to use instead of an offset', () => {
+    const message = invalidTimezoneMessage('UTC+2');
+    expect(message).toContain("Invalid timezone 'UTC+2'");
+    expect(message).toContain('IANA');
+    expect(message).toContain('Africa/Johannesburg');
+  });
+
+  it('refuses to create a schedule with an offset timezone', async () => {
+    const scheduler = new WorkflowScheduler({} as any);
+    const config: IScheduleConfig = {
+      id: 'tz-test',
+      name: 'tz-test',
+      workflow: { id: 'core.SomeWorkflow@1.0.0', version: '1.0.0' },
+      schedule: { cron: '*/5 * * * *', timezone: 'UTC+2', enabled: true },
+    };
+
+    await expect(scheduler.createSchedule(config)).rejects.toThrow(/Invalid timezone/);
+  });
+
+  it('creates a schedule with a valid IANA timezone', async () => {
+    const scheduler = new WorkflowScheduler({} as any);
+    const config: IScheduleConfig = {
+      id: 'tz-ok',
+      name: 'tz-ok',
+      workflow: { id: 'core.SomeWorkflow@1.0.0', version: '1.0.0' },
+      schedule: { cron: '*/5 * * * *', timezone: 'Africa/Johannesburg', enabled: false },
+    };
+
+    const created = await scheduler.createSchedule(config);
+    expect(created.config.schedule.timezone).toBe('Africa/Johannesburg');
+  });
+});
