@@ -203,4 +203,36 @@ describe("ServiceManager singleton execution context", () => {
     expect(cachedConsumer.context).toBe(systemContext);
     expect(cachedConsumer.dependency.context).toBe(systemContext);
   });
+
+  it("forwards callable dependencies without stripping their methods", async () => {
+    // axios.create() returns a *function* with .get/.post attached. The facade
+    // must forward it as a value; treating it as a service method replaces it
+    // with a bare wrapper and leaves `this.client.post` undefined.
+    const client: any = Object.assign(function callableClient() {}, {
+      get: jest.fn(() => Promise.resolve({ data: "got" })),
+      post: jest.fn(() => Promise.resolve({ data: "posted" })),
+    });
+
+    const factory = jest.fn((props: any, context: any) => ({
+      name: "CallableDependencyService",
+      nameSpace: "test",
+      version: "1.0.0",
+      context,
+      client,
+      async callPost() {
+        const response = await this.client.post("/x");
+        return response.data;
+      },
+    }));
+    const definition = makeDefinition("test.CallableDependencyService@1.0.0", factory);
+    register([definition]);
+    await manager.startServices({}, systemContext);
+
+    const service: any = manager.getService(definition.id, {}, requestContextA);
+
+    expect(typeof service.client).toBe("function");
+    expect(typeof service.client.post).toBe("function");
+    expect(await service.callPost()).toBe("posted");
+    expect(client.post).toHaveBeenCalledWith("/x");
+  });
 });

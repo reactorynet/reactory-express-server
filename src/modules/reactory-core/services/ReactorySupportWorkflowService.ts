@@ -215,6 +215,15 @@ export interface ISupportRoutingConfig {
 const DEFAULT_LOAD_STATUSES = ['new', 'open', 'in_progress', 'blocked'];
 const DEFAULT_ACTIVE_STATUSES = ['new', 'open', 'in_progress', 'blocked'];
 const DEFAULT_TERMINAL_STATUSES = ['resolved', 'withdrawn', 'closed'];
+const DEFAULT_CANONICAL_STATUSES = [
+  'new',
+  'open',
+  'in_progress',
+  'blocked',
+  'resolved',
+  'withdrawn',
+  'closed',
+];
 const DEFAULT_FALLBACK_EMAILS = ['support@reactory.net'];
 
 interface IRoutingConfigCache {
@@ -352,6 +361,19 @@ export interface IFindSlaBreachesParams {
 export interface IAddCommentParams {
   ticketId: string;
   comment: string;
+}
+
+export interface IUpdateStatusParams {
+  ticketId: string;
+  /**
+   * Target status. Accepts either casing (`in-progress` / `in_progress`); the
+   * value is canonicalised to the stored snake_case form before it is written.
+   */
+  status: string;
+  /** Optional note appended to the ticket as a comment by the same call. */
+  comment?: string;
+  /** Optional user id stamped on `updatedBy` (ownership stays with a user). */
+  updatedByUserId?: string;
 }
 
 export interface IPlanDispatchParams {
@@ -1060,6 +1082,97 @@ class ReactorySupportWorkflowService {
       return null;
     }
     return this.appendComment(String(ticketId), String(comment));
+  }
+
+  /**
+   * Set a ticket's STATUS from a workflow.
+   *
+   * WHY THIS EXISTS
+   * ---------------
+   * `core.ReactorySupportService.updateTicket(ticket_id, updates)` takes TWO
+   * positional arguments, but `service_invoke` calls `svc[method](paramsObject)`
+   * — a SINGLE object. Calling `updateTicket` from YAML therefore passes the
+   * params object as `ticket_id` and `undefined` as `updates`, so no status is
+   * ever written. The alternatives are unavailable here: `mongo_write` has no
+   * registered Mongo service in this deployment, and reaching for the
+   * `ReactoryUpdateSupportTicket` GraphQL mutation would need a second step
+   * type for one field.
+   *
+   * This is the single-object-arg, workflow-callable form. It owns the status
+   * transition for the AI engineering pipeline (in-progress at pickup, resolved
+   * once the pull request is merged).
+   *
+   * LIFECYCLE IS ADVISORY, NOT A GATE. `support-routing.yaml` documents the
+   * permitted transitions, and a jump that skips one (e.g. `new` -> `in_progress`
+   * for a ticket dispatched straight out of triage) is logged as a warning
+   * rather than rejected: hard-failing here would strand a run that is otherwise
+   * doing exactly what an operator asked for. Unknown statuses ARE rejected —
+   * those are a typo, not a policy edge case.
+   *
+   * Idempotent: re-applying the current status is a no-op unless a comment is
+   * supplied, so a retried step cannot produce a duplicate audit entry.
+   */
+  @roles(['ADMIN', 'SUPPORT_ADMIN', 'SUPPORT'])
+  async updateStatus(params: IUpdateStatusParams): Promise<any> {
+    const ticketId = cleanArg(params?.ticketId);
+    const rawStatus = cleanArg(params?.status);
+    const comment = cleanArg(params?.comment);
+    const updatedByUserId = cleanArg(params?.updatedByUserId);
+
+    if (!ticketId) throw new Error('updateStatus: ticketId is required');
+    if (!rawStatus) throw new Error('updateStatus: status is required');
+
+    const status = canonicalEnum(String(rawStatus));
+    const config = loadSupportRoutingConfig();
+    const canonical = (
+      config?.statuses?.canonical?.length ? config.statuses.canonical : DEFAULT_CANONICAL_STATUSES
+    ).map((s) => canonicalEnum(String(s)));
+
+    if (canonical.indexOf(status) === -1) {
+      throw new Error(
+        `updateStatus: '${rawStatus}' is not a known status. Allowed: ${canonical.join(', ')}.`,
+      );
+    }
+
+    const ticket: any = await ReactorySupportTicketModel.findById(ticketId).exec();
+    if (!ticket) throw new Error(`updateStatus: ticket ${ticketId} not found`);
+
+    const from = canonicalEnum(String(ticket.status ?? ''));
+    const lifecycle = config?.statuses?.lifecycle || {};
+    const permitted: string[] = (
+      (lifecycle as Record<string, any>)[from] ??
+      (lifecycle as Record<string, any>)[from.replace(/_/g, '-')] ??
+      []
+    ).map((s: any) => canonicalEnum(String(s)));
+
+    if (permitted.length > 0 && permitted.indexOf(status) === -1) {
+      this.log(
+        'warn',
+        `updateStatus: ${from || '(unset)'} -> ${status} is outside the documented lifecycle ` +
+          `(permitted: ${permitted.join(', ')}); applying it anyway`,
+      );
+    }
+
+    if (from === status) {
+      this.log('info', `updateStatus: ticket ${ticketId} already '${status}' — no status change`);
+      if (comment) await this.appendComment(String(ticketId), String(comment));
+      return this.serializeTicket(
+        await ReactorySupportTicketModel.findById(ticketId).populate('createdBy assignedTo').lean().exec(),
+      );
+    }
+
+    const set: Record<string, any> = { status, updatedDate: new Date() };
+    if (updatedByUserId) set.updatedBy = new ObjectId(String(updatedByUserId));
+
+    await ReactorySupportTicketModel.updateOne({ _id: ticket._id }, { $set: set }).exec();
+
+    this.log('info', `updateStatus: ticket ${ticketId} ${from || '(unset)'} -> ${status}`);
+
+    if (comment) await this.appendComment(String(ticketId), String(comment));
+
+    return this.serializeTicket(
+      await ReactorySupportTicketModel.findById(ticketId).populate('createdBy assignedTo').lean().exec(),
+    );
   }
 
   /**

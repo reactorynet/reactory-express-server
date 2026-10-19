@@ -68,7 +68,52 @@ interface PersonaOption {
 
 const WORKDIR_STORAGE_KEY = 'reactory.support.aiAction.workdir';
 const AGENT_STORAGE_KEY = 'reactory.support.aiAction.agentId';
-const DEFAULT_WORKFLOW_ID = 'core.ProcessAITicket@1.3.0';
+
+/**
+ * The workflow this widget starts, addressed by NAME.
+ *
+ * The version is deliberately NOT hardcoded here. It used to be a constant
+ * ('core.ProcessAITicket@1.3.0'), which silently kept launching a workflow
+ * version that no longer matched the shipped definition - the new behaviours
+ * simply never appeared because the old definition ran. The registry is the
+ * source of truth, so the highest registered version is resolved when the
+ * dialog opens and shown to the user before they launch.
+ */
+const WORKFLOW_NAME_SPACE = 'core';
+const WORKFLOW_NAME = 'ProcessAITicket';
+
+/** Registered versions of the pipeline, newest first. */
+const WORKFLOWS_QUERY = `
+  query SupportAIActionWorkflowVersions($filter: WorkflowFilterInput) {
+    workflows(filter: $filter, pagination: { page: 1, limit: 50 }) {
+      workflows {
+        id
+        nameSpace
+        name
+        version
+      }
+    }
+  }`;
+
+/** Semver compare on the numeric triple. Missing parts count as 0. */
+const compareVersions = (a: string, b: string): number => {
+  const left = String(a).split('.').map((part) => parseInt(part, 10) || 0);
+  const right = String(b).split('.').map((part) => parseInt(part, 10) || 0);
+  for (let index = 0; index < 3; index += 1) {
+    const diff = (left[index] || 0) - (right[index] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+};
+
+/** Newest registered version of the pipeline, or null when none is registered. */
+const pickLatestWorkflowId = (rows: any[]): string | null => {
+  const candidates = (rows || [])
+    .filter((row) => row && row.nameSpace === WORKFLOW_NAME_SPACE && row.name === WORKFLOW_NAME && !!row.version)
+    .sort((a, b) => compareVersions(b.version, a.version));
+  if (candidates.length === 0) return null;
+  return `${WORKFLOW_NAME_SPACE}.${WORKFLOW_NAME}@${candidates[0].version}`;
+};
 const DEFAULT_AGENT_ID = 'ReactorAIPersona';
 const DEFAULT_REVIEWER_ID = 'QualityQuinn';
 
@@ -83,16 +128,35 @@ const DEFAULT_REVIEWER_ID = 'QualityQuinn';
  * problem.
  */
 const PROJECTS_QUERY = `
-  query SupportAIActionProjects {
-    ReactorProjects(filter: {}) {
+  query SupportAIActionProjects($filter: ReactorProjectFilter) {
+    ReactorProjects(filter: $filter) {
       projects {
         id
         name
         nameSpace
         repoPath
       }
+      paging {
+        total
+        page
+        pageSize
+        hasNext
+      }
     }
   }`;
+
+/**
+ * How many projects to pull per page.
+ *
+ * The service DEFAULTS TO 10 when no paging is supplied (see
+ * ReactorProjectService.getProjects), and the dropdown only ever fetched page 1
+ * with no paging - so it silently showed 10 of the 37 registered projects. The
+ * remaining ones were reachable only by typing a path by hand.
+ */
+const PROJECTS_PAGE_SIZE = 100;
+
+/** Safety stop so a bad paging response cannot spin forever. */
+const PROJECTS_MAX_PAGES = 20;
 
 /**
  * Folder browsing for the manual path picker.
@@ -239,6 +303,11 @@ const SupportTicketAIAction = (props: AIActionProps) => {
   const [result, setResult] = React.useState<any>(null);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Resolved from the workflow registry when the dialog opens - never hardcoded.
+  const [resolvedWorkflowId, setResolvedWorkflowId] = React.useState<string>(workflowId || "");
+  const [workflowLoading, setWorkflowLoading] = React.useState<boolean>(false);
+  const [workflowError, setWorkflowError] = React.useState<string | null>(null);
+
   // Repositories (Reactor projects) - the primary way to choose a workdir.
   const [projects, setProjects] = React.useState<any[]>([]);
   const [projectsLoading, setProjectsLoading] = React.useState<boolean>(false);
@@ -255,6 +324,38 @@ const SupportTicketAIAction = (props: AIActionProps) => {
   const ticketStatus = String(ticket?.status || '').toLowerCase();
   const ticketIsClosed = ticketStatus === 'closed' || ticketStatus === 'resolved' || ticketStatus === 'withdrawn';
   const hasWorkdir = typeof workdir === 'string' && workdir.trim().length > 0;
+
+  /**
+   * Resolve the newest registered version of the pipeline.
+   *
+   * Failure is surfaced (not silently defaulted): starting an older or
+   * non-existent definition is worse than refusing to start, because the run
+   * looks healthy while doing the wrong thing.
+   */
+  const loadWorkflowVersion = React.useCallback(async () => {
+    if (workflowId) {
+      setResolvedWorkflowId(workflowId);
+      return;
+    }
+    setWorkflowLoading(true);
+    setWorkflowError(null);
+    try {
+      const response: any = await reactory.graphqlQuery(WORKFLOWS_QUERY, {
+        filter: { nameSpace: WORKFLOW_NAME_SPACE, name: WORKFLOW_NAME },
+      }).then();
+      const rows = response?.data?.workflows?.workflows || [];
+      const latest = pickLatestWorkflowId(rows);
+      setResolvedWorkflowId(latest || "");
+      if (!latest) {
+        setWorkflowError(`No registered ${WORKFLOW_NAME_SPACE}.${WORKFLOW_NAME} workflow was found. Deploy the definition before launching a run.`);
+      }
+    } catch (loadError: any) {
+      setResolvedWorkflowId("");
+      setWorkflowError(loadError?.message || "Could not read the workflow registry.");
+    } finally {
+      setWorkflowLoading(false);
+    }
+  }, [reactory, workflowId]);
 
   /**
    * Load the persona catalogue so the agent can be chosen by name rather than by id.
@@ -309,18 +410,56 @@ const SupportTicketAIAction = (props: AIActionProps) => {
 
     loadPersonas();
     loadProjects();
+    loadWorkflowVersion();
   }, [open, ticket?.id]);
 
-  /** Load the repo->project catalogue. Non-fatal: the path field still works. */
+  /**
+   * Load the FULL repository catalogue.
+   *
+   * Two things matter here, both of which were wrong before:
+   *
+   *  1. Pagination. `ReactorProjects` is paged and the service defaults to
+   *     pageSize 10, so an unpaged query returns 10 rows out of 37. We walk every
+   *     page until `hasNext` is false.
+   *  2. Filtering happens on the COMBINED set, not per page. Filtering each page
+   *     before merging would still leave holes once the list exceeds one page.
+   *
+   * Non-fatal throughout: the manual path field still works if this fails.
+   */
   const loadProjects = React.useCallback(async () => {
     if (projects.length > 0 || projectsLoading) return;
     setProjectsLoading(true);
     setProjectsError(null);
     try {
-      const response: any = await reactory.graphqlQuery(PROJECTS_QUERY, {}).then();
-      const list = response?.data?.ReactorProjects?.projects || [];
-      setProjects(list.filter((project: any) => !!project && !!project.repoPath));
-      if (list.length === 0) setProjectsError('No projects with a repository path were returned.');
+      const collected: any[] = [];
+      let page = 1;
+      let hasNext = false;
+
+      do {
+        const response: any = await reactory.graphqlQuery(PROJECTS_QUERY, {
+          filter: { paging: { page, pageSize: PROJECTS_PAGE_SIZE } },
+        }).then();
+
+        const payload = response?.data?.ReactorProjects;
+        collected.push(...(payload?.projects || []));
+        hasNext = Boolean(payload?.paging?.hasNext);
+        page += 1;
+      } while (hasNext && page <= PROJECTS_MAX_PAGES);
+
+      const withRepo = collected.filter((project: any) => !!project && !!project.repoPath);
+      // Stable, predictable order: namespace, then name.
+      withRepo.sort((a: any, b: any) =>
+        String(a.nameSpace || '').localeCompare(String(b.nameSpace || '')) ||
+        String(a.name || '').localeCompare(String(b.name || '')));
+
+      setProjects(withRepo);
+      if (withRepo.length === 0) {
+        setProjectsError(
+          collected.length === 0
+            ? 'No Reactor projects are registered.'
+            : `${collected.length} project(s) are registered but none has a repository path, so none can be worked.`,
+        );
+      }
     } catch (loadError: any) {
       setProjectsError(loadError?.message || 'Could not load projects.');
     } finally {
@@ -437,6 +576,13 @@ const SupportTicketAIAction = (props: AIActionProps) => {
       setError('The SupportTicketWorkflow module is not available in this session, so the run cannot be started.');
       return;
     }
+    // Never fall back to a constant: launching a stale or unregistered version
+    // produces a run that looks healthy while executing the wrong definition.
+    const targetWorkflowId = workflowId || resolvedWorkflowId;
+    if (!targetWorkflowId) {
+      setError(workflowError || 'The workflow version could not be resolved, so the run cannot be started.');
+      return;
+    }
 
     setLaunching(true);
     setError(null);
@@ -452,7 +598,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
       maxReviewCycles,
       requireSignoff,
       context,
-      workflowId: workflowId || DEFAULT_WORKFLOW_ID,
+      workflowId: targetWorkflowId,
     });
 
     setLaunching(false);
@@ -560,8 +706,10 @@ const SupportTicketAIAction = (props: AIActionProps) => {
 
           <Alert severity="info" icon={<Icon>badge</Icon>} sx={{ mb: 2 }}>
             The run executes <strong>as you</strong>, so the agent and reviewer conversations appear in your
-            chat history and can be inspected or continued. Nothing is pushed and the ticket is not changed
-            until the run reaches human sign-off.
+            chat history and can be inspected or continued. The agent works in an isolated git worktree; on a
+            passing review the pipeline commits, pushes and opens a pull request for your approval. The ticket
+            moves to <strong>in_progress</strong> when the run starts and to <strong>resolved</strong> only
+            once the pull request is merged.
           </Alert>
 
           {ticketIsClosed && (
@@ -574,6 +722,12 @@ const SupportTicketAIAction = (props: AIActionProps) => {
           {!hasWorkdir && (
             <Alert severity="warning" sx={{ mb: 2 }}>
               No repository selected. The agent needs an absolute path to the checkout it should work in.
+            </Alert>
+          )}
+
+          {workflowError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setWorkflowError(null)}>
+              {workflowError}
             </Alert>
           )}
 
@@ -675,6 +829,12 @@ const SupportTicketAIAction = (props: AIActionProps) => {
             </Alert>
           )}
 
+          {!projectsError && projects.length > 0 && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+              {projects.length} repositories available from the Reactor project registry.
+            </Typography>
+          )}
+
           <TextField
             fullWidth
             size="small"
@@ -714,7 +874,8 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               <Box>
                 <Typography variant="body2">Require human sign-off</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  The run pauses on a task in your task list before any status change.
+                  Raises a task in your task list with the pull request link; the ticket is resolved only after
+                  the merge.
                 </Typography>
               </Box>
             }
@@ -754,6 +915,14 @@ const SupportTicketAIAction = (props: AIActionProps) => {
             sx={{ mb: 1 }}
           />
 
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+            {workflowLoading
+              ? "Resolving the workflow version…"
+              : resolvedWorkflowId
+                ? `Workflow: ${resolvedWorkflowId} · brief: ${(context || "").trim().length} characters included`
+                : "Workflow version unresolved."}
+          </Typography>
+
           <Typography variant="caption" color="text.secondary">
             {personaCount > 0 ? `${personaCount} agents available.` : 'Agent list unavailable — the id will be used as entered.'}
           </Typography>
@@ -779,7 +948,11 @@ const SupportTicketAIAction = (props: AIActionProps) => {
                 Instance <Link component="span" sx={{ fontFamily: 'monospace' }}>{result.instanceId}</Link> • Status: {result.status}
               </Typography>
               <Typography variant="caption" display="block">
-                The agent's conversation is in your chat history; the run will pause for sign-off when it finishes.
+                Workflow {result.workflowId || resolvedWorkflowId} · brief {(context || "").trim().length} characters included.
+              </Typography>
+              <Typography variant="caption" display="block">
+                The agent's conversation is in your chat history. A pull request approval task will appear in your
+                task list when the review passes.
               </Typography>
             </Alert>
           )}
@@ -794,7 +967,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
             color="secondary"
             startIcon={launching ? <CircularProgress size={18} color="inherit" /> : <Icon>play_arrow</Icon>}
             onClick={launch}
-            disabled={launching || !agentId || !hasWorkdir}
+            disabled={launching || !agentId || !hasWorkdir || !(workflowId || resolvedWorkflowId)}
           >
             {launching ? 'Starting…' : 'Start AI run'}
           </Button>

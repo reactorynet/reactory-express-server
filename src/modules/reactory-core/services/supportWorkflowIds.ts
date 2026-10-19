@@ -22,5 +22,5 @@
  * disagree (wherever the module is checked out).
  */
 
-export const PROCESS_AI_TICKET_WORKFLOW_ID = 'core.ProcessAITicket@1.3.0';
+export const PROCESS_AI_TICKET_WORKFLOW_ID = 'core.ProcessAITicket@1.4.2';
 export const REQUEST_AI_ROUTING_WORKFLOW_ID = 'core.RequestAIRouting@1.0.0';

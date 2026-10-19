@@ -54,6 +54,21 @@ function isObjectLike(value: unknown): value is object {
 }
 
 /**
+ * True for a callable *value* — a function that carries its own API surface.
+ *
+ * Axios instances are the case that matters: `axios.create()` returns a
+ * function with `.get`, `.post`, `.put`, … attached. Wrapping such a value in
+ * the method wrapper below replaces it with a bare forwarding function and
+ * drops those properties, so `this.client.post` becomes `undefined` inside any
+ * service resolved through a facade. Callables with own enumerable members are
+ * therefore forwarded as-is; ordinary class/object methods have none and are
+ * still wrapped so they see the caller's context.
+ */
+function isCallableObject(value: unknown): boolean {
+  return typeof value === "function" && Object.keys(value as object).length > 0;
+}
+
+/**
  * Returns a facade over `instance` that reads and reports `context` for the
  * duration of the caller's usage, while forwarding all other state to the
  * shared singleton.
@@ -105,6 +120,10 @@ export function getContextBoundInstance<T extends object>(
       const value = Reflect.get(target, property, receiver);
 
       if (typeof value === "function") {
+        if (isCallableObject(value)) {
+          return value;
+        }
+
         let wrapper = methodWrappers.get(property);
         if (!wrapper) {
           wrapper = (...args: unknown[]) => {

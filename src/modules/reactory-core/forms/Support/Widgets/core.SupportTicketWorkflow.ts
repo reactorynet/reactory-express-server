@@ -41,8 +41,16 @@ interface ILaunchAIActionArgs {
   requireSignoff?: boolean,
   /** Extra context/instruction appended to the agent's brief. */
   context?: string,
-  /** Workflow id to run (overridable so a version bump needs no code change). */
-  workflowId?: string,
+  /**
+   * Workflow id to run.
+   *
+   * REQUIRED on purpose: there is no built-in default any more. A hardcoded
+   * fallback here silently pinned callers to whatever version happened to be
+   * current when the line was written, so the UI kept launching an old
+   * definition after every bump. Callers resolve the version from the
+   * registry (see core.SupportTicketAIAction).
+   */
+  workflowId: string,
 }
 
 interface ILaunchAIActionResult {
@@ -362,12 +370,16 @@ const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTick
    *    appear in that user's chat history (and therefore inspectable later).
    */
   const launchAIAction = async (args: ILaunchAIActionArgs): Promise<ILaunchAIActionResult> => {
-    const workflowId = args.workflowId || 'core.ProcessAITicket@1.3.0';
+    const workflowId = args.workflowId;
     const ticket = args.ticket;
 
     if (!ticket || !ticket.id) {
       reactory.createNotification('Cannot start an AI run: no ticket id available', { type: 'error' });
       return { instanceId: null, status: null, workflowId, error: 'No ticket id available' };
+    }
+    if (!workflowId) {
+      reactory.createNotification('Cannot start an AI run: no workflow version was resolved', { type: 'error' });
+      return { instanceId: null, status: null, workflowId: null, error: 'No workflow version resolved' };
     }
     if (!args.agentId) {
       reactory.createNotification('Cannot start an AI run: no agent selected', { type: 'error' });
