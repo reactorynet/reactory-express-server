@@ -13,6 +13,7 @@ import { Login, RouteAccess } from './Security';
 import SupportForm from './Support/SupportRequest';
 import SupportTickets from './Support/SupportTickets';
 import SupportTicketsAdmin from './Support/SupportTicketsAdmin';
+import SupportTicketDetails from './Support/SupportTicketDetails';
 import SupportticketDelete from './Support/SupportTicketDelete';
 import WorkflowForms from './Workflow'
 import UserForms from './User';
@@ -35,6 +36,7 @@ export default [
   SupportForm,
   SupportTickets,  
   SupportTicketsAdmin,
+  SupportTicketDetails,
   SupportticketDelete,
   ...WorkflowForms,
   ...UserForms,

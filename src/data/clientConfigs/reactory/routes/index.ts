@@ -8,6 +8,13 @@ import {
 } from '@reactory/server-core/data/clientConfigs/helpers/defaultRoutes';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 import safeUrl from '@reactory/server-core/utils/url/safeUrl';
+import {
+  SUPPORT_TICKET_DETAILS_ROUTE_KEY,
+  SUPPORT_TICKET_DETAILS_ROUTE_PATH,
+  SUPPORT_TICKET_DETAILS_FORM_ID,
+  SUPPORT_TICKET_REFERENCE_PROP,
+  SUPPORT_TICKET_REFERENCE_PARAM,
+} from '@reactory/server-core/modules/reactory-core/forms/Support/shared/ticketReference';
 
 
 
@@ -587,6 +594,27 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     public: false,
     roles: ["ADMIN", "SUPPORT_ADMIN", "SUPPORT"],
     componentFqn: "core.SupportTicketsAdmin@1.0.0",
+  },
+
+  {
+    // Single ticket, addressed by the ticket reference — the identifier shown in
+    // the grids and quoted in support mails.
+    //
+    // A reference looks like `REACTORY-302016408/20261019/3365961056`: it
+    // contains two forward slashes, so `/support/tickets/:reference` would match
+    // only the first segment and 404 for every real ticket. The trailing splat
+    // captures the remainder of the path, slashes included, and hands it to the
+    // form as `ticketReference`.
+    key: SUPPORT_TICKET_DETAILS_ROUTE_KEY,
+    title: "Support Ticket",
+    path: SUPPORT_TICKET_DETAILS_ROUTE_PATH,
+    exact: true,
+    public: false,
+    roles: ["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"],
+    componentFqn: SUPPORT_TICKET_DETAILS_FORM_ID,
+    componentProps: {
+      [SUPPORT_TICKET_REFERENCE_PROP]: `\${route['${SUPPORT_TICKET_REFERENCE_PARAM}']}`,
+    },
   },
 
   {

@@ -333,6 +333,16 @@ union ReactorySupportTicketAttachmentResult = ReactorySupportTicketAttachmentSuc
 
 extend type Query {
   """
+  Returns a single ticket by its human readable reference.
+
+  The reference is the ticket's shareable identifier (for example
+  `REACTORY-302016408/20261019/3365961056`) and is what the details page is
+  addressed by. Support staff may load any ticket in the tenant; every other
+  caller may only load a ticket they created or are assigned to.
+  Null when no ticket matches the reference.
+  """
+  ReactorySupportTicketByReference(reference: String!): ReactorySupportTicket
+  """
   Returns paged tickets that were created by the logged in user
   """
   ReactoryMySupportTickets(paging: PagingRequest, filter: ReactorySupportTicketFilter): PagedReactorySupportTickets
