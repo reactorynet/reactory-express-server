@@ -19,6 +19,9 @@ import Notification from "./Notification";
 import OperationalGroup from "./OperationalGroup";
 import Organigram from "./Organigram";
 import Organization from "./Organization";
+import AgeDemographic from "./demographics/AgeDemographic";
+import Demographic from "./demographics/Demographic";
+import OrganizationDemographicSettings from "./demographics/OrganizationDemographicsSettings";
 import PersonalDemographic from "./PersonalDemographic";
 import Project from "./Project";
 import ProjectBoard from "./ProjectBoard";
@@ -97,6 +100,9 @@ export type CoreModelTypes =
   | typeof Audit
   | typeof Application
   | typeof BusinessUnit
+  | typeof AgeDemographic
+  | typeof Demographic
+  | typeof OrganizationDemographicSettings
   | typeof ClientComponent
   | typeof Comment
   | typeof Content
@@ -143,6 +149,9 @@ export { default as User } from './User';
 export { default as Audit } from './Audit';
 export { default as Application } from './Application';
 export { default as BusinessUnit } from './BusinessUnit';
+export { default as AgeDemographic } from './demographics/AgeDemographic';
+export { default as Demographic } from './demographics/Demographic';
+export { default as OrganizationDemographicSettings } from './demographics/OrganizationDemographicsSettings';
 export { default as ClientComponent } from './ClientComponent';
 export { default as Comment } from './Comment';
 export { default as Content } from './Content';
@@ -274,6 +283,45 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       stem: "business-unit",
       tags: ["business-unit", "core", "system"],
       component: BusinessUnit,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+    },
+    {
+      nameSpace: "core",
+      name: "Demographic",
+      version: "1.0.0",
+      description: "Provides a demographic definition model for an organization",
+      stem: "demographic",
+      tags: ["demographic", "demographics", "organization", "core", "system"],
+      component: Demographic,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+    },
+    {
+      nameSpace: "core",
+      name: "AgeDemographic",
+      version: "1.0.0",
+      description: "Provides an age band demographic model for an organization",
+      stem: "age-demographic",
+      tags: ["age-demographic", "demographic", "demographics", "organization", "core", "system"],
+      component: AgeDemographic,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+    },
+    {
+      nameSpace: "core",
+      name: "OrganizationDemographicSettings",
+      version: "1.0.0",
+      description: "Provides the demographic settings policy model for an organization",
+      stem: "organization-demographic-settings",
+      tags: ["organization-demographic-settings", "demographic", "demographics", "organization", "core", "system"],
+      component: OrganizationDemographicSettings,
       domain: "model",
       overwrite: true,
       roles: [],

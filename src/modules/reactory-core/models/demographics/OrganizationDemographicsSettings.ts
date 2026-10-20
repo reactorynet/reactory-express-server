@@ -1,9 +1,9 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model } from 'mongoose';
 import Reactory from '@reactorynet/reactory-core';
-import { ObjectId } from 'mongodb';
 
+const { ObjectId } = Schema.Types;
 
-const OrganizationDemographicSettingsSchema: Schema<Reactory.Models.IOrganizationDemographicSettings> = new Schema<Reactory.Models.IOrganizationDemographicSettings>({
+const OrganizationDemographicSettingsSchema = new Schema<Reactory.Models.IOrganizationDemographicSettings>({
   organization: {
     type: ObjectId,
     required: true,
@@ -53,10 +53,16 @@ const OrganizationDemographicSettingsSchema: Schema<Reactory.Models.IOrganizatio
     type: Boolean,
     required: true,
     default: false,
-  }
+  },
 });
 
+// One policy document per organization.
+OrganizationDemographicSettingsSchema.index({ organization: 1 }, { unique: true });
 
-const OrganizationDemographicSettings = model<Reactory.Models.IOrganizationDemographicSettingsDocument>('OrganizationDemographicSettings', OrganizationDemographicSettingsSchema, 'reactory_organization_demographic_settings');
+const OrganizationDemographicSettings = model<Reactory.Models.IOrganizationDemographicSettingsDocument>(
+  'OrganizationDemographicSettings',
+  OrganizationDemographicSettingsSchema,
+  'reactory_organization_demographic_settings',
+);
 
 export default OrganizationDemographicSettings;
