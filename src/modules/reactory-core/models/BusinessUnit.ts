@@ -27,7 +27,19 @@ const BusinessUnitSchema = new mongoose.Schema<Reactory.Models.IBusinessUnit>({
     type: ObjectId,
     ref: 'User',
   },
+  createdBy: {
+    type: ObjectId,
+    ref: 'User',
+  },
+  updatedBy: {
+    type: ObjectId,
+    ref: 'User',
+  },
 });
+
+// Business units are listed per organization and exclude soft-deleted rows by
+// default.
+BusinessUnitSchema.index({ organization: 1, deleted: 1 });
 
 BusinessUnitSchema.statics.GetBusinessUnits = async function GetBusinessUnits() {
   return await this.find();

@@ -1,9 +1,9 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model } from 'mongoose';
 import Reactory from '@reactorynet/reactory-core';
-import { ObjectId } from 'mongodb';
 
+const { ObjectId } = Schema.Types;
 
-const AgeDemographicsSchema: Schema<Reactory.Models.IAgeDemographicDocument> = new Schema<Reactory.Models.IAgeDemographicDocument>({
+const AgeDemographicsSchema = new Schema<Reactory.Models.IAgeDemographic>({
   organization: {
     type: ObjectId,
     required: true,
@@ -15,8 +15,10 @@ const AgeDemographicsSchema: Schema<Reactory.Models.IAgeDemographicDocument> = n
   deleted: {
     type: Boolean,
     default: false,
-  }
+  },
 });
+
+AgeDemographicsSchema.index({ organization: 1 });
 
 const AgeDemographic = model<Reactory.Models.IAgeDemographicDocument>('AgeDemographic', AgeDemographicsSchema, 'reactory_age_demographics');
 

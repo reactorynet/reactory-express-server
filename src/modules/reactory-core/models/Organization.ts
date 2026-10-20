@@ -1,7 +1,26 @@
 import mongoose from 'mongoose';
 import Reactory from '@reactorynet/reactory-core';
 
-const { ObjectId } = mongoose.Schema.Types;
+const { ObjectId, Mixed } = mongoose.Schema.Types;
+
+/**
+ * Lifecycle states for an organization.
+ *
+ * `active`    - normal operating state.
+ * `suspended` - access is withheld but the record and its data are retained.
+ * `archived`  - the organization is retired; hidden from default listings.
+ */
+export const ORGANIZATION_STATUSES = ['active', 'suspended', 'archived'] as const;
+
+export type OrganizationStatus = typeof ORGANIZATION_STATUSES[number];
+
+/**
+ * Theme selection mode for an organization. `os` follows the end user's
+ * operating system preference.
+ */
+export const ORGANIZATION_THEME_MODES = ['light', 'dark', 'os'] as const;
+
+export type OrganizationThemeMode = typeof ORGANIZATION_THEME_MODES[number];
 
 /**
  * Meta data entry for a organization record.
@@ -29,8 +48,33 @@ const OrganizationSchema = new mongoose.Schema<Reactory.Models.IOrganization>({
   code: String,
   name: String,
   tradingName: String,
+  // Identity fields used by the organization configuration experience.
+  legalName: String,
+  description: String,
+  website: String,
+  contactEmail: String,
+  contactPhone: String,
   logo: String,
   avatar: String,
+  // Lifecycle
+  status: {
+    type: String,
+    enum: ORGANIZATION_STATUSES,
+    default: 'active',
+  },
+  deleted: {
+    type: Boolean,
+    default: false,
+  },
+  // Branding. `themes` deliberately mirrors `ReactoryClient.themes` ([Mixed]) so
+  // the same theme documents and editor can be reused (design decision D1).
+  theme: String,
+  themeMode: {
+    type: String,
+    enum: ORGANIZATION_THEME_MODES,
+    default: 'dark',
+  },
+  themes: [Mixed],
   businessUnits: [
     {
       type: ObjectId,
@@ -59,11 +103,39 @@ const OrganizationSchema = new mongoose.Schema<Reactory.Models.IOrganization>({
     },
   ],
   meta,
+  // Audit. `updateBy` predates `updatedBy` and is kept for backwards
+  // compatibility with existing records and queries.
+  createdBy: {
+    type: ObjectId,
+    ref: 'User',
+  },
+  updatedBy: {
+    type: ObjectId,
+    ref: 'User',
+  },
   updateBy: {
     type: ObjectId,
     ref: 'User',
   },
 });
+
+// Lookup indexes for the organization list, filters and soft-delete scoping.
+OrganizationSchema.index({ name: 1 });
+OrganizationSchema.index({ code: 1 });
+OrganizationSchema.index({ status: 1 });
+OrganizationSchema.index({ deleted: 1 });
+
+// Compound index for "is this code unique within the clients that can see the
+// organization" lookups.
+//
+// It is intentionally NOT unique. `code` is optional, and a unique multikey
+// index over { 'clients.active': 1, code: 1 } collides for every legacy
+// document that has no code and an empty/absent `active` array (all of them
+// index the same null key), which would fail index creation on existing data.
+// Enforcing per-client code uniqueness therefore needs a partial index scoped
+// to documents where `code` exists, plus a data clean-up pass - follow-up work,
+// not a schema-only foundation ticket.
+OrganizationSchema.index({ 'clients.active': 1, code: 1 });
 
 OrganizationSchema.methods.isPublic = function isPublic() {
   return this.public === true;
