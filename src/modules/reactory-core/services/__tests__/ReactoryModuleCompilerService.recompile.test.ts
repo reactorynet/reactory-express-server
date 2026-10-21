@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import ReactoryModuleCompilerService, { getDataRoot } from '../ReactoryModuleCompilerService';
 
@@ -26,6 +27,7 @@ import ReactoryModuleCompilerService, { getDataRoot } from '../ReactoryModuleCom
  */
 describe('ReactoryModuleCompilerService recompile-after-failure', () => {
   const originalEnv = process.env.NODE_ENV;
+  const originalDataRoot = process.env.APP_DATA_ROOT;
   const moduleId = 'test.RecompileProbe@1.0.0';
   const moduleDirName = moduleId.replace(/[\\/]/g, '_');
 
@@ -47,11 +49,23 @@ describe('ReactoryModuleCompilerService recompile-after-failure', () => {
 
   beforeEach(() => {
     process.env.NODE_ENV = 'development';
+    // Isolate from the machine's data root. `jest.sh` sources `.env`, so a local
+    // run otherwise inherits a real `plugins/__runtime__` while a clean CI
+    // checkout does not - which is precisely how these tests came to pass
+    // locally and fail in CI.
+    process.env.APP_DATA_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'reactory-recompile-'));
     dataRoot = getDataRoot();
     runtimeBase = path.join(dataRoot, 'plugins', '__runtime__');
     compiledFile = path.join(runtimeBase, `lib/${moduleId}.min.js`);
     checksumFile = path.join(runtimeBase, 'src', moduleDirName, '.reactory-checksum');
     moduleDir = path.join(runtimeBase, 'src', moduleDirName);
+
+    // The service deliberately refuses to recompile when
+    // `plugins/__runtime__/build.sh` is absent (the production-freeze guard).
+    // These tests assert whether a compile is *attempted*, so provide the
+    // script a build-capable checkout would have.
+    fs.mkdirSync(runtimeBase, { recursive: true });
+    fs.writeFileSync(path.join(runtimeBase, 'build.sh'), '#!/bin/sh\n', { mode: 0o755 });
 
     service = new ReactoryModuleCompilerService({} as any, { log: jest.fn() } as any);
 
@@ -63,9 +77,17 @@ describe('ReactoryModuleCompilerService recompile-after-failure', () => {
 
   afterEach(() => {
     process.env.NODE_ENV = originalEnv;
+    if (originalDataRoot === undefined) delete process.env.APP_DATA_ROOT;
+    else process.env.APP_DATA_ROOT = originalDataRoot;
     jest.restoreAllMocks();
-    try { fs.unlinkSync(compiledFile); } catch { /* ignore */ }
-    try { fs.rmSync(moduleDir, { recursive: true, force: true }); } catch { /* ignore */ }
+    // Removing the temporary data root also removes the module dir, the
+    // compiled stub, the checksum and the build script in one step.
+    // `rmSync` landed in Node 14.14 but this repo pins @types/node 10.x, so the
+    // typed surface does not expose it. Cast rather than weaken the tsconfig
+    // (or the ratchet baseline) for one call: the runtime supports it.
+    try {
+      (fs as any).rmSync(dataRoot, { recursive: true, force: true });
+    } catch { /* ignore */ }
   });
 
   it('recompiles when a compiled artifact exists but no checksum was recorded', async () => {
