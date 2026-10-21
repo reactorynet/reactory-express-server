@@ -15,7 +15,7 @@
     "key": "reactory-telemetry",
     "fqn": "reactory.ReactoryTelemetry@1.0.0",
     "moduleEntry": "reactory-telemetry/index.ts",
-    "license": "private",
+    "license": "MIT",
     "git": "git@github.com:reactorynet/reactory-express-server-telemetry.git",
     "shop": "https://reactory.net/shop/modules/reactory-telemetry"
   },
@@ -25,7 +25,7 @@
     "key": "reactory-azure",
     "fqn": "core.ReactoryAzure@1.0.0",
     "moduleEntry": "reactory-azure/index.ts",
-    "license": "commercial",
+    "license": "MIT",
     "git": "git@github.com:reactorynet/reactory-azure.git",
     "shop": "https://reactory.net/shop/modules/reactory-azure"
   },

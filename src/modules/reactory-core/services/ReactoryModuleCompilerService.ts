@@ -591,11 +591,18 @@ class ReactoryModuleCompilerService
         );
         existingChecksum = "";
       }
-      if (existingChecksum && existingChecksum !== newChecksum) {
+
+      // A *failed* build never persists a checksum, so a missing checksum is
+      // the signature of a poisoned module: whatever is on disk is the
+      // unparsable error stub written by the previous attempt. The original
+      // condition only recompiled when a non-empty stored checksum differed,
+      // which meant a module that failed once could never recover - even
+      // after the source was fixed and the server restarted. Recompile
+      // whenever there is no recorded checksum.
+      if (!existingChecksum || existingChecksum !== newChecksum) {
         doCompile = true;
       }
     }
-
     // Safety guard: if build.sh is not available or we are in production,
     // and compiledFile already exists without a failure signature, do NOT recompile!
     const buildScriptPath = path.join(runtimeBase, "build.sh");
@@ -666,6 +673,22 @@ class ReactoryModuleCompilerService
             { writeErr },
             "error",
             ReactoryModuleCompilerService.reactory.id
+          );
+        }
+
+        // Record the checksum for the failed attempt as well. Keeping the
+        // failure stub "sticky" for unchanged sources avoids re-spawning
+        // rollup on every request, while a genuine source edit still yields a
+        // different checksum and therefore a fresh build. Writing nothing was
+        // what made the module permanently unbuildable.
+        try {
+          durableWriteFile(checksumFile, newChecksum);
+        } catch (writeErr) {
+          that.context.log(
+            `Failed to persist checksum for failed module ${module.id}`,
+            { writeErr },
+            "warning",
+            ReactoryModuleCompilerService.reactory.id,
           );
         }
       }
