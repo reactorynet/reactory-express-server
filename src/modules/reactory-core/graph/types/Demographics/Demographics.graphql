@@ -194,6 +194,11 @@ input DemographicDefinitionInput {
   enabled: Boolean
   ordinal: Int
   roles: [String!]
+  """
+  Marks a seeded base definition. Accepted on creation only (ORG-030 seeds
+  through this mutation); the flag is immutable afterwards, in both directions.
+  """
+  system: Boolean
 }
 
 """
@@ -243,6 +248,9 @@ extend type Query {
   Soft-deleted definitions are never returned; disabled ones only when
   `includeDisabled` is true.
 
+  Requires membership of the organization. `sensitive` definitions are
+  administrator-only, so they are omitted from a non-administrator's result.
+
   NOTE: this is a top-level query with this exact name and an
   `organizationId` argument - the organization management plugin
   (ORG-010) calls it directly.
@@ -250,7 +258,8 @@ extend type Query {
   OrganizationDemographicDefinitions(organizationId: String!, includeDisabled: Boolean): [DemographicDefinition!]! @auth(roles: ["USER"])
 
   """
-  Loads one definition by key.
+  Loads one definition by key. Requires organization membership; a
+  `sensitive` definition additionally requires organization administration.
   """
   OrganizationDemographicDefinition(organizationId: String!, key: String!): DemographicDefinition @auth(roles: ["USER"])
 

@@ -37,9 +37,16 @@ const RealUserModel = jest.requireActual(
   '@reactory/server-modules/reactory-core/models/User',
 ).default;
 
+/**
+ * `admin`     - platform ADMIN, any organization.
+ * `orgAdminOf` - ids of organizations the caller administers.
+ * `memberOf`   - ids of organizations the caller is a plain member of.
+ * `system`     - the SYSTEM service role.
+ */
 interface IRolePolicy {
   admin?: boolean;
   orgAdminOf?: string[];
+  memberOf?: string[];
   system?: boolean;
 }
 
@@ -56,6 +63,13 @@ const makeContext = (policy: IRolePolicy = {}) => {
       roles: ['USER'],
       enabled: true,
     },
+    ...(policy.memberOf || []).map((organizationId) => ({
+      clientId: partnerId,
+      organizationId: new ObjectId(organizationId),
+      businessUnitId: null,
+      roles: ['USER'],
+      enabled: true,
+    })),
     ...orgAdminOf.map((organizationId) => ({
       clientId: partnerId,
       organizationId: new ObjectId(organizationId),
@@ -195,6 +209,35 @@ describe('DemographicsService - definitions (ORG-006)', () => {
       await expect(adminService().list('nope')).rejects.toThrow(/not a valid/);
       expect(models.DemographicDefinition.find).not.toHaveBeenCalled();
     });
+
+    it('denies a user who is not a member of the organization', async () => {
+      const service = new DemographicsService({}, makeContext({}));
+
+      await expect(service.list(ORGANIZATION_ID)).rejects.toThrow(/permission to access organization/i);
+      expect(models.DemographicDefinition.find).not.toHaveBeenCalled();
+    });
+
+    it('filters sensitive definitions out of a member\'s listing', async () => {
+      models.DemographicDefinition.find.mockReturnValue(makeFindQuery([]));
+
+      await new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] })).list(
+        ORGANIZATION_ID,
+        true,
+      );
+
+      expect(models.DemographicDefinition.find.mock.calls[0][0]).toMatchObject({
+        organization: new ObjectId(ORGANIZATION_ID),
+        sensitive: { $ne: true },
+      });
+    });
+
+    it('returns sensitive definitions to an organization administrator', async () => {
+      models.DemographicDefinition.find.mockReturnValue(makeFindQuery([]));
+
+      await adminService().list(ORGANIZATION_ID, true);
+
+      expect(models.DemographicDefinition.find.mock.calls[0][0]).not.toHaveProperty('sensitive');
+    });
   });
 
   describe('get', () => {
@@ -220,6 +263,45 @@ describe('DemographicsService - definitions (ORG-006)', () => {
 
     it('requires a key', async () => {
       await expect(adminService().get(ORGANIZATION_ID, '   ')).rejects.toThrow(/key is required/);
+    });
+
+    it('denies a user who is not a member of the organization', async () => {
+      const service = new DemographicsService({}, makeContext({}));
+
+      await expect(service.get(ORGANIZATION_ID, 'employment-type')).rejects.toThrow(
+        /permission to access organization/i,
+      );
+      expect(models.DemographicDefinition.findOne).not.toHaveBeenCalled();
+    });
+
+    it('denies a member reading a sensitive definition', async () => {
+      models.DemographicDefinition.findOne.mockResolvedValue(makeDefinition({ sensitive: true }));
+
+      await expect(
+        new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] })).get(
+          ORGANIZATION_ID,
+          'employment-type',
+        ),
+      ).rejects.toThrow(/is sensitive and can only be read by an organization administrator/);
+    });
+
+    it('allows an organization administrator to read a sensitive definition', async () => {
+      const definition = makeDefinition({ sensitive: true });
+      models.DemographicDefinition.findOne.mockResolvedValue(definition);
+
+      await expect(adminService().get(ORGANIZATION_ID, 'employment-type')).resolves.toBe(definition);
+    });
+
+    it('still allows a member to read a non-sensitive definition', async () => {
+      const definition = makeDefinition();
+      models.DemographicDefinition.findOne.mockResolvedValue(definition);
+
+      await expect(
+        new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] })).get(
+          ORGANIZATION_ID,
+          'employment-type',
+        ),
+      ).resolves.toBe(definition);
     });
   });
 
@@ -304,6 +386,71 @@ describe('DemographicsService - definitions (ORG-006)', () => {
         },
       });
     });
+
+    it('rejects an enum definition whose options are omitted entirely', async () => {
+      models.DemographicDefinition.findOne.mockResolvedValue(null);
+
+      await expect(
+        adminService().save(ORGANIZATION_ID, {
+          key: 'employment-type',
+          title: 'Employment type',
+          valueType: 'enum',
+        } as any),
+      ).rejects.toMatchObject({
+        meta: { fields: [{ path: 'options', message: expect.stringMatching(/at least one option/i) }] },
+      });
+
+      expect(models.DemographicDefinition).not.toHaveBeenCalled();
+    });
+
+    it('rejects a reference definition whose reference is omitted entirely', async () => {
+      models.DemographicDefinition.findOne.mockResolvedValue(null);
+
+      await expect(
+        adminService().save(ORGANIZATION_ID, {
+          key: 'business-unit',
+          title: 'Business unit',
+          valueType: 'reference',
+        } as any),
+      ).rejects.toMatchObject({
+        meta: {
+          fields: [{ path: 'reference.model', message: expect.stringMatching(/must be one of/i) }],
+        },
+      });
+
+      expect(models.DemographicDefinition).not.toHaveBeenCalled();
+    });
+
+    it('creates a system definition, which ORG-030 seeds through this path', async () => {
+      models.DemographicDefinition.findOne.mockResolvedValue(null);
+
+      const definition = await adminService().save(ORGANIZATION_ID, {
+        key: 'gender',
+        title: 'Gender',
+        valueType: 'enum',
+        options: [{ key: 'female', label: 'Female' }, { key: 'male', label: 'Male' }],
+        system: true,
+      } as any);
+
+      expect(models.DemographicDefinition).toHaveBeenCalledWith(
+        expect.objectContaining({ key: 'gender', system: true }),
+      );
+      expect(definition.system).toBe(true);
+    });
+
+    it('defaults the system flag to false when it is omitted', async () => {
+      models.DemographicDefinition.findOne.mockResolvedValue(null);
+
+      await adminService().save(ORGANIZATION_ID, {
+        key: 'nickname',
+        title: 'Nickname',
+        valueType: 'string',
+      } as any);
+
+      expect(models.DemographicDefinition).toHaveBeenCalledWith(
+        expect.objectContaining({ key: 'nickname', system: false }),
+      );
+    });
   });
 
   describe('save - update', () => {
@@ -365,6 +512,49 @@ describe('DemographicsService - definitions (ORG-006)', () => {
       await expect(
         adminService().save(ORGANIZATION_ID, { key: 'employment-type', title: 'Again' } as any),
       ).rejects.toThrow(/has been deleted/);
+
+      expect(existing.save).not.toHaveBeenCalled();
+    });
+
+    it('refuses to promote a user-defined definition to a system definition', async () => {
+      const existing = makeDefinition({ system: false });
+      models.DemographicDefinition.findOne.mockResolvedValue(existing);
+
+      await expect(
+        adminService().save(ORGANIZATION_ID, { key: 'employment-type', system: true } as any),
+      ).rejects.toThrow(/cannot be converted to a system definition/);
+
+      expect(existing.system).toBe(false);
+      expect(existing.save).not.toHaveBeenCalled();
+    });
+
+    it('validates the merged definition, so a title-only update of an enum still passes', async () => {
+      const existing = makeDefinition();
+      models.DemographicDefinition.findOne.mockResolvedValue(existing);
+
+      await adminService().save(ORGANIZATION_ID, {
+        key: 'employment-type',
+        title: 'Employment category',
+      } as any);
+
+      expect(existing.title).toBe('Employment category');
+      // The stored options were not part of the patch and must not be required.
+      expect(existing.options).toHaveLength(2);
+      expect(existing.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('refuses to strip options from an existing enum definition', async () => {
+      const existing = makeDefinition();
+      models.DemographicDefinition.findOne.mockResolvedValue(existing);
+
+      await expect(
+        adminService().save(ORGANIZATION_ID, {
+          key: 'employment-type',
+          options: [],
+        } as any),
+      ).rejects.toMatchObject({
+        meta: { fields: [{ path: 'options', message: expect.stringMatching(/at least one option/i) }] },
+      });
 
       expect(existing.save).not.toHaveBeenCalled();
     });
@@ -640,7 +830,7 @@ describe('DemographicsService - values (ORG-006)', () => {
 
   describe('saveValue', () => {
     it('writes the caller\'s own value with a key/valueType snapshot', async () => {
-      const context = makeContext({});
+      const context = makeContext({ memberOf: [ORGANIZATION_ID] });
       const service = new DemographicsService({}, context);
 
       const result: any = await service.saveValue(ORGANIZATION_ID, {
@@ -664,7 +854,7 @@ describe('DemographicsService - values (ORG-006)', () => {
     });
 
     it('rejects an invalid value with field-level errors', async () => {
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.saveValue(ORGANIZATION_ID, { key: 'employment-type', value: 'permanent-ish' }),
@@ -687,7 +877,7 @@ describe('DemographicsService - values (ORG-006)', () => {
     it('rejects a value whose definition belongs to another organization', async () => {
       definition.organization = new ObjectId();
 
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.saveValue(ORGANIZATION_ID, { key: 'employment-type', value: 'permanent' }),
@@ -696,7 +886,7 @@ describe('DemographicsService - values (ORG-006)', () => {
     });
 
     it('denies a plain USER writing for somebody else', async () => {
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.saveValue(ORGANIZATION_ID, {
@@ -727,7 +917,7 @@ describe('DemographicsService - values (ORG-006)', () => {
 
     it('rejects writes against a disabled definition for a non-admin', async () => {
       definition.enabled = false;
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.saveValue(ORGANIZATION_ID, { key: 'employment-type', value: 'permanent' }),
@@ -740,7 +930,7 @@ describe('DemographicsService - values (ORG-006)', () => {
         selfServiceEnabled: false,
         adminOnlyKeys: [],
       });
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.saveValue(ORGANIZATION_ID, { key: 'employment-type', value: 'permanent' }),
@@ -753,7 +943,7 @@ describe('DemographicsService - values (ORG-006)', () => {
         selfServiceEnabled: true,
         adminOnlyKeys: ['employment-type'],
       });
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.saveValue(ORGANIZATION_ID, { key: 'employment-type', value: 'permanent' }),
@@ -821,7 +1011,7 @@ describe('DemographicsService - values (ORG-006)', () => {
 
   describe('getUserValues', () => {
     it('returns the caller\'s own values without administrator rights', async () => {
-      const context = makeContext({});
+      const context = makeContext({ memberOf: [ORGANIZATION_ID] });
       const query = makeFindQuery([makeValueDocument()]);
       models.DemographicValue.find.mockReturnValue(query);
 
@@ -838,7 +1028,7 @@ describe('DemographicsService - values (ORG-006)', () => {
     });
 
     it('denies a plain USER reading another user\'s values', async () => {
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.getUserValues(ORGANIZATION_ID, `${new ObjectId()}`),
@@ -856,7 +1046,7 @@ describe('DemographicsService - values (ORG-006)', () => {
     });
 
     it('rejects an invalid user id', async () => {
-      const context = makeContext({});
+      const context = makeContext({ memberOf: [ORGANIZATION_ID] });
       const service = new DemographicsService({}, context);
 
       await expect(
@@ -905,7 +1095,7 @@ describe('DemographicsService - values (ORG-006)', () => {
 
   describe('deleteValue', () => {
     it('deletes the caller\'s own value', async () => {
-      const context = makeContext({});
+      const context = makeContext({ memberOf: [ORGANIZATION_ID] });
       const service = new DemographicsService({}, context);
 
       await expect(service.deleteValue(ORGANIZATION_ID, 'employment-type')).resolves.toBe(true);
@@ -918,7 +1108,7 @@ describe('DemographicsService - values (ORG-006)', () => {
     });
 
     it('denies a plain USER deleting somebody else\'s value', async () => {
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.deleteValue(ORGANIZATION_ID, 'employment-type', `${new ObjectId()}`),
@@ -944,7 +1134,7 @@ describe('DemographicsService - values (ORG-006)', () => {
       });
 
       await expect(
-        new DemographicsService({}, makeContext({})).deleteValue(ORGANIZATION_ID, 'employment-type'),
+        new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] })).deleteValue(ORGANIZATION_ID, 'employment-type'),
       ).resolves.toBe(false);
     });
 
@@ -954,7 +1144,7 @@ describe('DemographicsService - values (ORG-006)', () => {
         selfServiceEnabled: false,
         adminOnlyKeys: [],
       });
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.deleteValue(ORGANIZATION_ID, 'employment-type'),
@@ -964,7 +1154,7 @@ describe('DemographicsService - values (ORG-006)', () => {
 
   describe('saveSelfServiceValues (MySaveDemographics)', () => {
     it('writes for the caller and records the supplied membership', async () => {
-      const context = makeContext({});
+      const context = makeContext({ memberOf: [ORGANIZATION_ID] });
       const membershipId = `${new ObjectId()}`;
 
       const result = await new DemographicsService({}, context).saveSelfServiceValues(
@@ -984,7 +1174,7 @@ describe('DemographicsService - values (ORG-006)', () => {
     });
 
     it('rejects a payload that names another user', async () => {
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.saveSelfServiceValues(ORGANIZATION_ID, [
@@ -1001,7 +1191,7 @@ describe('DemographicsService - values (ORG-006)', () => {
         selfServiceEnabled: false,
         adminOnlyKeys: [],
       });
-      const service = new DemographicsService({}, makeContext({}));
+      const service = new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] }));
 
       await expect(
         service.saveSelfServiceValues(ORGANIZATION_ID, [
@@ -1020,7 +1210,7 @@ describe('DemographicsService - values (ORG-006)', () => {
       });
 
       await expect(
-        new DemographicsService({}, makeContext({})).saveSelfServiceValues(ORGANIZATION_ID, [
+        new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] })).saveSelfServiceValues(ORGANIZATION_ID, [
           { key: 'employment-type', value: 'permanent' },
         ]),
       ).rejects.toMatchObject({
@@ -1037,10 +1227,76 @@ describe('DemographicsService - values (ORG-006)', () => {
 
     it('rejects a non-user source', async () => {
       await expect(
-        new DemographicsService({}, makeContext({})).saveSelfServiceValues(ORGANIZATION_ID, [
+        new DemographicsService({}, makeContext({ memberOf: [ORGANIZATION_ID] })).saveSelfServiceValues(ORGANIZATION_ID, [
           { key: 'employment-type', value: 'permanent', source: 'admin' },
         ]),
       ).rejects.toThrow(/cannot set the value source/);
+    });
+  });
+
+  describe('organization membership is required for every value operation', () => {
+    it('denies a non-member reading their own values', async () => {
+      const service = new DemographicsService({}, makeContext({}));
+      const callerId = `${makeContext({}).user._id}`;
+
+      await expect(service.getUserValues(ORGANIZATION_ID, callerId)).rejects.toThrow(
+        /permission to access organization/i,
+      );
+      expect(models.DemographicValue.find).not.toHaveBeenCalled();
+    });
+
+    it('denies a non-member writing their own value', async () => {
+      const service = new DemographicsService({}, makeContext({}));
+
+      await expect(
+        service.saveValue(ORGANIZATION_ID, { key: 'employment-type', value: 'permanent' }),
+      ).rejects.toThrow(/permission to access organization/i);
+      expect(models.DemographicDefinition.findOne).not.toHaveBeenCalled();
+    });
+
+    it('denies a non-member deleting their own value', async () => {
+      const service = new DemographicsService({}, makeContext({}));
+
+      await expect(service.deleteValue(ORGANIZATION_ID, 'employment-type')).rejects.toThrow(
+        /permission to access organization/i,
+      );
+      expect(models.DemographicValue.deleteOne).not.toHaveBeenCalled();
+    });
+
+    it('denies a non-member the self-service write path', async () => {
+      const service = new DemographicsService({}, makeContext({}));
+
+      await expect(
+        service.saveSelfServiceValues(ORGANIZATION_ID, [
+          { key: 'employment-type', value: 'permanent' },
+        ]),
+      ).rejects.toThrow(/permission to access organization/i);
+      expect(models.DemographicValue).not.toHaveBeenCalled();
+    });
+
+    it('counts a business-unit membership as membership but not as administration', async () => {
+      const context = makeContext({});
+      context.user.memberships = [
+        {
+          clientId: context.partner._id,
+          organizationId: new ObjectId(ORGANIZATION_ID),
+          businessUnitId: new ObjectId(),
+          roles: ['USER'],
+          enabled: true,
+        },
+      ];
+
+      models.DemographicValue.find.mockReturnValue(makeFindQuery([]));
+      const service = new DemographicsService({}, context);
+
+      await expect(
+        service.getUserValues(ORGANIZATION_ID, `${context.user._id}`),
+      ).resolves.toEqual([]);
+
+      // Administration stays organization-level only.
+      await expect(
+        service.listValues(ORGANIZATION_ID, {}),
+      ).rejects.toThrow(/permission/i);
     });
   });
 });

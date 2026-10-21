@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { parse, print, Kind, FieldDefinitionNode, TypeNode } from 'graphql';
+import { makeExecutableSchema } from '@graphql-tools/schema';
 import CoreTypeDefinitions from '../index';
 
 /**
@@ -74,6 +75,33 @@ describe('Demographics GraphQL surface (ORG-006)', () => {
     expect(demographicsIndex).toBeGreaterThanOrEqual(0);
     // The SDL extends `type Organization`, so the base must load first.
     expect(demographicsIndex).toBeGreaterThan(organizationIndex);
+  });
+
+  it('composes with every other core SDL file into an executable schema', () => {
+    // The real graph is assembled from these SDL strings, so a name that is
+    // only unique inside this file (or an extension that targets a type nobody
+    // declares) would still fail here. This is the contract ORG-010 relies on.
+    const schema = makeExecutableSchema({ typeDefs: CoreTypeDefinitions, resolvers: {} });
+
+    const queryFields = schema.getQueryType().getFields();
+    expect(queryFields.OrganizationDemographicDefinitions).toBeDefined();
+    // Built schema types are GraphQLType instances, so they stringify rather
+    // than printing as AST nodes.
+    expect(`${queryFields.OrganizationDemographicDefinitions.type}`).toBe(
+      '[DemographicDefinition!]!',
+    );
+    expect(queryFields.OrganizationDemographicDefinitions.args.map((argument) => argument.name)).toEqual([
+      'organizationId',
+      'includeDisabled',
+    ]);
+
+    const organizationFields = (schema.getType('Organization') as any).getFields();
+    expect(organizationFields.demographicsPolicy).toBeDefined();
+    expect(`${organizationFields.demographicsPolicy.type}`).toBe(
+      'OrganizationDemographicsPolicy',
+    );
+
+    expect(schema.getMutationType().getFields().MySaveDemographics).toBeDefined();
   });
 
   it('keeps OrganizationDemographicDefinitions as a top-level query with the agreed signature', () => {
@@ -192,6 +220,26 @@ describe('Demographics GraphQL surface (ORG-006)', () => {
 
     // Object definitions appear exactly once each in this file.
     expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('accepts the system flag on the definition input so ORG-030 can seed base definitions', () => {
+    const input = parse(demographicsSdl).definitions.find(
+      (definition) =>
+        definition.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION &&
+        definition.name.value === 'DemographicDefinitionInput',
+    ) as any;
+
+    expect(input).toBeDefined();
+
+    const inputFields: FieldDefinitionNode[] = input.fields || [];
+    const fields = inputFields.reduce((result: Record<string, string>, field) => {
+      result[field.name.value] = print(field.type as TypeNode);
+      return result;
+    }, {});
+
+    expect(fields.system).toBe('Boolean');
+    expect(fields.valueType).toBe('String');
+    expect(fields.options).toBe('[DemographicOptionInput!]');
   });
 
   it('extends Organization with demographicsPolicy', () => {

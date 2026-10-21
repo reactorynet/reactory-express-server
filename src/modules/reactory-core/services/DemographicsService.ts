@@ -273,6 +273,72 @@ export class DemographicsService {
     }
   }
 
+  /**
+   * True when the caller holds an enabled membership for exactly this
+   * organization on their partner. A business-unit membership still counts as
+   * membership (unlike `hasOrganizationRole`, which requires an
+   * organization-level membership for administration).
+   */
+  private hasOrganizationMembership(
+    user: Reactory.Models.IUserDocument,
+    clientId: string,
+    organizationId: string,
+  ): boolean {
+    const memberships: any[] = Array.isArray(user?.memberships)
+      ? (user.memberships as any[])
+      : [];
+
+    return memberships.some((membership) => {
+      if (!membership) return false;
+      if (!membership.clientId || `${membership.clientId}` !== clientId) return false;
+      if (!membership.organizationId || `${membership.organizationId}` !== organizationId) return false;
+      if (membership.enabled === false) return false;
+      return Array.isArray(membership.roles) ? membership.roles.length > 0 : true;
+    });
+  }
+
+  /**
+   * Organization-scoped *read* authorization.
+   *
+   * Reading an organization's demographic configuration is a member operation,
+   * not a public one: without this check any authenticated user could enumerate
+   * another tenant's definitions (titles, keys, enum options and the JSON
+   * Schema, which together describe the organization's data model). A platform
+   * `ADMIN` and any enabled member of this organization (including a
+   * business-unit member) are admitted; everybody else is denied.
+   *
+   * Sensitive definitions are one step above this: see `list` and `get`, which
+   * additionally require `assertOrgAdmin` for `sensitive: true`.
+   */
+  private assertOrgMember(
+    organizationId: string | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): void {
+    const context = this.resolveExecutionContext(executionContext);
+    const { user } = context;
+
+    if (!user || !user._id) {
+      throw new InsufficientPermissions(
+        'An authenticated user is required to access an organization',
+      );
+    }
+
+    if (!organizationId || ObjectId.isValid(organizationId as any) === false) {
+      throw new ApiError(`param id is not a valid ${organizationId}`);
+    }
+
+    const partnerId = this.resolvePartnerId(context);
+
+    if (user.hasRole(partnerId, 'ADMIN') === true) return;
+
+    if (this.hasOrganizationMembership(user, partnerId, `${organizationId}`) === true) return;
+
+    throw new InsufficientPermissions(
+      `User [${user._id}] does not have permission to access organization [${organizationId}]`,
+      { organizationId: `${organizationId}`, partnerId },
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Shared helpers
   // ---------------------------------------------------------------------------
@@ -295,45 +361,103 @@ export class DemographicsService {
   }
 
   /**
-   * Structural validation of a definition payload. Returns field-level errors
-   * rather than one opaque string so the configuration form can highlight the
-   * offending input.
+   * Builds the definition that *would* exist after this write: the stored
+   * values for every field the caller omitted, overlaid with the fields they
+   * supplied.
+   *
+   * Validation must run against this, not against the raw patch. Validating a
+   * patch would accept an `enum` definition whose options live in the database
+   * (because the patch never mentions them) and would let an update keep an
+   * unusable definition alive; conversely it would reject a perfectly valid
+   * title-only update of an enum definition, whose options are simply not part
+   * of the patch.
    */
-  private validateDefinition(input: IDemographicDefinitionInput, creating: boolean): IDemographicFieldError[] {
+  private effectiveDefinition(
+    existing: any,
+    input: IDemographicDefinitionInput,
+  ): IDemographicDefinitionInput {
+    const supplied = Object.keys(input || {}).reduce<Record<string, unknown>>((accumulator, field) => {
+      const value = (input as Record<string, unknown>)[field];
+      if (value !== undefined) accumulator[field] = value;
+      return accumulator;
+    }, {}) as IDemographicDefinitionInput;
+
+    if (!existing) return supplied;
+
+    const read = (path: string): any =>
+      typeof existing.get === 'function' ? existing.get(path) : existing[path];
+
+    const options = read('options');
+    const reference = read('reference');
+
+    return {
+      key: read('key'),
+      title: read('title'),
+      category: read('category'),
+      valueType: read('valueType'),
+      options: Array.isArray(options)
+        ? options.map((option: any) => ({
+            key: option.key,
+            label: option.label,
+            ordinal: option.ordinal,
+            deprecated: option.deprecated,
+          }))
+        : options,
+      reference: reference
+        ? { model: reference.model, multiple: reference.multiple }
+        : reference,
+      ...supplied,
+    };
+  }
+
+  /**
+   * Structural validation of a definition. Returns field-level errors rather
+   * than one opaque string so the configuration form can highlight the
+   * offending input.
+   *
+   * `effective` is the merged view produced by `effectiveDefinition`, so the
+   * rules below hold for the definition that will actually be persisted:
+   * an `enum`/`multi-enum` definition without options and a `reference`
+   * definition without a model are rejected whether the caller omitted those
+   * fields or supplied them empty. Both are otherwise accepted and then fail
+   * on every value write (the validator has no option list or model to check
+   * against), which is the defect this closes.
+   */
+  private validateDefinition(
+    effective: IDemographicDefinitionInput,
+    creating: boolean,
+  ): IDemographicFieldError[] {
     const errors: IDemographicFieldError[] = [];
 
-    if (creating && !this.normalizeKey(input.key)) {
+    if (creating && !this.normalizeKey(effective.key)) {
       errors.push({ path: 'key', message: 'A key is required' });
     }
 
-    if (creating || input.title !== undefined) {
-      if (typeof input.title !== 'string' || input.title.trim().length === 0) {
-        errors.push({ path: 'title', message: 'A title is required' });
-      }
+    if (typeof effective.title !== 'string' || effective.title.trim().length === 0) {
+      errors.push({ path: 'title', message: 'A title is required' });
     }
 
-    if (creating || input.valueType !== undefined) {
-      if (typeof input.valueType !== 'string' ||
-        (DEMOGRAPHIC_VALUE_TYPES as readonly string[]).includes(input.valueType) === false) {
-        errors.push({
-          path: 'valueType',
-          message: `valueType must be one of: ${DEMOGRAPHIC_VALUE_TYPES.join(', ')}`,
-        });
-      }
+    const valueType = effective.valueType;
+
+    if (typeof valueType !== 'string' ||
+      (DEMOGRAPHIC_VALUE_TYPES as readonly string[]).includes(valueType) === false) {
+      errors.push({
+        path: 'valueType',
+        message: `valueType must be one of: ${DEMOGRAPHIC_VALUE_TYPES.join(', ')}`,
+      });
     }
 
-    if (input.category !== undefined &&
-      (DEMOGRAPHIC_CATEGORIES as readonly string[]).includes(`${input.category}`) === false) {
+    if (effective.category !== undefined &&
+      (DEMOGRAPHIC_CATEGORIES as readonly string[]).includes(`${effective.category}`) === false) {
       errors.push({
         path: 'category',
         message: `category must be one of: ${DEMOGRAPHIC_CATEGORIES.join(', ')}`,
       });
     }
 
-    const valueType = input.valueType;
-    const options = input.options;
+    if (valueType === 'enum' || valueType === 'multi-enum') {
+      const options = effective.options;
 
-    if ((valueType === 'enum' || valueType === 'multi-enum') && options !== undefined) {
       if (!Array.isArray(options) || options.length === 0) {
         errors.push({ path: 'options', message: 'Enum definitions require at least one option' });
       } else {
@@ -352,8 +476,8 @@ export class DemographicsService {
       }
     }
 
-    if (valueType === 'reference' && input.reference !== undefined) {
-      const model = input.reference && input.reference.model;
+    if (valueType === 'reference') {
+      const model = effective.reference && effective.reference.model;
       if (!model || (DEMOGRAPHIC_REFERENCE_MODELS as readonly string[]).includes(`${model}`) === false) {
         errors.push({
           path: 'reference.model',
@@ -492,15 +616,17 @@ export class DemographicsService {
    * Lists the organization's definitions, ordered for the configuration screen.
    * `includeDisabled` includes definitions an administrator has switched off;
    * soft-deleted definitions are never returned.
+   *
+   * Requires membership of the organization (see `assertOrgMember`).
+   * `sensitive` definitions are administrator-only, so they are filtered out of
+   * a non-administrator's result rather than returned and hidden client-side.
    */
   async list(
     organizationId: string,
     includeDisabled: boolean = false,
     executionContext?: Reactory.Server.IReactoryContext,
   ): Promise<any[]> {
-    // Reads are authenticated even though they are not administrator-only.
-    this.resolveActorId(executionContext);
-    this.assertValidOrganizationId(organizationId);
+    this.assertOrgMember(organizationId, executionContext);
 
     const query: Record<string, any> = {
       organization: new ObjectId(organizationId),
@@ -509,19 +635,32 @@ export class DemographicsService {
 
     if (includeDisabled !== true) query.enabled = true;
 
+    // A sensitive definition is only readable by an organization administrator,
+    // whatever `includeDisabled` says. `$ne: true` also matches documents that
+    // predate the flag (field absent).
+    if (this.hasOrgAdmin(organizationId, executionContext) === false) {
+      query.sensitive = { $ne: true };
+    }
+
     return DemographicDefinition.find(query)
       .sort({ ordinal: 1, title: 1 })
       .then();
   }
 
-  /** Loads one definition by key. */
+  /**
+   * Loads one definition by key.
+   *
+   * Requires membership of the organization, and additionally organization
+   * administration when the definition is marked `sensitive` (design decision
+   * D2/D4: the definition of a sensitive field - its options, schema and
+   * reference target - is itself privileged configuration).
+   */
   async get(
     organizationId: string,
     key: string,
     executionContext?: Reactory.Server.IReactoryContext,
   ): Promise<any> {
-    this.resolveActorId(executionContext);
-    this.assertValidOrganizationId(organizationId);
+    this.assertOrgMember(organizationId, executionContext);
     const normalized = this.normalizeKey(key);
     if (!normalized) throw new ApiError('A demographic definition key is required');
 
@@ -538,6 +677,13 @@ export class DemographicsService {
       );
     }
 
+    if (definition.sensitive === true && this.hasOrgAdmin(organizationId, executionContext) === false) {
+      throw new InsufficientPermissions(
+        `Demographic definition [${normalized}] is sensitive and can only be read by an organization administrator`,
+        { organizationId, key: normalized },
+      );
+    }
+
     return definition;
   }
 
@@ -546,9 +692,11 @@ export class DemographicsService {
    *
    * Guard rails:
    * - the `key` is immutable once the definition exists;
-   * - a `system` definition cannot change its `valueType` (nor drop the flag,
-   *   which would otherwise be a two-step way around the first rule);
-   * - the payload is validated before anything is written.
+   * - a `system` definition cannot change its `valueType`;
+   * - the `system` flag may be *set on creation* (ORG-030 seeds the base set
+   *   through this path) and is immutable afterwards in both directions -
+   *   clearing it would otherwise be a two-step way around the valueType rule;
+   * - the resulting definition is validated before anything is written.
    */
   async save(
     organizationId: string,
@@ -603,22 +751,27 @@ export class DemographicsService {
         );
       }
 
-      if (existing.system === true) {
-        if (input.valueType !== undefined && input.valueType !== existing.valueType) {
-          throw new ApiError(
-            `System demographic definition [${existingKey}] cannot change its value type from [${existing.valueType}] to [${input.valueType}]`,
-            { organizationId, key: existingKey, valueType: existing.valueType },
-          );
-        }
-        if (input.system === false) {
-          throw new ApiError(
-            `System demographic definition [${existingKey}] cannot be converted to a user-defined definition`,
-            { organizationId, key: existingKey },
-          );
-        }
+      if (existing.system === true && input.valueType !== undefined && input.valueType !== existing.valueType) {
+        throw new ApiError(
+          `System demographic definition [${existingKey}] cannot change its value type from [${existing.valueType}] to [${input.valueType}]`,
+          { organizationId, key: existingKey, valueType: existing.valueType },
+        );
       }
 
-      const errors = this.validateDefinition(input, false);
+      // The flag is set at creation and immutable thereafter. Both directions
+      // are rejected: promoting a user definition would make its value type
+      // frozen, and demoting a system definition would unfreeze it.
+      if (input.system !== undefined && input.system !== (existing.system === true)) {
+        throw new ApiError(
+          existing.system === true
+            ? `System demographic definition [${existingKey}] cannot be converted to a user-defined definition`
+            : `User-defined demographic definition [${existingKey}] cannot be converted to a system definition`,
+          { organizationId, key: existingKey, system: existing.system === true },
+        );
+      }
+
+      // Validate the definition that will actually be persisted, not the patch.
+      const errors = this.validateDefinition(this.effectiveDefinition(existing, input), false);
       if (errors.length > 0) {
         this.rejectInvalid(`Demographic definition [${existingKey}] is not valid`, errors, {
           organizationId,
@@ -642,6 +795,9 @@ export class DemographicsService {
     const document: any = new DemographicDefinition({
       organization,
       key,
+      // Seeded base definitions (ORG-030) are created through this path; the
+      // flag is immutable afterwards.
+      system: createInput.system === true,
       createdBy: actorId,
       updatedBy: actorId,
       deleted: false,
@@ -941,13 +1097,16 @@ export class DemographicsService {
    * definitions, which are your own PII and are exactly what the profile screen
    * renders. Organization-wide reads (`listValues`) and another user's values
    * are where the sensitive/administrator rule bites.
+   *
+   * Reading *any* value requires membership of the organization: values are
+   * tenant data even when the subject is the caller.
    */
   async getUserValues(
     organizationId: string,
     userId: string,
     executionContext?: Reactory.Server.IReactoryContext,
   ): Promise<any[]> {
-    this.assertValidOrganizationId(organizationId);
+    this.assertOrgMember(organizationId, executionContext);
     const context = this.resolveExecutionContext(executionContext);
     const callerId = `${this.resolveActorId(context)}`;
 
@@ -973,9 +1132,11 @@ export class DemographicsService {
     input: IDemographicValueInput,
     executionContext?: Reactory.Server.IReactoryContext,
   ): Promise<any> {
+    // Writing any value - including your own - requires membership of the
+    // organization the value belongs to.
+    this.assertOrgMember(organizationId, executionContext);
     const context = this.resolveExecutionContext(executionContext);
     const callerId = `${this.resolveActorId(context)}`;
-    this.assertValidOrganizationId(organizationId);
 
     const payload: IDemographicValueInput = input || {};
     const targetUserId = payload.user ? `${payload.user}` : callerId;
@@ -1106,7 +1267,7 @@ export class DemographicsService {
     userId?: string,
     executionContext?: Reactory.Server.IReactoryContext,
   ): Promise<boolean> {
-    this.assertValidOrganizationId(organizationId);
+    this.assertOrgMember(organizationId, executionContext);
     const context = this.resolveExecutionContext(executionContext);
     const callerId = `${this.resolveActorId(context)}`;
     const targetUserId = userId ? `${userId}` : callerId;
@@ -1162,7 +1323,7 @@ export class DemographicsService {
     membershipId?: string | null,
     executionContext?: Reactory.Server.IReactoryContext,
   ): Promise<any[]> {
-    this.assertValidOrganizationId(organizationId);
+    this.assertOrgMember(organizationId, executionContext);
     const context = this.resolveExecutionContext(executionContext);
     const callerId = `${this.resolveActorId(context)}`;
     const policy = await this.getPolicy(organizationId, context);
