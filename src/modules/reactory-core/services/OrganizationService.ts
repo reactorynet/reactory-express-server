@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
+import { Readable } from 'stream';
 import moment from 'moment';
 import { ObjectId } from 'mongodb';
 import Reactory from '@reactorynet/reactory-core';
@@ -72,6 +73,95 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
       throw new ApiError('An authenticated user is required to determine the acting user');
     }
     return user._id;
+  }
+
+  /**
+   * Normalises an optional text update so that "not supplied", "set" and
+   * "clear" are three distinct outcomes.
+   *
+   * - `undefined` in  -> `undefined` out (field untouched)
+   * - `null` in       -> `null` out (field cleared)
+   * - blank string in -> `null` out (field cleared)
+   * - anything else   -> trimmed string
+   */
+  private normalizeOptionalText(value?: string | null): string | null | undefined {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    const trimmed = `${value}`.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  }
+
+  /** Image mime types accepted for organization branding assets. */
+  private static readonly IMAGE_EXTENSIONS: Record<string, string> = {
+    'image/png': 'png',
+    'image/jpeg': 'jpeg',
+    'image/jpg': 'jpeg',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/svg+xml': 'svg',
+  };
+
+  /**
+   * Converts a base64 image data URI into the `IFile` contract the
+   * `ReactoryFileService` consumes, so organization images go through exactly
+   * the same upload + aliasing path as multipart uploads.
+   */
+  private imageDataToFile(imageData: string, filename: string): Reactory.Service.IFile {
+    const match = /^data:([^;,]+)(;base64)?,([\s\S]*)$/.exec(`${imageData}`);
+    if (match === null) {
+      throw new ApiError('Organization image must be a base64 encoded data URI');
+    }
+
+    const mimetype = match[1].toLowerCase();
+    const isBase64 = match[2] !== undefined;
+    const payload = match[3];
+    const buffer = isBase64
+      ? Buffer.from(payload, 'base64')
+      : Buffer.from(decodeURIComponent(payload), 'utf8');
+
+    if (buffer.length === 0) {
+      throw new ApiError('Organization image data is empty');
+    }
+
+    const extension = OrganizationService.IMAGE_EXTENSIONS[mimetype] || 'jpeg';
+
+    return {
+      filename: `${filename}.${extension}`,
+      mimetype,
+      encoding: isBase64 ? 'base64' : 'utf8',
+      // A fresh stream per call: `uploadFile` pipes it exactly once.
+      createReadStream: () => {
+        const stream = new Readable();
+        stream.push(buffer);
+        stream.push(null);
+        return stream;
+      },
+    };
+  }
+
+  /**
+   * Single upload path for organization branding assets. Returns the stored
+   * file model; the caller is responsible for assigning the alias and saving.
+   */
+  private async uploadOrganizationFile(
+    organization: Reactory.Models.IOrganizationDocument,
+    file: Reactory.Service.IFile,
+    imageType: 'logo' | 'avatar',
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IReactoryFileModel> {
+    const fileSvc: Reactory.Service.IReactoryFileService = this
+      .resolveExecutionContext(executionContext)
+      .getService('core.ReactoryFileService@1.0.0');
+
+    return fileSvc.uploadFile({
+      catalog: false,
+      file,
+      rename: false,
+      filename: `${imageType}_${organization._id}_default`,
+      isUserSpecific: false,
+      uploadContext: `mores::organization::${organization._id}::${imageType}`,
+      virtualPath: `/organization/${organization._id}/`,
+    }).then();
   }
 
   /***
@@ -466,68 +556,88 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
     return organization as Reactory.Models.IOrganizationDocument;
   }
 
+  /**
+   * Stores an organization logo supplied as a base64 data URI.
+   *
+   * The previous implementation wrote the decoded bytes straight to disk and
+   * returned the organization untouched, so `organization.logo` was never set
+   * and `logoURL` always resolved to null. It now goes through the same
+   * `ReactoryFileService` upload path as multipart uploads, assigns the
+   * returned alias to the document and persists it.
+   */
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
-  async updateOrganizationLogo(organization: Reactory.Models.IOrganizationDocument, imageData: string): Promise<Reactory.Models.IOrganizationDocument> {
-    try {      
-      const {
-        APP_DATA_ROOT,
-      } = process.env;
+  async updateOrganizationLogo(
+    organization: Reactory.Models.IOrganizationDocument,
+    imageData: string,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IOrganizationDocument> {
+    const file = this.imageDataToFile(imageData, `logo_${organization._id}_default`);
+    const reactoryFile = await this.uploadOrganizationFile(organization, file, 'logo', executionContext);
 
-      const isPng = imageData.startsWith('data:image/png');
-      const buffer = Buffer.from(imageData.split(/,\s*/)[1], 'base64');
-      if (!existsSync(`${APP_DATA_ROOT}/organization`)) mkdirSync(`${APP_DATA_ROOT}/organization`);
-      const path = `${APP_DATA_ROOT}/organization/${organization._id}/`;
-
-      if (!existsSync(path)) mkdirSync(path);
-      const filename = `${APP_DATA_ROOT}/organization/${organization._id}/logo_${organization._id}_default.${isPng === true ? 'png' : 'jpeg'}`;
-
-      // if (isPng === true) {
-      //  logger.info(`Converting logo for ${organization} from png to jpg`);
-      //  pngToJpeg({ quality: 70 })(buffer).then(output => writeFileSync(filename, output));
-      // } else writeFileSync(filename, buffer);
-
-      writeFileSync(filename, buffer);
-      return organization
-
-    } catch (organizationLogoUpdate) {
-      return organization;
+    if (!reactoryFile || !reactoryFile.alias) {
+      throw new ApiError(`Could not store the logo for organization ${organization._id}`);
     }
+
+    organization.logo = reactoryFile.alias;
+    await organization.save();
+
+    return organization;
   }
 
+  /**
+   * Applies identity updates to an organization.
+   *
+   * Updates use explicit `undefined` checks so a caller can distinguish
+   * "leave this field alone" (`undefined`) from "clear this field" (`null` or a
+   * blank string). An empty `name` is invalid and rejected.
+   */
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
-  async setOrganization(id: string, updates: { name?: string; code?: string; color?: string; logo?: string; }): Promise<Reactory.Models.IOrganizationDocument> {
+  async setOrganization(
+    id: string,
+    updates: { name?: string; code?: string; tradingName?: string; color?: string; logo?: string; },
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IOrganizationDocument> {
+    if (ObjectId.isValid(id) === false) {
+      throw new ApiError(`param id is not a valid ${id}`);
+    }
+
     const _id = new ObjectId(id);
-    const exists = await Organization.count({ _id }).then() === 1;
+    const exists = await Organization.countDocuments({ _id }).then() > 0;
 
     if (exists === false) throw new OrganizationNotFoundError(`Organization with the id ${id} could not be found`, id);
 
     let organization: Reactory.Models.IOrganizationDocument = await Organization.findById(_id).then();
-    const inputData = {
-      name: updates.name || organization.name,
-      code: updates.code || organization.code,
-    };
+    if (!organization) throw new OrganizationNotFoundError(`Organization with the id ${id} could not be found`, id);
+
+    const name = this.normalizeOptionalText(updates.name);
+    if (name !== undefined) {
+      if (name === null) throw new ApiError('Organization name cannot be empty');
+      organization.name = name;
+    }
+
+    const code = this.normalizeOptionalText(updates.code);
+    if (code !== undefined) organization.code = code;
+
+    const tradingName = this.normalizeOptionalText(updates.tradingName);
+    if (tradingName !== undefined) organization.tradingName = tradingName;
 
     if (updates.color) {
       organization.setSetting('color', { primary: updates.color, secondary: updates.color }, 'core.MaterialThemeColorPicker');
     }
 
-    if (organization && organization._id) {
-      organization.code = inputData.code;
-      organization.name = inputData.name;
-
-      if (updates.logo) {
-        try {
-          organization = await this.updateOrganizationLogo(organization, updates.logo);
-        } catch (logoError) {
-          logger.warn('Could not update the organization logo');
-        }
+    if (updates.logo) {
+      try {
+        await this.updateOrganizationLogo(organization, updates.logo, executionContext);
+      } catch (logoError) {
+        logger.warn(`Could not update the organization logo: ${logoError?.message || logoError}`);
       }
-      organization.createdAt = organization.createdAt || moment().valueOf();
-      organization.updatedAt = moment().valueOf();
-      await organization.save().then();
-
-      return organization;
     }
+
+    organization.createdAt = organization.createdAt || moment().valueOf();
+    organization.updatedAt = moment().valueOf();
+    await organization.save().then();
+
+    return organization;
   }
 
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
@@ -542,32 +652,27 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
       throw new ApiError('Cannot upload image for null id')
     }
 
-    const organization = await Organization.findById(id).then();
+    const organization: Reactory.Models.IOrganizationDocument = await Organization.findById(id).then();
 
     if (!organization) throw new ApiError(`Organization with id ${id} not found`);
 
+    const reactoryFile: Reactory.Models.IReactoryFile = await this.uploadOrganizationFile(
+      organization,
+      file,
+      imageType as 'logo' | 'avatar',
+      executionContext
+    );
 
-    let virtualPath = `/organization/${organization._id}/`;
-    let filename = `${imageType}_${organization._id}_default`;
-
-    const fileSvc: Reactory.Service.IReactoryFileService = this.resolveExecutionContext(executionContext).getService('core.ReactoryFileService@1.0.0');
-
-    const reactoryFile: Reactory.Models.IReactoryFile = await fileSvc.uploadFile({
-      catalog: false,
-      file: file,
-      rename: false,
-      filename,
-      isUserSpecific: false,
-      uploadContext: `mores::organization::${organization._id}::logo`,
-      virtualPath
-    }).then();
-
-    if (reactoryFile.id && reactoryFile.hash) {
-      if (imageType === 'logo') organization.logo = reactoryFile.alias;
-      if (imageType === 'avatar') organization.avatar = reactoryFile.alias;
+    if (!reactoryFile || !reactoryFile.alias) {
+      throw new ApiError(`Could not store the ${imageType} for organization ${id}`);
     }
 
-    organization.save();
+    if (imageType === 'logo') organization.logo = reactoryFile.alias;
+    if (imageType === 'avatar') organization.avatar = reactoryFile.alias;
+
+    // Persist before returning: the caller (and any subsequent read) must see
+    // the alias, and an unanswered save would resolve the promise first.
+    await organization.save();
 
     return organization;
   }

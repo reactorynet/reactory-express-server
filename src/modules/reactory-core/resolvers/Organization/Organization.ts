@@ -19,6 +19,22 @@ interface CorePagedOrganizationParams extends CoreOrganizationParams {
   paging: Reactory.Models.IPagingRequest;
 }
 
+/**
+ * Cache-busting token appended to organization image URLs.
+ *
+ * `YYYMMDDhh` is not a valid moment format (three year tokens, a 12-hour
+ * clock); `YYYYMMDDHH` renders an ISO-like, lexicographically sortable stamp
+ * that changes whenever a new image is stored.
+ */
+const organizationImageCacheToken = (): string => moment().format('YYYYMMDDHH');
+
+/**
+ * Resolves the CDN URL for an organization image alias. Shared by `avatarURL`
+ * and `logoURL` so both use the same path shape and cache-busting token.
+ */
+const organizationImageUrl = (organization: any, alias: string): string =>
+  safeCDNUrl(`organization/${organization._id}/${alias}?t=${organizationImageCacheToken()}`);
+
 //@ts-ignore - this has to be called without the () as this throws an error in the decorator
 @resolver
 class OrganizationResolver {
@@ -41,10 +57,10 @@ class OrganizationResolver {
   @property('Organization', 'avatarURL')
   avatarURL(organization: any, params: any, context: Reactory.Server.IReactoryContext) {
     if (organization && organization.avatar) {
-      return safeCDNUrl(`organization/${organization._id}/${organization.avatar}?t=${moment().format('YYYMMDDhh')}`);
+      return organizationImageUrl(organization, organization.avatar);
     }
     if (organization && organization.logo) {
-      return safeCDNUrl(`organization/${organization._id}/${organization.logo}?t=${moment().format('YYYMMDDhh')}`);
+      return organizationImageUrl(organization, organization.logo);
     }
     return null;
   }
@@ -58,7 +74,7 @@ class OrganizationResolver {
   @property('Organization', 'logoURL')
   logoURL(organization: any) {
     if (organization && organization.logo) {
-      return safeCDNUrl(`organization/${organization._id}/${organization.logo}?t=${moment().format('YYYMMDDhh')}`);
+      return organizationImageUrl(organization, organization.logo);
     }
     return null;
   }
@@ -142,6 +158,7 @@ class OrganizationResolver {
   // ---- Mutations ----
 
   @mutation('createOrganization')
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
   async createOrganization(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
     const { input } = args;
     const organizationService = context.getService('core.OrganizationService@1.0.0') as Reactory.Service.IReactoryOrganizationService;
@@ -156,6 +173,7 @@ class OrganizationResolver {
   }
 
   @mutation('updateOrganization')
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
   async updateOrganization(parent: any, args: any, context: Reactory.Server.IReactoryContext) {
     const { id, input } = args;
     const organizationService = context.getService('core.OrganizationService@1.0.0') as Reactory.Service.IReactoryOrganizationService;

@@ -37,3 +37,41 @@ exercised here (explicitly out of scope for ORG-001).
 ./bin/jest.sh reactory local 'src/modules/reactory-core/models/__tests__/*.test.ts'
 npx tsc --noEmit   # no NEW errors in touched files (repo has a pre-existing ratchet baseline)
 ```
+
+---
+
+## ORG-002 — `Organization.setSetting` first write, update and second add
+
+### Defect
+
+`setSetting` returned `null` whenever `this.settings` was empty, so the first
+setting could never be persisted. The index handling was also unsafe:
+`_idx` started as `null` (and `null >= 0` is `true` in JavaScript), while
+`Array#push` returns the *new length* rather than the index.
+
+### Behaviour to lock down
+
+1. First call on an empty/missing `settings` array persists and is readable via
+   `getSetting`.
+2. A second call for the same name updates in place (no duplicate entries).
+3. A call for a new name appends while preserving the first.
+4. Omitting `componentFqn` on update retains the stored component.
+5. The stored subdocument is returned so callers can use it immediately.
+
+### Test cases (`OrganizationModels.test.ts`)
+
+- `writes the first setting when settings is empty`
+- `writes the first setting when the settings path is unset`
+- `updates an existing setting instead of appending a duplicate`
+- `retains the existing componentFqn when the update omits one`
+- `adds a second setting while keeping the first`
+- `returns the stored subdocument so callers can read it back immediately`
+
+In-memory mongoose documents only; no database is required.
+
+## Verification
+
+```bash
+./bin/jest.sh reactory local 'OrganizationModels'
+npm run typecheck   # ratchet gate, must end with "No new type errors."
+```
