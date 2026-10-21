@@ -44,6 +44,20 @@ jest.mock('@reactory/server-modules/reactory-core/models', () => {
 const models = require('@reactory/server-modules/reactory-core/models');
 
 /**
+ * The REAL `User` model.
+ *
+ * The authorization matrix must run against the shipped `hasRole`
+ * implementation, not a hand-rolled mock that encodes the intended semantics.
+ * A mock previously hid a cross-tenant bypass: `UserSchema.methods.hasRole`
+ * ends with an unconditional document-level fallback
+ * (`this.roles.includes(role)`), so a user whose document-level roles contain
+ * ORGANIZATION_ADMIN passes the scoped query for EVERY organization.
+ */
+const RealUserModel = jest.requireActual(
+  '@reactory/server-modules/reactory-core/models/User',
+).default;
+
+/**
  * Role policy for a test context.
  *
  * `admin`       - platform ADMIN, any organization.
@@ -57,38 +71,62 @@ interface IRolePolicy {
 }
 
 /**
- * Builds an execution context whose `user.hasRole(clientId, role,
- * organizationId?)` mirrors the real model: ADMIN is organization agnostic,
- * ORGANIZATION_ADMIN only matches the organization it is scoped to.
+ * Builds an execution context around a REAL `User` document.
+ *
+ * `memberships` carries one client-level USER membership plus one membership
+ * per organization the caller administers. The document-level `roles` array
+ * deliberately reproduces the shape `UserService.createUserForOrganization`
+ * writes (`foundUser.roles = union(foundUser.roles, effectiveRoles)`): an
+ * ORGANIZATION_ADMIN caller therefore ALSO carries ORGANIZATION_ADMIN on the
+ * user document.
+ *
+ * That shape is not incidental - it is the one that defeated the original
+ * `user.hasRole(partnerId, 'ORGANIZATION_ADMIN', orgId)` check, because
+ * `UserSchema.methods.hasRole` ends with an unconditional document-level
+ * fallback. Using the real model here means the tests fail if the service ever
+ * goes back to relying on that query.
  */
 const makeContext = (policy: IRolePolicy = {}) => {
   const partnerId = new ObjectId();
   const orgAdminOf = policy.orgAdminOf || [];
 
-  const context: any = {
-    user: {
-      _id: new ObjectId(),
-      memberships: [],
-      hasRole: jest.fn((_clientId: string, role: string, organizationId?: string) => {
-        if (role === 'ADMIN') return policy.admin === true;
-        if (role === 'SYSTEM') return policy.system === true;
-        if (role === 'ORGANIZATION_ADMIN') {
-          return !!organizationId && orgAdminOf.indexOf(organizationId) >= 0;
-        }
-        if (role === 'USER') return true;
-        return false;
-      }),
-      hasAnyRole: jest.fn(() => true),
+  const memberships: any[] = [
+    {
+      clientId: partnerId,
+      organizationId: null,
+      businessUnitId: null,
+      roles: ['USER'],
+      enabled: true,
     },
+    ...orgAdminOf.map((organizationId) => ({
+      clientId: partnerId,
+      organizationId: new ObjectId(organizationId),
+      businessUnitId: null,
+      roles: ['USER', 'ORGANIZATION_ADMIN'],
+      enabled: true,
+    })),
+  ];
+
+  const documentRoles: string[] = ['USER'];
+  if (policy.admin) documentRoles.push('ADMIN');
+  if (policy.system) documentRoles.push('SYSTEM');
+  if (orgAdminOf.length > 0) documentRoles.push('ORGANIZATION_ADMIN');
+
+  const user: any = new RealUserModel({
+    _id: new ObjectId(),
+    email: `operator-${new ObjectId()}@example.com`,
+    roles: documentRoles,
+    memberships,
+  });
+  // Never touch a database: every write in this suite is asserted through the
+  // mock, and the context user is never persisted.
+  user.save = jest.fn().mockResolvedValue(user);
+
+  const context: any = {
+    user,
     partner: { _id: partnerId },
-    // Used by the `@roles` decorator, which checks the coarse role only.
-    hasRole: jest.fn(
-      (role: string) =>
-        role === 'USER' ||
-        (role === 'ADMIN' && policy.admin === true) ||
-        (role === 'SYSTEM' && policy.system === true) ||
-        (role === 'ORGANIZATION_ADMIN' && orgAdminOf.length > 0),
-    ),
+    // Used by the coarse `@roles` decorator, which never sees an organization.
+    hasRole: jest.fn((role: string) => documentRoles.indexOf(role) >= 0),
     hasAnyRole: jest.fn(() => true),
     log: jest.fn(),
     error: jest.fn(),
@@ -232,8 +270,202 @@ describe('OrganizationService org-scoped authorization (ORG-005)', () => {
     });
   });
 
+  /**
+   * The model-level hazard behind F1, pinned with the REAL `User` document.
+   *
+   * `UserSchema.methods.hasRole` ends with a document-level fallback, and
+   * `UserService.createUserForOrganization` copies membership roles into
+   * `user.roles`. A caller provisioned as an organization administrator
+   * therefore satisfies `hasRole(partner, 'ORGANIZATION_ADMIN', anyOrgId)` for
+   * every organization. The first assertion documents that (so the test cannot
+   * silently become meaningless); the rest prove that the service no longer
+   * trusts that query and denies the cross-organization call.
+   */
+  describe('real User model - document-level roles cannot cross organizations (F1)', () => {
+    it('documents that the model reports the role for every organization', () => {
+      const context = makeContext({ orgAdminOf: [`${organizationA._id}`] });
+
+      expect(context.user.roles).toContain('ORGANIZATION_ADMIN');
+      expect(
+        context.user.hasRole(`${context.partner._id}`, 'ORGANIZATION_ADMIN', `${organizationA._id}`),
+      ).toBe(true);
+      // If this ever becomes false the model was fixed upstream; the service
+      // check below remains correct either way.
+      expect(
+        context.user.hasRole(`${context.partner._id}`, 'ORGANIZATION_ADMIN', `${organizationB._id}`),
+      ).toBe(true);
+    });
+
+    it('denies setOrganization on organization B and never persists B', async () => {
+      const context = makeContext({ orgAdminOf: [`${organizationA._id}`] });
+      const svc = new OrganizationService({}, context);
+
+      await expectRejection(
+        () => svc.setOrganization(`${organizationB._id}`, { name: 'Hijacked' }),
+        /permission/i,
+      );
+
+      expect(organizationB.name).toBe('Acme');
+      expect(organizationB.save).not.toHaveBeenCalled();
+    });
+
+    it('still allows the same caller on organization A', async () => {
+      const context = makeContext({ orgAdminOf: [`${organizationA._id}`] });
+      const svc = new OrganizationService({}, context);
+
+      await svc.setOrganization(`${organizationA._id}`, { name: 'Acme Holdings' });
+
+      expect(organizationA.name).toBe('Acme Holdings');
+      expect(organizationA.save).toHaveBeenCalledTimes(1);
+      expect(organizationB.save).not.toHaveBeenCalled();
+    });
+
+    it('grants nothing to a business-unit membership on the same organization', async () => {
+      const context = makeContext({ orgAdminOf: [`${organizationA._id}`] });
+      const svc = new OrganizationService({}, context);
+      context.user.memberships = [
+        {
+          clientId: context.partner._id,
+          organizationId: organizationA._id,
+          businessUnitId: new ObjectId(),
+          roles: ['USER', 'ORGANIZATION_ADMIN'],
+          enabled: true,
+        },
+      ];
+
+      await expectRejection(
+        () => svc.setOrganization(`${organizationA._id}`, { name: 'Renamed' }),
+        /permission/i,
+      );
+      expect(organizationA.save).not.toHaveBeenCalled();
+    });
+
+    it('grants nothing to an explicitly disabled membership', async () => {
+      const context = makeContext({ orgAdminOf: [`${organizationA._id}`] });
+      const svc = new OrganizationService({}, context);
+      context.user.memberships = [
+        {
+          clientId: context.partner._id,
+          organizationId: organizationA._id,
+          businessUnitId: null,
+          roles: ['USER', 'ORGANIZATION_ADMIN'],
+          enabled: false,
+        },
+      ];
+
+      await expectRejection(
+        () => svc.setOrganization(`${organizationA._id}`, { name: 'Renamed' }),
+        /permission/i,
+      );
+      expect(organizationA.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('uploadOrganizationImage is org-scoped too', () => {
+    const file = { filename: 'logo.png' } as any;
+
+    it('denies an ORGANIZATION_ADMIN of A on B and never persists B', async () => {
+      const svc = service({ orgAdminOf: [`${organizationA._id}`] });
+
+      await expectRejection(
+        () => svc.uploadOrganizationImage(`${organizationB._id}`, file, 'logo'),
+        /permission/i,
+      );
+
+      expect(models.Organization.findById).not.toHaveBeenCalled();
+      expect(organizationB.save).not.toHaveBeenCalled();
+    });
+
+    it('denies a plain USER', async () => {
+      const svc = service({});
+
+      await expectRejection(
+        () => svc.uploadOrganizationImage(`${organizationA._id}`, file, 'logo'),
+        /permission/i,
+      );
+      expect(organizationA.save).not.toHaveBeenCalled();
+    });
+
+    it('stores the alias for an ADMIN', async () => {
+      const context = makeContext({ admin: true });
+      const uploadFile = jest.fn().mockResolvedValue({ alias: 'logo_new.png' });
+      context.getService = jest.fn(() => ({ uploadFile }));
+      const svc = new OrganizationService({}, context);
+
+      const result: any = await svc.uploadOrganizationImage(
+        `${organizationA._id}`,
+        file,
+        'logo',
+      );
+
+      expect(result.logo).toBe('logo_new.png');
+      expect(organizationA.save).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('guards that must never fall through', () => {
-    it('denies an unauthenticated caller', async () => {
+    // Called directly: the coarse `@roles` decorator would otherwise reject
+    // first and the helper's own guards would never execute.
+    const assertOrgAdmin = (svc: any, organizationId: any, context: any) =>
+      svc.assertOrgAdmin(organizationId, context);
+
+    it('denies an unauthenticated caller', () => {
+      const context = makeContext({ admin: true });
+      context.user = null;
+
+      expect(() =>
+        assertOrgAdmin(service({ admin: true }), `${organizationA._id}`, context),
+      ).toThrow(/authenticated/i);
+    });
+
+    it('denies a user document without an id', () => {
+      // A malformed context: an authenticated-looking user object that carries
+      // no id. Mongoose re-hydrates `_id`, so a plain object is used to model
+      // the shape this guard has to survive.
+      const context: any = {
+        user: { hasRole: jest.fn(() => true), hasAnyRole: jest.fn(() => true), memberships: [] },
+        partner: { _id: new ObjectId() },
+        hasRole: jest.fn(() => true),
+        log: jest.fn(),
+      };
+
+      expect(() =>
+        assertOrgAdmin(service({ admin: true }), `${organizationA._id}`, context),
+      ).toThrow(/authenticated/i);
+    });
+
+    it('denies a caller with no partner context', () => {
+      const context = makeContext({ admin: true });
+      context.partner = null;
+
+      expect(() =>
+        assertOrgAdmin(service({ admin: true }), `${organizationA._id}`, context),
+      ).toThrow(/partner/i);
+    });
+
+    it('rejects an invalid organization id instead of treating it as a client-wide role', () => {
+      const context = makeContext({ orgAdminOf: [`${organizationA._id}`] });
+      const svc = service({ orgAdminOf: [`${organizationA._id}`] });
+
+      expect(() => assertOrgAdmin(svc, 'not-an-object-id', context)).toThrow(/not a valid/);
+      expect(() => assertOrgAdmin(svc, null, context)).toThrow(/not a valid/);
+    });
+
+    it('admits an ADMIN and denies a USER for the same organization', () => {
+      expect(() =>
+        assertOrgAdmin(
+          service({ admin: true }),
+          `${organizationA._id}`,
+          makeContext({ admin: true }),
+        ),
+      ).not.toThrow();
+
+      expect(() =>
+        assertOrgAdmin(service({}), `${organizationA._id}`, makeContext({})),
+      ).toThrow(/permission/i);
+    });
+
+    it('propagates through the public mutations for a missing context', async () => {
       const context = makeContext({ admin: true });
       context.user = null;
       const svc = new OrganizationService({}, context);
@@ -242,23 +474,6 @@ describe('OrganizationService org-scoped authorization (ORG-005)', () => {
         () => svc.updateOrganization(`${organizationA._id}`, { name: 'Renamed' }),
         /no user|authenticated/i,
       );
-    });
-
-    it('denies a caller with no partner context', async () => {
-      const context = makeContext({ admin: true });
-      context.partner = null;
-      const svc = new OrganizationService({}, context);
-
-      await expectRejection(
-        () => svc.updateOrganization(`${organizationA._id}`, { name: 'Renamed' }),
-        /partner/i,
-      );
-    });
-
-    it('rejects an invalid organization id instead of treating it as a client-wide role', async () => {
-      const svc = service({ orgAdminOf: [`${organizationA._id}`] });
-
-      await expect(svc.archiveOrganization('not-an-object-id')).rejects.toThrow(/not a valid/);
     });
   });
 
@@ -475,6 +690,90 @@ describe('OrganizationService organization surface (ORG-005)', () => {
     });
   });
 
+  describe('guards, validation and edge cases', () => {
+    it('getSettings rejects an unknown organization', async () => {
+      models.Organization.findById.mockResolvedValue(null);
+
+      await expect(adminService().getSettings(`${new ObjectId()}`)).rejects.toThrow(
+        /could not be found/,
+      );
+    });
+
+    it('getSettings rejects an invalid id', async () => {
+      await expect(adminService().getSettings('nope')).rejects.toThrow(/not a valid/);
+    });
+
+    it('getSettings returns an empty list when the organization has no settings', async () => {
+      const organization = makeOrganization({ settings: undefined });
+      models.Organization.findById.mockResolvedValue(organization);
+
+      await expect(adminService().getSettings(`${organization._id}`)).resolves.toEqual([]);
+    });
+
+    it('removeSetting requires a setting name', async () => {
+      await expect(adminService().removeSetting(`${new ObjectId()}`, '   ')).rejects.toThrow(
+        /setting name is required/i,
+      );
+    });
+
+    it('removeSetting is a no-op for an absent setting', async () => {
+      const organization = makeOrganization({ settings: [{ name: 'other', data: {} }] });
+      models.Organization.findById.mockResolvedValue(organization);
+
+      await adminService().removeSetting(`${organization._id}`, 'color');
+
+      expect(organization.settings).toHaveLength(1);
+      expect(organization.settings[0].name).toBe('other');
+      expect(organization.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('getStatistics rejects an invalid id', async () => {
+      await expect(adminService().getStatistics('nope')).rejects.toThrow(/not a valid/);
+    });
+
+    it('addMember rejects an invalid user id', async () => {
+      const organization = makeOrganization();
+      models.Organization.findById.mockResolvedValue(organization);
+
+      await expect(
+        adminService().addMember(`${organization._id}`, 'not-an-object-id', ['USER']),
+      ).rejects.toThrow(/userId is not a valid/);
+    });
+
+    it('removeMember rejects an invalid user id', async () => {
+      const organization = makeOrganization();
+      models.Organization.findById.mockResolvedValue(organization);
+
+      await expect(
+        adminService().removeMember(`${organization._id}`, 'not-an-object-id'),
+      ).rejects.toThrow(/userId is not a valid/);
+    });
+
+    it('applies a settings array passed through updateOrganization', async () => {
+      const organization = makeOrganization();
+      models.Organization.findById.mockResolvedValue(organization);
+      const settings = [{ name: 'color', data: { primary: '#123' } }];
+
+      await adminService().updateOrganization(`${organization._id}`, { settings } as any);
+
+      expect(organization.settings).toEqual(settings);
+      expect(organization.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears the public flag and legacyId when explicitly set to null', async () => {
+      const organization = makeOrganization({ public: true, legacyId: '7' });
+      models.Organization.findById.mockResolvedValue(organization);
+
+      await adminService().updateOrganization(`${organization._id}`, {
+        public: false,
+        legacyId: null,
+      } as any);
+
+      expect(organization.public).toBe(false);
+      expect(organization.legacyId).toBeNull();
+    });
+  });
+
   describe('membership', () => {
     it('creates a membership keyed by client and organization', async () => {
       const organization = makeOrganization();
@@ -624,6 +923,7 @@ describe('OrganizationService getOrganizationsForLoggedInUser sorting (ORG-005)'
       {
         clientId: new ObjectId(`${context.partner._id}`),
         organizationId: new ObjectId(),
+        roles: ['USER'],
       },
     ];
 

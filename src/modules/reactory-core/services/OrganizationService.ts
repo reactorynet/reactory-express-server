@@ -153,6 +153,49 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
   }
 
   /**
+   * Returns true when the caller holds `role` on exactly this organization.
+   *
+   * This deliberately does NOT use `user.hasRole(partnerId, role,
+   * organizationId)`. That method ends with an unconditional document-level
+   * fallback (`this.roles.includes(role)`), and
+   * `UserService.createUserForOrganization` unions membership roles into
+   * `user.roles`. A user provisioned as an ORGANIZATION_ADMIN therefore carries
+   * the role on the user document, and the model's scoped query returns true
+   * for *every* organization - precisely the cross-tenant bypass this helper
+   * exists to prevent.
+   *
+   * The membership is the only authoritative source, so it is matched directly
+   * here using the same key the model's scoped query uses for an
+   * organization-level role: same client, same organization, and **no**
+   * business unit. Document-level roles are ignored, so a global
+   * ORGANIZATION_ADMIN cannot administer an organization they are not a member
+   * of. Explicitly disabled memberships confer nothing.
+   */
+  private hasOrganizationRole(
+    user: Reactory.Models.IUserDocument,
+    clientId: string,
+    organizationId: string,
+    role: string
+  ): boolean {
+    const memberships: any[] = Array.isArray(user?.memberships)
+      ? (user.memberships as any[])
+      : [];
+
+    return memberships.some((membership) => {
+      if (!membership) return false;
+      if (!membership.clientId || `${membership.clientId}` !== clientId) return false;
+      if (!membership.organizationId || `${membership.organizationId}` !== organizationId) return false;
+      // A business-unit membership does not confer organization administration.
+      if (membership.businessUnitId !== null && membership.businessUnitId !== undefined) {
+        return false;
+      }
+      if (membership.enabled === false) return false;
+      if (!Array.isArray(membership.roles)) return false;
+      return membership.roles.includes(role);
+    });
+  }
+
+  /**
    * Organization-scoped authorization (ORG-005).
    *
    * A coarse `@roles(['ORGANIZATION_ADMIN', ...])` check only proves the caller
@@ -161,7 +204,7 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
    * acting user (never the process/system context) and requires either:
    *
    * - `ADMIN` for the caller's partner - a platform administrator, or
-   * - `ORGANIZATION_ADMIN` scoped to *this* organization id.
+   * - `ORGANIZATION_ADMIN` held on *this* organization's membership.
    *
    * Anything else - including an unauthenticated caller, a missing partner or
    * an invalid organization id - throws. There is deliberately no fall-through:
@@ -191,9 +234,8 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
     if (user.hasRole(partnerId, 'ADMIN') === true) return;
 
     // Organization administrators only on the organization they administer.
-    if (
-      user.hasRole(partnerId, 'ORGANIZATION_ADMIN', `${organizationId}`) === true
-    ) {
+    // Resolved from the membership, never from document-level roles.
+    if (this.hasOrganizationRole(user, partnerId, `${organizationId}`, 'ORGANIZATION_ADMIN') === true) {
       return;
     }
 
@@ -897,6 +939,14 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
    * and `logoURL` always resolved to null. It now goes through the same
    * `ReactoryFileService` upload path as multipart uploads, assigns the
    * returned alias to the document and persists it.
+   *
+   * INTERNAL: this takes an already-loaded organization document and performs
+   * no authorization of its own. It is only safe because every caller has
+   * already authorized the target organization - `setupOrganization` via
+   * `create`/`applyOrganizationUpdates` (post-`assertOrgAdmin`) and the public
+   * `uploadOrganizationImage` after its own `assertOrgAdmin`. It is not part of
+   * the published `IReactoryOrganizationService` interface, so external
+   * callers should use `uploadOrganizationImage`.
    */
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
   async updateOrganizationLogo(
@@ -1023,6 +1073,7 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
    * may see the organization's configuration); a missing organization is a
    * 404 rather than an empty list so callers cannot mistake the two.
    */
+  @roles(['USER'])
   async getSettings(id: string): Promise<Reactory.Models.IOrganizationSetting[]> {
     if (ObjectId.isValid(id) === false) {
       throw new ApiError(`param id is not a valid ${id}`);
@@ -1095,6 +1146,7 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
    * `countDocuments` per collection) - no per-member or per-team queries, which
    * is what makes the naive implementation N+1.
    */
+  @roles(['USER'])
   async getStatistics(id: string): Promise<IOrganizationStatistics> {
     if (ObjectId.isValid(id) === false) {
       throw new ApiError(`param id is not a valid ${id}`);
@@ -1260,6 +1312,11 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
     if (!id) {
       throw new ApiError('Cannot upload image for null id')
     }
+
+    // Part of the published service interface, so it is reachable from plugins
+    // as well as resolvers: the org-scoped check must run here, not only in the
+    // coarse `@roles` decorator.
+    this.assertOrgAdmin(id, executionContext || this.context);
 
     const organization: Reactory.Models.IOrganizationDocument = await Organization.findById(id).then();
 

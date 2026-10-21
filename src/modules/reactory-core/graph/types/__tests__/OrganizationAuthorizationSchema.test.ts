@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { parse, Kind, FieldDefinitionNode, InputValueDefinitionNode } from 'graphql';
+import { parse, print, Kind, FieldDefinitionNode, InputValueDefinitionNode, TypeNode } from 'graphql';
 
 /**
  * Schema-level assertions for the ORG-005 surface: the expanded update input,
@@ -32,6 +32,10 @@ const fieldsOf = (typeName: string): Record<string, FieldDefinitionNode> => {
 
 const inputFields = (typeName: string): Record<string, InputValueDefinitionNode> =>
   fieldsOf(typeName) as any;
+
+/** Renders a field's declared type (e.g. `Organization!`) for assertion. */
+const declaredType = (field: FieldDefinitionNode): string =>
+  print(field.type as TypeNode);
 
 const directiveRoles = (field: FieldDefinitionNode, directiveName: string): string[] | null => {
   const directive = (field.directives || []).find((item) => item.name.value === directiveName);
@@ -128,8 +132,9 @@ describe('Organization GraphQL surface (ORG-005)', () => {
       ['addOrganizationMember', 'Organization!'],
       ['removeOrganizationMember', 'Organization!'],
       ['setOrganizationMemberRoles', 'Organization!'],
-    ])('exposes %s returning %s', (mutation, _returnType) => {
+    ])('exposes %s returning %s', (mutation, returnType) => {
       expect(mutations[mutation]).toBeDefined();
+      expect(declaredType(mutations[mutation])).toBe(returnType);
     });
 
     it('exposes the arguments the service methods need', () => {
@@ -162,6 +167,12 @@ describe('Organization GraphQL surface (ORG-005)', () => {
       expect(queries.OrganizationStatistics).toBeDefined();
       expect((queries.OrganizationStatistics.arguments || []).map((item) => item.name.value)).toEqual(['id']);
       expect(directiveRoles(queries.OrganizationStatistics, 'auth')).toEqual(['USER']);
+      expect(declaredType(queries.OrganizationStatistics)).toBe('OrganizationStatistics');
+      expect(
+        Object.keys(fieldsOf('OrganizationStatistics')).map((field) =>
+          declaredType(fieldsOf('OrganizationStatistics')[field]),
+        ),
+      ).toEqual(['Int', 'Int', 'Int']);
     });
   });
 

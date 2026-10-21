@@ -38,13 +38,11 @@ const makeContext = (roles: string[]) => {
     user: {
       _id: new ObjectId(),
       email: 'operator@reactory.net',
-      // Mirrors `user.hasRole(clientId, role, organizationId?)`: ADMIN is
-      // organization agnostic, ORGANIZATION_ADMIN is scoped to an org id.
-      hasRole: jest.fn((_clientId: string, role: string, organizationId?: string) => {
-        if (roles.indexOf(role) < 0) return false;
-        if (role === 'ORGANIZATION_ADMIN') return typeof organizationId === 'string';
-        return true;
-      }),
+      // The resolver only consults the COARSE context gate; the service (which
+      // is mocked here) performs the org-scoped check. Organization-scoping
+      // itself is covered against the real User model in
+      // services/__tests__/OrganizationAuthorization.test.ts.
+      hasRole: jest.fn((_clientId: string, role: string) => roles.indexOf(role) >= 0),
     },
     partner: { _id: new ObjectId() },
     hasRole: jest.fn((role: string) => roles.indexOf(role) >= 0),

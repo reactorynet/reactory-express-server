@@ -39,34 +39,68 @@ jest.mock('@reactory/server-modules/reactory-core/models', () => {
 
 const models = require('@reactory/server-modules/reactory-core/models');
 
-const ALLOWED_ROLES = ['ORGANIZATION_ADMIN', 'ADMIN'];
+/** The REAL `User` model: the scoped check must be exercised against the
+ * shipped `hasRole` (and its document-level fallback), not a mock. */
+const RealUserModel = jest.requireActual(
+  '@reactory/server-modules/reactory-core/models/User',
+).default;
+
+interface IRolePolicy {
+  admin?: boolean;
+  orgAdminOf?: string[];
+  system?: boolean;
+}
 
 /**
- * Builds a caller that holds `roles`. `user.hasRole` mirrors the real model's
- * signature so the ORG-005 scoped check is exercised: ADMIN is organization
- * agnostic, ORGANIZATION_ADMIN only matches when an organization id is given.
+ * Builds a caller backed by a real `User` document. Membership roles are also
+ * copied into the document-level `roles` array, exactly as
+ * `UserService.createUserForOrganization` does, so the tests cannot pass by
+ * assuming a scoping behaviour the model does not have.
  */
-const makeContext = (roles: string[] = ALLOWED_ROLES) => {
-  const context: any = {
-    user: {
-      _id: new ObjectId(),
-      hasRole: jest.fn((_clientId: string, role: string, organizationId?: string) => {
-        if (roles.indexOf(role) < 0) return false;
-        if (role === 'ORGANIZATION_ADMIN') return typeof organizationId === 'string';
-        return true;
-      }),
-      hasAnyRole: jest.fn(() => roles.length > 0),
-      memberships: [],
+const makeContext = (policy: IRolePolicy = { admin: true }) => {
+  const partnerId = new ObjectId();
+  const orgAdminOf = policy.orgAdminOf || [];
+
+  const memberships: any[] = [
+    {
+      clientId: partnerId,
+      organizationId: null,
+      businessUnitId: null,
+      roles: ['USER'],
+      enabled: true,
     },
-    partner: { _id: new ObjectId() },
-    hasRole: jest.fn((role: string) => roles.indexOf(role) >= 0),
-    hasAnyRole: jest.fn(() => roles.length > 0),
-    memberships: [],
+    ...orgAdminOf.map((organizationId) => ({
+      clientId: partnerId,
+      organizationId: new ObjectId(organizationId),
+      businessUnitId: null,
+      roles: ['USER', 'ORGANIZATION_ADMIN'],
+      enabled: true,
+    })),
+  ];
+
+  const documentRoles: string[] = ['USER'];
+  if (policy.admin) documentRoles.push('ADMIN');
+  if (policy.system) documentRoles.push('SYSTEM');
+  if (orgAdminOf.length > 0) documentRoles.push('ORGANIZATION_ADMIN');
+
+  const user: any = new RealUserModel({
+    _id: new ObjectId(),
+    email: `operator-${new ObjectId()}@example.com`,
+    roles: documentRoles,
+    memberships,
+  });
+  user.save = jest.fn().mockResolvedValue(user);
+
+  const context: any = {
+    user,
+    partner: { _id: partnerId },
+    hasRole: jest.fn((role: string) => documentRoles.indexOf(role) >= 0),
+    hasAnyRole: jest.fn(() => true),
     log: jest.fn(),
     error: jest.fn(),
     getService: jest.fn(),
   };
-  context.hasRole = jest.fn((role: string) => roles.indexOf(role) >= 0);
+
   return context;
 };
 
@@ -113,15 +147,15 @@ describe('OrganizationService theme methods (ORG-004)', () => {
     ];
 
     it.each(denialCases)('rejects a USER caller for %s without touching the organization', (_method, call) => {
-      const userService = new OrganizationService({}, makeContext(['USER']));
+      const userService = new OrganizationService({}, makeContext({ admin: false }));
       const id = orgId();
 
       expect(() => call(userService, id)).toThrow(/permissions/i);
       expect(models.Organization.findById).not.toHaveBeenCalled();
     });
 
-    it.each(ALLOWED_ROLES)('allows %s to save a theme', async (role) => {
-      const roleService = new OrganizationService({}, makeContext([role]));
+    it('allows an ADMIN to save a theme', async () => {
+      const roleService = new OrganizationService({}, makeContext({ admin: true }));
       const organization = makeOrganization();
       models.Organization.findById.mockResolvedValue(organization);
 
@@ -131,8 +165,22 @@ describe('OrganizationService theme methods (ORG-004)', () => {
       expect(organization.save).toHaveBeenCalled();
     });
 
+    it('allows an ORGANIZATION_ADMIN of that organization to save a theme', async () => {
+      const organization = makeOrganization();
+      models.Organization.findById.mockResolvedValue(organization);
+      const roleService = new OrganizationService(
+        {},
+        makeContext({ orgAdminOf: [organization._id.toString()] }),
+      );
+
+      await roleService.saveTheme(organization._id.toString(), theme('acme'));
+
+      expect(organization.themes).toHaveLength(1);
+      expect(organization.save).toHaveBeenCalled();
+    });
+
     it('denies a SYSTEM-only caller the org-scoped check even though the coarse role gate admits SYSTEM', async () => {
-      const systemService = new OrganizationService({}, makeContext(['SYSTEM']));
+      const systemService = new OrganizationService({}, makeContext({ system: true }));
       const organization = makeOrganization();
       models.Organization.findById.mockResolvedValue(organization);
 
@@ -148,13 +196,10 @@ describe('OrganizationService theme methods (ORG-004)', () => {
       const otherOrganizationId = new ObjectId().toString();
       models.Organization.findById.mockResolvedValue(organization);
 
-      const scopedContext = makeContext(['ORGANIZATION_ADMIN']);
+      // Real model: the caller's membership covers `otherOrganizationId`, so the
+      // document-level ORGANIZATION_ADMIN role must not extend it to `organization`.
+      const scopedContext = makeContext({ orgAdminOf: [otherOrganizationId] });
       const scopedService = new OrganizationService({}, scopedContext);
-      // Make the scoped check fail for this organization only.
-      scopedContext.user.hasRole.mockImplementation(
-        (_clientId: string, role: string, organizationId?: string) =>
-          role === 'ORGANIZATION_ADMIN' && organizationId === otherOrganizationId,
-      );
 
       await expect(
         scopedService.saveTheme(organization._id.toString(), theme('acme')),

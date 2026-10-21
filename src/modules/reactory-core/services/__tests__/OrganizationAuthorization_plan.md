@@ -65,3 +65,44 @@ Before ORG-005 the service only checked `context.hasRole('ORGANIZATION_ADMIN')`
 (no organization argument), so the "ADMIN of A on B" cases resolved; `create`
 accepted `ORGANIZATION_ADMIN`; there was no statistics/settings/membership
 surface at all; and the admin list path sorted by a non-existent field.
+
+## Review fix (F1): the model's `hasRole` cannot be trusted for scoping
+
+The first revision called `user.hasRole(partnerId, 'ORGANIZATION_ADMIN', orgId)`.
+That looks scoped, but `UserSchema.methods.hasRole` ends with an unconditional
+document-level fallback:
+
+```js
+if (isArray(this.roles) && this.roles.includes(role)) return true;
+```
+
+and `UserService.createUserForOrganization` unions membership roles into
+`foundUser.roles`. A user provisioned as an organization administrator therefore
+carries `ORGANIZATION_ADMIN` on the user document, and the model reports the
+role for **every** organization. The first revision's hand-rolled `hasRole` mock
+encoded the intended semantics rather than the shipped one, so the whole matrix
+passed while the real check was bypassable.
+
+`assertOrgAdmin` now resolves `ORGANIZATION_ADMIN` from the membership itself
+(`hasOrganizationRole`: same client, same organization, no business unit) and
+ignores document-level roles. `ADMIN` still goes through
+`user.hasRole(partnerId, 'ADMIN')` for the platform-admin path.
+
+### How the suite prevents a recurrence
+
+- `makeContext` builds a **real `User` document** (`jest.requireActual`) with
+  membership roles unioned into `roles`, i.e. the shape the provisioner writes.
+- The whole 13-mutation A-on-B matrix therefore runs against the shipped
+  `hasRole`, and there is a dedicated regression block that first documents the
+  model's cross-organization report and then proves the service denies B.
+- Business-unit memberships and explicitly disabled memberships confer nothing.
+- `uploadOrganizationImage` — the remaining published entry point — has its own
+  negative cases.
+- `assertOrgAdmin` is called directly for the unauthenticated / missing-partner /
+  invalid-id branches, which the `@roles` decorator would otherwise mask.
+
+### Red/green evidence
+
+With the old `user.hasRole(...)` branch restored, 18 specs fail, including every
+"ORGANIZATION_ADMIN of A ... on B" case and the dedicated regression test. With
+the membership-based check, all 121 specs in this suite pass.
