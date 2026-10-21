@@ -1,5 +1,6 @@
 import ApiStatus from './ApiStatus';
 import Organization from './Organization/Organization';
+import OrganizationThemeResolver from './Organization/OrganizationThemeResolver';
 import BusinessUnitResolver from './Organization/BusinessUnitResolver';
 import TeamResolver from './Organization/TeamResolver';
 import ReactoryContent from './ReactoryContent';
@@ -58,6 +59,7 @@ export default mergeGraphResolver([
   ReactoryForm,
   ReactoryFormSubmissionResolver,
   Organization,
+  OrganizationThemeResolver,
   ReactoryTranslationResolver,
   ReactoryMenuResolver,
   NaturalResolver,

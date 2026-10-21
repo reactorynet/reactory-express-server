@@ -57,6 +57,21 @@ type Organization {
   """
   avatarURL: String
   """
+  The name of the active theme for this organization. Null when the
+  organization has no theme assigned; consumers then fall back to the
+  client theme and finally the default theme.
+  """
+  theme: String
+  """
+  The active theme mode for this organization (light, dark or os).
+  """
+  themeMode: ApplicationThemeModeType
+  """
+  Themes owned by this organization. They use exactly the same shape as the
+  themes on a ReactoryClient so the same editor and resolution logic apply.
+  """
+  themes: [ApplicationTheme]
+  """
   A list of business units within the organization
   """
   businessUnits: [BusinessUnit]
@@ -168,10 +183,37 @@ extend type Query {
   """
   CoreUsersForOrganization(id: String!, searchString: String, paging: PagingRequest): PagedUserResults
   GetOrganisationLookupData(orgId: String!): OrganizationLookupData
+  """
+  Reads the custom CSS published for a theme, used by the theme CSS studio.
+  """
+  OrganizationThemeCss(themeName: String!): String
 }
 
 extend type Mutation {
   createOrganization(input: CreateOrganizationInput!): Organization @auth(roles: ["USER", "ADMIN"])
   updateOrganization(id: String!, input: UpdateOrganizationInput!): Organization @auth(roles: ["USER", "ADMIN"])
   SetOrganisationLookupData(lookupData: OrganizationLookupDataInput!): OrganizationLookupData @auth(roles: ["USER", "ADMIN"])
+
+  """
+  Creates or updates a theme on the organization. A theme is matched by name
+  or id; a match is merged so partial updates keep the existing fields.
+  """
+  OrganizationSaveTheme(id: String!, theme: ApplicationThemeInput!): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Sets the active theme for the organization. When `mode` is supplied it also
+  sets the active theme mode. An unknown theme name is rejected.
+  """
+  OrganizationSetActiveTheme(id: String!, themeName: String!, mode: ApplicationThemeModeType): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Deletes a theme from the organization. Deleting the active theme activates
+  the first remaining theme, or clears the pointer when none remain.
+  """
+  OrganizationDeleteTheme(id: String!, themeName: String!): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Publishes custom CSS for a theme to the theme folder on disk.
+  """
+  OrganizationPublishThemeCss(id: String!, themeName: String!, css: String!): Boolean! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
 }

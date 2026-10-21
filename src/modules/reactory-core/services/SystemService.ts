@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import Reactory from '@reactorynet/reactory-core';
 import modules from '@reactory/server-core/modules';
 import { ReactoryClient, Menu } from '@reactory/server-modules/reactory-core/models'
@@ -7,6 +5,7 @@ import { ObjectId } from 'bson';
 import { queryGraph as execql, mutateGraph as execml } from '@reactory/server-core/graph/ReactoryApolloClient'
 import { map } from 'lodash';
 import { ComponentFQN, FQN2ID } from '@reactory/server-core/utils/string';
+import { ThemeService } from './ThemeService';
 
 
 interface IModuleValidationResult {
@@ -457,101 +456,61 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     return client;
   }
 
+  /**
+   * Theme behaviour lives in the shared `ThemeService` (ORG-004) so clients
+   * and organizations use one implementation. The delegating wrappers below
+   * keep this service's public contract - and therefore its behaviour -
+   * unchanged.
+   */
+  private themeService(): ThemeService {
+    return new ThemeService(this.context);
+  }
+
   async setActiveTheme(clientId: string, themeName: string): Promise<Reactory.Models.TReactoryClient> {
     const client = await ReactoryClient.findById(clientId).exec();
     if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
 
-    client.theme = themeName;
-    await (client as any).save();
-    return client;
+    // `requireExisting: false` preserves the historical contract: the pointer
+    // was stored verbatim, without checking the client's theme list.
+    return this.themeService()
+      .setActiveTheme(client as any, themeName, undefined, { requireExisting: false });
   }
 
   async saveTheme(clientId: string, theme: any): Promise<Reactory.Models.TReactoryClient> {
     const client = await ReactoryClient.findById(clientId).exec();
     if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
 
-    const themes = (client as any).themes ? [...(client as any).themes] : [];
-    const index = themes.findIndex((t: any) => t.name === theme.name || (theme.id && t.id === theme.id));
-
-    if (index >= 0) {
-      themes[index] = { ...themes[index], ...theme };
-    } else {
-      themes.push(theme);
-    }
-
-    (client as any).themes = themes;
-    (client as any).markModified('themes');
-    await (client as any).save();
-    return client;
+    return this.themeService().saveTheme(client as any, theme);
   }
 
   async deleteTheme(clientId: string, themeName: string): Promise<Reactory.Models.TReactoryClient> {
     const client = await ReactoryClient.findById(clientId).exec();
     if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
 
-    const themes = ((client as any).themes || []).filter((t: any) => t.name !== themeName && t.id !== themeName);
-    (client as any).themes = themes;
-    if (client.theme === themeName) {
-      client.theme = themes[0]?.name || 'reactory';
-    }
-    (client as any).markModified('themes');
-    await (client as any).save();
-    return client;
+    // Clients historically fell back to the default theme name rather than a
+    // null pointer when the last theme was removed.
+    return this.themeService().deleteTheme(client as any, themeName, { emptyFallback: 'reactory' });
   }
 
   async publishThemeCss(themeName: string, cssContent: string, clientId?: string): Promise<boolean> {
-    const dataRoot = process.env.APP_DATA_ROOT || path.join(process.cwd(), '../reactory-data');
-    const themeFolder = path.join(dataRoot, 'themes', themeName);
+    let holder: any;
 
-    if (!fs.existsSync(themeFolder)) {
-      fs.mkdirSync(themeFolder, { recursive: true });
-    }
-
-    const cssPath = path.join(themeFolder, 'styles.css');
-    fs.writeFileSync(cssPath, cssContent, { encoding: 'utf-8' });
-
-    // Also update client asset entry if clientId is provided
+    // Also update the client asset entry if a clientId is provided. A lookup
+    // or linking failure must never fail the publish - the CSS is on disk.
     if (clientId) {
       try {
         const client = await ReactoryClient.findById(clientId).exec();
-        if (client) {
-          const themes = (client as any).themes ? [...(client as any).themes] : [];
-          const themeIdx = themes.findIndex((t: any) => t.name === themeName);
-          if (themeIdx >= 0) {
-            const assets = themes[themeIdx].assets ? [...themes[themeIdx].assets] : [];
-            const cssAssetIdx = assets.findIndex((a: any) => a.assetType === 'css' || a.id === 'styles');
-            const cssAsset = {
-              id: 'styles',
-              name: 'styles.css',
-              assetType: 'css',
-              url: `themes/${themeName}/styles.css`,
-            };
-            if (cssAssetIdx >= 0) {
-              assets[cssAssetIdx] = cssAsset;
-            } else {
-              assets.push(cssAsset);
-            }
-            themes[themeIdx].assets = assets;
-            (client as any).themes = themes;
-            (client as any).markModified('themes');
-            await (client as any).save();
-          }
-        }
+        if (client) holder = client;
       } catch (err) {
         this.context.error(`Failed to link styles.css asset on client: ${err.message}`);
       }
     }
 
-    return true;
+    return this.themeService().publishThemeCss(themeName, cssContent, holder);
   }
 
   async getThemeCss(themeName: string): Promise<string> {
-    const dataRoot = process.env.APP_DATA_ROOT || path.join(process.cwd(), '../reactory-data');
-    const cssPath = path.join(dataRoot, 'themes', themeName, 'styles.css');
-    if (fs.existsSync(cssPath)) {
-      return fs.readFileSync(cssPath, { encoding: 'utf-8' });
-    }
-    return '';
+    return this.themeService().getThemeCss(themeName);
   }
 
   static reactory: Reactory.Service.IReactoryServiceDefinition<SystemService> = {
