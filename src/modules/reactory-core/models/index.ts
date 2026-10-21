@@ -22,6 +22,8 @@ import Organization from "./Organization";
 import AgeDemographic from "./demographics/AgeDemographic";
 import Demographic from "./demographics/Demographic";
 import OrganizationDemographicSettings from "./demographics/OrganizationDemographicsSettings";
+import DemographicDefinition from "./demographics/DemographicDefinition";
+import DemographicValue from "./demographics/DemographicValue";
 import PersonalDemographic from "./PersonalDemographic";
 import Project from "./Project";
 import ProjectBoard from "./ProjectBoard";
@@ -103,6 +105,8 @@ export type CoreModelTypes =
   | typeof AgeDemographic
   | typeof Demographic
   | typeof OrganizationDemographicSettings
+  | typeof DemographicDefinition
+  | typeof DemographicValue
   | typeof ClientComponent
   | typeof Comment
   | typeof Content
@@ -152,6 +156,8 @@ export { default as BusinessUnit } from './BusinessUnit';
 export { default as AgeDemographic } from './demographics/AgeDemographic';
 export { default as Demographic } from './demographics/Demographic';
 export { default as OrganizationDemographicSettings } from './demographics/OrganizationDemographicsSettings';
+export { default as DemographicDefinition } from './demographics/DemographicDefinition';
+export { default as DemographicValue } from './demographics/DemographicValue';
 export { default as ClientComponent } from './ClientComponent';
 export { default as Comment } from './Comment';
 export { default as Content } from './Content';
@@ -322,6 +328,34 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       stem: "organization-demographic-settings",
       tags: ["organization-demographic-settings", "demographic", "demographics", "organization", "core", "system"],
       component: OrganizationDemographicSettings,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+    },
+    {
+      nameSpace: "core",
+      name: "DemographicDefinition",
+      version: "1.0.0",
+      description:
+        "Provides an organization-scoped demographic definition model for the server",
+      stem: "demographic-definition",
+      tags: ["demographic-definition", "demographic", "demographics", "organization", "core", "system"],
+      component: DemographicDefinition,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+    },
+    {
+      nameSpace: "core",
+      name: "DemographicValue",
+      version: "1.0.0",
+      description:
+        "Provides an organization-scoped demographic value model for the server",
+      stem: "demographic-value",
+      tags: ["demographic-value", "demographic", "demographics", "organization", "core", "system"],
+      component: DemographicValue,
       domain: "model",
       overwrite: true,
       roles: [],

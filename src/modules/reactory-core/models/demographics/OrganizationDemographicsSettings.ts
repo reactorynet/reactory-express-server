@@ -59,6 +59,13 @@ const OrganizationDemographicSettingsSchema = new Schema<Reactory.Models.IOrgani
 // One policy document per organization.
 OrganizationDemographicSettingsSchema.index({ organization: 1 }, { unique: true });
 
+/**
+ * @deprecated Legacy boolean settings sheet. Superseded by the `enabled`,
+ * `required` and `ordinal` flags on `DemographicDefinition` and the values in
+ * `DemographicValue` (ORG-003), with org-level policy held separately. Kept
+ * registered and unchanged so the eight booleans can be migrated to definition
+ * enablement in ORG-037.
+ */
 const OrganizationDemographicSettings = model<Reactory.Models.IOrganizationDemographicSettingsDocument>(
   'OrganizationDemographicSettings',
   OrganizationDemographicSettingsSchema,

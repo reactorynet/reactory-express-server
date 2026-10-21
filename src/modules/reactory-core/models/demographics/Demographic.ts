@@ -37,6 +37,15 @@ const DemographicsSchema = new Schema<Reactory.Models.IDemographic>({
 DemographicsSchema.index({ organization: 1, type: 1, key: 1 }, { unique: true });
 DemographicsSchema.index({ deleted: 1 });
 
+/**
+ * @deprecated Legacy fixed-field demographic definition model. Superseded by
+ * `DemographicDefinition` (`reactory_demographic_definitions`) and
+ * `DemographicValue` (`reactory_demographic_values`), added by ORG-003.
+ *
+ * It remains registered and its schema is unchanged so existing documents keep
+ * loading during the migration window (ORG-037). Do not extend it; model new
+ * demographics as `DemographicDefinition` documents instead.
+ */
 const Demographic = model<Reactory.Models.IDemographicDocument>('Demographic', DemographicsSchema, 'reactory_demographics');
 
 export default Demographic;
