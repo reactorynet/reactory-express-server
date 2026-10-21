@@ -180,28 +180,33 @@ OrganizationSchema.methods.getSetting = function getSettings(name: string): Reac
   return _setting;
 };
 
-OrganizationSchema.methods.setSetting = function getSettings(name: string, data: any, componentFqn: string) {
-  let _idx: number = null;
-
+/**
+ * Upserts a setting by name and returns the stored setting.
+ *
+ * The previous implementation returned `null` whenever `settings` was empty,
+ * which made the very first setting impossible to write. Index handling was
+ * also fragile: `_idx` started as `null`, `null >= 0` is true in JavaScript,
+ * and `Array#push` returns the new length rather than the index. The upsert
+ * below resolves the target index once and uses it for both branches.
+ */
+OrganizationSchema.methods.setSetting = function setSetting(name: string, data: any, componentFqn: string) {
   if (!this.settings) this.settings = [];
-  if (this.settings.length === 0) return null;
-  if (this.settings && this.settings.length > 0) {
-    this.settings.forEach((setting: { name: string; }, idx: any) => {
-      if (setting.name === name) {
-        _idx = idx;
-      }
-    });
-  }
+
+  const _idx = this.settings.findIndex(
+    (setting: { name?: string }) => setting !== null && setting !== undefined && setting.name === name
+  );
 
   if (_idx >= 0) {
-    this.settings[_idx].data = data;
-    this.settings[_idx].componentFqn = componentFqn || this.settings[_idx].componentFqn;
-  } else {
-    _idx = this.settings.push({ name, data, componentFqn });
-    _idx -= 1;
+    const setting = this.settings[_idx];
+    setting.data = data;
+    if (componentFqn !== undefined && componentFqn !== null) {
+      setting.componentFqn = componentFqn;
+    }
+    return setting;
   }
 
-  return this.settings[_idx];
+  this.settings.push({ name, data, componentFqn });
+  return this.settings[this.settings.length - 1];
 };
 
 

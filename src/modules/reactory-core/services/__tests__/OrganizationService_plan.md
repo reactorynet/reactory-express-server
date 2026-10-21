@@ -40,3 +40,55 @@ Models are mocked; no database is required.
 
 Before the fix the cached singleton kept the system context, so `resolveActorId`
 resolved the system user and every audit field was attributed to it.
+
+---
+
+## ORG-002 — organization identity writes and media persistence
+
+### Defects
+
+1. `updateOrganizationLogo` wrote bytes to `${APP_DATA_ROOT}/organization/<id>/`
+   and returned the organization untouched, so `logo` was never set.
+2. `uploadOrganizationImage` called `organization.save()` without awaiting it
+   and returned before persistence.
+3. `setOrganization` used `updates.name || organization.name` (no field could be
+   cleared) and the deprecated `Organization.count`.
+4. Cache-busting / aliasing was the only way `logoURL` could ever resolve.
+
+### Behaviour to lock down
+
+1. `uploadOrganizationImage('logo' | 'avatar')` uploads through
+   `core.ReactoryFileService@1.0.0`, assigns the returned `alias` to the
+   document and awaits `save()` before resolving.
+2. `updateOrganizationLogo` converts a base64 data URI into the `IFile` contract
+   (correct mimetype, extension and byte stream), uploads it through the same
+   service, assigns the alias and persists.
+3. `setOrganization` treats `undefined` as "leave alone", `null`/blank as
+   "clear", trims supplied values, rejects an empty `name`, and uses
+   `countDocuments`.
+
+### Test cases (`OrganizationService.test.ts`)
+
+- `uploadOrganizationImage`
+  - `stores the returned alias on the document and persists it`
+  - `stores the alias on the avatar for avatar uploads`
+  - `does not resolve before the save has completed` (deferred `save` promise)
+- `updateOrganizationLogo`
+  - `uploads a data URI through the file service and persists the alias`
+    (asserts upload args, mimetype, filename, decoded stream bytes and alias)
+  - `rejects image data that is not a data URI`
+- `setOrganization`
+  - `clears code and tradingName when they are explicitly cleared`
+  - `leaves unspecified fields untouched`
+  - `uses countDocuments rather than the deprecated count`
+  - `rejects an empty name` / `rejects an explicit null name`
+
+Models are mocked; the file service is a stub returning a `{ id, hash, alias }`
+model. No database or filesystem writes are required.
+
+## Verification
+
+```bash
+./bin/jest.sh reactory local 'OrganizationService'
+npm run typecheck
+```

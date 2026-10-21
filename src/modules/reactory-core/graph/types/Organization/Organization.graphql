@@ -84,8 +84,18 @@ input CreateOrganizationInput {
 
 
 input UpdateOrganizationInput {
+  """
+  A null or blank value clears the field; omit it to leave it unchanged.
+  """
   code: String
+  """
+  A null or blank value is rejected: an organization must always have a name.
+  """
   name: String
+  """
+  The registered trading name. A null or blank value clears the field.
+  """
+  tradingName: String
   logo: String
   settings: [Any]
   legacyId: Int

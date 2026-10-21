@@ -257,3 +257,76 @@ describe('Demographics model registration (ORG-001)', () => {
     expect(settingsOrganization[1].unique).toBe(true);
   });
 });
+
+describe('Organization.setSetting (ORG-002)', () => {
+  it('writes the first setting when settings is empty', () => {
+    const doc: any = new Organization({ name: 'First Setting Org' });
+
+    expect(doc.settings).toHaveLength(0);
+
+    const setting = doc.setSetting(
+      'color',
+      { primary: '#002244', secondary: '#002244' },
+      'core.MaterialThemeColorPicker'
+    );
+
+    expect(setting).toBeDefined();
+    expect(doc.settings).toHaveLength(1);
+
+    const stored = doc.getSetting('color');
+    expect(stored).toBeDefined();
+    expect(stored.data).toEqual({ primary: '#002244', secondary: '#002244' });
+    expect(stored.componentFqn).toBe('core.MaterialThemeColorPicker');
+  });
+
+  it('writes the first setting when the settings path is unset', () => {
+    const doc: any = new Organization({ name: 'Unset Settings Org' });
+    // Reproduces a legacy document loaded without a settings array.
+    (doc as any).settings = undefined;
+
+    doc.setSetting('branding', { accent: '#ff0000' }, 'core.BrandingEditor');
+
+    expect(doc.settings).toHaveLength(1);
+    expect(doc.getSetting('branding').data).toEqual({ accent: '#ff0000' });
+  });
+
+  it('updates an existing setting instead of appending a duplicate', () => {
+    const doc: any = new Organization({ name: 'Update Setting Org' });
+
+    doc.setSetting('color', { primary: '#111111' }, 'core.MaterialThemeColorPicker');
+    const updated = doc.setSetting('color', { primary: '#222222' }, 'core.MaterialThemeColorPicker');
+
+    expect(doc.settings).toHaveLength(1);
+    expect(updated.data).toEqual({ primary: '#222222' });
+    expect(doc.getSetting('color').data).toEqual({ primary: '#222222' });
+  });
+
+  it('retains the existing componentFqn when the update omits one', () => {
+    const doc: any = new Organization({ name: 'Component Fqn Org' });
+
+    doc.setSetting('color', { primary: '#111111' }, 'core.MaterialThemeColorPicker');
+    doc.setSetting('color', { primary: '#333333' }, undefined);
+
+    expect(doc.getSetting('color').data).toEqual({ primary: '#333333' });
+    expect(doc.getSetting('color').componentFqn).toBe('core.MaterialThemeColorPicker');
+  });
+
+  it('adds a second setting while keeping the first', () => {
+    const doc: any = new Organization({ name: 'Two Settings Org' });
+
+    doc.setSetting('color', { primary: '#111111' }, 'core.MaterialThemeColorPicker');
+    doc.setSetting('branding', { accent: '#00ff00' }, 'core.BrandingEditor');
+
+    expect(doc.settings).toHaveLength(2);
+    expect(doc.getSetting('color').data).toEqual({ primary: '#111111' });
+    expect(doc.getSetting('branding').data).toEqual({ accent: '#00ff00' });
+  });
+
+  it('returns the stored subdocument so callers can read it back immediately', () => {
+    const doc: any = new Organization({ name: 'Return Value Org' });
+    const returned = doc.setSetting('features', { enabled: true }, 'core.FeatureFlags');
+
+    expect(returned.name).toBe('features');
+    expect(JSON.parse(JSON.stringify(returned.data))).toEqual({ enabled: true });
+  });
+});
