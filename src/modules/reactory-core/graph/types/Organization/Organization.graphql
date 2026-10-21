@@ -362,4 +362,19 @@ extend type Mutation {
   Publishes custom CSS for a theme to the theme folder on disk.
   """
   OrganizationPublishThemeCss(id: String!, themeName: String!, css: String!): Boolean! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Uploads an organization image and returns the updated organization.
+
+  `imageType` selects the destination field and must be either `logo` or
+  `avatar`; any other value is rejected. The uploaded file is stored through
+  the Reactory file service and the resulting alias is persisted to
+  `logo` / `avatar` before this mutation returns, so the caller can read the
+  new alias (and its derived `logoURL` / `avatarURL`) from the payload.
+
+  Authorization is org-scoped: the service runs `assertOrgAdmin` against `id`,
+  so an ORGANIZATION_ADMIN of organization A cannot write to organization B.
+  The `@auth` roles below are only the coarse first gate.
+  """
+  OrganizationUploadImage(id: String!, imageType: String!, file: Upload!): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
 }

@@ -3,6 +3,7 @@ import Reactory from '@reactorynet/reactory-core';
 import { ObjectId } from 'mongodb';
 import moment from 'moment';
 import { roles } from '@reactory/server-core/authentication/decorators';
+import ApiError from '@reactory/server-core/exceptions';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 import {
@@ -80,6 +81,17 @@ export interface IOrganizationAdministrationService
     roles: string[],
     executionContext?: Reactory.Server.IReactoryContext,
   ): Promise<Reactory.Models.IOrganizationDocument>;
+  /**
+   * Stored on the service as `uploadOrganizationImage(id, file, imageType,
+   * executionContext)`. The published interface does not declare the execution
+   * context argument, so it is redeclared here to forward the caller (ORG-005).
+   */
+  uploadOrganizationImage(
+    id: string,
+    file: Reactory.Service.IFile,
+    imageType: Reactory.Service.OrganizationImageType,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
 }
 
 const ORGANIZATION_SERVICE_ID = 'core.OrganizationService@1.0.0';
@@ -93,6 +105,13 @@ const ORGANIZATION_ADMIN_ROLES = ['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'];
 
 /** Creation has no target organization yet: platform admins or SYSTEM only. */
 const ORGANIZATION_CREATE_ROLES = ['ADMIN', 'SYSTEM'];
+
+/**
+ * The organization image slots `uploadOrganizationImage` can write to. The
+ * service assumes a valid value and destructures its upload context from it,
+ * so the transport validates it rather than trusting the client.
+ */
+const ORGANIZATION_IMAGE_TYPES = ['logo', 'avatar'];
 
 const organizationService = (
   context: Reactory.Server.IReactoryContext,
@@ -337,6 +356,41 @@ class OrganizationResolver {
     context: Reactory.Server.IReactoryContext,
   ) {
     return organizationService(context).setMemberRoles(params.id, params.userId, params.roles, context);
+  }
+
+  /**
+   * ORG-013a: thin transport for the already-implemented
+   * `OrganizationService.uploadOrganizationImage`.
+   *
+   * The service uploads through `ReactoryFileService`, assigns the returned
+   * alias to `organization.logo` / `organization.avatar`, awaits `save()` and
+   * returns the document, so nothing beyond validation belongs here. The
+   * execution context is forwarded explicitly so the service's org-scoped
+   * `assertOrgAdmin` evaluates the caller rather than the service singleton's
+   * construction-time context.
+   */
+  @mutation('OrganizationUploadImage')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async OrganizationUploadImage(
+    obj: any,
+    params: { id: string; imageType: string; file: Reactory.Service.IFile },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    const { id, imageType, file } = params;
+
+    if (ORGANIZATION_IMAGE_TYPES.indexOf(imageType) < 0) {
+      throw new ApiError(
+        `Invalid imageType "${imageType}" for organization image upload; expected "logo" or "avatar".`,
+        { imageType, allowed: ORGANIZATION_IMAGE_TYPES },
+      );
+    }
+
+    return organizationService(context).uploadOrganizationImage(
+      id,
+      file,
+      imageType as Reactory.Service.OrganizationImageType,
+      context,
+    );
   }
 }
 
