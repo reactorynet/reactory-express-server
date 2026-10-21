@@ -19,13 +19,34 @@ const harvest = () => {
 };
 
 const makeContext = (roles: string[]) => {
+  const organization = { _id: new ObjectId(), name: 'Acme' };
   const organizationService = {
-    create: jest.fn().mockResolvedValue({ _id: new ObjectId(), name: 'Acme' }),
-    setOrganization: jest.fn().mockResolvedValue({ _id: new ObjectId(), name: 'Acme' }),
+    create: jest.fn().mockResolvedValue(organization),
+    setOrganization: jest.fn().mockResolvedValue(organization),
+    updateOrganization: jest.fn().mockResolvedValue(organization),
+    archiveOrganization: jest.fn().mockResolvedValue({ ...organization, status: 'archived' }),
+    restoreOrganization: jest.fn().mockResolvedValue({ ...organization, status: 'active' }),
+    setSetting: jest.fn().mockResolvedValue(organization),
+    removeSetting: jest.fn().mockResolvedValue(organization),
+    addMember: jest.fn().mockResolvedValue(organization),
+    removeMember: jest.fn().mockResolvedValue(organization),
+    setMemberRoles: jest.fn().mockResolvedValue(organization),
+    getStatistics: jest.fn().mockResolvedValue({ members: 2, businessUnits: 3, teams: 4 }),
   };
 
   const context: any = {
-    user: { _id: new ObjectId(), email: 'operator@reactory.net' },
+    user: {
+      _id: new ObjectId(),
+      email: 'operator@reactory.net',
+      // Mirrors `user.hasRole(clientId, role, organizationId?)`: ADMIN is
+      // organization agnostic, ORGANIZATION_ADMIN is scoped to an org id.
+      hasRole: jest.fn((_clientId: string, role: string, organizationId?: string) => {
+        if (roles.indexOf(role) < 0) return false;
+        if (role === 'ORGANIZATION_ADMIN') return typeof organizationId === 'string';
+        return true;
+      }),
+    },
+    partner: { _id: new ObjectId() },
     hasRole: jest.fn((role: string) => roles.indexOf(role) >= 0),
     hasAnyRole: jest.fn(() => roles.length > 0),
     getService: jest.fn(() => organizationService),
@@ -48,22 +69,26 @@ describe('OrganizationResolver organization mutations (ORG-002)', () => {
     expect(organizationService.create).not.toHaveBeenCalled();
   });
 
-  it('allows an ORGANIZATION_ADMIN to create an organization', async () => {
+  it('denies createOrganization to an ORGANIZATION_ADMIN (ORG-005: they only administer their own organization)', async () => {
     const map = harvest();
     const { context, organizationService } = makeContext(['USER', 'ORGANIZATION_ADMIN']);
 
-    await map.Mutation.createOrganization(
-      null,
-      { input: { name: 'Acme', code: 'ACME' } },
-      context,
-      {}
-    );
+    expect(() =>
+      map.Mutation.createOrganization(null, { input: { name: 'Acme' } }, context, {})
+    ).toThrow(/permissions/i);
 
-    expect(organizationService.create).toHaveBeenCalledWith('Acme');
-    expect(organizationService.setOrganization).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ code: 'ACME' })
-    );
+    expect(organizationService.create).not.toHaveBeenCalled();
+  });
+
+  it('allows an ADMIN to create an organization and passes the full input once', async () => {
+    const map = harvest();
+    const { context, organizationService } = makeContext(['USER', 'ADMIN']);
+    const input = { name: 'Acme', code: 'ACME' };
+
+    await map.Mutation.createOrganization(null, { input }, context, {});
+
+    expect(organizationService.create).toHaveBeenCalledWith('Acme', input, context);
+    expect(organizationService.setOrganization).not.toHaveBeenCalled();
   });
 
   it('denies updateOrganization to an unrestricted USER', async () => {
@@ -85,7 +110,82 @@ describe('OrganizationResolver organization mutations (ORG-002)', () => {
 
     await map.Mutation.updateOrganization(null, { id, input: { name: 'Renamed' } }, context, {});
 
-    expect(organizationService.setOrganization).toHaveBeenCalledWith(id, { name: 'Renamed' });
+    expect(organizationService.updateOrganization).toHaveBeenCalledWith(
+      id,
+      { name: 'Renamed' },
+      context,
+    );
+  });
+});
+
+describe('OrganizationResolver org-scoped mutations (ORG-005)', () => {
+  type MutationCase = [string, Record<string, unknown>, string];
+  const mutationCases: MutationCase[] = [
+    ['archiveOrganization', { id: 'org-1' }, 'archiveOrganization'],
+    ['restoreOrganization', { id: 'org-1' }, 'restoreOrganization'],
+    ['OrganizationSetSetting', { id: 'org-1', name: 'color', data: {} }, 'setSetting'],
+    ['OrganizationRemoveSetting', { id: 'org-1', name: 'color' }, 'removeSetting'],
+    ['addOrganizationMember', { id: 'org-1', userId: 'user-2', roles: ['USER'] }, 'addMember'],
+    ['removeOrganizationMember', { id: 'org-1', userId: 'user-2' }, 'removeMember'],
+    ['setOrganizationMemberRoles', { id: 'org-1', userId: 'user-2', roles: ['ADMIN'] }, 'setMemberRoles'],
+  ];
+
+  it.each(mutationCases)('denies a plain USER for %s', (mutation, args, serviceMethod) => {
+    const map = harvest();
+    const { context, organizationService } = makeContext(['USER']);
+
+    // The @roles guard throws synchronously, so the call is wrapped.
+    expect(() => map.Mutation[mutation](null, args, context, {})).toThrow(/permissions/i);
+    expect((organizationService as any)[serviceMethod]).not.toHaveBeenCalled();
+  });
+
+  it.each(mutationCases)('delegates %s to the service for an ADMIN', async (mutation, args, serviceMethod) => {
+    const map = harvest();
+    const { context, organizationService } = makeContext(['USER', 'ADMIN']);
+
+    await map.Mutation[mutation](null, args, context, {});
+
+    expect((organizationService as any)[serviceMethod]).toHaveBeenCalled();
+  });
+
+  it('passes every setting argument through, including the execution context', async () => {
+    const map = harvest();
+    const { context, organizationService } = makeContext(['ADMIN']);
+
+    await map.Mutation.OrganizationSetSetting(
+      null,
+      { id: 'org-1', name: 'color', data: { primary: '#fff' }, componentFqn: 'core.Picker' },
+      context,
+      {},
+    );
+
+    expect(organizationService.setSetting).toHaveBeenCalledWith(
+      'org-1',
+      'color',
+      { primary: '#fff' },
+      'core.Picker',
+      context,
+    );
+  });
+
+  it('serves organization statistics through the query', async () => {
+    const map = harvest();
+    const { context, organizationService } = makeContext(['USER']);
+
+    await expect(
+      map.Query.OrganizationStatistics(null, { id: 'org-1' }, context, {}),
+    ).resolves.toEqual({ members: 2, businessUnits: 3, teams: 4 });
+    expect(organizationService.getStatistics).toHaveBeenCalledWith('org-1');
+  });
+
+  it('denies statistics to an unauthenticated caller', () => {
+    const map = harvest();
+    const { context } = makeContext([]);
+    context.user = null;
+
+    expect(() =>
+      map.Query.OrganizationStatistics(null, { id: 'org-1' }, context, {}),
+    ).toThrow();
   });
 });
 

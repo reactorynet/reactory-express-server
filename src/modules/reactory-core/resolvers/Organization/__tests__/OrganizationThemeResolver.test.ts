@@ -28,7 +28,18 @@ const makeContext = (roles: string[]) => {
   };
 
   const context: any = {
-    user: { _id: 'user-1', email: 'operator@reactory.net' },
+    user: {
+      _id: 'user-1',
+      email: 'operator@reactory.net',
+      // Mirrors `user.hasRole(clientId, role, organizationId?)` so the
+      // org-scoped ORG-005 check is exercised rather than short-circuited.
+      hasRole: jest.fn((_clientId: string, role: string, organizationId?: string) => {
+        if (roles.indexOf(role) < 0) return false;
+        if (role === 'ORGANIZATION_ADMIN') return typeof organizationId === 'string';
+        return true;
+      }),
+    },
+    partner: { _id: 'partner-1' },
     hasRole: jest.fn((role: string) => roles.indexOf(role) >= 0),
     hasAnyRole: jest.fn(() => roles.length > 0),
     getService: jest.fn(() => organizationService),
@@ -96,13 +107,13 @@ describe('OrganizationThemeResolver (ORG-004)', () => {
       ).toThrow();
     });
 
-    it.each(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])('allows %s to save a theme', async (role) => {
+    it.each(['ORGANIZATION_ADMIN', 'ADMIN'])('allows %s to save a theme', async (role) => {
       const map = harvest();
       const { context, organizationService } = makeContext(['USER', role]);
 
       await map.Mutation.OrganizationSaveTheme(null, { id: 'org-1', theme }, context, {});
 
-      expect(organizationService.saveTheme).toHaveBeenCalledWith('org-1', theme);
+      expect(organizationService.saveTheme).toHaveBeenCalledWith('org-1', theme, context);
     });
   });
 
@@ -118,7 +129,7 @@ describe('OrganizationThemeResolver (ORG-004)', () => {
         {},
       );
 
-      expect(organizationService.setActiveTheme).toHaveBeenCalledWith('org-1', 'acme', 'light');
+      expect(organizationService.setActiveTheme).toHaveBeenCalledWith('org-1', 'acme', 'light', context);
       expect(result).toMatchObject({ theme: 'acme', themeMode: 'light' });
     });
 
@@ -128,7 +139,7 @@ describe('OrganizationThemeResolver (ORG-004)', () => {
 
       await map.Mutation.OrganizationDeleteTheme(null, { id: 'org-1', themeName: 'acme' }, context, {});
 
-      expect(organizationService.deleteTheme).toHaveBeenCalledWith('org-1', 'acme');
+      expect(organizationService.deleteTheme).toHaveBeenCalledWith('org-1', 'acme', context);
     });
 
     it('delegates publishThemeCss with the css payload', async () => {
@@ -142,7 +153,7 @@ describe('OrganizationThemeResolver (ORG-004)', () => {
         {},
       );
 
-      expect(organizationService.publishThemeCss).toHaveBeenCalledWith('org-1', 'acme', '.acme {}');
+      expect(organizationService.publishThemeCss).toHaveBeenCalledWith('org-1', 'acme', '.acme {}', context);
     });
 
     it('serves the theme css through the query', async () => {

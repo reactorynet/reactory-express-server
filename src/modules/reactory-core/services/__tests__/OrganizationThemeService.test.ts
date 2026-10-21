@@ -39,11 +39,26 @@ jest.mock('@reactory/server-modules/reactory-core/models', () => {
 
 const models = require('@reactory/server-modules/reactory-core/models');
 
-const ALLOWED_ROLES = ['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'];
+const ALLOWED_ROLES = ['ORGANIZATION_ADMIN', 'ADMIN'];
 
+/**
+ * Builds a caller that holds `roles`. `user.hasRole` mirrors the real model's
+ * signature so the ORG-005 scoped check is exercised: ADMIN is organization
+ * agnostic, ORGANIZATION_ADMIN only matches when an organization id is given.
+ */
 const makeContext = (roles: string[] = ALLOWED_ROLES) => {
   const context: any = {
-    user: { _id: new ObjectId() },
+    user: {
+      _id: new ObjectId(),
+      hasRole: jest.fn((_clientId: string, role: string, organizationId?: string) => {
+        if (roles.indexOf(role) < 0) return false;
+        if (role === 'ORGANIZATION_ADMIN') return typeof organizationId === 'string';
+        return true;
+      }),
+      hasAnyRole: jest.fn(() => roles.length > 0),
+      memberships: [],
+    },
+    partner: { _id: new ObjectId() },
     hasRole: jest.fn((role: string) => roles.indexOf(role) >= 0),
     hasAnyRole: jest.fn(() => roles.length > 0),
     memberships: [],
@@ -114,6 +129,37 @@ describe('OrganizationService theme methods (ORG-004)', () => {
 
       expect(organization.themes).toHaveLength(1);
       expect(organization.save).toHaveBeenCalled();
+    });
+
+    it('denies a SYSTEM-only caller the org-scoped check even though the coarse role gate admits SYSTEM', async () => {
+      const systemService = new OrganizationService({}, makeContext(['SYSTEM']));
+      const organization = makeOrganization();
+      models.Organization.findById.mockResolvedValue(organization);
+
+      // ORG-005: assertOrgAdmin admits ADMIN or a scoped ORGANIZATION_ADMIN only.
+      await expect(systemService.saveTheme(organization._id.toString(), theme('acme'))).rejects.toThrow(
+        /permission/i,
+      );
+      expect(organization.save).not.toHaveBeenCalled();
+    });
+
+    it('denies an ORGANIZATION_ADMIN of another organization', async () => {
+      const organization = makeOrganization();
+      const otherOrganizationId = new ObjectId().toString();
+      models.Organization.findById.mockResolvedValue(organization);
+
+      const scopedContext = makeContext(['ORGANIZATION_ADMIN']);
+      const scopedService = new OrganizationService({}, scopedContext);
+      // Make the scoped check fail for this organization only.
+      scopedContext.user.hasRole.mockImplementation(
+        (_clientId: string, role: string, organizationId?: string) =>
+          role === 'ORGANIZATION_ADMIN' && organizationId === otherOrganizationId,
+      );
+
+      await expect(
+        scopedService.saveTheme(organization._id.toString(), theme('acme')),
+      ).rejects.toThrow(/permission/i);
+      expect(organization.save).not.toHaveBeenCalled();
     });
   });
 
