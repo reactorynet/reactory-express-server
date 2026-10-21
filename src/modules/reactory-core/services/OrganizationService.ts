@@ -14,6 +14,7 @@ import logger from '@reactory/server-core/logging';
 import { trim } from 'lodash';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { service } from '@reactory/server-core/application/decorators/service';
+import { ThemeService } from './ThemeService';
 
 @service({
   id: 'core.OrganizationService@1.0.0',
@@ -675,6 +676,67 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
     await organization.save();
 
     return organization;
+  }
+
+  // ---- Branding / theme operations (ORG-004) ----
+  //
+  // Themes are stored on the organization exactly like they are on a
+  // ReactoryClient (`themes: [Mixed]`, `theme` is a name pointer), so all
+  // behaviour lives in the shared `ThemeService`. Org-scoped authorisation is
+  // ORG-005; for now these mirror the role gate on the other organization
+  // mutations.
+
+  private themeService(): ThemeService {
+    return new ThemeService(this.context);
+  }
+
+  /**
+   * Loads the organization used as a theme holder. Deliberately unprojected:
+   * `themes` and `theme` must be present on the document.
+   */
+  private async findThemeHolder(orgId: string): Promise<Reactory.Models.IOrganizationDocument> {
+    if (!orgId || ObjectId.isValid(orgId) === false) {
+      throw new ApiError(`param id is not a valid ${orgId}`);
+    }
+
+    const organization = await Organization.findById(orgId).then();
+    if (!organization) {
+      throw new OrganizationNotFoundError(`Organization with the id ${orgId} could not be found`, orgId);
+    }
+
+    return organization;
+  }
+
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async saveTheme(orgId: string, theme: any): Promise<Reactory.Models.IOrganizationDocument> {
+    const organization = await this.findThemeHolder(orgId);
+    return this.themeService().saveTheme(organization as any, theme);
+  }
+
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async setActiveTheme(
+    orgId: string,
+    themeName: string,
+    mode?: string | null
+  ): Promise<Reactory.Models.IOrganizationDocument> {
+    const organization = await this.findThemeHolder(orgId);
+    return this.themeService().setActiveTheme(organization as any, themeName, mode);
+  }
+
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async deleteTheme(orgId: string, themeName: string): Promise<Reactory.Models.IOrganizationDocument> {
+    const organization = await this.findThemeHolder(orgId);
+    return this.themeService().deleteTheme(organization as any, themeName);
+  }
+
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async publishThemeCss(orgId: string, themeName: string, css: string): Promise<boolean> {
+    const organization = await this.findThemeHolder(orgId);
+    return this.themeService().publishThemeCss(themeName, css, organization as any);
+  }
+
+  async getThemeCss(themeName: string): Promise<string> {
+    return this.themeService().getThemeCss(themeName);
   }
 
   @roles(['USER'])

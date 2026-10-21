@@ -1,0 +1,93 @@
+import Reactory from '@reactorynet/reactory-core';
+import { roles } from '@reactory/server-core/authentication/decorators';
+import { resolver, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver';
+
+/**
+ * The subset of `OrganizationService` used by the organization theme surface.
+ *
+ * Declared locally because the published `IReactoryOrganizationService`
+ * interface predates the theme operations; ORG-005 extends the service and can
+ * absorb these signatures then.
+ */
+export interface IOrganizationThemeService {
+  saveTheme(orgId: string, theme: any): Promise<any>;
+  setActiveTheme(orgId: string, themeName: string, mode?: string | null): Promise<any>;
+  deleteTheme(orgId: string, themeName: string): Promise<any>;
+  publishThemeCss(orgId: string, themeName: string, css: string): Promise<boolean>;
+  getThemeCss(themeName: string): Promise<string>;
+}
+
+const ORGANIZATION_SERVICE_ID = 'core.OrganizationService@1.0.0';
+
+const THEME_ROLES = ['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'];
+
+const organizationThemeService = (context: Reactory.Server.IReactoryContext): IOrganizationThemeService =>
+  context.getService(ORGANIZATION_SERVICE_ID) as unknown as IOrganizationThemeService;
+
+/**
+ * Organization branding (theme) resolvers.
+ *
+ * Kept in a separate resolver class from `Organization.ts` so ORG-005, which
+ * rewrites that file, does not collide with the theme surface (ORG-004).
+ * Every mutation delegates to `OrganizationService`, which enforces the role
+ * guard itself; the decorators here reject non-admin callers before any work
+ * happens.
+ */
+//@ts-ignore - this has to be called without the () as this throws an error in the decorator
+@resolver
+class OrganizationThemeResolver {
+
+  resolver: Reactory.Graph.IResolverStruct;
+
+  @mutation('OrganizationSaveTheme')
+  @roles(THEME_ROLES)
+  async saveTheme(
+    obj: any,
+    params: { id: string; theme: any },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationThemeService(context).saveTheme(params.id, params.theme);
+  }
+
+  @mutation('OrganizationSetActiveTheme')
+  @roles(THEME_ROLES)
+  async setActiveTheme(
+    obj: any,
+    params: { id: string; themeName: string; mode?: string | null },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationThemeService(context).setActiveTheme(params.id, params.themeName, params.mode);
+  }
+
+  @mutation('OrganizationDeleteTheme')
+  @roles(THEME_ROLES)
+  async deleteTheme(
+    obj: any,
+    params: { id: string; themeName: string },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationThemeService(context).deleteTheme(params.id, params.themeName);
+  }
+
+  @mutation('OrganizationPublishThemeCss')
+  @roles(THEME_ROLES)
+  async publishThemeCss(
+    obj: any,
+    params: { id: string; themeName: string; css: string },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationThemeService(context).publishThemeCss(params.id, params.themeName, params.css);
+  }
+
+  @query('OrganizationThemeCss')
+  @roles(['USER'])
+  async getThemeCss(
+    obj: any,
+    params: { themeName: string },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationThemeService(context).getThemeCss(params.themeName);
+  }
+}
+
+export default OrganizationThemeResolver;
