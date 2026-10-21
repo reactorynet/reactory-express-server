@@ -524,7 +524,12 @@ const SupportTicketOverview = (props: OverviewProps) => {
           </Button>
         )}
         {SupportTicketAIAction && (
+          // The action resolves `core.ProcessAITicket`'s newest registered version
+          // when its dialog opens. Keying it by ticket id discards that resolved
+          // state when the panel switches tickets, so a launch can never inherit
+          // the version resolved for a different ticket.
           <SupportTicketAIAction
+            key={`ai-action-${currentTicket.id}`}
             reactory={reactory}
             ticket={currentTicket}
             defaultWorkdir={currentTicket?.meta && (currentTicket.meta as any).aiWorkdir}

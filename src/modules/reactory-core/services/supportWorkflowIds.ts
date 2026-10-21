@@ -21,6 +21,5 @@
  * bump there must be mirrored here; `supportWorkflowIds.test.ts` fails when the two
  * disagree (wherever the module is checked out).
  */
-
-export const PROCESS_AI_TICKET_WORKFLOW_ID = 'core.ProcessAITicket@1.4.2';
+export const PROCESS_AI_TICKET_WORKFLOW_ID = 'core.ProcessAITicket@1.4.3';
 export const REQUEST_AI_ROUTING_WORKFLOW_ID = 'core.RequestAIRouting@1.0.0';

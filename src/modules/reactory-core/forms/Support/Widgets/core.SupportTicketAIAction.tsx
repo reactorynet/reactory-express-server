@@ -1,4 +1,10 @@
 import Reactory from '@reactorynet/reactory-core';
+import {
+  WORKFLOW_NAME,
+  WORKFLOW_NAME_SPACE,
+  pickLatestWorkflowId,
+  registeredWorkflowVersions,
+} from './aiWorkflowVersion';
 
 /**
  * core.SupportTicketAIAction@1.0.0
@@ -72,17 +78,17 @@ const AGENT_STORAGE_KEY = 'reactory.support.aiAction.agentId';
 /**
  * The workflow this widget starts, addressed by NAME.
  *
- * The version is deliberately NOT hardcoded here. It used to be a constant
+ * The version is deliberately NOT hardcoded. It used to be a constant
  * ('core.ProcessAITicket@1.3.0'), which silently kept launching a workflow
  * version that no longer matched the shipped definition - the new behaviours
  * simply never appeared because the old definition ran. The registry is the
- * source of truth, so the highest registered version is resolved when the
- * dialog opens and shown to the user before they launch.
+ * source of truth: `pickLatestWorkflowId` resolves the newest registered
+ * version when the dialog opens and the dialog shows it before launching.
  */
-const WORKFLOW_NAME_SPACE = 'core';
-const WORKFLOW_NAME = 'ProcessAITicket';
-
-/** Registered versions of the pipeline, newest first. */
+/**
+ * Registered versions of the pipeline. The list returns one row per
+ * registration, so the caller de-duplicates (see `registeredWorkflowVersions`).
+ */
 const WORKFLOWS_QUERY = `
   query SupportAIActionWorkflowVersions($filter: WorkflowFilterInput) {
     workflows(filter: $filter, pagination: { page: 1, limit: 50 }) {
@@ -95,25 +101,6 @@ const WORKFLOWS_QUERY = `
     }
   }`;
 
-/** Semver compare on the numeric triple. Missing parts count as 0. */
-const compareVersions = (a: string, b: string): number => {
-  const left = String(a).split('.').map((part) => parseInt(part, 10) || 0);
-  const right = String(b).split('.').map((part) => parseInt(part, 10) || 0);
-  for (let index = 0; index < 3; index += 1) {
-    const diff = (left[index] || 0) - (right[index] || 0);
-    if (diff !== 0) return diff;
-  }
-  return 0;
-};
-
-/** Newest registered version of the pipeline, or null when none is registered. */
-const pickLatestWorkflowId = (rows: any[]): string | null => {
-  const candidates = (rows || [])
-    .filter((row) => row && row.nameSpace === WORKFLOW_NAME_SPACE && row.name === WORKFLOW_NAME && !!row.version)
-    .sort((a, b) => compareVersions(b.version, a.version));
-  if (candidates.length === 0) return null;
-  return `${WORKFLOW_NAME_SPACE}.${WORKFLOW_NAME}@${candidates[0].version}`;
-};
 const DEFAULT_AGENT_ID = 'ReactorAIPersona';
 const DEFAULT_REVIEWER_ID = 'QualityQuinn';
 
@@ -307,6 +294,8 @@ const SupportTicketAIAction = (props: AIActionProps) => {
   const [resolvedWorkflowId, setResolvedWorkflowId] = React.useState<string>(workflowId || "");
   const [workflowLoading, setWorkflowLoading] = React.useState<boolean>(false);
   const [workflowError, setWorkflowError] = React.useState<string | null>(null);
+  // Distinct registered versions, newest first, for the "what else exists" hint.
+  const [workflowVersions, setWorkflowVersions] = React.useState<string[]>([]);
 
   // Repositories (Reactor projects) - the primary way to choose a workdir.
   const [projects, setProjects] = React.useState<any[]>([]);
@@ -320,6 +309,11 @@ const SupportTicketAIAction = (props: AIActionProps) => {
   const [pickerFolders, setPickerFolders] = React.useState<Array<{ name: string }>>([]);
   const [pickerLoading, setPickerLoading] = React.useState<boolean>(false);
   const [pickerError, setPickerError] = React.useState<string | null>(null);
+
+  const otherWorkflowVersions = React.useMemo(
+    () => workflowVersions.filter((version) => `${WORKFLOW_NAME_SPACE}.${WORKFLOW_NAME}@${version}` !== resolvedWorkflowId),
+    [workflowVersions, resolvedWorkflowId],
+  );
 
   const ticketStatus = String(ticket?.status || '').toLowerCase();
   const ticketIsClosed = ticketStatus === 'closed' || ticketStatus === 'resolved' || ticketStatus === 'withdrawn';
@@ -344,12 +338,15 @@ const SupportTicketAIAction = (props: AIActionProps) => {
         filter: { nameSpace: WORKFLOW_NAME_SPACE, name: WORKFLOW_NAME },
       }).then();
       const rows = response?.data?.workflows?.workflows || [];
+      const versions = registeredWorkflowVersions(rows);
       const latest = pickLatestWorkflowId(rows);
+      setWorkflowVersions(versions);
       setResolvedWorkflowId(latest || "");
       if (!latest) {
         setWorkflowError(`No registered ${WORKFLOW_NAME_SPACE}.${WORKFLOW_NAME} workflow was found. Deploy the definition before launching a run.`);
       }
     } catch (loadError: any) {
+      setWorkflowVersions([]);
       setResolvedWorkflowId("");
       setWorkflowError(loadError?.message || "Could not read the workflow registry.");
     } finally {
@@ -915,12 +912,48 @@ const SupportTicketAIAction = (props: AIActionProps) => {
             sx={{ mb: 1 }}
           />
 
+          {/*
+            Make the definition this run will execute explicit.
+
+            Launching the WRONG version is silent: the run looks healthy and
+            simply performs the old behaviour. Before this line the version was
+            only in a low-contrast caption, so an operator could not tell which
+            definition they were about to run, and a stale constant went
+            unnoticed for several releases.
+          */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.5 }}>
+            <Typography variant="caption" color="text.secondary">
+              Workflow
+            </Typography>
+            {workflowLoading ? (
+              <Chip
+                size="small"
+                variant="outlined"
+                icon={<CircularProgress size={12} />}
+                label="resolving registry…"
+              />
+            ) : resolvedWorkflowId ? (
+              <Chip
+                size="small"
+                color="primary"
+                variant="outlined"
+                icon={<Icon fontSize="small">account_tree</Icon>}
+                label={resolvedWorkflowId}
+                sx={{ fontFamily: 'monospace' }}
+              />
+            ) : (
+              <Chip size="small" color="error" variant="outlined" label="version unresolved" />
+            )}
+            {!workflowLoading && otherWorkflowVersions.length > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                (older registered: {otherWorkflowVersions.slice(0, 3).join(', ')}
+                {otherWorkflowVersions.length > 3 ? '…' : ''})
+              </Typography>
+            )}
+          </Box>
+
           <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
-            {workflowLoading
-              ? "Resolving the workflow version…"
-              : resolvedWorkflowId
-                ? `Workflow: ${resolvedWorkflowId} · brief: ${(context || "").trim().length} characters included`
-                : "Workflow version unresolved."}
+            {`Brief: ${(context || "").trim().length} characters included`}
           </Typography>
 
           <Typography variant="caption" color="text.secondary">
