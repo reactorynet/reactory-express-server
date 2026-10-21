@@ -40,6 +40,36 @@ type Organization {
   """
   tradingName: String
   """
+  The registered legal entity name, when it differs from the trading name.
+  """
+  legalName: String
+  """
+  A short, human readable description of the organization.
+  """
+  description: String
+  """
+  The organization website.
+  """
+  website: String
+  """
+  Primary contact email address for the organization.
+  """
+  contactEmail: String
+  """
+  Primary contact telephone number for the organization.
+  """
+  contactPhone: String
+  """
+  Lifecycle state: active, suspended or archived. Archived organizations are
+  retained (never hard deleted) and hidden from default listings.
+  """
+  status: String
+  """
+  Whether the organization is publicly visible. Public organizations are
+  readable without an explicit client allow-list entry.
+  """
+  public: Boolean
+  """
   The logo filename, just the the filename.  This should ideally be a 16:9 ratio png / svg / jpg
   """
   logo: String
@@ -111,9 +141,68 @@ input UpdateOrganizationInput {
   The registered trading name. A null or blank value clears the field.
   """
   tradingName: String
+  """
+  The registered legal entity name. A null or blank value clears the field.
+  """
+  legalName: String
+  """
+  A short description. A null or blank value clears the field.
+  """
+  description: String
+  """
+  The organization website. A null or blank value clears the field.
+  """
+  website: String
+  """
+  Primary contact email. A null or blank value clears the field.
+  """
+  contactEmail: String
+  """
+  Primary contact telephone number. A null or blank value clears the field.
+  """
+  contactPhone: String
+  """
+  Lifecycle state: active, suspended or archived.
+  """
+  status: String
+  """
+  The name of the active theme. A null or blank value clears the pointer.
+  """
+  theme: String
+  """
+  The active theme mode (light, dark or os).
+  """
+  themeMode: ApplicationThemeModeType
+  """
+  Whether the organization is publicly visible.
+  """
+  public: Boolean
+  """
+  The avatar filename/alias. A null or blank value clears the field.
+  """
+  avatar: String
   logo: String
   settings: [Any]
   legacyId: Int
+}
+
+"""
+Counts used by the organization dashboard. Deliberately flat so it can be
+produced with a bounded number of aggregate queries.
+"""
+type OrganizationStatistics {
+  """
+  Number of users with a membership for this organization.
+  """
+  members: Int
+  """
+  Number of (non-deleted) business units in this organization.
+  """
+  businessUnits: Int
+  """
+  Number of (non-deleted) teams in this organization.
+  """
+  teams: Int
 }
 
 type UpdateResponse {
@@ -187,12 +276,69 @@ extend type Query {
   Reads the custom CSS published for a theme, used by the theme CSS studio.
   """
   OrganizationThemeCss(themeName: String!): String
+  """
+  Member, business unit and team counts for an organization.
+  """
+  OrganizationStatistics(id: String!): OrganizationStatistics @auth(roles: ["USER"])
 }
 
 extend type Mutation {
-  createOrganization(input: CreateOrganizationInput!): Organization @auth(roles: ["USER", "ADMIN"])
-  updateOrganization(id: String!, input: UpdateOrganizationInput!): Organization @auth(roles: ["USER", "ADMIN"])
-  SetOrganisationLookupData(lookupData: OrganizationLookupDataInput!): OrganizationLookupData @auth(roles: ["USER", "ADMIN"])
+  """
+  Creates an organization. Requires a platform ADMIN or SYSTEM: an
+  ORGANIZATION_ADMIN has no authority beyond the organization they administer.
+  """
+  createOrganization(input: CreateOrganizationInput!): Organization @auth(roles: ["ADMIN", "SYSTEM"])
+
+  """
+  Updates an organization's identity, lifecycle and branding fields. The
+  service additionally enforces org-scoped authorization: an
+  ORGANIZATION_ADMIN may only update the organization they administer.
+  """
+  updateOrganization(id: String!, input: UpdateOrganizationInput!): Organization @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Archives an organization without deleting it. Requires org-scoped
+  authorization (ORGANIZATION_ADMIN of this organization, or ADMIN).
+  """
+  archiveOrganization(id: String!): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Restores an archived organization to the active state. Requires org-scoped
+  authorization.
+  """
+  restoreOrganization(id: String!): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Upserts a named setting on the organization. Requires org-scoped
+  authorization.
+  """
+  OrganizationSetSetting(id: String!, name: String!, data: Any, componentFqn: String): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Removes a named setting from the organization. Requires org-scoped
+  authorization.
+  """
+  OrganizationRemoveSetting(id: String!, name: String!): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Adds a user to the organization (creating or re-activating their membership).
+  Requires org-scoped authorization.
+  """
+  addOrganizationMember(id: String!, userId: String!, roles: [String!]): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Removes a user's membership for the organization. Requires org-scoped
+  authorization.
+  """
+  removeOrganizationMember(id: String!, userId: String!): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Replaces a member's roles for the organization. Requires org-scoped
+  authorization.
+  """
+  setOrganizationMemberRoles(id: String!, userId: String!, roles: [String!]!): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  SetOrganisationLookupData(lookupData: OrganizationLookupDataInput!): OrganizationLookupData @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
 
   """
   Creates or updates a theme on the organization. A theme is matched by name

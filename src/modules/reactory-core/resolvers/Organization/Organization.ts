@@ -20,6 +20,86 @@ interface CorePagedOrganizationParams extends CoreOrganizationParams {
 }
 
 /**
+ * The org-scoped administration surface added by ORG-005.
+ *
+ * The published `IReactoryOrganizationService` interface ships in the packaged
+ * `reactory-core` types and predates these operations, so the resolver declares
+ * the additional signatures locally - the same approach ORG-004 took for the
+ * theme methods. The methods themselves are implemented on `OrganizationService`.
+ */
+export interface IOrganizationAdministrationService
+  extends Reactory.Service.IReactoryOrganizationService {
+  create(
+    name: string,
+    input?: any,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
+  updateOrganization(
+    id: string,
+    input: any,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
+  archiveOrganization(
+    id: string,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
+  restoreOrganization(
+    id: string,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
+  getSettings(id: string): Promise<Reactory.Models.IOrganizationSetting[]>;
+  setSetting(
+    id: string,
+    name: string,
+    data: any,
+    componentFqn?: string,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
+  removeSetting(
+    id: string,
+    name: string,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
+  getStatistics(
+    id: string,
+  ): Promise<{ members: number; businessUnits: number; teams: number }>;
+  addMember(
+    id: string,
+    userId: string,
+    roles?: string[],
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
+  removeMember(
+    id: string,
+    userId: string,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
+  setMemberRoles(
+    id: string,
+    userId: string,
+    roles: string[],
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
+}
+
+const ORGANIZATION_SERVICE_ID = 'core.OrganizationService@1.0.0';
+
+/**
+ * Cheap first gate for organization administration. The service performs the
+ * real check (`assertOrgAdmin`) against the target organization id; these
+ * roles only prove the caller holds *a* privileged role somewhere.
+ */
+const ORGANIZATION_ADMIN_ROLES = ['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'];
+
+/** Creation has no target organization yet: platform admins or SYSTEM only. */
+const ORGANIZATION_CREATE_ROLES = ['ADMIN', 'SYSTEM'];
+
+const organizationService = (
+  context: Reactory.Server.IReactoryContext,
+): IOrganizationAdministrationService =>
+  context.getService(ORGANIZATION_SERVICE_ID) as unknown as IOrganizationAdministrationService;
+
+/**
  * Cache-busting token appended to organization image URLs.
  *
  * `YYYMMDDhh` is not a valid moment format (three year tokens, a 12-hour
@@ -144,40 +224,119 @@ class OrganizationResolver {
   @query('CoreOrganizations')
   @roles(['USER'])
   async CoreOrganizations(obj: any, params: CoreOrganizationParams, context: Reactory.Server.IReactoryContext): Promise<Reactory.Models.IOrganization[]> {
-    const organizationService = context.getService('core.OrganizationService@1.0.0') as Reactory.Service.IReactoryOrganizationService;
-    return organizationService.getOrganizationsForLoggedInUser(params.search, 'name', 'asc', context);
+    const service = organizationService(context);
+    return service.getOrganizationsForLoggedInUser(params.search, 'name', 'asc', context);
   }
 
   @query('CorePagedOrganizations')
   @roles(['USER'])
   async CorePagedOrganizations(obj: any, params: CorePagedOrganizationParams, context: Reactory.Server.IReactoryContext): Promise<{ paging: Reactory.Models.IPagingResult; organizations: Reactory.Models.IOrganization[] }> {
-    const organizationService = context.getService('core.OrganizationService@1.0.0') as Reactory.Service.IReactoryOrganizationService;
-    return organizationService.getPagedOrganizationsForLoggedInUser(params.search, 'name', 'asc', params.paging, context);
+    const service = organizationService(context);
+    return service.getPagedOrganizationsForLoggedInUser(params.search, 'name', 'asc', params.paging, context);
+  }
+
+  /**
+   * Member, business-unit and team counts for the organization dashboard.
+   * Read-only and available to any authenticated user, matching the other
+   * organization read queries.
+   */
+  @query('OrganizationStatistics')
+  @roles(['USER'])
+  async OrganizationStatistics(
+    obj: any,
+    params: { id: string },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationService(context).getStatistics(params.id);
   }
 
   // ---- Mutations ----
 
+  /**
+   * ORG-005: creation is the one case with no organization to scope against.
+   * Only a platform ADMIN or SYSTEM may create; initial fields are applied in
+   * the same call so a SYSTEM caller can complete the create.
+   */
   @mutation('createOrganization')
-  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  @roles(ORGANIZATION_CREATE_ROLES)
   async createOrganization(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
     const { input } = args;
-    const organizationService = context.getService('core.OrganizationService@1.0.0') as Reactory.Service.IReactoryOrganizationService;
-    let organization = await organizationService.create(input.name);
-    if (input.code || input.logo) {
-      organization = await organizationService.setOrganization(`${organization._id}`, {
-        code: input.code,
-        logo: input.logo,
-      });
-    }
-    return organization;
+    return organizationService(context).create(input.name, input, context);
   }
 
   @mutation('updateOrganization')
-  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  @roles(ORGANIZATION_ADMIN_ROLES)
   async updateOrganization(parent: any, args: any, context: Reactory.Server.IReactoryContext) {
     const { id, input } = args;
-    const organizationService = context.getService('core.OrganizationService@1.0.0') as Reactory.Service.IReactoryOrganizationService;
-    return organizationService.setOrganization(id, input);
+    return organizationService(context).updateOrganization(id, input, context);
+  }
+
+  @mutation('archiveOrganization')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async archiveOrganization(obj: any, params: { id: string }, context: Reactory.Server.IReactoryContext) {
+    return organizationService(context).archiveOrganization(params.id, context);
+  }
+
+  @mutation('restoreOrganization')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async restoreOrganization(obj: any, params: { id: string }, context: Reactory.Server.IReactoryContext) {
+    return organizationService(context).restoreOrganization(params.id, context);
+  }
+
+  @mutation('OrganizationSetSetting')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async OrganizationSetSetting(
+    obj: any,
+    params: { id: string; name: string; data?: any; componentFqn?: string },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationService(context).setSetting(
+      params.id,
+      params.name,
+      params.data,
+      params.componentFqn,
+      context,
+    );
+  }
+
+  @mutation('OrganizationRemoveSetting')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async OrganizationRemoveSetting(
+    obj: any,
+    params: { id: string; name: string },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationService(context).removeSetting(params.id, params.name, context);
+  }
+
+  @mutation('addOrganizationMember')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async addOrganizationMember(
+    obj: any,
+    params: { id: string; userId: string; roles?: string[] },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationService(context).addMember(params.id, params.userId, params.roles, context);
+  }
+
+  @mutation('removeOrganizationMember')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async removeOrganizationMember(
+    obj: any,
+    params: { id: string; userId: string },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationService(context).removeMember(params.id, params.userId, context);
+  }
+
+  @mutation('setOrganizationMemberRoles')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async setOrganizationMemberRoles(
+    obj: any,
+    params: { id: string; userId: string; roles: string[] },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationService(context).setMemberRoles(params.id, params.userId, params.roles, context);
   }
 }
 

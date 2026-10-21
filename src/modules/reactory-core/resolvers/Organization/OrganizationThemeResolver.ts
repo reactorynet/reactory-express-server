@@ -6,14 +6,15 @@ import { resolver, query, mutation } from '@reactory/server-core/models/graphql/
  * The subset of `OrganizationService` used by the organization theme surface.
  *
  * Declared locally because the published `IReactoryOrganizationService`
- * interface predates the theme operations; ORG-005 extends the service and can
- * absorb these signatures then.
+ * interface ships in the packaged `reactory-core` types and predates the theme
+ * operations. The optional execution context is forwarded so the service's
+ * org-scoped check (ORG-005) evaluates the caller.
  */
 export interface IOrganizationThemeService {
-  saveTheme(orgId: string, theme: any): Promise<any>;
-  setActiveTheme(orgId: string, themeName: string, mode?: string | null): Promise<any>;
-  deleteTheme(orgId: string, themeName: string): Promise<any>;
-  publishThemeCss(orgId: string, themeName: string, css: string): Promise<boolean>;
+  saveTheme(orgId: string, theme: any, executionContext?: Reactory.Server.IReactoryContext): Promise<any>;
+  setActiveTheme(orgId: string, themeName: string, mode?: string | null, executionContext?: Reactory.Server.IReactoryContext): Promise<any>;
+  deleteTheme(orgId: string, themeName: string, executionContext?: Reactory.Server.IReactoryContext): Promise<any>;
+  publishThemeCss(orgId: string, themeName: string, css: string, executionContext?: Reactory.Server.IReactoryContext): Promise<boolean>;
   getThemeCss(themeName: string): Promise<string>;
 }
 
@@ -31,7 +32,9 @@ const organizationThemeService = (context: Reactory.Server.IReactoryContext): IO
  * rewrites that file, does not collide with the theme surface (ORG-004).
  * Every mutation delegates to `OrganizationService`, which enforces the role
  * guard itself; the decorators here reject non-admin callers before any work
- * happens.
+ * happens. The execution context is passed explicitly so the service's
+ * org-scoped `assertOrgAdmin` check evaluates the caller (ORG-005), not
+ * whatever context the singleton happened to be constructed with.
  */
 //@ts-ignore - this has to be called without the () as this throws an error in the decorator
 @resolver
@@ -46,7 +49,7 @@ class OrganizationThemeResolver {
     params: { id: string; theme: any },
     context: Reactory.Server.IReactoryContext,
   ) {
-    return organizationThemeService(context).saveTheme(params.id, params.theme);
+    return organizationThemeService(context).saveTheme(params.id, params.theme, context);
   }
 
   @mutation('OrganizationSetActiveTheme')
@@ -56,7 +59,7 @@ class OrganizationThemeResolver {
     params: { id: string; themeName: string; mode?: string | null },
     context: Reactory.Server.IReactoryContext,
   ) {
-    return organizationThemeService(context).setActiveTheme(params.id, params.themeName, params.mode);
+    return organizationThemeService(context).setActiveTheme(params.id, params.themeName, params.mode, context);
   }
 
   @mutation('OrganizationDeleteTheme')
@@ -66,7 +69,7 @@ class OrganizationThemeResolver {
     params: { id: string; themeName: string },
     context: Reactory.Server.IReactoryContext,
   ) {
-    return organizationThemeService(context).deleteTheme(params.id, params.themeName);
+    return organizationThemeService(context).deleteTheme(params.id, params.themeName, context);
   }
 
   @mutation('OrganizationPublishThemeCss')
@@ -76,7 +79,7 @@ class OrganizationThemeResolver {
     params: { id: string; themeName: string; css: string },
     context: Reactory.Server.IReactoryContext,
   ) {
-    return organizationThemeService(context).publishThemeCss(params.id, params.themeName, params.css);
+    return organizationThemeService(context).publishThemeCss(params.id, params.themeName, params.css, context);
   }
 
   @query('OrganizationThemeCss')
