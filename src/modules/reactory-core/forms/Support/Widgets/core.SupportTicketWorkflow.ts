@@ -410,7 +410,10 @@ const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTick
         workflowId,
         input: {
           input,
-          tags: ['ai-run', 'launched-from-ui', `ticket:${ticket.reference || ticket.id}`],
+          // The workflow id is part of the tag set so a run can be traced back to the
+          // exact definition that produced it, and a wrong/stale version is visible in
+          // the instance record rather than only in the browser console.
+          tags: ['ai-run', 'launched-from-ui', `ticket:${ticket.reference || ticket.id}`, `workflow:${workflowId}`],
           priority: 1,
         },
       }).then();

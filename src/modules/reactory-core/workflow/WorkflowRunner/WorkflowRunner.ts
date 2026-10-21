@@ -75,6 +75,54 @@ const {
 const WORKFLOW_CLUSTER_ENABLED = String(WORKFLOW_CLUSTER_MODE).toLowerCase() === 'true';
 
 /**
+ * Compare two workflow versions numerically, segment by segment.
+ *
+ * Workflow versions in this platform are dotted numeric triples ('1.4.3'). A
+ * string comparison would sort '1.10.0' BELOW '1.9.0', so the segments are
+ * compared as numbers. Missing segments count as 0, and any non-numeric suffix
+ * is ignored (`1.4.3-beta` compares as 1.4.3).
+ *
+ * Returns a positive number when `a` is newer than `b`.
+ */
+/**
+ * Pick a registered workflow by namespace + name.
+ *
+ * Exported (and therefore unit-testable) because the "which version does this
+ * name mean" decision is the difference between running the shipped definition
+ * and silently running a stale one.
+ */
+export const selectWorkflowByName = <T extends { nameSpace: string; name: string; version: string }>(
+  workflows: T[],
+  nameSpace: string,
+  name: string,
+  version?: string,
+): T | undefined => {
+  const matches = (workflows || []).filter(
+    (workflow) => workflow.nameSpace === nameSpace && workflow.name === name,
+  );
+  if (matches.length === 0) return undefined;
+  if (version) return matches.find((workflow) => workflow.version === version);
+  return matches.reduce((latest, candidate) =>
+    compareWorkflowVersions(candidate.version, latest.version) > 0 ? candidate : latest,
+  );
+};
+
+export const compareWorkflowVersions = (a: string, b: string): number => {
+  const parse = (value: string): number[] => String(value || '0')
+    .trim()
+    .split('.')
+    .map((segment) => parseInt(segment, 10) || 0);
+  const left = parse(a);
+  const right = parse(b);
+  const length = Math.max(left.length, right.length, 3);
+  for (let index = 0; index < length; index += 1) {
+    const diff = (left[index] || 0) - (right[index] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+};
+
+/**
  * Indicates the source type of a workflow definition.
  * - YAML: Declarative workflow loaded from a .yaml / .yml file via the YamlFlow engine.
  * - CODE: Programmatic workflow defined as a TypeScript/JavaScript class.
@@ -1129,13 +1177,19 @@ export class WorkflowRunner {
 
   /**
    * Get registered workflow by namespace and name
+   *
+   * When a version is supplied the match is exact. When it is NOT supplied this
+   * returns the NEWEST registered version, not merely the first match.
+   *
+   * Why that matters: the registry keeps every version ever registered, in
+   * registration order. A plain `find` therefore returned the OLDEST version
+   * for a bare name lookup, so `core.ProcessAITicket` resolved to 1.4.2 while
+   * 1.4.3 was the version being shipped - every caller that addressed the
+   * workflow by name silently ran (or reported) a stale definition. Launching
+   * an old definition looks healthy: no error, just the wrong behaviour.
    */
   public getWorkflowByName(nameSpace: string, name: string, version?: string): IWorkflow | undefined {
-    return this.state.workflows.find(workflow => 
-      workflow.nameSpace === nameSpace && 
-      workflow.name === name && 
-      (version ? workflow.version === version : true)
-    );
+    return selectWorkflowByName(this.state.workflows, nameSpace, name, version);
   }
 
   /**
