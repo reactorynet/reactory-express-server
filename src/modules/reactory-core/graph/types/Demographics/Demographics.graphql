@@ -1,0 +1,324 @@
+# ORG-006: organization demographics configuration and value surface.
+#
+# A `DemographicDefinition` describes *what* an organization tracks (gender,
+# employment type, business unit, ...), how it is typed, validated and rendered.
+# A `DemographicValue` is one member's value for one definition in one
+# organization. Both are organization-scoped: a definition owned by organization
+# A can never be used to write a value in organization B.
+#
+# Configuration mutations are additionally guarded by the service's org-scoped
+# `assertOrgAdmin` check (an ORGANIZATION_ADMIN of A cannot administer B); the
+# `@auth` roles below are only the coarse first gate.
+
+"""
+One choice of an `enum` / `multi-enum` definition.
+"""
+type DemographicOption {
+  key: String!
+  label: String
+  ordinal: Int
+  deprecated: Boolean
+}
+
+"""
+Structural reference target (business unit, team, region, ...).
+"""
+type DemographicReference {
+  model: String!
+  multiple: Boolean
+}
+
+"""
+Optional custom input component. `componentPropsMap` maps context paths onto
+the component's prop names, following the existing Reactory `ui:props-map`
+convention.
+"""
+type DemographicWidget {
+  componentFqn: String
+  componentProps: Any
+  componentPropsMap: Any
+}
+
+"""
+An organization-scoped demographic definition.
+
+`schema` is a JSON Schema fragment used for extra validation of the stored
+value (in addition to the `valueType` shape check). `system` marks a seeded
+base definition: an organization may rename, reorder or disable it, but may
+not change its `valueType`.
+"""
+type DemographicDefinition {
+  id: String
+  organization: String
+  key: String!
+  title: String!
+  description: String
+  icon: String
+  """
+  One of: personal, employment, organizational, compliance.
+  """
+  category: String
+  """
+  One of: string, number, boolean, date, enum, multi-enum, object, array,
+  reference.
+  """
+  valueType: String!
+  """
+  JSON Schema fragment validated with ajv on every value write.
+  """
+  schema: Any
+  options: [DemographicOption!]
+  reference: DemographicReference
+  widget: DemographicWidget
+  required: Boolean
+  """
+  When true the stored value is an array of the declared `valueType`.
+  """
+  multiValued: Boolean
+  """
+  PII marker: gates reporting/export and audit logging.
+  """
+  sensitive: Boolean
+  searchable: Boolean
+  enabled: Boolean
+  ordinal: Int
+  roles: [String!]
+  system: Boolean
+  deleted: Boolean
+  createdBy: String
+  updatedBy: String
+  createdAt: Date
+  updatedAt: Date
+}
+
+"""
+One member's value for one definition.
+`key` and `valueType` are snapshots taken at write time so reports keep
+working after a definition is renamed or retyped.
+"""
+type DemographicValue {
+  id: String
+  organization: String
+  user: String
+  membership: String
+  definition: String
+  key: String
+  value: Any
+  valueType: String
+  """
+  One of: user, admin, import, api.
+  """
+  source: String
+  verified: Boolean
+  effectiveFrom: Date
+  effectiveTo: Date
+  updatedBy: String
+  createdAt: Date
+  updatedAt: Date
+}
+
+type PagedDemographicValues {
+  values: [DemographicValue!]!
+  paging: PagingResult
+}
+
+"""
+Thin organization-level demographics policy (design decision D4).
+
+There is at most one document per organization. Reading it before it has ever
+been written returns these defaults without persisting anything.
+"""
+type OrganizationDemographicsPolicy {
+  id: String
+  organization: String
+  """
+  Whether members may maintain their own values. Defaults to true.
+  """
+  selfServiceEnabled: Boolean!
+  """
+  Definition keys that only an organization administrator may write, even when
+  self-service is enabled.
+  """
+  adminOnlyKeys: [String!]!
+  """
+  Smallest cohort a report may return (k-anonymity). Defaults to 5.
+  """
+  minimumAggregationGroupSize: Int
+  """
+  Value retention in days; null retains indefinitely.
+  """
+  retentionDays: Int
+  createdAt: Date
+  updatedAt: Date
+}
+
+input DemographicOptionInput {
+  key: String!
+  label: String
+  ordinal: Int
+  deprecated: Boolean
+}
+
+input DemographicReferenceInput {
+  model: String!
+  multiple: Boolean
+}
+
+input DemographicWidgetInput {
+  componentFqn: String
+  componentProps: Any
+  componentPropsMap: Any
+}
+
+"""
+Create or update payload for a definition. Omit a field to leave it unchanged.
+`key` is immutable once the definition exists. Pass `id` to update by id;
+otherwise the definition is matched by `key`.
+"""
+input DemographicDefinitionInput {
+  id: String
+  key: String
+  title: String
+  description: String
+  icon: String
+  category: String
+  valueType: String
+  schema: Any
+  options: [DemographicOptionInput!]
+  reference: DemographicReferenceInput
+  widget: DemographicWidgetInput
+  required: Boolean
+  multiValued: Boolean
+  sensitive: Boolean
+  searchable: Boolean
+  enabled: Boolean
+  ordinal: Int
+  roles: [String!]
+}
+
+"""
+A value write. `user` may only name somebody other than the caller on the
+administrative mutations; `MySaveDemographics` rejects it.
+"""
+input DemographicValueInput {
+  id: String
+  user: String
+  membership: String
+  key: String
+  definition: String
+  value: Any
+  source: String
+  verified: Boolean
+  effectiveFrom: Date
+  effectiveTo: Date
+}
+
+input DemographicValueFilter {
+  user: String
+  membership: String
+  key: String
+  definition: String
+  value: Any
+  source: String
+  verified: Boolean
+}
+
+input OrganizationDemographicsPolicyInput {
+  selfServiceEnabled: Boolean
+  adminOnlyKeys: [String!]
+  minimumAggregationGroupSize: Int
+  retentionDays: Int
+}
+
+# The organization's demographics policy, resolved from
+# `reactory_organization_demographics_policies` and defaulted on read.
+# (Descriptions are not allowed on type extensions.)
+extend type Organization {
+  demographicsPolicy: OrganizationDemographicsPolicy
+}
+
+extend type Query {
+  """
+  Lists the organization's demographic definitions, ordered by ordinal.
+  Soft-deleted definitions are never returned; disabled ones only when
+  `includeDisabled` is true.
+
+  NOTE: this is a top-level query with this exact name and an
+  `organizationId` argument - the organization management plugin
+  (ORG-010) calls it directly.
+  """
+  OrganizationDemographicDefinitions(organizationId: String!, includeDisabled: Boolean): [DemographicDefinition!]! @auth(roles: ["USER"])
+
+  """
+  Loads one definition by key.
+  """
+  OrganizationDemographicDefinition(organizationId: String!, key: String!): DemographicDefinition @auth(roles: ["USER"])
+
+  """
+  Organization-wide value listing. Requires an organization administrator:
+  this is the reporting/compliance surface.
+  """
+  OrganizationDemographicValues(organizationId: String!, filter: DemographicValueFilter, paging: PagingRequest): PagedDemographicValues @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  The caller's own demographic values. `membershipId` is accepted for
+  multi-organization members and is recorded on writes, not used to select
+  another user.
+  """
+  MyDemographics(organizationId: String!, membershipId: String): [DemographicValue!]! @auth(roles: ["USER"])
+}
+
+extend type Mutation {
+  """
+  Creates or updates a definition. The key is immutable once created and a
+  `system` definition cannot change its value type.
+  """
+  OrganizationSaveDemographicDefinition(organizationId: String!, definition: DemographicDefinitionInput!): DemographicDefinition! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Soft-deletes a definition. Rejected when stored values still reference it;
+  disable the definition instead.
+  """
+  OrganizationDeleteDemographicDefinition(organizationId: String!, key: String!): Boolean! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Applies the supplied key order as the definitions' ordinal.
+  """
+  OrganizationReorderDemographicDefinitions(organizationId: String!, keys: [String!]!): [DemographicDefinition!]! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Enables or disables one definition without touching stored values.
+  """
+  OrganizationSetDemographicEnabled(organizationId: String!, key: String!, enabled: Boolean!): DemographicDefinition! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Creates the policy on first write, updates it afterwards.
+  """
+  OrganizationUpdateDemographicsPolicy(organizationId: String!, policy: OrganizationDemographicsPolicyInput!): OrganizationDemographicsPolicy! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Writes one value for a named user (or the caller). Validated against the
+  definition; invalid payloads are rejected with field-level errors. Writing
+  for another user requires organization administration.
+  """
+  OrganizationSaveDemographicValue(organizationId: String!, value: DemographicValueInput!): DemographicValue! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Bulk value write. Every row is validated before anything is persisted, so a
+  bad row cannot leave the batch half-applied.
+  """
+  OrganizationBulkSaveDemographicValues(organizationId: String!, values: [DemographicValueInput!]!): [DemographicValue!]! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Deletes one value; `user` defaults to the caller and may only name somebody
+  else when the caller administers the organization.
+  """
+  OrganizationDeleteDemographicValue(organizationId: String!, key: String!, user: String): Boolean! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM", "USER"])
+
+  """
+  Saves the caller's own values. Any `user` naming somebody else is rejected,
+  and the write is refused when the organization policy disables self-service
+  or the definition key is restricted to administrators.
+  """
+  MySaveDemographics(organizationId: String!, values: [DemographicValueInput!]!, membershipId: String): [DemographicValue!]! @auth(roles: ["USER"])
+}

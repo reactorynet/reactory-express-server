@@ -24,6 +24,7 @@ import Demographic from "./demographics/Demographic";
 import OrganizationDemographicSettings from "./demographics/OrganizationDemographicsSettings";
 import DemographicDefinition from "./demographics/DemographicDefinition";
 import DemographicValue from "./demographics/DemographicValue";
+import OrganizationDemographicsPolicy from "./demographics/OrganizationDemographicsPolicy";
 import PersonalDemographic from "./PersonalDemographic";
 import Project from "./Project";
 import ProjectBoard from "./ProjectBoard";
@@ -107,6 +108,7 @@ export type CoreModelTypes =
   | typeof OrganizationDemographicSettings
   | typeof DemographicDefinition
   | typeof DemographicValue
+  | typeof OrganizationDemographicsPolicy
   | typeof ClientComponent
   | typeof Comment
   | typeof Content
@@ -158,6 +160,7 @@ export { default as Demographic } from './demographics/Demographic';
 export { default as OrganizationDemographicSettings } from './demographics/OrganizationDemographicsSettings';
 export { default as DemographicDefinition } from './demographics/DemographicDefinition';
 export { default as DemographicValue } from './demographics/DemographicValue';
+export { default as OrganizationDemographicsPolicy } from './demographics/OrganizationDemographicsPolicy';
 export { default as ClientComponent } from './ClientComponent';
 export { default as Comment } from './Comment';
 export { default as Content } from './Content';
@@ -356,6 +359,20 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       stem: "demographic-value",
       tags: ["demographic-value", "demographic", "demographics", "organization", "core", "system"],
       component: DemographicValue,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+    },
+    {
+      nameSpace: "core",
+      name: "OrganizationDemographicsPolicy",
+      version: "1.0.0",
+      description:
+        "Provides the demographics policy model for an organization",
+      stem: "organization-demographics-policy",
+      tags: ["organization-demographics-policy", "demographic", "demographics", "organization", "core", "system"],
+      component: OrganizationDemographicsPolicy,
       domain: "model",
       overwrite: true,
       roles: [],

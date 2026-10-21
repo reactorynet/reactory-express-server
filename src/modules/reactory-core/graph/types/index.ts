@@ -29,6 +29,9 @@ const CoreTypeDefinitions = loadGraphQLTypeDefinitions([
   'User/UserImport',
   'User/Support', 
   'Organization/Organization',
+  // Loaded after the Organization base type because it extends it with
+  // `demographicsPolicy` (ORG-006).
+  'Demographics/Demographics',
   'Organization/BusinessUnit',
   'System/Email',
   'System/Template',
