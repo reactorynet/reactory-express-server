@@ -77,6 +77,19 @@ export type ResolverType =ReactoryResolverFunc |
   Reactory.Graph.IReactoryResolver |
   any;
 
+/** The three root operation types, whose fields always merge. */
+const ROOT_TYPES = ['Query', 'Mutation', 'Subscription'] as const;
+
+/**
+ * A type-specific field map (`Organization`, `Person`, ...) is a plain object
+ * of resolver functions. Scalars, enums, unions and class instances arrive with
+ * a different prototype and must be assigned, never merged.
+ */
+const isFieldMap = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' &&
+  value !== null &&
+  Object.getPrototypeOf(value) === Object.prototype;
+
 const MergeGraphResolvers = (resolvers: ResolverType[] = []): Reactory.Graph.IGraphShape => {
 
   let rootResolver: Reactory.Graph.IGraphShape = {
@@ -121,24 +134,39 @@ const MergeGraphResolvers = (resolvers: ResolverType[] = []): Reactory.Graph.IGr
       $resolver = (resolver as Reactory.Graph.IGraphShape);
     }
 
-    if(Object.keys($resolver).length > 0 ) {
-      ['Query', 'Mutation', 'Subscription'].forEach((property: string) => {
-        // first merge the Query and Mutation entries
-        // @ts-ignore
-        if (typeof $resolver[property] === 'object') {
-          //@ts-ignore
-          rootResolver[property] = {
-            //@ts-ignore
-            ...rootResolver[property],
-            //@ts-ignore
-            ...$resolver[property]
+    if (Object.keys($resolver).length > 0) {
+      // Merge into a fresh map. The previous implementation spread
+      // `$resolver` over `rootResolver`, which *replaced* every non-root type
+      // map: two resolver classes contributing to the same GraphQL type (for
+      // example OrganizationResolver's eight `Organization` fields and a
+      // demographics resolver's `demographicsPolicy`) left only the last
+      // class's fields, and the lost fields were declared in the SDL but
+      // unresolvable at runtime. Root operation types were already merged
+      // field-wise; every other plain field map must merge the same way.
+      //
+      // `next` is a plain record: `IGraphShape` has no index signature, so
+      // keyed access has to go through one to stay type-safe.
+      const next: Record<string, unknown> = { ...(rootResolver as Record<string, unknown>) };
+
+      Object.keys($resolver as Record<string, unknown>).forEach((typeName: string) => {
+        const fields = ($resolver as Record<string, unknown>)[typeName];
+        const isRoot = (ROOT_TYPES as readonly string[]).includes(typeName);
+
+        if (isRoot || isFieldMap(fields)) {
+          // A nullish root/type entry carries no fields: keep what is there.
+          if (fields === null || fields === undefined) return;
+          next[typeName] = {
+            ...((next[typeName] as Record<string, unknown>) || {}),
+            ...(fields as Record<string, unknown>),
           };
-          //@ts-ignore
-          delete $resolver[property];
+          return;
         }
+
+        // Scalars, enums, unions and class instances are assigned as-is.
+        next[typeName] = fields;
       });
 
-      rootResolver = { ...rootResolver, ...$resolver };
+      rootResolver = next as Reactory.Graph.IGraphShape;
     }
     
   });

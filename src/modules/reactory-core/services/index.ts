@@ -5,6 +5,7 @@ import FileService from './ReactoryFileService';
 import FileSSETransportManagerDefinition from './FileSSETransportManager';
 import { ReactoryExcelWriterServiceDefinition } from '@reactory/server-core/excel/ExcelWriter';
 import OrganizationServiceDefinition from '@reactory/server-modules/reactory-core/services/OrganizationService';
+import DemographicsServiceDefinition from '@reactory/server-modules/reactory-core/services/DemographicsService';
 import GoogleMapsService from "./location/GoogleMapsService";
 import Processors from './ETL/Processors';
 import ReactoryPackageManager from './ETL/ReactoryPackageManager';
@@ -45,6 +46,7 @@ const services = [
   FileSSETransportManagerDefinition,
   ReactoryExcelWriterServiceDefinition,
   OrganizationServiceDefinition,
+  DemographicsServiceDefinition,
   ReactoryPackageManager.reactory,
   UserService,
   WorkflowService,
