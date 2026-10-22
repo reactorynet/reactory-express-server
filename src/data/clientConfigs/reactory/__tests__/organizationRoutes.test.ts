@@ -14,10 +14,17 @@
  *   - the left-nav entry exists and is ADMIN-only;
  *   - `/organizations/manage/create` wins over `/organizations/manage/:id`.
  *
+ * ORG-017 extends the same file: the panels hardcode `/organizations/<id>`, so
+ * the three routes now carry serialisable `componentProps` (`basePath`,
+ * `listRoute`, and the pre-existing `id`) that point the surface at
+ * `/organizations/manage`. Those props are ignored until ORG-016 ships, so the
+ * assertions here only pin the config contract.
+ *
  * The routing config is authoritative at seed time: `synchronizeRoutes`
  * (models/ReactoryClient/statics.ts) removes stored routes that are absent here,
  * so a dropped route disappears from the running application for real. That is
- * why the "nothing else moved" assertions below matter as much as the new ones.
+ * why the "nothing else moved" assertions below matter as much as the new ones
+ * — including the pinned complete path set in the ORG-017 block.
  */
 
 import routes from '../routes';
@@ -201,7 +208,11 @@ describe('ORG-015 organization management routes', () => {
       expect(route?.public).toBe(false);
       // `OrganizationDetailPanel` documents `id` as the route argument; the
       // substitution form must match the other routes in this file exactly.
-      expect(route?.componentProps).toEqual({ id: '${route.id}' });
+      // ORG-017 additionally supplies `listRoute` for the back-link.
+      expect(route?.componentProps).toEqual({
+        id: '${route.id}',
+        listRoute: '/organizations/manage',
+      });
     });
 
     it('uses the same ${route.x} substitution form as the existing detail routes', () => {
@@ -210,7 +221,7 @@ describe('ORG-015 organization management routes', () => {
         JSON.stringify(route.componentProps || {}).includes('${route.'),
       ).map((route) => route.key);
 
-      expect(JSON.stringify(detail?.componentProps)).toBe('{"id":"${route.id}"}');
+      expect(detail?.componentProps?.id).toBe('${route.id}');
       expect(templates).toContain('organizations-manage-detail');
       expect(templates).toContain('reactor-project-detail');
     });
@@ -376,6 +387,318 @@ describe('ORG-015 organization management routes', () => {
 
       menuLinks.forEach((link) => {
         expect(resolve(link)).not.toBeNull();
+      });
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ORG-017 — navigation props for the /organizations/manage surface
+//
+// The panels (ORG-010/011) were written against the legacy URL shape
+// `/organizations/<id>`, so a row click in the new list navigated to a path with
+// no route (`/organizations/69dda9e87e9ebeb6ddcb382a`). ORG-016 introduces
+// serialisable `basePath` / `listRoute` props with legacy defaults; ORG-017 is
+// the config half that supplies them. Nothing here changes a path: these are
+// pure prop additions on the three existing organization management routes.
+// ---------------------------------------------------------------------------
+
+const MANAGE_BASE = '/organizations/manage';
+
+/**
+ * The complete route-path set of this seed config as of master `8366e15d`.
+ *
+ * `synchronizeRoutes` (models/ReactoryClient/statics.ts) is authoritative: a
+ * stored route whose path is absent from this file is deleted on the next
+ * reconcile (server start), and a new path is created. ORG-017 must not move
+ * that needle — it only adds `componentProps`. If a later change genuinely adds
+ * or removes a route, update this array in the same commit and say so in the PR;
+ * a failure here means the desired-state seed drifted silently.
+ */
+const EXPECTED_PATHS_AT_BASE = [
+  '/',
+  '/',
+  '/about/*',
+  '/admin/ai/budgets',
+  '/admin/ai/models',
+  '/admin/ai/providers',
+  '/admin/ai/usage',
+  '/admin/ai/usage/:userId',
+  '/applications/:applicationId',
+  '/blog/:blog_slug',
+  '/content',
+  '/content/:slug',
+  '/data/graphiql/*',
+  '/data/sql-editor/*',
+  '/docs/',
+  '/docs/:slug',
+  '/forgot',
+  '/forms/*',
+  '/forms/:formId',
+  '/forms/:formId/:mode',
+  '/forms/:formId/:mode/:id/*',
+  '/login',
+  '/logout',
+  '/my/comments',
+  '/organizations/',
+  '/organizations/manage/',
+  '/organizations/manage/:id',
+  '/organizations/manage/create',
+  '/profile',
+  '/profile/budget',
+  '/profile/usage',
+  '/reactor/ai/models',
+  '/reactor/ai/providers',
+  '/reactor/chat/*',
+  '/reactor/graph/:projectId?/:nodeId?',
+  '/reactor/project/:id',
+  '/reactor/projects',
+  '/reactor/projects/:id',
+  '/reactory-server/*',
+  '/register',
+  '/reset-password',
+  '/support/',
+  '/support/admin',
+  '/support/open',
+  '/support/request',
+  '/support/tickets/*',
+  '/whats-new/*',
+  '/workflows/editor',
+  '/workflows/operation-dashboard',
+  '/workflows/registry',
+  '/workflows/registry/:workflowId',
+];
+
+interface IComponentPropsEntry {
+  key?: string;
+  props: Record<string, unknown>;
+}
+
+/** Every route that declares `componentProps`, keyed for failure messages. */
+const componentPropsEntries = (): IComponentPropsEntry[] =>
+  ROUTES.filter((route) => route.componentProps !== undefined).map((route) => ({
+    key: route.key,
+    props: route.componentProps as Record<string, unknown>,
+  }));
+
+/**
+ * Structural check for things JSON cannot represent. `componentProps` reach the
+ * browser through the client config document (Mongo → ApiStatus → router), so a
+ * function, `undefined`, symbol or bigint is silently dropped or throws on the
+ * way out; catching it here is cheaper than debugging an empty prop at runtime.
+ */
+const collectNonSerialisable = (value: unknown, path: string, problems: string[]): void => {
+  if (value === undefined) {
+    problems.push(`${path} is undefined`);
+    return;
+  }
+
+  const type = typeof value;
+
+  if (type === 'function') {
+    problems.push(`${path} is a function`);
+    return;
+  }
+
+  if (type === 'symbol' || type === 'bigint') {
+    problems.push(`${path} is a ${type}`);
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => collectNonSerialisable(item, `${path}[${index}]`, problems));
+    return;
+  }
+
+  if (value !== null && type === 'object') {
+    Object.entries(value as Record<string, unknown>).forEach(([key, nested]) =>
+      collectNonSerialisable(nested, `${path}.${key}`, problems),
+    );
+  }
+};
+
+describe('ORG-017 organization route componentProps', () => {
+  describe('the three management routes carry navigation props', () => {
+    it('points the list panel at the /organizations/manage base path', () => {
+      const route = findRoute('organizations-manage');
+
+      expect(route?.componentProps).toEqual({ basePath: MANAGE_BASE });
+      expect(Object.keys(route?.componentProps ?? {})).toEqual(['basePath']);
+    });
+
+    it('points the create page at the base path and back to the manage list', () => {
+      const route = findRoute('organizations-manage-create');
+
+      expect(route?.componentProps).toEqual({
+        basePath: MANAGE_BASE,
+        listRoute: MANAGE_BASE,
+      });
+      expect(Object.keys(route?.componentProps ?? {}).sort()).toEqual(['basePath', 'listRoute']);
+    });
+
+    it('keeps the detail route id and adds the manage list as its back-link', () => {
+      const route = findRoute('organizations-manage-detail');
+
+      expect(route?.componentProps).toEqual({
+        id: '${route.id}',
+        listRoute: MANAGE_BASE,
+      });
+      expect(Object.keys(route?.componentProps ?? {}).sort()).toEqual(['id', 'listRoute']);
+    });
+
+    it('describes the routes as unchanged apart from componentProps', () => {
+      // The props are additive: path / exact / public / roles / FQN may not move
+      // as a side effect of ORG-017.
+      expect(findRoute('organizations-manage')).toMatchObject({
+        path: '/organizations/manage/',
+        exact: true,
+        public: false,
+        roles: ['ADMIN'],
+        componentFqn: 'reactory.OrganizationListPanel@1.0.0',
+      });
+      expect(findRoute('organizations-manage-create')).toMatchObject({
+        path: '/organizations/manage/create',
+        exact: true,
+        public: false,
+        roles: ['ADMIN'],
+        componentFqn: 'reactory.OrganizationCreatePage@1.0.0',
+      });
+      expect(findRoute('organizations-manage-detail')).toMatchObject({
+        path: '/organizations/manage/:id',
+        exact: false,
+        public: false,
+        roles: ['ADMIN'],
+        componentFqn: 'reactory.OrganizationDetailPanel@1.0.0',
+      });
+    });
+  });
+
+  describe('the supplied values resolve to real routes', () => {
+    it('builds row links under a path that resolves to the detail route', () => {
+      const basePath = findRoute('organizations-manage')?.componentProps?.basePath as string;
+      const id = '69dda9e87e9ebeb6ddcb382a';
+
+      expect(basePath).toBe(MANAGE_BASE);
+      // What OrganizationListPanel will now build for a row click.
+      const match = resolve(`${basePath}/${id}`);
+      expect(match?.route.key).toBe('organizations-manage-detail');
+      expect(match?.params).toEqual({ id });
+    });
+
+    it('keeps listRoute on the mounted list route, not the legacy panel', () => {
+      const listRoute = findRoute('organizations-manage-detail')?.componentProps
+        ?.listRoute as string;
+
+      expect(listRoute).toBe(MANAGE_BASE);
+      expect(resolve(listRoute)?.route.key).toBe('organizations-manage');
+      expect(resolve(listRoute)?.route.componentFqn).toBe(
+        'reactory.OrganizationListPanel@1.0.0',
+      );
+    });
+
+    it('does not add a /organizations/:id alias for the detail screen', () => {
+      // Two URL shapes for one screen would make ORG-042 ambiguous. The URL from
+      // the bug report must stay unrouted until ORG-016 lands everywhere.
+      expect(ROUTES.some((route) => route.path === '/organizations/:id')).toBe(false);
+      expect(resolve('/organizations/69dda9e87e9ebeb6ddcb382a')).toBeNull();
+    });
+  });
+
+  describe('legacy organizations route is untouched', () => {
+    it('has no basePath or listRoute', () => {
+      const legacy = findRoute('organizations');
+
+      expect(legacy).toBeDefined();
+      expect(legacy?.componentProps).toBeUndefined();
+      expect(legacy).not.toHaveProperty('componentProps.basePath');
+      expect(legacy).not.toHaveProperty('componentProps.listRoute');
+    });
+
+    it('is otherwise byte-for-byte the shape ORG-015 pinned', () => {
+      expect(findRoute('organizations')).toEqual({
+        key: 'organizations',
+        title: 'Organizations List',
+        path: '/organizations/',
+        exact: true,
+        public: true,
+        roles: ['ADMIN'],
+        componentFqn: 'reactory.ApplicationOrganizationsPanel@1.0.0',
+      });
+    });
+  });
+
+  describe('no route path was added or removed', () => {
+    it('matches the complete path set of the base commit', () => {
+      const paths = ROUTES.map((route) => route.path).sort();
+
+      expect(paths).toEqual(EXPECTED_PATHS_AT_BASE);
+      expect(paths).toHaveLength(EXPECTED_PATHS_AT_BASE.length);
+    });
+
+    it('still declares exactly the four organization routes', () => {
+      const organizationRoutes = ROUTES.filter((route) =>
+        (route.path || '').startsWith('/organizations'),
+      );
+
+      // Sorted with the default lexicographic comparator: ':' (0x3a) sorts
+      // before 'c', and the trailing-slash path before its longer siblings.
+      expect(organizationRoutes.map((route) => route.path).sort()).toEqual([
+        '/organizations/',
+        '/organizations/manage/',
+        '/organizations/manage/:id',
+        '/organizations/manage/create',
+      ]);
+    });
+  });
+
+  describe('componentProps are JSON-serialisable', () => {
+    it('carries only JSON-representable values on every route', () => {
+      const problems: string[] = [];
+
+      componentPropsEntries().forEach(({ props }) => {
+        collectNonSerialisable(props, 'componentProps', problems);
+      });
+
+      expect(problems).toEqual([]);
+    });
+
+    it('survives a JSON round-trip unchanged', () => {
+      const entries = componentPropsEntries();
+
+      expect(entries.length).toBeGreaterThan(0);
+
+      entries.forEach(({ key, props }) => {
+        const roundTripped = JSON.parse(JSON.stringify(props)) as Record<string, unknown>;
+        // `toEqual` ignores key order but flags dropped functions / undefined,
+        // which a plain `JSON.stringify` comparison would hide.
+        expect({ key, props: roundTripped }).toEqual({ key, props });
+      });
+    });
+
+    it('serialises the organization props as plain strings', () => {
+      const json = JSON.stringify({
+        list: findRoute('organizations-manage')?.componentProps,
+        create: findRoute('organizations-manage-create')?.componentProps,
+        detail: findRoute('organizations-manage-detail')?.componentProps,
+      });
+
+      expect(JSON.parse(json)).toEqual({
+        list: { basePath: MANAGE_BASE },
+        create: { basePath: MANAGE_BASE, listRoute: MANAGE_BASE },
+        detail: { id: '${route.id}', listRoute: MANAGE_BASE },
+      });
+
+      // Every value is a string that begins with a slash (paths) or is the
+      // `${route.x}` substitution token (id) — no absolute URLs, no undefined.
+      const values = [
+        findRoute('organizations-manage')?.componentProps?.basePath,
+        findRoute('organizations-manage-create')?.componentProps?.listRoute,
+        findRoute('organizations-manage-detail')?.componentProps?.listRoute,
+      ];
+
+      values.forEach((value) => {
+        expect(typeof value).toBe('string');
+        expect(value).toBe(MANAGE_BASE);
       });
     });
   });
