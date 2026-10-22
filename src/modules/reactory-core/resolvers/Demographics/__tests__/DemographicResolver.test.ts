@@ -80,6 +80,48 @@ describe('DemographicResolver (ORG-006)', () => {
     expect(merged.Mutation.createOrganization).toBeDefined();
   });
 
+  /**
+   * The original version of this test only checked Query/Mutation entries and
+   * therefore missed that the merge *replaced* the whole `Organization` type
+   * map: adding `demographicsPolicy` silently dropped OrganizationResolver's
+   * eight fields, so `businessUnits`, `avatarURL`/`logoURL` and the
+   * `tradingName` fallback became unresolvable at runtime. Assert the complete
+   * property map so this can never regress silently again.
+   */
+  it('keeps every Organization property resolver when demographics is merged in', async () => {
+    const merged: any = mergeGraphResolver([OrganizationResolver, DemographicResolver]);
+
+    expect(Object.keys(merged.Organization).sort()).toEqual(
+      [
+        'avatar',
+        'avatarURL',
+        'businessUnits',
+        'createdAt',
+        'demographicsPolicy',
+        'id',
+        'logoURL',
+        'tradingName',
+        'updatedAt',
+      ].sort(),
+    );
+
+    // ...and they are still the original callables, bound and working.
+    expect(merged.Organization.tradingName({ name: 'Acme', tradingName: null })).toBe('Acme');
+    expect(merged.Organization.id({ _id: 'abc' })).toBe('abc');
+    expect(merged.Organization.avatarURL({ avatar: null, logo: null })).toBeNull();
+
+    // `businessUnits` was the field that silently stopped resolving: with a
+    // populated document it must return that array without querying.
+    const businessUnits = [{ name: 'Engineering' }];
+    const resolved = await merged.Organization.businessUnits(
+      { _id: 'abc', businessUnits },
+      {},
+      makeContext(['USER']).context,
+      {},
+    );
+    expect(resolved).toBe(businessUnits);
+  });
+
   it('exposes every demographic definition/value mutation', () => {
     const map = harvest();
 
