@@ -22,6 +22,7 @@ import {
 } from '@reactory/server-core/data'
 import Constants from '@reactory/server-core/constants';
 import { validateUserLocale } from '@reactory/server-modules/reactory-core/utils/userLanguage';
+import { seedOrganizationDemographics } from '@reactory/server-modules/reactory-core/services/demographics/seedOrganizationDemographics';
 import fs from 'fs';
 import path from 'path';
 
@@ -1135,6 +1136,17 @@ class UserService implements Reactory.Service.IReactoryUserService {
    * No role guard — public endpoint flow only.
    * Finds or creates the organization, creates the user, and assigns memberships.
    * If no username is provided, derives one from the email local-part.
+   *
+   * ORG-030: when this path *creates* the organization it also seeds the base
+   * demographic template set. The organization is written through the model
+   * rather than `OrganizationService` precisely because the creating caller is
+   * anonymous, so that service's create hook does not run here - this is the
+   * second, and only other, organization-creation path in the codebase. An
+   * organization that is merely *found* already has (or will get) its own seed
+   * history and is deliberately left alone. Seeding is best-effort: the shared
+   * helper logs and returns rather than throwing, because a tenant that exists
+   * without the base set is recoverable via the idempotent backfill while a
+   * failed registration is not.
    */
   async selfRegister(
     userInput: Reactory.Models.IUserCreateParams,
@@ -1170,6 +1182,10 @@ class UserService implements Reactory.Service.IReactoryUserService {
       ).then();
       if (!organization) {
         organization = await new Organization({ name: organizationInput.name }).save().then() as Reactory.Models.IOrganizationDocument;
+
+        // ORG-030: only a *newly created* organization needs seeding; a found
+        // one keeps whatever an administrator has since configured.
+        await seedOrganizationDemographics(`${organization?._id}`, this.context);
       }
     }
 

@@ -15,6 +15,7 @@ import { trim } from 'lodash';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { service } from '@reactory/server-core/application/decorators/service';
 import { ThemeService } from './ThemeService';
+import { seedOrganizationDemographics } from './demographics/seedOrganizationDemographics';
 
 /**
  * Identity, lifecycle and branding fields accepted by `updateOrganization`.
@@ -835,7 +836,32 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
 
     await organization.save();
 
+    // ORG-030: seed the base demographic set once the organization exists.
+    // This is best-effort by design - see `seedOrganizationDemographics`.
+    await this.seedOrganizationDemographics(organization, executionContext);
+
     return organization;
+  }
+
+  /**
+   * ORG-030: seeds the base demographic template set for a freshly created
+   * organization.
+   *
+   * Called *after* the organization document is persisted, and deliberately
+   * never throws - see the shared `seedOrganizationDemographics` helper, which
+   * owns that policy and is also used by `UserService.selfRegister` (the other
+   * path that creates an organization).
+   *
+   * Resolving the demographics service lazily (rather than injecting it) keeps
+   * this out of the constructor dependency graph, which is also what makes the
+   * failure path testable: a context without the service is the "module not
+   * loaded" case.
+   */
+  private async seedOrganizationDemographics(
+    organization: Reactory.Models.IOrganizationDocument,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<void> {
+    await seedOrganizationDemographics(`${organization?._id}`, executionContext || this.context);
   }
 
   /**

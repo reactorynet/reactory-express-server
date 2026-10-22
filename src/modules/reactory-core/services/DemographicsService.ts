@@ -3,6 +3,7 @@ import Reactory from '@reactorynet/reactory-core';
 import {
   DemographicDefinition,
   DemographicValue,
+  Organization,
   OrganizationDemographicsPolicy,
 } from '@reactory/server-modules/reactory-core/models';
 import validateDemographicValue from '@reactory/server-modules/reactory-core/utils/validateDemographicValue';
@@ -16,6 +17,12 @@ import {
 import {
   ORGANIZATION_DEMOGRAPHICS_POLICY_DEFAULTS,
 } from '@reactory/server-modules/reactory-core/models/demographics/OrganizationDemographicsPolicy';
+import {
+  BASE_DEMOGRAPHIC_TEMPLATES,
+} from '@reactory/server-modules/reactory-core/services/demographics/baseDemographicTemplates';
+import type {
+  IBaseDemographicTemplate,
+} from '@reactory/server-modules/reactory-core/services/demographics/baseDemographicTemplates';
 
 /**
  * ORG-006: demographics configuration and value service.
@@ -122,6 +129,51 @@ export interface IDemographicFieldError {
   message: string;
 }
 
+/** Options accepted by `seedForOrganization`. */
+export interface IDemographicSeedOptions {
+  /**
+   * The context that triggered the seed, when there is one. It is used for
+   * actor attribution only: seeding is a platform invariant, not an
+   * administrator mutation, so it deliberately does not run
+   * `assertOrgAdmin` (see `seedForOrganization`).
+   *
+   * An anonymous context (`user: null`) is explicitly supported and simply
+   * leaves the created definitions unattributed - that is the public
+   * self-registration path.
+   */
+  executionContext?: Reactory.Server.IReactoryContext;
+  /** Explicit actor id; wins over `executionContext.user._id` when supplied. */
+  actorId?: any;
+}
+
+/** What a single seed run did, keyed by template key. */
+export interface IDemographicSeedResult {
+  organizationId: string;
+  /** Definitions created by this run. */
+  created: string[];
+  /** Definitions that already existed (and were therefore left untouched). */
+  existing: string[];
+  /** Definitions an administrator had soft-deleted; deliberately not recreated. */
+  deleted: string[];
+}
+
+/** Aggregate result of `backfillOrganizationDemographics`. */
+export interface IDemographicsBackfillResult {
+  organizations: number;
+  created: number;
+  existing: number;
+  deleted: number;
+  /** Organizations whose seed run failed; the run continues past them. */
+  failures: Array<{ organizationId: string; message: string }>;
+  results: IDemographicSeedResult[];
+}
+
+/** Options accepted by `backfillOrganizationDemographics`. */
+export interface IDemographicsBackfillOptions extends IDemographicSeedOptions {
+  /** Restrict the backfill to these organization ids; omitted = all. */
+  organizationIds?: string[];
+}
+
 const DEMOGRAPHICS_SERVICE_ID = 'core.DemographicsService@1.0.0';
 
 @service({
@@ -171,6 +223,32 @@ export class DemographicsService {
     if (!user || !user._id) {
       throw new ApiError('An authenticated user is required to determine the acting user');
     }
+    return user._id;
+  }
+
+  /**
+   * Best-effort actor id for writes that are not user-initiated mutations.
+   *
+   * Unlike `resolveActorId`, an anonymous caller is not an error: it yields
+   * `undefined` and the document is simply left unattributed. This exists
+   * because ORG-030 seeds the base demographic set from organization creation,
+   * and one of those creation paths (`UserService.selfRegister`) runs with
+   * `context.user === null` by definition - the registrant is not yet a user
+   * when the organization is written. Using `resolveActorId` there would throw,
+   * and since seeding is best-effort the throw would be swallowed and the new
+   * tenant would silently get *no* definitions at all. An unattributed
+   * `createdBy` is a cosmetic gap; a missing base set is the defect this ticket
+   * exists to prevent.
+   *
+   * This deliberately does not fall back to a system user id, so nothing can be
+   * misattributed to a real account.
+   */
+  private resolveOptionalActorId(
+    executionContext?: Reactory.Server.IReactoryContext | null,
+  ): any {
+    if (!executionContext) return undefined;
+    const { user } = executionContext;
+    if (!user || !user._id) return undefined;
     return user._id;
   }
 
@@ -786,15 +864,35 @@ export class DemographicsService {
 
     if (!key) throw new ApiError('A demographic definition key is required');
 
-    const createInput: IDemographicDefinitionInput = { ...input, key };
+    return this.insertDefinition(organization, organizationId, { ...input, key }, actorId);
+  }
+
+  /**
+   * The one creation path for a definition document.
+   *
+   * Shared by `save` (administrator create) and `seedForOrganization` (ORG-030
+   * base set) so the seeded definitions are validated, defaulted and written
+   * exactly like an administrator-created one. It performs no authorization of
+   * its own; both callers have already established that the write is
+   * legitimate - which is why it is private.
+   */
+  private async insertDefinition(
+    organization: ObjectId,
+    organizationId: string,
+    createInput: IDemographicDefinitionInput,
+    actorId: any,
+  ): Promise<any> {
     const errors = this.validateDefinition(createInput, true);
     if (errors.length > 0) {
-      this.rejectInvalid('Demographic definition is not valid', errors, { organizationId, key });
+      this.rejectInvalid('Demographic definition is not valid', errors, {
+        organizationId,
+        key: createInput.key,
+      });
     }
 
     const document: any = new DemographicDefinition({
       organization,
-      key,
+      key: createInput.key,
       // Seeded base definitions (ORG-030) are created through this path; the
       // flag is immutable afterwards.
       system: createInput.system === true,
@@ -903,6 +1001,213 @@ export class DemographicsService {
     await definition.save().then();
 
     return definition;
+  }
+
+  /**
+   * Translates one base template into the definition input the create path
+   * accepts. Options and the reference are copied so that a caller can never
+   * mutate the shared template data.
+   */
+  private templateDefinitionInput(
+    template: IBaseDemographicTemplate,
+  ): IDemographicDefinitionInput {
+    return {
+      key: template.key,
+      title: template.title,
+      description: template.description,
+      category: template.category,
+      valueType: template.valueType,
+      options: template.options
+        ? template.options.map((option) => ({ ...option }))
+        : undefined,
+      reference: template.reference ? { ...template.reference } : undefined,
+      required: template.required,
+      multiValued: template.multiValued === true,
+      sensitive: template.sensitive,
+      searchable: template.searchable === true,
+      enabled: template.enabled,
+      ordinal: template.ordinal,
+      system: true,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Base set seeding (ORG-030)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * ORG-030: copies the base demographic set into an organization.
+   *
+   * Idempotent by construction:
+   *
+   * - **Upsert by (organization, key).** Every template is looked up by its key
+   *   in this organization before anything is written, so a re-run creates
+   *   nothing and cannot duplicate (the unique `{ organization, key }` index is
+   *   the concurrency backstop: an E11000 from a parallel run is reported as
+   *   `existing`, not as a failure).
+   * - **Never resurrects a deleted definition.** A soft-deleted definition is
+   *   still in the collection (values may reference it) and is reported under
+   *   `deleted`; it is not re-created. Otherwise an administrator's decision to
+   *   stop tracking a field would silently undo itself on the next deploy.
+   * - **Never overwrites an existing definition.** Renames, reordering and
+   *   `enabled: false` are administrator choices; a seed run only fills gaps.
+   *   This also means a disabled definition is not re-enabled.
+   *
+   * Authorization: this is a platform invariant ("every organization has the
+   * base set"), not a configuration mutation. It is called from
+   * `OrganizationService.create` after the organization has been persisted (the
+   * caller there has already passed `assertCanCreateOrganization`), from
+   * `UserService.selfRegister` after it creates an organization (where the
+   * caller is by definition anonymous), and from
+   * `backfillOrganizationDemographics`. It therefore does not run
+   * `assertOrgAdmin`, does not accept definition input from the caller and can
+   * only create the fixed template set - the public write path and its guard
+   * rails are untouched.
+   *
+   * Actor attribution is best-effort and never fatal: `options.actorId` is used
+   * verbatim when supplied, otherwise the id comes from
+   * `options.executionContext.user` and is `undefined` for an anonymous caller
+   * (see `resolveOptionalActorId`). `resolveActorId` is deliberately *not* used
+   * here - it throws on a null user, which is precisely the self-registration
+   * case, and the resulting failure would abort the seed.
+   */
+  async seedForOrganization(
+    organizationId: string,
+    options: IDemographicSeedOptions = {},
+  ): Promise<IDemographicSeedResult> {
+    this.assertValidOrganizationId(organizationId);
+
+    const organization = new ObjectId(organizationId);
+    const actorId = options.actorId !== undefined
+      ? options.actorId
+      : this.resolveOptionalActorId(options.executionContext);
+
+    // The model lower-cases `key` on write (and every public lookup normalizes
+    // it), so the plan's camelCase names are canonical here and matched in
+    // their stored lower-case form below.
+    const keys = BASE_DEMOGRAPHIC_TEMPLATES
+      .map((template) => this.normalizeKey(template.key))
+      .filter((key): key is string => key !== null);
+
+    // One query for the whole set, deleted documents included: a soft-deleted
+    // definition must block re-creation, so it has to be visible here.
+    const stored: any[] = await DemographicDefinition.find({
+      organization,
+      key: { $in: keys },
+    }).then();
+
+    const byKey = new Map<string, any>(
+      stored.map((document) => [`${document.key}`.trim().toLowerCase(), document]),
+    );
+
+    const result: IDemographicSeedResult = {
+      organizationId: `${organizationId}`,
+      created: [],
+      existing: [],
+      deleted: [],
+    };
+
+    for (let index = 0; index < BASE_DEMOGRAPHIC_TEMPLATES.length; index += 1) {
+      const template = BASE_DEMOGRAPHIC_TEMPLATES[index];
+      const templateKey = this.normalizeKey(template.key);
+
+      if (!templateKey) {
+        // Unreachable for the shipped data set (asserted by the template
+        // test); a malformed template must not be silently skipped.
+        throw new ApiError(`Base demographic template [${template.key}] has no usable key`);
+      }
+
+      const current = byKey.get(templateKey);
+
+      if (current) {
+        if (current.deleted === true) {
+          result.deleted.push(template.key);
+        } else {
+          result.existing.push(template.key);
+        }
+        continue;
+      }
+
+      try {
+        await this.insertDefinition(
+          organization,
+          `${organizationId}`,
+          { ...this.templateDefinitionInput(template), key: templateKey },
+          actorId,
+        );
+        result.created.push(template.key);
+      } catch (error) {
+        // A concurrent seed can insert the same (organization, key) between the
+        // query above and this write. The unique index rejects the loser with
+        // E11000; the definition exists either way, which is the intended
+        // outcome, so it is reported as `existing`. Anything else is real.
+        if ((error as any)?.code === 11000) {
+          result.existing.push(template.key);
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * ORG-030 backfill: runs `seedForOrganization` for every organization that
+   * exists today (or for `options.organizationIds`).
+   *
+   * Idempotent for the same reasons as the per-organization seed, so it is safe
+   * to run on every deploy. One organization's failure never stops the run -
+   * it is recorded in `failures` so an operator can retry just that tenant -
+   * because a backfill that aborts on tenant #3 leaves every later tenant
+   * without definitions and no record of how far it got.
+   */
+  async backfillOrganizationDemographics(
+    options: IDemographicsBackfillOptions = {},
+  ): Promise<IDemographicsBackfillResult> {
+    const filter: Record<string, any> = { deleted: { $ne: true } };
+
+    if (Array.isArray(options.organizationIds) && options.organizationIds.length > 0) {
+      const ids = options.organizationIds
+        .filter((id) => ObjectId.isValid(`${id}`))
+        .map((id) => new ObjectId(`${id}`));
+
+      if (ids.length === 0) {
+        throw new ApiError('No valid organization ids were supplied for the demographics backfill');
+      }
+
+      filter._id = { $in: ids };
+    }
+
+    const organizations: any[] = await Organization.find(filter, { _id: 1 }).then();
+
+    const summary: IDemographicsBackfillResult = {
+      organizations: organizations.length,
+      created: 0,
+      existing: 0,
+      deleted: 0,
+      failures: [],
+      results: [],
+    };
+
+    for (let index = 0; index < organizations.length; index += 1) {
+      const organizationId = `${organizations[index]._id}`;
+
+      try {
+        const result = await this.seedForOrganization(organizationId, options);
+        summary.results.push(result);
+        summary.created += result.created.length;
+        summary.existing += result.existing.length;
+        summary.deleted += result.deleted.length;
+      } catch (error) {
+        summary.failures.push({
+          organizationId,
+          message: error instanceof Error ? error.message : `${error}`,
+        });
+      }
+    }
+
+    return summary;
   }
 
   // ---------------------------------------------------------------------------
