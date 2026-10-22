@@ -241,6 +241,82 @@ type PagedOrganizations {
   organizations: [Organization]
 }
 
+"""
+A single organization membership row (ORG-023).
+
+Deliberately membership-shaped rather than a bare user: the membership is what
+carries roles, the enabled/deactivated state, the business unit pointer and the
+join/login timestamps. `user` repeats the identity fields a table renders so the
+People tab can be driven from this shape alone.
+
+`id` is the membership subdocument id (`User.memberships[n]._id`); for a pending
+invitation it is the invitation id and `invited` is true.
+"""
+type OrganizationMember {
+  """The membership id (or the invitation id for a pending invite)."""
+  id: String
+  """The member user's id. Null for a pending invitation."""
+  userId: String
+  """The member user, resolved from the membership. Null for a pending invitation."""
+  user: User
+  """Email address of the member or invitee."""
+  email: String
+  firstName: String
+  lastName: String
+  avatar: String
+  """Roles held on this organization membership."""
+  roles: [String]
+  """Whether the membership currently confers access."""
+  enabled: Boolean
+  """active | deactivated | invited"""
+  status: String
+  """Business unit referenced by the membership, when it carries one."""
+  businessUnitId: String
+  businessUnit: BusinessUnit
+  """
+  Teams this user belongs to inside the organization. Derived from
+  `Team.members`; the membership subdocument itself has no team field.
+  """
+  teamIds: [String]
+  teams: [Team]
+  """When the membership (or invitation) was created."""
+  created: Date
+  """Last login recorded on the membership."""
+  lastLogin: Date
+  authProvider: String
+  """True when the row represents a pending invitation rather than a membership."""
+  invited: Boolean
+}
+
+"""Filter accepted by `OrganizationMembers` (ORG-023)."""
+input OrganizationMemberFilter {
+  """Case-insensitive match against first name, last name and email."""
+  search: String
+  """Restrict to memberships carrying this role."""
+  role: String
+  """Restrict to enabled (true) or deactivated (false) memberships."""
+  enabled: Boolean
+  """active | deactivated | invited. Defaults to active."""
+  status: String
+  """Include deactivated memberships alongside active ones."""
+  includeDeactivated: Boolean
+  """Return only deactivated memberships."""
+  deactivatedOnly: Boolean
+  """Restrict to memberships pointing at this business unit."""
+  businessUnitId: String
+  """Restrict to users who are members of this team."""
+  teamId: String
+}
+
+"""
+Paged membership listing envelope. Mirrors `PagedBusinessUnits` and
+`PagedTeams` so the same table component can page all three.
+"""
+type PagedOrganizationMembers {
+  paging: PagingResult
+  members: [OrganizationMember]
+}
+
 extend type Query {  
   """
   Deprecated query will be removed in the future, use the CoreOrganizations instead
@@ -268,9 +344,22 @@ extend type Query {
   """
   CorePagedOrganizations(search: String, paging: PagingRequest): PagedOrganizations
   """
-  List of organizations that the logged in user has access to in an alphabetical order
+  User-shaped member listing for an organization. Retained (deprecated) for
+  existing consumers; it has nowhere to put membership-specific data. Use
+  `OrganizationMembers` for membership-shaped rows (roles, enabled state,
+  business unit/team refs, join and last-login timestamps).
   """
-  CoreUsersForOrganization(id: String!, searchString: String, paging: PagingRequest): PagedUserResults
+  CoreUsersForOrganization(id: String!, searchString: String, paging: PagingRequest): PagedUserResults @deprecated(reason: "Use OrganizationMembers for membership-shaped rows")
+  """
+  Paged, filterable member list for one organization, with one row per
+  membership. Requires org administration because the rows expose member PII.
+
+  Client-wide memberships (`organizationId: null`) are never returned.
+  Deactivated members are excluded unless `filter.includeDeactivated` (or
+  `filter.status: \"deactivated\"`) is requested; `filter.status: \"invited\"`
+  lists pending invitations instead.
+  """
+  OrganizationMembers(organizationId: String!, filter: OrganizationMemberFilter, paging: PagingRequest): PagedOrganizationMembers @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
   GetOrganisationLookupData(orgId: String!): OrganizationLookupData
   """
   Reads the custom CSS published for a theme, used by the theme CSS studio.
@@ -337,6 +426,34 @@ extend type Mutation {
   authorization.
   """
   setOrganizationMemberRoles(id: String!, userId: String!, roles: [String!]!): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Invites an email address to join the organization (ORG-023).
+
+  Creates a pending invitation keyed by email - no `User` shell is created. The
+  invitee becomes an active member on their first login, using the same login
+  provisioning path that applies `login_partner_keys` /
+  `add_default_membership`, so no second manual step is required. Returns the
+  pending member so the People tab can render it immediately.
+
+  Requirements are org-scoped (`assertOrgAdmin`): an ORGANIZATION_ADMIN of
+  organization A cannot invite into organization B. Inviting an existing active
+  member, or re-inviting an email that already has a pending invitation, is
+  rejected rather than duplicated.
+  """
+  inviteOrganizationMember(id: String!, email: String!, roles: [String!], businessUnitId: String): OrganizationMember! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  Deactivates a member's membership (sets `enabled: false`) without deleting it,
+  so the person's history and business unit/team participation survive
+  (ORG-023). Organization access is refused on the next authorization check,
+  because roles are read from the persisted membership per request. Use
+  `removeOrganizationMember` for hard removal.
+
+  Requires org-scoped authorization. A client-wide membership
+  (`organizationId: null`) is never touched.
+  """
+  deactivateOrganizationMember(id: String!, userId: String!): Organization! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
 
   SetOrganisationLookupData(lookupData: OrganizationLookupDataInput!): OrganizationLookupData @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
 

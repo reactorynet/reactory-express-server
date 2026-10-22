@@ -20,7 +20,17 @@ const isAnonymousUser = (user: any): boolean => {
   return false;
 };
 
-const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ roles: string[], alt_roles: string[] }> => {
+/**
+ * Resolves the caller's roles for the current partner and runs the ORG-023
+ * first-login invitation acceptance.
+ *
+ * Exported so the login provisioning path can be tested directly: the ORG-023
+ * block below is the only code that converts a pending organization invitation
+ * into a membership, and it sits inside a deliberate silent-failure catch.
+ * Exercising it through the resolver map alone would not let a test assert that
+ * the catch path still returns the normal roles.
+ */
+export const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ roles: string[], alt_roles: string[] }> => {
   const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
 
   const { user, partner } = context;
@@ -29,7 +39,7 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ ro
 
   const roles: string[] = [];
   const alt_roles: string[] = [];
-  const memberships: any[] = (user && isArray(user.memberships)) === true ? user.memberships : [];
+  let memberships: any[] = (user && isArray(user.memberships)) === true ? user.memberships : [];
 
   if (isAnon === false && user) {
     const getUserDisplayName = () => {
@@ -37,6 +47,41 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise<{ ro
       if (user.firstName || user.lastName) return `${user.firstName || ''} ${user.lastName || ''}`.trim();
       return user.email || 'User';
     };
+
+    // ORG-023: pending organization invitations become active memberships on
+    // the invitee's first login. This runs in the same provisioning pass that
+    // applies `login_partner_keys` / `add_default_membership` below, which is
+    // what makes the invite a single step for the invitee - no manual "accept"
+    // round-trip. The service flips the invitation to `accepted`, so a repeat
+    // login is a no-op. A failure here must never block login: the client-wide
+    // membership path below still runs.
+    try {
+      const organizationService = context.getService('core.OrganizationService@1.0.0') as any;
+      if (organizationService && typeof organizationService.acceptPendingInvitations === 'function') {
+        const acceptedInvitations = await organizationService.acceptPendingInvitations(user, context);
+
+        if (acceptedInvitations > 0) {
+          context.log(
+            `Accepted ${acceptedInvitations} pending organization invitation(s) for ${getUserDisplayName()}`,
+            { acceptedInvitations },
+            'info',
+            'ApiStatus:getRoles',
+          );
+
+          // The service mutates the same user document instance held on the
+          // context, so re-reading the array makes the new memberships visible
+          // to the role collection below on this very request.
+          memberships = isArray(user.memberships) === true ? user.memberships : [];
+        }
+      }
+    } catch (invitationError) {
+      context.log(
+        `Failed to accept pending organization invitations for ${getUserDisplayName()}: ${invitationError.message}`,
+        { error: invitationError },
+        'warn',
+        'ApiStatus:getRoles',
+      );
+    }
 
     try {
       const login_partner_keys_setting = partner.getSetting("login_partner_keys", {

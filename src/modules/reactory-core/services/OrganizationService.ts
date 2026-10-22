@@ -9,6 +9,7 @@ import {
   Team,
   User,
   Organigram,
+  OrganizationInvitation,
 } from '@reactory/server-modules/reactory-core/models'
 import ApiError, { BusinessUnitExistsError, InsufficientPermissions, OrganizationNotFoundError, RecordNotFoundError } from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';
@@ -135,6 +136,88 @@ export interface ITeamFilter {
 export interface IPagedTeams {
   paging: Reactory.Models.IPagingResult;
   teams: Reactory.Models.ITeamDocument[];
+}
+
+/**
+ * Lifecycle states of a row returned by `pagedOrganizationMembers` (ORG-023).
+ *
+ * `active`      - an enabled `User.memberships` entry for this organization.
+ * `deactivated` - the membership still exists but `enabled` is false; the
+ *                 person keeps their history and BU/team participation but
+ *                 confers no access.
+ * `invited`     - a pending `OrganizationInvitation` for an email that has not
+ *                 signed in yet (no membership exists).
+ */
+export const ORGANIZATION_MEMBER_STATUSES = ['active', 'deactivated', 'invited'] as const;
+
+export type OrganizationMemberStatus = typeof ORGANIZATION_MEMBER_STATUSES[number];
+
+/** Filter accepted by `pagedOrganizationMembers` (ORG-023). */
+export interface IOrganizationMemberFilter {
+  /** Case-insensitive match against first name, last name and email. */
+  search?: string | null;
+  /** Restrict to memberships carrying exactly this role. */
+  role?: string | null;
+  /** Restrict to enabled (`true`) or disabled (`false`) memberships. */
+  enabled?: boolean | null;
+  /** One of `active`, `deactivated` or `invited`. Defaults to `active`. */
+  status?: OrganizationMemberStatus | string | null;
+  /** Include deactivated memberships alongside active ones. */
+  includeDeactivated?: boolean | null;
+  /** Return only deactivated memberships (the restore/deactivated view). */
+  deactivatedOnly?: boolean | null;
+  /** Restrict to memberships pointing at this business unit. */
+  businessUnitId?: string | null;
+  /** Restrict to users who are members of this team. */
+  teamId?: string | null;
+}
+
+/**
+ * One membership-shaped row for the People tab (ORG-023).
+ *
+ * The row is deliberately not a bare `User`: the membership is the thing that
+ * carries roles, enabled/status, the business unit pointer and the join/login
+ * timestamps. `user` repeats the identity fields the UI renders so a table can
+ * be driven from this shape alone.
+ *
+ * `id` is the membership subdocument id (`User.memberships[n]._id`). For rows
+ * backed by an invitation it is the invitation id.
+ */
+export interface IOrganizationMember {
+  id: string;
+  userId: string | null;
+  user: {
+    /** The member's user id. `User.id` is declared `ObjID!`, so it is always present. */
+    id: string;
+    _id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+    avatar: string | null;
+  } | null;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatar: string | null;
+  roles: string[];
+  enabled: boolean;
+  status: OrganizationMemberStatus;
+  businessUnitId: string | null;
+  businessUnit: any | null;
+  teamIds: string[];
+  /** The teams this user belongs to. `Team.id` is declared `ObjID!`, so each entry carries `id`. */
+  teams: Array<{ id: string; _id: string; name: string | null; title: string | null }>;
+  created: Date | null;
+  lastLogin: Date | null;
+  authProvider: string | null;
+  /** True when the row represents a pending invitation rather than a membership. */
+  invited: boolean;
+}
+
+/** Paged membership envelope. Mirrors `PagedBusinessUnits` / `PagedTeams`. */
+export interface IPagedOrganizationMembers {
+  paging: Reactory.Models.IPagingResult;
+  members: IOrganizationMember[];
 }
 
 @service({
@@ -2051,6 +2134,657 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
     }
 
     return organization;
+  }
+
+  // ---- Organization membership (ORG-023) ----
+  //
+  // Membership lives on `User.memberships`, keyed by client id + organization
+  // id. There is no second membership collection, so every query and mutation
+  // below works against that subdocument array.
+  //
+  // DOMAIN TRAP: most existing membership records in this database have
+  // `organizationId: null` - they are *client-wide* memberships, granted by the
+  // login provisioning path, and do not belong to any single organization.
+  // Every query and mutation here requires an exact `organizationId` match, so
+  // a client-wide membership is never listed as an org member and is never
+  // modified by `deactivateOrganizationMember` / `removeMember`.
+
+  /** Builds the paging envelope used by the other paged organization queries. */
+  private buildMemberPaging(
+    page: number,
+    pageSize: number,
+    total: number
+  ): Reactory.Models.IPagingResult {
+    return {
+      page,
+      pageSize,
+      total,
+      pageCount: Math.ceil(total / pageSize),
+      hasNext: (page * pageSize) < total,
+    } as Reactory.Models.IPagingResult;
+  }
+
+  /** The id of a membership row: the subdocument id, falling back to user+org. */
+  private membershipRowId(membership: any, user: any, organizationId: string): string {
+    if (membership && membership._id) return `${membership._id}`;
+    const userId = user ? `${user._id || user.id}` : 'invitation';
+    return `${userId}:${organizationId}`;
+  }
+
+  /**
+   * Loads the business units referenced by a page of memberships in one query.
+   * A membership may point at a business unit that has since been soft-deleted;
+   * the reference still resolves so the row keeps its history.
+   */
+  private async loadMemberBusinessUnits(
+    organizationId: string,
+    businessUnitIds: string[]
+  ): Promise<Map<string, any>> {
+    const map = new Map<string, any>();
+    if (businessUnitIds.length === 0) return map;
+
+    const units: any[] = await BusinessUnit.find({
+      _id: { $in: businessUnitIds.map((id) => new ObjectId(id)) },
+      organization: new ObjectId(organizationId),
+    }).then();
+
+    (units || []).forEach((unit: any) => map.set(`${unit._id}`, unit));
+    return map;
+  }
+
+  /**
+   * Resolves team membership for a page of users with ONE query.
+   *
+   * Team membership is stored on `Team.members`, not on `User.memberships`, so
+   * there is no team field to read on the membership itself. The team refs on a
+   * member row are therefore derived from the teams the user belongs to inside
+   * this organization - never invented, and never N+1.
+   */
+  private async loadMemberTeams(
+    organizationId: string,
+    userIds: string[]
+  ): Promise<Map<string, any[]>> {
+    const map = new Map<string, any[]>();
+    if (userIds.length === 0) return map;
+
+    const teams: any[] = await Team.find({
+      organization: new ObjectId(organizationId),
+      deleted: { $ne: true },
+      members: { $in: userIds.map((id) => new ObjectId(id)) },
+    }).select('_id name title members').then();
+
+    (teams || []).forEach((team: any) => {
+      const members: any[] = Array.isArray(team.members) ? team.members : [];
+      members.forEach((memberId: any) => {
+        const key = `${memberId}`;
+        if (!map.has(key)) map.set(key, []);
+        // `id` is included alongside `_id`: Team.id is declared `ObjID!` in the
+        // SDL, so a row that only carries `_id` relies on the Team property
+        // resolver to paper over it. The payload satisfies its own contract.
+        map.get(key).push({
+          id: `${team._id}`,
+          _id: `${team._id}`,
+          name: team.name || null,
+          title: team.title || null,
+        });
+      });
+    });
+
+    return map;
+  }
+
+  /** Maps a user + membership subdocument onto the membership-shaped row. */
+  private toOrganizationMember(
+    user: any,
+    membership: any,
+    organizationId: string,
+    businessUnits: Map<string, any>,
+    teamsByUserId: Map<string, any[]>
+  ): IOrganizationMember {
+    const userId = `${user._id || user.id}`;
+    const businessUnitId = membership && membership.businessUnitId
+      ? `${membership.businessUnitId}`
+      : null;
+    const teams = teamsByUserId.get(userId) || [];
+
+    return {
+      id: this.membershipRowId(membership, user, organizationId),
+      userId,
+      user: {
+        // `User.id` is declared `ObjID!`. Carry it explicitly rather than
+        // relying on the User property resolver to derive it from `_id`, so the
+        // row is valid against the schema on its own.
+        id: userId,
+        _id: userId,
+        firstName: user.firstName || null,
+        lastName: user.lastName || null,
+        email: user.email || null,
+        avatar: user.avatar || null,
+      },
+      email: user.email || '',
+      firstName: user.firstName || null,
+      lastName: user.lastName || null,
+      avatar: user.avatar || null,
+      roles: Array.isArray(membership?.roles) ? [...membership.roles] : [],
+      enabled: membership?.enabled !== false,
+      status: membership?.enabled === false ? 'deactivated' : 'active',
+      businessUnitId,
+      businessUnit: businessUnitId ? businessUnits.get(businessUnitId) || null : null,
+      teamIds: teams.map((team) => `${team._id}`),
+      teams,
+      created: membership?.created || null,
+      lastLogin: membership?.lastLogin || null,
+      authProvider: membership?.authProvider || null,
+      invited: false,
+    };
+  }
+
+  /** Maps a pending invitation onto the same membership-shaped row. */
+  private toInvitedOrganizationMember(
+    invitation: any,
+    businessUnits: Map<string, any>
+  ): IOrganizationMember {
+    const businessUnitId = invitation?.businessUnitId ? `${invitation.businessUnitId}` : null;
+
+    return {
+      id: `${invitation?._id || ''}`,
+      userId: null,
+      user: null,
+      email: invitation?.email || '',
+      firstName: null,
+      lastName: null,
+      avatar: null,
+      roles: Array.isArray(invitation?.roles) ? [...invitation.roles] : [],
+      // An invitation confers no access until it is accepted on first login.
+      enabled: false,
+      status: 'invited',
+      businessUnitId,
+      businessUnit: businessUnitId ? businessUnits.get(businessUnitId) || null : null,
+      teamIds: [],
+      teams: [],
+      created: invitation?.createdAt || null,
+      lastLogin: null,
+      authProvider: 'invitation',
+      invited: true,
+    };
+  }
+
+  /** Paged listing of pending invitations, returned in the member row shape. */
+  private async pagedInvitedOrganizationMembers(
+    clientId: string,
+    organizationId: string,
+    filter: IOrganizationMemberFilter | undefined,
+    page: number,
+    pageSize: number
+  ): Promise<IPagedOrganizationMembers> {
+    const dbQuery: Record<string, any> = {
+      clientId: new ObjectId(clientId),
+      organizationId: new ObjectId(organizationId),
+      status: 'pending',
+    };
+
+    const search = `${filter?.search || ''}`.trim();
+    if (search.length > 0) {
+      dbQuery.email = { $regex: this.escapeRegExp(search), $options: 'i' };
+    }
+
+    if (filter?.role) {
+      dbQuery.roles = `${filter.role}`.trim();
+    }
+
+    if (filter?.businessUnitId) {
+      if (ObjectId.isValid(filter.businessUnitId) === false) {
+        throw new ApiError(`param businessUnitId is not a valid ${filter.businessUnitId}`);
+      }
+      dbQuery.businessUnitId = new ObjectId(filter.businessUnitId);
+    }
+
+    const skip = (page - 1) * pageSize;
+
+    const [invitations, total] = await Promise.all([
+      OrganizationInvitation.find(dbQuery)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .then(),
+      OrganizationInvitation.countDocuments(dbQuery).then(),
+    ]);
+
+    const businessUnitIds: string[] = Array.from(
+      new Set(
+        (invitations || [])
+          .map((invitation: any) => (invitation?.businessUnitId ? `${invitation.businessUnitId}` : null))
+          .filter((id: string | null) => id !== null)
+      )
+    ) as string[];
+    const businessUnits = await this.loadMemberBusinessUnits(organizationId, businessUnitIds);
+
+    return {
+      members: (invitations || []).map((invitation: any) =>
+        this.toInvitedOrganizationMember(invitation, businessUnits)
+      ),
+      paging: this.buildMemberPaging(page, pageSize, total),
+    };
+  }
+
+  /**
+   * Paged, filterable member list for one organization (ORG-023).
+   *
+   * This is the membership-shaped counterpart to `CoreUsersForOrganization`,
+   * which stays available (deprecated) until ORG-041/042 consolidate the two.
+   * Rows carry the membership's roles, enabled state, business unit and team
+   * references, plus its created / lastLogin timestamps - everything the People
+   * tab needs without a second lookup per row.
+   *
+   * Envelope mirrors `pagedBusinessUnits` (ORG-020) and `pagedTeams` (ORG-021):
+   * `{ paging, members }`.
+   *
+   * Behaviour:
+   * - client-wide memberships (`organizationId: null`) are never returned;
+   * - deactivated memberships (`enabled: false`) are excluded unless
+   *   `includeDeactivated` / `status: 'deactivated'` asks for them;
+   * - `status: 'invited'` lists pending invitations instead of memberships;
+   * - requires org administration, because the row exposes member PII.
+   */
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async pagedOrganizationMembers(
+    organizationId: string | number | ObjectId,
+    filter?: IOrganizationMemberFilter,
+    paging?: Reactory.Models.IPagingRequest,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<IPagedOrganizationMembers> {
+    if (!organizationId || ObjectId.isValid(organizationId as any) === false) {
+      throw new ApiError(`param organizationId is not a valid ${organizationId}`);
+    }
+
+    // Authorization before existence: an unauthorized caller must not be able
+    // to probe for valid organization ids through error differences.
+    this.assertOrgAdmin(organizationId, executionContext || this.context);
+
+    const _organizationId = new ObjectId(organizationId as any);
+    const organizationIdString = `${_organizationId}`;
+    const clientId = this.resolvePartnerId(executionContext);
+
+    const exists = await Organization.countDocuments({ _id: _organizationId }).then();
+    if (exists === 0) {
+      throw new OrganizationNotFoundError(
+        `Organization with the id ${organizationId} could not be found`,
+        organizationIdString
+      );
+    }
+
+    const page = paging?.page || 1;
+    const pageSize = paging?.pageSize || 25;
+    const skip = (page - 1) * pageSize;
+
+    const status = `${filter?.status || ''}`.trim().toLowerCase();
+    if (status === 'invited') {
+      return this.pagedInvitedOrganizationMembers(
+        clientId,
+        organizationIdString,
+        filter,
+        page,
+        pageSize
+      );
+    }
+
+    // The membership match is required to be an EXACT organization match. A
+    // client-wide membership stores `organizationId: null`, so it can never
+    // satisfy this predicate - which is exactly what keeps client-wide members
+    // out of the organization's People list.
+    const membershipMatch: Record<string, any> = {
+      clientId: new ObjectId(clientId),
+      organizationId: _organizationId,
+    };
+
+    if (status === 'deactivated' || filter?.deactivatedOnly === true || filter?.enabled === false) {
+      membershipMatch.enabled = false;
+    } else if (filter?.enabled === true) {
+      membershipMatch.enabled = true;
+    } else if (filter?.includeDeactivated !== true) {
+      // Legacy memberships without an explicit flag are treated as enabled, the
+      // same way `hasOrganizationRole` reads `enabled === false`.
+      membershipMatch.enabled = { $ne: false };
+    }
+
+    if (filter?.role) {
+      membershipMatch.roles = `${filter.role}`.trim();
+    }
+
+    if (filter?.businessUnitId) {
+      if (ObjectId.isValid(filter.businessUnitId) === false) {
+        throw new ApiError(`param businessUnitId is not a valid ${filter.businessUnitId}`);
+      }
+      membershipMatch.businessUnitId = new ObjectId(filter.businessUnitId);
+    }
+
+    const dbQuery: Record<string, any> = { memberships: { $elemMatch: membershipMatch } };
+
+    // A soft-deleted user keeps their membership record but must not be listed
+    // as a current member.
+    dbQuery.deleted = { $ne: true };
+
+    if (filter?.teamId) {
+      if (ObjectId.isValid(filter.teamId) === false) {
+        throw new ApiError(`param teamId is not a valid ${filter.teamId}`);
+      }
+      const team: any = await Team.findOne({
+        _id: new ObjectId(filter.teamId),
+        organization: _organizationId,
+      }).then();
+      if (!team) {
+        throw new RecordNotFoundError(
+          `Team with the id ${filter.teamId} could not be found in organization ${organizationIdString}`,
+          'Team'
+        );
+      }
+      dbQuery._id = { $in: Array.isArray(team.members) ? team.members : [] };
+    }
+
+    const search = `${filter?.search || ''}`.trim();
+    if (search.length > 0) {
+      const term = this.escapeRegExp(search);
+      dbQuery.$or = [
+        { firstName: { $regex: term, $options: 'i' } },
+        { lastName: { $regex: term, $options: 'i' } },
+        { email: { $regex: term, $options: 'i' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      User.find(dbQuery)
+        .select('_id firstName lastName email avatar memberships')
+        .sort({ lastName: 1, firstName: 1 })
+        .skip(skip)
+        .limit(pageSize)
+        .then(),
+      User.countDocuments(dbQuery).then(),
+    ]);
+
+    // Pair each returned user with its matching membership FIRST. A user that
+    // only carries a client-wide membership has no match here and is dropped,
+    // which is the second line of defence behind the query predicate.
+    const pairs: Array<{ user: any; membership: any }> = [];
+    const userIds: string[] = [];
+    const businessUnitIds = new Set<string>();
+
+    (users || []).forEach((user: any) => {
+      const membership = this.findMembership(user, clientId, organizationIdString);
+      if (!membership) return;
+
+      pairs.push({ user, membership });
+      userIds.push(`${user._id || user.id}`);
+      if (membership.businessUnitId) businessUnitIds.add(`${membership.businessUnitId}`);
+    });
+
+    // Resolve the referenced business units and teams with one query each - no
+    // per-row lookup.
+    const [businessUnits, teamsByUserId] = await Promise.all([
+      this.loadMemberBusinessUnits(organizationIdString, Array.from(businessUnitIds)),
+      this.loadMemberTeams(organizationIdString, userIds),
+    ]);
+
+    const members = pairs.map(({ user, membership }) =>
+      this.toOrganizationMember(
+        user,
+        membership,
+        organizationIdString,
+        businessUnits,
+        teamsByUserId
+      )
+    );
+
+    return {
+      members,
+      paging: this.buildMemberPaging(page, pageSize, total),
+    };
+  }
+
+  /**
+   * Invites an email address to join the organization (ORG-023).
+   *
+   * DECISION: an invitation is a pending `OrganizationInvitation` record keyed
+   * by email - NOT a `User` shell. `User` requires a password and salt and
+   * holds a unique email index, so a shell would invent credentials and break
+   * the real self-registration path for that address. The invitation is turned
+   * into an active membership by `acceptPendingInvitations` on the invitee's
+   * first login, which reuses the existing login provisioning path
+   * (`login_partner_keys` / `add_default_membership`), so no second manual step
+   * is needed.
+   *
+   * An email that is already an active member, or already holds a deactivated
+   * membership for this organization, is rejected cleanly instead of creating a
+   * duplicate. Re-activating a deactivated member is `addMember`'s job.
+   */
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async inviteOrganizationMember(
+    id: string,
+    email: string,
+    roles?: string[],
+    businessUnitId?: string | null,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<IOrganizationMember> {
+    const organization = await this.loadOrganizationForAdministration(id, executionContext);
+    const clientId = this.resolvePartnerId(executionContext);
+    const organizationId = `${organization._id}`;
+
+    const normalisedEmail = `${email || ''}`.trim().toLowerCase();
+    if (normalisedEmail.length === 0 || /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(normalisedEmail) === false) {
+      throw new ApiError(`param email is not a valid email address: ${email}`);
+    }
+
+    const membershipRoles = this.normalizeMemberRoles(roles);
+
+    let businessUnitObjectId: ObjectId | null = null;
+    if (businessUnitId !== undefined && businessUnitId !== null && `${businessUnitId}`.trim().length > 0) {
+      if (ObjectId.isValid(businessUnitId) === false) {
+        throw new ApiError(`param businessUnitId is not a valid ${businessUnitId}`);
+      }
+      const unit: any = await BusinessUnit.findOne({
+        _id: new ObjectId(businessUnitId),
+        organization: organization._id,
+        deleted: { $ne: true },
+      }).then();
+      if (!unit) {
+        throw new RecordNotFoundError(
+          `Business unit with the id ${businessUnitId} could not be found in organization ${organizationId}`,
+          'BusinessUnit'
+        );
+      }
+      businessUnitObjectId = unit._id;
+    }
+
+    // The email may already belong to an account. It still receives a pending
+    // invitation: the membership is created on the next login, so the invite
+    // flow behaves identically for existing and new users.
+    const existingUser: any = await User.findOne({ email: normalisedEmail }).then();
+    if (existingUser) {
+      const existingMembership = this.findMembership(existingUser, clientId, organizationId);
+      if (existingMembership && existingMembership.enabled !== false) {
+        throw new ApiError(
+          `User ${normalisedEmail} is already a member of organization ${organizationId}`
+        );
+      }
+      if (existingMembership && existingMembership.enabled === false) {
+        throw new ApiError(
+          `User ${normalisedEmail} has a deactivated membership for organization ${organizationId}; use addOrganizationMember to re-activate it`
+        );
+      }
+    }
+
+    const pending: any = await OrganizationInvitation.findOne({
+      clientId: new ObjectId(clientId),
+      organizationId: organization._id,
+      email: normalisedEmail,
+      status: 'pending',
+    }).then();
+
+    if (pending) {
+      throw new ApiError(
+        `An invitation for ${normalisedEmail} is already pending for organization ${organizationId}`
+      );
+    }
+
+    const invitation: any = new OrganizationInvitation({
+      clientId: new ObjectId(clientId),
+      organizationId: organization._id,
+      email: normalisedEmail,
+      roles: membershipRoles,
+      businessUnitId: businessUnitObjectId,
+      status: 'pending',
+      invitedBy: this.resolveActorId(executionContext),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await invitation.save().then();
+
+    const businessUnits = await this.loadMemberBusinessUnits(
+      organizationId,
+      businessUnitObjectId ? [`${businessUnitObjectId}`] : []
+    );
+
+    return this.toInvitedOrganizationMember(invitation, businessUnits);
+  }
+
+  /**
+   * Deactivates a member's membership for this organization (ORG-023).
+   *
+   * Sets `enabled: false` rather than deleting: the person's history and their
+   * business unit / team participation survive. `removeMember` remains the hard
+   * removal.
+   *
+   * `assertOrgAdmin` resolves roles from the persisted membership on every
+   * request, so a deactivated member loses organization access on their next
+   * authorization check without needing a new token.
+   *
+   * A client-wide membership (`organizationId: null`) is never touched: it is
+   * not this organization's record, and stripping it would remove access the
+   * person legitimately holds elsewhere.
+   */
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async deactivateOrganizationMember(
+    id: string,
+    userId: string,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IOrganizationDocument> {
+    const organization = await this.loadOrganizationForAdministration(id, executionContext);
+    const user = await this.loadMember(userId);
+    const clientId = this.resolvePartnerId(executionContext);
+    const organizationId = `${organization._id}`;
+
+    const membership = this.findMembership(user, clientId, organizationId);
+
+    if (!membership) {
+      throw new RecordNotFoundError(
+        `User ${userId} does not have a membership for organization ${organizationId}`,
+        'Membership'
+      );
+    }
+
+    // Defensive: findMembership already requires an exact organization match,
+    // but never disable a client-wide record by accident.
+    if (!membership.organizationId || `${membership.organizationId}` !== organizationId) {
+      throw new RecordNotFoundError(
+        `User ${userId} does not have an organization-scoped membership for ${organizationId}`,
+        'Membership'
+      );
+    }
+
+    membership.enabled = false;
+    if (typeof (user as any).markModified === 'function') (user as any).markModified('memberships');
+    await user.save().then();
+
+    return organization;
+  }
+
+  /**
+   * Converts this user's pending organization invitations into active
+   * memberships (ORG-023).
+   *
+   * Called from the login provisioning path (`ApiStatus.getRoles`), which is
+   * also where `login_partner_keys` / `add_default_membership` grants the
+   * client-wide membership. Running it here means an invited person is an
+   * active organization member after their first login, with no second manual
+   * step, and it is idempotent: `status` flips to `accepted`, so a later login
+   * finds nothing to do.
+   *
+   * Invitations for a deleted/archived organization are skipped and left
+   * pending, so they do not resurrect access to a retired tenant.
+   */
+  @roles(['USER', 'ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async acceptPendingInvitations(
+    user: Reactory.Models.IUserDocument,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<number> {
+    if (!user || !(user as any)._id || !user.email) return 0;
+
+    const context = this.resolveExecutionContext(executionContext);
+    const clientId = this.resolvePartnerId(context);
+
+    const invitations: any[] = await OrganizationInvitation.find({
+      clientId: new ObjectId(clientId),
+      email: `${user.email}`.trim().toLowerCase(),
+      status: 'pending',
+    }).then();
+
+    if (!Array.isArray(invitations) || invitations.length === 0) return 0;
+
+    const organizationIds = invitations
+      .map((invitation: any) => invitation.organizationId)
+      .filter((organizationId: any) => ObjectId.isValid(organizationId));
+
+    const organizations: any[] = organizationIds.length > 0
+      ? await Organization.find({
+          _id: { $in: organizationIds.map((organizationId: any) => new ObjectId(organizationId)) },
+          deleted: { $ne: true },
+          status: { $ne: 'archived' },
+        }).select('_id').then()
+      : [];
+
+    const liveOrganizationIds = new Set((organizations || []).map((organization: any) => `${organization._id}`));
+
+    const accepted: any[] = [];
+
+    for (const invitation of invitations) {
+      const organizationId = `${invitation.organizationId || ''}`;
+      if (!organizationId || liveOrganizationIds.has(organizationId) === false) continue;
+
+      const membershipRoles = this.normalizeMemberRoles(invitation.roles);
+      const membership = this.findMembership(user, clientId, organizationId);
+
+      if (membership) {
+        membership.roles = Array.from(new Set([...(membership.roles || []), ...membershipRoles]));
+        membership.enabled = true;
+        if (invitation.businessUnitId && !membership.businessUnitId) {
+          membership.businessUnitId = invitation.businessUnitId;
+        }
+      } else {
+        if (!Array.isArray(user.memberships)) (user as any).memberships = [];
+        (user.memberships as any[]).push({
+          clientId: new ObjectId(clientId),
+          organizationId: new ObjectId(organizationId),
+          businessUnitId: invitation.businessUnitId || null,
+          roles: membershipRoles,
+          enabled: true,
+          authProvider: 'invitation',
+          created: new Date(),
+        });
+      }
+
+      invitation.status = 'accepted';
+      invitation.acceptedAt = new Date();
+      invitation.acceptedBy = (user as any)._id;
+      invitation.updatedAt = new Date();
+      accepted.push(invitation);
+    }
+
+    if (accepted.length === 0) return 0;
+
+    if (typeof (user as any).markModified === 'function') (user as any).markModified('memberships');
+    await user.save().then();
+    await Promise.all(accepted.map((invitation: any) => invitation.save()));
+
+    return accepted.length;
   }
 
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
