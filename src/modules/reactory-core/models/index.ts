@@ -19,6 +19,7 @@ import Notification from "./Notification";
 import OperationalGroup from "./OperationalGroup";
 import Organigram from "./Organigram";
 import Organization from "./Organization";
+import OrganizationInvitation from "./OrganizationInvitation";
 import AgeDemographic from "./demographics/AgeDemographic";
 import Demographic from "./demographics/Demographic";
 import OrganizationDemographicSettings from "./demographics/OrganizationDemographicsSettings";
@@ -126,6 +127,7 @@ export type CoreModelTypes =
   | typeof OperationalGroup
   | typeof Organigram
   | typeof Organization
+  | typeof OrganizationInvitation
   | typeof PersonalDemographic
   | typeof Project
   | typeof ProjectBoard
@@ -173,6 +175,13 @@ export { default as Notification } from './Notification';
 export { default as OperationalGroup } from './OperationalGroup';
 export { default as Organigram } from './Organigram';
 export { default as Organization } from './Organization';
+export { default as OrganizationInvitation } from './OrganizationInvitation';
+export { ORGANIZATION_INVITATION_STATUSES } from './OrganizationInvitation';
+export type {
+  OrganizationInvitationStatus,
+  IOrganizationInvitation,
+  IOrganizationInvitationDocument,
+} from './OrganizationInvitation';
 export { default as PersonalDemographic } from './PersonalDemographic';
 export { default as Project } from './Project';
 export { default as ProjectBoard } from './ProjectBoard';
@@ -292,6 +301,20 @@ export const ModelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
       stem: "business-unit",
       tags: ["business-unit", "core", "system"],
       component: BusinessUnit,
+      domain: "model",
+      overwrite: true,
+      roles: [],
+      features: [],
+    },
+    {
+      nameSpace: "core",
+      name: "OrganizationInvitation",
+      version: "1.0.0",
+      description:
+        "Provides a pending organization membership invitation model for the server",
+      stem: "organization-invitation",
+      tags: ["organization", "invitation", "membership", "core", "system"],
+      component: OrganizationInvitation,
       domain: "model",
       overwrite: true,
       roles: [],

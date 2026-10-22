@@ -81,6 +81,32 @@ export interface IOrganizationAdministrationService
     roles: string[],
     executionContext?: Reactory.Server.IReactoryContext,
   ): Promise<Reactory.Models.IOrganizationDocument>;
+  /** ORG-023: membership-shaped member listing (People tab). */
+  pagedOrganizationMembers(
+    organizationId: string,
+    filter?: any,
+    paging?: Reactory.Models.IPagingRequest,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<{ paging: Reactory.Models.IPagingResult; members: any[] }>;
+  /** ORG-023: creates a pending invitation keyed by email. */
+  inviteOrganizationMember(
+    id: string,
+    email: string,
+    roles?: string[],
+    businessUnitId?: string | null,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<any>;
+  /** ORG-023: disables a membership without deleting it. */
+  deactivateOrganizationMember(
+    id: string,
+    userId: string,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<Reactory.Models.IOrganizationDocument>;
+  /** ORG-023: converts pending invitations on login (called by ApiStatus). */
+  acceptPendingInvitations(
+    user: Reactory.Models.IUserDocument,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<number>;
   /**
    * Stored on the service as `uploadOrganizationImage(id, file, imageType,
    * executionContext)`. The published interface does not declare the execution
@@ -384,6 +410,74 @@ class OrganizationResolver {
     context: Reactory.Server.IReactoryContext,
   ) {
     return organizationService(context).setMemberRoles(params.id, params.userId, params.roles, context);
+  }
+
+  /**
+   * ORG-023: membership-shaped member listing for the People tab.
+   *
+   * The coarse role gate below only proves the caller holds a privileged role
+   * somewhere; the service runs `assertOrgAdmin` against `organizationId`, so an
+   * administrator of organization A cannot read organization B's members (the
+   * rows carry member PII). `CoreUsersForOrganization` stays available and
+   * deprecated for existing consumers.
+   */
+  @query('OrganizationMembers')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async OrganizationMembers(
+    obj: any,
+    params: { organizationId: string; filter?: any; paging?: Reactory.Models.IPagingRequest },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    const { organizationId, filter, paging } = params;
+    return organizationService(context).pagedOrganizationMembers(
+      organizationId,
+      filter,
+      paging,
+      context,
+    );
+  }
+
+  /**
+   * ORG-023: invites an email address into the organization.
+   *
+   * The service performs the org-scoped check and creates a pending invitation;
+   * the invitee becomes an active member on their first login. Returns the
+   * pending member so the UI can show it without a refetch.
+   */
+  @mutation('inviteOrganizationMember')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async inviteOrganizationMember(
+    obj: any,
+    params: { id: string; email: string; roles?: string[]; businessUnitId?: string | null },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    const { id, email, roles, businessUnitId } = params;
+    return organizationService(context).inviteOrganizationMember(
+      id,
+      email,
+      roles,
+      businessUnitId === undefined ? null : businessUnitId,
+      context,
+    );
+  }
+
+  /**
+   * ORG-023: deactivates a member (sets `enabled: false`), retaining their
+   * history and BU/team participation. Hard removal stays on
+   * `removeOrganizationMember`.
+   */
+  @mutation('deactivateOrganizationMember')
+  @roles(ORGANIZATION_ADMIN_ROLES)
+  async deactivateOrganizationMember(
+    obj: any,
+    params: { id: string; userId: string },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return organizationService(context).deactivateOrganizationMember(
+      params.id,
+      params.userId,
+      context,
+    );
   }
 
   /**
