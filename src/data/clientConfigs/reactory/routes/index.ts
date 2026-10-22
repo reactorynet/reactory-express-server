@@ -560,6 +560,19 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   //
   // `roles` stay "ADMIN" and `public` stays false to match the existing
   // organizations route's access boundary — do not widen either.
+  //
+  // ORG-017: the panels were authored (ORG-010/011) against the legacy URL shape
+  // `/organizations/<id>` — the list navigates to `/organizations/${id}`, the
+  // create page returns to `/organizations/${id}` (and defaults its back-link to
+  // `/organizations`), and the detail panel navigates back to `/organizations`.
+  // ORG-016 makes those targets serialisable props (`basePath`, `listRoute`) with
+  // the legacy defaults preserved, so this surface can be pointed at the
+  // `/organizations/manage` prefix it is actually mounted on. Before ORG-016
+  // lands the props are simply ignored, which is why this change is safe to
+  // merge in either order.
+  //
+  // Do NOT add a `/organizations/:id` route as a shortcut: two URL shapes for
+  // the same screen makes ORG-042 (retiring the legacy panel) ambiguous.
   {
     key: "organizations-manage",
     title: "Manage Organizations",
@@ -568,6 +581,8 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     public: false,
     roles: ["ADMIN"],
     componentFqn: "reactory.OrganizationListPanel@1.0.0",
+    // Row clicks resolve against this prefix instead of hardcoded `/organizations`.
+    componentProps: { basePath: "/organizations/manage" },
   },
   {
     key: "organizations-manage-create",
@@ -577,6 +592,9 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     public: false,
     roles: ["ADMIN"],
     componentFqn: "reactory.OrganizationCreatePage@1.0.0",
+    // `basePath` builds the post-create redirect; `listRoute` is the back-link
+    // target and must match the list route registered above.
+    componentProps: { basePath: "/organizations/manage", listRoute: "/organizations/manage" },
   },
   {
     key: "organizations-manage-detail",
@@ -588,8 +606,9 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     componentFqn: "reactory.OrganizationDetailPanel@1.0.0",
     // `OrganizationDetailPanel` accepts `id` or `organizationId` and treats `id`
     // as the documented route argument; `${route.id}` is the same substitution
-    // form used by `reactor-project-detail` in this file.
-    componentProps: { id: "${route.id}" },
+    // form used by `reactor-project-detail` in this file. `listRoute` replaces
+    // the panel's hardcoded `/organizations` back-link.
+    componentProps: { id: "${route.id}", listRoute: "/organizations/manage" },
   },
 
   {
