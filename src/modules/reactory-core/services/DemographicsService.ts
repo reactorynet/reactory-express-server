@@ -5,8 +5,11 @@ import {
   DemographicValue,
   Organization,
   OrganizationDemographicsPolicy,
+  Team,
+  User,
 } from '@reactory/server-modules/reactory-core/models';
 import validateDemographicValue from '@reactory/server-modules/reactory-core/utils/validateDemographicValue';
+import logger from '@reactory/server-core/logging';
 import ApiError, { InsufficientPermissions } from '@reactory/server-core/exceptions';
 import { service } from '@reactory/server-core/application/decorators/service';
 import {
@@ -23,6 +26,15 @@ import {
 import type {
   IBaseDemographicTemplate,
 } from '@reactory/server-modules/reactory-core/services/demographics/baseDemographicTemplates';
+import {
+  buildDemographicAggregateCsv,
+  buildDemographicDefinitionAggregate,
+} from '@reactory/server-modules/reactory-core/services/demographics/demographicAggregates';
+import type {
+  IDemographicAggregateFilterEcho,
+  IDemographicAggregateReport,
+  IDemographicDefinitionAggregate,
+} from '@reactory/server-modules/reactory-core/services/demographics/demographicAggregates';
 
 /**
  * ORG-006: demographics configuration and value service.
@@ -90,6 +102,22 @@ export interface IDemographicValueInput {
   value?: unknown;
   source?: string;
   verified?: boolean;
+  effectiveFrom?: string | Date | null;
+  effectiveTo?: string | Date | null;
+}
+
+/**
+ * Filters accepted by `aggregate` / `aggregateCsv` (ORG-035).
+ *
+ * `businessUnit`, `team` and `region` all narrow the *member set first*: the
+ * aggregation then only sees values belonging to members that survived the
+ * filter. `effectiveFrom` / `effectiveTo` is a period window applied to the
+ * value's own effective range (overlap semantics, not containment).
+ */
+export interface IDemographicAggregateFilter {
+  businessUnit?: string | null;
+  team?: string | null;
+  region?: string | null;
   effectiveFrom?: string | Date | null;
   effectiveTo?: string | Date | null;
 }
@@ -175,6 +203,21 @@ export interface IDemographicsBackfillOptions extends IDemographicSeedOptions {
 }
 
 const DEMOGRAPHICS_SERVICE_ID = 'core.DemographicsService@1.0.0';
+
+/**
+ * Existing audit sink in this module (see `ReactoryAuditService` and the
+ * `AuditLog` GraphQL type). Aggregate reads of sensitive definitions are
+ * recorded there rather than in a new collection, so they show up in the same
+ * compliance trail as every other privileged action.
+ */
+const AUDIT_SERVICE_ID = 'core.ReactoryAuditService@1.0.0';
+
+/**
+ * Definition key that links a member to a region. `Region` has no membership
+ * column anywhere in the schema, so this ORG-006 structural definition is the
+ * authoritative member -> region reference (see `baseDemographicTemplates`).
+ */
+const DEMOGRAPHIC_REGION_KEY = 'region';
 
 @service({
   id: DEMOGRAPHICS_SERVICE_ID,
@@ -1322,6 +1365,425 @@ export class DemographicsService {
 
     await document.save().then();
     return document;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Aggregates (ORG-035)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Trims an optional id.
+   *
+   * Deliberately does NOT lowercase: `normalizeKey` is for definition keys, and
+   * an ObjectId is a case-sensitive hex string by contract, so reusing it here
+   * would silently rewrite input.
+   */
+  private normalizeAggregateId(value?: string | null): string | null {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  /** Normalises `definitionKeys`: trimmed, lowercased, unique, input order. */
+  private normalizeAggregateDefinitionKeys(definitionKeys?: string[] | null): string[] {
+    if (!Array.isArray(definitionKeys)) return [];
+    const keys: string[] = [];
+    definitionKeys.forEach((candidate) => {
+      const key = this.normalizeKey(candidate);
+      if (key && keys.indexOf(key) < 0) keys.push(key);
+    });
+    return keys;
+  }
+
+  private parseAggregateDate(value: string | Date | null | undefined, field: string): Date | null {
+    if (value === undefined || value === null || value === '') return null;
+    const parsed = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(parsed.valueOf())) {
+      throw new ApiError(`param ${field} is not a valid date: ${value}`);
+    }
+    return parsed;
+  }
+
+  /**
+   * Builds the period predicate for a value's own effective window.
+   *
+   * Overlap semantics: a value belongs to the period when it was effective at
+   * any point inside the requested window, so an open-ended value (a null
+   * `effectiveTo`) is included, and a value that merely started before the
+   * window but is still current is included too. A null bound means
+   * "unbounded".
+   */
+  private buildAggregateEffectiveWindow(
+    filter: IDemographicAggregateFilter,
+  ): { clauses: Record<string, any>[]; effectiveFrom: Date | null; effectiveTo: Date | null } {
+    const effectiveFrom = this.parseAggregateDate(filter?.effectiveFrom, 'effectiveFrom');
+    const effectiveTo = this.parseAggregateDate(filter?.effectiveTo, 'effectiveTo');
+
+    if (effectiveFrom && effectiveTo && effectiveFrom.valueOf() > effectiveTo.valueOf()) {
+      throw new ApiError('param effectiveFrom must be on or before effectiveTo');
+    }
+
+    const clauses: Record<string, any>[] = [];
+    if (effectiveTo) {
+      // `{ effectiveFrom: null }` matches both an explicit null and a missing
+      // field, which is what "effective since forever" means here.
+      clauses.push({ $or: [{ effectiveFrom: null }, { effectiveFrom: { $lte: effectiveTo } }] });
+    }
+    if (effectiveFrom) {
+      clauses.push({ $or: [{ effectiveTo: null }, { effectiveTo: { $gte: effectiveFrom } }] });
+    }
+
+    return { clauses, effectiveFrom, effectiveTo };
+  }
+
+  /**
+   * Resolves the member set a structural filter narrows the report to.
+   *
+   * Returns `null` when no structural filter was supplied (the report is not
+   * narrowed) and a concrete - possibly EMPTY - array otherwise. The empty
+   * array is the whole point: a filter that matches nobody must produce an
+   * empty cohort, never "everyone". Widening a cohort is a privacy failure,
+   * not a convenience.
+   *
+   * DOMAIN TRAP (ORG-023): membership lives on `User.memberships`, and most
+   * historical rows carry `organizationId: null`, meaning *client-wide*. Only an
+   * exact organization match is a member of this organization, so the base
+   * predicate is an `$elemMatch` on client + exact organization id. A
+   * client-wide membership can never satisfy it - which is what stops a
+   * business-unit filter from silently becoming "the whole tenant".
+   *
+   * Team membership is stored on `Team.members`; region has no membership
+   * column anywhere in the schema, so the organization-scoped `region`
+   * demographic value is the authoritative member -> region link.
+   */
+  private async resolveAggregateCohort(
+    organizationId: string,
+    filter: IDemographicAggregateFilter,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<string[] | null> {
+    const businessUnit = this.normalizeAggregateId(filter?.businessUnit);
+    const team = this.normalizeAggregateId(filter?.team);
+    const region = this.normalizeAggregateId(filter?.region);
+
+    if (!businessUnit && !team && !region) return null;
+
+    const context = this.resolveExecutionContext(executionContext);
+    const clientId = this.resolvePartnerId(context);
+    const organization = new ObjectId(organizationId);
+
+    const membershipMatch: Record<string, any> = {
+      clientId: new ObjectId(clientId),
+      organizationId: organization,
+    };
+
+    if (businessUnit) {
+      if (ObjectId.isValid(businessUnit) === false) {
+        throw new ApiError(`param businessUnit is not a valid ${businessUnit}`);
+      }
+      membershipMatch.businessUnitId = new ObjectId(businessUnit);
+    }
+
+    const userQuery: Record<string, any> = {
+      deleted: { $ne: true },
+      memberships: { $elemMatch: membershipMatch },
+    };
+
+    // null = unconstrained; an array = the candidate member ids.
+    let candidateIds: string[] | null = null;
+
+    const narrow = (ids: string[]): void => {
+      if (candidateIds === null) {
+        candidateIds = ids;
+        return;
+      }
+      const allowed = new Set<string>(candidateIds);
+      candidateIds = ids.filter((candidate) => allowed.has(candidate));
+    };
+
+    if (team) {
+      if (ObjectId.isValid(team) === false) {
+        throw new ApiError(`param team is not a valid ${team}`);
+      }
+      const teamDocument: any = await Team.findOne({
+        _id: new ObjectId(team),
+        organization,
+        deleted: { $ne: true },
+      }).then();
+      const members: any[] = Array.isArray(teamDocument?.members) ? teamDocument.members : [];
+      // An unknown team, or one with no members, resolves to an EMPTY cohort.
+      narrow(members.map((member) => `${member}`).filter((memberId) => ObjectId.isValid(memberId)));
+      if (candidateIds.length === 0) return [];
+    }
+
+    if (region) {
+      if (ObjectId.isValid(region) === false) {
+        throw new ApiError(`param region is not a valid ${region}`);
+      }
+      const regionValues: any[] = await DemographicValue.find({
+        organization,
+        key: DEMOGRAPHIC_REGION_KEY,
+        // `value` is Mixed: match both the ObjectId and the string form. `$in`
+        // also matches elements when the definition is multi-valued.
+        value: { $in: [new ObjectId(region), region] },
+      }).select('user').then();
+      const regionMemberIds: string[] = (regionValues || [])
+        .map((value) => `${value?.user ?? ''}`)
+        .filter((memberId) => memberId.length > 0 && ObjectId.isValid(memberId));
+      // Nobody in that region: an empty cohort, never the full member set.
+      if (regionMemberIds.length === 0) return [];
+      narrow(regionMemberIds);
+      if (candidateIds.length === 0) return [];
+    }
+
+    if (candidateIds !== null) {
+      if (candidateIds.length === 0) return [];
+      userQuery._id = { $in: candidateIds.map((memberId) => new ObjectId(memberId)) };
+    }
+
+    const members: any[] = await User.find(userQuery).select('_id').then();
+    return (members || [])
+      .map((member) => `${member?._id ?? ''}`)
+      .filter((memberId) => memberId.length > 0);
+  }
+
+  /**
+   * Records an aggregate read of every SENSITIVE definition in the report.
+   *
+   * Uses this module's existing audit sink - `core.ReactoryAuditService@1.0.0`,
+   * backed by the `reactory_audit` table and exposed through the `AuditLog`
+   * GraphQL type - rather than inventing a second destination. Aggregation of a
+   * sensitive definition is still permitted for an organization administrator;
+   * the flag exists so the read is *auditable*, not so it is impossible.
+   *
+   * An audit failure is logged at `error` level and does not fail the report: a
+   * sink outage must not black out the compliance report an administrator is
+   * trying to read. The count fields written here are counts of REPORTED
+   * cohorts only - the audit trail must not become the leak the report refuses
+   * to be.
+   */
+  private async auditAggregateSensitiveRead(params: {
+    organizationId: string;
+    definitions: IDemographicDefinitionAggregate[];
+    filter: IDemographicAggregateFilterEcho;
+    /** Raw value rows aggregated per definition key, for the audit trail. */
+    valuesRead?: Map<string, number>;
+    executionContext?: Reactory.Server.IReactoryContext;
+  }): Promise<void> {
+    const sensitive = (params.definitions || []).filter((definition) => definition.sensitive === true);
+    if (sensitive.length === 0) return;
+
+    const context = this.resolveExecutionContext(params.executionContext);
+    const actorId = `${this.resolveActorId(context)}`;
+
+    let auditService: any = null;
+    try {
+      auditService = context.getService ? context.getService(AUDIT_SERVICE_ID) : null;
+    } catch (error) {
+      auditService = null;
+    }
+
+    if (!auditService || typeof auditService.logAuditEvent !== 'function') {
+      logger.error(
+        'Demographics aggregate read of sensitive definition(s) could not be audited: audit service unavailable',
+        {
+          organizationId: params.organizationId,
+          actorId,
+          definitionKeys: sensitive.map((definition) => definition.definitionKey),
+        },
+      );
+      return;
+    }
+
+    for (const definition of sensitive) {
+      try {
+        await auditService.logAuditEvent({
+          action: 'demographics.aggregate.read',
+          source: DEMOGRAPHICS_SERVICE_ID,
+          user: actorId,
+          actorType: 'user',
+          actorId,
+          eventType: 'access',
+          resourceType: 'DemographicDefinition',
+          resourceId: definition.definitionKey,
+          organizationId: params.organizationId,
+          moduleName: 'reactory-core',
+          moduleVersion: '1.0.0',
+          success: true,
+          metadata: {
+            definitionKey: definition.definitionKey,
+            sensitive: true,
+            filter: params.filter,
+            // Counts of REPORTED cohorts and of the rows that were read - the
+            // audit trail must not become the leak the report refuses to be.
+            valuesRead: params.valuesRead?.get(definition.definitionKey) ?? 0,
+            bucketsReturned: definition.buckets.length,
+            cohortsWithheld: definition.suppressedCohorts,
+            cohortTotal: definition.cohortTotal,
+            definitionSuppressed: definition.suppressed,
+          },
+        });
+      } catch (error: any) {
+        logger.error(
+          `Demographics aggregate read of sensitive definition [${definition.definitionKey}] could not be audited: ${error?.message || error}`,
+          { organizationId: params.organizationId, actorId },
+        );
+      }
+    }
+  }
+
+  /**
+   * Aggregate demographic report for one organization (ORG-035).
+   *
+   * Returns counts and distributions per definition. Cohorts smaller than the
+   * organization's `minimumAggregationGroupSize` (read from the demographics
+   * policy, never hardcoded) are suppressed entirely - not zeroed and not
+   * merged into an "other" bucket - and the threshold is returned so the UI can
+   * explain the gap. See `demographicAggregates` for the privacy contract.
+   *
+   * Requires an organization administrator, enforced with the org-scoped
+   * `assertOrgAdmin` helper: a coarse role check would let an administrator of
+   * organization A read B's distributions.
+   */
+  async aggregate(
+    organizationId: string,
+    definitionKeys?: string[] | null,
+    filter?: IDemographicAggregateFilter | null,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<IDemographicAggregateReport> {
+    this.assertOrgAdmin(organizationId, executionContext);
+
+    const context = this.resolveExecutionContext(executionContext);
+    const organization = new ObjectId(organizationId);
+    const criteria: IDemographicAggregateFilter = filter || {};
+
+    // One source of truth for the privacy threshold: the policy document.
+    const policy: any = await this.getPolicy(organizationId, context);
+    const configuredThreshold = Number(policy?.minimumAggregationGroupSize);
+    const minimumAggregationGroupSize = Number.isFinite(configuredThreshold) && configuredThreshold >= 1
+      ? Math.floor(configuredThreshold)
+      : ORGANIZATION_DEMOGRAPHICS_POLICY_DEFAULTS.minimumAggregationGroupSize;
+
+    const keys = this.normalizeAggregateDefinitionKeys(definitionKeys);
+    const definitionQuery: Record<string, any> = {
+      organization,
+      deleted: { $ne: true },
+    };
+
+    if (keys.length > 0) {
+      // An explicitly requested definition is reported even when disabled: the
+      // caller named it, and its historical values still exist.
+      definitionQuery.key = { $in: keys };
+    } else {
+      definitionQuery.enabled = true;
+    }
+
+    const definitions: any[] = await DemographicDefinition.find(definitionQuery)
+      .sort({ ordinal: 1, title: 1 })
+      .then();
+
+    const window = this.buildAggregateEffectiveWindow(criteria);
+    const cohortMemberIds = await this.resolveAggregateCohort(organizationId, criteria, context);
+
+    const filterEcho: IDemographicAggregateFilterEcho = {
+      businessUnit: this.normalizeAggregateId(criteria.businessUnit),
+      team: this.normalizeAggregateId(criteria.team),
+      region: this.normalizeAggregateId(criteria.region),
+      effectiveFrom: window.effectiveFrom ? window.effectiveFrom.toISOString() : null,
+      effectiveTo: window.effectiveTo ? window.effectiveTo.toISOString() : null,
+      definitionKeys: keys,
+      cohortRestricted: cohortMemberIds !== null,
+    };
+
+    const valuesByDefinition = new Map<string, any[]>();
+    definitions.forEach((definition) => valuesByDefinition.set(`${definition._id}`, []));
+
+    // A structural filter that resolved to nobody yields an empty cohort: the
+    // report is computed (so every definition is reported as suppressed) but no
+    // value is ever read. It must never fall back to "all values".
+    const cohortIsEmpty = Array.isArray(cohortMemberIds) && cohortMemberIds.length === 0;
+
+    if (definitions.length > 0 && cohortIsEmpty === false) {
+      const valueQuery: Record<string, any> = {
+        organization,
+        definition: { $in: definitions.map((definition) => new ObjectId(`${definition._id}`)) },
+      };
+
+      if (cohortMemberIds !== null) {
+        valueQuery.user = { $in: (cohortMemberIds || []).map((memberId) => new ObjectId(memberId)) };
+      }
+
+      if (window.clauses.length > 0) valueQuery.$and = window.clauses;
+
+      const values: any[] = await DemographicValue.find(valueQuery)
+        .select('user definition key value valueType effectiveFrom effectiveTo')
+        .then();
+
+      (values || []).forEach((value) => {
+        const definitionId = `${value?.definition ?? ''}`;
+        if (valuesByDefinition.has(definitionId)) {
+          valuesByDefinition.get(definitionId).push(value);
+          return;
+        }
+        // Fallback for a legacy row without a usable definition reference: the
+        // key snapshot on the value is what reports are meant to survive on.
+        const keyed = definitions.find((definition) => `${definition.key}` === `${value?.key ?? ''}`);
+        if (keyed) valuesByDefinition.get(`${keyed._id}`).push(value);
+      });
+    }
+
+    const report: IDemographicAggregateReport = {
+      organization: `${organizationId}`,
+      minimumAggregationGroupSize,
+      filter: filterEcho,
+      definitions: definitions.map((definition) => buildDemographicDefinitionAggregate(
+        definition,
+        valuesByDefinition.get(`${definition._id}`) || [],
+        minimumAggregationGroupSize,
+      )),
+      reportedDefinitions: definitions.length,
+      suppressedDefinitions: 0,
+    };
+
+    report.suppressedDefinitions = report.definitions.filter(
+      (definition) => definition.suppressed === true,
+    ).length;
+
+    const valuesRead = new Map<string, number>();
+    definitions.forEach((definition) => {
+      valuesRead.set(
+        `${definition.key}`,
+        (valuesByDefinition.get(`${definition._id}`) || []).length,
+      );
+    });
+
+    await this.auditAggregateSensitiveRead({
+      organizationId: `${organizationId}`,
+      definitions: report.definitions,
+      filter: filterEcho,
+      valuesRead,
+      executionContext: context,
+    });
+
+    return report;
+  }
+
+  /**
+   * CSV export of `aggregate` (ORG-035).
+   *
+   * A query, not a mutation: an export reads and changes nothing, is idempotent
+   * and safe to retry or cache-control, and a mutation would falsely imply a
+   * write and need every write-side guard. It reuses `aggregate`, so the export
+   * inherits the same authorization, suppression and audit behaviour - a CSV is
+   * just another way to read the same report, not a second reporting path.
+   */
+  async aggregateCsv(
+    organizationId: string,
+    definitionKeys?: string[] | null,
+    filter?: IDemographicAggregateFilter | null,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<string> {
+    const report = await this.aggregate(organizationId, definitionKeys, filter, executionContext);
+    return buildDemographicAggregateCsv(report);
   }
 
   // ---------------------------------------------------------------------------

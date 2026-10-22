@@ -36,6 +36,8 @@ const makeService = () => ({
   saveValues: jest.fn().mockResolvedValue([]),
   deleteValue: jest.fn().mockResolvedValue(true),
   saveSelfServiceValues: jest.fn().mockResolvedValue([{ key: 'employment-type' }]),
+  aggregate: jest.fn().mockResolvedValue({ organization: 'org', definitions: [] }),
+  aggregateCsv: jest.fn().mockResolvedValue('organization,minimum_group_size\n'),
 });
 
 const makeContext = (roles: string[]) => {
@@ -71,6 +73,8 @@ describe('DemographicResolver (ORG-006)', () => {
     expect(merged.Query.OrganizationDemographicDefinition).toBeDefined();
     expect(merged.Query.OrganizationDemographicValues).toBeDefined();
     expect(merged.Query.MyDemographics).toBeDefined();
+    expect(merged.Query.OrganizationDemographicAggregates).toBeDefined();
+    expect(merged.Query.OrganizationDemographicAggregatesCsv).toBeDefined();
     expect(merged.Mutation.OrganizationSaveDemographicDefinition).toBeDefined();
     expect(merged.Mutation.MySaveDemographics).toBeDefined();
     expect(merged.Organization.demographicsPolicy).toBeDefined();
@@ -78,6 +82,38 @@ describe('DemographicResolver (ORG-006)', () => {
     // The existing organization surface is untouched.
     expect(merged.Query.CoreOrganization).toBeDefined();
     expect(merged.Mutation.createOrganization).toBeDefined();
+  });
+
+  it('delegates the ORG-035 aggregate queries, sharing the caller\'s context', async () => {
+    const merged: any = mergeGraphResolver([OrganizationResolver, DemographicResolver]);
+    const { context, service } = makeContext(['ORGANIZATION_ADMIN']);
+    const filter = { region: 'region-1' };
+
+    await merged.Query.OrganizationDemographicAggregates(
+      {},
+      { organizationId: ORGANIZATION_ID, definitionKeys: ['gender'], filter },
+      context,
+    );
+    expect(service.aggregate).toHaveBeenCalledWith(
+      ORGANIZATION_ID,
+      ['gender'],
+      filter,
+      context,
+    );
+
+    // The CSV export must go through the same service entry point, so it can
+    // never bypass the authorization/suppression/audit of the JSON report.
+    await merged.Query.OrganizationDemographicAggregatesCsv(
+      {},
+      { organizationId: ORGANIZATION_ID, definitionKeys: ['gender'], filter },
+      context,
+    );
+    expect(service.aggregateCsv).toHaveBeenCalledWith(
+      ORGANIZATION_ID,
+      ['gender'],
+      filter,
+      context,
+    );
   });
 
   /**

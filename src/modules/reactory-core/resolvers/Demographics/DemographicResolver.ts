@@ -34,6 +34,8 @@ export interface IDemographicsService {
   saveValues(organizationId: string, values: any[], executionContext?: Reactory.Server.IReactoryContext): Promise<any[]>;
   deleteValue(organizationId: string, key: string, userId?: string, executionContext?: Reactory.Server.IReactoryContext): Promise<boolean>;
   saveSelfServiceValues(organizationId: string, values: any[], membershipId?: string | null, executionContext?: Reactory.Server.IReactoryContext): Promise<any[]>;
+  aggregate(organizationId: string, definitionKeys?: string[] | null, filter?: any, executionContext?: Reactory.Server.IReactoryContext): Promise<any>;
+  aggregateCsv(organizationId: string, definitionKeys?: string[] | null, filter?: any, executionContext?: Reactory.Server.IReactoryContext): Promise<string>;
 }
 
 const DEMOGRAPHICS_SERVICE_ID = 'core.DemographicsService@1.0.0';
@@ -168,6 +170,59 @@ class DemographicResolver {
     return demographicsService(context).getUserValues(
       params.organizationId,
       `${context.user._id}`,
+      context,
+    );
+  }
+
+  /**
+   * ORG-035: aggregate report.
+   *
+   * `@roles` here is only the coarse gate. The service re-checks the caller
+   * with its org-scoped `assertOrgAdmin`, which is what stops an administrator
+   * of organization A from reading B's distributions.
+   */
+  @query('OrganizationDemographicAggregates')
+  @roles(CONFIG_ROLES)
+  async demographicAggregates(
+    _obj: any,
+    params: {
+      organizationId: string;
+      definitionKeys?: string[] | null;
+      filter?: any;
+    },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return demographicsService(context).aggregate(
+      params.organizationId,
+      params.definitionKeys || [],
+      params.filter || {},
+      context,
+    );
+  }
+
+  /**
+   * ORG-035: CSV export of the aggregate report.
+   *
+   * A query rather than a mutation: it reads and changes nothing, is
+   * idempotent and safe to retry. It delegates to `aggregateCsv`, which itself
+   * calls `aggregate`, so the export cannot bypass the authorization,
+   * suppression or audit path used by the JSON query.
+   */
+  @query('OrganizationDemographicAggregatesCsv')
+  @roles(CONFIG_ROLES)
+  async demographicAggregatesCsv(
+    _obj: any,
+    params: {
+      organizationId: string;
+      definitionKeys?: string[] | null;
+      filter?: any;
+    },
+    context: Reactory.Server.IReactoryContext,
+  ) {
+    return demographicsService(context).aggregateCsv(
+      params.organizationId,
+      params.definitionKeys || [],
+      params.filter || {},
       context,
     );
   }

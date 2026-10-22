@@ -235,6 +235,124 @@ input OrganizationDemographicsPolicyInput {
   retentionDays: Int
 }
 
+# ---------------------------------------------------------------------------
+# ORG-035: aggregate reporting.
+#
+# These types describe a *privacy-filtered* view of the data, not the raw
+# values. Two rules shape every field below and must not be relaxed:
+#
+# 1. `minimumAggregationGroupSize` is read from the organization's policy and
+#    echoed on the report. A cohort smaller than it is removed entirely - it is
+#    never zeroed and never folded into an "other" bucket - and
+#    `suppressedCohorts` says how many buckets were withheld. Bucket counts are
+#    therefore always >= the threshold.
+# 2. There is no pre-suppression total anywhere. `cohortTotal` and
+#    `percentageDenominator` are the same number: the distinct members behind
+#    the *surviving* buckets. Returning a population count as well would let a
+#    caller recover a suppressed cohort by subtraction, and reporting only the
+#    post-suppression total keeps that closed.
+
+"""
+One bucket of a distribution. `count` is a number of DISTINCT MEMBERS, not of
+selections: a multi-valued definition can put one member in several buckets, so
+`percentage` values may sum above 100. `percentage` is computed against
+`DemographicDefinitionAggregate.percentageDenominator`.
+"""
+type DemographicAggregateBucket {
+  key: String!
+  label: String!
+  count: Int!
+  percentage: Float!
+}
+
+"""
+Aggregation of one definition for one organization and filter set.
+
+`suppressed: true` means nothing may be reported for this definition - either
+nobody answered or every bucket was below the threshold. The two cases are
+indistinguishable on purpose, so the payload never reveals which one applies.
+"""
+type DemographicDefinitionAggregate {
+  definitionKey: String!
+  title: String!
+  category: String
+  valueType: String!
+  multiValued: Boolean!
+  """
+  PII marker, copied from the definition. Sensitive definitions are aggregated
+  like any other, but the read is written to the audit trail and the surface is
+  organization-administrator only.
+  """
+  sensitive: Boolean!
+  suppressed: Boolean!
+  """
+  How many buckets were withheld. A bucket count, never a member count.
+  """
+  suppressedCohorts: Int!
+  """
+  Distinct members behind the surviving buckets. This is the ONLY total in the
+  payload and it is also the percentage denominator.
+  """
+  cohortTotal: Int!
+  """
+  Explicit alias of `cohortTotal`, so a UI cannot relabel the denominator.
+  """
+  percentageDenominator: Int!
+  """
+  Always `respondents` today. Present so percentages can never be mislabelled
+  as a share of the organization's headcount.
+  """
+  denominatorKind: String!
+  buckets: [DemographicAggregateBucket!]!
+}
+
+"""
+Echo of the filters actually applied, so an export or a screenshot is
+self-describing. Dates are ISO-8601 strings.
+
+`cohortRestricted` is true when a structural filter (businessUnit / team /
+region) narrowed the member set. A structural filter that matches nobody
+yields an empty cohort and therefore an all-suppressed report - it never falls
+back to "everybody".
+"""
+type DemographicAggregateFilterEcho {
+  businessUnit: String
+  team: String
+  region: String
+  effectiveFrom: String
+  effectiveTo: String
+  definitionKeys: [String!]!
+  cohortRestricted: Boolean!
+}
+
+type DemographicAggregateReport {
+  organization: String!
+  """
+  The k-anonymity threshold actually applied, read from the organization's
+  demographics policy (never hardcoded).
+  """
+  minimumAggregationGroupSize: Int!
+  filter: DemographicAggregateFilterEcho!
+  definitions: [DemographicDefinitionAggregate!]!
+  reportedDefinitions: Int!
+  """
+  Definitions withheld entirely because nothing survived the threshold.
+  """
+  suppressedDefinitions: Int!
+}
+
+input DemographicAggregateFilter {
+  """
+  Business unit id. Resolved against the member's organization membership, so
+  a client-wide membership (organizationId: null) never satisfies it.
+  """
+  businessUnit: String
+  team: String
+  region: String
+  effectiveFrom: Date
+  effectiveTo: Date
+}
+
 # The organization's demographics policy, resolved from
 # `reactory_organization_demographics_policies` and defaulted on read.
 # (Descriptions are not allowed on type extensions.)
@@ -275,6 +393,33 @@ extend type Query {
   another user.
   """
   MyDemographics(organizationId: String!, membershipId: String): [DemographicValue!]! @auth(roles: ["USER"])
+
+  """
+  Counts and distributions per definition for one organization (ORG-035).
+
+  Cohorts below the organization's `minimumAggregationGroupSize` are
+  suppressed per cohort, and the threshold is returned on the report so the UI
+  can explain the gap. Organization-administrator only: this is enforced by the
+  service's org-scoped `assertOrgAdmin`, not by the `@roles` argument, which is
+  only the coarse first gate (an administrator of organization A must not read
+  organization B).
+  """
+  OrganizationDemographicAggregates(organizationId: String!, definitionKeys: [String!], filter: DemographicAggregateFilter): DemographicAggregateReport! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
+
+  """
+  CSV export of `OrganizationDemographicAggregates` (ORG-035).
+
+  Modelled as a query, not a mutation, because it reads and changes nothing: a
+  mutation would imply a write, need write-side guards and defeat HTTP caching,
+  while a query is idempotent and safe to retry. It is not a second reporting
+  path - the resolver delegates to the same service method as the JSON query,
+  so authorization, suppression and auditing cannot drift between the two.
+
+  The export always has a header row and a stable column order (see
+  `DEMOGRAPHIC_AGGREGATE_CSV_COLUMNS`), and a suppressed definition still
+  produces a row so "suppressed" can never be mistaken for "missing".
+  """
+  OrganizationDemographicAggregatesCsv(organizationId: String!, definitionKeys: [String!], filter: DemographicAggregateFilter): String! @auth(roles: ["ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
 }
 
 extend type Mutation {
