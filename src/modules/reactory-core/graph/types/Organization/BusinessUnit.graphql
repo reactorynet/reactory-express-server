@@ -37,6 +37,11 @@ type BusinessUnit {
   A logo for the business unit
   """
   logo: String
+  """
+  Soft-delete flag. Deleted business units are retained and excluded from
+  listings by default; use `restoreBusinessUnit` to bring one back.
+  """
+  deleted: Boolean
 }
 
 
@@ -50,9 +55,36 @@ input BusinessUnitInput {
   avatar: String
 }
 
+"""
+Partial update for a business unit. Every field is optional: omit a field to
+leave it unchanged, pass `null` (or a blank string) to clear it. `name` is the
+exception - it cannot be cleared, because a business unit without a name cannot
+be looked up or de-duplicated.
+
+`organization` is deliberately absent: a business unit cannot be moved between
+organizations, as that would sidestep the org-scoped authorization boundary.
+`members` is absent too: membership is maintained by `addMemberToBusinessUnit`
+and `removeMemberFromBusinessUnit`, which also keep the Organigram pointer and
+the organization membership in step.
+"""
+input BusinessUnitUpdateInput {
+  name: String
+  description: String
+  avatar: String
+  owner: String
+}
+
 type ReactoryPagedBusinessUnits {
   businessUnits: [BusinessUnit]
   paging: PagingResult
+}
+
+"""
+Paged business unit listing envelope. Mirrors `PagedOrganizations`.
+"""
+type PagedBusinessUnits {
+  paging: PagingResult
+  businessUnits: [BusinessUnit]
 }
 
 type ReactoryBusinessUnitsQueryFailed {
@@ -63,6 +95,26 @@ type ReactoryBusinessUnitsQueryFailed {
 input ReactoryBusinessUnitFilter {
   name: String  
   organizationId: String  
+  """
+  Case-insensitive match against the business unit name and description.
+  """
+  search: String
+  """
+  Include soft-deleted business units. Defaults to false.
+  """
+  includeDeleted: Boolean
+  """
+  Return only soft-deleted business units (for the restore screen).
+  """
+  deletedOnly: Boolean
+  """
+  Restrict to business units owned by this user id.
+  """
+  owner: String
+  """
+  Restrict to business units this user id is a member of.
+  """
+  member: String
 }
 
 input ReactoryPagedBusinessUnitsQueryInput {
@@ -77,12 +129,30 @@ extend type Query {
   businessUnitsForOrganization(id: String!, searchString: String): [BusinessUnit],
   businessUnitWithId(id: String!): BusinessUnit,
   ReactoryBusinessUnits(query: ReactoryPagedBusinessUnitsQueryInput!): ReactoryBusinessUnitsQueryResult
+  """
+  Paged, filterable business units for one organization. Excludes
+  soft-deleted units unless `filter.includeDeleted` is set.
+  """
+  pagedBusinessUnits(organizationId: String!, filter: ReactoryBusinessUnitFilter, paging: PagingRequest): PagedBusinessUnits @auth(roles: ["USER"])
 }
 
 extend type Mutation {
   createBusinessUnit(input: BusinessUnitInput!): BusinessUnit @auth(roles: ["USER", "ADMIN"]),
-  updateBusinessUnit(id: String!, input: BusinessUnitInput): BusinessUnit @auth(roles: ["USER", "ADMIN"]),
-  addMemberToBussinessUnit(id: String!, memberId: String!): Boolean @auth(roles: ["USER", "ADMIN"]),
-  addMemberToBusinessUnit(id: String!, memberId: String!): Boolean @auth(roles: ["USER", "ADMIN"]),
-  removeMemberFromBusinessUnit(id: String!, memberId: String!): Boolean @auth(roles: ["USER", "ADMIN"]),
+  """
+  Updates a business unit. The service additionally enforces org-scoped
+  authorization against the unit's parent organization, so an
+  ORGANIZATION_ADMIN of organization A cannot update a unit in organization B.
+  """
+  updateBusinessUnit(id: String!, input: BusinessUnitUpdateInput): BusinessUnit @auth(roles: ["BUSINESS_UNIT_ADMIN", "ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"]),
+  """
+  Soft-deletes a business unit (sets `deleted: true`). Never hard-deletes.
+  """
+  deleteBusinessUnit(id: String!): BusinessUnit @auth(roles: ["BUSINESS_UNIT_ADMIN", "ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"]),
+  """
+  Restores a soft-deleted business unit.
+  """
+  restoreBusinessUnit(id: String!): BusinessUnit @auth(roles: ["BUSINESS_UNIT_ADMIN", "ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"]),
+  addMemberToBussinessUnit(id: String!, memberId: String!): Boolean @auth(roles: ["BUSINESS_UNIT_ADMIN", "ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"]),
+  addMemberToBusinessUnit(id: String!, memberId: String!): Boolean @auth(roles: ["BUSINESS_UNIT_ADMIN", "ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"]),
+  removeMemberFromBusinessUnit(id: String!, memberId: String!): Boolean @auth(roles: ["BUSINESS_UNIT_ADMIN", "ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"]),
 }

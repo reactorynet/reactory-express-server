@@ -8,8 +8,9 @@ import {
   BusinessUnit,
   Team,
   User,
+  Organigram,
 } from '@reactory/server-modules/reactory-core/models'
-import ApiError, { InsufficientPermissions, OrganizationNotFoundError } from '@reactory/server-core/exceptions';
+import ApiError, { BusinessUnitExistsError, InsufficientPermissions, OrganizationNotFoundError, RecordNotFoundError } from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';
 import { trim } from 'lodash';
 import { roles } from '@reactory/server-core/authentication/decorators';
@@ -49,6 +50,46 @@ export interface IOrganizationStatistics {
   members: number;
   businessUnits: number;
   teams: number;
+}
+
+/**
+ * Identity fields accepted by `updateBusinessUnit` (ORG-020).
+ *
+ * Every field is optional and follows the same three-state contract as
+ * `IOrganizationUpdateInput`: omit to leave untouched, `null`/blank to clear,
+ * a value to set. `name` is the exception - a business unit without a name is
+ * unusable (it is the key callers match on), so clearing it is rejected.
+ *
+ * Membership is deliberately NOT here: `members` is maintained by
+ * `addMemberToBusinessUnit` / `removeMemberFromBusinessUnit`, which also keep the
+ * Organigram pointer and the organization membership in step. Replacing the
+ * array through a generic update would silently desynchronise those records.
+ */
+export interface IBusinessUnitUpdateInput {
+  name?: string | null;
+  description?: string | null;
+  avatar?: string | null;
+  owner?: string | null;
+}
+
+/** Filter accepted by `pagedBusinessUnits`. */
+export interface IBusinessUnitFilter {
+  /** Matched case-insensitively against the name and description. */
+  search?: string | null;
+  /** Restrict to business units owned by this user id. */
+  owner?: string | null;
+  /** Restrict to business units this user id is a member of. */
+  member?: string | null;
+  /** Include soft-deleted rows. Defaults to false. */
+  includeDeleted?: boolean | null;
+  /** Return only soft-deleted rows. Implies `includeDeleted`. */
+  deletedOnly?: boolean | null;
+}
+
+/** Paged business unit envelope. Mirrors `PagedOrganizations`. */
+export interface IPagedBusinessUnits {
+  paging: Reactory.Models.IPagingResult;
+  businessUnits: Reactory.Models.IBusinessUnitDocument[];
 }
 
 @service({
@@ -504,6 +545,386 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
       await organization.save().then();      
       return $business_unit;
 
+  }
+
+  // ---- Business unit management (ORG-020) ----
+  //
+  // A business unit has no independent role model: authority over it is exactly
+  // authority over the organization that owns it. Every mutation below therefore
+  // runs `loadBusinessUnitForAdministration`, which resolves the parent
+  // organization and applies the same `assertOrgAdmin` check ORG-005 uses for
+  // organization mutations. An ORGANIZATION_ADMIN of organization A cannot
+  // mutate a business unit that belongs to organization B.
+
+  /** The organization id a business unit belongs to. */
+  private businessUnitOrganizationId(
+    businessUnit: Reactory.Models.IBusinessUnitDocument
+  ): string {
+    const organization: any = (businessUnit as any).organization;
+    if (!organization) return null;
+    if (typeof organization === 'string') return organization;
+    if (organization._id) return `${organization._id}`;
+    return `${organization}`;
+  }
+
+  /** Escapes a caller-supplied term so it can be used as a literal regex. */
+  private escapeRegExp(term: string): string {
+    return `${term}`.replace(/[.*+?^${}()|[\]\\]/g, (character) => `\\${character}`);
+  }
+
+  /**
+   * Loads a business unit after checking that the caller may administer the
+   * organization that owns it.
+   *
+   * The parent organization is the authorization boundary. Authorization runs
+   * before anything else so an unauthorized caller cannot use response timing
+   * or error messages to probe for business unit ids.
+   */
+  private async loadBusinessUnitForAdministration(
+    id: string | number | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IBusinessUnitDocument> {
+    if (!id || ObjectId.isValid(id as any) === false) {
+      throw new ApiError(`param id is not a valid ${id}`);
+    }
+
+    const businessUnit = await BusinessUnit.findById(id).then();
+    if (!businessUnit) {
+      throw new RecordNotFoundError(`Business Unit with the id ${id} could not be found`, 'BusinessUnit');
+    }
+
+    const organizationId = this.businessUnitOrganizationId(
+      businessUnit as unknown as Reactory.Models.IBusinessUnitDocument
+    );
+    if (!organizationId) {
+      throw new OrganizationNotFoundError(
+        `Business Unit ${id} is not linked to an organization and cannot be administered`,
+        `${id}`
+      );
+    }
+
+    this.assertOrgAdmin(organizationId, executionContext || this.context);
+
+    return businessUnit as unknown as Reactory.Models.IBusinessUnitDocument;
+  }
+
+  /**
+   * Updates a business unit's identity fields.
+   *
+   * Semantics match `updateOrganization`: an omitted field is left untouched,
+   * `null` or a blank string clears it, and any other value is trimmed and
+   * stored. Before this existed the resolver wrote the GraphQL input straight
+   * through `findByIdAndUpdate`, which (a) performed no authorization at all and
+   * (b) could not express "clear this field" because `undefined` keys are
+   * dropped by the driver.
+   *
+   * The name is the one field that cannot be cleared: it is how callers find a
+   * business unit (`findBusinessUnit`) and how `createBusinessUnit` detects a
+   * duplicate, so a nameless unit would break both.
+   */
+  @roles(['BUSINESS_UNIT_ADMIN', 'ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async updateBusinessUnit(
+    id: string | number | ObjectId,
+    updates: IBusinessUnitUpdateInput,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IBusinessUnitDocument> {
+    const businessUnit = await this.loadBusinessUnitForAdministration(id, executionContext);
+    const businessUnitDocument: any = businessUnit;
+
+    if (!updates || typeof updates !== 'object') {
+      throw new ApiError('Business Unit updates are required');
+    }
+
+    const name = this.normalizeOptionalText(updates.name);
+    if (name !== undefined) {
+      if (name === null) throw new ApiError('Business Unit name cannot be empty');
+
+      // Preserve the per-organization name uniqueness `createBusinessUnit`
+      // enforces. Renaming into a name that is already taken would leave two
+      // live units a caller cannot tell apart, because `findBusinessUnit`
+      // matches by name and would return an arbitrary one. Soft-deleted units
+      // are ignored: restoring a unit whose name was reused is an administrator
+      // decision, not a rename error.
+      const currentName = `${businessUnitDocument.name || ''}`.trim().toLowerCase();
+      if (name.toLowerCase() !== currentName) {
+        const organizationId = this.businessUnitOrganizationId(businessUnit);
+        const conflicting = await BusinessUnit.countDocuments({
+          organization: new ObjectId(organizationId),
+          _id: { $ne: (businessUnit as any)._id },
+          name: { $regex: `^${this.escapeRegExp(name)}$`, $options: 'i' },
+          deleted: { $ne: true },
+        }).then();
+
+        if (conflicting > 0) {
+          throw new BusinessUnitExistsError(
+            `Business Unit with name ${name} already exists in organization ${organizationId}`
+          );
+        }
+      }
+
+      businessUnitDocument.name = name;
+    }
+
+    const optionalTextFields: Array<'description' | 'avatar'> = ['description', 'avatar'];
+    optionalTextFields.forEach((field) => {
+      const value = this.normalizeOptionalText(updates[field]);
+      if (value !== undefined) businessUnitDocument[field] = value;
+    });
+
+    // Owner is a user reference, not free text: null clears it, anything else
+    // must be a user id. Existence is not checked here (create does not check it
+    // either) but the id must be well formed so the reference cannot dangle on a
+    // syntactically invalid value.
+    if (updates.owner !== undefined) {
+      const owner = this.normalizeOptionalText(updates.owner);
+      if (owner === null) {
+        businessUnitDocument.owner = null;
+      } else {
+        if (ObjectId.isValid(owner) === false) {
+          throw new ApiError(`param owner is not a valid user id ${owner}`);
+        }
+        businessUnitDocument.owner = new ObjectId(owner);
+      }
+    }
+
+    // Membership is deliberately not writable through this path: member
+    // management goes through `addMemberToBusinessUnit` /
+    // `removeMemberFromBusinessUnit`, which also move the Organigram pointer and
+    // the organization membership. Replacing the array here would desynchronise
+    // them.
+    businessUnitDocument.updatedAt = moment().valueOf();
+    businessUnitDocument.updatedBy = this.resolveActorId(executionContext);
+
+    await businessUnitDocument.save().then();
+
+    return businessUnit;
+  }
+
+  /**
+   * Soft-deletes a business unit. The document and its members are retained:
+   * `deleted` is the only thing that changes, so `restoreBusinessUnit` is a
+   * lossless undo and historical references stay resolvable.
+   *
+   * Listings (`businessUnitsForOrganization`, `pagedBusinessUnits`, the
+   * `Organization.businessUnits` property and the organization statistics)
+   * exclude `deleted: true` by default, which is what removes the unit from
+   * business-unit queries and from the options offered when assigning a
+   * membership.
+   */
+  @roles(['BUSINESS_UNIT_ADMIN', 'ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async deleteBusinessUnit(
+    id: string | number | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IBusinessUnitDocument> {
+    const businessUnit = await this.loadBusinessUnitForAdministration(id, executionContext);
+    const businessUnitDocument: any = businessUnit;
+
+    businessUnitDocument.deleted = true;
+    businessUnitDocument.updatedAt = moment().valueOf();
+    businessUnitDocument.updatedBy = this.resolveActorId(executionContext);
+
+    await businessUnitDocument.save().then();
+
+    return businessUnit;
+  }
+
+  /** Clears the soft-delete flag so the business unit is listed again. */
+  @roles(['BUSINESS_UNIT_ADMIN', 'ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async restoreBusinessUnit(
+    id: string | number | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IBusinessUnitDocument> {
+    const businessUnit = await this.loadBusinessUnitForAdministration(id, executionContext);
+    const businessUnitDocument: any = businessUnit;
+
+    businessUnitDocument.deleted = false;
+    businessUnitDocument.updatedAt = moment().valueOf();
+    businessUnitDocument.updatedBy = this.resolveActorId(executionContext);
+
+    await businessUnitDocument.save().then();
+
+    return businessUnit;
+  }
+
+  /**
+   * Paged, filterable business unit list for one organization.
+   *
+   * The envelope is the same `{ paging, <collection> }` shape
+   * `getPagedOrganizationsForLoggedInUser` and `getPagedTeamsForOrganization`
+   * already return, so clients can reuse one table component.
+   *
+   * Soft-deleted units are excluded unless `includeDeleted` is set; the
+   * `deletedOnly` variant exists so an administrator can find and restore them.
+   */
+  @roles(['USER'])
+  async pagedBusinessUnits(
+    organizationId: string | number | ObjectId,
+    filter?: IBusinessUnitFilter,
+    paging?: Reactory.Models.IPagingRequest
+  ): Promise<IPagedBusinessUnits> {
+    if (!organizationId || ObjectId.isValid(organizationId as any) === false) {
+      throw new ApiError(`param organizationId is not a valid ${organizationId}`);
+    }
+
+    const _organizationId = new ObjectId(organizationId as any);
+    const exists = await Organization.countDocuments({ _id: _organizationId }).then();
+    if (exists === 0) {
+      throw new OrganizationNotFoundError(
+        `Organization with the id ${organizationId} could not be found`,
+        `${organizationId}`
+      );
+    }
+
+    const dbQuery: Record<string, any> = { organization: _organizationId };
+
+    if (filter?.deletedOnly === true) {
+      dbQuery.deleted = true;
+    } else if (filter?.includeDeleted !== true) {
+      dbQuery.deleted = { $ne: true };
+    }
+
+    const search = `${filter?.search || ''}`.trim();
+    if (search.length > 0) {
+      // Escape the term: a caller searching for "R&D" must not submit an
+      // invalid regular expression.
+      const term = this.escapeRegExp(search);
+      dbQuery.$or = [
+        { name: { $regex: term, $options: 'i' } },
+        { description: { $regex: term, $options: 'i' } },
+      ];
+    }
+
+    if (filter?.owner) {
+      if (ObjectId.isValid(filter.owner) === false) {
+        throw new ApiError(`param owner is not a valid user id ${filter.owner}`);
+      }
+      dbQuery.owner = new ObjectId(filter.owner);
+    }
+
+    if (filter?.member) {
+      if (ObjectId.isValid(filter.member) === false) {
+        throw new ApiError(`param member is not a valid user id ${filter.member}`);
+      }
+      dbQuery.members = new ObjectId(filter.member);
+    }
+
+    const page = paging?.page || 1;
+    const pageSize = paging?.pageSize || 25;
+    const skip = (page - 1) * pageSize;
+
+    const [businessUnits, total] = await Promise.all([
+      BusinessUnit.find(dbQuery).sort({ name: 1 }).skip(skip).limit(pageSize).then(),
+      BusinessUnit.countDocuments(dbQuery).then(),
+    ]);
+
+    return {
+      // `BusinessUnit.find` resolves to hydrated mongoose documents, which are
+      // structurally the model type but not assignable to the registry's
+      // document interface; the envelope is the public shape callers consume.
+      businessUnits: businessUnits as unknown as Reactory.Models.IBusinessUnitDocument[],
+      paging: {
+        page,
+        pageSize,
+        total,
+        pageCount: Math.ceil(total / pageSize),
+        hasNext: (page * pageSize) < total,
+      } as Reactory.Models.IPagingResult,
+    };
+  }
+
+  /**
+   * Adds a user to a business unit and points their organization membership at
+   * it. Org-scoped against the business unit's parent organization, so this
+   * cannot be used to edit another tenant.
+   */
+  @roles(['BUSINESS_UNIT_ADMIN', 'ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async addMemberToBusinessUnit(
+    id: string | number | ObjectId,
+    memberId: string | number | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<boolean> {
+    const businessUnit = await this.loadBusinessUnitForAdministration(id, executionContext);
+    const businessUnitDocument: any = businessUnit;
+
+    if (!memberId || ObjectId.isValid(memberId as any) === false) {
+      throw new ApiError(`param memberId is not a valid ${memberId}`);
+    }
+
+    const user = await User.findById(memberId).then() as unknown as Reactory.Models.IUserDocument;
+    if (!user) {
+      throw new RecordNotFoundError(`User with the id ${memberId} could not be found`, 'User');
+    }
+
+    const organizationId = this.businessUnitOrganizationId(businessUnit);
+    const organigram = await Organigram.findOne({
+      user: (user as any).id || (user as any)._id,
+      organization: organizationId,
+    }).then();
+
+    if (organigram) {
+      (organigram as any).businessUnit = (businessUnit as any).id || (businessUnit as any)._id;
+      await organigram.save().then();
+    }
+
+    const members: any[] = Array.isArray(businessUnitDocument.members) ? businessUnitDocument.members : [];
+    const isMember = members.some((member: any) => `${member}` === `${(user as any)._id}`);
+    if (isMember === false) {
+      members.push((user as any)._id);
+      businessUnitDocument.members = members;
+    }
+
+    businessUnitDocument.updatedAt = moment().valueOf();
+    businessUnitDocument.updatedBy = this.resolveActorId(executionContext);
+    await businessUnitDocument.save().then();
+
+    return true;
+  }
+
+  /**
+   * Removes a user from a business unit and clears the business unit pointer on
+   * the matching organization membership. Org-scoped like every other business
+   * unit mutation.
+   */
+  @roles(['BUSINESS_UNIT_ADMIN', 'ORGANIZATION_ADMIN', 'ADMIN', 'SYSTEM'])
+  async removeMemberFromBusinessUnit(
+    id: string | number | ObjectId,
+    memberId: string | number | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<boolean> {
+    const businessUnit = await this.loadBusinessUnitForAdministration(id, executionContext);
+    const businessUnitDocument: any = businessUnit;
+
+    if (!memberId || ObjectId.isValid(memberId as any) === false) {
+      throw new ApiError(`param memberId is not a valid ${memberId}`);
+    }
+
+    const user = await User.findById(memberId).then() as unknown as Reactory.Models.IUserDocument;
+    if (!user) {
+      throw new RecordNotFoundError(`User with the id ${memberId} could not be found`, 'User');
+    }
+
+    const organizationId = this.businessUnitOrganizationId(businessUnit);
+    const organigram = await Organigram.findOne({
+      user: (user as any).id || (user as any)._id,
+      organization: organizationId,
+      businessUnit: (businessUnit as any).id || (businessUnit as any)._id,
+    }).then();
+
+    if (organigram) {
+      (organigram as any).businessUnit = null;
+      await organigram.save().then();
+    }
+
+    if (Array.isArray(businessUnitDocument.members)) {
+      businessUnitDocument.members = businessUnitDocument.members
+        .filter((member: any) => `${member}` !== `${(user as any)._id}`);
+    }
+
+    businessUnitDocument.updatedAt = moment().valueOf();
+    businessUnitDocument.updatedBy = this.resolveActorId(executionContext);
+    await businessUnitDocument.save().then();
+
+    return true;
   }
 
 
