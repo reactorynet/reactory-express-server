@@ -180,8 +180,36 @@ class OrganizationResolver {
 
   @property('Organization', 'businessUnits')
   async businessUnits(organization: Reactory.IOrganizationDocument, args: any, context: Reactory.Server.IReactoryContext) {
-    if (organization.businessUnits && organization.businessUnits.length > 0) return organization.businessUnits;
-    return BusinessUnit.find({ organization: organization._id }).then();
+    // ORG-020: business units are soft-deleted, and `organization.businessUnits`
+    // is a cache of saved documents. Filtering here keeps a soft-deleted unit
+    // out of the org document and every list built from it, and automatically
+    // brings it back once `restoreBusinessUnit` clears the flag.
+    const cachedBusinessUnits: any[] = Array.isArray(organization.businessUnits)
+      ? (organization.businessUnits as any[])
+      : [];
+
+    // Return the cached array by identity when nothing needs filtering. This is
+    // the documented contract of this resolver - it hands back the array that
+    // is already populated on the document instead of querying - and other
+    // merges (DemographicResolver) assert it. Only allocate when a soft-deleted
+    // entry actually has to be removed.
+    //
+    // `businessUnits` is `[ObjectId]` in the model and populated only on some
+    // service paths; an ObjectId carries no `deleted` flag, so the filter below
+    // is a no-op for unpopulated references and the deleted filter lives in the
+    // fallback query and in `businessUnitsForOrganization` /
+    // `pagedBusinessUnits`, which is what clients listing units should use.
+    if (cachedBusinessUnits.length > 0) {
+      const hasDeleted = cachedBusinessUnits.some(
+        (businessUnit: any) => businessUnit?.deleted === true,
+      );
+
+      return hasDeleted
+        ? cachedBusinessUnits.filter((businessUnit: any) => businessUnit?.deleted !== true)
+        : cachedBusinessUnits;
+    }
+
+    return BusinessUnit.find({ organization: organization._id, deleted: { $ne: true } }).then();
   }
 
   @property('Organization', 'createdAt')
