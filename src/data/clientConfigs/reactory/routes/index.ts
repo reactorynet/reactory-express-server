@@ -545,6 +545,52 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     roles: ["ADMIN"],
     componentFqn: "reactory.ApplicationOrganizationsPanel@1.0.0",
   },
+  // ORG-015: entry points for the organization management surface delivered by
+  // ORG-010/011/013 (components registered by the reactory-core
+  // `organization-management` plugin as `reactory.Organization*Panel/Page@1.0.0`).
+  // These are *additional* routes: the legacy `organizations` route above is
+  // deliberately left untouched and unredirected until ORG-042 retires
+  // `reactory.ApplicationOrganizationsPanel@1.0.0`.
+  //
+  // Ordering matters: `/organizations/manage/create` is listed before
+  // `/organizations/manage/:id` so a consumer that resolves routes in
+  // declaration order still hits the static segment first. React Router ranks a
+  // static segment above a dynamic one independently of order, but that is
+  // asserted in `__tests__/organizationRoutes.test.ts` rather than assumed.
+  //
+  // `roles` stay "ADMIN" and `public` stays false to match the existing
+  // organizations route's access boundary — do not widen either.
+  {
+    key: "organizations-manage",
+    title: "Manage Organizations",
+    path: "/organizations/manage/",
+    exact: true,
+    public: false,
+    roles: ["ADMIN"],
+    componentFqn: "reactory.OrganizationListPanel@1.0.0",
+  },
+  {
+    key: "organizations-manage-create",
+    title: "Create Organization",
+    path: "/organizations/manage/create",
+    exact: true,
+    public: false,
+    roles: ["ADMIN"],
+    componentFqn: "reactory.OrganizationCreatePage@1.0.0",
+  },
+  {
+    key: "organizations-manage-detail",
+    title: "Organization",
+    path: "/organizations/manage/:id",
+    exact: false,
+    public: false,
+    roles: ["ADMIN"],
+    componentFqn: "reactory.OrganizationDetailPanel@1.0.0",
+    // `OrganizationDetailPanel` accepts `id` or `organizationId` and treats `id`
+    // as the documented route argument; `${route.id}` is the same substitution
+    // form used by `reactor-project-detail` in this file.
+    componentProps: { id: "${route.id}" },
+  },
 
   {
     key: "general-support",
