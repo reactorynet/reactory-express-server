@@ -207,13 +207,26 @@ describe('demographic aggregate arithmetic (ORG-035)', () => {
       );
 
       expect(aggregate.suppressed).toBe(true);
-      expect(aggregate.suppressedCohorts).toBe(2);
       expect(aggregate.buckets).toEqual([]);
       expect(aggregate.cohortTotal).toBe(0);
       expect(aggregate.percentageDenominator).toBe(0);
     });
 
-    it('reports an empty definition exactly like a fully suppressed one', () => {
+    it('masks suppressedCohorts when nothing survives, so it is not a disclosure', () => {
+      const aggregate = buildDemographicDefinitionAggregate(
+        GENDER,
+        [...cohort('male', 3), ...cohort('female', 2, 100)],
+        5,
+      );
+
+      // Two buckets existed and both were withheld. Reporting "2" here would
+      // tell the caller the definition has two distinct answers, each held by
+      // 1..k-1 members - so the count is masked instead.
+      expect(aggregate.suppressed).toBe(true);
+      expect(aggregate.suppressedCohorts).toBeNull();
+    });
+
+    it('reports an empty definition exactly like a fully suppressed one, suppressedCohorts included', () => {
       const empty = buildDemographicDefinitionAggregate(GENDER, [], 5);
       const suppressed = buildDemographicDefinitionAggregate(
         GENDER,
@@ -221,9 +234,20 @@ describe('demographic aggregate arithmetic (ORG-035)', () => {
         5,
       );
 
-      expect(empty.suppressed).toBe(suppressed.suppressed);
-      expect(empty.buckets).toEqual(suppressed.buckets);
-      expect(empty.cohortTotal).toBe(suppressed.cohortTotal);
+      // Every field must match - including suppressedCohorts, which is the
+      // field that used to falsify this test's name (it was 2 for the
+      // suppressed case and 0 for the empty one). Comparing the whole object
+      // is the only assertion that cannot be quietly side-stepped by a future
+      // field being added.
+      expect(suppressed).toEqual(empty);
+      expect(empty.suppressedCohorts).toBeNull();
+      expect(suppressed.suppressedCohorts).toBeNull();
+      expect(empty.suppressed).toBe(true);
+      expect(suppressed.suppressed).toBe(true);
+      expect(empty.buckets).toEqual([]);
+      expect(suppressed.buckets).toEqual([]);
+      expect(empty.cohortTotal).toBe(0);
+      expect(suppressed.cohortTotal).toBe(0);
     });
   });
 

@@ -348,6 +348,25 @@ describe('DemographicsService.aggregate (ORG-035)', () => {
       expect(report.definitions[0].suppressedCohorts).toBe(1);
     });
 
+    it('masks suppressedCohorts in the response when nothing survives', async () => {
+      const gender = makeDefinition();
+      primeModels({
+        definitions: [gender],
+        values: [...valuesFor(gender, 'male', 3), ...valuesFor(gender, 'female', 2)],
+        policy: { minimumAggregationGroupSize: 5 },
+      });
+
+      const report = await adminService().service.aggregate(ORGANIZATION_ID);
+      const aggregate = report.definitions[0];
+
+      // Two cohorts were withheld. Saying so would confirm the definition has
+      // two distinct answers, each held by 1..k-1 members, so the count is
+      // masked - the same null an unanswered definition returns.
+      expect(aggregate.suppressed).toBe(true);
+      expect(aggregate.suppressedCohorts).toBeNull();
+      expect(report.suppressedDefinitions).toBe(1);
+    });
+
     it('never returns a total a suppressed cohort could be derived from', async () => {
       const gender = makeDefinition();
       primeModels({

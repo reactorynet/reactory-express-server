@@ -1557,9 +1557,11 @@ export class DemographicsService {
    *
    * An audit failure is logged at `error` level and does not fail the report: a
    * sink outage must not black out the compliance report an administrator is
-   * trying to read. The count fields written here are counts of REPORTED
-   * cohorts only - the audit trail must not become the leak the report refuses
-   * to be.
+   * trying to read. The counts written here are the ones the report already
+   * discloses: `bucketsReturned`, the (possibly masked) `cohortsWithheld`,
+   * `cohortTotal` and the raw `valuesRead` row count. No pre-suppression
+   * population is recorded - the audit trail must not become the leak the
+   * report refuses to be.
    */
   private async auditAggregateSensitiveRead(params: {
     organizationId: string;

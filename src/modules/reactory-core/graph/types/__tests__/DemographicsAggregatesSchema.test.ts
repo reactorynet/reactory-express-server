@@ -97,12 +97,23 @@ describe('Demographics aggregate GraphQL surface (ORG-035)', () => {
 
     const definition = collectFields('DemographicDefinitionAggregate');
     expect(typeOf(definition, 'suppressed')).toBe('Boolean!');
-    expect(typeOf(definition, 'suppressedCohorts')).toBe('Int!');
+    expect(typeOf(definition, 'suppressedCohorts')).toBe('Int');
     expect(typeOf(definition, 'cohortTotal')).toBe('Int!');
     expect(typeOf(definition, 'percentageDenominator')).toBe('Int!');
     expect(typeOf(definition, 'denominatorKind')).toBe('String!');
     expect(typeOf(definition, 'sensitive')).toBe('Boolean!');
     expect(typeOf(definition, 'buckets')).toBe('[DemographicAggregateBucket!]!');
+  });
+
+  it('makes suppressedCohorts nullable, so a suppressed definition discloses no cohort count', () => {
+    // This nullability IS the privacy guarantee, not an oversight. If the field
+    // were `Int!`, a definition whose every bucket was withheld would report a
+    // count of withheld buckets, which distinguishes it from a definition
+    // nobody answered and reveals that the definition has answers at all.
+    const definition = collectFields('DemographicDefinitionAggregate');
+
+    expect(typeOf(definition, 'suppressed')).toBe('Boolean!');
+    expect(typeOf(definition, 'suppressedCohorts')).toBe('Int');
   });
 
   it('offers the documented filter fields', () => {

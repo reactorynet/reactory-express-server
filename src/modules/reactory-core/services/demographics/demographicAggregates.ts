@@ -25,9 +25,15 @@
  *    the denominator is returned explicitly (`percentageDenominator` plus
  *    `denominatorKind`) so a UI cannot silently relabel it.
  * 4. When no bucket survives, the whole definition is reported as
- *    `suppressed: true` with no buckets and no totals. An empty definition and
- *    a 1..k-1 cohort are reported identically, so the payload does not reveal
- *    whether anybody answered at all.
+ *    `suppressed: true` with no buckets and no totals, and `suppressedCohorts`
+ *    is null. An empty definition and a 1..k-1 cohort are therefore reported
+ *    identically - every field matches - so the payload does not reveal
+ *    whether anybody answered at all. The count of withheld buckets is
+ *    itself a disclosure once nothing survives (2 withheld buckets means two
+ *    distinct answers, each held by 1..k-1 members), which is why it is
+ *    masked here instead of reported. A *partially* suppressed definition
+ *    still reports `suppressedCohorts`, because a caller who can already see
+ *    surviving buckets cannot use that number to resurrect a withheld one.
  *
  * `count` is always a number of DISTINCT MEMBERS, never a number of documents
  * and never a number of selections: a multi-valued definition lets one member
@@ -80,11 +86,20 @@ export interface IDemographicDefinitionAggregate {
   /**
    * True when nothing may be reported for this definition: its surviving
    * cohort is empty, either because nobody answered or because every bucket
-   * was below the threshold.
+   * was below the threshold. The two cases are intentionally
+   * indistinguishable.
    */
   suppressed: boolean;
-  /** How many buckets were withheld. Never how many members they held. */
-  suppressedCohorts: number;
+  /**
+   * How many buckets were withheld. Never how many members they held.
+   *
+   * Null when `suppressed` is true: once nothing survives, the number of
+   * withheld buckets is itself a disclosure (it would tell a caller that two
+   * distinct answers exist, each held by 1..k-1 members) and it would make
+   * "nobody answered" distinguishable from "a small cohort". Keeping it null
+   * in both cases is what makes the two reports identical.
+   */
+  suppressedCohorts: number | null;
   /** Distinct members behind the surviving buckets. Also the denominator. */
   cohortTotal: number;
   /** Explicit alias of `cohortTotal`, so the UI cannot mislabel it. */
@@ -313,7 +328,10 @@ export const buildDemographicDefinitionAggregate = (
       sensitive: definition?.sensitive === true,
       multiValued: definition?.multiValued === true,
       suppressed: true,
-      suppressedCohorts,
+      // Masked on purpose - see the field doc. Reporting 2 here for a
+      // two-bucket 1..k-1 cohort would distinguish it from an empty
+      // definition and disclose that the definition has answers at all.
+      suppressedCohorts: null,
       cohortTotal: 0,
       percentageDenominator: 0,
       denominatorKind: DEMOGRAPHIC_AGGREGATE_DENOMINATOR_KIND,
@@ -331,6 +349,8 @@ export const buildDemographicDefinitionAggregate = (
     sensitive: definition?.sensitive === true,
     multiValued: definition?.multiValued === true,
     suppressed: false,
+    // A surviving bucket lets no withheld bucket be reconstructed, so the
+    // count is safe to disclose here.
     suppressedCohorts,
     // The denominator is the post-suppression cohort, and it is also the only
     // total in the payload. There is deliberately no pre-suppression count.
@@ -341,18 +361,61 @@ export const buildDemographicDefinitionAggregate = (
       key: bucket.key,
       label: bucket.label,
       count: bucket.count,
+      // Defensive zero guard: unreachable today, because a surviving bucket
+      // proves `cohortTotal >= threshold >= 1`, and this is the one branch
+      // the coverage report will always show uncovered. Kept so a future
+      // reordering cannot emit NaN (or Infinity) into a report or a CSV.
       percentage: cohortTotal > 0 ? roundPercentage((bucket.count / cohortTotal) * 100) : 0,
     })),
   };
 };
 
+/**
+ * Characters a spreadsheet treats as the start of a formula.
+ *
+ * `=` `+` `-` `@` are the classic four, and a leading TAB or CR is a known
+ * bypass (Excel strips the whitespace and then evaluates what follows). Every
+ * one of these can appear in a cell that came from a member: a free-text
+ * `string` definition value becomes a bucket key AND a bucket label, and a
+ * definition `title` is administrator-supplied. An exported CSV that a
+ * spreadsheet opens must never execute those.
+ */
+const CSV_FORMULA_PREFIXES = ['=', '+', '-', '@', '\t', '\r'];
+
+/**
+ * Serialises one CSV cell.
+ *
+ * Two passes, in this order:
+ *
+ * 1. **Neutralise formula injection.** A cell whose first character is one of
+ *    `CSV_FORMULA_PREFIXES` is prefixed with a single quote, so Excel/Sheets/
+ *    LibreOffice show it as text instead of evaluating it. This is applied to
+ *    every cell - including `definition_title`, `bucket_key` and `bucket_label`
+ *    - because any of them can carry attacker-controlled text.
+ * 2. **Quote for CSV structure.** A cell containing a quote, comma, CR or LF
+ *    is quoted with embedded quotes doubled, as RFC 4180 requires.
+ *
+ * The order matters: neutralising first means the injected `'` is inside the
+ * quoted field, so a value like `=HYPERLINK("http://x","y")` becomes
+ * `"'=HYPERLINK(""http://x"",""y"")"` - inert text that still round-trips
+ * through a CSV parser as the original value plus the guard quote.
+ */
 const csvCell = (value: unknown): string => {
   if (value === undefined || value === null) return '';
+
   const text = `${value}`;
-  if (text.indexOf('"') >= 0 || text.indexOf(',') >= 0 || text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0) {
-    return `"${text.split('"').join('""')}"`;
+  const first = text.charAt(0);
+  const neutralised = CSV_FORMULA_PREFIXES.indexOf(first) >= 0 ? `'${text}` : text;
+
+  if (
+    neutralised.indexOf('"') >= 0 ||
+    neutralised.indexOf(',') >= 0 ||
+    neutralised.indexOf('\n') >= 0 ||
+    neutralised.indexOf('\r') >= 0
+  ) {
+    return `"${neutralised.split('"').join('""')}"`;
   }
-  return text;
+  return neutralised;
 };
 
 /**
@@ -376,6 +439,9 @@ export const buildDemographicAggregateCsv = (report: IDemographicAggregateReport
       definition.sensitive === true,
       definition.suppressed === true,
       definition.suppressedCohorts,
+      // `suppressedCohorts` is null for a suppressed definition, and
+      // `csvCell` renders null as an empty cell - the export says "suppressed"
+      // without saying how much was suppressed.
       definition.cohortTotal,
       definition.percentageDenominator,
       definition.denominatorKind,

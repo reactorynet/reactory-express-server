@@ -244,8 +244,9 @@ input OrganizationDemographicsPolicyInput {
 # 1. `minimumAggregationGroupSize` is read from the organization's policy and
 #    echoed on the report. A cohort smaller than it is removed entirely - it is
 #    never zeroed and never folded into an "other" bucket - and
-#    `suppressedCohorts` says how many buckets were withheld. Bucket counts are
-#    therefore always >= the threshold.
+#    `suppressedCohorts` says how many buckets were withheld (null when nothing
+#    survives - see the field doc). Bucket counts are therefore always >= the
+#    threshold.
 # 2. There is no pre-suppression total anywhere. `cohortTotal` and
 #    `percentageDenominator` are the same number: the distinct members behind
 #    the *surviving* buckets. Returning a population count as well would let a
@@ -270,7 +271,9 @@ Aggregation of one definition for one organization and filter set.
 
 `suppressed: true` means nothing may be reported for this definition - either
 nobody answered or every bucket was below the threshold. The two cases are
-indistinguishable on purpose, so the payload never reveals which one applies.
+indistinguishable on purpose: every field matches, including
+`suppressedCohorts`, which is null in both cases, so the payload never reveals
+which one applies - nor whether the definition has any answers at all.
 """
 type DemographicDefinitionAggregate {
   definitionKey: String!
@@ -287,8 +290,16 @@ type DemographicDefinitionAggregate {
   suppressed: Boolean!
   """
   How many buckets were withheld. A bucket count, never a member count.
+
+  Null when `suppressed` is true. Once nothing survives, the number of
+  withheld buckets is itself a disclosure - two withheld buckets would say
+  that two distinct answers exist, each held by 1..k-1 members - and it would
+  make "nobody answered" distinguishable from "a small cohort". Masking it is
+  what makes those two reports identical. A partially suppressed definition
+  still reports the count, because a caller who already sees surviving buckets
+  cannot use it to reconstruct a withheld one.
   """
-  suppressedCohorts: Int!
+  suppressedCohorts: Int
   """
   Distinct members behind the surviving buckets. This is the ONLY total in the
   payload and it is also the percentage denominator.
