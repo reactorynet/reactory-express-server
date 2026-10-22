@@ -1,13 +1,67 @@
+import Reactory from '@reactorynet/reactory-core';
 import { ObjectId } from 'mongodb';
 import { indexOf, remove } from 'lodash';
+import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, query, mutation, property } from '@reactory/server-core/models/graphql/decorators/resolver';
 import {
   Team,
+  BusinessUnit,
   Organization,
   User,
 } from '@reactory/server-modules/reactory-core/models'
 
-import { OrganizationNotFoundError, BusinessUnitExistsError, ValidationError, RecordNotFoundError } from '@reactory/server-core/exceptions';
+import {
+  OrganizationNotFoundError,
+  BusinessUnitExistsError,
+  ValidationError,
+  RecordNotFoundError,
+} from '@reactory/server-core/exceptions';
+
+/**
+ * The team surface added by ORG-021.
+ *
+ * Declared locally because the published `IReactoryOrganizationService`
+ * interface ships in the packaged `reactory-core` types and predates these
+ * operations - the same approach ORG-020 took for business units and ORG-004
+ * for themes. The execution context is forwarded so the service's org-scoped
+ * `assertOrgAdmin` check evaluates the caller, not whatever context the
+ * singleton happened to be constructed with.
+ */
+export interface ITeamService {
+  createTeam(
+    organizationId: string,
+    name: string,
+    executionContext?: Reactory.Server.IReactoryContext,
+    businessUnitId?: string | null,
+  ): Promise<any>;
+  updateTeam(
+    id: string,
+    updates: any,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<any>;
+  moveTeamToBusinessUnit(
+    id: string,
+    businessUnitId: string,
+    executionContext?: Reactory.Server.IReactoryContext,
+  ): Promise<any>;
+  pagedTeams(
+    organizationId: string,
+    filter?: any,
+    paging?: Reactory.Models.IPagingRequest,
+  ): Promise<{ paging: Reactory.Models.IPagingResult; teams: any[] }>;
+}
+
+const ORGANIZATION_SERVICE_ID = 'core.OrganizationService@1.0.0';
+
+/**
+ * Cheap first gate for team administration. The service performs the real check
+ * (`assertOrgAdmin` against the team's parent organization); these roles only
+ * prove the caller holds *a* privileged role somewhere.
+ */
+const TEAM_ADMIN_ROLES = ['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'];
+
+const teamService = (context: Reactory.Server.IReactoryContext): ITeamService =>
+  context.getService(ORGANIZATION_SERVICE_ID) as unknown as ITeamService;
 
 //@ts-ignore - this has to be called without the () as this throws an error in the decorator
 @resolver
@@ -34,6 +88,18 @@ class TeamResolver {
   async organization(team: any) {
     if (team.organization) {
       return Organization.findById(team.organization).then();
+    }
+    return null;
+  }
+
+  /**
+   * Resolves the team's business unit link (ORG-021). `null` when the team is
+   * not assigned to a unit, which is a valid state.
+   */
+  @property('Team', 'businessUnit')
+  async businessUnit(team: any) {
+    if (team.businessUnit) {
+      return BusinessUnit.findById(team.businessUnit).then();
     }
     return null;
   }
@@ -67,7 +133,7 @@ class TeamResolver {
     const { id, searchString } = args;
     const organization = await Organization.findById(id).then();
     if (organization) {
-      const query: any = { organization: organization._id };
+      const query: any = { organization: organization._id, deleted: { $ne: true } };
       if (searchString) {
         query.name = new RegExp(`${searchString}`, 'g');
       }
@@ -88,6 +154,10 @@ class TeamResolver {
     return Team.findById(id).then();
   }
 
+  /**
+   * Legacy paged query. Kept for existing consumers; it retains its
+   * cross-organization listing behaviour when `filter.organization` is omitted.
+   */
   @query('ReactoryTeams')
   async ReactoryTeams(parent: any, args: any, context: any) {
     try {
@@ -114,12 +184,29 @@ class TeamResolver {
     }
   }
 
+  /**
+   * Paged, filterable teams for one organization (ORG-021). Mirrors
+   * `pagedBusinessUnits`: same `{ paging, teams }` envelope, requires a real
+   * organization id, and supports `filter.businessUnitId`.
+   */
+  @query('pagedTeams')
+  @roles(['USER'])
+  async pagedTeams(obj: any, args: any, context: Reactory.Server.IReactoryContext) {
+    const { organizationId, filter, paging } = args;
+    return teamService(context).pagedTeams(organizationId, filter, paging);
+  }
+
   @mutation('createTeam')
   async createTeam(obj: any, args: any, context: any) {
     const { input } = args;
     if (input.organization) {
       const organizationService = context.getService('core.OrganizationService@1.0.0') as any;
-      return await organizationService.createTeam(input.organization, input.name || input.title, context);
+      return await organizationService.createTeam(
+        input.organization,
+        input.name || input.title,
+        context,
+        input.businessUnit
+      );
     }
     throw new ValidationError('Could not validate the input');
   }
@@ -132,6 +219,18 @@ class TeamResolver {
       return await organizationService.updateTeam(id, input, context);
     }
     return null;
+  }
+
+  /**
+   * Moves a team into a business unit. Delegates to
+   * `OrganizationService.moveTeamToBusinessUnit`, which re-validates both sides
+   * and enforces the org-scoped authorization boundary.
+   */
+  @mutation('moveTeamToBusinessUnit')
+  @roles(TEAM_ADMIN_ROLES)
+  async moveTeamToBusinessUnit(parent: any, args: any, context: Reactory.Server.IReactoryContext) {
+    const { id, businessUnitId } = args;
+    return teamService(context).moveTeamToBusinessUnit(id, businessUnitId, context);
   }
 
   @mutation('addMemberToTeam')

@@ -1,6 +1,12 @@
 type Team {
   id: ObjID!
   organization: Organization
+  """
+  The business unit the team reports into. Null when the team is not (yet)
+  assigned to a unit. Maintained by `createTeam`, `updateTeam` and
+  `moveTeamToBusinessUnit`; the unit must belong to the same organization.
+  """
+  businessUnit: BusinessUnit
   owner: User
   """
   Title will be deprecated and name will be preferred
@@ -11,16 +17,29 @@ type Team {
   avatar: String
   meta: Meta
   members: [User]  
+  """
+  Soft-delete flag. Deleted teams are retained and excluded from listings.
+  """
+  deleted: Boolean
   createdAt: Date!
   updatedAt: Date!
 }
 
+"""
+Create/update payload for a team.
+
+`owner` and `businessUnit` follow the business unit contract: on update, omit a
+field to leave it unchanged and pass `null` to clear it. `organization` is only
+meaningful on create - a team cannot be moved between organizations.
+"""
 input TeamInput {
   title: String
   name: String
   description: String
   avatar: String
   organization: String
+  owner: String
+  businessUnit: String
 }
 
 input ReactoryTeamFilter { 
@@ -28,6 +47,10 @@ input ReactoryTeamFilter {
   organization: String
   owner: String
   member: String
+  """
+  Restrict to teams linked to this business unit id.
+  """
+  businessUnitId: String
   createdBefore: Date
   createdAfter: Date
   updatedBefore: Date
@@ -37,6 +60,15 @@ input ReactoryTeamFilter {
 type ReactoryTeamPagedResults { 
   teams: [Team]
   paging: PagingResult
+}
+
+"""
+Paged team envelope. Mirrors `PagedBusinessUnits` so the organization structure
+screen can page teams and business units with one table component.
+"""
+type PagedTeams {
+  paging: PagingResult
+  teams: [Team]
 }
 
 type ReactoryTeamsQueryFailed {
@@ -51,13 +83,32 @@ extend type Query {
   ReactoryTeams(paging: PagingRequest, filter: ReactoryTeamFilter): ReactoryTeamsQueryResult
   team(id: String!): Team
   teamsForOrganization(id: String!): [Team]
+  """
+  Paged, filterable teams for one organization. Excludes soft-deleted teams and
+  understands `filter.businessUnitId`, `filter.search`, `filter.owner` and
+  `filter.member`.
+  """
+  pagedTeams(organizationId: String!, filter: ReactoryTeamFilter, paging: PagingRequest): PagedTeams @auth(roles: ["USER"])
 }
 
 
-
 extend type Mutation {
+  """
+  Creates a team. `input.businessUnit` is optional and must reference a live
+  business unit of `input.organization`.
+  """
   createTeam(input: TeamInput): Team @auth(roles: ["USER", "ADMIN"])
+  """
+  Updates a team. The service additionally enforces org-scoped authorization
+  against the team's parent organization, so an ORGANIZATION_ADMIN of
+  organization A cannot update a team in organization B.
+  """
   updateTeam(id: String!, input: TeamInput): Team @auth(roles: ["USER", "ADMIN"])
+  """
+  Moves a team into a business unit. Both must belong to the same organization;
+  a cross-organization move is rejected.
+  """
+  moveTeamToBusinessUnit(id: String!, businessUnitId: String!): Team @auth(roles: ["BUSINESS_UNIT_ADMIN", "ORGANIZATION_ADMIN", "ADMIN", "SYSTEM"])
   addMemberToTeam(id: String!, memberId: String!): Boolean @auth(roles: ["USER", "ADMIN"])
   removeMemberFromTeam(id: String!, memberId: String!): Boolean @auth(roles: ["USER", "ADMIN"])
   deleteTeam(id: String!): Boolean @auth(roles: ["USER", "ADMIN"])
