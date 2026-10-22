@@ -30,6 +30,11 @@ src/workflow/.sample_env
 
 src/data/clientConfigs/**
 !src/data/clientConfigs/helpers**
+# The directory itself must be re-included before anything inside it can be:
+# git never descends into an excluded directory, so `reactory/**` alone left
+# every newly added file under it silently ignored (existing files are only
+# tracked because they predate the rule or were force-added).
+!src/data/clientConfigs/reactory
 !src/data/clientConfigs/reactory/**
 !src/data/clientConfigs/index.ts
 !src/data/clientConfigs/readme.md

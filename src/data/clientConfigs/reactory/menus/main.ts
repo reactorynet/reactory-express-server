@@ -215,6 +215,19 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
       roles: ["USER"],
     },
     {
+      // ORG-015: entry point for the organization management UI
+      // (`reactory.OrganizationListPanel@1.0.0`). Kept as a separate ADMIN-only
+      // entry so the legacy `/organizations/` entry above is neither changed nor
+      // removed before ORG-042 retires it. The label is an i18n key like every
+      // other entry in this file — the string lives with the rest of the
+      // `reactory.menu.*` keys.
+      ordinal: 91,
+      title: "reactory:reactory.menu.organizations-manage",
+      link: "/organizations/manage",
+      icon: "manage_accounts",
+      roles: ["ADMIN"],
+    },
+    {
       ordinal: 9,
       title: "reactory:reactory.menu.my-comments",
       link: "/my/comments",
