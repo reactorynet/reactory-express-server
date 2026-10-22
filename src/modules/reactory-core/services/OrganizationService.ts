@@ -92,6 +92,51 @@ export interface IPagedBusinessUnits {
   businessUnits: Reactory.Models.IBusinessUnitDocument[];
 }
 
+/**
+ * Fields accepted by `updateTeam`'s business-unit and ownership surface
+ * (ORG-021).
+ *
+ * `owner` and `businessUnit` follow the same three-state contract as the
+ * business unit updates: omit to leave untouched, `null` to clear, a value to
+ * set. The text fields keep the ORG-001 behaviour (only provided, non-empty
+ * values are written).
+ *
+ * `organization` is deliberately absent: a team cannot be moved between
+ * organizations, as that would sidestep the org-scoped authorization boundary.
+ * `members` is absent too: membership is maintained by `addMemberToTeam` and
+ * `removeMemberFromTeam`.
+ */
+export interface ITeamUpdateInput {
+  name?: string | null;
+  title?: string | null;
+  description?: string | null;
+  avatar?: string | null;
+  owner?: string | null;
+  businessUnit?: string | null;
+}
+
+/** Filter accepted by `pagedTeams` / `getPagedTeamsForOrganization`. */
+export interface ITeamFilter {
+  /** Matched case-insensitively against the team name and title. */
+  search?: string | null;
+  /** Restrict to teams owned by this user id. */
+  owner?: string | null;
+  /** Restrict to teams this user id is a member of. */
+  member?: string | null;
+  /** Restrict to teams linked to this business unit id. */
+  businessUnitId?: string | null;
+  createdBefore?: Date | string | null;
+  createdAfter?: Date | string | null;
+  updatedBefore?: Date | string | null;
+  updatedAfter?: Date | string | null;
+}
+
+/** Paged team envelope. Mirrors `PagedBusinessUnits` (ORG-020). */
+export interface IPagedTeams {
+  paging: Reactory.Models.IPagingResult;
+  teams: Reactory.Models.ITeamDocument[];
+}
+
 @service({
   id: 'core.OrganizationService@1.0.0',
   name: 'ReactoryOrganizationService',
@@ -928,6 +973,165 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
   }
 
 
+  // ---- Team management (ORG-021) ----
+  //
+  // A team has no independent role model either: authority over it is exactly
+  // authority over the organization that owns it. Every team mutation below
+  // resolves the parent organization and applies the same `assertOrgAdmin`
+  // check ORG-020 uses for business units, so an ORGANIZATION_ADMIN of
+  // organization A cannot mutate a team that belongs to organization B.
+
+  /** The organization id a team belongs to. */
+  private teamOrganizationId(team: any): string {
+    const organization = team?.organization;
+    if (!organization) return null;
+    if (typeof organization === 'string') return organization;
+    if (organization._id) return `${organization._id}`;
+    return `${organization}`;
+  }
+
+  /**
+   * Loads a team after checking that the caller may administer the organization
+   * that owns it. Authorization runs first so an unauthorized caller cannot use
+   * response timing or error messages to probe for team ids.
+   */
+  private async loadTeamForAdministration(
+    id: string | number | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<any> {
+    if (!id || ObjectId.isValid(id as any) === false) {
+      throw new ApiError(`param id is not a valid ${id}`);
+    }
+
+    const team = await Team.findById(id).then();
+    if (!team) {
+      throw new RecordNotFoundError(`Team with the id ${id} could not be found`, 'Team');
+    }
+
+    const organizationId = this.teamOrganizationId(team);
+    if (!organizationId) {
+      throw new OrganizationNotFoundError(
+        `Team ${id} is not linked to an organization and cannot be administered`,
+        `${id}`
+      );
+    }
+
+    this.assertOrgAdmin(organizationId, executionContext || this.context);
+
+    return team;
+  }
+
+  /**
+   * Resolves and validates an optional business unit reference for a team.
+   *
+   * A team may only be linked to a live business unit of its *own*
+   * organization. Cross-organization links would make the team searchable (and
+   * its reporting) leak across the tenant boundary that `assertOrgAdmin`
+   * enforces, so they are rejected rather than silently coerced.
+   *
+   * Callers handle `undefined` (leave unchanged) and `null` (clear) before
+   * calling; any concrete value is returned as an ObjectId.
+   */
+  private async resolveTeamBusinessUnit(
+    organizationId: string,
+    businessUnitId: string | number | ObjectId
+  ): Promise<ObjectId | null> {
+    const value = this.normalizeOptionalText(businessUnitId as any);
+    if (value === null || value === undefined) return null;
+
+    if (ObjectId.isValid(value) === false) {
+      throw new ApiError(`param businessUnit is not a valid business unit id ${value}`);
+    }
+
+    const businessUnit = await BusinessUnit.findById(value).then();
+    if (!businessUnit) {
+      throw new RecordNotFoundError(
+        `Business Unit with the id ${value} could not be found`,
+        'BusinessUnit'
+      );
+    }
+
+    if ((businessUnit as any).deleted === true) {
+      throw new ApiError(
+        `Business Unit with the id ${value} is deleted and cannot be linked to a team`
+      );
+    }
+
+    const unitOrganizationId = this.businessUnitOrganizationId(businessUnit);
+    if (`${unitOrganizationId}` !== `${organizationId}`) {
+      throw new ApiError(
+        `Business Unit with the id ${value} does not belong to organization ${organizationId}`
+      );
+    }
+
+    return new ObjectId(value);
+  }
+
+  /**
+   * Shared query builder for the paged team listings. Keeps
+   * `getPagedTeamsForOrganization` (legacy, cross-organization capable) and
+   * `pagedTeams` (organization-scoped, ORG-021) on one filter contract:
+   * organization + search + owner/member/business unit + soft-delete exclusion.
+   */
+  private buildTeamPagedQuery(
+    organization_id: string | number | ObjectId | null,
+    filter?: ITeamFilter
+  ): Record<string, any> {
+    const dbQuery: Record<string, any> = { deleted: { $ne: true } };
+
+    // Add organization filter only if organization_id is provided and valid
+    if (organization_id && ObjectId.isValid(organization_id as any)) {
+      dbQuery.organization = new ObjectId(organization_id as any);
+    }
+
+    if (filter) {
+      const search = `${filter.search || ''}`.trim();
+      if (search.length > 0) {
+        // Escape the term: a caller searching for "R&D (core)" must be a
+        // literal match, not an invalid regular expression.
+        const term = this.escapeRegExp(search);
+        dbQuery.$or = [
+          { name: { $regex: term, $options: 'i' } },
+          { title: { $regex: term, $options: 'i' } },
+        ];
+      }
+      if (filter.owner) {
+        if (ObjectId.isValid(filter.owner as any) === false) {
+          throw new ApiError(`param owner is not a valid user id ${filter.owner}`);
+        }
+        dbQuery.owner = new ObjectId(filter.owner as any);
+      }
+      if (filter.member) {
+        if (ObjectId.isValid(filter.member as any) === false) {
+          throw new ApiError(`param member is not a valid user id ${filter.member}`);
+        }
+        dbQuery.members = new ObjectId(filter.member as any);
+      }
+      if (filter.businessUnitId) {
+        if (ObjectId.isValid(filter.businessUnitId as any) === false) {
+          throw new ApiError(
+            `param businessUnitId is not a valid business unit id ${filter.businessUnitId}`
+          );
+        }
+        dbQuery.businessUnit = new ObjectId(filter.businessUnitId as any);
+      }
+      if (filter.createdBefore) {
+        dbQuery.createdAt = { ...dbQuery.createdAt, $lte: new Date(filter.createdBefore) };
+      }
+      if (filter.createdAfter) {
+        dbQuery.createdAt = { ...dbQuery.createdAt, $gte: new Date(filter.createdAfter) };
+      }
+      if (filter.updatedBefore) {
+        dbQuery.updatedAt = { ...dbQuery.updatedAt, $lte: new Date(filter.updatedBefore) };
+      }
+      if (filter.updatedAfter) {
+        dbQuery.updatedAt = { ...dbQuery.updatedAt, $gte: new Date(filter.updatedAfter) };
+      }
+    }
+
+    return dbQuery;
+  }
+
   /***
   * Finds a business unit 
   */
@@ -957,11 +1161,22 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
     return $team;
   }
 
+  /**
+   * Creates a team in an organization.
+   *
+   * `businessUnitId` (ORG-021) is optional and, when supplied, must reference a
+   * live business unit of the *same* organization - see
+   * `resolveTeamBusinessUnit`. Creation authorization matches
+   * `createBusinessUnit`: the caller's role gate plus the organization
+   * existence check (there is no team document to scope against yet, and the
+   * demographics/import path creates teams as part of its own authorized run).
+   */
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
   async createTeam(
     organization_id: string | number | ObjectId,
     name: string,
-    executionContext?: Reactory.Server.IReactoryContext
+    executionContext?: Reactory.Server.IReactoryContext,
+    businessUnitId?: string | number | ObjectId | null
   ): Promise<Reactory.Models.ITeamDocument> {
     
     if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
@@ -988,6 +1203,13 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
       throw new OrganizationNotFoundError(`Organization with id ${organization_id} not found`, `${organization_id}`);
     }
 
+    // Validate the optional business unit only once the organization is known to
+    // exist, so the "belongs to organization" error carries a real org id.
+    const businessUnit = await this.resolveTeamBusinessUnit(
+      `${organization_id}`,
+      businessUnitId
+    );
+
     // add a new business unit if we do not find any matches
     let $now = Date.now();
     const actorId = this.resolveActorId(executionContext);
@@ -1000,7 +1222,8 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
       createdAt: $now,
       updatedAt: $now,
       deleted: false,
-      owner: actorId
+      owner: actorId,
+      ...(businessUnit ? { businessUnit } : {}),
     });
     organization.teams = organization.teams || [];
     organization.teams.push($team);
@@ -1013,46 +1236,22 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
     return $team as Reactory.Models.ITeamDocument;
   }
 
+  /**
+   * Legacy paged team listing. Retains its permissive organization handling (an
+   * omitted or invalid `organization_id` lists across organizations) because
+   * `ReactoryTeams` consumers rely on that, but now understands
+   * `filter.businessUnitId` (ORG-021) and escapes the search term.
+   *
+   * New consumers should use `pagedTeams`, which requires a real organization
+   * and mirrors the `PagedBusinessUnits` envelope added by ORG-020.
+   */
   @roles(['USER', 'SYSTEM'])
   async getPagedTeamsForOrganization(
     organization_id?: string | number | ObjectId, 
     filter?: any, 
     paging?: Reactory.Models.IPagingRequest
   ): Promise<{ teams: Reactory.Models.ITeamDocument[], paging: Reactory.Models.IPagingResult }> {
-    
-    const dbQuery: any = { deleted: { $ne: true } };
-    
-    // Add organization filter only if organization_id is provided and valid
-    if (organization_id && ObjectId.isValid(organization_id)) {
-      dbQuery.organization = new ObjectId(organization_id);
-    }
-    
-    if (filter) {
-      if (filter.search) {
-        dbQuery.$or = [
-          { name: new RegExp(filter.search, 'i') },
-          { title: new RegExp(filter.search, 'i') }
-        ];
-      }
-      if (filter.owner) {
-        dbQuery.owner = new ObjectId(filter.owner);
-      }
-      if (filter.member) {
-        dbQuery.members = new ObjectId(filter.member);
-      }
-      if (filter.createdBefore) {
-        dbQuery.createdAt = { ...dbQuery.createdAt, $lte: new Date(filter.createdBefore) };
-      }
-      if (filter.createdAfter) {
-        dbQuery.createdAt = { ...dbQuery.createdAt, $gte: new Date(filter.createdAfter) };
-      }
-      if (filter.updatedBefore) {
-        dbQuery.updatedAt = { ...dbQuery.updatedAt, $lte: new Date(filter.updatedBefore) };
-      }
-      if (filter.updatedAfter) {
-        dbQuery.updatedAt = { ...dbQuery.updatedAt, $gte: new Date(filter.updatedAfter) };
-      }
-    }
+    const dbQuery = this.buildTeamPagedQuery(organization_id, filter);
 
     const page = paging?.page || 1;
     const pageSize = paging?.pageSize || 25;
@@ -1062,6 +1261,7 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
       Team.find(dbQuery)
         .populate('owner')
         .populate('members')
+        .sort({ name: 1 })
         .skip(skip)
         .limit(pageSize)
         .then(),
@@ -1080,47 +1280,122 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
     };
   }
 
+  /**
+   * Paged, filterable team list for one organization (ORG-021).
+   *
+   * Same `{ paging, teams }` envelope as `pagedBusinessUnits`, so the
+   * organization Structure tab can page teams and business units with one table
+   * component. Soft-deleted teams are always excluded, and `filter.businessUnitId`
+   * narrows the list to one unit (an unassigned team is simply not returned).
+   */
+  @roles(['USER'])
+  async pagedTeams(
+    organizationId: string | number | ObjectId,
+    filter?: ITeamFilter,
+    paging?: Reactory.Models.IPagingRequest
+  ): Promise<IPagedTeams> {
+    if (!organizationId || ObjectId.isValid(organizationId as any) === false) {
+      throw new ApiError(`param organizationId is not a valid ${organizationId}`);
+    }
+
+    const _organizationId = new ObjectId(organizationId as any);
+    const exists = await Organization.countDocuments({ _id: _organizationId }).then();
+    if (exists === 0) {
+      throw new OrganizationNotFoundError(
+        `Organization with the id ${organizationId} could not be found`,
+        `${organizationId}`
+      );
+    }
+
+    const result = await this.getPagedTeamsForOrganization(_organizationId, filter, paging);
+
+    return {
+      teams: result.teams,
+      paging: result.paging,
+    };
+  }
+
+  /**
+   * Updates a team.
+   *
+   * Org-scoped: the caller must administer the organization that owns the team
+   * (`loadTeamForAdministration`), so an ORGANIZATION_ADMIN of organization B
+   * cannot edit organization A's team.
+   *
+   * The ORG-001 text handling is preserved as-is (a provided non-empty value is
+   * written; omission leaves the field alone). `owner` and `businessUnit`
+   * (ORG-021) follow the three-state contract used by business units: omit to
+   * leave unchanged, `null` to clear, a value to set. A `businessUnit` value
+   * must be a live unit of the same organization.
+   */
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
   async updateTeam(
     team_id: string | number | ObjectId,
-    updates: any,
+    updates: ITeamUpdateInput,
     executionContext?: Reactory.Server.IReactoryContext
   ): Promise<Reactory.Models.ITeamDocument> {
-    
-    if (ObjectId.isValid(team_id) === false) throw new ApiError(`param team_id is not a valid ${team_id}`);
+    const team: any = await this.loadTeamForAdministration(team_id, executionContext);
+    const teamDocument: any = team;
 
-    const team = await Team.findById(team_id).then();
-    if (!team) {
-      throw new ApiError(`Team with id ${team_id} not found`, 404);
+    if (!updates || typeof updates !== 'object') {
+      throw new ApiError('Team updates are required');
     }
 
     // Update fields
-    if (updates.name) team.name = updates.name.trim();
-    if (updates.title) team.title = updates.title.trim();
-    if (updates.description) team.description = updates.description;
-    if (updates.avatar) team.avatar = updates.avatar;
+    if (updates.name) teamDocument.name = updates.name.trim();
+    if (updates.title) teamDocument.title = updates.title.trim();
+    if (updates.description) teamDocument.description = updates.description;
+    if (updates.avatar) teamDocument.avatar = updates.avatar;
 
-    team.updatedAt = Date.now();
-    team.updatedBy = this.resolveActorId(executionContext);
+    // Owner is a user reference, not free text: null clears it, anything else
+    // must be a well-formed user id so the reference cannot dangle.
+    if (updates.owner !== undefined) {
+      const owner = this.normalizeOptionalText(updates.owner);
+      if (owner === null) {
+        teamDocument.owner = null;
+      } else {
+        if (ObjectId.isValid(owner) === false) {
+          throw new ApiError(`param owner is not a valid user id ${owner}`);
+        }
+        teamDocument.owner = new ObjectId(owner);
+      }
+    }
 
-    await team.save().then();
-    return team;
+    // Business unit: omitted = unchanged, null/blank = clear, otherwise a live
+    // unit of the same organization.
+    if (updates.businessUnit !== undefined) {
+      const value = this.normalizeOptionalText(updates.businessUnit);
+      if (value === null) {
+        teamDocument.businessUnit = null;
+      } else {
+        const organizationId = this.teamOrganizationId(team);
+        teamDocument.businessUnit = await this.resolveTeamBusinessUnit(
+          organizationId,
+          value
+        );
+      }
+    }
+
+    teamDocument.updatedAt = Date.now();
+    teamDocument.updatedBy = this.resolveActorId(executionContext);
+
+    await teamDocument.save().then();
+    return teamDocument as Reactory.Models.ITeamDocument;
   }
 
+  /**
+   * Adds a user to a team. Org-scoped against the team's parent organization,
+   * like the business unit membership mutations ORG-020 added.
+   */
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
   async addMemberToTeam(
     team_id: string | number | ObjectId,
     member_id: string | number | ObjectId,
     executionContext?: Reactory.Server.IReactoryContext
   ): Promise<boolean> {
-    
-    if (ObjectId.isValid(team_id) === false) throw new ApiError(`param team_id is not a valid ${team_id}`);
-    if (ObjectId.isValid(member_id) === false) throw new ApiError(`param member_id is not a valid ${member_id}`);
+    const team: any = await this.loadTeamForAdministration(team_id, executionContext);
 
-    const team = await Team.findById(team_id).then();
-    if (!team) {
-      throw new ApiError(`Team with id ${team_id} not found`, 404);
-    }
+    if (ObjectId.isValid(member_id) === false) throw new ApiError(`param member_id is not a valid ${member_id}`);
 
     const user = await User.findById(member_id).then();
     if (!user) {
@@ -1141,20 +1416,16 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
     return true;
   }
 
+  /** Removes a user from a team. Org-scoped like `addMemberToTeam`. */
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
   async removeMemberFromTeam(
     team_id: string | number | ObjectId,
     member_id: string | number | ObjectId,
     executionContext?: Reactory.Server.IReactoryContext
   ): Promise<boolean> {
-    
-    if (ObjectId.isValid(team_id) === false) throw new ApiError(`param team_id is not a valid ${team_id}`);
-    if (ObjectId.isValid(member_id) === false) throw new ApiError(`param member_id is not a valid ${member_id}`);
+    const team: any = await this.loadTeamForAdministration(team_id, executionContext);
 
-    const team = await Team.findById(team_id).then();
-    if (!team) {
-      throw new ApiError(`Team with id ${team_id} not found`, 404);
-    }
+    if (ObjectId.isValid(member_id) === false) throw new ApiError(`param member_id is not a valid ${member_id}`);
 
     const user = await User.findById(member_id).then();
     if (!user) {
@@ -1172,18 +1443,13 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
     return true;
   }
 
+  /** Soft-deletes a team. Never hard-deletes. Org-scoped like `updateTeam`. */
   @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
   async deleteTeam(
     team_id: string | number | ObjectId,
     executionContext?: Reactory.Server.IReactoryContext
   ): Promise<boolean> {
-    
-    if (ObjectId.isValid(team_id) === false) throw new ApiError(`param team_id is not a valid ${team_id}`);
-
-    const team = await Team.findById(team_id).then();
-    if (!team) {
-      throw new ApiError(`Team with id ${team_id} not found`, 404);
-    }
+    const team: any = await this.loadTeamForAdministration(team_id, executionContext);
 
     // Soft delete
     team.deleted = true;
@@ -1192,6 +1458,45 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
 
     await team.save().then();
     return true;
+  }
+
+  /**
+   * Moves a team into a business unit (ORG-021).
+   *
+   * This is the dedicated operation the structure UI calls. It is a plain
+   * update - moving out of the current unit needs no history record - but both
+   * sides are re-validated on every call:
+   *
+   * - the team must exist, be live and belong to an organization the caller
+   *   administers (`loadTeamForAdministration`);
+   * - the business unit must exist, be live and belong to the *same*
+   *   organization. A cross-organization move is rejected: it would expose a
+   *   team to another tenant's reporting and bypass the org-scoped boundary.
+   */
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN', 'SYSTEM'])
+  async moveTeamToBusinessUnit(
+    team_id: string | number | ObjectId,
+    business_unit_id: string | number | ObjectId,
+    executionContext?: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.ITeamDocument> {
+    const team: any = await this.loadTeamForAdministration(team_id, executionContext);
+
+    if ((team as any).deleted === true) {
+      throw new ApiError(`Team with the id ${team_id} is deleted and cannot be moved`);
+    }
+
+    const businessUnit = this.normalizeOptionalText(business_unit_id as any);
+    if (businessUnit === null || businessUnit === undefined) {
+      throw new ApiError('param businessUnitId is required to move a team to a business unit');
+    }
+
+    const organizationId = this.teamOrganizationId(team);
+    team.businessUnit = await this.resolveTeamBusinessUnit(organizationId, businessUnit);
+    team.updatedAt = Date.now();
+    team.updatedBy = this.resolveActorId(executionContext);
+
+    await team.save().then();
+    return team as Reactory.Models.ITeamDocument;
   }
   
   async findWithName(name: string): Promise<Reactory.Models.IOrganizationDocument> {
