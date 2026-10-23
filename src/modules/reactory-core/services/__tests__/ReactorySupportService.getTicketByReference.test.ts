@@ -51,8 +51,17 @@ const ticketWith = (overrides: Record<string, any> = {}): any => ({
   ...overrides,
 });
 
+/**
+ * `getTicketByReference` populates the reader context (people, comments,
+ * documents) before returning, so the query mock must be chainable.
+ */
 const mockFindOneResult = (value: any) => {
-  mockFindOne.mockReturnValue({ exec: async () => value });
+  const query: any = {
+    populate: jest.fn(() => query),
+    exec: async () => value,
+  };
+  mockFindOne.mockReturnValue(query);
+  return query;
 };
 
 describe('ReactorySupportService.getTicketByReference', () => {

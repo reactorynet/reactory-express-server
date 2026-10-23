@@ -9,6 +9,7 @@ import ReactoryFileModel from '@reactory/server-modules/reactory-core/models/Cor
 import { InsufficientPermissions } from '@reactory/server-core/exceptions';
 import { ObjectId } from 'mongodb';
 import { service } from '@reactory/server-core/application/decorators';
+import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
 /**
  * Support tickets are persisted with snake_case enumerations (e.g. `in_progress`)
@@ -35,6 +36,130 @@ const enumVariants = (values: string | string[]): string[] => {
 /** Canonical storage form for enumeration values: lowercase snake_case. */
 const canonicalEnum = (value: string): string =>
   String(value ?? '').trim().toLowerCase().replace(/-/g, '_');
+
+/**
+ * Everything a reader needs to interpret a single ticket without a second round
+ * trip: the people involved, the conversation (with its authors), and the
+ * attachments.
+ *
+ * Declared once and reused by every single-ticket read so the two lookups can
+ * never drift apart. List/paged reads deliberately do NOT use this list: the
+ * comment bodies would bloat every grid response (see `pagedRequest`).
+ */
+const SUPPORT_TICKET_READ_POPULATE: any[] = [
+  { path: 'createdBy' },
+  { path: 'assignedTo' },
+  { path: 'updatedBy' },
+  { path: 'documents' },
+  {
+    path: 'comments',
+    // Oldest first: a conversation is read top-to-bottom.
+    options: { sort: { createdAt: 1 } },
+    // Without this the ticket carries comment documents whose `user` is still
+    // an ObjectId, so a reader can only print an id instead of a name.
+    populate: { path: 'user' },
+  },
+];
+
+/** A file (ticket attachment or comment attachment) as exposed to readers. */
+export interface IReactorySupportTicketFileView {
+  id: string;
+  filename: string | null;
+  alias: string | null;
+  url: string | null;
+  size: number | null;
+  mimetype: string | null;
+}
+
+/** The author of a comment, resolved to something a reader can name. */
+export interface IReactorySupportTicketCommentAuthor {
+  id: string | null;
+  name: string | null;
+}
+
+/** A comment as exposed by `getTicketComments`. */
+export interface IReactorySupportTicketCommentView {
+  id: string;
+  text: string;
+  createdAt: Date | null;
+  author: IReactorySupportTicketCommentAuthor;
+  /** Set when this comment is a reply; the parent is the referenced comment. */
+  parentId: string | null;
+  attachments: IReactorySupportTicketFileView[];
+}
+
+const idOf = (value: any): string => {
+  if (value === null || value === undefined) return '';
+  return String(value._id ?? value.id ?? value);
+};
+
+/** ObjectIds for the ids that are well-formed hex strings, ignoring the rest. */
+const toObjectIds = (ids: string[]): ObjectId[] => ids
+  .filter((id) => /^[a-fA-F0-9]{24}$/.test(id))
+  .map((id) => new ObjectId(id));
+
+/** Full display name for a user document, falling back to the handle/email. */
+const displayNameOf = (user: any): string | null => {
+  if (!user || typeof user !== 'object') return null;
+  const fullName = [user.firstName, user.lastName]
+    .filter((part: any) => typeof part === 'string' && part.trim().length > 0)
+    .join(' ')
+    .trim();
+  if (fullName.length > 0) return fullName;
+  if (typeof user.username === 'string' && user.username.length > 0) return user.username;
+  if (typeof user.email === 'string' && user.email.length > 0) return user.email;
+  return null;
+};
+
+/**
+ * Resolve a stored file to a link a caller can actually open.
+ *
+ * `link` is the canonical, already-absolute CDN URL written at upload/catalog
+ * time. Files created by older paths may carry a CDN-relative link or no link at
+ * all, in which case the path + alias are used to build one.
+ */
+const fileUrl = (file: any): string | null => {
+  const link = typeof file?.link === 'string' ? file.link.trim() : '';
+  if (link.length > 0) {
+    return /^(https?:)?\/\//i.test(link) ? link : safeCDNUrl(link);
+  }
+  const route = [file?.path, file?.alias]
+    .filter((part: any) => typeof part === 'string' && part.trim().length > 0)
+    .map((part: string) => part.replace(/^\/+/, ''))
+    .join('/');
+  return route.length > 0 ? safeCDNUrl(route) : null;
+};
+
+/** Map a `CoreFile`/`ReactoryFile` document to the reader-facing attachment shape. */
+const toFileView = (file: any): IReactorySupportTicketFileView => ({
+  id: idOf(file),
+  filename: file?.filename ?? null,
+  alias: file?.alias ?? null,
+  url: fileUrl(file),
+  size: typeof file?.size === 'number' ? file.size : null,
+  // `CoreFile` stores the MIME type as `mimetype` (all lower case).
+  mimetype: file?.mimetype ?? null,
+});
+
+/**
+ * A comment's attachments live in the comment's `metadata` (the Comment schema
+ * has no first-class attachment field). Accept every shape the writers use so
+ * the read path does not lose them: ids, `{ fileId }` wrappers or file docs.
+ */
+const commentAttachmentEntries = (comment: any): any[] => {
+  const metadata = comment?.metadata ?? {};
+  const candidates = [
+    comment?.attachments,
+    metadata.attachments,
+    metadata.files,
+    metadata.fileIds,
+    metadata.documents,
+  ];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate) && candidate.length > 0) return candidate;
+  }
+  return [];
+};
 
 @service({
   id: "core.ReactorySupportService@1.0.0",
@@ -361,6 +486,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   async getTicket(id: string): Promise<Reactory.Models.ReactorySupportDocument> {
 
     const ticket = await ReactorySupportTicketModel.findById(id)
+        .populate(SUPPORT_TICKET_READ_POPULATE)
         .exec() as Reactory.Models.ReactorySupportDocument;
 
     if (!ticket) {
@@ -392,6 +518,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     if (normalisedReference.length === 0) return null;
 
     const ticket = await ReactorySupportTicketModel.findOne({ reference: normalisedReference })
+        .populate(SUPPORT_TICKET_READ_POPULATE)
         .exec() as Reactory.Models.ReactorySupportDocument;
 
     if (!ticket) return null;
@@ -399,6 +526,131 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     this.assertCanViewTicket(ticket);
 
     return ticket;
+   }
+
+  /**
+   * The ticket conversation, oldest comment first.
+   *
+   * Comments are returned flat with an explicit `parentId` rather than as a
+   * nested tree: a caller that wants a thread can build one from `parentId`,
+   * and a caller that only wants the transcript does not have to walk it.
+   *
+   * Goes through `assertCanViewTicket`, so reading the conversation never
+   * widens access to the ticket itself.
+   */
+  @roles(["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"])
+  async getTicketComments(ticketId: string): Promise<IReactorySupportTicketCommentView[]> {
+    const ticket = await ReactorySupportTicketModel.findById(ticketId)
+        .exec() as Reactory.Models.ReactorySupportDocument;
+
+    if (!ticket) {
+      throw new Error('Ticket not found');
+     }
+
+    this.assertCanViewTicket(ticket);
+
+    // `comments` is the ticket's authoritative, ordered membership list. A
+    // comment is only part of the conversation if the ticket references it.
+    const commentIds = ((ticket.comments || []) as any[])
+      .map((comment: any) => idOf(comment))
+      .filter((id: string) => id.length > 0);
+
+    if (commentIds.length === 0) return [];
+
+    const comments = await ReactoryCommentModel.find({ _id: { $in: commentIds } })
+      .sort({ createdAt: 1, _id: 1 })
+      .populate({ path: 'user' })
+      .exec() as any[];
+
+    // Resolve every attachment id referenced by any comment in one query.
+    const attachmentEntriesByComment = new Map<string, any[]>();
+    const attachmentIds: string[] = [];
+    comments.forEach((comment: any) => {
+      const entries = commentAttachmentEntries(comment);
+      attachmentEntriesByComment.set(idOf(comment), entries);
+      entries.forEach((entry: any) => {
+        // Populated file documents carry their own metadata; only unresolved
+        // entries need a lookup.
+        if (entry && typeof entry === 'object' && (entry.filename || entry.alias || entry.link)) return;
+        const id = idOf(entry?.fileId ?? entry?.id ?? entry);
+        if (id.length > 0 && !attachmentIds.includes(id)) attachmentIds.push(id);
+      });
+    });
+
+    const attachmentObjectIds = toObjectIds(attachmentIds);
+    const files = attachmentObjectIds.length > 0
+      ? await ReactoryFileModel.find({ _id: { $in: attachmentObjectIds } }).exec() as any[]
+      : [];
+    const filesById = new Map<string, any>();
+    files.forEach((file: any) => filesById.set(idOf(file), file));
+
+    return comments.map((comment: any) => {
+      const entries = attachmentEntriesByComment.get(idOf(comment)) || [];
+      const attachments = entries
+        .map((entry: any) => {
+          if (entry && typeof entry === 'object' && (entry.filename || entry.alias || entry.link)) {
+            return toFileView(entry);
+          }
+          const id = idOf(entry?.fileId ?? entry?.id ?? entry);
+          const file = filesById.get(id);
+          return file ? toFileView(file) : null;
+        })
+        .filter((attachment: IReactorySupportTicketFileView | null): attachment is IReactorySupportTicketFileView => attachment !== null);
+
+      const author = comment.user;
+      return {
+        id: idOf(comment),
+        text: typeof comment.text === 'string' ? comment.text : '',
+        createdAt: comment.createdAt ? new Date(comment.createdAt) : null,
+        author: {
+          // A populate miss leaves the raw ObjectId: keep the id, but never
+          // pretend we know the name.
+          id: author ? idOf(author) : null,
+          name: displayNameOf(author),
+        },
+        parentId: comment.parent ? idOf(comment.parent) : null,
+        attachments,
+      };
+    });
+   }
+
+  /**
+   * The ticket's attachments, resolved to reader-facing metadata.
+   *
+   * Uses the ticket's `documents` list as the source of truth and preserves its
+   * order. Permission is the ticket's read permission; there is no separate
+   * file-level check to bypass.
+   */
+  @roles(["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"])
+  async listTicketDocuments(ticketId: string): Promise<IReactorySupportTicketFileView[]> {
+    const ticket = await ReactorySupportTicketModel.findById(ticketId)
+        .exec() as Reactory.Models.ReactorySupportDocument;
+
+    if (!ticket) {
+      throw new Error('Ticket not found');
+     }
+
+    this.assertCanViewTicket(ticket);
+
+    const documentIds = ((ticket.documents || []) as any[])
+      .map((document: any) => idOf(document._id ?? document.id ?? document))
+      .filter((id: string) => id.length > 0);
+
+    if (documentIds.length === 0) return [];
+
+    const files = await ReactoryFileModel.find({
+      _id: { $in: toObjectIds(documentIds) },
+    }).exec() as any[];
+
+    const filesById = new Map<string, any>();
+    files.forEach((file: any) => filesById.set(idOf(file), file));
+
+    // Preserve the order in which the files were attached to the ticket and
+    // drop ids whose file no longer exists rather than returning a null row.
+    return documentIds
+      .map((id: string) => filesById.get(id))
+      .filter((file: any) => file !== undefined)
+      .map((file: any) => toFileView(file));
    }
 
   onStartup(): Promise<any> {
