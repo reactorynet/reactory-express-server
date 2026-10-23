@@ -6,6 +6,7 @@ import SecurityCliDefinition from './security/SecurityCli';
 import WorkflowCliDefinition from './workflow/WorkflowCli';
 import ServiceKeysCliDefinition from './service-keys/ServiceKeysCli';
 import DemographicsCliDefinition from './demographics/DemographicsCli';
+import LegacyDemographicsMigrationCliDefinition from './demographics/LegacyDemographicsMigrationCli';
 
 export default [
   SchemaGenCli,
@@ -16,4 +17,5 @@ export default [
   WorkflowCliDefinition,
   ServiceKeysCliDefinition,
   DemographicsCliDefinition,
+  LegacyDemographicsMigrationCliDefinition,
 ];
