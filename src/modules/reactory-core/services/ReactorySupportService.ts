@@ -535,6 +535,12 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
    * nested tree: a caller that wants a thread can build one from `parentId`,
    * and a caller that only wants the transcript does not have to walk it.
    *
+   * Moderated comments (`removed: true`) are excluded, matching the platform's
+   * default for every other comment surface (`getCommentsByContext` and the
+   * ticket details field both hide them unless removal is explicitly opted
+   * into). A transcript that showed hidden comments would be a second,
+   * inconsistent definition of "the conversation".
+   *
    * Goes through `assertCanViewTicket`, so reading the conversation never
    * widens access to the ticket itself.
    */
@@ -557,7 +563,10 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
 
     if (commentIds.length === 0) return [];
 
-    const comments = await ReactoryCommentModel.find({ _id: { $in: commentIds } })
+    const comments = await ReactoryCommentModel.find({
+      _id: { $in: commentIds },
+      removed: { $ne: true },
+    })
       .sort({ createdAt: 1, _id: 1 })
       .populate({ path: 'user' })
       .exec() as any[];

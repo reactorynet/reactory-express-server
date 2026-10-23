@@ -44,6 +44,15 @@ Cases:
 - Permissions: stranger rejected on all three; creator/support still allowed.
 - `pagedRequest`: does not populate `comments` or `documents`.
 
+## Review round 1 additions
+
+- `getTicketComments` now excludes `removed: true` comments, matching the platform default
+  (`getCommentsByContext` / the ticket details field). The mock honours the `removed` predicate so the
+  moderated fixture is genuinely filtered, not merely asserted about.
+- The populated-comments branch of `SupportResolver.comments` is pinned by a new resolver suite
+  (`resolvers/Support/__tests__/SupportResolver.comments.test.ts`): roots only, `removed` hidden, newest
+  first — the same projection the query branch produces.
+
 ## Notes / non-goals
 
 - The `Comment` schema has no first-class attachment field, so comment

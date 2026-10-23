@@ -60,6 +60,7 @@ const OTHER_ID = '507f1f77bcf86cd799439013';
 const AUTHOR_ID = '507f1f77bcf86cd799439014';
 const COMMENT_1_ID = '507f1f77bcf86cd799439015';
 const COMMENT_2_ID = '507f1f77bcf86cd799439016';
+const REMOVED_COMMENT_ID = '507f1f77bcf86cd79943901a';
 const DOCUMENT_ID = '507f1f77bcf86cd799439017';
 const COMMENT_FILE_ID = '507f1f77bcf86cd799439018';
 const REPLY_FILE_ID = '507f1f77bcf86cd799439019';
@@ -320,8 +321,23 @@ describe('ReactorySupportService read paths — TOOLS-001', () => {
   });
 
   describe('getTicketComments', () => {
+    /**
+     * Comment query mock that honours the `removed` predicate rather than
+     * ignoring it, so a moderated fixture is genuinely filtered out and not
+     * merely asserted about.
+     */
     const mockComments = (comments: any[], files: any[] = []) => {
-      const commentQuery = queryReturning(comments);
+      const commentQuery: any = {
+        sort: jest.fn(() => commentQuery),
+        populate: jest.fn(() => commentQuery),
+        exec: jest.fn(async () => {
+          const filter: any = mockCommentFind.mock.calls[0]?.[0] ?? {};
+          if (filter?.removed?.$ne === true) {
+            return comments.filter((comment: any) => comment.removed !== true);
+          }
+          return comments;
+        }),
+      };
       mockCommentFind.mockReturnValue(commentQuery);
       const fileQuery = queryReturning(files);
       mockFileFind.mockReturnValue(fileQuery);
@@ -387,6 +403,29 @@ describe('ReactorySupportService read paths — TOOLS-001', () => {
       expect(mockFileFind).toHaveBeenCalledWith({
         _id: { $in: expect.arrayContaining([expect.anything(), expect.anything()]) },
       });
+    });
+
+    it('excludes moderated comments, matching every other comment surface', async () => {
+      // `getCommentsByContext` and the ticket details field both hide
+      // `removed: true` unless removal is explicitly opted into; the agent
+      // transcript must not be a second, laxer definition of the conversation.
+      mockTicketById(ticketFixture({ comments: [COMMENT_1_ID, COMMENT_2_ID, REMOVED_COMMENT_ID] }));
+      const removed = {
+        _id: REMOVED_COMMENT_ID,
+        text: 'moderated away',
+        createdAt: new Date('2026-01-03T10:00:00.000Z'),
+        user: AUTHOR,
+        removed: true,
+      };
+      mockComments([...COMMENT_FIXTURES, removed], [commentFile, replyFile]);
+
+      const service = new ReactorySupportService({} as any, CONTEXT_FOR(['SUPPORT']));
+      const result = await service.getTicketComments(TICKET_ID);
+
+      expect(mockCommentFind).toHaveBeenCalledWith(
+        expect.objectContaining({ removed: { $ne: true } }),
+      );
+      expect(result.map((comment) => comment.text)).toEqual(['first message', 'reply']);
     });
 
     it('returns an empty transcript without querying when there are no comments', async () => {
