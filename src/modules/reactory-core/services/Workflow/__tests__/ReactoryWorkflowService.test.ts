@@ -1278,4 +1278,103 @@ describe('ReactoryWorkflowService', () => {
       expect(rawYaml).toMatch(/url:/);
     });
   });
+
+  // ─── REACTORY-302016408: wait_event must not declare `timeout` ─────────────
+  //
+  // The engine matches an event subscription only for events published at or after
+  // it was created (subscribeAsOf <= event.eventTime is a LOWER BOUND on the event,
+  // not a deadline) and marks a delivered event processed regardless. A `timeout`
+  // therefore made the wait deaf for its duration and destroyed the signal. This
+  // is the VALIDATION/WRITE path named by the ticket: the definition must be
+  // rejected here, before it is written, so a designer cannot save something that
+  // silently stops being runnable.
+  describe('wait_event timeout rejection (REACTORY-302016408)', () => {
+    let tmpDir: string;
+    let registerWorkflow: jest.Mock;
+    const originalEnv = process.env;
+
+    const waiterDefinition = (config: Record<string, any>) => ({
+      nameSpace: 'test',
+      name: 'WaitEventWF',
+      version: '1.0.0',
+      description: 'wait for approval',
+      steps: [
+        {
+          id: 'awaitApproval',
+          type: 'wait_event',
+          config: { eventName: 'approval', eventKey: 'input.requestId', ...config },
+        },
+      ],
+    });
+
+    beforeEach(() => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reactory-wf-timeout-'));
+      process.env = { ...originalEnv, REACTORY_DATA: tmpDir };
+      mockRunnerInstance.getWorkflowByName.mockReturnValue(null);
+      registerWorkflow = jest.fn();
+      // `registerWorkflow` is not part of the shared mock literal above; assign it
+      // through `any` so this suite adds no new type error to the ratchet.
+      (mockRunnerInstance as any).registerWorkflow = registerWorkflow;
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+      try { (fs as any).rmSync(tmpDir, { recursive: true, force: true }); } catch { /* no-op */ }
+    });
+
+    it('validateWorkflowDefinition rejects a wait_event declaring timeout', async () => {
+      const result = await service.validateWorkflowDefinition(waiterDefinition({ timeout: 5000 }) as any);
+
+      expect(result.isValid).toBe(false);
+      const error = (result.errors || []).find((e) => e.code === 'WAIT_EVENT_TIMEOUT_UNSUPPORTED');
+      expect(error).toBeDefined();
+      expect(error!.field).toBe('steps[awaitApproval].config.timeout');
+      // Same canonical, actionable message as the builder / executor / validator.
+      expect(error!.message).toContain("Step 'awaitApproval' (wait_event)");
+      expect(error!.message).toContain('publish a sentinel event at the deadline');
+      expect(error!.message).toContain("eventName ('approval')");
+    });
+
+    it('validateWorkflowDefinition accepts the same wait_event without a timeout', async () => {
+      const result = await service.validateWorkflowDefinition(waiterDefinition({}) as any);
+
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    it('saveWorkflowDefinition refuses to write the file', async () => {
+      const result = await service.saveWorkflowDefinition(waiterDefinition({ timeout: 5000 }) as any);
+
+      expect(result.loadStatus).toBe('PARSE_ERROR');
+      expect((result.errors || []).some((e: any) => e.code === 'WAIT_EVENT_TIMEOUT_UNSUPPORTED')).toBe(true);
+
+      // Critically: nothing was written and no registration was attempted, so the
+      // catalog can never hold a definition that is silently un-runnable.
+      const targetFile = path.join(tmpDir, 'workflows', 'catalog', 'test', 'WaitEventWF', '1.0.0', 'WaitEventWF.yaml');
+      expect(fs.existsSync(targetFile)).toBe(false);
+      expect(registerWorkflow).not.toHaveBeenCalled();
+    });
+
+    it('saveWorkflowYaml refuses raw YAML containing a wait_event timeout', async () => {
+      const yamlContent = [
+        'nameSpace: test',
+        'name: RawWaitEventWF',
+        'version: 1.0.0',
+        'steps:',
+        '  - id: awaitApproval',
+        '    type: wait_event',
+        '    config:',
+        '      eventName: approval',
+        '      timeout: 5000',
+      ].join('\n');
+
+      const result = await service.saveWorkflowYaml('test', 'RawWaitEventWF', '1.0.0', yamlContent);
+
+      expect(result.loadStatus).toBe('PARSE_ERROR');
+      expect((result.errors || []).some((e: any) => e.code === 'WAIT_EVENT_TIMEOUT_UNSUPPORTED')).toBe(true);
+
+      const targetFile = path.join(tmpDir, 'workflows', 'catalog', 'test', 'RawWaitEventWF', '1.0.0', 'RawWaitEventWF.yaml');
+      expect(fs.existsSync(targetFile)).toBe(false);
+    });
+  });
 });

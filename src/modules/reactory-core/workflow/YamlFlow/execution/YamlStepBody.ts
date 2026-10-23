@@ -286,7 +286,17 @@ export class WaitForEventStepBody extends StepBody {
   public eventName: string;
   /** Resolved correlation key (set via an input expression). */
   public eventKey: string;
-  /** Effective-date threshold for matching events (set via an input expression). */
+  /**
+   * Effective-date threshold for matching events (set via an input expression).
+   *
+   * MUST be "now" (or earlier). The engine matches a subscription only when
+   * `subscribeAsOf <= event.eventTime`, so a FUTURE value makes the subscription
+   * deaf to every event published before it — the event is marked processed and
+   * lost, and the wait then never ends. There is no timer that could expire an
+   * event-wait pointer, so a `wait_event` step declaring `timeout` is REJECTED at
+   * validation time (see validators/WaitEventTimeoutContract.ts); expiry has to
+   * be delivered as an event on the same name/key.
+   */
   public effectiveDate: Date;
   /** The YAML step id, stamped onto the pointer for identification. */
   public stepName: string;
@@ -506,7 +516,11 @@ export class YamlStepBody extends StepBody {
           // effectiveDate is ALWAYS now: the engine matches a subscription only when
           // subscribeAsOf <= event.eventTime, so a future effectiveDate would make
           // the subscription ignore events published before it — delaying eligibility
-          // rather than timing the wait out. Timeouts must be delivered as events.
+          // rather than timing the wait out, and DISCARDING the signal (the queue
+          // worker marks an unmatched event processed). Timeouts must be delivered
+          // as events; that rule is ENFORCED for wait_event, where a declared
+          // `timeout` fails validation (validators/WaitEventTimeoutContract.ts),
+          // and followed here by never deriving the date from a timeout.
           return ExecutionResult.waitForEvent(eventName, eventKey ?? '', new Date());
         }
         if (control.sleep) {
