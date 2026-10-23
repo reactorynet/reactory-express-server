@@ -52,6 +52,23 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   routes,
   theme: 'reactory',  
   themes,
+  // ORG-041b: this CDN registration is NOT redundant and must stay until the
+  // client (or the `reactory-core` plugin submodule) registers the auth surface
+  // locally. Audited 2026-10-23: the CDN bundle registers 27 FQNs and the
+  // submodule registers 22 — with zero overlap. The bundle is the only provider
+  // of core.Login@1.0.0 (route `/login` *and* an App.tsx boot dependency),
+  // core.Register, core.ForgotPassword, core.Logout, core.TwoFactorAuth, the
+  // four OAuth buttons, core.Profile / core.EditProfile, the user-import trio,
+  // the membership selectors, core.UserDemographics and
+  // core.ReactoryOrganizationSelector. Dropping the entry here would leave
+  // those routes unresolved (`component not loaded`) and make the app
+  // impossible to sign into. `plugins` is reconciled wholesale (see
+  // RECONCILABLE_COLLECTION_FIELDS in models/ReactoryClient/statics.ts), so the
+  // entry would genuinely disappear from the stored document — the blocker is
+  // the missing components, not the reconciliation path.
+  //
+  // Full coverage table and the porting preconditions for retiring this entry:
+  // ./readme.md. The contract is pinned by ./__tests__/pluginCoverage.test.ts.
   plugins: [
     {
       id: 'reactory-client-core',
