@@ -9,6 +9,50 @@ type DeleteArgs = {
   reason?: string
 }
 
+/**
+ * A comment is a reply when it carries a parent reference (id or document).
+ *
+ * `parent` is left undefined by every write path (`addComment` only sets it
+ * when a `parentId` is supplied), and an explicit `null` means the same thing:
+ * root. The query branch approximates this with `parent: { $exists: false }`,
+ * which would also drop a stored `parent: null`; nothing in the write paths can
+ * produce that shape, and treating `null` as "no parent" is the intent.
+ */
+const isReplyComment = (comment: any): boolean => {
+  const parent = comment?.parent;
+  if (parent === null || parent === undefined) return false;
+  const parentId = String(parent._id ?? parent.id ?? parent);
+  return parentId.length > 0;
+};
+
+/**
+ * Ticket-level comment projection.
+ *
+ * The `ReactorySupportTicket.comments` field is deliberately a *root-only,
+ * moderated-safe, newest-first* view: a ticket page shows the top-level
+ * conversation and loads replies per comment through `getCommentReplies`.
+ * `removed` comments are hidden unless a caller explicitly opts in elsewhere
+ * (`getCommentsByContext(includeRemoved: true)`).
+ *
+ * This projection exists because the property has two input shapes:
+ *  - unpopulated (an array of ObjectIds) -> the query below applies the rules;
+ *  - populated (comment documents) -> the rules must be applied in memory.
+ * Before TOOLS-001 the single-ticket read never populated comments, so only the
+ * query branch was ever taken. Now that `getTicket`/`getTicketByReference`
+ * populate them, both branches have to produce the same result or the field's
+ * contract changes silently.
+ */
+const projectTicketLevelComments = (comments: any[]): any[] =>
+  (Array.isArray(comments) ? comments : [])
+    .filter((comment) => !!comment && comment.removed !== true && !isReplyComment(comment))
+    // Newest first, matching the query branch's `sort({ createdAt: -1 })`.
+    // Array#sort is stable, so comments sharing a timestamp keep their order.
+    .sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+
 // @ts-ignore - decorator requires this form without () invocation
 @resolver
 class SupportResolver {
@@ -95,10 +139,14 @@ class SupportResolver {
       // Check if comments are already populated (array of objects vs array of IDs)
     if (obj.comments && obj.comments.length > 0) {
       const firstComment = obj.comments[0];
-        // If it's already an object with properties, it's populated
+        // If it's already an object with properties, it's populated. Apply the
+        // same projection the query branch would have produced: roots only,
+        // `removed` hidden, newest first.
       if (typeof firstComment === 'object' && firstComment.text !== undefined) {
-        return obj.comments;
+        return projectTicketLevelComments(obj.comments as any[]);
         }
+      // A non-empty array of ids falls through to the query below, which owns
+      // the same projection for the unpopulated shape.
       }
 
        // Comments are not populated, fetch them from the database
