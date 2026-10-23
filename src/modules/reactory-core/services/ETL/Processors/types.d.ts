@@ -37,14 +37,8 @@ export interface IUserImportStruct {
   demographic_result?: {
     errors?: any[],
     data?: {
-      MoresUpdateUserDemographic?: {
-        user: any
-        organization: any
-        gender: any
-        age: Date,
-        position: string,
-        jobTitle: string
-      }
+      /** ORG-040: values written through DemographicsService.saveValues. */
+      demographics?: any[]
     }
   },
 
