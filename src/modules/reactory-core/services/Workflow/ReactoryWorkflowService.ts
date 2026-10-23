@@ -4,6 +4,11 @@ import {
   WorkflowRunner,
 } from '@reactory/server-modules/reactory-core/workflow/WorkflowRunner/WorkflowRunner';
 import { collectAndStripDesigner, reattachDesigner } from './designerMetadata';
+import {
+  WAIT_EVENT_TIMEOUT_CODE,
+  findWaitEventTimeoutViolations,
+  waitEventTimeoutMessage,
+} from '@reactory/server-modules/reactory-core/workflow/YamlFlow/validators/WaitEventTimeoutContract';
 import { 
   IReactoryWorkflowService,
   IWorkflowSystemStatus,
@@ -2001,6 +2006,24 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
         }
       }
 
+      // R1 (REACTORY-302016408): a `wait_event` step must not declare `timeout`.
+      // The engine matches an event subscription only for events published at or
+      // after it was created (subscribeAsOf <= event.eventTime is a LOWER BOUND on
+      // the event, not a deadline), so a timeout makes the wait deaf for its
+      // duration and permanently discards the signal. Rejecting it HERE is what
+      // makes saveWorkflowDefinition() return PARSE_ERROR before writing the file
+      // and before attempting registration, instead of writing a definition that
+      // silently stops being runnable. Same canonical message as the builder, the
+      // YAML-document validator and YamlWorkflowExecutor.validateWorkflow.
+      // See workflow/YamlFlow/validators/WaitEventTimeoutContract.ts.
+      for (const violation of findWaitEventTimeoutViolations(definition.steps)) {
+        errors.push({
+          field: violation.path,
+          code: WAIT_EVENT_TIMEOUT_CODE,
+          message: waitEventTimeoutMessage(violation),
+        });
+      }
+
       // Validate designer connections reference existing steps
       if (definition.designer?.connections) {
         for (const conn of definition.designer.connections) {
@@ -2365,6 +2388,24 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       return {
         nameSpace, name, version, steps: [], loadStatus: 'PARSE_ERROR',
         errors: [{ stage: 'PARSE' as const, message: 'YAML content must be a valid workflow object', code: 'INVALID_CONTENT' }],
+      };
+    }
+
+    // A `wait_event` must not declare `timeout` (REACTORY-302016408). This raw-YAML
+    // path deliberately skips step-config validation (template inputs are legal
+    // here), but this particular key is not a permissive-syntax question: it makes
+    // the wait deaf and destroys the signal, and the definition would then be
+    // written and never become runnable (registration swallows the builder's
+    // throw as a warning). Reject before writing so the caller sees why.
+    const waitEventTimeouts = findWaitEventTimeoutViolations((parsed as any).steps);
+    if (waitEventTimeouts.length > 0) {
+      return {
+        nameSpace, name, version, steps: [], loadStatus: 'PARSE_ERROR',
+        errors: waitEventTimeouts.map((violation) => ({
+          stage: 'VALIDATION' as const,
+          message: waitEventTimeoutMessage(violation),
+          code: WAIT_EVENT_TIMEOUT_CODE,
+        })),
       };
     }
 

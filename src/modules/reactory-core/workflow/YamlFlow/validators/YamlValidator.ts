@@ -17,6 +17,11 @@ import {
   ParameterSubstitutionContext
 } from '../types/WorkflowDefinition';
 import { ParameterSubstitution } from '../parsers/ParameterSubstitution';
+import {
+  WAIT_EVENT_TIMEOUT_CODE,
+  findWaitEventTimeoutViolations,
+  waitEventTimeoutMessage
+} from './WaitEventTimeoutContract';
 
 export class YamlValidator {
   private ajv: any;
@@ -202,6 +207,21 @@ export class YamlValidator {
 
     // Validate timeout values
     this.validateTimeouts(workflow, errors);
+
+    // A wait_event cannot be given a `timeout` (REACTORY-302016408): the engine
+    // matches a subscription only for events published at or after it was created,
+    // so a timeout makes the wait deaf for its duration and loses the signal
+    // permanently rather than expiring the wait. Caught here so the YAML-document
+    // validation path (`parseAndValidate` → `validateYamlWorkflow`) rejects the
+    // definition too, with the same message the builder and the executor use.
+    for (const violation of findWaitEventTimeoutViolations(workflow.steps)) {
+      errors.push({
+        code: WAIT_EVENT_TIMEOUT_CODE,
+        message: waitEventTimeoutMessage(violation),
+        path: violation.path,
+        value: violation.stepId
+      });
+    }
 
     // Validate version format
     if (!/^\d+\.\d+\.\d+$/.test(workflow.version)) {

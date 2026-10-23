@@ -6,6 +6,11 @@
 
 import Reactory from '@reactorynet/reactory-core';
 import { YamlStepRegistry } from '../steps/registry/YamlStepRegistry';
+import {
+  WAIT_EVENT_TIMEOUT_CODE,
+  findWaitEventTimeoutViolations,
+  waitEventTimeoutMessage,
+} from '../validators/WaitEventTimeoutContract';
 import { YamlWorkflowDefinition, StepCreationParams } from '../types/WorkflowDefinition';
 import { IYamlStep, StepExecutionContext, StepExecutionResult } from '../steps/interfaces/IYamlStep';
 import {
@@ -83,6 +88,22 @@ export class YamlWorkflowExecutor {
             stepId: step.id 
           });
         }
+      }
+
+      // A wait_event cannot be given a `timeout` (REACTORY-302016408). The engine
+      // matches an event subscription only for events published at or after it was
+      // created, so a timeout makes the wait deaf for its duration and loses the
+      // signal permanently instead of expiring the wait. Rejected here — with the
+      // same message the builder throws at definition load — so design-time
+      // validation (the designer's yamlValidationErrors resolver) reports it before
+      // an instance can be started. See validators/WaitEventTimeoutContract.ts.
+      for (const violation of findWaitEventTimeoutViolations(workflow.steps)) {
+        errors.push({
+          message: waitEventTimeoutMessage(violation),
+          path: violation.path,
+          code: WAIT_EVENT_TIMEOUT_CODE,
+          stepId: violation.stepId,
+        });
       }
       
       // Validate dependencies exist

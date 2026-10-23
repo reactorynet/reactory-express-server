@@ -13,11 +13,16 @@
  *   while       → .while(cond).do(body)
  *   parallel    → .parallel().do(branch)...join()
  *   saga        → .saga(body).compensateWithSequence(compensate)
- *   wait_event  → .waitFor(eventName, eventKey, effectiveDate?)
+ *   wait_event  → WaitForEventStepBody (eventName, eventKey, effectiveDate = now;
+ *                 `timeout` is REJECTED, never translated into a deadline)
  *   join        → no-op (parallel already synchronises)
  *
  * Per-step `retryPolicy` maps to `.onError(Retry, interval, maxRetries)` and
- * `timeout` is enforced inside YamlStepBody.
+ * `timeout` is enforced inside YamlStepBody — for EVERY step type except
+ * `wait_event`, which REJECTS `timeout` outright (see
+ * validators/WaitEventTimeoutContract.ts and `buildYamlWorkflowClass` below):
+ * a wait_event must be expired by an event, never by a clock, so a declared
+ * timeout fails the definition instead of being silently misinterpreted.
  *
  * Expression scope (conditions, foreach items, event keys) — all evaluated
  * against the workflow data (TData):
@@ -32,6 +37,11 @@
 import { createHash } from 'crypto';
 import { WorkflowBase, WorkflowBuilder, WorkflowErrorHandling } from '@reactorynet/workflow-es';
 import { YamlStepBody, NoOpStepBody, FinalizeStepBody, WaitForEventStepBody, NamedMarkerStepBody, YamlWorkflowData } from './execution/YamlStepBody';
+import {
+  assertNoWaitEventTimeouts,
+  findWaitEventTimeoutViolations,
+  waitEventTimeoutMessage,
+} from './validators/WaitEventTimeoutContract';
 
 type AnyChain = any;
 type AnyStep = any;
@@ -229,11 +239,6 @@ function stepConfig(step: AnyStep): Record<string, any> {
   return {};
 }
 
-/** `Date.now()` indirection so the value is easy to stub in tests. */
-function nowMs(): number {
-  return Date.now();
-}
-
 function applyRetry(stepBuilder: AnyChain, step: AnyStep): AnyChain {
   const rp = step.retryPolicy;
   if (!rp) return stepBuilder;
@@ -345,8 +350,18 @@ function attach(chain: AnyChain, step: AnyStep, opts: ScopeOpts): AnyChain {
     case 'wait_event': {
       const eventName = config.eventName || config.event || step.id;
       const eventKeyExpr = config.eventKey;
-      const timeoutMs = typeof config.timeout === 'number' ? config.timeout : undefined;
       const outputVariable = config.outputVariable;
+
+      // Defence in depth: buildYamlWorkflowClass() already rejects a wait_event
+      // timeout for the WHOLE definition (including nested scopes) before this
+      // walk runs, which is the path that fails at definition load. This guard
+      // covers a direct `walk()`/registry use of this branch, so no code path can
+      // ever construct a future event watermark again.
+      const violations = findWaitEventTimeoutViolations([step]);
+      if (violations.length > 0) {
+        throw new Error(waitEventTimeoutMessage(violations[0]));
+      }
+
       // Use the Reactory WaitForEventStepBody (rather than the native
       // chain.waitFor primitive) so the suspended pointer is stamped with the
       // YAML step id — native WaitFor leaves pointer.stepName unset, which makes
@@ -356,7 +371,17 @@ function attach(chain: AnyChain, step: AnyStep, opts: ScopeOpts): AnyChain {
           s.eventName = String(eventName);
           const key = eventKeyExpr != null ? evalExpression(eventKeyExpr, data) : undefined;
           s.eventKey = key == null ? '' : String(key);
-          s.effectiveDate = timeoutMs != null ? new Date(nowMs() + timeoutMs) : new Date();
+          // effectiveDate is ALWAYS now, never a deadline. The engine matches a
+          // subscription only when subscribeAsOf <= event.eventTime (a LOWER BOUND
+          // on the event's publish time), so a future effectiveDate would make the
+          // subscription ignore every event published before it — discarding the
+          // signal rather than timing the wait out, and leaving nothing to wake the
+          // instance. Timeouts must be delivered as EVENTS, which is why a
+          // wait_event `timeout` is rejected at validation time (see
+          // validators/WaitEventTimeoutContract.ts) and why this branch has no
+          // timeout handling at all. Same rule as YamlStepBody's waitForEvent
+          // directive.
+          s.effectiveDate = new Date();
           s.stepName = step.name || step.id;
         });
       });
@@ -402,6 +427,14 @@ export function buildYamlWorkflowClass(def: {
   // M11 — the engine version IS the semantic version. No truncation to a major.
   const version = def.version;
   const steps = def.steps || [];
+
+  // REACTORY-302016408 — fail at definition load / registration, before any
+  // instance exists, when a wait_event declares a `timeout`. A wait_event cannot
+  // expire itself (a timeout only makes the subscription deaf and loses the
+  // signal), so the author MUST be told now rather than discovering a wait that
+  // never ends. Recurses into nested scopes; the message names the supported
+  // alternative (publish a sentinel event at the deadline).
+  assertNoWaitEventTimeouts(steps, id);
   // M10 — bind the definition's CONTENT to the engine fingerprint. The engine hashes
   // graph shape; this seed adds the step configuration, which lives in closures the
   // engine cannot see. Together they mean an instance started on this YAML can never
