@@ -1,7 +1,6 @@
 import Applications from './Applications';
 import Application from './Application';
 import ApplicationUsers from './Application/ApplicationUsers';
-import ApplicationOrganizations from './Application/ApplicationOrganizations';
 import ApplicationRouteEditor from './Application/ApplicationRouteEditor';
 import StaticContentInputForm from './StaticContentInputForm';
 import ReactoryContentCapture from './ReactoryContentCapture';
@@ -23,7 +22,6 @@ export default [
   Applications,
   Application,
   ApplicationUsers,
-  ApplicationOrganizations,
   ApplicationRouteEditor,
   StaticContentInputForm,
   ReactoryContentCapture,
