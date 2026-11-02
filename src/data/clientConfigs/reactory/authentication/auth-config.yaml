@@ -1,0 +1,9 @@
+- provider: LOCAL
+  enabled: true
+  _id: {}
+- provider: FACEBOOK
+  enabled: false
+  _id: {}
+- provider: GOOGLE
+  enabled: true
+  _id: {}

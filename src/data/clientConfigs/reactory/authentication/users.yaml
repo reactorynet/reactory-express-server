@@ -1,0 +1,18 @@
+- email: werner.weber@gmail.com
+  username: werner
+  firstName: Werner
+  lastName: Weber
+  password: Password123
+  roles: 
+    - USER
+    - ADMIN
+    - DEVELOPER
+
+- email: kb@reactory.net
+  username: KnowledgeBase
+  firstName: KnowledgeBase
+  lastName: SystemUser
+  password: KnowledgeBase
+  roles:
+    - KB_ADMIN
+    - KB_WORKFLOW_EXEC
