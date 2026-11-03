@@ -32,7 +32,7 @@
  *     by the provider adapter, asserted on rendered content.
  *
  * ===========================================================================
- * KNOWN BLOCKER - the delivery layer cannot execute (defect D1)
+ * STATUS: BLOCKED - the delivery layer cannot execute (defect D1)
  * ===========================================================================
  * `communicator.MessageService.createMessage()` never assigns the business `id`
  * the `Message` schema requires, so `Message.create()` fails validation with
@@ -45,6 +45,21 @@
  * production write path for every sender), so it is reported rather than fixed
  * here. The guard test in "blocker" below proves it, and it fails the moment
  * the defect is fixed - which is the signal to flip DELIVERY_ENABLED.
+ *
+ * Because of D1 this ticket is BLOCKED, not done: the review was right that a
+ * green suite full of honest skips is not a satisfied acceptance criterion.
+ * See docs/verification/TRANSACTIONAL_EMAIL_MATRIX.md sections 4.3-4.4.
+ *
+ * Why the fix is not in this commit: `src/modules/reactory-communicator` is a
+ * SEPARATE git repository (git@github.com:reactorynet/reactory-communicator)
+ * that express-server does not track at all (`git ls-files` there returns
+ * nothing). Committing DELIVERY_ENABLED = true against a fix that lives only in
+ * an unmerged cross-repo change would commit a suite that is red on every clean
+ * checkout. The unblock order is: communicator PR -> flip the flag -> republish
+ * the matrix with observed delivery rows.
+ *
+ * Every evidence row carries the HTTP status the test actually observed, read
+ * from the response object the assertions ran on.
  *
  * Run:
  *   TRANSACTIONAL_EMAIL_MONGO_URI=mongodb://127.0.0.1:27017/reactory-transactional-email-acceptance \
@@ -191,6 +206,26 @@ const loggedText = (): string =>
     )
     .join('\n');
 
+/**
+ * The `reason` the registration delivery catch block recorded.
+ *
+ * Scenario 10 has to say *which* stage failed, not merely that something did.
+ * With defect D1 present the send dies at persistence (`Message.create`), so the
+ * scenario exercises the non-fatal wrapper for a PERSISTENCE failure; the
+ * provider-stage failure is only reachable once D1 is fixed. Asserting this
+ * explicitly stops the scenario from claiming more than it observed - the review
+ * asked for exactly that qualification.
+ */
+const activationFailureReason = (): string => {
+  const call = loggedErrors().find(
+    (args: any[]) =>
+      typeof args[0] === 'string' &&
+      args[0].indexOf('Failed to prepare or send registration activation email') !== -1,
+  );
+  const detail = call && call[1] && typeof call[1] === 'object' ? call[1] : undefined;
+  return String((detail as any)?.reason || '');
+};
+
 /* ------------------------------------------------------------------------- */
 /* Evidence (printed at the end; paste into the matrix, never transcribe)     */
 /* ------------------------------------------------------------------------- */
@@ -200,6 +235,15 @@ interface IEvidenceRow {
   layer: 'template + render' | 'delivery';
   templateView: string;
   subject: string;
+  /**
+   * The HTTP status the test actually observed, read from the response object
+   * the assertions ran on - never typed in by hand.
+   *
+   * The review asked for this because a matrix row that says PASS without a
+   * status is unfalsifiable: while D1 exists `/forgot` answers 500, and a row
+   * that did not state that would read as if the happy path had been observed.
+   */
+  http: string;
   state: 'PASS' | 'FAIL' | 'NOT RUN';
   note?: string;
 }
@@ -321,6 +365,7 @@ describe('scenario 1 - password reset uses the default forgot-password-email tem
     record({
       scenario: '1 - password reset, no setting',
       layer: 'template + render',
+      http: `POST /useraccount/forgot -> ${response.status}`,
       templateView: view,
       subject: content.subject,
       state: 'PASS',
@@ -352,6 +397,7 @@ describe('scenario 1 - password reset uses the default forgot-password-email tem
     record({
       scenario: '1 - password reset, no setting',
       layer: 'delivery',
+      http: `POST /useraccount/forgot -> ${response.status}`,
       templateView: 'forgot-password-email',
       subject: content.subject,
       state: 'PASS',
@@ -398,6 +444,7 @@ describe('scenario 2 - registration uses the default activation-email template',
     record({
       scenario: '2 - registration, no setting',
       layer: 'template + render',
+      http: `POST /useraccount/register -> ${response.status}`,
       templateView: view,
       subject: content.subject,
       state: 'PASS',
@@ -423,6 +470,7 @@ describe('scenario 2 - registration uses the default activation-email template',
     record({
       scenario: '2 - registration, no setting',
       layer: 'delivery',
+      http: `POST /useraccount/register -> ${response.status}`,
       templateView: 'activation-email',
       subject: content.subject,
       state: 'PASS',
@@ -479,6 +527,7 @@ describe('scenario 3 - the application override is honoured for password reset',
     record({
       scenario: '3 - password reset, application override',
       layer: 'template + render',
+      http: `POST /useraccount/forgot -> ${response.status}`,
       templateView: view,
       subject: content.subject,
       state: 'PASS',
@@ -506,6 +555,7 @@ describe('scenario 3 - the application override is honoured for password reset',
     record({
       scenario: '3 - password reset, application override',
       layer: 'delivery',
+      http: `POST /useraccount/forgot -> ${response.status}`,
       templateView: CUSTOM_RESET_VIEW,
       subject: content.subject,
       state: 'PASS',
@@ -559,6 +609,7 @@ describe('scenario 4 - the application override is honoured for registration', (
     record({
       scenario: '4 - registration, application override',
       layer: 'template + render',
+      http: `POST /useraccount/register -> ${response.status}`,
       templateView: view,
       subject: content.subject,
       state: 'PASS',
@@ -585,6 +636,7 @@ describe('scenario 4 - the application override is honoured for registration', (
     record({
       scenario: '4 - registration, application override',
       layer: 'delivery',
+      http: `POST /useraccount/register -> ${response.status}`,
       templateView: CUSTOM_ACTIVATION_VIEW,
       subject: content.subject,
       state: 'PASS',
@@ -621,6 +673,7 @@ describe('scenario 5 - an override naming a missing template fails loudly', () =
     record({
       scenario: '5 - override points at a missing template (reset)',
       layer: 'template + render',
+      http: `POST /useraccount/forgot -> ${response.status}`,
       templateView: missingView,
       subject: '(none - resolution failed before render)',
       state: 'PASS',
@@ -655,6 +708,7 @@ describe('scenario 5 - an override naming a missing template fails loudly', () =
     record({
       scenario: '5 - override points at a missing template (registration)',
       layer: 'template + render',
+      http: `POST /useraccount/register -> ${response.status}`,
       templateView: missingView,
       subject: '(none - resolution failed before render)',
       state: 'PASS',
@@ -698,6 +752,7 @@ describe('scenario 6 - a malformed setting is treated as unset and the default i
     record({
       scenario: `6 - malformed setting (${_label})`,
       layer: 'template + render',
+      http: `POST /useraccount/forgot -> ${response.status}`,
       templateView: view,
       subject: content.subject,
       state: 'PASS',
@@ -709,7 +764,8 @@ describe('scenario 6 - a malformed setting is treated as unset and the default i
     const email = nextEmail('s6-delivery');
     harness.resetObservations();
 
-    expect((await postRegister(email)).status).toBe(200);
+    const registrationResponse = await postRegister(email);
+    expect(registrationResponse.status).toBe(200);
     await harness.dispatch();
 
     const calls = harness.adapterCalls();
@@ -720,6 +776,7 @@ describe('scenario 6 - a malformed setting is treated as unset and the default i
     record({
       scenario: '6 - malformed setting (registration)',
       layer: 'delivery',
+      http: `POST /useraccount/register -> ${registrationResponse.status}`,
       templateView: 'activation-email',
       subject: content.subject,
       state: 'PASS',
@@ -768,6 +825,7 @@ describe('scenario 7 - the activation link from registration activates the accou
     record({
       scenario: '7 - activation round trip',
       layer: 'template + render',
+      http: `GET /useraccount/activate -> ${first.status}, repeat -> ${second.status}`,
       templateView: 'activation-email',
       subject: '(activation route exercised; see scenario 2 for the rendered subject)',
       state: 'PASS',
@@ -797,6 +855,7 @@ describe('scenario 7 - the activation link from registration activates the accou
     record({
       scenario: '7 - activation round trip (from delivered email)',
       layer: 'delivery',
+      http: `GET /useraccount/activate -> ${first.status}, repeat -> ${second.status}`,
       templateView: 'activation-email',
       subject: content.subject,
       state: 'PASS',
@@ -839,6 +898,7 @@ describe('scenario 8 - an expired activation token is rejected distinctly', () =
     record({
       scenario: '8 - expired activation token',
       layer: 'template + render',
+      http: `GET /useraccount/activate -> ${response.status}; malformed token -> ${invalid.status}`,
       templateView: '(no template involved)',
       subject: '(none)',
       state: 'PASS',
@@ -869,6 +929,7 @@ describe('scenario 9 - forgot for an unknown address sends nothing and reveals n
     record({
       scenario: '9 - forgot for an unknown address',
       layer: 'template + render',
+      http: `POST /useraccount/forgot -> ${response.status}`,
       templateView: '(none - no resolution attempted)',
       subject: '(none)',
       state: 'PASS',
@@ -918,16 +979,28 @@ describe('scenario 10 - a send failure during registration is non-fatal', () => 
     expect(text).toContain('registration');
     expect(text).toContain(email);
 
+    // Which stage failed - machine-checked, not claimed in prose. This is the
+    // qualification the review asked for: with D1 present the send dies at
+    // persistence, so what is proven here is that the wrapper survives a
+    // PERSISTENCE failure. The provider-stage path is exercised once the send
+    // can get past persistence, i.e. after D1 is fixed.
+    const reason = activationFailureReason();
+    expect(reason.length).toBeGreaterThan(0);
+    const stage = /id.*is required|Failed to create message/i.test(reason) ? 'persistence' : 'provider';
+    expect(stage).toBe(DELIVERY_ENABLED ? 'provider' : 'persistence');
+
     record({
-      scenario: '10 - provider failure during registration',
+      scenario: '10 - send failure during registration is non-fatal',
       layer: 'template + render',
+      http: `POST /useraccount/register -> ${response.status}`,
       templateView: '(resolution succeeded; the send failed)',
       subject: '(none - send failed before render)',
       state: 'PASS',
       note:
-        '200 + user created + failure logged. NOTE: with D1 present the failure is MESSAGE_CREATE_FAILED ' +
-        '(persistence) because it fires before provider selection; the provider is unregistered so the ' +
-        'provider-unavailable path is what runs once D1 is fixed.',
+        `non-fatal wrapper proven for a ${stage}-stage failure (${reason}). ` +
+        (DELIVERY_ENABLED
+          ? 'Provider unregistered, so this is the provider-unavailable path.'
+          : 'D1 fails the send at Message.create, before provider selection; the provider-unavailable path is NOT proven until D1 is fixed.'),
     });
   });
 
@@ -950,6 +1023,7 @@ describe('scenario 10 - a send failure during registration is non-fatal', () => 
     record({
       scenario: '10 - provider failure during registration (delivery)',
       layer: 'delivery',
+      http: `POST /useraccount/register -> ${response.status}`,
       templateView: '(send failed)',
       subject: '(none)',
       state: 'PASS',
@@ -973,6 +1047,7 @@ const NOT_RUN_ROWS: IEvidenceRow[] = DELIVERY_ENABLED
       {
         scenario: '1 - password reset, no setting',
         layer: 'delivery',
+        http: '\u2014 (not executed)',
         templateView: 'forgot-password-email',
         subject: '(not observed)',
         state: 'NOT RUN',
@@ -981,6 +1056,7 @@ const NOT_RUN_ROWS: IEvidenceRow[] = DELIVERY_ENABLED
       {
         scenario: '2 - registration, no setting',
         layer: 'delivery',
+        http: '\u2014 (not executed)',
         templateView: 'activation-email',
         subject: '(not observed)',
         state: 'NOT RUN',
@@ -989,6 +1065,7 @@ const NOT_RUN_ROWS: IEvidenceRow[] = DELIVERY_ENABLED
       {
         scenario: '3 - password reset, application override',
         layer: 'delivery',
+        http: '\u2014 (not executed)',
         templateView: CUSTOM_RESET_VIEW,
         subject: '(not observed)',
         state: 'NOT RUN',
@@ -997,6 +1074,7 @@ const NOT_RUN_ROWS: IEvidenceRow[] = DELIVERY_ENABLED
       {
         scenario: '4 - registration, application override',
         layer: 'delivery',
+        http: '\u2014 (not executed)',
         templateView: CUSTOM_ACTIVATION_VIEW,
         subject: '(not observed)',
         state: 'NOT RUN',
@@ -1005,6 +1083,7 @@ const NOT_RUN_ROWS: IEvidenceRow[] = DELIVERY_ENABLED
       {
         scenario: '6 - malformed setting (registration)',
         layer: 'delivery',
+        http: '\u2014 (not executed)',
         templateView: 'activation-email',
         subject: '(not observed)',
         state: 'NOT RUN',
@@ -1013,6 +1092,7 @@ const NOT_RUN_ROWS: IEvidenceRow[] = DELIVERY_ENABLED
       {
         scenario: '7 - activation round trip (from delivered email)',
         layer: 'delivery',
+        http: '\u2014 (not executed)',
         templateView: 'activation-email',
         subject: '(not observed)',
         state: 'NOT RUN',
@@ -1021,6 +1101,7 @@ const NOT_RUN_ROWS: IEvidenceRow[] = DELIVERY_ENABLED
       {
         scenario: '10 - provider failure during registration (delivery)',
         layer: 'delivery',
+        http: '\u2014 (not executed)',
         templateView: '(send failed)',
         subject: '(none)',
         state: 'NOT RUN',
@@ -1031,11 +1112,11 @@ const NOT_RUN_ROWS: IEvidenceRow[] = DELIVERY_ENABLED
 afterAll(() => {
   const rows = [...evidence, ...NOT_RUN_ROWS].map(
     (row) =>
-      `| ${row.scenario} | ${row.layer} | ${row.templateView} | ${row.subject} | ${row.state} | ${row.note || ''} |`,
+      `| ${row.scenario} | ${row.layer} | ${row.http} | ${row.templateView} | ${row.subject} | ${row.state} | ${row.note || ''} |`,
   );
   const header =
-    '| Scenario | Layer | Template view used | Subject observed | Result | Note |';
-  const divider = '|---|---|---|---|---|---|';
+    '| Scenario | Layer | HTTP observed | Template view used | Subject observed | Result | Note |';
+  const divider = '|---|---|---|---|---|---|---|';
   process.stdout.write(
     `\n[E5 transactional email matrix] ${new Date().toISOString()}\n${header}\n${divider}\n${rows.join('\n')}\n\n`,
   );
