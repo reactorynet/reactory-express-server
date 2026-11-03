@@ -43,12 +43,24 @@
  * persisted, queued or dispatched - for any channel, on any surface. It is a
  * pre-existing defect in the communicator module (a separate repository, and a
  * production write path for every sender), so it is reported rather than fixed
- * here. The guard test in "blocker" below proves it, and it fails the moment
- * the defect is fixed - which is the signal to flip DELIVERY_ENABLED.
+ * here. The guard in "D1 guard" below proves it; the moment the defect is fixed
+ * the guard fails with an instruction to flip DELIVERY_ENABLED.
  *
- * Because of D1 this ticket is BLOCKED, not done: the review was right that a
- * green suite full of honest skips is not a satisfied acceptance criterion.
- * See docs/verification/TRANSACTIONAL_EMAIL_MATRIX.md sections 4.3-4.4.
+ * Tracked reference (N5). The defect is pinned to a commit, not just described:
+ *
+ *   repository  reactorynet/reactory-communicator
+ *   revision    03da474  (HEAD of master when this suite was written)
+ *   schema      src/modules/Message.ts:22-27   `id: { type: String, required: true,
+ *                                              unique: true, index: true }`
+ *   defect      src/modules/MessageService.ts:68-72  createMessage() spreads the
+ *               caller's data and calls messageModel.create() without ever
+ *               assigning `id`
+ *   message     Message validation failed: CommunicatorMessage validation failed:
+ *               id: Path `id` is required.
+ *
+ * Because of D1 this ticket is BLOCKED, not done: a green suite full of honest
+ * skips is not a satisfied acceptance criterion. See
+ * docs/verification/TRANSACTIONAL_EMAIL_MATRIX.md sections 4.3-4.4.
  *
  * Why the fix is not in this commit: `src/modules/reactory-communicator` is a
  * SEPARATE git repository (git@github.com:reactorynet/reactory-communicator)
@@ -57,6 +69,13 @@
  * an unmerged cross-repo change would commit a suite that is red on every clean
  * checkout. The unblock order is: communicator PR -> flip the flag -> republish
  * the matrix with observed delivery rows.
+ *
+ * Guard behaviour, stated the way the code actually behaves (corrected in review):
+ * D1 is detected ONCE in beforeAll by probing the production call, and the guard
+ * compares that OBSERVED state with DELIVERY_ENABLED. On disagreement it throws a
+ * single instruction naming the flag to change - it does NOT rely on some later
+ * assertion failing, and it is the only test that fails. Both directions are
+ * covered: fixed-but-flag-off and flagged-but-still-blocked.
  *
  * Every evidence row carries the HTTP status the test actually observed, read
  * from the response object the assertions ran on.
@@ -106,23 +125,91 @@ jest.setTimeout(180_000);
 const mockLogger = logger as any;
 
 /**
- * Flip to `true` once defect D1 is fixed (see the file header). The guard test
- * in `describe('blocker ...')` fails first and tells you to do exactly that.
+ * Flip to `true` once defect D1 is fixed.
+ *
+ * This flag decides only ONE thing: whether the seven delivery-layer tests run.
+ * It is NOT used to decide what to assert about D1's presence - that is observed
+ * at runtime by probeBlocker(), because deriving it from this flag is how the
+ * suite previously produced seven misleading 500-vs-200 failures instead of one
+ * instruction when the upstream fix landed without the flag being flipped.
+ *
+ * When the flag and reality disagree, the coherence guard in
+ * `describe('D1 guard ...')` fails with an instruction and nothing else does.
  */
 const DELIVERY_ENABLED = false;
 
 const deliveryIt = DELIVERY_ENABLED ? it : it.skip;
 
 /**
- * The status `/forgot` answers with.
+ * Whether defect D1 is still present, OBSERVED - not assumed.
+ *
+ * Probed once in beforeAll through the real MessageService.createMessage()
+ * against the real Message schema, i.e. exactly the call the send path makes.
+ * `null` means the probe has not run.
+ *
+ * Everything that depends on D1's presence reads this instead of
+ * DELIVERY_ENABLED, so the suite cannot assert a 500 in a world that answers 200
+ * (or the reverse): it reports the actual state and, if that state disagrees
+ * with the flag, says so once and clearly.
+ */
+let blockerPresent: boolean | null = null;
+
+/** The observed failure while the blocker is present, kept as guard evidence. */
+let blockerFailure: any = null;
+
+/**
+ * The status `/forgot` answers with, as observed.
  *
  * 500 while D1 is present (the send cannot persist a message); 200 once it is
- * fixed. Written as a branch rather than two assertions so the same suite is
- * honest in both states, and so neither value can quietly drift.
+ * fixed. Previously a constant derived from DELIVERY_ENABLED, which is what made
+ * a fixed-but-not-flipped world fail in seven places with unhelpful messages.
  */
-const resetStatus = (): number => (DELIVERY_ENABLED ? 200 : 500);
+const resetStatus = (): number => (blockerPresent === false ? 200 : 500);
 
-/** The blocker guard is only meaningful while the blocker exists. */
+/** The exact call the send path makes, used only to detect D1. */
+const BLOCKER_PROBE = {
+  partnerId: 'd1-probe',
+  userId: 'd1-probe',
+  channel: 'email',
+  to: 'd1-probe@acceptance.transactional.test',
+  subject: 'd1 probe',
+  content: { subject: 'd1 probe', text: 'body', html: '<p>body</p>' },
+};
+
+/** What to do about each disagreement between the flag and reality. */
+const INSTRUCTION = {
+  fixedButFlagOff:
+    'The message-persistence blocker (D1) is FIXED: MessageService.createMessage() now persists a ' +
+    'message. Flip DELIVERY_ENABLED to true at the top of ' +
+    'transactionalEmail.acceptance.test.ts so the seven delivery-layer tests run, then republish ' +
+    'docs/verification/TRANSACTIONAL_EMAIL_MATRIX.md section 3.2 with the observed rows.',
+  flagOnButStillBlocked:
+    'DELIVERY_ENABLED is true but defect D1 is still present: MessageService.createMessage() cannot ' +
+    'persist a message, so the seven delivery-layer tests cannot pass. Either land the communicator PR ' +
+    '(assign the business id in MessageService.createMessage, plus a real-model test) or set ' +
+    'DELIVERY_ENABLED = false and keep E5 BLOCKED.',
+};
+
+/**
+ * Detect whether D1 is present, through the production call.
+ *
+ * Deliberately the same call the send path makes - no mock, no schema
+ * introspection - so the answer cannot drift from what the route experiences.
+ */
+const probeBlocker = async (): Promise<void> => {
+  try {
+    const created: any = await harness.messageService.createMessage({ ...BLOCKER_PROBE });
+    blockerPresent = false;
+    blockerFailure = null;
+    // A successful probe wrote a row; remove it so it cannot colour messageCount().
+    if (created?.id) await harness.clearMessages();
+  } catch (error: any) {
+    blockerPresent = true;
+    blockerFailure = error;
+  }
+};
+
+/** The D1 guard only needs to run while the delivery layer is expected to be off. */
 const blockerDescribe = DELIVERY_ENABLED ? describe.skip : describe;
 /* ------------------------------------------------------------------------- */
 /* Fixtures and helpers                                                       */
@@ -258,6 +345,10 @@ const record = (row: IEvidenceRow): void => {
 
 beforeAll(async () => {
   harness = await createHarness();
+  // Observe D1 once, through the production call, before any test asserts
+  // anything that depends on it. This is what lets the guard fail with ONE
+  // instruction instead of every /forgot test failing with 500-vs-200.
+  await probeBlocker();
 });
 
 afterAll(async () => {
@@ -280,40 +371,41 @@ afterEach(() => {
 /* BLOCKER                                                                   */
 /* ========================================================================= */
 
-blockerDescribe('blocker - the production send path cannot persist a message (defect D1)', () => {
-  it('proves the blocker: MessageService.createMessage rejects with "id is required"', async () => {
-    // Driven through the real service against the real schema. This is the
-    // assertion that makes the delivery-layer skip below evidence-backed rather
-    // than an excuse: when the defect is fixed this test fails, and the failure
-    // message says to flip DELIVERY_ENABLED.
-    let failure: any;
-    try {
-      await harness.messageService.createMessage({
-        partnerId: harness.partnerId,
-        userId: 'acceptance-user',
-        channel: 'email',
-        to: `blocker@${ACCEPTANCE_EMAIL_DOMAIN}`,
-        subject: 'blocker probe',
-        content: { subject: 'blocker probe', text: 'body', html: '<p>body</p>' },
-      });
-    } catch (error: any) {
-      failure = error;
+blockerDescribe('D1 guard - the suite state is coherent', () => {
+  /**
+   * The ONE place a flag/reality disagreement becomes an instruction.
+   *
+   * Deliberately first, and deliberately before every generic assertion: when the
+   * upstream fix lands without DELIVERY_ENABLED being flipped, the operator must
+   * read one sentence telling them what to do - not eight failures (500 vs 200,
+   * "Received: undefined") that read as broken tests. Coherence is checked
+   * against the OBSERVED state, never against the flag itself.
+   */
+  it('instructs when DELIVERY_ENABLED disagrees with the observed state, and diagnoses the blocker', async () => {
+    expect(blockerPresent).not.toBeNull(); // the probe ran
+
+    if (blockerPresent === false && DELIVERY_ENABLED === false) {
+      throw new Error(INSTRUCTION.fixedButFlagOff);
     }
 
-    expect(failure).toBeDefined();
-    const detail = JSON.stringify(failure.details || failure.toJSON?.() || {});
-    expect(`${failure.message} ${detail}`).toMatch(/id.*is required/i);
-    if (!DELIVERY_ENABLED) {
-      expect(await harness.messageCount()).toBe(0);
-    } else {
-      throw new Error(
-        'The message-persistence blocker is fixed. Flip DELIVERY_ENABLED to true in ' +
-          'transactionalEmail.acceptance.test.ts so the delivery layer runs.',
-      );
+    if (blockerPresent === true && DELIVERY_ENABLED === true) {
+      throw new Error(INSTRUCTION.flagOnButStillBlocked);
     }
+
+    if (blockerPresent === false) return; // coherent and unblocked: nothing to diagnose
+
+    // Coherent and blocked: prove WHAT the blocker is, so the seven skipped
+    // delivery tests are evidence-backed rather than an excuse. The failure came
+    // from the real service against the real schema - the call the send path makes.
+    expect(blockerFailure).not.toBeNull();
+
+    const detail = JSON.stringify(blockerFailure.details || blockerFailure.toJSON?.() || {});
+    expect(`${blockerFailure.message} ${detail}`).toMatch(/id.*is required/i);
   });
 
   it('shows the same blocker through the route: POST /forgot cannot deliver', async () => {
+    if (blockerPresent === false) return; // covered by the coherence test above
+
     const email = nextEmail('blocker-reset');
     await registerUser(email);
     harness.resetObservations();
@@ -323,8 +415,7 @@ blockerDescribe('blocker - the production send path cannot persist a message (de
     // The route is honest about it: 500, not a silent success.
     expect(response.status).toBe(500);
     expect(String(response.body.message)).toMatch(/Failed to create message/i);
-    // No email reached the adapter. (A message row may exist once D1 is fixed:
-    // the failure then happens at provider selection, after persistence.)
+    // No email reached the adapter.
     expect(harness.adapterCalls()).toHaveLength(0);
   });
 });
@@ -726,7 +817,7 @@ describe('scenario 6 - a malformed setting is treated as unset and the default i
     ['empty string', ''],
     ['null', null],
     ['empty object', {}],
-  ])('falls back to the default for a %s setting', async (_label: string, value: any) => {
+  ])('falls back to the default for a setting of %s', async (_label: string, value: any) => {
     await harness.setSetting('email_template_password_reset', value);
 
     const email = nextEmail('s6');
@@ -987,7 +1078,7 @@ describe('scenario 10 - a send failure during registration is non-fatal', () => 
     const reason = activationFailureReason();
     expect(reason.length).toBeGreaterThan(0);
     const stage = /id.*is required|Failed to create message/i.test(reason) ? 'persistence' : 'provider';
-    expect(stage).toBe(DELIVERY_ENABLED ? 'provider' : 'persistence');
+    expect(stage).toBe(blockerPresent ? 'persistence' : 'provider');
 
     record({
       scenario: '10 - send failure during registration is non-fatal',
@@ -998,9 +1089,9 @@ describe('scenario 10 - a send failure during registration is non-fatal', () => 
       state: 'PASS',
       note:
         `non-fatal wrapper proven for a ${stage}-stage failure (${reason}). ` +
-        (DELIVERY_ENABLED
-          ? 'Provider unregistered, so this is the provider-unavailable path.'
-          : 'D1 fails the send at Message.create, before provider selection; the provider-unavailable path is NOT proven until D1 is fixed.'),
+        (blockerPresent
+          ? 'D1 fails the send at Message.create, before provider selection; the provider-unavailable path is NOT proven until D1 is fixed.'
+          : 'Provider unregistered, so this is the provider-unavailable path.'),
     });
   });
 
