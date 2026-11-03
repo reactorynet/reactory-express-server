@@ -2,7 +2,7 @@
 
 **Ticket:** REACTORY-302016408/20261103/1766701674 — E5 acceptance test: templated registration and password reset, per-application override and fallback
 **Umbrella:** `workspace/notes/templated-email-registration-reset-plan.md` (§5, §6 — E6)
-**Date:** 2026-11-03 (revision 4 — review response R7 + note N8)
+**Date:** 2026-11-03 (revision 5 — review response DOC1 + notes N10/N11)
 **Status:** ⛔ **BLOCKED — not done.** One upstream defect (D1) prevents the delivery layer of all ten scenarios from executing. The harness is complete and the templating half is proven; the ticket's first acceptance criterion ("all 10 scenarios implemented and passing with real collaborators") is **not met**.
 
 > A row is only `PASS` if an **executed** test produced it, and every `PASS` row
@@ -26,7 +26,7 @@
 
 **Verdict:** the templating requirement is proven from the HTTP surface. The
 delivery requirement is **not proven**, and cannot be until D1 is fixed. The
-committed suite is green (15 passed / 7 skipped) only because the seven
+committed suite is green (16 passed / 7 skipped, 23 total) only because the seven
 unprovable tests are honestly skipped and guarded — a green suite is not the
 same thing as a satisfied acceptance criterion, and this ticket must not be
 closed on it.
@@ -198,7 +198,7 @@ With that patch and `DELIVERY_ENABLED = true`:
 
 | Run | Result |
 |---|---|
-| suite | **1 suite passed — 20 passed, 2 skipped, 22 total** |
+| suite | **1 suite passed — 21 passed, 2 skipped, 23 total** |
 | delivery assertions | all green against the provider adapter |
 
 Observed subjects the provider adapter received in that run:
@@ -213,8 +213,10 @@ Observed subjects the provider adapter received in that run:
 | 7 — activation from the delivered body | link extracted from the email body activated the account; repeat was idempotent |
 | 10 — provider-stage failure | no email delivered; registration unaffected |
 
-The two skipped tests in that run are the D1 guard, which skips itself when the
-blocker is gone. Afterwards the communicator working tree was restored —
+The two skipped tests in that run are the **diagnostics**, which skip themselves
+when the blocker is gone because there is nothing left to diagnose. The coherence
+guard **runs and passes** in that state - it is unconditional precisely so that it
+can. Afterwards the communicator working tree was restored —
 `git -C src/modules/reactory-communicator status --porcelain` → empty.
 
 ### 4.4 Why the fix is not in this commit
@@ -232,7 +234,7 @@ that can be worked around by ignoring it, and it is worth being precise about wh
    own PR with its own review, exactly as #16 and #17 were.
 3. **Committing `DELIVERY_ENABLED = true` against an unmerged cross-repo fix would
    commit a suite that is red for everyone.** In this worktree it would read
-   20/2; on any clean checkout — CI included — the seven delivery tests would run
+   21/2; on any clean checkout — CI included — the seven delivery tests would run
    against unfixed `MessageService` and fail. Trading an honest skip for a
    green-here-red-everywhere commit is precisely the anti-pattern this ticket
    exists to prevent.
@@ -267,7 +269,9 @@ generic assertion but left **inside `blockerDescribe`**, which is
 `describe.skip` exactly when `DELIVERY_ENABLED` is true. The reverse-disagreement
 branch — flag true, D1 still present — was therefore unreachable dead code: both
 guard tests printed `skipped` and six delivery tests failed with no instruction
-anywhere. Reproduced before fixing: **6 failed, 2 skipped, 14 passed, 22 total**.
+anywhere. Reproduced before fixing: **6 failed, 2 skipped, 14 passed, 22 total**
+(22, not 23 — the coherence test was still conditional at that revision, which is
+the whole point of the defect).
 
 **The fix.** The coherence assertion now lives in an **unconditional** `describe`
 that runs in every state. Only the two *diagnostic* tests remain inside
@@ -318,7 +322,7 @@ the *instruction* is now present in that state, which was the defect.
 
 ---
 
-## 5. Negative controls## 5. Negative controls
+## 5. Negative controls
 
 Both controls run against the **committed tree** (unpatched `MessageService`), then
 reverted and verified byte-identical to the pre-control file.
@@ -351,10 +355,18 @@ Concrete failure:
 Reverted: `git -C src/modules/reactory-communicator checkout -- services/emailTemplates/resolveEmailTemplate.ts`
 → `git status --porcelain` empty.
 
-> With D1 also patched (so the delivery tests execute) the same control fails
-> **6** tests instead of 4 — the two extra being scenario 3's and 4's delivery
-> assertions — confirming the delivery rows are not vacuous either. That run is
-> recorded in §4.3's companion notes.
+> **Run with D1 also patched** (so the delivery tests execute, flag `true`), the
+> same control fails **6** tests instead of 4:
+>
+> ```
+> Tests:       6 failed, 2 skipped, 15 passed, 23 total
+> ```
+>
+> The two extra failures are scenario 3's and 4's *delivery* assertions — the
+> ones added in this revision. That confirms the delivery rows are not vacuous
+> either: with the override feature removed, the custom subject never reaches the
+> provider adapter. Both patches were reverted afterwards (communicator working
+> tree clean, flag `false`).
 
 ### 5.2 Scenario 10 — make the send failure fatal
 
@@ -465,11 +477,15 @@ domain, and its own `ReactoryClient`). It refuses to run with
    hold in both worlds (non-empty, not the route literal, the override's literal
    subject for custom templates) rather than pinning one bundle's text. Rows above are
    from a run with the bundles present.
-5. **One incidental flake observed once, not reproduced.** The first run of the two
-   existing useraccount suites in this worktree reported `1 failed, 65 passed`; four
-   subsequent runs (worktree and master) reported `66 passed`. That suite compares
-   real clocks (`POST /forgot - reset token lifetime`). Nothing here is imported by
-   those suites.
+5. **One incidental flake observed once, not reproduced, and not attributed.** The
+   first run of the two existing useraccount suites in this worktree reported
+   `1 failed, 65 passed`; every subsequent run (worktree and master) reported
+   `66 passed`. The identity of the failing test was **not captured** in that run,
+   so this note deliberately does **not** name one — the earlier revision guessed
+   `POST /forgot - reset token lifetime` because it compares real clocks, but a
+   guess is not evidence and has no more standing here than any other unverified
+   claim in this document. What is established: the failure did not recur in five
+   further runs, and nothing in this change is imported by those two suites.
 6. **`Message` rows cannot be asserted for delivery** while D1 exists; the delivery
    tests assert against the provider adapter, which is what "delivered" means at this
    boundary.
@@ -477,6 +493,40 @@ domain, and its own `ReactoryClient`). It refuses to run with
 ---
 
 ## 9. Changes in this revision (review response)
+
+### Revision 5 — DOC1: the surviving pre-fix records
+
+Revisions 3 and 4 rewrote §4.5, §7 and §9 but left the **same stale facts** in the
+sections that were not rewritten, so the document contradicted itself: §4.3 still
+described the D1-patched run as `20 passed, 2 skipped, 22 total`, §4.4 repeated
+`20/2`, and §1's verdict still said the committed suite was green at
+`15 passed / 7 skipped`. Worse, §4.3 contained the sentence *"the two skipped
+tests in that run are the D1 guard, which skips itself when the blocker is gone"* —
+a description of guard behaviour the code no longer has, which is exactly the
+failure mode of R5 and R7 surviving in a section nobody revisited.
+
+This review verified the state directly: the D1-patched, flag-true run is
+**21 passed, 2 skipped, 23 total**, the coherence guard **passes**, and the two
+skips are the **diagnostics**.
+
+Corrected:
+
+| Location | Was | Now |
+|---|---|---|
+| §4.3 run table | `20 passed, 2 skipped, 22 total` | `21 passed, 2 skipped, 23 total` |
+| §4.3 guard sentence | "the D1 guard, which skips itself when the blocker is gone" | "the **diagnostics** … the coherence guard **runs and passes**" |
+| §4.4 item 3 | `20/2` | `21/2` |
+| §1 verdict | `15 passed / 7 skipped` | `16 passed / 7 skipped, 23 total` |
+| §5 heading | `## 5. Negative controls## 5. Negative controls` | one heading |
+| §5.1 companion note | "recorded in §4.3's companion notes" (never written) | the measured run, inline: `6 failed, 2 skipped, 15 passed, 23 total` |
+
+Two further tidy-ups for the same reason — numbers that are legitimately
+historical must not read as stale. The `22 total` figures in §4.5 and §9 describe
+the **pre-fix reproduction**, when the coherence test was still conditional; both
+now say so explicitly.
+
+Every count in the document was re-audited against the runs, not just the four
+the review named.
 
 ### Revision 4 — R7 and N8
 
@@ -486,7 +536,8 @@ assertion but left it inside `blockerDescribe`, and `blockerDescribe` is
 `describe.skip` exactly when `DELIVERY_ENABLED` is true - so the
 `blockerPresent === true && DELIVERY_ENABLED === true` branch could only be
 evaluated in a state where its own describe was skipped. Reproduced first: flag
-true with D1 present gave **6 failed, 2 skipped, 14 passed, 22 total**, both guard
+true with D1 present gave **6 failed, 2 skipped, 14 passed, 22 total** (22 - the
+guard was still conditional), both guard
 tests `skipped`, six delivery failures, no instruction anywhere - the opposite of
 what §4.5 and `reviewResponse.R5` claimed.
 
