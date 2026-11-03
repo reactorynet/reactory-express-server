@@ -70,12 +70,20 @@
  * checkout. The unblock order is: communicator PR -> flip the flag -> republish
  * the matrix with observed delivery rows.
  *
- * Guard behaviour, stated the way the code actually behaves (corrected in review):
- * D1 is detected ONCE in beforeAll by probing the production call, and the guard
- * compares that OBSERVED state with DELIVERY_ENABLED. On disagreement it throws a
- * single instruction naming the flag to change - it does NOT rely on some later
- * assertion failing, and it is the only test that fails. Both directions are
- * covered: fixed-but-flag-off and flagged-but-still-blocked.
+ * Guard behaviour, stated the way the code actually behaves (corrected twice in
+ * review). D1 is detected ONCE in beforeAll by probing the production call, and
+ * an UNCONDITIONAL `describe('D1 guard ...')` compares that OBSERVED state with
+ * DELIVERY_ENABLED. On disagreement it throws an instruction naming the flag to
+ * change: `fixedButFlagOff` when the fix landed without the flag, and
+ * `flagOnButStillBlocked` when the flag was flipped too early. It does not rely
+ * on some later assertion failing.
+ *
+ * The block is deliberately NOT behind `blockerDescribe`: an earlier revision put
+ * it there, and because that helper is `describe.skip` exactly when the flag is
+ * true, the reverse-disagreement branch became unreachable dead code - both guard
+ * tests printed "skipped" while six delivery tests failed with no instruction.
+ * The two DIAGNOSTIC tests stay behind it, since they are the evidence for the
+ * skip and are meaningless once the delivery layer runs.
  *
  * Every evidence row carries the HTTP status the test actually observed, read
  * from the response object the assertions ran on.
@@ -201,16 +209,17 @@ const probeBlocker = async (): Promise<void> => {
     const created: any = await harness.messageService.createMessage({ ...BLOCKER_PROBE });
     blockerPresent = false;
     blockerFailure = null;
-    // A successful probe wrote a row; remove it so it cannot colour messageCount().
-    if (created?.id) await harness.clearMessages();
+    // A successful probe wrote a row under BLOCKER_PROBE.partnerId, which is NOT
+    // the acceptance application's partnerId. Deleting with the default filter
+    // could never match it (N8), so the probe's own id is passed explicitly. If the
+    // delete fails the row is reported rather than left to colour messageCount().
+    if (created?.id) await harness.clearMessages(BLOCKER_PROBE.partnerId);
   } catch (error: any) {
     blockerPresent = true;
     blockerFailure = error;
   }
 };
 
-/** The D1 guard only needs to run while the delivery layer is expected to be off. */
-const blockerDescribe = DELIVERY_ENABLED ? describe.skip : describe;
 /* ------------------------------------------------------------------------- */
 /* Fixtures and helpers                                                       */
 /* ------------------------------------------------------------------------- */
@@ -371,32 +380,50 @@ afterEach(() => {
 /* BLOCKER                                                                   */
 /* ========================================================================= */
 
-blockerDescribe('D1 guard - the suite state is coherent', () => {
-  /**
-   * The ONE place a flag/reality disagreement becomes an instruction.
-   *
-   * Deliberately first, and deliberately before every generic assertion: when the
-   * upstream fix lands without DELIVERY_ENABLED being flipped, the operator must
-   * read one sentence telling them what to do - not eight failures (500 vs 200,
-   * "Received: undefined") that read as broken tests. Coherence is checked
-   * against the OBSERVED state, never against the flag itself.
-   */
-  it('instructs when DELIVERY_ENABLED disagrees with the observed state, and diagnoses the blocker', async () => {
-    expect(blockerPresent).not.toBeNull(); // the probe ran
+/**
+ * COHERENCE GUARD - runs in EVERY state, deliberately.
+ *
+ * NOT conditional on DELIVERY_ENABLED. An earlier revision put this inside
+ * `blockerDescribe` (which is `describe.skip` exactly when the flag is true), so
+ * the reverse-disagreement branch - flag true, D1 still present - was unreachable
+ * dead code: both guard tests printed "skipped" and six delivery tests failed
+ * with no instruction anywhere. Reproduced by running that state before fixing.
+ *
+ * One assertion, always executed: the OBSERVED blocker state must agree with the
+ * flag. On disagreement it throws an instruction and is the only failing test.
+ */
+describe('D1 guard - the suite state is coherent', () => {
+  it('instructs when DELIVERY_ENABLED disagrees with the observed state', () => {
+    expect(blockerPresent).not.toBeNull(); // the probe ran in beforeAll
 
+    // Fix landed without the flag being flipped: the delivery layer is silently
+    // not being covered.
     if (blockerPresent === false && DELIVERY_ENABLED === false) {
       throw new Error(INSTRUCTION.fixedButFlagOff);
     }
 
+    // Flag flipped while the blocker is still present: every delivery test would
+    // fail for a reason that reads as a broken suite. Say so once instead.
     if (blockerPresent === true && DELIVERY_ENABLED === true) {
       throw new Error(INSTRUCTION.flagOnButStillBlocked);
     }
+  });
+});
 
-    if (blockerPresent === false) return; // coherent and unblocked: nothing to diagnose
+/**
+ * DIAGNOSTIC - evidence for the skip, only meaningful while the blocker exists.
+ *
+ * Conditionally skipped when the delivery layer is expected to run: in the
+ * coherent-and-unblocked world there is nothing to diagnose, and these tests are
+ * what makes the seven delivery skips evidence-backed rather than an excuse.
+ */
+const blockerDescribe = DELIVERY_ENABLED ? describe.skip : describe;
 
-    // Coherent and blocked: prove WHAT the blocker is, so the seven skipped
-    // delivery tests are evidence-backed rather than an excuse. The failure came
-    // from the real service against the real schema - the call the send path makes.
+blockerDescribe('D1 diagnostics - what the blocker is', () => {
+  it('is a required-id validation failure from the production createMessage()', () => {
+    if (blockerPresent === false) return; // coherence guard owns the mismatch case
+
+    // The real service against the real schema - the call the send path makes.
     expect(blockerFailure).not.toBeNull();
 
     const detail = JSON.stringify(blockerFailure.details || blockerFailure.toJSON?.() || {});
@@ -404,7 +431,7 @@ blockerDescribe('D1 guard - the suite state is coherent', () => {
   });
 
   it('shows the same blocker through the route: POST /forgot cannot deliver', async () => {
-    if (blockerPresent === false) return; // covered by the coherence test above
+    if (blockerPresent === false) return;
 
     const email = nextEmail('blocker-reset');
     await registerUser(email);

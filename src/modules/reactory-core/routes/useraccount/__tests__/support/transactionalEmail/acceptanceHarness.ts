@@ -282,7 +282,14 @@ export interface ITransactionalEmailHarness {
   /** Message count for this application. */
   messageCount(): Promise<number>;
   /** Delete persisted messages for this application (fixture isolation). */
-  clearMessages(): Promise<void>;
+  /**
+   * Delete persisted messages.
+   *
+   * Defaults to this application's partnerId. Pass an explicit id when deleting
+   * rows written under a different partnerId (the D1 probe writes its own, so
+   * the default filter cannot match it - N8).
+   */
+  clearMessages(partnerId?: string): Promise<void>;
   /** Remove everything this suite wrote. */
   teardown(): Promise<void>;
 }
@@ -551,8 +558,8 @@ export const createHarness = async (): Promise<ITransactionalEmailHarness> => {
     async messageCount() {
       return Message.countDocuments({ partnerId });
     },
-    async clearMessages() {
-      await Message.deleteMany({ partnerId } as any);
+    async clearMessages(messagePartnerId?: string) {
+      await Message.deleteMany({ partnerId: messagePartnerId || partnerId } as any);
     },
     async teardown() {
       await worker.onShutdown().catch(() => undefined);

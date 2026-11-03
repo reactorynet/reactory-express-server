@@ -2,7 +2,7 @@
 
 **Ticket:** REACTORY-302016408/20261103/1766701674 — E5 acceptance test: templated registration and password reset, per-application override and fallback
 **Umbrella:** `workspace/notes/templated-email-registration-reset-plan.md` (§5, §6 — E6)
-**Date:** 2026-11-03 (revision 3 — review response R5/R6 + notes N5/N6/N7)
+**Date:** 2026-11-03 (revision 4 — review response R7 + note N8)
 **Status:** ⛔ **BLOCKED — not done.** One upstream defect (D1) prevents the delivery layer of all ten scenarios from executing. The harness is complete and the templating half is proven; the ticket's first acceptance criterion ("all 10 scenarios implemented and passing with real collaborators") is **not met**.
 
 > A row is only `PASS` if an **executed** test produced it, and every `PASS` row
@@ -242,60 +242,83 @@ completed. Unblocking requires, in order:
 
 1. communicator PR: `id: data.id || randomUUID()` in `MessageService.createMessage()`,
    plus a real-model test that does **not** mock `Message.create`;
-2. this suite: `DELIVERY_ENABLED = true` — the D1 guard fails **first and alone**, with
-   the instruction reproduced verbatim in §4.5;
+2. this suite: `DELIVERY_ENABLED = true` — the unconditional D1 guard emits the
+   `flagOnButStillBlocked`/`fixedButFlagOff` instruction; both are reproduced verbatim
+   in §4.5;
 3. re-run and republish §3.2 with observed rows.
 
 ---
 
-### 4.5 The D1 guard — behaviour proven in both directions (R5)
+### 4.5 The D1 guard — behaviour proven in all four states (R5, then R7)
 
-An earlier revision of this document claimed the guard "fails and tells you to
-flip DELIVERY_ENABLED". **That claim was false and is corrected here.** The guard
-then checked `expect(failure).toBeDefined()` before its instructional branch, so
-with the fix applied it failed with `Received: undefined`, and because
-`resetStatus()` was derived from the flag rather than from observed reality,
-`/forgot` tests also failed with misleading `500 vs 200` errors — 8 failures in
-total, none of them instructive.
+Two earlier revisions of this document described a guard that did not behave as
+written. Both claims were false and are corrected here; the code was fixed rather
+than the sentences.
 
-The guard now detects D1 **once** in `beforeAll`, by probing the production
-`MessageService.createMessage()` against the real schema, and compares that
-observed state with `DELIVERY_ENABLED`. `resetStatus()` and scenario 10's stage
-expectation both derive from the observed state, not from the flag. On
-disagreement the guard throws one instruction and is the **only** failing test.
+**What was wrong in revision 2 (R5).** The guard checked
+`expect(failure).toBeDefined()` before its instructional branch, so with the fix
+applied it failed with `Received: undefined`; and `resetStatus()` derived the
+expected `/forgot` status from the flag rather than from observed reality, so
+seven `/forgot` tests also failed with misleading `500 vs 200`. Eight failures,
+none instructive.
 
-Both states were re-run to prove it:
+**What was wrong in revision 3 (R7).** The coherence test was moved out of the
+generic assertion but left **inside `blockerDescribe`**, which is
+`describe.skip` exactly when `DELIVERY_ENABLED` is true. The reverse-disagreement
+branch — flag true, D1 still present — was therefore unreachable dead code: both
+guard tests printed `skipped` and six delivery tests failed with no instruction
+anywhere. Reproduced before fixing: **6 failed, 2 skipped, 14 passed, 22 total**.
 
-| State | Command outcome | Result |
-|---|---|---|
-| `DELIVERY_ENABLED = false` + D1 patched (fix landed, flag not flipped) | `Tests: 1 failed, 7 skipped, 14 passed, 22 total` | **one instructive failure**, exactly as documented |
-| `DELIVERY_ENABLED = true` + D1 patched (coherent, unblocked) | `Test Suites: 1 passed` · `Tests: 2 skipped, 20 passed, 22 total` | all delivery assertions green |
+**The fix.** The coherence assertion now lives in an **unconditional** `describe`
+that runs in every state. Only the two *diagnostic* tests remain inside
+`blockerDescribe`, because they are the evidence for the skip and are meaningless
+once the delivery layer runs. D1 is probed once in `beforeAll` through the
+production `MessageService.createMessage()` against the real schema;
+`resetStatus()` and scenario 10's stage expectation both derive from the observed
+state, never from the flag.
 
-The single failure in the first state reads, verbatim:
+**All four states, re-run:**
+
+| # | `DELIVERY_ENABLED` | D1 present | Counts | Meaning |
+|---|---|---|---|---|
+| A | `false` | yes | `7 skipped, 16 passed, 23 total` — suite green | committed state: honest skips, guard silent, diagnostics pass |
+| B | `false` | no | `1 failed, 7 skipped, 15 passed, 23 total` | fix landed, flag not flipped → **one** failure, the `fixedButFlagOff` instruction |
+| C | `true` | no | `2 skipped, 21 passed, 23 total` — suite green | coherent and unblocked: all delivery assertions green |
+| D | `true` | yes | `7 failed, 2 skipped, 14 passed, 23 total` | flag flipped too early → the `flagOnButStillBlocked` instruction **is present** (plus the six delivery failures it is warning about) |
+
+State A grew from 22 to **23 total** because the coherence test is now
+unconditional; it passes in the two coherent states and that is the point.
+
+The two instructions, verbatim:
 
 ```
+State B:
 ● D1 guard - the suite state is coherent › instructs when DELIVERY_ENABLED
-  disagrees with the observed state, and diagnoses the blocker
+  disagrees with the observed state
 
   The message-persistence blocker (D1) is FIXED: MessageService.createMessage()
   now persists a message. Flip DELIVERY_ENABLED to true at the top of
   transactionalEmail.acceptance.test.ts so the seven delivery-layer tests run,
   then republish docs/verification/TRANSACTIONAL_EMAIL_MATRIX.md section 3.2 with
   the observed rows.
+
+State D:
+● D1 guard - the suite state is coherent › instructs when DELIVERY_ENABLED
+  disagrees with the observed state
+
+  DELIVERY_ENABLED is true but defect D1 is still present: MessageService.createMessage()
+  cannot persist a message, so the seven delivery-layer tests cannot pass. Either
+  land the communicator PR (assign the business id in MessageService.createMessage,
+  plus a real-model test) or set DELIVERY_ENABLED = false and keep E5 BLOCKED.
 ```
 
-The reverse disagreement is covered too: `DELIVERY_ENABLED = true` with D1 still
-present throws a different instruction telling the operator to land the
-communicator PR or set the flag back to `false`. Both directions are asserted
-against the observed state, so neither can be satisfied by editing the flag alone.
-
-> Before the correction, the first state produced `8 failed, 7 skipped, 7 passed`:
-> the guard failed on `Received: undefined` and seven other tests failed on
-> `Expected: 500, Received: 200`. That reproduction is why this section exists.
+State D cannot be reduced to a single failure: the six delivery tests genuinely
+cannot pass, and skipping them would hide that. What the guard guarantees is that
+the *instruction* is now present in that state, which was the defect.
 
 ---
 
-## 5. Negative controls
+## 5. Negative controls## 5. Negative controls
 
 Both controls run against the **committed tree** (unpatched `MessageService`), then
 reverted and verified byte-identical to the pre-control file.
@@ -306,7 +329,7 @@ Change (local, reverted): in `communicator/services/emailTemplates/resolveEmailT
 `if (configuredReference) {` → `if (false && configuredReference) {`, i.e. tier 1
 of the resolver (the application setting) is removed.
 
-Observed: **`Tests: 4 failed, 7 skipped, 11 passed, 22 total`**
+Observed: **`Tests: 4 failed, 7 skipped, 12 passed, 23 total`**
 
 | Test | Result |
 |---|---|
@@ -340,7 +363,7 @@ Change (local, reverted): `POST /register` in
 `try/catch` around `sendRegistrationActivationEmail(...)`, so the failure escapes
 to the outer handler.
 
-Observed: **`Tests: 5 failed, 7 skipped, 10 passed, 22 total`**
+Observed: **`Tests: 5 failed, 7 skipped, 11 passed, 23 total`**
 
 | Test | Result |
 |---|---|
@@ -409,10 +432,11 @@ Files:
 
 | Run | Command config | Count |
 |---|---|---|
-| This suite | `jest.integration.config.ts` | **1 suite passed — 15 passed, 7 skipped, 22 total** |
+| This suite | `jest.integration.config.ts` | **1 suite passed — 16 passed, 7 skipped, 23 total** |
 | Existing useraccount baseline | `jest.config.ts` (unit) | **2 suites passed — 66 passed, 66 total** (`UserAccount.forgot` 18 + `UserAccount.activation` 48) |
-| Forward verification, coherent (D1 patched + `DELIVERY_ENABLED = true`, both reverted) | `jest.integration.config.ts` | **1 suite passed — 20 passed, 2 skipped, 22 total** |
-| Guard verification, incoherent (D1 patched, flag left `false`, both reverted) | `jest.integration.config.ts` | **1 failed, 7 skipped, 14 passed, 22 total** — the single failure is the D1 guard instruction (§4.5) |
+| State C — coherent & unblocked (D1 patched + flag `true`, both reverted) | `jest.integration.config.ts` | **1 suite passed — 21 passed, 2 skipped, 23 total** |
+| State B — fix landed, flag not flipped (D1 patched, flag `false`, reverted) | `jest.integration.config.ts` | **1 failed, 7 skipped, 15 passed, 23 total** — the one failure is the guard instruction |
+| State D — flag flipped too early (D1 present, flag `true`, reverted) | `jest.integration.config.ts` | **7 failed, 2 skipped, 14 passed, 23 total** — guard instruction present, plus the six delivery failures it warns about |
 
 The new suite is **not selected** by the unit config, so the 66-test baseline is
 unchanged by construction as well as by measurement.
@@ -454,16 +478,47 @@ domain, and its own `ReactoryClient`). It refuses to run with
 
 ## 9. Changes in this revision (review response)
 
-Revision 3 addresses the two precision defects the reviewer found in the evidence
-artefacts, plus the three non-blocking notes requested in the same pass.
+### Revision 4 — R7 and N8
 
-| Item | Change |
+**R7: the reverse-disagreement instruction was unreachable dead code.** The
+reviewer was right. Revision 3 moved the coherence test out of the generic
+assertion but left it inside `blockerDescribe`, and `blockerDescribe` is
+`describe.skip` exactly when `DELIVERY_ENABLED` is true - so the
+`blockerPresent === true && DELIVERY_ENABLED === true` branch could only be
+evaluated in a state where its own describe was skipped. Reproduced first: flag
+true with D1 present gave **6 failed, 2 skipped, 14 passed, 22 total**, both guard
+tests `skipped`, six delivery failures, no instruction anywhere - the opposite of
+what §4.5 and `reviewResponse.R5` claimed.
+
+Fixed by taking the reviewer's preferred option: the coherence assertion now lives
+in an **unconditional `describe`** and runs in every state; only the two
+diagnostic tests remain behind `blockerDescribe`. All four states were re-run and
+are recorded in §4.5 with their real counts:
+
+| State | Counts |
 |---|---|
-| **R5** — the guard must emit the documented instruction, or the promise must be withdrawn | The claim was **false**, so the code was fixed rather than the sentence. D1 is now detected once in `beforeAll` by probing the production `createMessage()`, and the guard compares that **observed** state with `DELIVERY_ENABLED`. `resetStatus()` and scenario 10's stage expectation derive from the observed state instead of the flag. Result: `DELIVERY_ENABLED = false` + D1 patched → **1 failed, 7 skipped, 14 passed** (one instructive failure, reproduced verbatim in §4.5); `DELIVERY_ENABLED = true` + D1 patched → **20 passed, 2 skipped**. Both re-run; the pre-fix behaviour (`8 failed, 7 skipped, 7 passed`) is recorded in §4.5 as the reason for the change. |
-| **R6** — §1 must not claim 10/10 rendered | §1 now states the render gate passed for **the five scenarios that render** (1, 2, 3, 4, 6 — 7 executed rows) and a new row lists 5a/5b/7/8/9/10 as **behaviour assertions, not rendered content**, pointing at the `n/a` / "resolution failed before render" values in §3.1. §1 and §3.1 now agree row for row. |
-| **N5** — cite a tracked reference for D1 | §4 and the suite header now pin the defect to `reactorynet/reactory-communicator` @ **`03da474`**, with the schema path (`Message.ts:22-27`), the offending method (`MessageService.ts:68-72`) and the observed message. |
-| **N6** — disclose the in-memory transport and workflow persistence | §2 gained two rows: the queue **transport** is `InMemoryQueueService` (the queue service and worker above it are real) and workflow **persistence** is `MemoryPersistenceProvider` (the engine and `SendMessageWorkflow` are real). A paragraph after the table states exactly what that does and does not prove. |
-| **N7** — "a empty string setting" | The `it.each` label is now `'falls back to the default for a setting of %s'`, so the three cases read "…for a setting of empty string / null / empty object". |
+| A — flag `false`, D1 present (committed) | `16 passed, 7 skipped, 23 total` |
+| B — flag `false`, D1 fixed | `1 failed, 7 skipped, 15 passed, 23 total` |
+| C — flag `true`, D1 fixed | `21 passed, 2 skipped, 23 total` |
+| D — flag `true`, D1 present | `7 failed, 2 skipped, 14 passed, 23 total` — instruction present |
+
+The total is 23 rather than 22 because the coherence test is now unconditional. It
+passes in states A and C and fails with an instruction in B and D, which is the
+intended behaviour. State D cannot be reduced to one failure: the six delivery
+tests genuinely cannot pass, and skipping them would conceal that; what the guard
+guarantees is that the *instruction* is present, which was the defect.
+
+**N8: the probe could not clean up its own row.** `clearMessages()` filtered on
+the acceptance application's `partnerId`, so it could never match the
+`d1-probe` row the probe writes. `clearMessages(partnerId?)` now takes an optional
+explicit id and the probe passes its own; the comment on the call site explains
+why. This also means a future unblocked run cannot leave a stray row behind to
+disturb `messageCount()`.
+
+**Earlier revisions.** Revision 2 corrected the render-gate claim (R6) and added
+the tracked reference, the transport disclosure and the label fixes (N5, N6, N7).
+Revision 3 corrected the *forward* disagreement instruction (R5). Both of those
+remain in place; only the reverse branch was still wrong, and is now fixed.
 
 **Status is unchanged: BLOCKED.** The delivery criterion remains unmet until D1 is
 fixed upstream and `DELIVERY_ENABLED` is flipped. Nothing in this revision makes
