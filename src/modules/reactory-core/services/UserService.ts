@@ -1200,6 +1200,10 @@ class UserService implements Reactory.Service.IReactoryUserService {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    // Activation is server-owned state. The spread above copies whatever the
+    // anonymous caller sent, so a crafted `activatedAt` must not survive: only
+    // the activation route (or an administrator) may set it.
+    (newUser as any).activatedAt = null;
     await newUser.setPassword(userInput.password);
     await newUser.save();
 
@@ -1219,6 +1223,39 @@ class UserService implements Reactory.Service.IReactoryUserService {
     const savedUser = await newUser.save();
 
     return { user: savedUser as Reactory.Models.IUserDocument, organization };
+  }
+
+  /**
+   * Mark an account as activated, idempotently.
+   *
+   * The conditional update is the whole point: `activatedAt: null` matches both
+   * a null and an absent field, so the first call wins and every later call
+   * matches nothing. Two clicks on the same activation link therefore cannot
+   * produce two writes - the loser is told the account is already activated
+   * rather than overwriting the original timestamp, which support relies on.
+   *
+   * @returns `null` when no such user exists, otherwise the user and whether
+   *          this call was the one that activated it.
+   */
+  async activateUser(
+    userId: string,
+  ): Promise<{ user: Reactory.Models.IUserDocument; alreadyActivated: boolean } | null> {
+    if (!userId || !ObjectId.isValid(userId)) return null;
+
+    const activatedAt = new Date();
+
+    const updated = (await User.findOneAndUpdate(
+      { _id: userId, activatedAt: null },
+      { $set: { activatedAt, updatedAt: activatedAt } },
+      { new: true },
+    ).then()) as unknown as Reactory.Models.IUserDocument;
+
+    if (updated) return { user: updated, alreadyActivated: false };
+
+    const existing = (await User.findById(userId).then()) as unknown as Reactory.Models.IUserDocument;
+    if (!existing) return null;
+
+    return { user: existing, alreadyActivated: true };
   }
 
   /**

@@ -204,6 +204,20 @@ const UserSchema = new mongoose.Schema({
   ],
   legacyId: Number,
   lastLogin: Date,
+  // When the account completed email activation (the `GET /useraccount/activate`
+  // flow). Null means "never activated", which is the state every self-registered
+  // account starts in and the state every pre-existing account is in.
+  //
+  // A timestamp rather than a boolean because support's first question is
+  // "did they activate, and when?", which a flag cannot answer. Activation is
+  // deliberately additive: nothing in login or authorisation reads this field,
+  // so an existing account that has never activated is not locked out by the
+  // introduction of the flow.
+  activatedAt: {
+    type: Date,
+    required: false,
+    default: null,
+  },
   deleted: {
     type: Boolean,
     required: false,

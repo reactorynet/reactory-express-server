@@ -45,6 +45,17 @@ const ReactoryClientMongooseSchema = new mongoose.Schema<Reactory.Models.IReacto
   emailSendVia: String,
   emailApiKey: String,
   resetEmailRoute: String,
+  // Route the *activation* link in the registration email points at, and the
+  // route a browser is sent to afterwards. Declared here for the same reason
+  // `resetEmailRoute` is: the registration flow reads them off the application
+  // document, and Mongoose drops paths that are not in the schema, so an
+  // undeclared field would silently never arrive.
+  //
+  // Both are optional. When unset the route resolver falls back to the
+  // `email_activation_route` / `email_activation_result_route` settings and
+  // then to the documented defaults (`/useraccount/activate`, `/login`).
+  activationEmailRoute: String,
+  activationResultRoute: String,
   password: String,
   avatar: String,
   theme: String, 
