@@ -198,9 +198,24 @@ Observed on 2026-11-04 in this environment: the stored setting held
 `reactory` did not exist at all (0 collections), whereas `reactory-reactory` held
 92 collections including `reactory_templates` and `communicatortemplates` — so
 anyone inspecting templates through the setting saw nothing and concluded they
-were missing. Repair the stored setting by hand (see the ticket
-`REACTORY-302016408/20261103/3664951717` completion report for the exact update),
-or delete the client document and let the seed recreate it.
+were missing.
+
+### Repairing an existing install
+
+```bash
+bin/repair-connection-settings.sh                  # dry run, prints what would change
+bin/repair-connection-settings.sh --apply          # repair the historical default
+bin/repair-connection-settings.sh --apply --force  # overwrite a custom value
+```
+
+The target comes from the deployment environment through `mongoConnectionSettings`,
+so the repair, the seed and the server cannot disagree. It writes only
+`reactory.mongodb.connection`; only the historical default shape is repaired
+automatically and anything else is refused without `--force`; the write is
+verified on re-read; a correct setting is a no-op, so re-running is safe; and
+passwords are never printed. Restart the server (or wait out the five-minute
+partner cache in `src/express/middleware/ReactoryClient.ts`) before the running
+process sees the new value.
 
 **Variant spelling.** A setting may say `mongo` or `mongodb`; the data macros
 normalise through `ai/macro/data/variants.ts` in the reactor module, so both
