@@ -24,6 +24,10 @@ const INTEGRATION_SUITES = [
     path: 'src/modules/reactory-classroom/tests/unit/seed_apex.test.ts',
     needs: 'a live MongoDB and Postgres - and a DISPOSABLE one: it sets real accounts passwords and deletes markbook rows. It also currently fails against an empty database, so it is still listed in test/quarantine.json.',
   },
+  {
+    path: 'src/modules/reactory-core/routes/useraccount/__tests__/acceptance/transactionalEmail.acceptance.test.ts',
+    needs: 'a live MongoDB (a DISPOSABLE one: the suite creates and deletes its own documents) for the E5 transactional-email acceptance matrix. Point it at one with TRANSACTIONAL_EMAIL_MONGO_URI; it defaults to mongodb://127.0.0.1:27017/reactory-transactional-email-acceptance.',
+  },
 ];
 
 // Both projects derive their patterns from this list, so a path that is not a
