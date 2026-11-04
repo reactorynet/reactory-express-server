@@ -195,6 +195,103 @@ export const mongoClientOptions = (env: Env = process.env): MongoTlsClientOption
   return options;
 };
 
+export interface MongoConnectionSettings {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  database: string;
+  /**
+   * Driver options the URI carries that the flat connection setting cannot
+   * express. `authSource` matters: a user created in `admin` cannot authenticate
+   * against a URI whose auth source defaults to the target database.
+   */
+  options?: Record<string, any>;
+}
+
+/**
+ * The pieces of a `mongodb://` URI that describe where the server connects.
+ * Returns `{}` (not an error) for an absent or unparseable URI: this feeds a
+ * settings default, and a malformed MONGOOSE would already have failed at boot.
+ * Multi-host replica-set URIs are not understood and fall through to the
+ * explicit variables or the defaults.
+ */
+const parseMongoUri = (uri?: string): Partial<MongoConnectionSettings> => {
+  const raw = first(uri);
+  if (!raw) return {};
+
+  try {
+    const url = new URL(raw);
+    const path = url.pathname.replace(/^\/+/, '');
+    const database = path.split('/')[0];
+
+    return {
+      host: url.hostname || undefined,
+      port: url.port ? parseInt(url.port, 10) : undefined,
+      username: url.username ? decodeURIComponent(url.username) : undefined,
+      password: url.password ? decodeURIComponent(url.password) : undefined,
+      database: database ? decodeURIComponent(database) : undefined,
+    };
+  } catch {
+    return {};
+  }
+};
+
+/**
+ * The `authSource` query parameter of a `mongodb://` URI, if any. It lives
+ * outside `parseMongoUri` because it belongs in the driver options, not in the
+ * flat host/port/credentials shape.
+ */
+const readAuthSource = (uri?: string): string | undefined => {
+  const raw = first(uri);
+  if (!raw) return undefined;
+
+  try {
+    return first(new URL(raw).searchParams.get('authSource') || undefined);
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Host, port, credentials and database for MongoDB, from the same source of
+ * truth the server uses.
+ *
+ * Precedence is per field: `REACTORY_MONGO_*` (an explicit setting override),
+ * then the `MONGOOSE` URI the server actually opens, then the loose `MONGO_*`
+ * names, then the historical defaults. The database in the URI wins over
+ * `MONGO_DB` on purpose: the URI is what Mongoose connects with, so a settings
+ * default derived from anything else can point at a different, empty database.
+ * That is exactly how `reactory.mongodb.connection` came to name `reactory`
+ * while the server was running against `reactory-reactory`.
+ */
+export const mongoConnectionSettings = (
+  env: Env = process.env,
+  uri: string | undefined = env.MONGOOSE,
+): MongoConnectionSettings => {
+  const fromUri = parseMongoUri(uri);
+  const port = first(
+    env.REACTORY_MONGO_PORT,
+    fromUri.port ? String(fromUri.port) : undefined,
+    env.MONGO_PORT,
+  );
+  const authSource = readAuthSource(uri);
+
+  const settings: MongoConnectionSettings = {
+    host: first(env.REACTORY_MONGO_HOST, fromUri.host, env.MONGO_HOST) || 'localhost',
+    port: parseInt(port || '27017', 10),
+    username: first(env.REACTORY_MONGO_USER, fromUri.username, env.MONGO_USER) || '',
+    password: first(env.REACTORY_MONGO_PASSWORD, fromUri.password, env.MONGO_PASSWORD) || '',
+    database: first(env.REACTORY_MONGO_DB, fromUri.database, env.MONGO_DB) || 'reactory',
+  };
+
+  // Only present when the URI names one, so a default install keeps the driver
+  // behaviour (auth source = the database being connected to).
+  if (authSource) settings.options = { authSource };
+
+  return settings;
+};
+
 /** A one-line description for the startup log, without credentials. */
 export const describeConnectionSecurity = (env: Env = process.env): string => {
   const mongo = mongoClientOptions(env);

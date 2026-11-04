@@ -163,3 +163,47 @@ booktutor configs — do not read it as corroboration of a working client-side p
 Anything that remains CDN-only after that porting work belongs in the stale plugin repository
 (`reactory-data/plugins/reactory-client-core`, outside the ORG programme repos) and needs its
 own ticket — deleting the registration is not a substitute for porting.
+
+## Connection settings: where the defaults come from, and what is actually stored
+
+`settings.ts` declares the two database connections the platform advertises to
+agents: `reactory.mongodb.connection` and `reactory.postgres.connection`. Both are
+**derived at import time** from `src/database/connectionOptions.ts` — the same
+module the server's own Mongoose, TypeORM and postgres.js clients use — so a fresh
+install cannot be minted with a connection that points somewhere the server does
+not.
+
+MongoDB precedence, per field:
+
+1. `REACTORY_MONGO_*` (an explicit override for the setting)
+2. the `MONGOOSE` URI the server actually opens — host, port, credentials,
+   database, and `authSource`
+3. the loose `MONGO_*` names
+4. `localhost:27017`, no credentials, database `reactory`
+
+The `authSource` query parameter of `MONGOOSE` is carried into `data.options`
+because a user created in `admin` cannot authenticate when the auth source
+defaults to the target database — the macro builds `mongodb://user:pass@host/db`
+and passes the setting's `options` to the driver.
+
+**These are defaults, not the live value.** The resolved array is written into the
+`reactory` document in `reactory_clients` when that document is first created
+(`ReactoryClient.upsertFromConfig`, reached from system-user initialisation only
+when the client does not already exist). An existing install therefore keeps
+whatever it stored, and a changed default does not reach it.
+
+Observed on 2026-11-04 in this environment: the stored setting held
+`database: 'reactory'`, empty `username`/`password` and no `options`, while
+`MONGOOSE` pointed at `reactory-reactory` with `authSource=admin`. The database
+`reactory` did not exist at all (0 collections), whereas `reactory-reactory` held
+92 collections including `reactory_templates` and `communicatortemplates` — so
+anyone inspecting templates through the setting saw nothing and concluded they
+were missing. Repair the stored setting by hand (see the ticket
+`REACTORY-302016408/20261103/3664951717` completion report for the exact update),
+or delete the client document and let the seed recreate it.
+
+**Variant spelling.** A setting may say `mongo` or `mongodb`; the data macros
+normalise through `ai/macro/data/variants.ts` in the reactor module, so both
+resolve and the listing advertises the canonical `mongo`. Do not "fix" one
+spelling into the other — that is what broke the `mongo` macro for
+`variant: "mongodb"` connections.
