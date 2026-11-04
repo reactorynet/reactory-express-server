@@ -1,7 +1,6 @@
 import amq from '@reactory/server-core/amq';
 import pdfRouter from '@reactory/server-core/pdf';
 import resourcesRouter from '@reactory/server-core/resources'
-import userAccountRouter from '@reactory/server-core/useraccount';
 import workflowRouter from '@reactory/server-modules/reactory-core/workflow';
 import express from 'express';
 //import flash from 'connect-flash';
@@ -17,7 +16,13 @@ const ConfigureRoutes = (app: express.Application) => {
     '/amq': amq.router,    
     '/pdf': pdfRouter,
     '/resources': resourcesRouter,
-    '/user': userAccountRouter,    
+    // NOTE: there is deliberately no '/user' mount here. `src/useraccount/`
+    // used to be mounted at '/user' and its handlers referenced an `Admin`
+    // symbol that no longer existed, so POST /user/register and POST
+    // /user/forgot threw ReferenceError while looking like live endpoints.
+    // Self-registration and password reset live in exactly one place now:
+    // modules/reactory-core/routes/useraccount/UserAccount.ts, mounted at
+    // '/useraccount' by the reactory-core module route map.
     '/cdn': CDNRouter,
     '/health': HealthRouter
   };
