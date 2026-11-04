@@ -144,7 +144,7 @@ const mockLogger = logger as any;
  * When the flag and reality disagree, the coherence guard in
  * `describe('D1 guard ...')` fails with an instruction and nothing else does.
  */
-const DELIVERY_ENABLED = false;
+const DELIVERY_ENABLED = true;
 
 const deliveryIt = DELIVERY_ENABLED ? it : it.skip;
 

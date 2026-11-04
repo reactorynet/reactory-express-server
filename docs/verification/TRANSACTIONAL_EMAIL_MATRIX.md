@@ -3,7 +3,7 @@
 **Ticket:** REACTORY-302016408/20261103/1766701674 — E5 acceptance test: templated registration and password reset, per-application override and fallback
 **Umbrella:** `workspace/notes/templated-email-registration-reset-plan.md` (§5, §6 — E6)
 **Date:** 2026-11-03 (revision 5 — review response DOC1 + notes N10/N11)
-**Status:** ⛔ **BLOCKED — not done.** One upstream defect (D1) prevents the delivery layer of all ten scenarios from executing. The harness is complete and the templating half is proven; the ticket's first acceptance criterion ("all 10 scenarios implemented and passing with real collaborators") is **not met**.
+**Status:** ✅ **UNBLOCKED — all ten scenarios now execute and pass.** D1 was fixed in the communicator module (PR #18, merged as `a138100`) and `DELIVERY_ENABLED` is now `true`. The delivery half that was skipped as "NOT RUN" now runs and is green: **21 passed / 2 skipped**. The two remaining skips are the D1 diagnostics, which are deliberately gated to the *blocked* state (`DELIVERY_ENABLED ? describe.skip : describe`) and describe a defect that no longer exists.
 
 > A row is only `PASS` if an **executed** test produced it, and every `PASS` row
 > states the HTTP status the test actually observed. Rows marked **NOT RUN** are
@@ -21,7 +21,7 @@
 | Override honoured | The application's `email_template_password_reset` / `email_template_registration` setting selects a custom template for **both** purposes, and the default is not used. | ✅ PASS |
 | Route behaviour, no render | Scenarios **5a, 5b** (override naming a missing template), **7** (activation round trip), **8** (expired token), **9** (unknown address) and **10** (send failure) assert route/domain behaviour, not rendered content: 5a/5b fail before render, 7/8/9/10 have no rendered message in their executed form. Their §3.1 rows record `n/a` or "resolution failed before render" — that is the honest value, and this row exists so §1 does not read as if they rendered. | ✅ PASS — 6 executed rows, asserted as behaviour |
 | Fallback chain | Unset, empty, `null` and `{}` settings fall back quietly to the default; a setting naming a **missing** template fails loudly, naming the setting and the value, and does **not** send the default. | ✅ PASS |
-| Delivery layer | The message is persisted, dispatched through the real queue/worker/workflow engine and received by the provider adapter. | ⛔ **NOT RUN — 7 tests, blocked by D1 (§4)** |
+| Delivery layer | The message is persisted, dispatched through the real queue/worker/workflow engine and received by the provider adapter. | ✅ **PASS — 7 tests, ran after D1 was fixed** |
 | Negative controls (scenarios 3 and 10) | Removing the feature makes the scenario fail. | ✅ PASS (§5) |
 
 **Verdict:** the templating requirement is proven from the HTTP surface. The
