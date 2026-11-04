@@ -1,12 +1,28 @@
 import RouteAccessSetting from './routeAccess';
+import {
+  mongoConnectionSettings,
+  postgresConnectionSettings,
+} from '@reactory/server-core/database/connectionOptions';
 
-const {
-  REACTORY_POSTGRES_USER = 'reactory',
-  REACTORY_POSTGRES_PASSWORD = 'reactory',
-  REACTORY_POSTGRES_DB = 'reactory',
-  REACTORY_POSTGRES_HOST = 'localhost',
-  REACTORY_POSTGRES_PORT = '5432',
-} = process.env;
+/**
+ * Connection defaults are derived from the same module the server's own data
+ * access uses (src/database/connectionOptions.ts), so a fresh install cannot be
+ * minted with a connection setting that points somewhere else.
+ *
+ * The MongoDB setting previously read `REACTORY_MONGO_DB || 'reactory'` while
+ * the server runs from the `MONGOOSE` URI and `.env` ships `MONGO_DB`. Nothing
+ * set `REACTORY_MONGO_DB`, so the setting silently resolved to the database
+ * `reactory` while the server ran against `reactory-reactory`. Anyone using the
+ * setting to inspect templates saw an empty database and concluded they were
+ * missing. `mongoConnectionSettings` reads the URI first, exactly as the server
+ * does; `REACTORY_MONGO_*` still overrides field by field.
+ *
+ * Note: this fixes the DEFAULTS. An existing install carries the resolved value
+ * in `reactory_clients`, which is data, not code — see the repair note in this
+ * ticket's completion report.
+ */
+const mongoConnection = mongoConnectionSettings();
+const postgresConnection = postgresConnectionSettings();
 
 export default [
   {
@@ -26,13 +42,7 @@ export default [
     componentFqn: "core.MongoConnectionForm@1.0.0",
     settingType: "connection",
     variant: "mongodb",
-    data: {
-      host: process.env.REACTORY_MONGO_HOST || 'localhost',
-      port: parseInt(process.env.REACTORY_MONGO_PORT || '27017'),
-      username: process.env.REACTORY_MONGO_USER || '',
-      password: process.env.REACTORY_MONGO_PASSWORD || '',
-      database: process.env.REACTORY_MONGO_DB || 'reactory',
-    },
+    data: { ...mongoConnection },
     roles: ['ADMIN'],
   },
   {
@@ -41,13 +51,7 @@ export default [
     componentFqn: 'core.PostgresConnectionForm@1.0.0',
     settingType: 'connection',
     variant: 'postgres',
-    data: {
-      host: REACTORY_POSTGRES_HOST,
-      port: parseInt(REACTORY_POSTGRES_PORT),
-      username: REACTORY_POSTGRES_USER,
-      password: REACTORY_POSTGRES_PASSWORD,
-      database: REACTORY_POSTGRES_DB,
-    },
+    data: { ...postgresConnection },
     roles: ['ADMIN'],
   },
   {
