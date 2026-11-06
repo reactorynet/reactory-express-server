@@ -1,0 +1,81 @@
+"""
+A group of roles contributed by a single backend module.
+
+Every module declares the roles it uses for access control on
+`IReactoryModule.roles`. The role catalogue aggregates those declarations so
+that an application can only be configured with roles the backend can actually
+honour.
+"""
+type ReactoryRoleModule {
+  """
+  Stable group identifier — the module id, or its FQN when no id is set.
+  """
+  id: String!
+  """
+  The namespace of the module providing the roles.
+  """
+  nameSpace: String!
+  """
+  The name of the module providing the roles.
+  """
+  name: String!
+  """
+  The version of the module providing the roles.
+  """
+  version: String!
+  """
+  The module description, when provided.
+  """
+  description: String
+  """
+  The module load priority. Lower numbers load first.
+  """
+  priority: Int!
+  """
+  True for the Reactory core module, which also supplies the platform roles.
+  """
+  isCore: Boolean!
+  """
+  The roles contributed by this module, excluding the platform baseline roles
+  (ANON, USER, ADMIN, DEVELOPER) and the internal system roles (SYSTEM), which
+  are reported once at the catalogue level. Sorted alphabetically.
+  """
+  roles: [String!]!
+}
+
+"""
+The complete set of roles the running backend can honour.
+"""
+type ReactoryRoleCatalogue {
+  """
+  Every role accepted as an application role: platform roles plus every role
+  contributed by an activated module. Sorted and distinct. This is the set an
+  application's `applicationRoles` must be a subset of.
+  """
+  roles: [String!]!
+  """
+  The platform-provided core roles (ANON, USER, ADMIN, DEVELOPER). Always
+  available, regardless of which modules are activated.
+  """
+  platformRoles: [String!]!
+  """
+  Internal system elevation roles (SYSTEM). Provided by the backend and
+  therefore valid, but not intended to be exposed as application roles.
+  """
+  systemRoles: [String!]!
+  """
+  Module role groups. The core module group is listed first, then groups by
+  module priority and name.
+  """
+  modules: [ReactoryRoleModule!]!
+}
+
+extend type Query {
+  """
+  Returns the role catalogue for the running backend: every role provided by
+  the platform and by the activated modules, grouped by module.
+
+  Restricted to ADMIN roles.
+  """
+  ReactoryRoleCatalogue: ReactoryRoleCatalogue
+}

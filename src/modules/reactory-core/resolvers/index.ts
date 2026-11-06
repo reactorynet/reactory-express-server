@@ -30,6 +30,7 @@ import WorkflowResolver from './Workflow/WorkflowResolver';
 import TaskResolver from './Task/TaskResolver';
 import AuditResolver from './System/AuditResolver';
 import FeatureFlagResolver from './System/FeatureFlagResolver';
+import ReactoryRoleResolver from './System/ReactoryRoleResolver';
 import SubresourceIntegrityResolver from './System/SubresourceIntegrityResolver';
 
 import { mergeGraphResolver } from '@reactory/server-core/utils';
@@ -68,5 +69,6 @@ export default mergeGraphResolver([
   WorkflowResolver,
   TaskResolver,
   AuditResolver,
-  FeatureFlagResolver
+  FeatureFlagResolver,
+  ReactoryRoleResolver,
 ]);

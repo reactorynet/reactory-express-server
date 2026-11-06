@@ -39,6 +39,25 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
   pdfs: [],
   middleware,
   routes,
+  /**
+   * Roles this module uses for access control. The role catalogue derives the
+   * set of roles the backend can honour from these declarations, so a role that
+   * is enforced by core code must be declared here.
+   *
+   * The platform baseline roles (ANON, USER, ADMIN, DEVELOPER) and the internal
+   * SYSTEM role are supplied by the platform and are therefore not repeated.
+   */
+  roles: [
+    'BUSINESS_UNIT_ADMIN',
+    'ORGANIZATION_ADMIN',
+    'SUPPORT',
+    'SUPPORT_ADMIN',
+    'SUPPORT_AGENT',
+    'SYSADMIN',
+    'TEAM_ADMIN',
+    'WORKFLOW_ADMIN',
+    'WORKFLOW_OPERATOR',
+  ],
   featureFlags: [
     {
       id: 'workflow-editor-beta-ui',

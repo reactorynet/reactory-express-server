@@ -26,7 +26,7 @@ The UI schema uses the `TabbedLayout` field to organize the form into tabs. Each
 2. **Settings Tab**: Shows application configuration
 3. **Users Tab**: Lists application users
 4. **Organizations Tab**: Shows organizations
-5. **Roles Tab**: Displays roles and permissions
+5. **Roles Tab**: Backend role catalogue grouped by providing module, with configured / available / invalid state
 6. **Themes Tab**: Theme management
 7. **Statistics Tab**: Usage metrics and analytics
 
@@ -46,9 +46,30 @@ Custom React widgets for each tab panel:
 2. **ApplicationSettingsPanel**: Shows configuration and menus
 3. **ApplicationUsersPanel**: Lists users with avatars and email
 4. **ApplicationOrganizationsPanel**: Displays organizations
-5. **ApplicationRolesPanel**: Shows roles and descriptions
+5. **ApplicationRolesPanel**: Groups the backend role catalogue by providing module and distinguishes configured roles from available-but-unused roles and invalid roles
 6. **ApplicationThemesPanel**: Theme cards with color swatches
 7. **ApplicationStatisticsPanel**: Metric cards with icons
+
+## Role validity
+
+Application roles are validated against the backend, not taken on trust. A role is
+valid only if an activated module declares it on `IReactoryModule.roles`, or if it
+is one of the platform roles (`ANON`, `USER`, `ADMIN`, `DEVELOPER`) or the
+internal `SYSTEM` role. The `roles` property of a module definition is therefore
+the declaration of what that module provides.
+
+- `ReactoryRoleCatalogue` (ADMIN) returns every provided role, grouped by the
+  module that provides it, plus `platformRoles`, `systemRoles` and a flattened
+  `roles` list.
+- `SystemService.updateApplicationRoles` rejects updates containing a role that
+  is not in that catalogue (`REACTORY_UNKNOWN_APPLICATION_ROLES`) and logs the
+  offending roles. Nothing is written.
+- Client configuration seeding reconciles `applicationRoles` the same way: roles
+  no module provides are dropped and reported at error level, so a config typo
+  cannot persist an invalid role set (and cannot fail startup).
+- The Roles tab renders the catalogue grouped by module and flags any configured
+  role that no module provides. Adding roles is blocked until invalid roles are
+  removed, because the server would reject the payload.
 
 ## Usage
 

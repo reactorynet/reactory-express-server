@@ -16,6 +16,7 @@ import { acquireMasterLock, MasterLock } from "../../utils/MasterLock";
 // concrete service accepts an explicit execution context on its mutating
 // methods, which the shared interface does not declare yet.
 import type { OrganizationService } from "../../services/OrganizationService";
+import { buildRoleCatalogue, findUnknownRoles, normaliseRoles } from "../../roles";
 
 const { clients } = CoreData;
 const CLIENT_CONFIGURATION_LOCK = "reactory-client-configuration-startup";
@@ -572,6 +573,51 @@ export const applyReconcileDefaults = <T extends Record<string, any>>(
 };
 
 /**
+ * Builds the backend role catalogue from the activated modules.
+ *
+ * The module registry imports this model, so it is required lazily: a top-level
+ * import would create a cycle that leaves `enabled` unset while the model
+ * module is first evaluated.
+ */
+const resolveRoleCatalogue = (): ReturnType<typeof buildRoleCatalogue> => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const registry = require("@reactory/server-core/modules");
+  return buildRoleCatalogue(registry?.enabled ?? []);
+};
+
+/**
+ * Reconciles a client config's `applicationRoles` against the roles the backend
+ * actually provides.
+ *
+ * Seeding bypasses `SystemService.updateApplicationRoles` (which rejects unknown
+ * roles), so the same invariant is enforced here: an application must never be
+ * persisted exposing a role that no activated module provides. Unknown roles are
+ * dropped and reported at error level, because failing startup over a config
+ * typo would take the whole platform down. Admin saves through the API still
+ * fail hard.
+ */
+export const reconcileApplicationRoles = (
+  key: string,
+  configured: string[] | null | undefined,
+): string[] | undefined => {
+  if (!Array.isArray(configured)) return undefined;
+
+  const roles = normaliseRoles(configured);
+  const unknown = findUnknownRoles(roles, resolveRoleCatalogue());
+
+  if (unknown.length > 0) {
+    logger.error(
+      `Client ${key} config exposes application roles that no activated module provides: ${unknown.join(
+        ", ",
+      )}. These roles were not persisted. Declare them on the providing module's ` +
+        "`roles` property, or remove them from the client config.",
+    );
+  }
+
+  return unknown.length === 0 ? roles : roles.filter((role) => !unknown.includes(role));
+};
+
+/**
  * Comprehensive upsert operation for client configuration
  * Handles all aspects of client config including routes, menus, components, etc.
  */
@@ -628,6 +674,16 @@ const upsertFromConfig = async (
     // Set it to [] so Object.assign below clears the persisted value and the
     // configured (absent) state matches the database exactly.
     applyReconcileDefaults(clientConfig, input as Record<string, any>, reconcile);
+
+    // Keep the persisted role set honest: roles that no activated module
+    // provides are dropped here (with an error log) rather than stored.
+    const reconciledRoles = reconcileApplicationRoles(
+      key,
+      (input as { applicationRoles?: string[] }).applicationRoles,
+    );
+    if (reconciledRoles !== undefined) {
+      (input as { applicationRoles?: string[] }).applicationRoles = reconciledRoles;
+    }
 
     // Find existing client
     let reactoryClient: Reactory.Models.ReactoryClientDocument =

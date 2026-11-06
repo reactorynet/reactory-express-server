@@ -1,4 +1,34 @@
-import { applyReconcileDefaults } from '../statics';
+import { applyReconcileDefaults, reconcileApplicationRoles } from '../statics';
+
+jest.mock('@reactory/server-core/logging', () => ({
+  debug: jest.fn(),
+  error: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+}));
+
+jest.mock('@reactory/server-core/modules', () => ({
+  enabled: [
+    {
+      id: 'reactory-core',
+      nameSpace: 'core',
+      name: 'ReactoryServer',
+      version: '1.0.0',
+      priority: 0,
+      roles: ['ORGANIZATION_ADMIN', 'SUPPORT_ADMIN'],
+    },
+    {
+      id: 'reactory-payment',
+      nameSpace: 'payment',
+      name: 'ReactoryPayment',
+      version: '1.0.0',
+      priority: 15,
+      roles: ['FINANCE_MANAGER'],
+    },
+  ],
+}));
+
+const logger = require('@reactory/server-core/logging');
 
 describe('ReactoryClient reconcile semantics (D5)', () => {
   const reconcilableFields = [
@@ -58,6 +88,48 @@ describe('ReactoryClient reconcile semantics (D5)', () => {
       expect(result.settings).toEqual([]);
       expect(result.featureFlags).toEqual([]);
       expect(result.themes).toEqual([]);
+    });
+  });
+
+  describe('reconcileApplicationRoles', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('keeps and normalises roles the backend provides', () => {
+      const result = reconcileApplicationRoles('acme', [
+        'USER',
+        ' ADMIN ',
+        'FINANCE_MANAGER',
+        'ORGANIZATION_ADMIN',
+      ]);
+
+      expect(result).toEqual(['ADMIN', 'FINANCE_MANAGER', 'ORGANIZATION_ADMIN', 'USER']);
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    it('drops roles that no activated module provides and reports them', () => {
+      const result = reconcileApplicationRoles('acme', ['USER', 'CONTENT_MANAGER']);
+
+      expect(result).toEqual(['USER']);
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining('CONTENT_MANAGER'),
+      );
+    });
+
+    it('always keeps the platform baseline even when no module declares it', () => {
+      const result = reconcileApplicationRoles('acme', ['ANON', 'USER', 'ADMIN', 'DEVELOPER']);
+
+      expect(result).toEqual(['ADMIN', 'ANON', 'DEVELOPER', 'USER']);
+    });
+
+    it('returns undefined when the config does not declare roles', () => {
+      expect(reconcileApplicationRoles('acme', undefined)).toBeUndefined();
+      expect(reconcileApplicationRoles('acme', null)).toBeUndefined();
+    });
+
+    it('returns an empty list for an explicitly empty role set', () => {
+      expect(reconcileApplicationRoles('acme', [])).toEqual([]);
     });
   });
 });
