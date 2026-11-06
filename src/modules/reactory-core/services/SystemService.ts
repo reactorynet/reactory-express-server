@@ -6,6 +6,7 @@ import { queryGraph as execql, mutateGraph as execml } from '@reactory/server-co
 import { map } from 'lodash';
 import { ComponentFQN, FQN2ID } from '@reactory/server-core/utils/string';
 import { ThemeService } from './ThemeService';
+import { buildRoleCatalogue, findUnknownRoles, normaliseRoles } from '../roles';
 
 
 interface IModuleValidationResult {
@@ -401,10 +402,38 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     return updated!;
   }
 
+  /**
+   * Replaces the application roles for a ReactoryClient.
+   *
+   * The role set is validated against the backend role catalogue before it is
+   * persisted: an application may only expose roles that an activated module or
+   * the platform actually provides. This guarantees that every role an
+   * application advertises can be honoured by the running backend.
+   *
+   * @param clientId the ReactoryClient to update
+   * @param roles the complete replacement role set for the application
+   * @throws when any requested role is not provided by the backend
+   */
   async updateApplicationRoles(clientId: string, roles: string[]): Promise<Reactory.Models.TReactoryClient> {
+    const requested = normaliseRoles(roles);
+    const catalogue = buildRoleCatalogue(this.context?.modules);
+    const unknownRoles = findUnknownRoles(requested, catalogue);
+
+    if (unknownRoles.length > 0) {
+      const error = new Error(
+        `Cannot update application roles for ReactoryClient ${clientId}: ` +
+          `the following roles are not provided by any activated module: ${unknownRoles.join(', ')}. ` +
+          `Declare the role on the providing module's \`roles\` property, or remove it from the application.`,
+      );
+      (error as Error & { code?: string }).code = 'REACTORY_UNKNOWN_APPLICATION_ROLES';
+      (error as Error & { unknownRoles?: string[] }).unknownRoles = unknownRoles;
+      this.context?.error(error.message, { clientId, unknownRoles });
+      throw error;
+    }
+
     const client = await ReactoryClient.findByIdAndUpdate(
       clientId,
-      { $set: { applicationRoles: roles } },
+      { $set: { applicationRoles: requested } },
       { new: true },
     ).exec();
     if (!client) throw new Error(`ReactoryClient ${clientId} not found`);
