@@ -45,6 +45,21 @@ import {
  * context's identity onto the instance, which is exactly what makes the agent
  * conversations appear in that user's chat history - i.e. inspectable and
  * continuable afterwards. Do not proxy this through a service account.
+ *
+ * Folder selection
+ * ----------------
+ * The repository comes from the Reactor project registry, or is typed by hand.
+ * Browsing is delegated to the registered `core.ServerFileExplorer@1.0.0`
+ * instead of an inline picker. The old picker listed folder NAMES only and
+ * joined paths client-side, so it silently depended on
+ * `ReactoryFileService.getServerFiles` returning `path: dirent.name`; the shared
+ * explorer reports the resolver's `fullPath` directly. That component is owned
+ * by the PWA client and is resolved through `reactory.getComponents()` - this
+ * widget is compiled into a client plugin and must not import it.
+ *
+ * The explorer is registered with roles ADMIN/DEVELOPER. A USER therefore sees
+ * the workdir text field only: the Browse affordance is gated on the same
+ * roles, and the explorer is never mounted for them.
  */
 
 interface AIActionDependencies {
@@ -146,29 +161,27 @@ const PROJECTS_PAGE_SIZE = 100;
 const PROJECTS_MAX_PAGES = 20;
 
 /**
- * Folder browsing for the manual path picker.
- *
- * Same query the shared ServerFileExplorer uses (ReactoryServerFiles), and it
- * accepts an ABSOLUTE path: getServerFiles only template-resolves when the path
- * contains a ${...} token, otherwise it uses the value verbatim. Requires the
- * ADMIN or DEVELOPER role. Only folder names are requested - the picker never
- * needs files.
+ * The shared folder browser is registered under this FQN by the PWA client.
+ * Resolution MUST go through the component registry (see the call in the
+ * component body): a server module is compiled into a client plugin, so a
+ * static import of a client component would not resolve at bundle time.
  */
-const SERVER_FOLDERS_QUERY = `
-  query SupportAIActionFolders($serverPath: String, $loadOptions: ReactoryServerFilesLoadOptionsInput) {
-    ReactoryServerFiles(serverPath: $serverPath, loadOptions: $loadOptions) {
-      ... on ReactoryServerFiles {
-        serverPath
-        folders {
-          name
-        }
-      }
-      ... on ReactoryServerFilesErrorResponse {
-        error
-        message
-      }
-    }
-  }`;
+const SERVER_FILE_EXPLORER_FQN = 'core.ServerFileExplorer@1.0.0';
+
+/** Roles the explorer is registered with; used to gate the Browse affordance. */
+const FOLDER_BROWSER_ROLES = ['ADMIN', 'DEVELOPER'];
+
+/**
+ * True when a path is absolute enough to seed the folder browser with.
+ *
+ * This matters beyond cosmetics: `ReactoryFileService.getServerFiles` returns an
+ * ABSOLUTE `fullPath` only when the requested `serverPath` is already absolute.
+ * For a templated root (`${APP_DATA_ROOT}`) it returns `path.join(serverPath,
+ * name)`, i.e. still templated - and that is what would then be persisted as the
+ * workflow's workdir. The picker therefore refuses to open without an absolute
+ * seed, and the text field stays the manual override for anything else.
+ */
+const isAbsoluteServerPath = (value?: string): boolean => String(value || '').trim().startsWith('/');
 
 /**
  * Agents that are actually able to take an engineering ticket.
@@ -303,12 +316,45 @@ const SupportTicketAIAction = (props: AIActionProps) => {
   const [projectsError, setProjectsError] = React.useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string>('');
 
-  // Folder picker (fallback / override).
+  // Folder picker (fallback / override). The browser itself is the shared
+  // core.ServerFileExplorer - only its open state and its absolute seed path are
+  // owned here. `pickerNotice` explains why the browser did not open.
   const [pickerOpen, setPickerOpen] = React.useState<boolean>(false);
-  const [pickerPath, setPickerPath] = React.useState<string>('');
-  const [pickerFolders, setPickerFolders] = React.useState<Array<{ name: string }>>([]);
-  const [pickerLoading, setPickerLoading] = React.useState<boolean>(false);
-  const [pickerError, setPickerError] = React.useState<string | null>(null);
+  const [pickerSeedPath, setPickerSeedPath] = React.useState<string>('');
+  const [pickerNotice, setPickerNotice] = React.useState<string | null>(null);
+
+  /**
+   * The explorer requires ADMIN or DEVELOPER (its registered roles). Mirroring
+   * that here keeps a USER's experience honest: they get the text field only,
+   * rather than a Browse button that cannot produce a usable component.
+   */
+  const canBrowseFolders = React.useMemo(() => {
+    try {
+      return typeof reactory.hasRole === 'function' && reactory.hasRole(FOLDER_BROWSER_ROLES) === true;
+    } catch {
+      return false;
+    }
+  }, [reactory]);
+
+  /**
+   * The shared folder browser (owned by the PWA client), resolved from the
+   * registry: a static import would not resolve, because this widget is packaged
+   * as a client plugin.
+   *
+   * It may legitimately be undefined - the registry may not know the component
+   * yet, and the resolution itself may fail - so every use degrades to the
+   * workdir text field rather than blanking the ticket. A USER never asks for it
+   * at all.
+   */
+  const ServerFileExplorer = React.useMemo(() => {
+    if (!canBrowseFolders) return undefined;
+    try {
+      const resolved = reactory.getComponents<{ ServerFileExplorer: any }>([SERVER_FILE_EXPLORER_FQN]);
+      return resolved ? resolved.ServerFileExplorer : undefined;
+    } catch {
+      return undefined;
+    }
+  }, [reactory, canBrowseFolders]);
 
   const otherWorkflowVersions = React.useMemo(
     () => workflowVersions.filter((version) => `${WORKFLOW_NAME_SPACE}.${WORKFLOW_NAME}@${version}` !== resolvedWorkflowId),
@@ -404,6 +450,8 @@ const SupportTicketAIAction = (props: AIActionProps) => {
     setContext(buildDefaultContext(ticket));
     setResult(null);
     setError(null);
+    setPickerOpen(false);
+    setPickerNotice(null);
 
     loadPersonas();
     loadProjects();
@@ -464,64 +512,58 @@ const SupportTicketAIAction = (props: AIActionProps) => {
     }
   }, [projects.length, projectsLoading, reactory]);
 
-  /** Read one directory level for the folder picker. */
-  const loadFolders = React.useCallback(async (targetPath: string) => {
-    setPickerLoading(true);
-    setPickerError(null);
-    try {
-      const response: any = await reactory.graphqlQuery(SERVER_FOLDERS_QUERY, {
-        serverPath: targetPath,
-        loadOptions: { limit: 500, includeFolders: true, includeHidden: false, includeSystemFiles: false },
-      }).then();
-      const payload = response?.data?.ReactoryServerFiles;
-      if (payload && payload.error) {
-        setPickerFolders([]);
-        setPickerError(payload.message || payload.error);
-        return;
-      }
-      const folders = (payload?.folders || [])
-        .map((folder: any) => ({ name: String((folder && folder.name) || '') }))
-        .filter((folder: any) => !!folder.name)
-        .sort((a: any, b: any) => a.name.localeCompare(b.name));
-      setPickerFolders(folders);
-      setPickerPath(targetPath);
-    } catch (pickerLoadError: any) {
-      setPickerFolders([]);
-      setPickerError(pickerLoadError?.message || 'Could not read that folder.');
-    } finally {
-      setPickerLoading(false);
-    }
-  }, [reactory]);
-
-  const openPicker = () => {
-    setPickerOpen(true);
-    const start = (workdir || '').trim() || defaultWorkdir || '';
-    if (start) loadFolders(start);
-  };
-
-  const browseInto = (folderName: string) => {
-    const base = pickerPath.replace(/\/+$/, '');
-    loadFolders(base + '/' + folderName);
-  };
-
-  const browseUp = () => {
-    const base = pickerPath.replace(/\/+$/, '');
-    const parent = base.substring(0, base.lastIndexOf('/'));
-    if (parent) loadFolders(parent);
-  };
-
-  const usePickerPath = () => {
-    if (pickerPath) {
-      setWorkdir(pickerPath);
-      setSelectedProjectId('');
-    }
-    setPickerOpen(false);
-  };
-
   const selectedProject = React.useMemo(
     () => projects.find((project: any) => String(project.id) === selectedProjectId) || null,
     [projects, selectedProjectId]
   );
+
+  /**
+   * Open the shared folder browser.
+   *
+   * The seed MUST be absolute (see `isAbsoluteServerPath`), so it is resolved from
+   * the best candidate available in this order: the path currently in the field,
+   * the path remembered from the last launch, the selected project's repoPath,
+   * then the `defaultWorkdir` prop. A templated or relative value never reaches
+   * the explorer: the operator is told to type an absolute path instead.
+   */
+  const openPicker = () => {
+    if (!ServerFileExplorer) {
+      setPickerNotice(
+        'The shared folder browser is not available in this session, so the repository path has to be entered by hand.',
+      );
+      return;
+    }
+
+    const seed = [workdir, readStored(WORKDIR_STORAGE_KEY) || '', selectedProject?.repoPath || '', defaultWorkdir || '']
+      .map((candidate) => String(candidate || '').trim())
+      .find(isAbsoluteServerPath) || '';
+
+    if (!seed) {
+      setPickerNotice(
+        'The folder browser needs an absolute path to start from. Pick a project above or type an absolute path (starting with "/") in the repository field.',
+      );
+      return;
+    }
+
+    setPickerNotice(null);
+    setPickerSeedPath(seed);
+    setPickerOpen(true);
+  };
+
+  /**
+   * The explorer reports the resolver's `fullPath` verbatim, so no client-side
+   * path joining happens here - that was the fragility the inline picker carried.
+   * A folder chosen by hand is no longer a registered project, so the Project
+   * dropdown falls back to "Custom path".
+   */
+  const handleFolderSelection = (folders: Array<{ fullPath?: string }>) => {
+    const chosen = String((folders && folders[0] && folders[0].fullPath) || '').trim();
+    if (chosen) {
+      setWorkdir(chosen);
+      setSelectedProjectId('');
+    }
+    setPickerOpen(false);
+  };
 
   const chooseProject = (projectId: string) => {
     setSelectedProjectId(projectId);
@@ -805,7 +847,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               MenuProps={{ PaperProps: { sx: { maxHeight: 380 } } }}
             >
               <MenuItem value="">
-                <em>Custom path (choose a folder below)</em>
+                <em>Custom path (set the repository field below)</em>
               </MenuItem>
               {projects.map((project: any) => (
                 <MenuItem key={project.id} value={String(project.id)}>
@@ -822,7 +864,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
 
           {projectsError && (
             <Alert severity="info" sx={{ mb: 1.5 }} onClose={() => setProjectsError(null)}>
-              {projectsError} You can still enter or browse to a folder below.
+              {projectsError} You can still set the repository path below.
             </Alert>
           )}
 
@@ -850,14 +892,22 @@ const SupportTicketAIAction = (props: AIActionProps) => {
             }
             InputProps={{
               sx: { fontFamily: 'monospace', fontSize: '0.85rem' },
-              endAdornment: (
+              // The shared browser requires ADMIN/DEVELOPER; for everyone else the
+              // field itself is the only (and sufficient) way to set the workdir.
+              endAdornment: canBrowseFolders ? (
                 <Button size="small" startIcon={<Icon>folder_open</Icon>} onClick={openPicker}>
                   Browse
                 </Button>
-              ),
+              ) : null,
             }}
-            sx={{ mb: 2 }}
+            sx={{ mb: pickerNotice ? 0.5 : 2 }}
           />
+
+          {pickerNotice && (
+            <Alert severity="info" sx={{ mb: 2 }} onClose={() => setPickerNotice(null)}>
+              {pickerNotice}
+            </Alert>
+          )}
 
           <FormControlLabel
             control={
@@ -1007,80 +1057,32 @@ const SupportTicketAIAction = (props: AIActionProps) => {
         </DialogActions>
       </Dialog>
 
-      {/* Folder picker - the "capability to select a folder" escape hatch. */}
-      <Dialog open={pickerOpen} onClose={() => setPickerOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Icon>folder_open</Icon>
-            <Typography variant="h6" component="div">Select a folder</Typography>
-          </Box>
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1.5 }}>
-            <Button size="small" variant="outlined" startIcon={<Icon>arrow_upward</Icon>} onClick={browseUp}>
-              Up
-            </Button>
-            <Typography
-              variant="caption"
-              sx={{ fontFamily: 'monospace', fontSize: '0.75rem', wordBreak: 'break-all', flex: 1 }}
-            >
-              {pickerPath || '(no path selected)'}
-            </Typography>
-          </Box>
+      {/*
+        Folder picker - the "capability to select a folder" escape hatch.
 
-          {pickerError && (
-            <Alert severity="warning" sx={{ mb: 1.5 }} onClose={() => setPickerError(null)}>
-              {pickerError}
-            </Alert>
-          )}
-
-          {pickerLoading ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 2 }}>
-              <CircularProgress size={16} />
-              <Typography variant="caption" color="text.secondary">Reading folder…</Typography>
-            </Box>
-          ) : (
-            <Box sx={{ maxHeight: 320, overflowY: 'auto', border: 1, borderColor: 'divider', borderRadius: 1 }}>
-              {pickerFolders.length === 0 && (
-                <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-                  No sub-folders here. You can still choose this folder.
-                </Typography>
-              )}
-              {pickerFolders.map((folder) => (
-                <Box
-                  key={folder.name}
-                  onClick={() => browseInto(folder.name)}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    px: 2,
-                    py: 1,
-                    cursor: 'pointer',
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    '&:hover': { bgcolor: 'action.hover' },
-                  }}
-                >
-                  <Icon fontSize="small">folder</Icon>
-                  <Typography variant="body2">{folder.name}</Typography>
-                </Box>
-              ))}
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPickerOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={usePickerPath}
-            disabled={!pickerPath || pickerLoading}
-            startIcon={<Icon>check</Icon>}
-          >
-            Use this folder
-          </Button>
-        </DialogActions>
-      </Dialog>
+        Delegated to the shared core.ServerFileExplorer@1.0.0, seeded with an
+        absolute path. It reports the resolver's `fullPath` directly, so the
+        workdir no longer depends on how the resolver shapes relative paths.
+        Rendered only for the explorer's roles, and only when it resolved - a
+        plugin built before that registration must degrade to the text field, not
+        crash.
+      */}
+      {canBrowseFolders && ServerFileExplorer && (
+        <ServerFileExplorer
+          reactory={reactory}
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          serverPath={pickerSeedPath}
+          title="Choose repository folder"
+          onFolderSelection={handleFolderSelection}
+          readonly
+          allowUpload={false}
+          allowCreateFolder={false}
+          allowDelete={false}
+          allowRename={false}
+          closeOnFolderSelection
+        />
+      )}
     </>
   );
 };
