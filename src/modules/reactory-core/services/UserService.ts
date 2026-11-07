@@ -1110,8 +1110,25 @@ class UserService implements Reactory.Service.IReactoryUserService {
     return (await User.findByIdAndUpdate(id, profileData, { new: true }).exec()) as unknown as Reactory.Models.IUserDocument;
   }
 
-  // Set user password
-  async setUserPassword(userId: string, password: string, authToken?: string): Promise<Reactory.Models.IUserDocument> {
+  /**
+   * Set a user's password.
+   *
+   * `authToken` is accepted for call-site compatibility but is NOT consulted;
+   * it never was. Authorisation belongs to the caller: the GraphQL mutation
+   * requires an authenticated user, and `POST /useraccount/reset-password`
+   * requires a purpose-scoped reset token which it verifies before calling here.
+   *
+   * `options.clearSessions` exists for the reset path. A password reset is a
+   * recovery action, so every existing session for the account must die —
+   * otherwise an attacker holding a live token keeps access after the victim
+   * recovers the account, which defeats the entire flow.
+   */
+  async setUserPassword(
+    userId: string,
+    password: string,
+    authToken?: string,
+    options: { clearSessions?: boolean } = {},
+  ): Promise<Reactory.Models.IUserDocument> {
     const user = await User.findById(userId).exec() as Reactory.Models.IUserDocument;
     if (!user) throw new ApiError('User not found');
     if (typeof user.setPassword === 'function') {
@@ -1119,6 +1136,11 @@ class UserService implements Reactory.Service.IReactoryUserService {
     } else {
       throw new ApiError('User model does not support setPassword');
     }
+
+    if (options.clearSessions === true) {
+      (user as any).sessionInfo = [];
+    }
+
     return (await user.save()) as unknown as Reactory.Models.IUserDocument;
   }
 
