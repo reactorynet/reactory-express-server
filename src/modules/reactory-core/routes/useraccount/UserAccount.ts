@@ -10,8 +10,13 @@ import {
   readSettingData,
   resolveEmailTemplate,
 } from '@reactory/server-modules/reactory-communicator/services/emailTemplates';
+import {
+  resolveCommunicatorService,
+  resolveTemplateService,
+} from '@reactory/server-modules/reactory-communicator/services/sendFacade';
 import jwt from 'jwt-simple';
 import moment from 'moment';
+import crypto from 'crypto';
 
 const router: express.IRouter = express.Router({
   caseSensitive: true,
@@ -158,6 +163,47 @@ export const buildPasswordResetLink = (
   const normalisedRoute = route.length === 0 ? '' : route.startsWith('/') ? route : `/${route}`;
 
   return `${base}${normalisedRoute}?${tokenParam}=${token}`;
+};
+
+/**
+ * Default client route that consumes a reset token.
+ *
+ * The reset FORM, not the "request a reset" form. This distinction was the
+ * whole bug: clients configured `resetEmailRoute = /forgot-password`, which is
+ * not a registered route in the client at all (the client serves `/forgot` to
+ * request a link and `/reset-password` to use one), so every emailed link landed
+ * on a dead page.
+ */
+export const RESET_PASSWORD_ROUTE_DEFAULT = '/reset-password';
+
+/** Application setting that overrides the reset form route. */
+export const RESET_PASSWORD_ROUTE_SETTING_KEY = 'email_reset_password_route';
+
+/**
+ * The client route a reset link should point at for this application.
+ *
+ * Precedence: explicit `partner.resetPasswordRoute` -> the application setting
+ * (so an administrator can change it without a deploy) -> legacy
+ * `partner.resetEmailRoute` (which historically carried this meaning) -> the
+ * documented default.
+ */
+export const resolvePasswordResetRoute = (partner: any): string => {
+  const preferred =
+    partner && typeof partner.resetPasswordRoute === 'string'
+      ? partner.resetPasswordRoute.trim()
+      : '';
+  if (preferred.length > 0) return preferred;
+
+  const fromSetting = normaliseRouteSetting(
+    readSettingData(partner, RESET_PASSWORD_ROUTE_SETTING_KEY)
+  );
+  if (fromSetting) return fromSetting;
+
+  const legacy =
+    partner && typeof partner.resetEmailRoute === 'string' ? partner.resetEmailRoute.trim() : '';
+  if (legacy.length > 0) return legacy;
+
+  return RESET_PASSWORD_ROUTE_DEFAULT;
 };
 
 /**
@@ -470,6 +516,149 @@ export const inspectActivationToken = (
 };
 
 /**
+ * Purpose scope claim for a password-reset token.
+ *
+ * Mirrors `ACTIVATION_TOKEN_SCOPE`. A reset token is deliberately NOT a session
+ * token: it authorises exactly one thing (setting a new password) and nothing
+ * else.
+ */
+export const RESET_TOKEN_SCOPE = 'password_reset';
+
+/**
+ * Suffix appended to `SECRET_SAUCE` to derive the reset-token signing key.
+ *
+ * Same reasoning as `ACTIVATION_TOKEN_SECRET_SUFFIX`, and it closes a real hole:
+ * `/forgot` used to mint the reset link with `Helpers.jwtMake`, which signs with
+ * plain `SECRET_SAUCE` — the session key. The resulting token was a *valid
+ * session JWT*, so anyone who obtained the email (or the link, from a mailbox,
+ * a proxy log or a shared screen) could use it as a Bearer token to authenticate
+ * as that user, without ever setting a new password. Deriving a distinct key
+ * makes a reset token inert on every authenticated endpoint.
+ */
+export const RESET_TOKEN_SECRET_SUFFIX = '::password_reset';
+
+/** Minimum accepted password length. Matches the help text in ResetPasswordForm. */
+export const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * The reset-token signing key. Fails closed for the same reason as the
+ * activation equivalent: a missing `SECRET_SAUCE` must not degrade into signing
+ * with the literal string `"undefined"`.
+ */
+export const resolveResetSigningSecret = (): string => {
+  const base = process.env.SECRET_SAUCE;
+
+  if (typeof base !== 'string' || base.trim().length === 0) {
+    throw new Error('SECRET_SAUCE is not set; cannot sign or verify a password reset token');
+  }
+
+  return `${base}${RESET_TOKEN_SECRET_SUFFIX}`;
+};
+
+/**
+ * A short fingerprint of the user's CURRENT stored password hash.
+ *
+ * Carried as the `pwfp` claim so a link becomes single-use without a schema
+ * change: `setPassword()` rewrites the hash, so every token minted before the
+ * change stops matching. This also invalidates older links when a newer one is
+ * used — exactly the behaviour people expect from "this link has already been
+ * used".
+ *
+ * It is a SHA-256 of an already-slow PBKDF2 hash, truncated to 16 hex chars. It
+ * reveals nothing useful (the input is not guessable, and the claim is only ever
+ * compared, never logged) while being stable across reads.
+ */
+export const passwordFingerprint = (storedHash: unknown): string => {
+  const value = typeof storedHash === 'string' ? storedHash : '';
+  return crypto.createHash('sha256').update(value).digest('hex').slice(0, 16);
+};
+
+/**
+ * Mint a password-reset token for `user`, scoped to this application.
+ *
+ * The claim vocabulary is the platform's (`Helpers.jwtTokenForUser`), plus
+ * `scope`, `clientId` and `pwfp`. Signed with the purpose-scoped key, so this
+ * token cannot be used as a session.
+ */
+export const createPasswordResetToken = (
+  user: any,
+  partner: any,
+  now: moment.Moment = moment(),
+): { token: string; expiresAt: number } => {
+  const expiresAt = passwordResetTokenExpiry(now);
+  const payload: any = Helpers.jwtTokenForUser(user, { exp: expiresAt });
+
+  payload.scope = RESET_TOKEN_SCOPE;
+  if (partner && partner._id) payload.clientId = String(partner._id);
+  payload.pwfp = passwordFingerprint(user?.password);
+
+  return { token: jwt.encode(payload, resolveResetSigningSecret()), expiresAt };
+};
+
+export type ResetTokenState = 'valid' | 'expired' | 'invalid';
+
+export interface IResetTokenInspection {
+  state: ResetTokenState;
+  claims?: any;
+  reason?: 'malformed' | 'wrong_scope' | 'no_expiry' | 'no_user' | 'no_fingerprint';
+}
+
+/**
+ * Verify and classify a password-reset token.
+ *
+ * Identical shape to `inspectActivationToken`, and for the same reason: signature
+ * and scope are checked here, expiry is decided here (jwt-simple compares `exp`
+ * against seconds, so it cannot enforce a millisecond lifetime), and an expired
+ * link is reported as expired rather than as malformed.
+ *
+ * The password fingerprint is NOT verified here — that needs the user document,
+ * and doing a database read in a pure classifier would make it untestable. The
+ * routes check it after loading the user.
+ */
+export const inspectPasswordResetToken = (
+  token: unknown,
+  now: number = Date.now(),
+): IResetTokenInspection => {
+  if (typeof token !== 'string' || token.trim().length === 0) {
+    return { state: 'invalid', reason: 'malformed' };
+  }
+
+  // Resolved before the try: an unconfigured secret is a server fault, not a
+  // bad link, and must not be reported to the caller as one.
+  const secret = resolveResetSigningSecret();
+
+  let claims: any;
+  try {
+    claims = jwt.decode(token.trim(), secret);
+  } catch (decodeError) {
+    return { state: 'invalid', reason: 'malformed' };
+  }
+
+  if (!claims || typeof claims !== 'object') return { state: 'invalid', reason: 'malformed' };
+  if (claims.scope !== RESET_TOKEN_SCOPE) return { state: 'invalid', reason: 'wrong_scope' };
+  if (typeof claims.exp !== 'number') return { state: 'invalid', reason: 'no_expiry' };
+  if (!claims.userId) return { state: 'invalid', reason: 'no_user' };
+  if (typeof claims.pwfp !== 'string' || claims.pwfp.length === 0) {
+    return { state: 'invalid', reason: 'no_fingerprint' };
+  }
+
+  if (claims.exp <= now) return { state: 'expired', claims };
+
+  return { state: 'valid', claims };
+};
+
+/** Responses shared by both reset endpoints. */
+export const RESET_PASSWORD_MESSAGES = {
+  missing: 'A reset token is required.',
+  invalid: 'This password reset link is not valid. Request a new one.',
+  expired: 'This password reset link has expired. Request a new one.',
+  used: 'This password reset link has already been used. Request a new one.',
+  weak: `Choose a password of at least ${MIN_PASSWORD_LENGTH} characters.`,
+  mismatch: 'The passwords do not match.',
+  completed: 'Your password has been updated. You can now sign in with it.',
+};
+
+/**
  * Resolve the registration template and send the activation email.
  *
  * Purpose-based resolution only: the route names `registration`, the purpose
@@ -486,7 +675,10 @@ export const sendRegistrationActivationEmail = async (params: {
 }): Promise<boolean> => {
   const { context, partner, user, organization } = params;
 
-  const templateService = context.getService('communicator.TemplateService@1.0.0') as any;
+  // Initialised at the point of use: the module's boot hook is not guaranteed
+  // to have run for this service, and an uninitialised instance throws
+  // TEMPLATE_NOT_INITIALIZED on every resolve.
+  const templateService = await resolveTemplateService(context);
 
   const resolvedTemplate = (await resolveEmailTemplate({
     purpose: 'registration',
@@ -518,7 +710,11 @@ export const sendRegistrationActivationEmail = async (params: {
     });
   }
 
-  const communicatorService = context.getService('communicator.CommunicatorService@1.0.0') as any;
+  // Resolved through the send facade, not `context.getService()` directly:
+  // `ServiceManager` never calls `initialize()`, so the raw instance throws
+  // SERVICE_NOT_INITIALIZED on `send()`. The facade performs the idempotent
+  // initialise step and binds the service to this request's context.
+  const communicatorService = await resolveCommunicatorService(context);
 
   const payload: ISendPayload = {
     partnerId: partner?._id?.toString?.() ?? '',
@@ -580,7 +776,8 @@ router.post(
       // Purpose-based resolution. The route names what happened
       // (`password_reset`); the registry owns the view slug and the application's
       // `email_template_password_reset` setting is honoured by the resolver.
-      const templateService = req.context.getService('communicator.TemplateService@1.0.0') as any;
+      // Same reason as the registration path above.
+      const templateService = await resolveTemplateService(req.context);
 
       const organization =
         req.organization ?? req.context?.organization ?? req.context?.user?.organization ?? undefined;
@@ -605,13 +802,22 @@ router.post(
         throw new Error('Resolved password_reset template has no identifier');
       }
 
-      const resetToken = Helpers.jwtMake(
-        Helpers.jwtTokenForUser(user, { exp: passwordResetTokenExpiry() }),
+      // Purpose-scoped and single-use. Signed with the reset key rather than
+      // the session key, so this token authorises setting a password and
+      // nothing else. See createPasswordResetToken().
+      const { token: resetToken } = createPasswordResetToken(user, partner);
+
+      const resetLink = buildPasswordResetLink(
+        partner.siteUrl,
+        resolvePasswordResetRoute(partner),
+        resetToken,
       );
 
-      const resetLink = buildPasswordResetLink(partner.siteUrl, partner.resetEmailRoute, resetToken);
-
-      const communicatorService = req.context.getService('communicator.CommunicatorService@1.0.0') as any;
+      // Same reason as the registration path above: the facade initialises the
+      // service. Calling `getService()` directly left `send()` throwing
+      // "CommunicatorService must be initialized before use", which the catch
+      // below turned into a 500 for every password reset request.
+      const communicatorService = await resolveCommunicatorService(req.context);
 
       const payload: ISendPayload = {
         partnerId: partner._id?.toString() ?? '',
@@ -638,6 +844,172 @@ router.post(
     }
 
     return res.status(200).json({ message: PASSWORD_RESET_ACKNOWLEDGEMENT });
+  }),
+);
+
+/**
+ * Shared verification for both reset endpoints.
+ *
+ * Returns either a rejection (with the status and message the caller should see)
+ * or the resolved user and claims. Keeping it in one place is what stops the GET
+ * and the POST from disagreeing about what "used" or "expired" mean.
+ */
+interface IResetVerification {
+  ok: boolean;
+  /** Present when `ok` is false; the HTTP status the caller should send. */
+  status?: number;
+  /** Machine-readable outcome, mirrored into the response body. */
+  state?: string;
+  /** Human-readable outcome, mirrored into the response body. */
+  message?: string;
+  user?: any;
+  claims?: any;
+}
+
+const verifyResetToken = async (req: any, rawToken: unknown): Promise<IResetVerification> => {
+  if (typeof rawToken !== 'string' || rawToken.trim().length === 0) {
+    return { ok: false, status: 400, state: 'missing_token', message: RESET_PASSWORD_MESSAGES.missing };
+  }
+
+  const inspection = inspectPasswordResetToken(rawToken);
+
+  if (inspection.state === 'invalid') {
+    logger.warn('Password reset attempted with an invalid token', { reason: inspection.reason });
+    return { ok: false, status: 400, state: 'invalid_token', message: RESET_PASSWORD_MESSAGES.invalid };
+  }
+
+  if (inspection.state === 'expired') {
+    logger.info('Password reset attempted with an expired token', {
+      userId: inspection.claims?.userId,
+    });
+    return { ok: false, status: 410, state: 'expired_token', message: RESET_PASSWORD_MESSAGES.expired };
+  }
+
+  const userService = req.context.getService('core.UserService@1.0.0') as any;
+  const user = await userService.findUserById(String(inspection.claims.userId));
+
+  if (!user) {
+    // Deliberately identical to "malformed": the endpoint is unauthenticated, so
+    // distinguishing "no such account" would confirm whether one exists.
+    logger.warn(`Password reset token referenced an unknown user: ${inspection.claims.userId}`);
+    return { ok: false, status: 400, state: 'invalid_token', message: RESET_PASSWORD_MESSAGES.invalid };
+  }
+
+  // Single use: `setPassword()` rewrites the hash, so a token minted before the
+  // last change no longer matches. That covers both "already used" and "superseded
+  // by a newer link".
+  if (passwordFingerprint(user.password) !== inspection.claims.pwfp) {
+    logger.info(`Password reset token already used or superseded: ${inspection.claims.userId}`);
+    return { ok: false, status: 410, state: 'used_token', message: RESET_PASSWORD_MESSAGES.used };
+  }
+
+  return { ok: true, user, claims: inspection.claims };
+};
+
+/**
+ * GET /reset-password?token=...
+ *
+ * Public. Tells a reset form whether the link is usable and who it belongs to,
+ * so the form can show "resetting the password for someone@example.com" instead
+ * of asking the user to retype their address.
+ *
+ * 200 { state: 'valid', user: { firstName, lastName, email, avatar } }
+ * 400 missing / invalid
+ * 410 expired / used
+ *
+ * Only the four presentation fields are returned. The document also carries the
+ * password hash, salt, memberships and sessions, none of which belong in an
+ * unauthenticated response.
+ */
+router.get(
+  '/reset-password',
+  asyncHandler(async (req: any, res: any) => {
+    const rawToken = typeof req.query.token === 'string' ? req.query.token : undefined;
+    const verification = await verifyResetToken(req, rawToken);
+
+    if (!verification.ok) {
+      return res
+        .status(verification.status as number)
+        .json({ state: verification.state, message: verification.message });
+    }
+
+    const target = verification.user ?? {};
+
+    return res.status(200).json({
+      state: 'valid',
+      user: {
+        firstName: target.firstName ?? '',
+        lastName: target.lastName ?? '',
+        email: target.email ?? '',
+        avatar: target.avatar ?? '',
+      },
+    });
+  }),
+);
+
+/**
+ * POST /reset-password
+ *
+ * Public. Body: { token, password, confirmPassword? }
+ *
+ * The only endpoint in the platform that changes a password without an
+ * authenticated session, which is exactly why the token is purpose-scoped,
+ * single-use and bound to the password it was issued against.
+ *
+ * On success the user's sessions are cleared: a password reset is a recovery
+ * action, and leaving an attacker's existing session alive would defeat it.
+ */
+router.post(
+  '/reset-password',
+  asyncHandler(async (req: any, res: any) => {
+    const { token, password, confirmPassword } = req.body || {};
+
+    if (typeof password !== 'string' || password.trim().length === 0) {
+      return res.status(400).json({
+        state: 'invalid_password',
+        message: RESET_PASSWORD_MESSAGES.weak,
+      });
+    }
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        state: 'weak_password',
+        message: RESET_PASSWORD_MESSAGES.weak,
+      });
+    }
+
+    if (typeof confirmPassword === 'string' && password !== confirmPassword) {
+      return res.status(400).json({
+        state: 'password_mismatch',
+        message: RESET_PASSWORD_MESSAGES.mismatch,
+      });
+    }
+
+    const verification = await verifyResetToken(req, token);
+
+    if (!verification.ok) {
+      return res
+        .status(verification.status as number)
+        .json({ state: verification.state, message: verification.message });
+    }
+
+    const userId = String((verification.claims as any).userId);
+
+    try {
+      const userService = req.context.getService('core.UserService@1.0.0') as any;
+
+      await userService.setUserPassword(userId, password, token, { clearSessions: true });
+
+      logger.info(`Password reset completed for user ${userId}`);
+      return res.status(200).json({ state: 'completed', message: RESET_PASSWORD_MESSAGES.completed });
+    } catch (resetError: any) {
+      // Never report the password value; the message comes from the service.
+      logger.error('Password reset failed', resetError);
+      return res.status(500).json({
+        state: 'failed',
+        message: 'Your password could not be updated. Please request a new reset link.',
+      });
+    }
   }),
 );
 

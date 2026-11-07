@@ -42,7 +42,7 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   siteUrl: REACTORY_SITE_URL || 'http://localhost:3000', 
   emailSendVia: process.env.REACTORY_EMAIL_SEND_VIA || 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY as string,
-  resetEmailRoute: '/forgot-password',
+  resetEmailRoute: '/reset-password',
   avatar: safeCDNUrl('themes/reactory/images/avatar.png'),
   applicationRoles: roles,
   users,

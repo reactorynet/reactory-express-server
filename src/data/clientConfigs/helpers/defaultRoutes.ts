@@ -47,15 +47,49 @@ export const forgotpasswordroute = {
   ],
 };
 
+/**
+ * The password reset form.
+ *
+ * `public` and the `ANON` role are load-bearing, not cosmetic: someone using a
+ * reset link is by definition not signed in, so a USER-only route made the emailed
+ * link a dead end even once the server endpoint existed. The token in the query
+ * string is the authorisation; the route itself needs none.
+ */
 export const resetpasswordroute = {
   id: '2',
   key: 'reset-password',
   title: 'Reset',
   path: '/reset-password',
+  public: true,
+  exact: true,
+  roles: ['ANON', 'USER'],
+  componentFqn: 'core.ResetPassword@1.0.0',
+};
+
+/**
+ * Communicator email-template editor.
+ *
+ * Deliberately NOT in the default array below: the communicator is a platform
+ * module, and a client that has not adopted it should not carry a dead route.
+ * Clients opt in by spreading this export into their own routes.
+ *
+ * Gated on the template roles rather than `USER`. The server enforces the same
+ * gates on the query, so the route gate only prevents an operator from landing on
+ * a screen that answers 403.
+ */
+export const communicatortemplatesroute = {
+  id: '6',
+  key: 'communicator-templates',
+  title: 'Email Templates',
+  path: '/communicator/templates',
   public: false,
   exact: true,
-  roles: ['USER'],
-  componentFqn: 'core.ResetPassword@1.0.0',
+  roles: [
+    'COMMUNICATOR_TEMPLATE_VIEW',
+    'COMMUNICATOR_TEMPLATE_ADMIN',
+    'ADMIN',
+  ],
+  componentFqn: 'communicator.EmailTemplates@1.0.0',
 };
 
 export const logoutroute = {

@@ -5,6 +5,7 @@ import {
   resetpasswordroute,
   forgotpasswordroute,
   registerRoute,  
+  communicatortemplatesroute,
 } from '@reactory/server-core/data/clientConfigs/helpers/defaultRoutes';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 import safeUrl from '@reactory/server-core/utils/url/safeUrl';
@@ -727,6 +728,9 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
       workflowId: "${route.workflowId}",
     },
   },
+  // Communicator email-template editor (communicator.EmailTemplates@1.0.0).
+  // Opt-in per client; see the note on the export in defaultRoutes.
+  communicatortemplatesroute,
 ];
 
 

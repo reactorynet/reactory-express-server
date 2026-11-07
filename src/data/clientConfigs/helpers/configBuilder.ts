@@ -576,7 +576,7 @@ const makeConfig = (
     .withEmailConfig(
       props.emailSendVia ?? 'sendgrid',
       props.emailApiKey ?? process.env.SENDGRID_API_KEY ?? '',
-      props.resetEmailRoute ?? '/forgot-password',
+      props.resetEmailRoute ?? '/reset-password',
     )
     .withRoles(...(props.applicationRoles ?? ['USER', 'ADMIN', 'ANON']))
     .withRoutes(...(Array.isArray(props.routes) ? props.routes : Presets.routes.default()))
