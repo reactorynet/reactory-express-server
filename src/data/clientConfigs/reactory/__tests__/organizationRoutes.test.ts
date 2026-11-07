@@ -25,6 +25,10 @@
  * so a dropped route disappears from the running application for real. That is
  * why the "nothing else moved" assertions below matter as much as the new ones
  * — including the pinned complete path set in the ORG-017 block.
+ *
+ * WP-2 (communicator) adds ONE path, `/communicator/templates`, for the email
+ * template editor. It is in this pinned list on purpose: the guard exists so a
+ * route appears or disappears only when someone decides it should.
  */
 
 import routes from '../routes';
@@ -426,6 +430,7 @@ const EXPECTED_PATHS_AT_BASE = [
   '/admin/ai/usage/:userId',
   '/applications/:applicationId',
   '/blog/:blog_slug',
+  '/communicator/templates',
   '/content',
   '/content/:slug',
   '/data/graphiql/*',
