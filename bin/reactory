@@ -48,7 +48,12 @@ Options:
   --debug                 Enable debug mode
   --watch                 Enable watch mode
   --verbose, -v           Enable verbose logging (silent by default)
+  --silent                Quiet launcher output (the default)
   -h, --help              Show help message
+
+Launcher options are consumed by bin/reactory and are NOT forwarded to the
+command. Each command owns its own output mode; in particular, quietly running a
+command still prints its machine-readable result.
 
 Environment Variables:
   REACTORY_CONFIG_NAME    Default configuration name
@@ -125,8 +130,12 @@ while [[ $# -gt 0 ]]; do
       VERBOSE=true
       shift
       ;;
-    --silent)
-      # explicit silent mode - already default but allow override
+    --silent|--silent=*)
+      # explicit silent mode - already default but allow override.
+      # `--silent=<value>` is matched too, so the value spelling cannot be mistaken
+      # for the command name. isLauncherReservedFlag() in
+      # src/modules/reactory-core/cli/shared/platformFlags.ts accepts both spellings;
+      # the two must agree or the launcher would hand a flag to a parser as a command.
       VERBOSE=false
       shift
       ;;
@@ -250,15 +259,23 @@ if [ "$VERBOSE" = true ]; then
   echo "Project Root: $PROJECT_ROOT"
 fi
 
-# Pass --silent to Node if not in verbose mode so core logger can be suppressed.
-# The command goes FIRST: prepending --silent ahead of it used to leave the CLI
-# resolving the command from a flag token, which made every invocation a silent
-# no-op (boot, "Goodbye.", exit 0). cli.ts now scans past leading flags too, but
-# ordering the command first keeps the intent explicit.
+# The sub-command's argv is the command followed by the caller's own options - and
+# nothing else. The wrapper's output flags (--verbose/-v, --silent) are consumed
+# above and belong to the LAUNCHER, not to the command.
+#
+# They used to be forwarded: `--silent` was appended to every non-verbose run,
+# which made every strict sub-command parser reject the invocation with
+# "Unknown argument [--silent]" - so the documented, plain
+# `reactory demographics-seed` could never succeed. Do not reintroduce the
+# injection. Sub-commands also strip a forwarded `--silent` defensively
+# (src/modules/reactory-core/cli/shared/platformFlags.ts), but the launcher must
+# not create the problem in the first place. See src/reactory/cli/CLI.md,
+# "Argument contract" (REACTORY-302016408).
+#
+# The command still goes FIRST: prepending a flag ahead of it used to leave the
+# CLI resolving the command from a flag token, which made every invocation a
+# silent no-op (boot, "Goodbye.", exit 0).
 CLI_ARGS=("$COMMAND" "${KWARGS[@]}")
-if [ "$VERBOSE" != true ]; then
-  CLI_ARGS+=("--silent")
-fi
 
 # Execute the CLI
 cd "$PROJECT_ROOT" || exit 1

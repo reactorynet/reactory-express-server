@@ -4,6 +4,9 @@ import DemographicsCliDefinition, {
   DEMOGRAPHICS_SERVICE_ID,
 } from '../DemographicsCli';
 
+/** A representative Mongo ObjectId, used by the argument-parsing assertions. */
+const ID = '665f0c1a2b3c4d5e6f708192';
+
 /**
  * ORG-030 / reviewer F3: the backfill must be runnable, not just callable from
  * code. These tests exercise the CLI plugin the way the CLI loader does - through
@@ -101,6 +104,97 @@ describe('Demographics CLI backfill command (ORG-030)', () => {
     await expect(run(['--organizationId', '665f0c1a2b3c4d5e6f708192'])).rejects.toThrow('process.exit:1');
 
     expect(context.error).toHaveBeenCalledWith(expect.stringMatching(/\[ArgumentError\] Unknown argument/));
+    expect(backfillOrganizationDemographics).not.toHaveBeenCalled();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Launcher-owned flags (REACTORY-302016408)
+  //
+  // bin/reactory used to append --silent to every non-verbose invocation, so the
+  // documented plain command could never run. These tests hold both ends of the
+  // fix: the parser tolerates the launcher's own flags, and stays strict about
+  // everything else.
+  // ---------------------------------------------------------------------------
+
+  it('parses the documented plain invocation (no flags) successfully', () => {
+    expect(parseDemographicsSeedArgs([])).toEqual({ help: false });
+  });
+
+  it('accepts and ignores the launcher-injected --silent flag', () => {
+    expect(parseDemographicsSeedArgs(['--silent'])).toEqual({ help: false });
+    expect(parseDemographicsSeedArgs(['--organizationIds', ID, '--silent']))
+      .toEqual({ organizationIds: [ID], help: false });
+    expect(parseDemographicsSeedArgs(['--silent', `--organizationIds=${ID}`]).organizationIds)
+      .toEqual([ID]);
+  });
+
+  it('rejects --verbose / -v like every other strict parser in the family', () => {
+    // --verbose is a LAUNCHER flag: bin/reactory consumes it and never forwards it,
+    // so `bin/reactory demographics-seed --verbose` still works. Accepting it here as
+    // well made this command the only strict parser with a private exception, which
+    // is the inconsistency REACTORY-302016408 was asked to remove.
+    expect(() => parseDemographicsSeedArgs(['--verbose'])).toThrow(/Unknown argument \[--verbose\]/);
+    expect(() => parseDemographicsSeedArgs(['-v'])).toThrow(/Unknown argument \[-v\]/);
+    // A launcher-stripped --silent must not launder a genuinely unknown flag.
+    expect(() => parseDemographicsSeedArgs(['--silent', '--verbose']))
+      .toThrow(/Unknown argument \[--verbose\]/);
+  });
+
+  // B2 (review): removing the injected --silent removed an accidental guard. A
+  // value-less --organizationIds used to abort only because the injected token was
+  // rejected as unknown; on its own it parsed to `undefined`, i.e. "seed EVERY
+  // organization", with exit 0. The parser must reject it on its own merits.
+  it('rejects a value-less --organizationIds instead of seeding every organization', async () => {
+    expect(() => parseDemographicsSeedArgs(['--organizationIds']))
+      .toThrow(/Argument \[--organizationIds\] requires a value/);
+    expect(() => parseDemographicsSeedArgs(['--organization-ids']))
+      .toThrow(/requires a value/);
+    expect(() => parseDemographicsSeedArgs(['--org']))
+      .toThrow(/requires a value/);
+    // Present but empty / only separators is the same mistake.
+    expect(() => parseDemographicsSeedArgs(['--organizationIds=']))
+      .toThrow(/requires a value/);
+    expect(() => parseDemographicsSeedArgs(['--organizationIds=,, ,']))
+      .toThrow(/requires a value/);
+
+    await expect(run(['--organizationIds'])).rejects.toThrow('process.exit:1');
+
+    expect(context.error).toHaveBeenCalledWith(
+      expect.stringMatching(/\[ArgumentError\] Argument \[--organizationIds\] requires a value/),
+    );
+    expect(backfillOrganizationDemographics).not.toHaveBeenCalled();
+  });
+
+  it('rejects a value-less --organizationIds even with the launcher --silent appended', async () => {
+    // The exact production argv that used to abort only by accident.
+    await expect(run(['--organizationIds', '--silent'])).rejects.toThrow('process.exit:1');
+
+    expect(context.error).toHaveBeenCalledWith(expect.stringMatching(/\[ArgumentError\].*requires a value/));
+    expect(backfillOrganizationDemographics).not.toHaveBeenCalled();
+  });
+
+  it('seeds correctly when the launcher appends --silent to the invocation', async () => {
+    await run(['--silent']);
+
+    expect(context.error).not.toHaveBeenCalled();
+    expect(backfillOrganizationDemographics).toHaveBeenCalledWith({ organizationIds: undefined });
+    expect(JSON.parse(stdoutSpy.mock.calls[0][0]).organizations).toBe(2);
+    expect(exitSpy).not.toHaveBeenCalled();
+  });
+
+  it('seeds correctly when --silent follows the id filter', async () => {
+    await run(['--organizationIds', ID, '--silent']);
+
+    expect(backfillOrganizationDemographics).toHaveBeenCalledWith({ organizationIds: [ID] });
+    expect(exitSpy).not.toHaveBeenCalled();
+  });
+
+  it('still rejects a genuine typo when --silent is also present', async () => {
+    await expect(run(['--silent', '--organizationId', ID])).rejects.toThrow('process.exit:1');
+
+    expect(context.error).toHaveBeenCalledWith(
+      expect.stringMatching(/\[ArgumentError\] Unknown argument \[--organizationId\]/),
+    );
     expect(backfillOrganizationDemographics).not.toHaveBeenCalled();
   });
 

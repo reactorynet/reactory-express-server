@@ -4,6 +4,7 @@ import path from "path";
 import yaml from "js-yaml";
 import { ReadLine } from "readline";
 import colors from "colors/safe";
+import { stripLauncherFlags } from "../shared/platformFlags";
 
 const HelpText = `
 The csv2json CLI tool converts a CSV file to a JSON file using an optional mapping file.
@@ -24,6 +25,12 @@ const Csv2JsonCli = async (
   kwargs: string[],
   context: Reactory.Server.IReactoryContext
 ): Promise<void> => {
+  // Launcher-owned output flags (`--silent`) are not arguments for this command.
+  // Strip them before the emptiness check so `reactory csv2json` fails with the
+  // real reason (no source file) rather than "Unknown argument [--silent]".
+  // See src/reactory/cli/CLI.md, "Argument contract".
+  kwargs = stripLauncherFlags(kwargs);
+
   if (!kwargs || kwargs.length === 0) {
     context.error("No arguments provided");
     process.exit(1);

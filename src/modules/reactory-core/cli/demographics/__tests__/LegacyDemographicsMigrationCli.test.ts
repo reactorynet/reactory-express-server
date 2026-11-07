@@ -243,6 +243,23 @@ describe('Legacy demographics migration CLI (ORG-040)', () => {
     expect(parseLegacyDemographicsMigrationArgs(['--report', '/tmp/x.json']).reportPath).toBe('/tmp/x.json');
   });
 
+  // B2 (review): the same value-less hole existed here, and the fix must hold for the
+  // whole family. A bare --organizationIds previously meant "every organization the
+  // legacy data references" - much wider than the operator asked for.
+  it('rejects a value-less --organizationIds instead of widening the run', async () => {
+    expect(() => parseLegacyDemographicsMigrationArgs(['--organizationIds']))
+      .toThrow(/Argument \[--organizationIds\] requires a value/);
+    expect(() => parseLegacyDemographicsMigrationArgs(['--org=']))
+      .toThrow(/requires a value/);
+
+    await expect(run(['--apply', '--organizationIds'])).rejects.toThrow('process.exit:1');
+
+    expect(context.error).toHaveBeenCalledWith(
+      expect.stringMatching(/\[ArgumentError\] Argument \[--organizationIds\] requires a value/),
+    );
+    expect(mockState.saveValues).not.toHaveBeenCalled();
+  });
+
   it('honours explicit boolean values on the write and source flags', () => {
     expect(parseLegacyDemographicsMigrationArgs(['--apply=false']).apply).toBe(false);
     expect(parseLegacyDemographicsMigrationArgs(['--apply=yes']).apply).toBe(true);
@@ -278,6 +295,20 @@ describe('Legacy demographics migration CLI (ORG-040)', () => {
   it('rejects --report without a path', async () => {
     await expect(run(['--report='])).rejects.toThrow('process.exit:1');
     expect(context.error).toHaveBeenCalledWith(expect.stringMatching(/--report.*file path/));
+  });
+
+  it('ignores the launcher-injected --silent flag (REACTORY-302016408)', () => {
+    // bin/reactory used to append --silent to every non-verbose invocation, which
+    // made this strict sibling parser fail before it ever ran.
+    expect(parseLegacyDemographicsMigrationArgs(['--silent']))
+      .toEqual(parseLegacyDemographicsMigrationArgs([]));
+    expect(parseLegacyDemographicsMigrationArgs(['--apply', '--silent']).apply).toBe(true);
+    expect(parseLegacyDemographicsMigrationArgs(['--silent', `--organizationIds=${ORG_ID}`]).organizationIds)
+      .toEqual([ORG_ID]);
+
+    // Strictness is preserved: a real typo still fails, even alongside --silent.
+    expect(() => parseLegacyDemographicsMigrationArgs(['--silent', '--organisationIds', ORG_ID]))
+      .toThrow(/Unknown argument/);
   });
 
   it('rejects an unknown flag and exits non-zero', async () => {
