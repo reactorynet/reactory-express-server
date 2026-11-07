@@ -1,4 +1,28 @@
 import Reactory from '@reactorynet/reactory-core';
+import {
+  COMMENT_PAGE_SIZE,
+  MAX_REFRESH_PAGES,
+  REPLY_PAGE_SIZE,
+  canLoadMoreComments,
+  commentCountLabel,
+  commentListReducer,
+  commentShowingLabel,
+  initialCommentListState,
+  mergeCommentPages,
+} from '../shared/commentPaging';
+import type { CommentSortOrder, ICommentListState } from '../shared/commentPaging';
+
+/**
+ * Paging metadata for one comment's reply thread. `loaded` is how many replies
+ * the reader has fetched; a refresh re-bases the same window instead of
+ * collapsing the thread back to its first page.
+ */
+interface IReplyWindow {
+  total: number;
+  hasNext: boolean;
+  nextCursor: string | null;
+  loaded: number;
+}
 
 interface CommentsDependencies {
   React: Reactory.React,
@@ -90,12 +114,36 @@ const SupportTicketComments = (props: CommentsProps) => {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [replyingToId, setReplyingToId] = React.useState<string | null>(null);
   const [replyText, setReplyText] = React.useState('');
-  const [sortBy, setSortBy] = React.useState<'newest' | 'oldest'>('newest');
+  // Root comments and their paging window. The reducer owns the loaded pages so
+  // appending a page, switching sort and merging replies are all pure and
+  // testable (see forms/Support/tests/commentPaging.test.ts).
+  const [commentList, dispatchCommentList] = React.useReducer(
+    commentListReducer,
+    initialCommentListState('NEWEST'),
+  );
+  // Refs mirror async-relevant state so handlers read the window they were
+  // invoked with instead of a stale render closure.
+  const commentListRef = React.useRef<ICommentListState>(commentList);
+  const expandedRepliesRef = React.useRef<Set<string>>(new Set());
+  const replyPagingRef = React.useRef<Record<string, IReplyWindow>>({});
+  const onCommentCountChangeRef = React.useRef(onCommentCountChange);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [commentToDelete, setCommentToDelete] = React.useState<string | null>(null);
-  const [comments, setComments] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);
   const [expandedReplies, setExpandedReplies] = React.useState<Set<string>>(new Set());
+  const [replyPaging, setReplyPaging] = React.useState<Record<string, IReplyWindow>>({});
+  const [loadingReplies, setLoadingReplies] = React.useState<Set<string>>(new Set());
+
+  React.useEffect(() => { commentListRef.current = commentList; }, [commentList]);
+  React.useEffect(() => { expandedRepliesRef.current = expandedReplies; }, [expandedReplies]);
+  React.useEffect(() => { replyPagingRef.current = replyPaging; }, [replyPaging]);
+  React.useEffect(() => { onCommentCountChangeRef.current = onCommentCountChange; });
+
+  const publishCommentCount = React.useCallback((total: number) => {
+    const handler = onCommentCountChangeRef.current;
+    if (typeof handler === 'function') handler(total);
+  }, []);
 
   // Initialize content renderer
   const { renderContent } = useContentRender ? useContentRender(reactory) : { 
@@ -125,14 +173,34 @@ const SupportTicketComments = (props: CommentsProps) => {
     }
   }, [reactory, ticket]);
 
-  const fetchComments = React.useCallback(async (): Promise<any[]> => {
-    if (!ticket?.id) return [];
+  /**
+   * Fetch one page of root comments. `cursor` is the opaque keyset cursor the
+   * server returned for the previous page; `page` is only meaningful for the
+   * first page (and for offset callers) because the server prefers the cursor.
+   */
+  const fetchCommentPage = React.useCallback(async (options: {
+    cursor?: string | null;
+    page?: number;
+    sortOrder: CommentSortOrder;
+  }): Promise<{ comments: any[]; total: number; hasNext: boolean; nextCursor: string | null } | null> => {
+    if (!ticket?.id) return null;
 
-    setLoading(true);
     try {
       const result = await reactory.graphqlQuery(`
-        query GetCommentsByContext($context: String!, $contextId: String!) {
-          getCommentsByContext(context: $context, contextId: $contextId) {
+        query GetCommentsByContext(
+          $context: String!
+          $contextId: String!
+          $paging: PagingRequest
+          $sortOrder: CommentSortOrder
+          $cursor: String
+        ) {
+          getCommentsByContext(
+            context: $context
+            contextId: $contextId
+            paging: $paging
+            sortOrder: $sortOrder
+            cursor: $cursor
+          ) {
             comments {
               id
               text
@@ -168,62 +236,129 @@ const SupportTicketComments = (props: CommentsProps) => {
               pageSize
               total
               hasNext
+              nextCursor
             }
           }
         }
       `, {
         context: 'ReactorySupportTicket',
         contextId: ticket.id,
+        paging: { page: options.page || 1, pageSize: COMMENT_PAGE_SIZE },
+        sortOrder: options.sortOrder,
+        ...(options.cursor ? { cursor: options.cursor } : {}),
       });
 
-      if (result.data?.getCommentsByContext?.comments) {
-        const list = result.data.getCommentsByContext.comments;
-        setComments(list);
-        return list;
-      }
-      return [];
+      const payload = result.data?.getCommentsByContext;
+      if (!payload) return null;
+
+      const list = Array.isArray(payload.comments) ? payload.comments : [];
+      const paging = payload.paging || {};
+      const total = typeof paging.total === 'number' ? paging.total : list.length;
+
+      return {
+        comments: list,
+        total,
+        hasNext: Boolean(paging.hasNext),
+        nextCursor: paging.nextCursor || null,
+      };
     } catch (error) {
       reactory.log('Error fetching comments', { error }, 'error');
       reactory.createNotification('Failed to load comments', {
         title: 'Error',
         options: { body: 'Could not load comments for this ticket' }
       });
-      return [];
-    } finally {
-      setLoading(false);
+      return null;
     }
   }, [ticket?.id, reactory]);
 
-  // Load comments on mount and when ticket changes
-  React.useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
+  /** Replace the list with the first page in the given direction. */
+  const loadFirstPage = React.useCallback(async (sortOrder: CommentSortOrder): Promise<any[]> => {
+    setLoading(true);
+    try {
+      const page = await fetchCommentPage({ page: 1, sortOrder });
+      if (!page) return [];
 
-  // Listen for comment updates
-  React.useEffect(() => {
-    const handleUpdate = async (event: any) => {
-      if (event.ticketId === ticket.id) {
-        await fetchComments();
-        await restoreExpandedStates();
-      }
+      dispatchCommentList({
+        type: 'firstPage',
+        comments: page.comments,
+        paging: page,
+        sortOrder,
+      });
+      publishCommentCount(page.total);
+      return page.comments;
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchCommentPage, publishCommentCount]);
+
+  /** Append the next page in the currently selected direction. */
+  const loadMoreComments = React.useCallback(async () => {
+    const current = commentListRef.current;
+    if (!canLoadMoreComments(current) || loadingMore) return;
+
+    setLoadingMore(true);
+    try {
+      const next = await fetchCommentPage({
+        cursor: current.nextCursor,
+        page: 1,
+        sortOrder: current.sortOrder,
+      });
+      if (!next) return;
+
+      dispatchCommentList({ type: 'nextPage', comments: next.comments, paging: next });
+      publishCommentCount(next.total);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [fetchCommentPage, loadingMore, publishCommentCount]);
+
+  /**
+   * Re-base the loaded window after an external change. Walks the same keyset
+   * chain the reader built, so an appended comment does not collapse the panel
+   * back to page 1 (nor duplicate rows already on screen).
+   */
+  const refreshLoadedWindow = React.useCallback(async () => {
+    const current = commentListRef.current;
+    const target = Math.max(current.comments.length, COMMENT_PAGE_SIZE);
+
+    let collected: any[] = [];
+    let cursor: string | null = null;
+    let last: { comments: any[]; total: number; hasNext: boolean; nextCursor: string | null } = {
+      comments: [],
+      total: current.total,
+      hasNext: false,
+      nextCursor: null,
     };
 
-    // Subscribe to the canonical change event, plus the legacy name for compatibility.
-    reactory.on('core.SupportTicketChanged', handleUpdate);
-    reactory.on('core.SupportTicketUpdated', handleUpdate);
+    for (let pageNumber = 1; pageNumber <= MAX_REFRESH_PAGES; pageNumber += 1) {
+      const page = await fetchCommentPage({ page: pageNumber, cursor, sortOrder: current.sortOrder });
+      if (!page) return;
 
-    return () => {
-      reactory.off('core.SupportTicketChanged', handleUpdate);
-      reactory.off('core.SupportTicketUpdated', handleUpdate);
-    };
-  }, [ticket.id, fetchComments, restoreExpandedStates, reactory]);
+      collected = mergeCommentPages(collected, page.comments);
+      last = page;
+      cursor = page.nextCursor;
 
-  // Fetch nested replies for a comment
-  const fetchReplies = async (commentId: string) => {
+      if (!page.hasNext || !cursor || collected.length >= target) break;
+    }
+
+    dispatchCommentList({
+      type: 'firstPage',
+      comments: collected,
+      paging: last,
+      sortOrder: current.sortOrder,
+    });
+    publishCommentCount(last.total);
+  }, [fetchCommentPage, publishCommentCount]);
+
+  /** Fetch one page of a comment's replies (chronological order). */
+  const fetchReplyPage = React.useCallback(async (commentId: string, options: {
+    cursor?: string | null;
+    page?: number;
+  }): Promise<{ comments: any[]; total: number; hasNext: boolean; nextCursor: string | null } | null> => {
     try {
       const result = await reactory.graphqlQuery(`
-        query GetCommentReplies($commentId: ObjID!) {
-          getCommentReplies(commentId: $commentId) {
+        query GetCommentReplies($commentId: ObjID!, $paging: PagingRequest, $cursor: String) {
+          getCommentReplies(commentId: $commentId, paging: $paging, cursor: $cursor, sortOrder: OLDEST) {
             comments {
               id
               text
@@ -240,61 +375,141 @@ const SupportTicketComments = (props: CommentsProps) => {
               favorites
               removed
               parentId
-              replies {
-                id
-                text
-                when
-                who {
-                  id
-                  firstName
-                  lastName
-                }
-                upvotes
-              }
+            }
+            paging {
+              page
+              pageSize
+              total
+              hasNext
+              nextCursor
             }
           }
         }
       `, {
         commentId,
+        paging: { page: options.page || 1, pageSize: REPLY_PAGE_SIZE },
+        ...(options.cursor ? { cursor: options.cursor } : {}),
       });
 
-      if (result.data?.getCommentReplies?.comments) {
-        // Update the comment in the list with fetched replies
-        setComments(prevComments => {
-          const updateReplies = (commentsList: any[]): any[] => {
-            return commentsList.map(comment => {
-              if (comment.id === commentId) {
-                return {
-                  ...comment,
-                  replies: result.data.getCommentReplies.comments,
-                };
-              }
-              // Recursively update nested replies
-              if (comment.replies && comment.replies.length > 0) {
-                return {
-                  ...comment,
-                  replies: updateReplies(comment.replies),
-                };
-              }
-              return comment;
-            });
-          };
-          return updateReplies(prevComments);
-        });
-      }
+      const payload = result.data?.getCommentReplies;
+      if (!payload) return null;
+
+      const list = Array.isArray(payload.comments) ? payload.comments : [];
+      const paging = payload.paging || {};
+
+      return {
+        comments: list,
+        total: typeof paging.total === 'number' ? paging.total : list.length,
+        hasNext: Boolean(paging.hasNext),
+        nextCursor: paging.nextCursor || null,
+      };
     } catch (error) {
       reactory.log('Error fetching replies', { error, commentId }, 'error');
+      return null;
     }
-  };
+  }, [reactory]);
 
-  // Restore expanded state for all comments in the tree
+  /**
+   * Load replies for one comment, either from the start (`reset`, used when a
+   * thread is expanded) or the next page (`more`). Only the replies of that
+   * comment are touched: the parent page and its order are left intact.
+   */
+  const loadReplies = React.useCallback(async (commentId: string, mode: 'reset' | 'more' = 'reset') => {
+    const current = replyPagingRef.current[commentId];
+    if (mode === 'more' && !canLoadMoreComments(current)) return;
+
+    setLoadingReplies((previous) => {
+      const next = new Set(previous);
+      next.add(commentId);
+      return next;
+    });
+
+    try {
+      const page = await fetchReplyPage(commentId, mode === 'more'
+        ? { cursor: current?.nextCursor, page: 1 }
+        : { page: 1 });
+      if (!page) return;
+
+      dispatchCommentList({
+        type: 'repliesUpdated',
+        commentId,
+        replies: page.comments,
+        append: mode === 'more',
+      });
+
+      setReplyPaging((previous) => ({
+        ...previous,
+        [commentId]: {
+          total: page.total,
+          hasNext: page.hasNext,
+          nextCursor: page.nextCursor,
+          loaded: mode === 'more'
+            ? (previous[commentId]?.loaded || 0) + page.comments.length
+            : page.comments.length,
+        },
+      }));
+    } finally {
+      setLoadingReplies((previous) => {
+        const next = new Set(previous);
+        next.delete(commentId);
+        return next;
+      });
+    }
+  }, [fetchReplyPage]);
+
+  /** Re-base a reply thread to the number of replies the reader had loaded. */
+  const reloadReplyWindow = React.useCallback(async (commentId: string) => {
+    const target = Math.max(replyPagingRef.current[commentId]?.loaded || 0, REPLY_PAGE_SIZE);
+
+    let collected: any[] = [];
+    let cursor: string | null = null;
+    let last: { comments: any[]; total: number; hasNext: boolean; nextCursor: string | null } = {
+      comments: [],
+      total: 0,
+      hasNext: false,
+      nextCursor: null,
+    };
+
+    for (let pageNumber = 1; pageNumber <= MAX_REFRESH_PAGES; pageNumber += 1) {
+      const page = await fetchReplyPage(commentId, { page: pageNumber, cursor });
+      if (!page) return;
+
+      collected = mergeCommentPages(collected, page.comments);
+      last = page;
+      cursor = page.nextCursor;
+
+      if (!page.hasNext || !cursor || collected.length >= target) break;
+    }
+
+    dispatchCommentList({
+      type: 'repliesUpdated',
+      commentId,
+      replies: collected,
+      append: false,
+    });
+    setReplyPaging((previous) => ({
+      ...previous,
+      [commentId]: {
+        total: last.total,
+        hasNext: last.hasNext,
+        nextCursor: last.nextCursor,
+        loaded: collected.length,
+      },
+    }));
+  }, [fetchReplyPage]);
+
+  /**
+   * Restore expanded reply threads after the root window is re-fetched. Each
+   * thread is re-based to the number of replies the reader had loaded, and the
+   * parent list is left untouched.
+   */
   const restoreExpandedStates = React.useCallback(async () => {
-    if (expandedReplies.size === 0) return;
-    
-    // Helper function to find all comment IDs in the tree
+    const expandedIds = Array.from(expandedRepliesRef.current);
+    if (expandedIds.length === 0) return;
+
     const findCommentInTree = (commentsList: any[], targetId: string): any => {
       for (const comment of commentsList) {
-        if (comment.id === targetId) return comment;
+        if (String(comment.id ?? comment._id) === targetId) return comment;
         if (comment.replies && comment.replies.length > 0) {
           const found = findCommentInTree(comment.replies, targetId);
           if (found) return found;
@@ -302,19 +517,47 @@ const SupportTicketComments = (props: CommentsProps) => {
       }
       return null;
     };
-    
-    // Fetch replies for all expanded comments
-    const expandedIds = Array.from(expandedReplies);
-    
+
+    const tree = commentListRef.current.comments;
+
     for (const commentId of expandedIds) {
-      // Check if this comment exists in the current tree
-      const comment = findCommentInTree(comments, commentId);
-      if (comment) {
-        // Fetch its replies to restore the expanded state
-        await fetchReplies(commentId);
-      }
+      if (!findCommentInTree(tree, commentId)) continue;
+      await reloadReplyWindow(commentId);
     }
-  }, [expandedReplies, comments]);
+  }, [reloadReplyWindow]);
+
+  // Load comments on mount and whenever the ticket changes.
+  React.useEffect(() => {
+    dispatchCommentList({ type: 'sortOrderChanged', sortOrder: 'NEWEST' });
+    void loadFirstPage('NEWEST');
+  }, [ticket.id, loadFirstPage]);
+
+  // Listen for comment updates. The loaded window is re-based in place: a new
+  // comment must not drop the pages the reader already pulled in.
+  React.useEffect(() => {
+    const handleUpdate = async (event: any) => {
+      if (event.ticketId === ticket.id) {
+        await refreshLoadedWindow();
+        await restoreExpandedStates();
+      }
+    };
+
+    // Subscribe to the canonical change event, plus the legacy name for compatibility.
+    reactory.on('core.SupportTicketChanged', handleUpdate);
+    reactory.on('core.SupportTicketUpdated', handleUpdate);
+
+    return () => {
+      reactory.off('core.SupportTicketChanged', handleUpdate);
+      reactory.off('core.SupportTicketUpdated', handleUpdate);
+    };
+  }, [ticket.id, refreshLoadedWindow, restoreExpandedStates, reactory]);
+
+  /** Change the sort direction: reset paging, then refetch page 1 server-side. */
+  const handleSortChange = (nextOrder: CommentSortOrder) => {
+    if (nextOrder === commentList.sortOrder) return;
+    dispatchCommentList({ type: 'sortOrderChanged', sortOrder: nextOrder });
+    void loadFirstPage(nextOrder);
+  };
 
   // Toggle reply expansion
   const toggleReplies = async (commentId: string) => {
@@ -328,23 +571,11 @@ const SupportTicketComments = (props: CommentsProps) => {
         return next;
       });
     } else {
-      // Expand and fetch nested replies
+      // Expand and fetch the first page of replies
       setExpandedReplies(prev => new Set(prev).add(commentId));
-      await fetchReplies(commentId);
+      await loadReplies(commentId, 'reset');
     }
   };
-
-  // Sort comments
-  const sortedComments = React.useMemo(() => {
-    if (!comments || comments.length === 0) return [];
-    
-    const sorted = [...comments];
-    return sorted.sort((a, b) => {
-      const dateA = new Date(a.when).getTime();
-      const dateB = new Date(b.when).getTime();
-      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
-    });
-  }, [comments, sortBy]);
 
   const handleSubmitComment = async () => {
     if (!commentText.trim()) {
@@ -388,10 +619,9 @@ const SupportTicketComments = (props: CommentsProps) => {
         setCommentText('');
         setReplyingToId(null);
         setComposerKey((key) => key + 1);
-        // Refresh comments and restore expanded states
-        const afterAdd = await fetchComments();
+        // Re-base the loaded window and restore expanded states
+        await refreshLoadedWindow();
         notifyTicketChanged('commented', { comment: 'added' });
-        if (typeof onCommentCountChange === 'function') onCommentCountChange(afterAdd?.length || 0);
         await restoreExpandedStates();
       }
     } catch (error) {
@@ -449,10 +679,9 @@ const SupportTicketComments = (props: CommentsProps) => {
         setEditingId(null);
         setCommentText('');
         
-        // Refresh comments and restore expanded states
-        const afterEdit = await fetchComments();
+        // Re-base the loaded window and restore expanded states
+        await refreshLoadedWindow();
         notifyTicketChanged('commented', { comment: 'updated' });
-        if (typeof onCommentCountChange === 'function') onCommentCountChange(afterEdit?.length || 0);
         await restoreExpandedStates();
       }
     } catch (error) {
@@ -509,10 +738,9 @@ const SupportTicketComments = (props: CommentsProps) => {
           options: { body: deleteResult.message || 'Comment has been removed' }
         });
         
-        // Refresh comments and restore expanded states
-        const afterDelete = await fetchComments();
+        // Re-base the loaded window and restore expanded states
+        await refreshLoadedWindow();
         notifyTicketChanged('commented', { comment: 'deleted' });
-        if (typeof onCommentCountChange === 'function') onCommentCountChange(afterDelete?.length || 0);
         await restoreExpandedStates();
       } else {
         throw new Error(deleteResult?.message || 'Delete failed');
@@ -549,8 +777,8 @@ const SupportTicketComments = (props: CommentsProps) => {
       });
 
       if (result.data?.upvoteComment) {
-        // Refresh comments and restore expanded states
-        await fetchComments();
+        // Re-base the loaded window and restore expanded states
+        await refreshLoadedWindow();
         notifyTicketChanged('commented', { comment: 'upvoted' });
         await restoreExpandedStates();
       }
@@ -614,10 +842,10 @@ const SupportTicketComments = (props: CommentsProps) => {
         setReplyText('');
         setReplyingToId(null);
         
-        // Refresh comments to get the new reply
-        const afterReply = await fetchComments();
+        // Re-base the loaded window so the new reply is counted, then restore
+        // every previously expanded thread
+        await refreshLoadedWindow();
         notifyTicketChanged('commented', { comment: 'reply added' });
-        if (typeof onCommentCountChange === 'function') onCommentCountChange(afterReply?.length || 0);
         
         // Restore all previously expanded states (this will fetch nested replies)
         await restoreExpandedStates();
@@ -649,10 +877,12 @@ const SupportTicketComments = (props: CommentsProps) => {
   const renderComment = (comment: any, depth: number = 0, isLastInThread: boolean = false): React.ReactNode => {
     if (!comment) return null;
 
-    const hasReplies = comment.replies && comment.replies.length > 0;
     const isExpanded = expandedReplies.has(comment.id);
-    const replyCount = comment.replies?.length || 0;
-    
+    const replyWindow = replyPaging[comment.id];
+    const replies = Array.isArray(comment.replies) ? comment.replies : [];
+    // Prefer the server total: the loaded replies are a page, not the thread.
+    const replyCount = Math.max(replyWindow?.total ?? 0, replies.length);
+    const hasReplies = replyCount > 0;    
     // Calculate indentation based on depth
     const indentLevel = depth * 4; // 4 units per level (32px)
 
@@ -888,8 +1118,26 @@ const SupportTicketComments = (props: CommentsProps) => {
         {/* Nested Replies (Recursive) */}
         {hasReplies && isExpanded && (
           <Box sx={{ position: 'relative' }}>
-            {comment.replies.map((reply: any, index: number) => 
-              renderComment(reply, depth + 1, index === comment.replies.length - 1)
+            {replies.map((reply: any, index: number) => 
+              renderComment(reply, depth + 1, index === replies.length - 1)
+            )}
+
+            {/* Reply paging: a thread longer than one page must stay reachable. */}
+            {replyWindow && canLoadMoreComments(replyWindow) && (
+              <Box sx={{ ml: indentLevel + 4, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {commentShowingLabel(replies.length, replyWindow.total)}
+                </Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => loadReplies(comment.id, 'more')}
+                  disabled={loadingReplies.has(comment.id)}
+                  startIcon={<Icon>expand_more</Icon>}
+                >
+                  {loadingReplies.has(comment.id) ? 'Loading...' : 'Load more replies'}
+                </Button>
+              </Box>
             )}
           </Box>
         )}
@@ -902,21 +1150,21 @@ const SupportTicketComments = (props: CommentsProps) => {
       {/* Header with sort options */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h6">
-          Comments ({sortedComments.length})
+          {commentCountLabel(commentList.total)}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
             size="small"
-            variant={sortBy === 'newest' ? 'contained' : 'outlined'}
-            onClick={() => setSortBy('newest')}
+            variant={commentList.sortOrder === 'NEWEST' ? 'contained' : 'outlined'}
+            onClick={() => handleSortChange('NEWEST')}
             startIcon={<Icon>arrow_downward</Icon>}
           >
             Newest
           </Button>
           <Button
             size="small"
-            variant={sortBy === 'oldest' ? 'contained' : 'outlined'}
-            onClick={() => setSortBy('oldest')}
+            variant={commentList.sortOrder === 'OLDEST' ? 'contained' : 'outlined'}
+            onClick={() => handleSortChange('OLDEST')}
             startIcon={<Icon>arrow_upward</Icon>}
           >
             Oldest
@@ -990,7 +1238,7 @@ const SupportTicketComments = (props: CommentsProps) => {
             Loading comments...
           </Typography>
         </Box>
-      ) : sortedComments.length === 0 ? (
+      ) : commentList.comments.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 6 }}>
           <Icon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}>
             comment
@@ -1004,9 +1252,27 @@ const SupportTicketComments = (props: CommentsProps) => {
         </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          {sortedComments.map((comment, index) => 
-            renderComment(comment, 0, index === sortedComments.length - 1)
+          {commentList.comments.map((comment, index) => 
+            renderComment(comment, 0, index === commentList.comments.length - 1)
           )}
+
+          {/* The panel must never present a partial page as the whole history. */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, py: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              {commentShowingLabel(commentList.comments.length, commentList.total)}
+            </Typography>
+            {canLoadMoreComments(commentList) && (
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={loadMoreComments}
+                disabled={loadingMore}
+                startIcon={<Icon>expand_more</Icon>}
+              >
+                {loadingMore ? 'Loading...' : 'Load more'}
+              </Button>
+            )}
+          </Box>
         </Box>
       )}
 

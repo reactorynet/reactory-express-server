@@ -267,10 +267,23 @@ type CommentContextStat {
 
 """
 Paged comments result
+
+`paging.nextCursor` is an opaque keyset cursor for `(createdAt, _id)`. Pass it
+back as the `cursor` argument to fetch the next page in the same sort order.
+It is only populated while more rows exist, and is null on the last page.
 """
 type PagedComments {
   comments: [Comment]
   paging: PagingResult
+}
+
+"""
+Ordering for paged comment reads. Ties on `createdAt` are broken by `_id` in
+the same direction, so the order is total and stable across pages.
+"""
+enum CommentSortOrder {
+  NEWEST
+  OLDEST
 }
 
 extend type Query {
@@ -288,6 +301,15 @@ extend type Query {
     contextId: String!
     includeRemoved: Boolean
     paging: PagingRequest
+    """
+    Keyset cursor returned as `paging.nextCursor` by the previous page.
+    Takes precedence over `paging.page`; page size is still honoured.
+    """
+    cursor: String
+    """
+    Sort direction, applied server-side. Defaults to NEWEST.
+    """
+    sortOrder: CommentSortOrder
   ): PagedComments
   
   """
@@ -298,6 +320,15 @@ extend type Query {
     commentId: ObjID!
     includeRemoved: Boolean
     paging: PagingRequest
+    """
+    Keyset cursor returned as `paging.nextCursor` by the previous page.
+    Takes precedence over `paging.page`; page size is still honoured.
+    """
+    cursor: String
+    """
+    Sort direction, applied server-side. Defaults to OLDEST (chronological).
+    """
+    sortOrder: CommentSortOrder
   ): PagedComments
 
   """

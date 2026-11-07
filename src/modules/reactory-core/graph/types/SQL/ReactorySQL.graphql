@@ -72,6 +72,12 @@ type PagingResult {
   page: Int
   hasNext: Boolean
   pageSize: Int
+  """
+  Opaque keyset cursor for the page after this one. Populated by resolvers
+  that support cursor paging (currently the Comment queries); null otherwise
+  and null on the final page.
+  """
+  nextCursor: String
 }
 
 type SQLQueryResult {
