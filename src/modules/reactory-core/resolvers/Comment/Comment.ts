@@ -5,6 +5,16 @@ import CommentModel from '../../models/Comment';
 import UserModel from '../../models/User';
 import { ObjectId } from 'mongodb';
 import { InsufficientPermissions } from '@reactory/server-core/exceptions';
+import {
+  CommentSortOrder,
+  DEFAULT_REPLY_PAGE_SIZE,
+  buildCommentCursorFilter,
+  clampCommentPageSize,
+  commentSortSpec,
+  decodeCommentCursor,
+  encodeCommentCursor,
+  resolveCommentSortOrder,
+} from './commentPagination';
 
 const REGEX_SPECIALS = ['.', '*', '+', '?', '^', '$', '{', '}', '(', ')', '|', '[', ']', String.fromCharCode(92)];
 
@@ -315,6 +325,13 @@ class CommentResolver {
   /**
    * Get comments for a specific context (e.g., support ticket)
    * Returns only root-level comments (no parent)
+   *
+   * REACTORY-302016408/20261107/149192668: the result set is paged. Next pages
+   * are fetched with an opaque keyset `cursor` on `(createdAt, _id)` so a
+   * comment appended while the reader is on page 2 cannot duplicate or skip a
+   * row. `paging.page` remains supported for existing offset callers; a
+   * `cursor` takes precedence over `page`. Ordering is always total: `_id`
+   * breaks ties on `createdAt` in the same direction.
    */
   @roles(["USER"], 'args.context')
   @query("getCommentsByContext")
@@ -325,10 +342,19 @@ class CommentResolver {
       contextId: string;
       includeRemoved?: boolean;
       paging?: Reactory.Models.IPagingRequest;
+      cursor?: string;
+      sortOrder?: CommentSortOrder;
     },
     context: Reactory.Server.IReactoryContext
   ) {
     const { context: ctx, contextId, includeRemoved = false, paging } = args;
+
+    // Resolve paging inputs before the try/catch: a malformed cursor must
+    // surface as an error, not as an empty page that reads as "no comments".
+    const sortOrder = resolveCommentSortOrder(args.sortOrder, 'NEWEST');
+    const pageSize = clampCommentPageSize(paging?.pageSize);
+    const page = paging?.page && paging.page > 0 ? Math.floor(paging.page) : 1;
+    const cursor = args.cursor ? decodeCommentCursor(args.cursor) : null;
 
     try {
       // Build context IDs to match either slug or mongo id for static/reactory content
@@ -366,22 +392,24 @@ class CommentResolver {
         query.removed = { $ne: true };
       }
 
-      // Get total count
+      // Total of the whole filtered set, independent of the cursor/page.
       const total = await CommentModel.countDocuments(query);
 
-      // Build pagination
-      const page = paging?.page || 1;
-      const pageSize = paging?.pageSize || 20;
-      const skip = (page - 1) * pageSize;
+      // Keyset filter via $and so its $or cannot collide with the base query.
+      const pageQuery = cursor ? { $and: [query, buildCommentCursorFilter(cursor, sortOrder)] } : query;
+      const skip = cursor ? 0 : (page - 1) * pageSize;
 
-      // Fetch comments
-      const comments = await CommentModel
-        .find(query)
+      // Fetch one row beyond the page: its presence is what proves `hasNext`.
+      const rows = await CommentModel
+        .find(pageQuery)
         .populate('user')
-        .sort({ createdAt: -1 })
+        .sort(commentSortSpec(sortOrder))
         .skip(skip)
-        .limit(pageSize)
+        .limit(pageSize + 1)
         .exec();
+
+      const hasNext = rows.length > pageSize;
+      const comments = hasNext ? rows.slice(0, pageSize) : rows;
 
       return {
         comments,
@@ -389,7 +417,8 @@ class CommentResolver {
           page,
           pageSize,
           total,
-          hasNext: total > (page * pageSize),
+          hasNext,
+          nextCursor: hasNext ? encodeCommentCursor(comments[comments.length - 1]) : null,
         },
       };
     } catch (error) {
@@ -397,10 +426,11 @@ class CommentResolver {
       return {
         comments: [],
         paging: {
-          page: 1,
-          pageSize: 20,
+          page,
+          pageSize,
           total: 0,
           hasNext: false,
+          nextCursor: null,
         },
       };
     }
@@ -409,6 +439,9 @@ class CommentResolver {
   /**
    * Get replies for a specific comment
    * Use for loading nested replies recursively
+   *
+   * Paged on the same keyset contract as `getCommentsByContext`, but ordered
+   * chronologically by default because a reply thread reads top-to-bottom.
    */
   @roles(["USER"], 'args.context')
   @query("getCommentReplies")
@@ -418,10 +451,17 @@ class CommentResolver {
       commentId: string;
       includeRemoved?: boolean;
       paging?: Reactory.Models.IPagingRequest;
+      cursor?: string;
+      sortOrder?: CommentSortOrder;
     },
     context: Reactory.Server.IReactoryContext
   ) {
     const { commentId, includeRemoved = false, paging } = args;
+
+    const sortOrder = resolveCommentSortOrder(args.sortOrder, 'OLDEST');
+    const pageSize = clampCommentPageSize(paging?.pageSize, DEFAULT_REPLY_PAGE_SIZE);
+    const page = paging?.page && paging.page > 0 ? Math.floor(paging.page) : 1;
+    const cursor = args.cursor ? decodeCommentCursor(args.cursor) : null;
 
     try {
       // Build query
@@ -434,22 +474,22 @@ class CommentResolver {
         query.removed = { $ne: true };
       }
 
-      // Get total count
+      // Total of the whole reply thread, independent of the cursor/page.
       const total = await CommentModel.countDocuments(query);
 
-      // Build pagination
-      const page = paging?.page || 1;
-      const pageSize = paging?.pageSize || 50;
-      const skip = (page - 1) * pageSize;
+      const pageQuery = cursor ? { $and: [query, buildCommentCursorFilter(cursor, sortOrder)] } : query;
+      const skip = cursor ? 0 : (page - 1) * pageSize;
 
-      // Fetch replies
-      const comments = await CommentModel
-        .find(query)
+      const rows = await CommentModel
+        .find(pageQuery)
         .populate('user')
-        .sort({ createdAt: 1 }) // Replies in chronological order
+        .sort(commentSortSpec(sortOrder)) // chronological by default
         .skip(skip)
-        .limit(pageSize)
+        .limit(pageSize + 1)
         .exec();
+
+      const hasNext = rows.length > pageSize;
+      const comments = hasNext ? rows.slice(0, pageSize) : rows;
 
       return {
         comments,
@@ -457,7 +497,8 @@ class CommentResolver {
           page,
           pageSize,
           total,
-          hasNext: total > (page * pageSize),
+          hasNext,
+          nextCursor: hasNext ? encodeCommentCursor(comments[comments.length - 1]) : null,
         },
       };
     } catch (error) {
@@ -465,10 +506,11 @@ class CommentResolver {
       return {
         comments: [],
         paging: {
-          page: 1,
-          pageSize: 50,
+          page,
+          pageSize,
           total: 0,
           hasNext: false,
+          nextCursor: null,
         },
       };
     }
