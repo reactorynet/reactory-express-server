@@ -10,6 +10,27 @@ import { validateUserLocale } from '@reactory/server-modules/reactory-core/utils
 import { PagedUserResults, ReactoryUserFilterInput, ReactoryUserQueryFailed, ReactoryUserQueryResult } from './types';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
 
+/**
+ * A 24 character hexadecimal object id.
+ *
+ * Stricter than `ObjectId.isValid`, which also accepts any 12 byte string: the
+ * mutation has to tell "that is not an id" apart from "no such organization",
+ * and a 12 character string is a malformed id, not a missing record.
+ */
+const OBJECT_ID_PATTERN = /^[a-fA-F0-9]{24}$/;
+
+/**
+ * The organization lookup `UserService` implements but the packaged
+ * `IReactoryUserService` interface has never declared (the same gap
+ * `setUserLanguage` works around for `updateUser`). Declaring the extra
+ * signature locally keeps this file type-safe without editing the published
+ * types - the approach `OrganizationResolver` takes for the administration
+ * methods.
+ */
+interface IUserServiceWithOrganizationLookup extends Reactory.Service.IReactoryUserService {
+  findOrganizationById(organizationId: string): Promise<Reactory.Models.IOrganizationDocument>;
+}
+
 //@ts-ignore
 @resolver
 class UserResolver {
@@ -207,6 +228,108 @@ class UserResolver {
     return context
       .getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0')
       .updateUser({ id: userId, il8n: { locale } } as any);
+  }
+
+  /**
+   * Switches the signed-in user's active organization.
+   *
+   * The active organization used to be a browser-local choice
+   * (`localStorage['CoreDefaultOrganization']`), so it diverged across devices
+   * and every other surface kept reporting the old organization. This mutation
+   * makes it server state: it writes `organization` on the caller's own user
+   * document, which is exactly what `ApiStatus.getApiStatus` projects into
+   * `organization` (`resolvers/ApiStatus/ApiStatus.ts`).
+   *
+   * Self-service on purpose: the target is always `context.user` and the
+   * mutation takes no user id, so an ADMIN cannot use it to move somebody
+   * else's session. Authorization to *administer* an organization lives in
+   * `OrganizationService`, not here.
+   *
+   * Membership is the only authority. `user.hasRole(...)` cannot be used for
+   * this check: it falls back to document-level roles, and provisioning unions
+   * membership roles into `user.roles`, so a user carrying ORGANIZATION_ADMIN on
+   * the document would pass for an organization they are not a member of.
+   *
+   * Failures are typed, and deliberately distinct so the client can pick the
+   * right message:
+   *   UNAUTHENTICATED               no signed-in user
+   *   ORGANIZATION_ID_INVALID       not a 24 character object id
+   *   ORGANIZATION_NOT_FOUND        well formed id that names nothing
+   *   ORGANIZATION_MEMBERSHIP_REQUIRED  no enabled membership in this tenant
+   * Each rejection happens before the write, so a refused switch leaves the
+   * previous active organization untouched.
+   */
+  @mutation('setActiveOrganization')
+  async setActiveOrganization(
+    obj: any,
+    { organizationId }: { organizationId: string },
+    context: Reactory.Server.IReactoryContext
+  ): Promise<Reactory.Models.IOrganizationDocument> {
+    const userId = context.user?._id?.toString();
+    if (!userId) {
+      throw new ApiError('A signed-in user is required to change the active organization', {
+        code: 'UNAUTHENTICATED',
+      });
+    }
+
+    if (typeof organizationId !== 'string' || OBJECT_ID_PATTERN.test(organizationId) === false) {
+      throw new ApiError(`"${organizationId}" is not a valid organization id`, {
+        code: 'ORGANIZATION_ID_INVALID',
+        organizationId: organizationId === undefined ? null : organizationId,
+      });
+    }
+
+    const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0') as unknown as IUserServiceWithOrganizationLookup;
+
+    // Resolve the organization first: an id that names nothing is a different
+    // answer from "you are not a member of it", and the client shows a
+    // different message for each.
+    const organization = await userService.findOrganizationById(organizationId);
+    if (!organization) {
+      throw new ApiError(`Organization ${organizationId} not found`, {
+        code: 'ORGANIZATION_NOT_FOUND',
+        organizationId,
+      });
+    }
+
+    const user = await userService.findUserById(userId) as Reactory.Models.IUserDocument;
+    if (!user) {
+      // The session names a user that no longer exists; treat it as signed out
+      // rather than writing to a document we could not load.
+      throw new ApiError('A signed-in user is required to change the active organization', {
+        code: 'UNAUTHENTICATED',
+      });
+    }
+
+    const partnerId = (context.partner as any)?._id ? `${(context.partner as any)._id}` : null;
+    // Compare against the *stored* id: object ids are canonically lower case
+    // hex, so a caller sending the same id in upper case must still match the
+    // membership it holds.
+    const organizationKey = (organization as any)?._id ? `${(organization as any)._id}` : organizationId;
+    const memberships: any[] = Array.isArray(user.memberships) ? (user.memberships as any[]) : [];
+    const isMember = memberships.some((membership) => {
+      if (!membership || !membership.organizationId) return false;
+      if (`${membership.organizationId}` !== organizationKey) return false;
+      // A deactivated membership confers nothing; the account still carries it.
+      if (membership.enabled === false) return false;
+      // A membership held in another tenant does not apply to this session.
+      if (partnerId !== null && `${membership.clientId || ''}` !== partnerId) return false;
+      return true;
+    });
+
+    if (isMember === false) {
+      throw new ApiError(`User ${userId} is not an active member of organization ${organizationId}`, {
+        code: 'ORGANIZATION_MEMBERSHIP_REQUIRED',
+        organizationId,
+      });
+    }
+
+    // Only the caller's own document is ever written; the id came from the
+    // session, never from the arguments.
+    (user as any).organization = (organization as any)._id || organizationId;
+    await user.save();
+
+    return organization;
   }
 
   @mutation('deleteUser')
