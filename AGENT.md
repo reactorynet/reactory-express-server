@@ -106,6 +106,8 @@ bin/jest.sh reactory local --coverage               # Coverage report
 
 # Run CLI commands (bin/reactory is the single CLI entry point; bin/cli.sh is a
 # deprecated shim that forwards to it). Runs from any working directory.
+# Launcher flags (--silent/--verbose) are NOT forwarded to the command; see
+# src/reactory/cli/CLI.md -> "Argument contract: who owns --silent" before adding a CLI.
 bin/reactory <command> [options]
 bin/reactory workflow stats
 bin/reactory workflow start core.MyWorkflow@1.0.0 --input='{"foo":1}'

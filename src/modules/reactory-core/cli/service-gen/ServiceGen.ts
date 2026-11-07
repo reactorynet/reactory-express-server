@@ -4,6 +4,7 @@ import path from "path";
 import { ReadLine } from "readline";
 import colors from "colors/safe";
 import type { IServiceGenerator, ServiceGenerationOptions, ServiceGenerationResult } from "../../services/generators/service/types";
+import { stripLauncherFlags } from "../shared/platformFlags";
 
 // set theme
 colors.setTheme({
@@ -65,6 +66,11 @@ const ServiceGenCli = async (
   context: Reactory.Server.IReactoryContext
 ): Promise<void> => {
   const rl: ReadLine = context.readline as ReadLine;
+
+  // Launcher-owned output flags (`--silent`) are not arguments for this command;
+  // strip them before the emptiness check and the argument loop. See
+  // src/reactory/cli/CLI.md, "Argument contract".
+  kwargs = stripLauncherFlags(kwargs);
 
   // Debug: Log what we received  
   console.log(colors.cyan(`\nServiceGen CLI invoked with ${kwargs.length} arguments`));

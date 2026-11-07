@@ -1,4 +1,5 @@
 import Reactory from '@reactorynet/reactory-core';
+import { stripLauncherFlags } from '../shared/platformFlags';
 
 /**
  * ORG-030: `reactory demographics-seed` / `seed-demographics`.
@@ -13,6 +14,14 @@ import Reactory from '@reactorynet/reactory-core';
  * Usage:
  *   reactory demographics-seed
  *   reactory demographics-seed --organizationIds=<id>[,<id>...]
+ *
+ * REACTORY-302016408: the launcher-owned `--silent` is accepted and ignored. It
+ * describes how much the *launcher* prints, not what this command should do, and the
+ * launcher used to append it to every invocation - which made the plain, documented
+ * command above impossible to run. See src/reactory/cli/CLI.md, "Argument contract".
+ * `--verbose`/`-v` are NOT accepted here: they are launcher flags too, the launcher
+ * consumes them, and every other strict parser in the family rejects them, so this
+ * command does the same rather than owning a private exception.
  *
  * Output is a single JSON object on stdout so the command can be wired into
  * automation:
@@ -39,6 +48,9 @@ Parameters:
   --organizationIds <ids>   Comma separated organization ids. When omitted every
                             non-deleted organization is seeded.
   -h --help                 Show this help.
+
+The launcher-owned --silent flag is accepted and ignored; this command always prints
+its JSON summary on stdout so it stays parseable from automation.
 
 Output (stdout, JSON):
   { organizations, created, existing, deleted, failures }
@@ -85,10 +97,16 @@ const parseIdList = (value: string | null): string[] | undefined => {
  * are rejected rather than ignored: silently seeding *every* organization
  * because a typo swallowed the id filter would be a genuinely destructive
  * surprise.
+ *
+ * The one exception is the launcher-owned `--silent`, which is stripped before
+ * parsing. It is not part of this command's contract, and treating it as a typo is
+ * what broke `reactory demographics-seed` outright. Nothing else is tolerated - the
+ * strictness that catches `--organizationId` is unchanged, and a flag that is
+ * present but has no value (see `--organizationIds`) is an error too.
  */
 export const parseDemographicsSeedArgs = (vargs: string[] = []): IDemographicsSeedCliArgs => {
   const args: IDemographicsSeedCliArgs = { help: false };
-  const kwargs = Array.isArray(vargs) ? vargs : [];
+  const kwargs = stripLauncherFlags(vargs);
 
   for (let index = 0; index < kwargs.length; index += 1) {
     const raw = `${kwargs[index]}`;
@@ -112,9 +130,22 @@ export const parseDemographicsSeedArgs = (vargs: string[] = []): IDemographicsSe
         break;
       case '--organizationIds':
       case '--organization-ids':
-      case '--org':
-        args.organizationIds = parseIdList(value);
+      case '--org': {
+        // A MISSING value must fail, never degrade to "no filter".
+        // `--organizationIds` with nothing after it used to parse to `undefined`,
+        // which seeds EVERY organization - precisely the destructive surprise this
+        // strict parser exists to prevent. Before REACTORY-302016408 it only aborted
+        // by accident, because the launcher's injected `--silent` was rejected as
+        // unknown; removing that injection must not remove the guard with it.
+        const organizationIds = parseIdList(value);
+        if (!organizationIds) {
+          throw new Error(
+            `Argument [${flag}] requires a value. Usage: ${flag} <id>[,<id>...]`,
+          );
+        }
+        args.organizationIds = organizationIds;
         break;
+      }
       default:
         throw new Error(
           `Unknown argument [${flag}]. Supported: --organizationIds <ids>, -h, --help`,

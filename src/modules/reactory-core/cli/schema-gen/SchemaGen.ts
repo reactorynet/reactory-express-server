@@ -5,6 +5,7 @@ import yaml from "js-yaml";
 import { ReadLine } from "readline";
 import colors from "colors/safe";
 import { ENVIRONMENT } from "@reactory/server-core/types/constants";
+import { stripLauncherFlags } from "../shared/platformFlags";
 
 // set theme
 colors.setTheme({
@@ -69,6 +70,11 @@ const SchemaGenCli = async (
   kwargs: string[],
   context: Reactory.Server.IReactoryContext
 ): Promise<void> => {
+  // Launcher-owned output flags (`--silent`) are not arguments for this command;
+  // strip them before the emptiness check. See src/reactory/cli/CLI.md,
+  // "Argument contract".
+  kwargs = stripLauncherFlags(kwargs);
+
   if (kwargs.length === 0) {
     context.error(`No arguments provided`);
     process.exit(1);

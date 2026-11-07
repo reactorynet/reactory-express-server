@@ -14,6 +14,7 @@ import {
   createDemographicsServiceTarget,
   createMongoLegacyDemographicsSource,
 } from '@reactory/server-modules/reactory-core/services/demographics/legacyDemographicsMongoSource';
+import { stripLauncherFlags } from '../shared/platformFlags';
 
 /**
  * ORG-040: `reactory demographics-legacy-migrate`.
@@ -131,7 +132,11 @@ export const parseLegacyDemographicsMigrationArgs = (
     help: false,
   };
 
-  const kwargs = Array.isArray(vargs) ? vargs : [];
+  // Launcher-owned output flags (`--silent`) are not part of this command's
+  // contract; strip them before parsing so an older/newer launcher cannot turn a
+  // valid invocation into "Unknown argument [--silent]". See
+  // src/reactory/cli/CLI.md, "Argument contract".
+  const kwargs = stripLauncherFlags(vargs);
 
   for (let index = 0; index < kwargs.length; index += 1) {
     const raw = `${kwargs[index]}`;
@@ -165,9 +170,21 @@ export const parseLegacyDemographicsMigrationArgs = (
 
       case '--organizationIds':
       case '--organization-ids':
-      case '--org':
-        args.organizationIds = parseIdList(value);
+      case '--org': {
+        // Missing value must fail (REACTORY-302016408 / B2): a value-less
+        // --organizationIds would otherwise become `undefined`, i.e. "every
+        // organization referenced by the legacy data" - far wider than the operator
+        // asked for. Same guard as parseDemographicsSeedArgs so the two demographics
+        // commands cannot drift apart.
+        const organizationIds = parseIdList(value);
+        if (!organizationIds) {
+          throw new Error(
+            `Argument [${flag}] requires a value. Usage: ${flag} <id>[,<id>...]`,
+          );
+        }
+        args.organizationIds = organizationIds;
         break;
+      }
 
       case '--source': {
         const source = (value || 'all').trim().toLowerCase();

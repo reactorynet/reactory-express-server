@@ -43,6 +43,22 @@ boundaries exactly, so JSON payloads survive intact.
 | `--debug` | Attach the Node inspector |
 | `--watch` | Run under nodemon |
 | `--verbose`, `-v` | Verbose logging (quiet by default) |
+| `--silent` | Quiet launcher output — the default; accepted explicitly so scripts can state it |
+
+**Launcher options are never forwarded to the command.** `bin/reactory` consumes them and
+hands the command only the caller's own arguments. Before this was fixed it appended
+`--silent` to every non-verbose invocation, so commands with a strict argument parser
+rejected the documented plain form:
+
+```bash
+$ bin/reactory demographics-seed
+[ArgumentError] Unknown argument [--silent].
+```
+
+If you are writing or reviewing a CLI command, read
+[`src/reactory/cli/CLI.md`](../src/reactory/cli/CLI.md) → "Argument contract: who owns
+`--silent`". Commands strip a forwarded launcher flag with
+`cli/shared/platformFlags.ts`; running quietly never suppresses a command's JSON result.
 
 ## Command aliases
 
