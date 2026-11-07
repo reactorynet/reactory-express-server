@@ -22,7 +22,7 @@ const INTEGRATION_SUITES = [
   },
   {
     path: 'src/modules/reactory-classroom/tests/unit/seed_apex.test.ts',
-    needs: 'a live MongoDB and Postgres - and a DISPOSABLE one: it sets real accounts passwords and deletes markbook rows. It also currently fails against an empty database, so it is still listed in test/quarantine.json.',
+    needs: 'a live MongoDB and Postgres. It seeds a committed fixture into the booktutor tenant, then removes the rows, users and ReactoryClient it created, so it can be re-run; it still writes to whatever database it is pointed at, so do not aim it at production.',
   },
   {
     path: 'src/modules/reactory-core/routes/useraccount/__tests__/acceptance/transactionalEmail.acceptance.test.ts',

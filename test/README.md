@@ -33,13 +33,15 @@ yarn test:integration
 >
 > **They are not safe to point at a database you care about.** They run against whatever
 > `MONGOOSE` and the `REACTORY_POSTGRES_*` variables resolve to – in a dev checkout that
-> is the `.env` database – and `seed_apex.test.ts` is destructive: it resets the passwords
-> of real accounts (including `werner.weber@gmail.com`) to `password123`, and deletes
-> markbook rows. Point them at a disposable database.
+> is the `.env` database – and they create data in it. `seed_apex.test.ts` seeds a committed
+> fixture into the `booktutor` tenant and then removes the rows, users and `ReactoryClient`
+> it created, so it is repeatable; it still writes, so a disposable database is the safe
+> choice.
 >
-> `seed_apex.test.ts` also currently **fails against an empty database** (it inserts a
-> classroom row without the `clientKey` that the tenancy migration makes `NOT NULL`), and
-> is therefore still listed in `test/quarantine.json`. See that entry.
+> `seed_apex.test.ts` passes against empty databases: it reaches every classroom table
+> through the tenant repository, which stamps the `client_key` the table declares `NOT NULL`.
+> It no longer needs the gitignored `apex-demo.json` (the fixture is committed), and it no
+> longer resets account passwords or deletes markbook rows.
 >
 > `GoogleStrategy.spec.ts` boots the whole ReactoryServer and binds port 4000. If that port
 > is taken the server calls `process.exit(-1)`, which — because `test:integration` runs
