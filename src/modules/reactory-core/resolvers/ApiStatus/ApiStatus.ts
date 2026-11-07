@@ -281,6 +281,56 @@ const getActiveTheme = (_: Reactory.Models.IApiStatus, args: { theme: string, mo
   return activeTheme
 }
 
+interface IUserServiceOrganizationLookup {
+  findOrganizationById(organizationId: string): Promise<Reactory.Models.IOrganizationDocument>;
+}
+
+/**
+ * The hex id behind an organization reference.
+ *
+ * `ObjectId#id` is a Buffer of the raw bytes rather than the hex string, so a
+ * template literal over it produced a binary string and the lookup failed as a
+ * cast error. Object ids therefore go through `toHexString`.
+ */
+const toOrganizationId = (reference: any): string | null => {
+  if (!reference) return null;
+  if (typeof reference === 'string') return reference.length > 0 ? reference : null;
+  if (typeof reference.toHexString === 'function') return reference.toHexString();
+  if (reference._id) return toOrganizationId(reference._id);
+  if (typeof reference.id === 'string' && reference.id.length > 0) return reference.id;
+  return null;
+};
+
+/**
+ * Turns the organization *reference* stored on the user document into the
+ * Organization object the GraphQL type describes.
+ *
+ * `getApiStatus` and `loggedInContext` carry `user.organization`, which is a
+ * bare ObjectId reference, while `Organization.id` reads `_id`. Rendered from a
+ * reference the active organization came back as
+ * `{ id: 'organization-no-id', name: null, logo: null }` - or as null - so the
+ * status query never reflected the organization that was actually stored.
+ * Loading the document makes `organization { id name logo logoURL }` usable on
+ * both fields, which is what lets a client re-resolve branding after
+ * `setActiveOrganization`.
+ */
+const resolveOrganizationReference = async (
+  reference: any,
+  context: Reactory.Server.IReactoryContext,
+): Promise<Reactory.Models.IOrganizationDocument> => {
+  if (!reference) return null;
+
+  // Already a document: a populated reference, or an object that carries the
+  // fields the type needs.
+  if (typeof reference === 'object' && (reference._id || reference.name)) return reference;
+
+  const id = toOrganizationId(reference);
+  if (!id) return null;
+
+  const userService = context.getService('core.UserService@1.0.0') as unknown as IUserServiceOrganizationLookup;
+  return userService.findOrganizationById(id);
+};
+
 //@ts-ignore
 @resolver
 class ApiStatus {
@@ -290,6 +340,28 @@ class ApiStatus {
   @property("ApiStatus", "id")
   id(apiStatus: Reactory.Models.IApiStatus) {
     return apiStatus.id || 'anon'
+  }
+
+  /**
+   * The organization the session is active in, as a document.
+   *
+   * `getApiStatus` copies the reference off the user document;
+   * `resolveOrganizationReference` loads it, so a switch made through
+   * `setActiveOrganization` is visible to a subsequent status query.
+   */
+  @property("ApiStatus", "organization")
+  async organization(apiStatus: Reactory.Models.IApiStatus, _args: any, context: Reactory.Server.IReactoryContext) {
+    return resolveOrganizationReference((apiStatus as any)?.organization, context);
+  }
+
+  /**
+   * The same document for the `loggedIn` shortcut, which is the field the PWA
+   * reads (`loggedIn.organization.id`) when it decides which organization to
+   * theme.
+   */
+  @property("LoggedInContext", "organization")
+  async loggedInOrganization(loggedIn: Reactory.Models.IReactoryLoggedInContext, _args: any, context: Reactory.Server.IReactoryContext) {
+    return resolveOrganizationReference((loggedIn as any)?.organization, context);
   }
 
   /**
@@ -462,7 +534,7 @@ class ApiStatus {
       memberships,
       roles: roles,
       businessUnit: null,
-      organization: null,
+      organization: (loggedInUser as any)?.organization || null,
       team: null,
       additional: [],
       altRoles: alt_roles

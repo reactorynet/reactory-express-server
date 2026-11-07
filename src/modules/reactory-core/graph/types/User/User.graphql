@@ -871,12 +871,28 @@ extend type Mutation {
   deleteUser(id: String!): Boolean @auth(roles: ["ADMIN"])
   
   """
-  Assigns a user to an organization explicitly.
+  Switches the signed-in user's active organization.
+
+  Writes `organization` on the caller's own user document, so the active
+  organization is server state that follows the account to any browser or
+  device instead of living in one browser's storage. Only an enabled
+  membership of the target organization in the request's tenant is accepted,
+  and the target is always the caller - the mutation takes no user id, so it
+  cannot be used to move another user's session.
+
+  Failures are distinguishable by `extensions.code`:
+    * UNAUTHENTICATED - no signed-in user;
+    * ORGANIZATION_ID_INVALID - the id is not a 24 character object id;
+    * ORGANIZATION_NOT_FOUND - no such organization;
+    * ORGANIZATION_MEMBERSHIP_REQUIRED - the caller is not a member.
   """
-  setOrganizationForUser(
-    id: String!, 
-    organizationId: String
-  ) : Boolean @auth(roles: ["USER", "ADMIN"])
+  setActiveOrganization(
+    """
+    The organization to make active. Required: the caller must name the
+    organization it wants, there is no implicit default.
+    """
+    organizationId: String!
+  ): Organization @auth(roles: ["USER", "ADMIN"])
   
   """
   Sets the entire list of peers for a user in their active context.
