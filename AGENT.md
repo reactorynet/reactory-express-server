@@ -163,6 +163,72 @@ REACTORY_DATA      # Path to reactory-data
 REACTORY_PLUGINS   # Path to reactory-data/plugins
 ```
 
+## Microsoft Graph: the Azure module and the legacy shim (AZ-19)
+
+The Microsoft Graph surface is being moved to the `reactory-azure` module, which registers
+`azure.*` services under the module FQN `core.ReactoryAzure@1.0.0`. That module is a separate
+repository checked out at `src/modules/reactory-azure`, and it is **inert until the server is
+restarted** - the running process loaded its service list before the module existed.
+
+### What AZ-19 changed in this repository
+
+| File | Change |
+|---|---|
+| `src/modules/reactory-core/resolvers/Emails/UserEmails.ts` | `O365.getEmails(token, filter)` replaced by `context.getService('azure.AzureMailService@1.0.0').listMessages(userId, options)`. The resolver passes the **user id** - never a token - and maps the normalised `IMailPage.items` back onto the nine `Email` keys the old `object-mapper` spec produced. |
+| `src/modules/reactory-core/services/EmailService.ts` | The dead `@reactory/server-modules/reactory-azure/services/graph` import removed; the only `O365` use left is inside a commented-out `case 'microsoft'`. |
+
+**Credentials are resolved by the service, not by the resolver.** `getToken(userId)` in
+`azure.AzureAuthService@1.0.0` reads a vaulted `AzureToken` row first (refreshed 60 s before
+expiry) and, when **no row exists at all**, falls back to the legacy bridge: the User
+document's `getAuthentication('microsoft').props.accessToken`. That token is the one
+`ProfileResolver` refreshes through `isTokenValid`, so a user who signed in before the Azure
+module existed keeps reading mail without re-consenting. The bridge itself never refreshes and
+never caches, and a 401 on a legacy-sourced call raises `LegacyTokenExpired` (not
+`InvalidAuthenticationToken`), which a caller must read as "reconnect", not "revoked".
+A row that exists and is **revoked** is terminal: it never falls through to the legacy token.
+
+### Why `resolvers/User/ProfileResolver.ts` stays on the shim
+
+Its call is `MSGraph.getUserDetails(msauth.props.accessToken, { imageSize, profileImage })`,
+where `msauth` is the **User document's** Microsoft authentication, refreshed by the local
+(non-exported) `isTokenValid` closure. This is a **live sign-in path**: every Microsoft sign-in
+today reads the profile through it. Migrating it onto `azure.AzureAuthService` would point it at
+a token store that is empty until the new OAuth flow has run for that user, which breaks sign-in
+for every existing account - and this environment has no Azure tenant in which the replacement
+could be proven. It is therefore deliberately left on the shim.
+
+A consequence to keep in mind: the shim is deprecated but **load-bearing**. `reactory-core`
+imports it eagerly, so it cannot be deleted, and neither can
+`src/modules/reactory-azure/types.d.ts`.
+
+### The shim retirement gate
+
+`src/modules/reactory-azure/services/graph.ts` and `types.d.ts` may be deleted **only after the
+owner** has:
+
+1. restarted the express server, so `core.ReactoryAzure@1.0.0` is actually registered and its
+   16 services resolve (until then every `azure.*` FQN is unresolvable);
+2. signed in through the Microsoft provider on that running server;
+3. confirmed `refreshProfileData` still returns the same profile - the migrated replacement for
+   `MSGraph.getUserDetails` (including `avatar` when `skipImage` is false) must be shown
+   equivalent on a real sign-in;
+4. exercised `userEmails` for **both** a vaulted user and a user whose token still lives on the
+   User document (the legacy bridge path), and seen the same `Email` rows from both.
+
+Until all four are confirmed, the acceptance invariant is:
+
+```bash
+# exactly one line expected - ProfileResolver.ts:6
+grep -rn --include='*.ts' 'reactory-azure/services/grap[h]' src
+```
+
+`--include='*.ts'` and the bracket expression `grap[h]` are both required: without them the
+search also matches the azure module's own `docs/*.md`, including the text of this criterion.
+
+When the gate opens, delete the shim, delete `types.d.ts`, drop the `getClientWithToken`
+provider method, and remove the header comment in `services/graph.ts` that names its three
+importers - in that order, in one change, with the sign-in walk-through recorded in the PR.
+
 ## Testing
 
 - Tests are **environment-specific**: you must pass a config key and environment key

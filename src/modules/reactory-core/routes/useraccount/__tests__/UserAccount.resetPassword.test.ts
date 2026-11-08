@@ -340,7 +340,13 @@ describe('reset link target', () => {
   });
 
   it('falls back to the legacy resetEmailRoute when nothing else is set', () => {
-    const partner = { resetEmailRoute: '/reset-password', getSetting: () => ({ data: undefined }) };
+    // `data: undefined` needs the annotation: without it the property is typed
+    // `any`, which the repository typecheck ratchet reports as a new error
+    // (TS7018). Type-only; the fixture value is unchanged.
+    const partner = {
+      resetEmailRoute: '/reset-password',
+      getSetting: () => ({ data: undefined as string | undefined }),
+    };
 
     expect(resolvePasswordResetRoute(partner)).toBe('/reset-password');
   });
