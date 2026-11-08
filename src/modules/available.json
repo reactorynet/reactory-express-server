@@ -26,8 +26,7 @@
     "fqn": "core.ReactoryAzure@1.0.0",
     "moduleEntry": "reactory-azure/index.ts",
     "license": "MIT",
-    "git": "git@github.com:reactorynet/reactory-azure.git",
-    "shop": "https://reactory.net/shop/modules/reactory-azure"
+    "git": "git@github.com:reactorynet/reactory-azure.git"
   },
   {
     "id": "reactory-reactor",
