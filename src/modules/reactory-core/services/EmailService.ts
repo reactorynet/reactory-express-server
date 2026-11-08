@@ -6,7 +6,6 @@ import Reactory from '@reactorynet/reactory-core';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 import { User } from '@reactory/server-modules/reactory-core/models'
-import O365 from '@reactory/server-modules/reactory-azure/services/graph';
 import SendGrid from '@sendgrid/mail';
 import path from 'path';
 import * as Microsoft from '@microsoft/microsoft-graph-types'
