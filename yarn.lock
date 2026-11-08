@@ -6858,6 +6858,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@microsoft/microsoft-graph-client@npm:^3.0.7":
+  version: 3.0.7
+  resolution: "@microsoft/microsoft-graph-client@npm:3.0.7"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.5"
+    tslib: "npm:^2.2.0"
+  peerDependenciesMeta:
+    "@azure/identity":
+      optional: true
+    "@azure/msal-browser":
+      optional: true
+    buffer:
+      optional: true
+    stream-browserify:
+      optional: true
+  checksum: 10c0/0e5b3dd469be0606ba34a82464d18a8c919f396adf65756612e9ec0bb47c99c4c3eaf5d65eec953e2c6f5b79e48e003efe914adbfc8b741d098e8e8f7084ea8b
+  languageName: node
+  linkType: hard
+
+"@microsoft/microsoft-graph-types@npm:^2.40.0":
+  version: 2.43.1
+  resolution: "@microsoft/microsoft-graph-types@npm:2.43.1"
+  checksum: 10c0/781134ab9f9b10e22e2fdd56150c8fce2af8615d1b718854ea9799c5011e0f1706cae5cbd1d8bb4520c470e6a1ec128df0ee5a704fa5a6b3b6a5c67cbb672112
+  languageName: node
+  linkType: hard
+
 "@modelcontextprotocol/sdk@npm:1.28.0":
   version: 1.28.0
   resolution: "@modelcontextprotocol/sdk@npm:1.28.0"
@@ -10668,6 +10694,8 @@ __metadata:
     "@graphql-tools/schema": "npm:10.0.4"
     "@graphql-tools/utils": "npm:10.3.1"
     "@grpc/grpc-js": "npm:1.10.3"
+    "@microsoft/microsoft-graph-client": "npm:^3.0.7"
+    "@microsoft/microsoft-graph-types": "npm:^2.40.0"
     "@mui/icons-material": "npm:5.6.1"
     "@mui/lab": "npm:5.0.0-alpha.77"
     "@mui/material": "npm:5.6.1"
