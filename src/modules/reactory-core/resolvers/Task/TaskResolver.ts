@@ -275,21 +275,51 @@ class TaskResolver {
         const conversationService = context.getService<any>('reactor.ReactorConversationService@1.0.0');
         if (conversationService) {
           const isApproved = params.resultData?.approved === true || params.resultData?.decision === 'approved';
+          // The resume/interrupt is fire-and-forget ON PURPOSE: the approver's task
+          // acknowledgement must not block on a long agent turn. What is not
+          // acceptable is an UNHANDLED promise — a rejection here used to escape
+          // the surrounding try/catch (which only sees synchronous throws) and
+          // reach the process-level `unhandledRejection` handler, which exits the
+          // API. Both branches therefore attach a rejection handler, and the
+          // success log only fires once the call has actually resolved.
           if (isApproved) {
             const newMax = params.resultData?.newMaxIterations || task.componentProps?.newMaxIterations || (task.componentProps?.maxIterations ? task.componentProps.maxIterations + 10 : undefined);
-            void conversationService.continueToolExecution(
-              task.componentProps.chatSessionId,
-              task.componentProps.personaId,
-              newMax
-            );
-            context.log(`Resumed chat session ${task.componentProps.chatSessionId} after task approval`, { newMax }, 'info', 'TaskResolver');
+            void conversationService
+              .continueToolExecution(
+                task.componentProps.chatSessionId,
+                task.componentProps.personaId,
+                newMax
+              )
+              .then(() => {
+                // Only now is the resume known to have happened.
+                context.log(`Resumed chat session ${task.componentProps.chatSessionId} after task approval`, { newMax }, 'info', 'TaskResolver');
+              })
+              .catch((err: any) => {
+                context.log(
+                  `Could not resume chat session ${task.componentProps.chatSessionId} after approval: ${err?.message ?? String(err)}`,
+                  { error: err },
+                  'error',
+                  'TaskResolver'
+                );
+              });
           } else {
-            void conversationService.interruptToolExecution(
-              task.componentProps.chatSessionId,
-              task.componentProps.personaId,
-              params.resultData?.reason || 'Declined in task queue'
-            );
-            context.log(`Interrupted chat session ${task.componentProps.chatSessionId} after task decline`, {}, 'info', 'TaskResolver');
+            void conversationService
+              .interruptToolExecution(
+                task.componentProps.chatSessionId,
+                task.componentProps.personaId,
+                params.resultData?.reason || 'Declined in task queue'
+              )
+              .then(() => {
+                context.log(`Interrupted chat session ${task.componentProps.chatSessionId} after task decline`, {}, 'info', 'TaskResolver');
+              })
+              .catch((err: any) => {
+                context.log(
+                  `Could not interrupt chat session ${task.componentProps.chatSessionId} after decline: ${err?.message ?? String(err)}`,
+                  { error: err },
+                  'error',
+                  'TaskResolver'
+                );
+              });
           }
         }
       } catch (chatResumeErr: any) {
