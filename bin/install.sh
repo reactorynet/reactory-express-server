@@ -14,7 +14,8 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 readonly REACTORY_NODE_VERSION="20.19.4"
 readonly REACTORY_NVM_VERSION="0.39.7"
-readonly REACTORY_GITHUB_ORG="reactorynet"
+# Override with REACTORY_GITHUB_ORG=Zepz-Engineering to install from the Zepz mirror.
+readonly REACTORY_GITHUB_ORG="${REACTORY_GITHUB_ORG:-reactorynet}"
 
 RED=$'\033[0;31m'
 GREEN=$'\033[0;32m'
@@ -873,6 +874,10 @@ for m in enabled:
       warn "No git URL for module '$key' — skipping clone"
       continue
     fi
+
+    # The catalogue pins github.com/reactorynet; honour REACTORY_GITHUB_ORG so the
+    # same catalogue installs from a mirror org (e.g. Zepz-Engineering).
+    git_url="$(sed -E "s#(github\.com[:/])reactorynet/#\1${REACTORY_GITHUB_ORG}/#" <<< "$git_url")"
 
     # Convert SSH <-> HTTPS based on global USE_SSH preference
     local clone_url="$git_url"

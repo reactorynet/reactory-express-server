@@ -334,6 +334,12 @@ else:
     return 1
   fi
 
+  # The catalogues pin github.com/reactorynet. REACTORY_GITHUB_ORG (default
+  # reactorynet) redirects every clone to a mirror org such as Zepz-Engineering
+  # so the same available.json works from either organisation.
+  local github_org="${REACTORY_GITHUB_ORG:-reactorynet}"
+  git_url="$(sed -E "s#(github\.com[:/])reactorynet/#\1${github_org}/#" <<< "$git_url")"
+
   # Convert SSH <-> HTTPS if requested
   if [[ "$use_ssh" == "n" && "$git_url" == git@* ]]; then
     git_url="${git_url/git@github.com:/https:\/\/github.com\/}"
@@ -595,6 +601,7 @@ Environment:
   REACTORY_SERVER      Path to the express server root
   REACTORY_DATA        Path to the reactory-data directory
   REACTORY_PLUGINS     Path to the plugins directory (default: \$REACTORY_DATA/plugins)
+  REACTORY_GITHUB_ORG  GitHub org to clone from (default: reactorynet; e.g. Zepz-Engineering)
 EOF
         exit 0
         ;;
