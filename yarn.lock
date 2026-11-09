@@ -4807,19 +4807,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@flat/lame@npm:1.2.7":
-  version: 1.2.7
-  resolution: "@flat/lame@npm:1.2.7"
-  dependencies:
-    bindings: "npm:^1.5.0"
-    debug: "npm:^4.3.4"
-    nan: "npm:^2.16.0"
-    node-gyp: "npm:latest"
-    readable-stream: "npm:^1.0.34"
-  checksum: 10c0/9d86d3410d0580e5585b6bc962c5e715f66ef78c17fcd3e0c7c14159d85b33ca053b5293d1c55fc7d056875ceebbd9a7fbeaea88bc5cc948edc571e7837ca53c
-  languageName: node
-  linkType: hard
-
 "@google/genai@npm:1.24.0":
   version: 1.24.0
   resolution: "@google/genai@npm:1.24.0"
@@ -10680,7 +10667,6 @@ __metadata:
     "@elastic/elasticsearch": "npm:^8.19.2"
     "@emotion/react": "npm:11.8.1"
     "@emotion/styled": "npm:11.8.1"
-    "@flat/lame": "npm:1.2.7"
     "@graphql-codegen/add": "npm:3.1.1"
     "@graphql-codegen/cli": "npm:2.13.3"
     "@graphql-codegen/graphql-modules-preset": "npm:2.5.1"
