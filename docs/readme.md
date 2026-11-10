@@ -32,6 +32,15 @@ The installer clones from `github.com/reactorynet` by default. To install from a
 REACTORY_GITHUB_ORG=<your-org> bash <(curl -fsSL https://raw.githubusercontent.com/<your-org>/reactory-express-server/master/bin/install.sh)
 ```
 
+The value must be a plain GitHub organisation name — letters, digits, `.`, `_` or `-`. Anything else (notably `#`, `&`, `\` or `/`) is rejected with an error rather than silently producing a malformed clone URL.
+
+> **Mirror repositories required.** Submodule URLs are relative (`../<repo>.git`), so they resolve against whichever organisation the superproject was cloned from. A mirror organisation must therefore carry the submodule repos too:
+>
+> - `reactory-express-server-devops` (for `config/reactory`)
+> - `reactory-client-core-pwa-plugin` and `reactory-communicator-pwa-plugin` (for the PWA client)
+>
+> If one is missing, the installer falls back to a plain clone without submodules and prints the `git submodule update` command to run once the repo is reachable, rather than aborting the whole install.
+
 ### Run the installer locally
 If you have already cloned the server repository:
 ```bash
