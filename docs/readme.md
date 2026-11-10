@@ -27,6 +27,11 @@ The fastest way to get a fully configured Reactory environment is to use the int
 bash <(curl -fsSL https://raw.githubusercontent.com/reactorynet/reactory-express-server/master/bin/install.sh)
 ```
 
+The installer clones from `github.com/reactorynet` by default. To install from a mirror of the platform in another GitHub organisation, set `REACTORY_GITHUB_ORG` first (the same variable is honoured by `bin/install-modules.sh`):
+```bash
+REACTORY_GITHUB_ORG=<your-org> bash <(curl -fsSL https://raw.githubusercontent.com/<your-org>/reactory-express-server/master/bin/install.sh)
+```
+
 ### Run the installer locally
 If you have already cloned the server repository:
 ```bash
