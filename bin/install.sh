@@ -34,6 +34,19 @@ warn()    { printf "${YELLOW}[WARN]${NC}    %s\n" "$*"; }
 error()   { printf "${RED}[ERROR]${NC}   %s\n" "$*"; }
 banner()  { printf "\n${CYAN}${BOLD}── %s ──${NC}\n\n" "$*"; }
 
+# REACTORY_GITHUB_ORG is interpolated straight into git URLs and, through
+# install-modules.sh, into a sed replacement that uses '#' as its delimiter.
+# Reject anything that could corrupt either: a value containing '#', '&', '\'
+# or '/' would silently produce a wrong clone URL instead of a clear failure.
+validate_github_org() {
+  if [[ ! "$REACTORY_GITHUB_ORG" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+    error "Invalid REACTORY_GITHUB_ORG: '${REACTORY_GITHUB_ORG}'"
+    error "Expected a GitHub organisation name (letters, digits, '.', '_' or '-'),"
+    error "for example reactorynet or Zepz-Engineering."
+    exit 1
+  fi
+}
+
 confirm() {
   local prompt="${1:-Continue?}"
   local default="${2:-y}"
@@ -414,7 +427,20 @@ setup_repos() {
     local url
     [[ "$USE_SSH" == "y" ]] && url="$ssh_url" || url="$https_url"
     info "Cloning $name..."
-    git clone --recurse-submodules "$url" "$dir"
+    # Submodule URLs are relative (../<repo>.git), so they resolve against
+    # whichever organisation `origin` points at. A mirror organisation that
+    # does not carry every submodule repository therefore fails the recursive
+    # fetch, and under `set -e` that would abort the whole installer — in
+    # exactly the mirror scenario the relative URLs exist to enable. Clone the
+    # superproject on its own, then treat the submodule step as best-effort.
+    git clone "$url" "$dir"
+    if [[ -f "$dir/.gitmodules" ]]; then
+      info "Initialising submodules for $name..."
+      if ! git -C "$dir" submodule update --init --recursive; then
+        warn "Some submodules for $name could not be fetched — continuing."
+        warn "Once they are reachable run: cd \"$dir\" && git submodule update --init --recursive"
+      fi
+    fi
     success "$name cloned"
   }
 
@@ -1078,6 +1104,7 @@ print_summary() {
 # Main
 # ---------------------------------------------------------------------------
 main() {
+  validate_github_org
   detect_os
 
   if [[ "$OS" == "unknown" ]]; then
