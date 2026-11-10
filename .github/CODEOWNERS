@@ -1,1 +1,4 @@
+# Code owners: a review from one of these is required on every pull request
+# into the default branch (branch protection: require_code_owner_reviews).
+# Managed by reactory-workspace `seed` (create-only: edit freely after that).
 * @wweber @zepzwweber
