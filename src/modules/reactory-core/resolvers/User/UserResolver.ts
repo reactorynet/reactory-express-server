@@ -31,6 +31,25 @@ interface IUserServiceWithOrganizationLookup extends Reactory.Service.IReactoryU
   findOrganizationById(organizationId: string): Promise<Reactory.Models.IOrganizationDocument>;
 }
 
+/**
+ * Whether the caller may read a user record's credential-bearing fields
+ * (`sessionInfo`, `authentications`).
+ *
+ * The account owner may always read their own; ADMIN and SUPPORT_ADMIN are the
+ * documented escalation path for account support. Everybody else - including a
+ * plain USER reading a colleague, a ticket author or a comment author - gets
+ * `null` rather than an error, so one refused field cannot break a shared query.
+ */
+const canReadUserCredentials = (usr: any, context?: Reactory.Server.IReactoryContext): boolean => {
+  const targetId = usr?._id?.toString?.() ?? (usr?._id !== undefined && usr?._id !== null ? String(usr._id) : String(usr?.id ?? ''));
+  const callerId = context?.user?._id?.toString?.()
+    ?? (context?.user?._id !== undefined && context?.user?._id !== null ? String(context.user._id) : '');
+
+  if (targetId.length > 0 && callerId.length > 0 && targetId === callerId) return true;
+
+  return context?.hasRole?.('ADMIN') === true || context?.hasRole?.('SUPPORT_ADMIN') === true;
+};
+
 //@ts-ignore
 @resolver
 class UserResolver {
@@ -109,6 +128,43 @@ class UserResolver {
   @property('User', 'linked_agents')
   linked_agents(user: { linked_agents: any }) {
     return user.linked_agents || [];
+  }
+
+  /**
+   * Session history, owner/admin only.
+   *
+   * `sessionInfo[].jwtPayload.refresh` is a LIVE refresh token: it can mint new
+   * access tokens for that session. Exposing the field to every caller that can
+   * reach a User (support ticket authors, comment authors, team members) turned
+   * any of those reads into a credential dump.
+   *
+   * Even for an allowed caller the refresh token is stripped: the session list
+   * is device/session metadata, and nothing in the product reads the token from
+   * GraphQL (the client never refreshes through it - the server does).
+   */
+  @property('User', 'sessionInfo')
+  sessionInfo(usr: any, args: any, context: Reactory.Server.IReactoryContext) {
+    if (!canReadUserCredentials(usr, context)) return null;
+
+    const sessions: any[] = Array.isArray(usr?.sessionInfo) ? usr.sessionInfo : [];
+    return sessions.map((session) => {
+      const plain: any = typeof session?.toObject === 'function' ? session.toObject() : { ...session };
+      const { refresh, jwtPayload, jwtPayloadJson, ...metadata } = plain;
+      return metadata;
+    });
+  }
+
+  /**
+   * Linked authentication providers, owner/admin only.
+   *
+   * `props` already projects down to non-secret bookkeeping fields (see
+   * `UserAuthentication.props`), but the collection itself still names every
+   * provider the account can be used with, so it is not public.
+   */
+  @property('User', 'authentications')
+  authentications(usr: any, args: any, context: Reactory.Server.IReactoryContext) {
+    if (!canReadUserCredentials(usr, context)) return null;
+    return Array.isArray(usr?.authentications) ? usr.authentications : [];
   }
   
 

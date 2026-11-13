@@ -5,6 +5,7 @@ import CommentModel from '../../models/Comment';
 import UserModel from '../../models/User';
 import { ObjectId } from 'mongodb';
 import { InsufficientPermissions } from '@reactory/server-core/exceptions';
+import { USER_REFERENCE_SELECT } from '@reactory/server-modules/reactory-core/utils/userReferenceSelect';
 import {
   CommentSortOrder,
   DEFAULT_REPLY_PAGE_SIZE,
@@ -71,7 +72,7 @@ class CommentResolver {
     }
 
     try {
-      const user = await UserModel.findById(obj.user).exec();
+      const user = await UserModel.findById(obj.user).select(USER_REFERENCE_SELECT).exec();
       return user;
     } catch (error) {
       context.log('Error populating comment user', { error }, 'error');
@@ -109,7 +110,7 @@ class CommentResolver {
     }
 
     try {
-      const users = await UserModel.find({ _id: { $in: obj.upvoted } }).exec();
+      const users = await UserModel.find({ _id: { $in: obj.upvoted } }).select(USER_REFERENCE_SELECT).exec();
       return users;
     } catch (error) {
       context.log('Error populating upvoted users', { error }, 'error');
@@ -148,7 +149,7 @@ class CommentResolver {
     }
 
     try {
-      const users = await UserModel.find({ _id: { $in: obj.downvoted } }).exec();
+      const users = await UserModel.find({ _id: { $in: obj.downvoted } }).select(USER_REFERENCE_SELECT).exec();
       return users;
     } catch (error) {
       context.log('Error populating downvoted users', { error }, 'error');
@@ -186,7 +187,7 @@ class CommentResolver {
     }
 
     try {
-      const users = await UserModel.find({ _id: { $in: obj.favorite } }).exec();
+      const users = await UserModel.find({ _id: { $in: obj.favorite } }).select(USER_REFERENCE_SELECT).exec();
       return users;
     } catch (error) {
       context.log('Error populating favorited users', { error }, 'error');
@@ -228,7 +229,7 @@ class CommentResolver {
       // Fetch parent comment
       const parentComment = await CommentModel
         .findById(obj.parent)
-        .populate('user')
+        .populate({ path: 'user', select: USER_REFERENCE_SELECT })
         .exec();
 
       return parentComment;
@@ -256,7 +257,7 @@ class CommentResolver {
       // Fetch replies where parent === this comment's id
       const replies = await CommentModel
         .find({ parent: obj._id })
-        .populate('user')
+        .populate({ path: 'user', select: USER_REFERENCE_SELECT })
         .sort({ createdAt: 1 })
         .exec();
 
@@ -298,7 +299,7 @@ class CommentResolver {
     try {
       const comment = await CommentModel
         .findById(commentId)
-        .populate('user')
+        .populate({ path: 'user', select: USER_REFERENCE_SELECT })
         .exec();
 
       if (!comment) {
@@ -402,7 +403,7 @@ class CommentResolver {
       // Fetch one row beyond the page: its presence is what proves `hasNext`.
       const rows = await CommentModel
         .find(pageQuery)
-        .populate('user')
+        .populate({ path: 'user', select: USER_REFERENCE_SELECT })
         .sort(commentSortSpec(sortOrder))
         .skip(skip)
         .limit(pageSize + 1)
@@ -482,7 +483,7 @@ class CommentResolver {
 
       const rows = await CommentModel
         .find(pageQuery)
-        .populate('user')
+        .populate({ path: 'user', select: USER_REFERENCE_SELECT })
         .sort(commentSortSpec(sortOrder)) // chronological by default
         .skip(skip)
         .limit(pageSize + 1)
@@ -582,7 +583,7 @@ class CommentResolver {
       });
     }
 
-    await comment.populate('user');
+    await comment.populate({ path: 'user', select: USER_REFERENCE_SELECT });
 
     if (context.emit) {
       context.emit('core.CommentAdded', {
@@ -638,7 +639,7 @@ class CommentResolver {
     comment.updatedBy = context.user._id as any;
 
     await comment.save();
-    await comment.populate('user');
+    await comment.populate({ path: 'user', select: USER_REFERENCE_SELECT });
 
     context.log('Comment edited', { commentId, userId: context.user._id }, 'info');
 
@@ -772,7 +773,7 @@ class CommentResolver {
 
     comment.updatedAt = new Date();
     await comment.save();
-    await comment.populate('user');
+    await comment.populate({ path: 'user', select: USER_REFERENCE_SELECT });
 
     return comment;
   }
@@ -821,7 +822,7 @@ class CommentResolver {
 
     comment.updatedAt = new Date();
     await comment.save();
-    await comment.populate('user');
+    await comment.populate({ path: 'user', select: USER_REFERENCE_SELECT });
 
     return comment;
   }
@@ -863,7 +864,7 @@ class CommentResolver {
 
     comment.updatedAt = new Date();
     await comment.save();
-    await comment.populate('user');
+    await comment.populate({ path: 'user', select: USER_REFERENCE_SELECT });
 
     return comment;
   }
@@ -922,7 +923,7 @@ class CommentResolver {
     comment.updatedAt = new Date();
 
     await comment.save();
-    await comment.populate('user');
+    await comment.populate({ path: 'user', select: USER_REFERENCE_SELECT });
 
     // Log the flag for moderation review
     context.log('Comment flagged', {
@@ -988,7 +989,7 @@ class CommentResolver {
 
       const comments = await CommentModel
         .find(query)
-        .populate('user')
+        .populate({ path: 'user', select: USER_REFERENCE_SELECT })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(pageSize)

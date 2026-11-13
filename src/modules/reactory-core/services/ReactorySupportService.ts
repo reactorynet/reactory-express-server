@@ -10,6 +10,7 @@ import { InsufficientPermissions } from '@reactory/server-core/exceptions';
 import { ObjectId } from 'mongodb';
 import { service } from '@reactory/server-core/application/decorators';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
+import { USER_REFERENCE_SELECT } from '@reactory/server-modules/reactory-core/utils/userReferenceSelect';
 
 /**
  * Support tickets are persisted with snake_case enumerations (e.g. `in_progress`)
@@ -45,11 +46,17 @@ const canonicalEnum = (value: string): string =>
  * Declared once and reused by every single-ticket read so the two lookups can
  * never drift apart. List/paged reads deliberately do NOT use this list: the
  * comment bodies would bloat every grid response (see `pagedRequest`).
+ *
+ * Every user reference carries `USER_REFERENCE_SELECT`. A bare
+ * `.populate('createdBy')` loads the whole User document - password hash, salt,
+ * live refresh token, live OAuth token - and `getSupportTicket` serialises the
+ * ticket verbatim, so the projection is what keeps credentials out of the
+ * response. Never remove it.
  */
 const SUPPORT_TICKET_READ_POPULATE: any[] = [
-  { path: 'createdBy' },
-  { path: 'assignedTo' },
-  { path: 'updatedBy' },
+  { path: 'createdBy', select: USER_REFERENCE_SELECT },
+  { path: 'assignedTo', select: USER_REFERENCE_SELECT },
+  { path: 'updatedBy', select: USER_REFERENCE_SELECT },
   { path: 'documents' },
   {
     path: 'comments',
@@ -57,7 +64,7 @@ const SUPPORT_TICKET_READ_POPULATE: any[] = [
     options: { sort: { createdAt: 1 } },
     // Without this the ticket carries comment documents whose `user` is still
     // an ObjectId, so a reader can only print an id instead of a name.
-    populate: { path: 'user' },
+    populate: { path: 'user', select: USER_REFERENCE_SELECT },
   },
 ];
 
@@ -209,7 +216,11 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     if (updates.tags) ticket.tags = updates.tags;
 
     ticket.updatedDate = new Date();
-    ticket.updatedBy = this.context.user as any;
+    // Store the reference (ObjectId), never the `context.user` document: the
+    // JWT strategy puts a complete User document on the context, and assigning
+    // it here embeds the caller's password hash and tokens in the ticket - a
+    // leak that happens at insert time, with no populate involved.
+    ticket.updatedBy = this.context.user._id as any;
 
      // Add comment if provided
     if (updates.comment) {
@@ -218,7 +229,11 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
      }
 
     await ticket.save();
-    await ticket.populate('createdBy assignedTo comments');
+    await ticket.populate([
+      { path: 'createdBy', select: USER_REFERENCE_SELECT },
+      { path: 'assignedTo', select: USER_REFERENCE_SELECT },
+      { path: 'comments', populate: { path: 'user', select: USER_REFERENCE_SELECT } },
+    ]);
 
     return ticket;
    }
@@ -257,7 +272,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     ticket.updatedDate = new Date();
     await ticket.save();
 
-    await comment.populate('user');
+    await comment.populate({ path: 'user', select: USER_REFERENCE_SELECT });
 
     return comment;
    }
@@ -392,8 +407,8 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       try {
         result.paging.total = await query.count();
         result.tickets = await ReactorySupportTicketModel.find(params)
-           .populate('createdBy')
-           .populate('assignedTo')
+           .populate({ path: 'createdBy', select: USER_REFERENCE_SELECT })
+           .populate({ path: 'assignedTo', select: USER_REFERENCE_SELECT })
            .skip((pagingRequest.page - 1) * pagingRequest.pageSize)
            .limit(pagingRequest.pageSize)
            .exec();
@@ -446,8 +461,12 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       // is used so the hash input is stable (hashing a raw ObjectId previously
       // produced 0, yielding the meaningless "REACTORY-0" prefix).
       reference: `${this.context.partner.key}-${HashUnsigned(String(this.context.user._id))}/${moment().format('YYYYMMDD')}/${HashUnsigned(request)}`.toUpperCase(),
-      createdBy: this.context.user,
-      updatedBy: this.context.user,
+      // Persist the caller's id, not the caller's document. `context.user` is a
+      // full User document (JWTStrategy loads it), so assigning it here wrote
+      // the password hash, salt, refresh token and OAuth token into the ticket
+      // the moment it was created - before any populate could be blamed.
+      createdBy: this.context.user._id,
+      updatedBy: this.context.user._id,
       comments: [],
       documents: []
      });
@@ -568,7 +587,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       removed: { $ne: true },
     })
       .sort({ createdAt: 1, _id: 1 })
-      .populate({ path: 'user' })
+      .populate({ path: 'user', select: USER_REFERENCE_SELECT })
       .exec() as any[];
 
     // Resolve every attachment id referenced by any comment in one query.
