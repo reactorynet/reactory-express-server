@@ -31,17 +31,61 @@ const LOCK_TTL_MS: number =
 const CronParser = require('cron-parser');
 
 /**
+ * Matches a fixed UTC offset written as an offset instead of an IANA zone name.
+ * Covers every form ICU 78 accepts and node-cron cannot distinguish from a real zone:
+ * `+02`, `-05`, `+02:00`, `+05:30`, `+0200`, `+0530`, `-00:00`, `UTC+2`, `GMT+02:00`.
+ *
+ * The hour component is optional after `\d{2}` — `'-02'` is a legal ISO 8601 offset
+ * and `Intl.DateTimeFormat` now accepts it, so a four-digit-only pattern would let
+ * `'+02'` through while still rejecting the equivalent `'+02:00'`.
+ *
+ * Deliberately does NOT match `Etc/GMT+2` or any other IANA zone name: the second
+ * alternative is anchored on `UTC`/`GMT` at the start of the string, and the first
+ * is anchored on a leading sign. Checked against all 418 zones returned by
+ * `Intl.supportedValuesOf('timeZone')` — zero false positives.
+ */
+const FIXED_OFFSET_TIMEZONE = /^(?:[+-]\d{2}(?::?\d{2})?|(?:UTC|GMT)\s*[+-].*)$/i;
+
+/**
  * Validates a timezone against the runtime's IANA database.
  *
- * `node-cron` resolves the timezone through `Intl.DateTimeFormat`, which accepts
- * only IANA zone names such as `Africa/Johannesburg` or `Europe/Berlin`. A
- * human-friendly offset such as `UTC+2` or `GMT+02:00` throws a `RangeError`
- * inside `cron.schedule`, which previously aborted `startSchedule` — leaving the
- * schedule persisted and displayed as ENABLED but with no cron task, so it
- * silently never ran. Validating up front turns that into a clear error at the
- * point the operator sets the schedule.
+ * The product contract — established by #69 (1be7794b) and asserted by
+ * `Scheduler.test.ts › timezone validation` — is that schedule timezones are IANA
+ * zone names only. The UI stores the timezone as free text, so offsets have to be
+ * rejected at the point the operator sets the schedule, with a message that names
+ * an IANA equivalent.
+ *
+ * On Node.js 20 the `Intl.DateTimeFormat` probe enforced that contract for free:
+ * ICU 77 rejected every fixed offset, so `'UTC+2'`, `'+02:00'` and `'+02'` all threw
+ * a `RangeError` and `isValidTimezone` returned false.
+ *
+ * ICU 78 — bundled with Node.js 22 (V8 12.4) and Node.js 24 (V8 13.6) — accepts
+ * fixed-offset time zones, so the probe alone no longer enforces it: `'+02:00'`,
+ * `'+02'`, `'-0500'` and `'+05:30'` now come back valid on 22/24. (`'UTC+2'` and
+ * `'GMT+02:00'` are still rejected by ICU, and `node-cron` 4.6.0 still throws
+ * `RangeError: Invalid time zone specified` for those two.)
+ *
+ * The consequence on the new runtimes is therefore contract drift, not a dead
+ * schedule: the forms ICU 78 newly accepts are also accepted by node-cron 4.6.0,
+ * so such a schedule would actually run — it just silently widens the accepted
+ * input beyond what the API and UI promise, and behaves differently depending on
+ * which Node version the pod happens to be running. Rejecting offsets by pattern
+ * keeps the contract, and the error the operator sees, identical on 20/22/24.
+ *
+ * Note the historical, still-valid reason for validating up front at all: a
+ * non-IANA zone that reaches `cron.schedule` throws deep inside `startSchedule`,
+ * which used to leave the schedule persisted and displayed as ENABLED with no cron
+ * task while never executing. That path is now closed for offsets by this guard.
  */
 export function isValidTimezone(timeZone: string): boolean {
+  if (typeof timeZone !== 'string' || timeZone.trim().length === 0) {
+    return false;
+  }
+
+  if (FIXED_OFFSET_TIMEZONE.test(timeZone.trim())) {
+    return false;
+  }
+
   try {
     new Intl.DateTimeFormat('en-US', { timeZone });
     return true;
@@ -382,9 +426,11 @@ export class WorkflowScheduler {
       throw new Error(`Invalid cron expression: ${config.schedule.cron}`);
     }
 
-    // Reject a non-IANA timezone here rather than letting cron.schedule throw
-    // inside startSchedule, which would leave the schedule persisted and showing
-    // as ENABLED while never actually running.
+    // Reject a non-IANA timezone at the point the operator sets it, with a message
+    // that names an IANA equivalent. Offsets ICU 78 newly accepts would otherwise be
+    // persisted as legal; forms node-cron still cannot resolve ('UTC+2',
+    // 'GMT+02:00') would otherwise throw inside startSchedule and leave the schedule
+    // persisted and displayed as ENABLED with no cron task.
     if (config.schedule.timezone && !isValidTimezone(config.schedule.timezone)) {
       throw new Error(invalidTimezoneMessage(config.schedule.timezone));
     }
