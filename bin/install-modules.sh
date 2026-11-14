@@ -53,7 +53,7 @@ NC=$'\033[0m'
 info()    { printf "${BLUE}[INFO]${NC}    %s\n" "$*"; }
 success() { printf "${GREEN}[OK]${NC}      %s\n" "$*"; }
 warn()    { printf "${YELLOW}[WARN]${NC}    %s\n" "$*"; }
-error()   { printf "${RED}[ERROR]${NC}   %s\n" "$*"; }
+error()   { printf "${RED}[ERROR]${NC}   %s\n" "$*" >&2; }
 banner()  { printf "\n${CYAN}${BOLD}── %s ──${NC}\n\n" "$*"; }
 
 confirm() {
@@ -338,6 +338,16 @@ else:
   # reactorynet) redirects every clone to a mirror org such as Zepz-Engineering
   # so the same available.json works from either organisation.
   local github_org="${REACTORY_GITHUB_ORG:-reactorynet}"
+  # The rewrite below interpolates the org into a sed replacement that uses '#'
+  # as its delimiter. A value containing '#', '&', '\' or '/' would corrupt the
+  # resulting URL silently (and '&' would re-expand to the matched text), so
+  # reject anything that is not a plain GitHub organisation name first.
+  if [[ ! "$github_org" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+    error "Invalid REACTORY_GITHUB_ORG: '${github_org}'"
+    error "Expected a GitHub organisation name (letters, digits, '.', '_' or '-'),"
+    error "for example reactorynet or Zepz-Engineering."
+    return 1
+  fi
   git_url="$(sed -E "s#(github\.com[:/])reactorynet/#\1${github_org}/#" <<< "$git_url")"
 
   # Convert SSH <-> HTTPS if requested
