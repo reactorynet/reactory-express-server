@@ -12,7 +12,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # Constants & Colors
 # ---------------------------------------------------------------------------
-readonly REACTORY_NODE_VERSION="20.19.4"
+readonly REACTORY_NODE_VERSION="24.22.3"
 readonly REACTORY_NVM_VERSION="0.39.7"
 # Override with REACTORY_GITHUB_ORG=Zepz-Engineering to install from the Zepz mirror.
 readonly REACTORY_GITHUB_ORG="${REACTORY_GITHUB_ORG:-reactorynet}"

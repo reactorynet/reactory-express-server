@@ -3,6 +3,7 @@ import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
 import CommentModel from '@reactory/server-modules/reactory-core/models/Comment';
 import { CoreFile as ReactoryFileModel } from '@reactory/server-modules/reactory-core/models';
+import { USER_REFERENCE_SELECT } from '@reactory/server-modules/reactory-core/utils/userReferenceSelect';
 
 type DeleteArgs = {
   ids: string[]
@@ -121,7 +122,7 @@ class SupportResolver {
    @property("ReactorySupportTicket", "createdBy")
   async createdBy(obj: Reactory.Models.IReactorySupportTicketDocument) {
     if (!obj.populated('createdBy')) {
-      await obj.populate('createdBy');
+      await obj.populate({ path: 'createdBy', select: USER_REFERENCE_SELECT });
      }
     return obj.createdBy;
     }
@@ -129,7 +130,7 @@ class SupportResolver {
    @property("ReactorySupportTicket", "assignedTo")
   async assignedTo(obj: Reactory.Models.IReactorySupportTicketDocument) {
     if (!obj.populated('assignedTo')) {
-      await obj.populate('assignedTo');
+      await obj.populate({ path: 'assignedTo', select: USER_REFERENCE_SELECT });
      }
     return obj.assignedTo;
     }
@@ -168,7 +169,7 @@ class SupportResolver {
           removed: { $ne: true },
            parent: { $exists: false }
           })
-          .populate('user')
+          .populate({ path: 'user', select: USER_REFERENCE_SELECT })
           .sort({ createdAt: -1 });
 
       return populatedComments;

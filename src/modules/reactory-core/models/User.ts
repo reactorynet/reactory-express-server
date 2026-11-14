@@ -6,6 +6,7 @@ import * as lodash from 'lodash';
 import logger from '@reactory/server-core/logging';
 import Reactory from '@reactorynet/reactory-core';
 import PasswordHasher from '@reactory/server-core/authentication/password/PasswordHasher';
+import { redactUserCredentials } from '@reactory/server-modules/reactory-core/utils/userCredentialRedaction';
 
 
 const { ObjectId: ObjectIdSchema } = mongoose.Schema.Types;
@@ -693,6 +694,18 @@ UserSchema.statics.parse = (inputString: string): any => {
 UserSchema.statics.onStartup = async (context: Reactory.Server.IReactoryContext) => { 
   
 };
+
+/**
+ * Never serialise credentials. `JSON.stringify` / `res.json()` of a hydrated
+ * user - directly, or populated into a ticket, comment or team without a
+ * projection - drops `password`, `salt`, session tokens and provider secrets.
+ * `toObject` is deliberately left alone: password verification and the reset
+ * fingerprint read those fields from the live document. `.lean()` reads bypass
+ * this transform, so they must still project with `USER_REFERENCE_SELECT`.
+ */
+UserSchema.set('toJSON', {
+  transform: (_doc: unknown, ret: Record<string, any>) => redactUserCredentials(ret),
+});
 
 export const ReactoryUserSchema = UserSchema;
 export type ReactoryUserDocument = mongoose.Document & Reactory.Models.IUserDocument;

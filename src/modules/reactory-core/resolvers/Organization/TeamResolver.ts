@@ -9,6 +9,8 @@ import {
   Organization,
   User,
 } from '@reactory/server-modules/reactory-core/models'
+import { USER_REFERENCE_WITH_ROLES_FIELDS } from '@reactory/server-modules/reactory-core/utils/userReferenceSelect';
+import { resolveUserReference, resolveUserReferences } from '@reactory/server-modules/reactory-core/utils/userReferences';
 
 import {
   OrganizationNotFoundError,
@@ -104,18 +106,19 @@ class TeamResolver {
     return null;
   }
 
+  /**
+   * Owner and members are user references: they resolve to the roster
+   * projection (`USER_REFERENCE_WITH_ROLES_FIELDS`), never a full User
+   * document, whether the parent arrives with ids or already populated.
+   */
   @property('Team', 'owner')
   async owner(team: any) {
-    if (team.owner) return User.findById(team.owner).then();
-    return null;
+    return resolveUserReference(User, team.owner, USER_REFERENCE_WITH_ROLES_FIELDS);
   }
 
   @property('Team', 'members')
   async members(team: any) {
-    if (team.members) {
-      return Promise.all(team.members.map((m: any) => User.findById(m).then()));
-    }
-    return [];
+    return resolveUserReferences(User, team.members, USER_REFERENCE_WITH_ROLES_FIELDS);
   }
 
   @property('Team', 'createdAt')
