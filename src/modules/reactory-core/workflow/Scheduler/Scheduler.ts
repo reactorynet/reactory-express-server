@@ -31,20 +31,15 @@ const LOCK_TTL_MS: number =
 const CronParser = require('cron-parser');
 
 /**
- * Matches a fixed UTC offset written as an offset instead of an IANA zone name.
- * Covers every form ICU 78 accepts and node-cron cannot distinguish from a real zone:
- * `+02`, `-05`, `+02:00`, `+05:30`, `+0200`, `+0530`, `-00:00`, `UTC+2`, `GMT+02:00`.
+ * The shape `Intl.DateTimeFormat#resolvedOptions().timeZone` returns when the input
+ * was a fixed UTC offset rather than an IANA zone name: `+02:00`, `-05:30`.
  *
- * The hour component is optional after `\d{2}` — `'-02'` is a legal ISO 8601 offset
- * and `Intl.DateTimeFormat` now accepts it, so a four-digit-only pattern would let
- * `'+02'` through while still rejecting the equivalent `'+02:00'`.
- *
- * Deliberately does NOT match `Etc/GMT+2` or any other IANA zone name: the second
- * alternative is anchored on `UTC`/`GMT` at the start of the string, and the first
- * is anchored on a leading sign. Checked against all 418 zones returned by
- * `Intl.supportedValuesOf('timeZone')` — zero false positives.
+ * A resolved IANA name never looks like this — `'Etc/GMT+2'` stays `'Etc/GMT+2'`,
+ * `'GMT+0'` resolves to `'UTC'` — so matching the RESOLVED value distinguishes
+ * "is this an IANA zone name" from "is this an offset" without maintaining a list
+ * of offset spellings.
  */
-const FIXED_OFFSET_TIMEZONE = /^(?:[+-]\d{2}(?::?\d{2})?|(?:UTC|GMT)\s*[+-].*)$/i;
+const RESOLVED_FIXED_OFFSET = /^[+-]\d{2}:\d{2}$/;
 
 /**
  * Validates a timezone against the runtime's IANA database.
@@ -55,40 +50,61 @@ const FIXED_OFFSET_TIMEZONE = /^(?:[+-]\d{2}(?::?\d{2})?|(?:UTC|GMT)\s*[+-].*)$/
  * rejected at the point the operator sets the schedule, with a message that names
  * an IANA equivalent.
  *
- * On Node.js 20 the `Intl.DateTimeFormat` probe enforced that contract for free:
- * ICU 77 rejected every fixed offset, so `'UTC+2'`, `'+02:00'` and `'+02'` all threw
- * a `RangeError` and `isValidTimezone` returned false.
+ * WHY A BARE `Intl` PROBE IS NOT ENOUGH
  *
- * ICU 78 — bundled with Node.js 22 (V8 12.4) and Node.js 24 (V8 13.6) — accepts
- * fixed-offset time zones, so the probe alone no longer enforces it: `'+02:00'`,
- * `'+02'`, `'-0500'` and `'+05:30'` now come back valid on 22/24. (`'UTC+2'` and
- * `'GMT+02:00'` are still rejected by ICU, and `node-cron` 4.6.0 still throws
- * `RangeError: Invalid time zone specified` for those two.)
+ * On Node.js 20 (ICU 77) `Intl.DateTimeFormat` rejected every fixed offset, so the
+ * probe alone enforced the contract: `'UTC+2'`, `'+02:00'` and `'+02'` all threw a
+ * `RangeError` and `isValidTimezone` returned false.
  *
- * The consequence on the new runtimes is therefore contract drift, not a dead
- * schedule: the forms ICU 78 newly accepts are also accepted by node-cron 4.6.0,
- * so such a schedule would actually run — it just silently widens the accepted
- * input beyond what the API and UI promise, and behaves differently depending on
- * which Node version the pod happens to be running. Rejecting offsets by pattern
- * keeps the contract, and the error the operator sees, identical on 20/22/24.
+ * ICU 78 — bundled with Node.js 22 and Node.js 24 — accepts fixed-offset zones, so
+ * the probe no longer proves the value is an IANA name. It also accepts U+2212 MINUS
+ * SIGN, so `'\u221202:00'` becomes a valid offset on 22/24 but not on 20; that
+ * spelling reaches us when an operator pastes a value from a word processor or a web
+ * page into the free-text field.
  *
- * Note the historical, still-valid reason for validating up front at all: a
- * non-IANA zone that reaches `cron.schedule` throws deep inside `startSchedule`,
- * which used to leave the schedule persisted and displayed as ENABLED with no cron
- * task while never executing. That path is now closed for offsets by this guard.
+ * WHY NOT A PATTERN
+ *
+ * A denylist regex has to enumerate every offset spelling ICU might accept, and it
+ * inevitably over-reaches. The first attempt at this guard matched `(UTC|GMT)\s*[+-]`
+ * and so rejected `'GMT+0'` and `'GMT-0'` — valid IANA link names that both `Intl` and
+ * `node-cron` resolve to `UTC`. That is a regression, not a tightening: `startSchedule`
+ * re-validates every enabled schedule at boot and only logs the failure, so an existing
+ * schedule using `GMT+0` would have silently stopped running after the upgrade.
+ *
+ * WHAT THIS DOES INSTEAD
+ *
+ * It asks `Intl` what it actually resolved to. For a genuine IANA zone the resolved
+ * name is a zone name (`'Africa/Johannesburg'`, `'Etc/GMT+2'`, `'UTC'`); for a fixed
+ * offset — in any spelling ICU 78 accepts, including U+2212 — it is the normalised
+ * `±HH:MM` form. That is a stable contract rather than a list to maintain, and on
+ * Node 20 it is a no-op because `Intl` still throws for offsets.
+ *
+ * WHY REJECTING UP FRONT STILL MATTERS
+ *
+ * Not merely for the operator-facing message. A fixed offset that reached
+ * `cron.schedule` throws `RangeError: Invalid time zone specified` — node-cron 4.6.0
+ * rejects every offset spelling even where ICU 78 now accepts it. That throw happens
+ * deep inside `startSchedule`, which historically left the schedule persisted and
+ * displayed as ENABLED with no cron task attached while never executing. So the wider
+ * ICU 78 contract would resurrect exactly that dead-schedule bug on Node 22/24 if the
+ * guard were absent.
  */
 export function isValidTimezone(timeZone: string): boolean {
-  if (typeof timeZone !== 'string' || timeZone.trim().length === 0) {
+  if (typeof timeZone !== 'string') {
     return false;
   }
 
-  if (FIXED_OFFSET_TIMEZONE.test(timeZone.trim())) {
+  // Trim once and use the SAME value for the probe and the resolved-name test, so
+  // the two checks cannot disagree about the input they are looking at.
+  const candidate = timeZone.trim();
+  if (candidate.length === 0) {
     return false;
   }
 
   try {
-    new Intl.DateTimeFormat('en-US', { timeZone });
-    return true;
+    const resolved = new Intl.DateTimeFormat('en-US', { timeZone: candidate })
+      .resolvedOptions().timeZone;
+    return !RESOLVED_FIXED_OFFSET.test(resolved);
   } catch {
     return false;
   }
