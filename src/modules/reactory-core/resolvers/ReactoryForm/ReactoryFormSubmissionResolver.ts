@@ -2,6 +2,7 @@ import Reactory from '@reactorynet/reactory-core';
 import { resolver, query, mutation, property } from '@reactory/server-core/models/graphql/decorators/resolver';
 import ApiError from '@reactory/server-core/exceptions';
 import UserModel from '../../models/User';
+import { resolveUserReference } from '@reactory/server-modules/reactory-core/utils/userReferences';
 import type { ReactoryFormSubmissionService } from '../../services/FormSubmission';
 import {
   ReactoryFormSubmissionConfig,
@@ -124,7 +125,8 @@ class ReactoryFormSubmissionResolver {
   ) {
     if (!submission?.userId) return null;
     try {
-      return await UserModel.findById(submission.userId).then();
+      // A reference: identity fields only, never the submitter's full document.
+      return await resolveUserReference(UserModel, submission.userId);
     } catch (userErr) {
       context.log(
         `Could not resolve the user ${submission.userId} for submission ${submission.id}`,

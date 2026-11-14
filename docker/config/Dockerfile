@@ -1,6 +1,6 @@
 # NODE_VERSION and BUN_VERSION must be declared before FROM so they can be used in FROM instructions.
 # The default matches .nvmrc — override by passing --build-arg NODE_VERSION=<version>.
-ARG NODE_VERSION=20.19.4
+ARG NODE_VERSION=24.22.3
 ARG BUN_VERSION=1.4.2
 
 FROM oven/bun:${BUN_VERSION} AS bun-image

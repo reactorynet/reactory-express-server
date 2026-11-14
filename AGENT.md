@@ -7,7 +7,7 @@ The Reactory Express Server (`@reactory/server-core`) is the main backend for th
 ## Technology Stack
 
 - **Language**: TypeScript
-- **Runtime**: Node.js 20.x (see `.nvmrc`)
+- **Runtime**: Node.js 24.x LTS (see `.nvmrc`)
 - **Package manager**: Yarn
 - **Server framework**: Express.js
 - **API layer**: GraphQL (Apollo Server), REST (secondary)

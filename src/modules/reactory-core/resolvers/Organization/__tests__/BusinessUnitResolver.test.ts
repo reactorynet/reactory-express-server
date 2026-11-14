@@ -14,6 +14,7 @@ jest.mock('@reactory/server-modules/reactory-core/models', () => {
 
   const User: any = jest.fn();
   User.findById = jest.fn();
+  User.find = jest.fn();
 
   return { Organization, BusinessUnit, User };
 });
@@ -255,6 +256,68 @@ describe('BusinessUnitResolver (ORG-020)', () => {
       // without querying; DemographicResolver.test.ts pins this identity.
       expect(result).toBe(businessUnits);
       expect(models.BusinessUnit.find).not.toHaveBeenCalled();
+    });
+  });
+  describe('BusinessUnit.owner / BusinessUnit.members are projected user references (REACTORY-302016408)', () => {
+    const ALICE = '507f1f77bcf86cd799439031';
+    const BOB = '507f1f77bcf86cd799439032';
+    const LEAK = /live-hash|live-refresh|"password"|"salt"|sessionInfo|authentications|memberships/;
+    const fullUser = (id: string, firstName: string) => ({
+      _id: new ObjectId(id), firstName, lastName: 'X', email: `${firstName}@example.com`, roles: ['USER'],
+      password: 'live-hash', salt: 's', sessionInfo: [{ jwtPayload: { refresh: 'live-refresh' } }],
+      authentications: [] as any[], memberships: [] as any[],
+    });
+    const fields = () => (Object.create((BusinessUnitResolver as any).prototype) as any).resolver.BusinessUnit;
+    const findChain = (rows: any[]) => {
+      const chain: any = {};
+      chain.select = jest.fn(() => chain);
+      chain.lean = jest.fn(() => chain);
+      chain.exec = jest.fn().mockResolvedValue(rows);
+      return chain;
+    };
+
+    beforeEach(() => {
+      models.User.find = jest.fn();
+      models.User.findById.mockReset();
+    });
+
+    it('loads member ids in one projected query, never per-member findById', async () => {
+      const chain = findChain([{ _id: new ObjectId(BOB), firstName: 'Bob' }, { _id: new ObjectId(ALICE), firstName: 'Alice' }]);
+      models.User.find.mockReturnValue(chain);
+
+      const result = await fields().members({ members: [new ObjectId(ALICE), new ObjectId(BOB)] });
+
+      expect(models.User.find).toHaveBeenCalledTimes(1);
+      expect(chain.select).toHaveBeenCalledWith('_id firstName lastName email avatar username createdAt updatedAt roles');
+      expect(models.User.findById).not.toHaveBeenCalled();
+      expect(result.map((u: any) => u.firstName)).toEqual(['Alice', 'Bob']);
+    });
+
+    it('narrows members a service already populated (even without a projection) instead of re-fetching them', async () => {
+      const result = await fields().members({ members: [fullUser(ALICE, 'Alice'), fullUser(BOB, 'Bob')] });
+
+      expect(models.User.find).not.toHaveBeenCalled();
+      expect(models.User.findById).not.toHaveBeenCalled();
+      expect(result.map((u: any) => u.firstName)).toEqual(['Alice', 'Bob']);
+      expect(JSON.stringify(result)).not.toMatch(LEAK);
+    });
+
+    it('narrows a populated owner and projects an owner id', async () => {
+      const populated = await fields().owner({ owner: fullUser(ALICE, 'Alice') });
+      expect(populated).toMatchObject({ firstName: 'Alice', roles: ['USER'] });
+      expect(JSON.stringify(populated)).not.toMatch(LEAK);
+
+      const chain = findChain([{ _id: new ObjectId(BOB), firstName: 'Bob' }]);
+      models.User.find.mockReturnValue(chain);
+      const loaded = await fields().owner({ owner: new ObjectId(BOB) });
+      expect(loaded).toMatchObject({ firstName: 'Bob' });
+      expect(chain.select).toHaveBeenCalledWith('_id firstName lastName email avatar username createdAt updatedAt roles');
+    });
+
+    it('returns null / [] when there is no owner or members', async () => {
+      expect(await fields().owner({ owner: null })).toBeNull();
+      expect(await fields().members({})).toEqual([]);
+      expect(models.User.find).not.toHaveBeenCalled();
     });
   });
 });

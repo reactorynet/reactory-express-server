@@ -255,8 +255,7 @@ describe('ReactorySupportService read paths — TOOLS-001', () => {
       const commentSpec = spec.find((entry) => entry.path === 'comments');
       expect(commentSpec).toBeDefined();
       // Author names require a nested populate of the comment's `user`.
-      expect(commentSpec.populate).toEqual({ path: 'user' });
-
+      expect(commentSpec.populate).toEqual(expect.objectContaining({ path: 'user' }));
       expect(String(result.comments[0])).not.toBe(COMMENT_2_ID);
       expect(result.comments).toHaveLength(2);
       expect(result.comments[0]).toMatchObject({ text: 'first message' });
@@ -354,8 +353,7 @@ describe('ReactorySupportService read paths — TOOLS-001', () => {
 
       // Stable transcript order is enforced in the query, not left to storage.
       expect(commentQuery.sort).toHaveBeenCalledWith({ createdAt: 1, _id: 1 });
-      expect(commentQuery.populate).toHaveBeenCalledWith({ path: 'user' });
-
+      expect(commentQuery.populate).toHaveBeenCalledWith(expect.objectContaining({ path: 'user' }));
       expect(result.map((comment) => comment.text)).toEqual(['first message', 'reply']);
       result.forEach((comment, index) => {
         const createdAt = new Date(comment.createdAt as Date).getTime();
@@ -543,9 +541,8 @@ describe('ReactorySupportService read paths — TOOLS-001', () => {
       // queries[0] is the count query, queries[1] the page query.
       const pageQuery = queries[queries.length - 1];
       const populated = pageQuery.populate.mock.calls.map((call: any[]) => call[0]);
-      expect(populated).toEqual(['createdBy', 'assignedTo']);
+      expect(populated.map((entry: any) => (typeof entry === 'string' ? entry : entry.path))).toEqual(['createdBy', 'assignedTo']);
       expect(populated.join(' ')).not.toContain('comments');
-      expect(pageQuery.populate.mock.calls.map((call: any[]) => call[0]).join(' ')).not.toContain('documents');
-    });
+      expect(pageQuery.populate.mock.calls.map((call: any[]) => call[0]).join(' ')).not.toContain('documents');    });
   });
 });

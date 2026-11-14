@@ -31,20 +31,95 @@ const LOCK_TTL_MS: number =
 const CronParser = require('cron-parser');
 
 /**
+ * The shape `Intl.DateTimeFormat#resolvedOptions().timeZone` returns when the input
+ * was a fixed UTC offset rather than an IANA zone name: `+02:00`, `-05:30`.
+ *
+ * A resolved IANA name never looks like this — `'Etc/GMT+2'` stays `'Etc/GMT+2'`,
+ * `'GMT+0'` resolves to `'UTC'` — so matching the RESOLVED value distinguishes
+ * "is this an IANA zone name" from "is this an offset" without maintaining a list
+ * of offset spellings.
+ */
+const RESOLVED_FIXED_OFFSET = /^[+-]\d{2}:\d{2}$/;
+
+/**
  * Validates a timezone against the runtime's IANA database.
  *
- * `node-cron` resolves the timezone through `Intl.DateTimeFormat`, which accepts
- * only IANA zone names such as `Africa/Johannesburg` or `Europe/Berlin`. A
- * human-friendly offset such as `UTC+2` or `GMT+02:00` throws a `RangeError`
- * inside `cron.schedule`, which previously aborted `startSchedule` — leaving the
- * schedule persisted and displayed as ENABLED but with no cron task, so it
- * silently never ran. Validating up front turns that into a clear error at the
- * point the operator sets the schedule.
+ * The product contract — established by #69 (1be7794b) and asserted by
+ * `Scheduler.test.ts › timezone validation` — is that schedule timezones are IANA
+ * zone names only. The UI stores the timezone as free text, so offsets have to be
+ * rejected at the point the operator sets the schedule, with a message that names
+ * an IANA equivalent.
+ *
+ * WHY A BARE `Intl` PROBE IS NOT ENOUGH
+ *
+ * On Node.js 20 (ICU 77) `Intl.DateTimeFormat` rejected every fixed offset, so the
+ * probe alone enforced the contract: `'UTC+2'`, `'+02:00'` and `'+02'` all threw a
+ * `RangeError` and `isValidTimezone` returned false.
+ *
+ * ICU 78 — bundled with Node.js 22 and Node.js 24 — accepts fixed-offset zones, so
+ * the probe no longer proves the value is an IANA name. It also accepts U+2212 MINUS
+ * SIGN, so `'\u221202:00'` becomes a valid offset on 22/24 but not on 20; that
+ * spelling reaches us when an operator pastes a value from a word processor or a web
+ * page into the free-text field.
+ *
+ * WHY NOT A PATTERN
+ *
+ * A denylist regex has to enumerate every offset spelling ICU might accept, and it
+ * inevitably over-reaches. The first attempt at this guard matched `(UTC|GMT)\s*[+-]`
+ * and so rejected `'GMT+0'` and `'GMT-0'` — valid IANA link names that both `Intl` and
+ * `node-cron` resolve to `UTC`. That is a regression, not a tightening: `startSchedule`
+ * re-validates every enabled schedule at boot and only logs the failure, so an existing
+ * schedule using `GMT+0` would have silently stopped running after the upgrade.
+ *
+ * WHAT THIS DOES INSTEAD
+ *
+ * It asks `Intl` what it actually resolved to. For a genuine IANA zone the resolved
+ * name is a zone name (`'Africa/Johannesburg'`, `'Etc/GMT+2'`, `'UTC'`); for a fixed
+ * offset — in any spelling ICU 78 accepts, including U+2212 — it is the normalised
+ * `±HH:MM` form. That is a stable contract rather than a list to maintain, and on
+ * Node 20 it is a no-op because `Intl` still throws for offsets.
+ *
+ * WHY REJECTING UP FRONT STILL MATTERS — CONTRACT DRIFT, NOT A DEAD SCHEDULE
+ *
+ * `node-cron` 4.6.0 delegates its zone check to `Intl`, so its behaviour tracks the
+ * runtime exactly. Measured on both:
+ *
+ *   Node 20.19.4 (ICU 77): cron.schedule('+02:00') THROWS, Intl throws
+ *   Node 24.22.3 (ICU 78): cron.schedule('+02:00') SUCCEEDS, Intl accepts
+ *
+ * So on Node 22/24, without this guard, an offset schedule would actually be created
+ * and would run — which is worse than it sounds. It would run with FIXED-OFFSET
+ * semantics, so it would not follow DST: an operator who typed `UTC+2` for a Berlin
+ * schedule gets a job that is correct in winter and an hour wrong all summer, with
+ * nothing anywhere saying so. And because the same schedule document behaves
+ * differently depending on which Node version the pod happens to run, the deployment
+ * becomes the variable.
+ *
+ * Rejecting offsets up front keeps the operator-facing contract, the error message and
+ * the runtime behaviour identical on Node 20, 22 and 24.
  */
 export function isValidTimezone(timeZone: string): boolean {
+  if (typeof timeZone !== 'string') {
+    return false;
+  }
+
+  // Reject surrounding whitespace outright rather than trimming it away.
+  //
+  // The value that gets VALIDATED has to be the value that gets USED: callers store
+  // `config.schedule.timezone` as typed and pass that same string to `cron.schedule`
+  // and `CronParser`. Intl and node-cron both reject a padded name on every runtime,
+  // so validating a trimmed copy would accept `' Europe/Berlin'` here and then throw
+  // inside `startSchedule` — the dead-schedule path this guard exists to close.
+  // Comparing against the trimmed form makes that impossible without depending on
+  // any particular ICU version.
+  if (timeZone.length === 0 || timeZone !== timeZone.trim()) {
+    return false;
+  }
+
   try {
-    new Intl.DateTimeFormat('en-US', { timeZone });
-    return true;
+    const resolved = new Intl.DateTimeFormat('en-US', { timeZone })
+      .resolvedOptions().timeZone;
+    return !RESOLVED_FIXED_OFFSET.test(resolved);
   } catch {
     return false;
   }
@@ -382,9 +457,11 @@ export class WorkflowScheduler {
       throw new Error(`Invalid cron expression: ${config.schedule.cron}`);
     }
 
-    // Reject a non-IANA timezone here rather than letting cron.schedule throw
-    // inside startSchedule, which would leave the schedule persisted and showing
-    // as ENABLED while never actually running.
+    // Reject a non-IANA timezone at the point the operator sets it, with a message
+    // that names an IANA equivalent. Offsets ICU 78 newly accepts would otherwise be
+    // persisted as legal; forms node-cron still cannot resolve ('UTC+2',
+    // 'GMT+02:00') would otherwise throw inside startSchedule and leave the schedule
+    // persisted and displayed as ENABLED with no cron task.
     if (config.schedule.timezone && !isValidTimezone(config.schedule.timezone)) {
       throw new Error(invalidTimezoneMessage(config.schedule.timezone));
     }
