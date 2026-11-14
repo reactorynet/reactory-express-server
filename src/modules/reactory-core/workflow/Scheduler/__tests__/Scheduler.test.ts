@@ -677,22 +677,122 @@ describe('timezone validation', () => {
   });
 
   // Regression: a schedule configured with a UTC offset ('UTC+2') was accepted by
-  // the UI and persisted as ENABLED, but node-cron resolves the zone through
-  // Intl.DateTimeFormat, which only accepts IANA names. cron.schedule threw a
-  // RangeError, startSchedule aborted, and the schedule silently never ran.
+  // the UI and persisted as ENABLED, but node-cron cannot resolve an offset to a
+  // time zone, so cron.schedule threw a RangeError, startSchedule aborted, and the
+  // schedule silently never ran.
+  //
+  // On Node 20 that defect was masked by ICU: Intl.DateTimeFormat rejected every
+  // offset, so validation failed first and cron.schedule was never reached. ICU 78
+  // (Node 22/24) accepts fixed offsets - and the U+2212 spelling of a minus sign -
+  // so node-cron accepts them too and the schedule would run, but with fixed-offset
+  // semantics: no DST, and different behaviour depending on the pod's Node version.
+  // The guard keeps the answer identical across 20/22/24.
+  //
+  // The IANA-only contract these cases assert is the same one #69 (1be7794b) put in
+  // place. These are therefore contract cases: the point is that an offset is not an
+  // IANA zone name, not merely that node-cron happens to reject it today.
 
   it('accepts IANA timezone names', () => {
     expect(isValidTimezone('Africa/Johannesburg')).toBe(true);
     expect(isValidTimezone('Europe/Berlin')).toBe(true);
     expect(isValidTimezone('UTC')).toBe(true);
     expect(isValidTimezone('America/New_York')).toBe(true);
+    expect(isValidTimezone('America/Argentina/Buenos_Aires')).toBe(true);
   });
 
-  it('rejects UTC offsets, which node-cron cannot resolve', () => {
+  // 'Etc/GMT+2' is a real IANA zone whose name contains a sign. It must not be
+  // caught by the offset guard - a false positive here would reject a valid zone.
+  it('keeps IANA zone names that contain a sign', () => {
+    expect(isValidTimezone('Etc/GMT+2')).toBe(true);
+    expect(isValidTimezone('Etc/GMT-2')).toBe(true);
+
+    // 'GMT+0' and 'GMT-0' are IANA backward-compatible link names that resolve to
+    // UTC. They are not offsets: Intl and node-cron both accept them, and
+    // startSchedule re-validates every enabled schedule at boot, so rejecting
+    // them would silently stop an existing schedule from running after upgrade.
+    expect(isValidTimezone('GMT+0')).toBe(true);
+    expect(isValidTimezone('GMT-0')).toBe(true);
+    expect(isValidTimezone('gmt+0')).toBe(true);
+  });
+
+  it('rejects UTC offsets, which are not IANA zone names', () => {
     expect(isValidTimezone('UTC+2')).toBe(false);
     expect(isValidTimezone('GMT+2')).toBe(false);
     expect(isValidTimezone('+02:00')).toBe(false);
     expect(isValidTimezone('not a zone')).toBe(false);
+  });
+
+  // ICU 78 accepts fixed-offset zones in Intl.DateTimeFormat, so a successful Intl
+  // probe no longer proves the value is an IANA name. Every form ICU 78 accepts has
+  // to be rejected explicitly, including the hours-only forms ('+02', '-05') that a
+  // four-digit-only pattern would let through, and offsets written with U+2212 MINUS
+  // SIGN - a spelling that arrives when a value is pasted from a word processor or
+  // web page, and which an ASCII-only `[+-]` class does not catch.
+  it('rejects every fixed-offset form that ICU 78 accepts', () => {
+    const offsets = [
+      '+02',        // hours only - accepted by ICU 78, missed by a 4-digit pattern
+      '-05',        // hours only, negative
+      '+02:00',     // colon-separated
+      '-00:00',     // zero offset, still not an IANA name
+      '+05:30',     // half-hour offset
+      '+0530',      // compact offset
+      '+0200',      // compact offset
+      '-0500',      // compact offset, negative
+      'UTC+2',      // node-cron still throws RangeError for this
+      'GMT+02:00',  // node-cron still throws RangeError for this
+      '\u221202:00', // U+2212 MINUS SIGN, accepted by ICU 78 on Node 22/24 only
+      '\u221202',    // U+2212 hours-only form
+    ];
+
+    for (const offset of offsets) {
+      expect({ offset, valid: isValidTimezone(offset) }).toEqual({ offset, valid: false });
+    }
+  });
+
+  // The guard must give the same answer on every runtime. On Node 20 ICU rejects
+  // offsets and on Node 22/24 it accepts them, so a probe-only implementation would
+  // drift with the Node version - the very thing this validation exists to prevent.
+  it('answers identically regardless of whether ICU accepts offsets', () => {
+    const acceptedByIcu = (tz: string): boolean => {
+      try {
+        new Intl.DateTimeFormat('en-US', { timeZone: tz });
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const offsetForms = ['+02:00', '+02', '-05', '-00:00', '+05:30', '\u221202:00'];
+    for (const form of offsetForms) {
+      // Whatever this runtime's ICU does, the contract is the same: not a zone name.
+      expect({ form, icuAccepts: acceptedByIcu(form), valid: isValidTimezone(form) })
+        .toEqual({ form, icuAccepts: acceptedByIcu(form), valid: false });
+    }
+  });
+
+  // The typeof/empty branch. Reachable in practice: a persisted schedule document or
+  // a GraphQL input can carry undefined, and a free-text UI field can carry ''.
+  it('rejects a missing, empty or blank timezone', () => {
+    expect(isValidTimezone(undefined as unknown as string)).toBe(false);
+    expect(isValidTimezone(null as unknown as string)).toBe(false);
+    expect(isValidTimezone('')).toBe(false);
+    expect(isValidTimezone('   ')).toBe(false);
+    expect(isValidTimezone('\t\n')).toBe(false);
+  });
+
+  // Surrounding whitespace must be REJECTED, not trimmed away. Callers store the
+  // timezone as typed and pass that same string to cron.schedule and CronParser, so a
+  // value that is only valid after trimming gets persisted and then throws inside
+  // startSchedule - the dead-schedule path this guard exists to close. Intl and
+  // node-cron both reject a padded name on every runtime, so the raw value is what
+  // gets judged.
+  it('rejects a padded zone name instead of trimming it', () => {
+    expect(isValidTimezone(' Europe/Berlin')).toBe(false);
+    expect(isValidTimezone('Europe/Berlin ')).toBe(false);
+    expect(isValidTimezone('\tUTC')).toBe(false);
+    expect(isValidTimezone('Africa/Johannesburg\n')).toBe(false);
+    // The unpadded value is still accepted, so this rejects the padding, not the zone.
+    expect(isValidTimezone('Europe/Berlin')).toBe(true);
   });
 
   it('explains what to use instead of an offset', () => {
