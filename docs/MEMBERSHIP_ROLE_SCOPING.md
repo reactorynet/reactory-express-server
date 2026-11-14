@@ -72,3 +72,12 @@ db.reactory_users.find({ 'memberships.1': { $exists: true }, 'memberships.roles'
 - `User.hasRole` still counts memberships whose `enabled` is `false`. `partnerAuthority` and the newer org-scoped helpers ignore them.
 - `updateUser`, `deleteUser` and `ReactoryCoreUpdateUserSocials` let an ADMIN of the current partner act on any user id, including users of other partners.
 - `OrganizationService.assertOrgAdmin` accepts a partner ADMIN for any organization id, without checking which partner the organization belongs to.
+
+## Tests
+
+The behaviour above is covered by these suites under `src/modules/reactory-core`:
+
+- `resolvers/User/Membership/__tests__/UserMembershipResolver.tenantScope.test.ts`: the membership mutations and `partnerAuthority`.
+- `models/__tests__/User.roles.test.ts`: `User.hasRole` and `User.hasAnyRole`.
+- `resolvers/ApiStatus/ApiStatus.roleFallback.test.ts`: the `ApiStatus` role fallback.
+- `services/__tests__/UserService.provisioningRoles.test.ts`: `createUserForOrganization` leaving document roles alone.
