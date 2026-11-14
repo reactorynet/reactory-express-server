@@ -79,30 +79,45 @@ const RESOLVED_FIXED_OFFSET = /^[+-]\d{2}:\d{2}$/;
  * `±HH:MM` form. That is a stable contract rather than a list to maintain, and on
  * Node 20 it is a no-op because `Intl` still throws for offsets.
  *
- * WHY REJECTING UP FRONT STILL MATTERS
+ * WHY REJECTING UP FRONT STILL MATTERS — CONTRACT DRIFT, NOT A DEAD SCHEDULE
  *
- * Not merely for the operator-facing message. A fixed offset that reached
- * `cron.schedule` throws `RangeError: Invalid time zone specified` — node-cron 4.6.0
- * rejects every offset spelling even where ICU 78 now accepts it. That throw happens
- * deep inside `startSchedule`, which historically left the schedule persisted and
- * displayed as ENABLED with no cron task attached while never executing. So the wider
- * ICU 78 contract would resurrect exactly that dead-schedule bug on Node 22/24 if the
- * guard were absent.
+ * `node-cron` 4.6.0 delegates its zone check to `Intl`, so its behaviour tracks the
+ * runtime exactly. Measured on both:
+ *
+ *   Node 20.19.4 (ICU 77): cron.schedule('+02:00') THROWS, Intl throws
+ *   Node 24.22.3 (ICU 78): cron.schedule('+02:00') SUCCEEDS, Intl accepts
+ *
+ * So on Node 22/24, without this guard, an offset schedule would actually be created
+ * and would run — which is worse than it sounds. It would run with FIXED-OFFSET
+ * semantics, so it would not follow DST: an operator who typed `UTC+2` for a Berlin
+ * schedule gets a job that is correct in winter and an hour wrong all summer, with
+ * nothing anywhere saying so. And because the same schedule document behaves
+ * differently depending on which Node version the pod happens to run, the deployment
+ * becomes the variable.
+ *
+ * Rejecting offsets up front keeps the operator-facing contract, the error message and
+ * the runtime behaviour identical on Node 20, 22 and 24.
  */
 export function isValidTimezone(timeZone: string): boolean {
   if (typeof timeZone !== 'string') {
     return false;
   }
 
-  // Trim once and use the SAME value for the probe and the resolved-name test, so
-  // the two checks cannot disagree about the input they are looking at.
-  const candidate = timeZone.trim();
-  if (candidate.length === 0) {
+  // Reject surrounding whitespace outright rather than trimming it away.
+  //
+  // The value that gets VALIDATED has to be the value that gets USED: callers store
+  // `config.schedule.timezone` as typed and pass that same string to `cron.schedule`
+  // and `CronParser`. Intl and node-cron both reject a padded name on every runtime,
+  // so validating a trimmed copy would accept `' Europe/Berlin'` here and then throw
+  // inside `startSchedule` — the dead-schedule path this guard exists to close.
+  // Comparing against the trimmed form makes that impossible without depending on
+  // any particular ICU version.
+  if (timeZone.length === 0 || timeZone !== timeZone.trim()) {
     return false;
   }
 
   try {
-    const resolved = new Intl.DateTimeFormat('en-US', { timeZone: candidate })
+    const resolved = new Intl.DateTimeFormat('en-US', { timeZone })
       .resolvedOptions().timeZone;
     return !RESOLVED_FIXED_OFFSET.test(resolved);
   } catch {

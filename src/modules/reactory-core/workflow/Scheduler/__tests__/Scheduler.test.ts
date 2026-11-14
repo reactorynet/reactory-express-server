@@ -684,8 +684,9 @@ describe('timezone validation', () => {
   // On Node 20 that defect was masked by ICU: Intl.DateTimeFormat rejected every
   // offset, so validation failed first and cron.schedule was never reached. ICU 78
   // (Node 22/24) accepts fixed offsets - and the U+2212 spelling of a minus sign -
-  // so on those runtimes the offset would reach cron.schedule again and resurrect the
-  // dead schedule. The guard is what keeps the behaviour identical across 20/22/24.
+  // so node-cron accepts them too and the schedule would run, but with fixed-offset
+  // semantics: no DST, and different behaviour depending on the pod's Node version.
+  // The guard keeps the answer identical across 20/22/24.
   //
   // The IANA-only contract these cases assert is the same one #69 (1be7794b) put in
   // place. These are therefore contract cases: the point is that an offset is not an
@@ -777,6 +778,21 @@ describe('timezone validation', () => {
     expect(isValidTimezone('')).toBe(false);
     expect(isValidTimezone('   ')).toBe(false);
     expect(isValidTimezone('\t\n')).toBe(false);
+  });
+
+  // Surrounding whitespace must be REJECTED, not trimmed away. Callers store the
+  // timezone as typed and pass that same string to cron.schedule and CronParser, so a
+  // value that is only valid after trimming gets persisted and then throws inside
+  // startSchedule - the dead-schedule path this guard exists to close. Intl and
+  // node-cron both reject a padded name on every runtime, so the raw value is what
+  // gets judged.
+  it('rejects a padded zone name instead of trimming it', () => {
+    expect(isValidTimezone(' Europe/Berlin')).toBe(false);
+    expect(isValidTimezone('Europe/Berlin ')).toBe(false);
+    expect(isValidTimezone('\tUTC')).toBe(false);
+    expect(isValidTimezone('Africa/Johannesburg\n')).toBe(false);
+    // The unpadded value is still accepted, so this rejects the padding, not the zone.
+    expect(isValidTimezone('Europe/Berlin')).toBe(true);
   });
 
   it('explains what to use instead of an offset', () => {
