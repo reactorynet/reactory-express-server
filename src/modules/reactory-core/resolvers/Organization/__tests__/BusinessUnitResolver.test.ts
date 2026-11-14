@@ -265,7 +265,7 @@ describe('BusinessUnitResolver (ORG-020)', () => {
     const fullUser = (id: string, firstName: string) => ({
       _id: new ObjectId(id), firstName, lastName: 'X', email: `${firstName}@example.com`, roles: ['USER'],
       password: 'live-hash', salt: 's', sessionInfo: [{ jwtPayload: { refresh: 'live-refresh' } }],
-      authentications: [], memberships: [],
+      authentications: [] as any[], memberships: [] as any[],
     });
     const fields = () => (Object.create((BusinessUnitResolver as any).prototype) as any).resolver.BusinessUnit;
     const findChain = (rows: any[]) => {
