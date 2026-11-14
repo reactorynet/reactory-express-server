@@ -8083,7 +8083,7 @@ __metadata:
     moment: "npm:^2.24.0"
     mongodb: "npm:5.8.0"
     mongodb-extjson: "npm:^1.0.4"
-    mongoose: "npm:7.1.1"
+    mongoose: "npm:7.8.13"
     morgan: "npm:^1.10.0"
     mssql: "npm:^10.0.1"
     multer: "npm:^1.4.5-lts.1"
@@ -12178,7 +12178,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bson@npm:^5.2.0, bson@npm:^5.4.0":
+"bson@npm:^5.4.0, bson@npm:^5.5.0":
   version: 5.5.1
   resolution: "bson@npm:5.5.1"
   checksum: 10c0/00fabdafe98d20609bd76f607cada03ec544b90225103f7ae859fba7674bd96cae56432b0516e30291af0c40634d306f8a45b63b706a034e95fe583c749ef5b3
@@ -22710,32 +22710,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mongodb@npm:5.3.0":
-  version: 5.3.0
-  resolution: "mongodb@npm:5.3.0"
-  dependencies:
-    bson: "npm:^5.2.0"
-    mongodb-connection-string-url: "npm:^2.6.0"
-    saslprep: "npm:^1.0.3"
-    socks: "npm:^2.7.1"
-  peerDependencies:
-    "@aws-sdk/credential-providers": ^3.201.0
-    mongodb-client-encryption: ">=2.3.0 <3"
-    snappy: ^7.2.2
-  dependenciesMeta:
-    saslprep:
-      optional: true
-  peerDependenciesMeta:
-    "@aws-sdk/credential-providers":
-      optional: true
-    mongodb-client-encryption:
-      optional: true
-    snappy:
-      optional: true
-  checksum: 10c0/aa3c44c4cabec1d70aedf6a3f61b91d949392566329f14a7e31e84b4fe034be9bbd6f86fc7c39c48181917e77e40bc622c0f09d6eea1d56b4ee4ea618b69e6b3
-  languageName: node
-  linkType: hard
-
 "mongodb@npm:5.8.0":
   version: 5.8.0
   resolution: "mongodb@npm:5.8.0"
@@ -22765,6 +22739,38 @@ __metadata:
     snappy:
       optional: true
   checksum: 10c0/bb29254dcf79a8a7c4ee5a4086c90bbab3741262f146a30522575af9620e3dc1a2e131e630a7fec75b547a5147fda6720967ad65dbbcd0bb5e1f731a17412688
+  languageName: node
+  linkType: hard
+
+"mongodb@npm:5.9.2":
+  version: 5.9.2
+  resolution: "mongodb@npm:5.9.2"
+  dependencies:
+    "@mongodb-js/saslprep": "npm:^1.1.0"
+    bson: "npm:^5.5.0"
+    mongodb-connection-string-url: "npm:^2.6.0"
+    socks: "npm:^2.7.1"
+  peerDependencies:
+    "@aws-sdk/credential-providers": ^3.188.0
+    "@mongodb-js/zstd": ^1.0.0
+    kerberos: ^1.0.0 || ^2.0.0
+    mongodb-client-encryption: ">=2.3.0 <3"
+    snappy: ^7.2.2
+  dependenciesMeta:
+    "@mongodb-js/saslprep":
+      optional: true
+  peerDependenciesMeta:
+    "@aws-sdk/credential-providers":
+      optional: true
+    "@mongodb-js/zstd":
+      optional: true
+    kerberos:
+      optional: true
+    mongodb-client-encryption:
+      optional: true
+    snappy:
+      optional: true
+  checksum: 10c0/c1bb3e0b390c74cd53ae2deedf6fb87d15f4bf11677f499b095c7fcd8d4692cd664a63b49b8b525330069faa0e689a76eda4b2a7a97bb7f26645d9310617b07f
   languageName: node
   linkType: hard
 
@@ -22881,18 +22887,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mongoose@npm:7.1.1":
-  version: 7.1.1
-  resolution: "mongoose@npm:7.1.1"
+"mongoose@npm:7.8.13":
+  version: 7.8.13
+  resolution: "mongoose@npm:7.8.13"
   dependencies:
-    bson: "npm:^5.2.0"
+    bson: "npm:^5.5.0"
     kareem: "npm:2.5.1"
-    mongodb: "npm:5.3.0"
+    mongodb: "npm:5.9.2"
     mpath: "npm:0.9.0"
-    mquery: "npm:5.0.0"
+    mquery: "npm:5.0.1"
     ms: "npm:2.1.3"
     sift: "npm:16.0.1"
-  checksum: 10c0/bc45cda828bbe190105eb9fc7979979f97ab6e3edc558489de98ca556009d8c33e95ce81b4b69fa2896d37f8f835a25a9cdc38523ec0b9b5d679af4dfeb2d6e5
+  checksum: 10c0/a3aa55602ff5302af8b982657f3e16a904c0ac29ef5f3a3e3fac25a01bc1d9760b5ecef7c6037feddb38e3c1f3ee44f2e9e45b2f78545364c6a06c12584e7a45
   languageName: node
   linkType: hard
 
@@ -22944,6 +22950,15 @@ __metadata:
   dependencies:
     debug: "npm:4.x"
   checksum: 10c0/65b8a92d3b23d9bd1a3d149c3cbd09468e5e5b95d6cff73c1ed2d0a3dc8dce7daa538862ca2a477bf99bbb2197b049becb73d9664b0f7c3dd5472fcd5cb34bca
+  languageName: node
+  linkType: hard
+
+"mquery@npm:5.0.1":
+  version: 5.0.1
+  resolution: "mquery@npm:5.0.1"
+  dependencies:
+    debug: "npm:4.x"
+  checksum: 10c0/bfdc7f4253ea37f149a6e222963130d5e65d41e89d0149d4ee925d039e5ba4fc9a9ba52854edd249c93f93214e007777937a8f10a0a6e026293ca8febeb36b6a
   languageName: node
   linkType: hard
 
@@ -27091,15 +27106,6 @@ __metadata:
   version: 2.1.2
   resolution: "safer-buffer@npm:2.1.2"
   checksum: 10c0/7e3c8b2e88a1841c9671094bbaeebd94448111dd90a81a1f606f3f67708a6ec57763b3b47f06da09fc6054193e0e6709e77325415dc8422b04497a8070fa02d4
-  languageName: node
-  linkType: hard
-
-"saslprep@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "saslprep@npm:1.0.3"
-  dependencies:
-    sparse-bitfield: "npm:^3.0.3"
-  checksum: 10c0/7dea5b2c0cb507132d4a6e1a65082b1118b435f9bb5b13665e71e581875dc574d4fb26dd0246d72daa1d7a453b131043aa0f8c1a8813ca2d4b577335156f99ac
   languageName: node
   linkType: hard
 
