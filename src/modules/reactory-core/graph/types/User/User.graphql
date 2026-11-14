@@ -63,11 +63,9 @@ type UserSession {
   Date and time when the session expires.
   """
   expires: Date
-  
-  """
-  RefreshToken used to renew this session.
-  """
-  refresh: String
+
+  # No `refresh` field: the session's refresh token is a live credential and is
+  # never exposed over GraphQL. See `User.sessionInfo` in UserResolver.
 }
 
 """

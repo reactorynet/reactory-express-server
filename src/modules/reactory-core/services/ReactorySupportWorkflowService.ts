@@ -53,6 +53,16 @@ const WORKFLOW_SERVICE_ID = 'core.ReactoryWorkflowService@1.0.0';
 const COMMUNICATOR_QUEUE_SERVICE_ID = 'communicator.CommunicatorQueueService@1.0.0';
 const COMMUNICATOR_MESSAGE_SERVICE_ID = 'communicator.MessageService@1.0.0';
 
+/**
+ * The ticket's user references, identity fields only. Every read here is
+ * `.lean()`, which skips the User schema's `toJSON` redaction, so this
+ * projection is the only thing keeping credentials out of a serialised ticket.
+ */
+const TICKET_USER_POPULATE = [
+  { path: 'createdBy', select: USER_REFERENCE_SELECT },
+  { path: 'assignedTo', select: USER_REFERENCE_SELECT },
+];
+
 /** Canonical storage form for enumeration values: lowercase snake_case. */
 const canonicalEnum = (value: string): string =>
   String(value ?? '').trim().toLowerCase().replace(/-/g, '_');
@@ -499,7 +509,7 @@ class ReactorySupportWorkflowService {
 
     const query = id ? { _id: new ObjectId(String(id)) } : { reference: String(reference) };
     const ticket = await ReactorySupportTicketModel.findOne(query)
-      .populate([{ path: 'createdBy', select: USER_REFERENCE_SELECT }, { path: 'assignedTo', select: USER_REFERENCE_SELECT }])
+      .populate(TICKET_USER_POPULATE)
       .lean()
       .exec();
 
@@ -1158,7 +1168,7 @@ class ReactorySupportWorkflowService {
       this.log('info', `updateStatus: ticket ${ticketId} already '${status}' — no status change`);
       if (comment) await this.appendComment(String(ticketId), String(comment));
       return this.serializeTicket(
-        await ReactorySupportTicketModel.findById(ticketId).populate([{ path: 'createdBy', select: USER_REFERENCE_SELECT }, { path: 'assignedTo', select: USER_REFERENCE_SELECT }]).lean().exec(),
+        await ReactorySupportTicketModel.findById(ticketId).populate(TICKET_USER_POPULATE).lean().exec(),
       );
     }
 
@@ -1172,7 +1182,7 @@ class ReactorySupportWorkflowService {
     if (comment) await this.appendComment(String(ticketId), String(comment));
 
     return this.serializeTicket(
-      await ReactorySupportTicketModel.findById(ticketId).populate([{ path: 'createdBy', select: USER_REFERENCE_SELECT }, { path: 'assignedTo', select: USER_REFERENCE_SELECT }]).lean().exec(),
+      await ReactorySupportTicketModel.findById(ticketId).populate(TICKET_USER_POPULATE).lean().exec(),
     );
   }
 
@@ -1202,7 +1212,7 @@ class ReactorySupportWorkflowService {
     const rows = await ReactorySupportTicketModel.find(filter)
       .sort({ createdDate: 1 })
       .limit(Math.max(1, Math.min(limit, 200)))
-      .populate([{ path: 'assignedTo', select: USER_REFERENCE_SELECT }, { path: 'createdBy', select: USER_REFERENCE_SELECT }])
+      .populate(TICKET_USER_POPULATE)
       .lean()
       .exec();
 
@@ -1242,7 +1252,7 @@ class ReactorySupportWorkflowService {
     }
 
     const ticket: any = await ReactorySupportTicketModel.findById(ticketId)
-      .populate([{ path: 'assignedTo', select: USER_REFERENCE_SELECT }, { path: 'createdBy', select: USER_REFERENCE_SELECT }])
+      .populate(TICKET_USER_POPULATE)
       .lean()
       .exec();
     if (!ticket) {

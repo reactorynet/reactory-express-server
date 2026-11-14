@@ -11,12 +11,18 @@ import { USER_REFERENCE_SELECT } from '@reactory/server-modules/reactory-core/ut
  * token) - thirteen credentials in one response, including the sysadmin
  * account.
  *
- * The regression is proven end to end rather than by asserting that `.select()`
- * was called: the model is mocked so that a populate WITHOUT a projection hands
- * back the complete fixture (credentials included), and a populate WITH a
- * projection applies it. If a future change drops `select` from a populate -
- * or writes `context.user` (a full document) into the ticket - the fixture's
- * credentials survive into the result and the assertions below fail.
+ * The regression is proven behaviourally rather than by asserting that
+ * `.select()` was called: the models are mocked so that a populate WITHOUT a
+ * projection hands back the complete fixture (credentials included), and a
+ * populate WITH a projection applies it. If a future change drops `select` from
+ * a populate - or hands back `context.user` (a full document) as a populated
+ * reference on the returned ticket - the fixture's credentials survive into the
+ * result and the assertions below fail.
+ *
+ * The projection here is the mock's, not Mongoose's. The real-Mongoose half -
+ * the User schema's `toJSON` redaction of populated users - is covered in
+ * `utils/__tests__/userCredentialRedaction.test.ts`, and the GraphQL user
+ * reference resolvers in `utils/__tests__/userReferences.test.ts`.
  */
 
 const mockTicketFindById = jest.fn();

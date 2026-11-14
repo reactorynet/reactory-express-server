@@ -216,10 +216,11 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     if (updates.tags) ticket.tags = updates.tags;
 
     ticket.updatedDate = new Date();
-    // Store the reference (ObjectId), never the `context.user` document: the
-    // JWT strategy puts a complete User document on the context, and assigning
-    // it here embeds the caller's password hash and tokens in the ticket - a
-    // leak that happens at insert time, with no populate involved.
+    // Store the id, never the `context.user` document. The schema casts a
+    // document to its `_id` on save, so nothing extra reaches the database, but
+    // the in-memory ticket would keep the caller's complete User document
+    // (password hash, salt, tokens) as a populated `updatedBy` and hand it to
+    // whoever serialises the returned ticket.
     ticket.updatedBy = this.context.user._id as any;
 
      // Add comment if provided
@@ -461,10 +462,11 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       // is used so the hash input is stable (hashing a raw ObjectId previously
       // produced 0, yielding the meaningless "REACTORY-0" prefix).
       reference: `${this.context.partner.key}-${HashUnsigned(String(this.context.user._id))}/${moment().format('YYYYMMDD')}/${HashUnsigned(request)}`.toUpperCase(),
-      // Persist the caller's id, not the caller's document. `context.user` is a
-      // full User document (JWTStrategy loads it), so assigning it here wrote
-      // the password hash, salt, refresh token and OAuth token into the ticket
-      // the moment it was created - before any populate could be blamed.
+      // The caller's id, not the caller's document. `context.user` is a full
+      // User document (JWTStrategy loads it). Mongoose would store only its
+      // `_id`, but the returned ticket would carry the whole document - password
+      // hash, salt, refresh and OAuth tokens - as populated `createdBy` and
+      // `updatedBy`, and the create mutation returns that ticket.
       createdBy: this.context.user._id,
       updatedBy: this.context.user._id,
       comments: [],

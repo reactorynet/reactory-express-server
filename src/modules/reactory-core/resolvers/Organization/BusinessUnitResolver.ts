@@ -2,6 +2,8 @@ import Reactory from '@reactorynet/reactory-core';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, query, mutation, property } from '@reactory/server-core/models/graphql/decorators/resolver';
 import { BusinessUnit, Organization, User } from '@reactory/server-modules/reactory-core/models';
+import { USER_REFERENCE_WITH_ROLES_FIELDS } from '@reactory/server-modules/reactory-core/utils/userReferenceSelect';
+import { resolveUserReference, resolveUserReferences } from '@reactory/server-modules/reactory-core/utils/userReferences';
 import { OrganizationNotFoundError, BusinessUnitExistsError, ValidationError } from '@reactory/server-core/exceptions';
 
 /**
@@ -83,18 +85,19 @@ class BusinessUnitResolver {
     return null;
   }
 
+  /**
+   * Owner and members are user references: they resolve to the roster
+   * projection (`USER_REFERENCE_WITH_ROLES_FIELDS`), never a full User
+   * document, whether the parent arrives with ids or already populated.
+   */
   @property('BusinessUnit', 'owner')
   async owner(bu: any) {
-    if (bu.owner) return User.findById(bu.owner).then();
-    return null;
+    return resolveUserReference(User, bu.owner, USER_REFERENCE_WITH_ROLES_FIELDS);
   }
 
   @property('BusinessUnit', 'members')
   async members(bu: any) {
-    if (bu.members) {
-      return Promise.all(bu.members.map((m: any) => User.findById(m).then()));
-    }
-    return [];
+    return resolveUserReferences(User, bu.members, USER_REFERENCE_WITH_ROLES_FIELDS);
   }
 
   // ---- Queries ----

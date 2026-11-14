@@ -9,6 +9,7 @@ import { getAvailableLanguages } from '@reactory/server-core/express/i18n/langua
 import { validateUserLocale } from '@reactory/server-modules/reactory-core/utils/userLanguage';
 import { PagedUserResults, ReactoryUserFilterInput, ReactoryUserQueryFailed, ReactoryUserQueryResult } from './types';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
+import { redactAuthenticationProps, redactSession } from '@reactory/server-modules/reactory-core/utils/userCredentialRedaction';
 
 /**
  * A 24 character hexadecimal object id.
@@ -31,23 +32,48 @@ interface IUserServiceWithOrganizationLookup extends Reactory.Service.IReactoryU
   findOrganizationById(organizationId: string): Promise<Reactory.Models.IOrganizationDocument>;
 }
 
+const CREDENTIAL_READER_ROLES = ['ADMIN', 'SUPPORT_ADMIN'];
+
+/** The enabled memberships `user` holds in partner `partnerId`. */
+const membershipsInPartner = (user: any, partnerId: string): any[] => {
+  if (!user || partnerId.length === 0 || !Array.isArray(user.memberships)) return [];
+  return user.memberships.filter((membership: any) =>
+    membership
+    && membership.enabled !== false
+    && String(membership.clientId ?? '') === partnerId);
+};
+
 /**
  * Whether the caller may read a user record's credential-bearing fields
  * (`sessionInfo`, `authentications`).
  *
- * The account owner may always read their own; ADMIN and SUPPORT_ADMIN are the
- * documented escalation path for account support. Everybody else - including a
- * plain USER reading a colleague, a ticket author or a comment author - gets
- * `null` rather than an error, so one refused field cannot break a shared query.
+ * The account owner may always read their own. ADMIN and SUPPORT_ADMIN are the
+ * documented escalation path for account support, but only within one partner:
+ * the caller must hold the role in an enabled membership of the CURRENT
+ * partner, and the target must be a member of that partner too.
+ *
+ * `context.hasRole` is deliberately not used: `User.hasRole` falls back to the
+ * document-level `roles`, which aggregates roles from every partner, so an
+ * ADMIN of any tenant would pass it everywhere.
+ *
+ * Everybody else - including a plain USER reading a colleague, a ticket author
+ * or a comment author - gets `null` rather than an error, so one refused field
+ * cannot break a shared query.
  */
 const canReadUserCredentials = (usr: any, context?: Reactory.Server.IReactoryContext): boolean => {
-  const targetId = usr?._id?.toString?.() ?? (usr?._id !== undefined && usr?._id !== null ? String(usr._id) : String(usr?.id ?? ''));
-  const callerId = context?.user?._id?.toString?.()
-    ?? (context?.user?._id !== undefined && context?.user?._id !== null ? String(context.user._id) : '');
+  if (!usr || !context) return false;
 
-  if (targetId.length > 0 && callerId.length > 0 && targetId === callerId) return true;
+  const targetId = String(usr._id ?? usr.id ?? '');
+  const callerId = String(context.user?._id ?? '');
+  if (targetId.length > 0 && targetId === callerId) return true;
 
-  return context?.hasRole?.('ADMIN') === true || context?.hasRole?.('SUPPORT_ADMIN') === true;
+  const partnerId = String(context.partner?._id ?? '');
+  const callerIsPartnerAdmin = membershipsInPartner(context.user, partnerId).some((membership: any) =>
+    Array.isArray(membership.roles)
+    && membership.roles.some((role: string) => CREDENTIAL_READER_ROLES.includes(role)));
+  if (!callerIsPartnerAdmin) return false;
+
+  return membershipsInPartner(usr, partnerId).length > 0;
 };
 
 //@ts-ignore
@@ -147,11 +173,7 @@ class UserResolver {
     if (!canReadUserCredentials(usr, context)) return null;
 
     const sessions: any[] = Array.isArray(usr?.sessionInfo) ? usr.sessionInfo : [];
-    return sessions.map((session) => {
-      const plain: any = typeof session?.toObject === 'function' ? session.toObject() : { ...session };
-      const { refresh, jwtPayload, jwtPayloadJson, ...metadata } = plain;
-      return metadata;
-    });
+    return sessions.map(redactSession);
   }
 
   /**
@@ -197,18 +219,8 @@ class UserResolver {
 
   @property('UserAuthentication', 'props')  
   userAuthProps(auth: { props: any }, context: Reactory.Server.IReactoryContext) {        
-    if (auth.props) {
-      const filteredProps: any = {};
-      // we don't send any sensitive information back unless the user has elevated permissions
-      const allowedKeys = ['lastLogin', 'loginCount', 'failedLoginAttempts', 'lockoutExpiry', 'twoFactorEnabled'];
-      Object.keys(auth.props).forEach((key) => {
-        if (allowedKeys.includes(key)) {
-          filteredProps[key] = auth.props[key];
-        }
-      });
-      return filteredProps;
-    }
-    return null;
+    // Never the provider tokens/secrets: the shared allowlist keeps bookkeeping only.
+    return redactAuthenticationProps(auth.props);
   }
 
   // --- Mutation Resolvers ---
