@@ -95,6 +95,6 @@ describe('UserService.createUserForOrganization — document roles', () => {
     );
 
     expect(result.user.roles).toEqual([]);
-    expect(result.user.memberships[0].roles).toEqual(expect.arrayContaining(['ADMIN', 'USER']));
+    expect((result.user.memberships[0] as any).roles).toEqual(expect.arrayContaining(['ADMIN', 'USER']));
   });
 });
