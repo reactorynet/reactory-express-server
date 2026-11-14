@@ -63,11 +63,9 @@ type UserSession {
   Date and time when the session expires.
   """
   expires: Date
-  
-  """
-  RefreshToken used to renew this session.
-  """
-  refresh: String
+
+  # No `refresh` field: the session's refresh token is a live credential and is
+  # never exposed over GraphQL. See `User.sessionInfo` in UserResolver.
 }
 
 """
@@ -311,16 +309,6 @@ type User {
   peers: UserPeers,
   
   """
-  Password salt (internal use).
-  """
-  salt: String,
-  
-  """
-  Hashed password (never returned in plain text).
-  """
-  password: String
-  
-  """
   URL or path to user's avatar image.
   """
   avatar: String
@@ -367,11 +355,18 @@ type User {
   
   """
   History of user sessions.
+
+  Carries the live refresh token for each session, so it is resolved by a field
+  resolver that allows the session's owner and administrators only. Never add
+  this to a shared/reference selection.
   """
   sessionInfo: [UserSession]
   
   """
   List of authentication methods/tokens linked to this user.
+
+  Carries provider credentials, so it is resolved by a field resolver that
+  allows the account owner and administrators only.
   """
   authentications: [UserAuthentication]
   

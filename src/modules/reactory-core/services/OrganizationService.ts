@@ -17,6 +17,7 @@ import { trim } from 'lodash';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { service } from '@reactory/server-core/application/decorators/service';
 import { ThemeService } from './ThemeService';
+import { USER_REFERENCE_WITH_ROLES_SELECT } from '@reactory/server-modules/reactory-core/utils/userReferenceSelect';
 import { seedOrganizationDemographics } from './demographics/seedOrganizationDemographics';
 
 /**
@@ -1342,8 +1343,8 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
 
     const [teams, total] = await Promise.all([
       Team.find(dbQuery)
-        .populate('owner')
-        .populate('members')
+        .populate({ path: 'owner', select: USER_REFERENCE_WITH_ROLES_SELECT })
+        .populate({ path: 'members', select: USER_REFERENCE_WITH_ROLES_SELECT })
         .sort({ name: 1 })
         .skip(skip)
         .limit(pageSize)
