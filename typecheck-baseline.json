@@ -1,5 +1,5 @@
 {
-  "total": 3817,
+  "total": 3809,
   "files": {
     "src/application/decorators/audit/audit.ts": 3,
     "src/application/decorators/inject.ts": 1,
@@ -22,10 +22,6 @@
     "src/authentication/strategies/microsoft/MicrosoftStrategy.ts": 3,
     "src/authentication/strategies/okta/OktaStrategy.spec.ts": 2,
     "src/authentication/strategies/okta/OktaStrategy.ts": 4,
-    "src/charts/barcharts/index.ts": 2,
-    "src/charts/pie/index.ts": 2,
-    "src/charts/polararea/index.ts": 2,
-    "src/charts/radialcharts/index.ts": 2,
     "src/context/AnonUser.ts": 1,
     "src/context/ReactoryContextProvider.ts": 2,
     "src/context/__tests__/ReactoryContextProvider.test.ts": 1,
