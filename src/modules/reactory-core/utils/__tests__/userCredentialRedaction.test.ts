@@ -20,11 +20,14 @@ import {
  * call site forgot its projection.
  */
 
-const LIVE_HASH = '$pbkdf2$10000$live-password-hash';
-const LIVE_SALT = 'c0ffee1234567890c0ffee1234567890';
-const LIVE_REFRESH = 'eyJhbGciOiJIUzI1NiJ9.live-refresh-token.signature';
-const LIVE_ACCESS = 'ya29.live-google-oauth-token';
-const LIVE_PROVIDER_REFRESH = '1//live-provider-refresh';
+// Obviously fake markers, not real-looking credentials: the test only needs
+// distinctive strings to search the serialised output for. (Real-looking
+// fixtures trip the repository's secret scanner.)
+const LIVE_HASH = 'FAKE-HASH-MARKER';
+const LIVE_SALT = 'FAKE-SALT-MARKER';
+const LIVE_REFRESH = 'FAKE-SESSION-REFRESH-MARKER';
+const LIVE_ACCESS = 'FAKE-PROVIDER-ACCESS-MARKER';
+const LIVE_PROVIDER_REFRESH = 'FAKE-PROVIDER-REFRESH-MARKER';
 
 const LEAK = new RegExp([LIVE_HASH, LIVE_SALT, LIVE_REFRESH, LIVE_ACCESS, LIVE_PROVIDER_REFRESH]
   .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'));
@@ -33,7 +36,6 @@ const makeUser = () => new UserModel({
   firstName: 'Sys',
   lastName: 'Admin',
   email: 'sysadmin@example.com',
-  username: 'sysadmin',
   password: LIVE_HASH,
   salt: LIVE_SALT,
   createdAt: new Date(),
