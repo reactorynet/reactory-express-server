@@ -4,6 +4,7 @@ import StatisticPackageModel from '../../models/Statistic';
 import logger from '@reactory/server-core/logging';
 import { ObjectId } from 'mongodb';
 import { service } from '@reactory/server-core/application/decorators';
+import { USER_REFERENCE_SELECT } from '@reactory/server-modules/reactory-core/utils/userReferenceSelect';
 
 
 
@@ -495,7 +496,7 @@ class ReactoryStatisticsService implements Reactory.Service.IReactoryService {
     try {
       const pkg = await StatisticPackageModel.findOne({ reference })
         .populate('statistics')
-        .populate('user')
+        .populate({ path: 'user', select: USER_REFERENCE_SELECT })
         .populate('partner')
         .lean();
 
@@ -525,7 +526,7 @@ class ReactoryStatisticsService implements Reactory.Service.IReactoryService {
 
       const packages = await StatisticPackageModel.find(query)
         .populate('statistics')
-        .populate('user')
+        .populate({ path: 'user', select: USER_REFERENCE_SELECT })
         .populate('partner')
         .sort({ createdAt: -1 })
         .limit(100)
@@ -615,7 +616,7 @@ class ReactoryStatisticsService implements Reactory.Service.IReactoryService {
         { new: true }
       )
         .populate('statistics')
-        .populate('user')
+        .populate({ path: 'user', select: USER_REFERENCE_SELECT })
         .populate('partner')
         .lean();
 

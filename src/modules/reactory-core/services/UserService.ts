@@ -196,14 +196,17 @@ class UserService implements Reactory.Service.IReactoryUserService {
           roles: membership.roles,
         });
 
-        if (Array.isArray(foundUser.roles)) {
-          foundUser.roles = union(foundUser.roles, effectiveRoles);
-        } else {
-          foundUser.roles = effectiveRoles;
+        // Membership roles are NOT copied onto the user document any more. The
+        // document-level `roles` array used to be the union of every partner's
+        // roles, and `User.hasRole` / ApiStatus trusted it for every partner, so
+        // an ADMIN grant in one partner became ADMIN everywhere. Memberships are
+        // the authority; the document keeps only what it already holds (platform
+        // roles, legacy accounts). Role filters query `memberships.roles`.
+        if (!Array.isArray(foundUser.roles)) {
+          foundUser.roles = [] as any;
         }
 
         foundUser.markModified('memberships');
-        foundUser.markModified('roles');
         result.user = await foundUser.save().then();
 
         await User.updateOne(

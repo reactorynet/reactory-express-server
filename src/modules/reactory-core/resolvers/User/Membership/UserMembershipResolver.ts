@@ -3,6 +3,7 @@ import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
 import ApiError from '@reactory/server-core/exceptions';
 import { ObjectId } from 'mongodb';
+import { assertCanAdministerPartner, assertCanGrantRoles } from '@reactory/server-modules/reactory-core/utils/partnerAuthority';
 
 
 const UserMembership: string = "UserMembership"
@@ -69,9 +70,20 @@ class UserMembershipResolver {
 
   @roles(["ADMIN"])
   @mutation("ReactoryCoreRemoveUserMembership")
-  removeUserMembership(obj: any, params: { user_id: string, id: string }, context: Reactory.Server.IReactoryContext): Promise<Reactory.Models.CoreSimpleResponse> {
+  async removeUserMembership(obj: any, params: { user_id: string, id: string }, context: Reactory.Server.IReactoryContext): Promise<Reactory.Models.CoreSimpleResponse> {
     const { id, user_id } = params;
     const userService: Reactory.Service.IReactoryUserService = context.getService("core.UserService@1.0.0") as Reactory.Service.IReactoryUserService;
+
+    // The membership's own partner decides who may remove it: `@roles(["ADMIN"])`
+    // alone lets an admin of any partner strip memberships in every other one.
+    const user = (await userService.findUserById(user_id)) as Reactory.Models.IUserDocument;
+    if (!user) return { success: false, message: 'User not found' };
+    const membership: any = Array.isArray(user.memberships)
+      ? (user.memberships as any[]).find((m: any) => String(m?._id ?? '') === String(id))
+      : null;
+    if (!membership) return { success: false, message: 'Membership not found' };
+    assertCanAdministerPartner(context, membership.clientId);
+
     return userService.removeUserMembership(user_id, id);
   }
 
@@ -99,13 +111,21 @@ class UserMembershipResolver {
     ) as Reactory.Service.IReactoryUserService;
 
     const { user_id } = params;
-    const user = (await userService.findUserById(user_id)) as Reactory.Models.IUserDocument;
-    if (!user) throw new ApiError(`User not found with id ${user_id}`);
 
     const client_id = params.clientId || params.membership?.clientId || context.partner._id.toString();
     const org_id = params.organization || params.membership?.organizationId || null;
     const bu_id = params.businessUnit || params.membership?.businessUnitId || null;
     const member_roles = params.roles || params.membership?.roles || ["USER"];
+
+    if (!ObjectId.isValid(client_id)) throw new ApiError(`Invalid clientId ${client_id}`);
+    // `clientId` comes from the caller, so authority is checked against THAT
+    // partner, not the one the request arrived on; platform roles are never
+    // grantable by a partner admin.
+    assertCanAdministerPartner(context, client_id);
+    assertCanGrantRoles(context, member_roles);
+
+    const user = (await userService.findUserById(user_id)) as Reactory.Models.IUserDocument;
+    if (!user) throw new ApiError(`User not found with id ${user_id}`);
 
     if (!user.memberships) user.memberships = [] as any;
 

@@ -32,6 +32,15 @@ The installer clones from `github.com/reactorynet` by default. To install from a
 REACTORY_GITHUB_ORG=<your-org> bash <(curl -fsSL https://raw.githubusercontent.com/<your-org>/reactory-express-server/master/bin/install.sh)
 ```
 
+The value must be a plain GitHub organisation name — letters, digits, `.`, `_` or `-`. Anything else (notably `#`, `&`, `\` or `/`) is rejected with an error rather than silently producing a malformed clone URL.
+
+> **Mirror repositories required.** Submodule URLs are relative (`../<repo>.git`), so they resolve against whichever organisation the superproject was cloned from. A mirror organisation must therefore carry the submodule repos too:
+>
+> - `reactory-express-server-devops` (for `config/reactory`)
+> - `reactory-client-core-pwa-plugin` and `reactory-communicator-pwa-plugin` (for the PWA client)
+>
+> If one is missing, the installer falls back to a plain clone without submodules and prints the `git submodule update` command to run once the repo is reachable, rather than aborting the whole install.
+
 ### Run the installer locally
 If you have already cloned the server repository:
 ```bash
@@ -45,7 +54,7 @@ bash bin/install.sh
 | Step | Description |
 |------|-------------|
 | **1. System Dependencies** | Detects your OS and package manager (brew, apt, dnf, pacman). Installs git, curl, and the native canvas/PDF libraries (cairo, pango, giflib, etc.). |
-| **2. Node.js via nvm** | Installs nvm v0.39.7 (if needed), then installs and activates Node 20.19.4. Also installs yarn and env-cmd globally. |
+| **2. Node.js via nvm** | Installs nvm v0.39.7 (if needed), then installs and activates Node 24.22.3 (Krypton LTS). Also installs yarn and env-cmd globally. |
 | **3. Repositories** | Prompts for a root directory, then clones the server, PWA client, core types library, and data/CDN repos. Optionally clones reactory-native. Clones the required reactory-azure module. Skips any repo that already exists. |
 | **4. Shell Environment** | Detects your shell profile (.zshrc, .zprofile, .bashrc) and appends the required `REACTORY_*` exports. |
 | **5. Server .env** | Walks you through MongoDB connection, API port, URLs, admin credentials, and more. Generates a complete `.env.<environment>` file with a random `SECRET_SAUCE`. |
@@ -79,7 +88,7 @@ or
 wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 ```
 
-The server is currently being maintained on Node 20.19.4 and can be run on Windows using the Ubuntu on Windows feature.
+The server is currently being maintained on Node 24.22.3 (Krypton LTS) and can be run on Windows using the Ubuntu on Windows feature.
 
 If you have not worked with the Ubuntu on Windows feature, you can go to the link below.
 https://ubuntu.com/tutorials/ubuntu-on-windows#1-overview
@@ -156,8 +165,8 @@ Your specific environment may have other ways of installing mongodb.  The mongod
 ### Install Node and NPM
 If you installed nvm you can install node using (the .nvmrc file specifies the correct version as well)
 ```bash
-nvm install 20.19.4
-nvm use 20.19.4
+nvm install 24.22.3
+nvm use 24.22.3
 ```
 
 #### Install yarn

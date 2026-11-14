@@ -82,7 +82,7 @@ The `Dockerfile` builds the Reactory Express Server image. Key build arguments:
 
 | Argument | Default | Description |
 |---|---|---|
-| `NODE_VERSION` | `20.19.4` | Node.js version (matches `.nvmrc`) |
+| `NODE_VERSION` | `24.22.3` | Node.js version (matches `.nvmrc`) |
 | `REACTORY_CONFIG_ID` | `reactory` | Client config identifier |
 | `REACTORY_ENV_ID` | `podman` | Environment identifier |
 | `HAS_CUSTOM_CERTS` | `false` | Set to `true` when custom CA certs are present |

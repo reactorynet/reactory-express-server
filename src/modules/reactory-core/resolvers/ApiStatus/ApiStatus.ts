@@ -4,6 +4,7 @@ import { resolver, query, property } from "@reactory/server-core/models/graphql/
 import { ReactoryAnonUser } from '@reactory/server-core/context/AnonUser';
 import { isNil, isArray, filter, intersection, uniq } from 'lodash';
 import moment from 'moment';
+import { PLATFORM_ROLES } from '@reactory/server-modules/reactory-core/utils/platformRoles';
 const packageJson = require(path.join(process.cwd(), 'package.json'));
 
 
@@ -152,7 +153,13 @@ export const getRoles = async (context: Reactory.Server.IReactoryContext): Promi
       // Safe fallback if roles is still empty for an authenticated user
       if (roles.length === 0) {
         let fallbackRoles: string[] = [];
-        if (isArray(user.roles) && user.roles.length > 0) {
+        // Document-level roles are copied into this partner ONLY for a user
+        // with no memberships at all (the seeded sysadmin, legacy single-tenant
+        // accounts), for whom they are the sole record of what they hold. A user
+        // who is a member elsewhere gets this partner's default roles: copying
+        // their document roles would persist an ADMIN of another partner as an
+        // ADMIN of this one.
+        if (memberships.length === 0 && isArray(user.roles) && user.roles.length > 0) {
           fallbackRoles = user.roles.filter((r: string) => r && r !== 'ANON');
         }
         if (fallbackRoles.length === 0) {
@@ -195,14 +202,21 @@ export const getRoles = async (context: Reactory.Server.IReactoryContext): Promi
       }
     } catch (error) {
       context.log(`Error in getRoles for user ${getUserDisplayName()}: ${error.message}`, { error }, 'error', 'ApiStatus:getRoles');
-      // If user has global roles, use them as resilient fallback even on error
-      if (isArray(user.roles) && user.roles.length > 0) {
+      // A user with no memberships keeps their document-level roles as a
+      // resilient fallback; for anyone else they are not this partner's roles.
+      if (memberships.length === 0 && isArray(user.roles) && user.roles.length > 0) {
         const globalRoles = user.roles.filter((r: string) => r && r !== 'ANON');
         if (globalRoles.length > 0) {
           return { roles: uniq(globalRoles), alt_roles: [] };
         }
       }
       return { roles: [], alt_roles: [] };
+    }
+    // Platform roles (SYSADMIN, SYSTEM) are not partner roles: `User.hasRole`
+    // honours them from the user document in every partner, so report them in
+    // every partner too, or the client would hide what the server allows.
+    if (isArray(user.roles)) {
+      user.roles.filter((r: string) => PLATFORM_ROLES.includes(r)).forEach((r: string) => roles.push(r));
     }
   } else {
     roles.push('ANON');

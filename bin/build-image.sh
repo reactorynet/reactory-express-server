@@ -35,8 +35,8 @@ export REACTORY_ENV_ID
 # ── Node version from .nvmrc ───────────────────────────────────────────────────
 NODE_VERSION=$(cat .nvmrc 2>/dev/null | tr -d '[:space:]')
 if [ -z "$NODE_VERSION" ]; then
-  echo "⚠️  .nvmrc not found or empty — falling back to default node version 20.19.4"
-  NODE_VERSION="20.19.4"
+  echo "⚠️  .nvmrc not found or empty — falling back to default node version 24.22.3"
+  NODE_VERSION="24.22.3"
 fi
 
 # ── Certificate preflight check ───────────────────────────────────────────────

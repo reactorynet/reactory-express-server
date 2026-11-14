@@ -9,6 +9,8 @@ import { getAvailableLanguages } from '@reactory/server-core/express/i18n/langua
 import { validateUserLocale } from '@reactory/server-modules/reactory-core/utils/userLanguage';
 import { PagedUserResults, ReactoryUserFilterInput, ReactoryUserQueryFailed, ReactoryUserQueryResult } from './types';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
+import { assertCanAdministerPartner, assertCanGrantRoles } from '@reactory/server-modules/reactory-core/utils/partnerAuthority';
+import { redactAuthenticationProps, redactSession } from '@reactory/server-modules/reactory-core/utils/userCredentialRedaction';
 
 /**
  * A 24 character hexadecimal object id.
@@ -30,6 +32,50 @@ const OBJECT_ID_PATTERN = /^[a-fA-F0-9]{24}$/;
 interface IUserServiceWithOrganizationLookup extends Reactory.Service.IReactoryUserService {
   findOrganizationById(organizationId: string): Promise<Reactory.Models.IOrganizationDocument>;
 }
+
+const CREDENTIAL_READER_ROLES = ['ADMIN', 'SUPPORT_ADMIN'];
+
+/** The enabled memberships `user` holds in partner `partnerId`. */
+const membershipsInPartner = (user: any, partnerId: string): any[] => {
+  if (!user || partnerId.length === 0 || !Array.isArray(user.memberships)) return [];
+  return user.memberships.filter((membership: any) =>
+    membership
+    && membership.enabled !== false
+    && String(membership.clientId ?? '') === partnerId);
+};
+
+/**
+ * Whether the caller may read a user record's credential-bearing fields
+ * (`sessionInfo`, `authentications`).
+ *
+ * The account owner may always read their own. ADMIN and SUPPORT_ADMIN are the
+ * documented escalation path for account support, but only within one partner:
+ * the caller must hold the role in an enabled membership of the CURRENT
+ * partner, and the target must be a member of that partner too.
+ *
+ * `context.hasRole` is deliberately not used: `User.hasRole` falls back to the
+ * document-level `roles`, which aggregates roles from every partner, so an
+ * ADMIN of any tenant would pass it everywhere.
+ *
+ * Everybody else - including a plain USER reading a colleague, a ticket author
+ * or a comment author - gets `null` rather than an error, so one refused field
+ * cannot break a shared query.
+ */
+const canReadUserCredentials = (usr: any, context?: Reactory.Server.IReactoryContext): boolean => {
+  if (!usr || !context) return false;
+
+  const targetId = String(usr._id ?? usr.id ?? '');
+  const callerId = String(context.user?._id ?? '');
+  if (targetId.length > 0 && targetId === callerId) return true;
+
+  const partnerId = String(context.partner?._id ?? '');
+  const callerIsPartnerAdmin = membershipsInPartner(context.user, partnerId).some((membership: any) =>
+    Array.isArray(membership.roles)
+    && membership.roles.some((role: string) => CREDENTIAL_READER_ROLES.includes(role)));
+  if (!callerIsPartnerAdmin) return false;
+
+  return membershipsInPartner(usr, partnerId).length > 0;
+};
 
 //@ts-ignore
 @resolver
@@ -110,6 +156,39 @@ class UserResolver {
   linked_agents(user: { linked_agents: any }) {
     return user.linked_agents || [];
   }
+
+  /**
+   * Session history, owner/admin only.
+   *
+   * `sessionInfo[].jwtPayload.refresh` is a LIVE refresh token: it can mint new
+   * access tokens for that session. Exposing the field to every caller that can
+   * reach a User (support ticket authors, comment authors, team members) turned
+   * any of those reads into a credential dump.
+   *
+   * Even for an allowed caller the refresh token is stripped: the session list
+   * is device/session metadata, and nothing in the product reads the token from
+   * GraphQL (the client never refreshes through it - the server does).
+   */
+  @property('User', 'sessionInfo')
+  sessionInfo(usr: any, args: any, context: Reactory.Server.IReactoryContext) {
+    if (!canReadUserCredentials(usr, context)) return null;
+
+    const sessions: any[] = Array.isArray(usr?.sessionInfo) ? usr.sessionInfo : [];
+    return sessions.map(redactSession);
+  }
+
+  /**
+   * Linked authentication providers, owner/admin only.
+   *
+   * `props` already projects down to non-secret bookkeeping fields (see
+   * `UserAuthentication.props`), but the collection itself still names every
+   * provider the account can be used with, so it is not public.
+   */
+  @property('User', 'authentications')
+  authentications(usr: any, args: any, context: Reactory.Server.IReactoryContext) {
+    if (!canReadUserCredentials(usr, context)) return null;
+    return Array.isArray(usr?.authentications) ? usr.authentications : [];
+  }
   
 
   // --- Query Resolvers ---
@@ -141,18 +220,8 @@ class UserResolver {
 
   @property('UserAuthentication', 'props')  
   userAuthProps(auth: { props: any }, context: Reactory.Server.IReactoryContext) {        
-    if (auth.props) {
-      const filteredProps: any = {};
-      // we don't send any sensitive information back unless the user has elevated permissions
-      const allowedKeys = ['lastLogin', 'loginCount', 'failedLoginAttempts', 'lockoutExpiry', 'twoFactorEnabled'];
-      Object.keys(auth.props).forEach((key) => {
-        if (allowedKeys.includes(key)) {
-          filteredProps[key] = auth.props[key];
-        }
-      });
-      return filteredProps;
-    }
-    return null;
+    // Never the provider tokens/secrets: the shared allowlist keeps bookkeeping only.
+    return redactAuthenticationProps(auth.props);
   }
 
   // --- Mutation Resolvers ---
@@ -245,10 +314,9 @@ class UserResolver {
    * else's session. Authorization to *administer* an organization lives in
    * `OrganizationService`, not here.
    *
-   * Membership is the only authority. `user.hasRole(...)` cannot be used for
-   * this check: it falls back to document-level roles, and provisioning unions
-   * membership roles into `user.roles`, so a user carrying ORGANIZATION_ADMIN on
-   * the document would pass for an organization they are not a member of.
+   * Membership is the only authority. `user.hasRole(...)` is not used for this
+   * check: a partner-level role satisfies its organization-scoped form, and this
+   * switch requires an enabled membership of the organization itself.
    *
    * Failures are typed, and deliberately distinct so the client can pick the
    * right message:
@@ -345,6 +413,10 @@ class UserResolver {
     context: Reactory.Server.IReactoryContext
   ) {
     const { input, clientId, password = crypto.randomBytes(16).toString('hex'), roles: userRoles = ['USER'] } = params;
+    // An existing email gets a membership added instead of a new account, so
+    // this is a membership grant: authority over `clientId`, never platform roles.
+    assertCanAdministerPartner(context, clientId);
+    assertCanGrantRoles(context, userRoles);
     const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
     const systemService = context.getService<Reactory.Service.IReactorySystemService>('core.SystemService@1.0.0');
     
