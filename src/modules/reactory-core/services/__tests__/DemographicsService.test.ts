@@ -60,7 +60,10 @@ const makeContext = (policy: IRolePolicy = {}) => {
       clientId: partnerId,
       organizationId: null,
       businessUnitId: null,
-      roles: ['USER'],
+      // A platform ADMIN holds ADMIN on their partner-level membership: memberships
+      // are the only authority now (document-level roles no longer leak across
+      // partners through User.hasRole).
+      roles: policy.admin ? ['USER', 'ADMIN'] : ['USER'],
       enabled: true,
     },
     ...(policy.memberOf || []).map((organizationId) => ({

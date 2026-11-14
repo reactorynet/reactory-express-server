@@ -9,6 +9,7 @@ import { getAvailableLanguages } from '@reactory/server-core/express/i18n/langua
 import { validateUserLocale } from '@reactory/server-modules/reactory-core/utils/userLanguage';
 import { PagedUserResults, ReactoryUserFilterInput, ReactoryUserQueryFailed, ReactoryUserQueryResult } from './types';
 import { safeCDNUrl } from '@reactory/server-core/utils/url/safeUrl';
+import { assertCanAdministerPartner, assertCanGrantRoles } from '@reactory/server-modules/reactory-core/utils/partnerAuthority';
 
 /**
  * A 24 character hexadecimal object id.
@@ -245,10 +246,9 @@ class UserResolver {
    * else's session. Authorization to *administer* an organization lives in
    * `OrganizationService`, not here.
    *
-   * Membership is the only authority. `user.hasRole(...)` cannot be used for
-   * this check: it falls back to document-level roles, and provisioning unions
-   * membership roles into `user.roles`, so a user carrying ORGANIZATION_ADMIN on
-   * the document would pass for an organization they are not a member of.
+   * Membership is the only authority. `user.hasRole(...)` is not used for this
+   * check: a partner-level role satisfies its organization-scoped form, and this
+   * switch requires an enabled membership of the organization itself.
    *
    * Failures are typed, and deliberately distinct so the client can pick the
    * right message:
@@ -345,6 +345,10 @@ class UserResolver {
     context: Reactory.Server.IReactoryContext
   ) {
     const { input, clientId, password = crypto.randomBytes(16).toString('hex'), roles: userRoles = ['USER'] } = params;
+    // An existing email gets a membership added instead of a new account, so
+    // this is a membership grant: authority over `clientId`, never platform roles.
+    assertCanAdministerPartner(context, clientId);
+    assertCanGrantRoles(context, userRoles);
     const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
     const systemService = context.getService<Reactory.Service.IReactorySystemService>('core.SystemService@1.0.0');
     

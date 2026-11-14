@@ -95,7 +95,10 @@ const makeContext = (policy: IRolePolicy = {}) => {
       clientId: partnerId,
       organizationId: null,
       businessUnitId: null,
-      roles: ['USER'],
+      // A platform ADMIN holds ADMIN on their partner-level membership: memberships
+      // are the only authority now (document-level roles no longer leak across
+      // partners through User.hasRole).
+      roles: policy.admin ? ['USER', 'ADMIN'] : ['USER'],
       enabled: true,
     },
     ...orgAdminOf.map((organizationId) => ({
@@ -273,27 +276,27 @@ describe('OrganizationService org-scoped authorization (ORG-005)', () => {
   /**
    * The model-level hazard behind F1, pinned with the REAL `User` document.
    *
-   * `UserSchema.methods.hasRole` ends with a document-level fallback, and
-   * `UserService.createUserForOrganization` copies membership roles into
-   * `user.roles`. A caller provisioned as an organization administrator
-   * therefore satisfies `hasRole(partner, 'ORGANIZATION_ADMIN', anyOrgId)` for
-   * every organization. The first assertion documents that (so the test cannot
-   * silently become meaningless); the rest prove that the service no longer
-   * trusts that query and denies the cross-organization call.
+   * `UserSchema.methods.hasRole` used to end with a document-level fallback
+   * while `UserService.createUserForOrganization` copied membership roles into
+   * `user.roles`, so a caller provisioned as an organization administrator
+   * satisfied `hasRole(partner, 'ORGANIZATION_ADMIN', anyOrgId)` for every
+   * organization. The model is now fixed: for a user with memberships, the
+   * document roles are ignored. The first assertion pins that; the rest prove
+   * the service denies the cross-organization call either way.
    */
   describe('real User model - document-level roles cannot cross organizations (F1)', () => {
-    it('documents that the model reports the role for every organization', () => {
+    it('the model reports the role only for the organization the membership names', () => {
       const context = makeContext({ orgAdminOf: [`${organizationA._id}`] });
 
       expect(context.user.roles).toContain('ORGANIZATION_ADMIN');
       expect(
         context.user.hasRole(`${context.partner._id}`, 'ORGANIZATION_ADMIN', `${organizationA._id}`),
       ).toBe(true);
-      // If this ever becomes false the model was fixed upstream; the service
-      // check below remains correct either way.
+      // The document still carries the role (fixture), but it no longer
+      // reaches organization B through the model.
       expect(
         context.user.hasRole(`${context.partner._id}`, 'ORGANIZATION_ADMIN', `${organizationB._id}`),
-      ).toBe(true);
+      ).toBe(false);
     });
 
     it('denies setOrganization on organization B and never persists B', async () => {
