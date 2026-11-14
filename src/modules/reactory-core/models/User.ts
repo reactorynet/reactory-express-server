@@ -6,6 +6,7 @@ import * as lodash from 'lodash';
 import logger from '@reactory/server-core/logging';
 import Reactory from '@reactorynet/reactory-core';
 import PasswordHasher from '@reactory/server-core/authentication/password/PasswordHasher';
+import { PLATFORM_ROLES } from '@reactory/server-modules/reactory-core/utils/platformRoles';
 import { redactUserCredentials } from '@reactory/server-modules/reactory-core/utils/userCredentialRedaction';
 
 
@@ -266,66 +267,59 @@ UserSchema.methods.fullName = function fullName(email = false) {
 };
 
 /**
- * Extension Method on Model to check for a particular role / claim
+ * Whether the user holds `role` in partner `clientId`, optionally scoped to an
+ * organization and business unit.
+ *
+ * Memberships are the only authority for users that have any. The document-level
+ * `roles` array is consulted only:
+ *  - for users with NO memberships (the seeded system administrator, legacy
+ *    single-tenant accounts), and
+ *  - for the platform roles (`PLATFORM_ROLES`), which are not partner roles.
+ *
+ * It used to be an unconditional final fallback. Because provisioning copied
+ * every membership's roles onto the document, an ADMIN of one partner then held
+ * ADMIN in every partner - a cross-tenant escalation.
+ *
+ * A role held at a wider scope of the SAME partner covers a narrower one: a
+ * partner-level ADMIN passes an organization- or business-unit-scoped ADMIN
+ * check, and an organization-level role passes a check for one of that
+ * organization's business units. (Before, the document fallback answered those
+ * checks; this keeps them working without reaching across partners.)
  */
-UserSchema.methods.hasRole = function hasRole(clientId: string, role = 'USER', 
+UserSchema.methods.hasRole = function hasRole(clientId: string, role = 'USER',
   organizationId: string | typeof ObjectId = null, businessUnitId: string | typeof ObjectId = null) {
+  const documentRoles: string[] = isArray(this.roles) ? this.roles : [];
+
   if (!this.memberships || this.memberships.length === 0) {
-    if (isArray(this.roles) && this.roles.includes(role)) {
-      return true;
-    }
-    return false;
+    return documentRoles.includes(role);
   }
 
-  let matches = [];
+  if (PLATFORM_ROLES.includes(role) && documentRoles.includes(role)) return true;
 
   if (ObjectId.isValid(clientId) === false) {
     return false;
   }
 
-  matches = filter(this.memberships, (membership) => {
-    return new ObjectId(membership.clientId).equals(new ObjectId(clientId));
-  });
+  const partnerMemberships = filter(this.memberships, (membership) =>
+    !lodash.isNil(membership?.clientId)
+    && new ObjectId(membership.clientId).equals(new ObjectId(clientId)));
 
-  if (ObjectId.isValid(organizationId) === true) {
-    matches = filter(
-      matches,
-      membership => new ObjectId(membership.organizationId).equals(new ObjectId(organizationId)),
-    );
-  } else {
-    matches = filter(
-      matches,
-      membership => lodash.isNil(membership.organizationId) === true,
-    );
-  }
+  const scopeMatches = (value: any, wanted: any) => (wanted
+    ? !lodash.isNil(value) && new ObjectId(value).equals(new ObjectId(wanted))
+    : lodash.isNil(value));
 
-  if (ObjectId.isValid(businessUnitId)) {
-    matches = filter(
-      matches,
-      membership => new ObjectId(membership.businessUnitId).equals(new ObjectId(businessUnitId)),
-    );
-  } else {
-    matches = filter(
-      matches,
-      membership => lodash.isNil(membership.businessUnitId) === true,
-    );
-  }
+  const holdsAt = (orgId: any, buId: any) => partnerMemberships.some((membership) =>
+    scopeMatches(membership.organizationId, orgId)
+    && scopeMatches(membership.businessUnitId, buId)
+    && isArray(membership.roles)
+    && membership.roles.includes(role));
 
-  if (isArray(matches) === true && matches.length > 0) {
-    const matched = lodash.filter(
-      matches,
-      membership => isArray(membership.roles) === true
-        && lodash.intersection(membership.roles, [role]).length > 0,
-    );
-    if (isArray(matched) === true && matched.length >= 1) return true;
-    if (lodash.isObject(matched) === true && isArray((matched as any).roles) === true) {
-      return true;
-    }
-  }
+  const org = ObjectId.isValid(organizationId as any) ? organizationId : null;
+  const bu = ObjectId.isValid(businessUnitId as any) ? businessUnitId : null;
 
-  if (isArray(this.roles) && this.roles.includes(role)) {
-    return true;
-  }
+  if (holdsAt(org, bu)) return true;
+  if (org && bu && holdsAt(org, null)) return true;
+  if ((org || bu) && holdsAt(null, null)) return true;
 
   return false;
 };
@@ -365,10 +359,9 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(
     );
   }
 
-  const hasMatched = isArray(matches) === true && matches.length > 0;
-  if (hasMatched) return true;
-
-  return isArray(this.roles) && this.roles.length > 0 && !this.roles.every((r: string) => r === 'ANON');
+  // A user with memberships is a member of exactly the partners they hold
+  // memberships in; their document-level roles say nothing about this one.
+  return isArray(matches) === true && matches.length > 0;
 };
 
 // eslint-disable-next-line max-len

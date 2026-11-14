@@ -327,13 +327,12 @@ export class OrganizationService implements Reactory.Service.IReactoryOrganizati
    * Returns true when the caller holds `role` on exactly this organization.
    *
    * This deliberately does NOT use `user.hasRole(partnerId, role,
-   * organizationId)`. That method ends with an unconditional document-level
-   * fallback (`this.roles.includes(role)`), and
-   * `UserService.createUserForOrganization` unions membership roles into
-   * `user.roles`. A user provisioned as an ORGANIZATION_ADMIN therefore carries
-   * the role on the user document, and the model's scoped query returns true
-   * for *every* organization - precisely the cross-tenant bypass this helper
-   * exists to prevent.
+   * organizationId)`. That method once ended with an unconditional
+   * document-level fallback while provisioning copied membership roles onto
+   * `user.roles`, so it returned true for *every* organization. It no longer
+   * does either, but it still lets a partner-level role satisfy an
+   * organization-scoped check, which is wider than "administers exactly this
+   * organization".
    *
    * The membership is the only authoritative source, so it is matched directly
    * here using the same key the model's scoped query uses for an
