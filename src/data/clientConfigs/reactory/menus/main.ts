@@ -235,6 +235,25 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
       roles: ["USER"],
     },
     {
+      // Entry point for the communicator's transactional email-template editor
+      // (`communicator.EmailTemplates@1.0.0`, provided by the
+      // reactory-communicator plugin submodule). The matching route
+      // (`communicator-templates` -> /communicator/templates) has existed since
+      // WP-2 and is seeded from `helpers/defaultRoutes`, but with no menu entry
+      // the page was unreachable from the UI — the editor could only be opened
+      // by typing the URL. Roles mirror the route's: the server enforces
+      // COMMUNICATOR_TEMPLATE_VIEW / _ADMIN, and ADMIN is the platform bypass.
+      ordinal: 10,
+      title: "reactory:reactory.menu.email-templates",
+      link: "/communicator/templates",
+      icon: "mail",
+      roles: [
+        "COMMUNICATOR_TEMPLATE_VIEW",
+        "COMMUNICATOR_TEMPLATE_ADMIN",
+        "ADMIN",
+      ],
+    },
+    {
       ordinal: 94,
       title: "reactory:reactory.menu.support",
       link: "/support/open",
