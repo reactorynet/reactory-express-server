@@ -831,8 +831,10 @@ const SupportTicketAIAction = (props: AIActionProps) => {
                 const parsed = Number(event.target.value);
                 setMaxReviewCycles(Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1);
               }}
-              inputProps={{ min: 1, max: 10 }}
               sx={{ width: 180 }}
+              slotProps={{
+                htmlInput: { min: 1, max: 10 }
+              }}
             />
           </Box>
 
@@ -890,17 +892,19 @@ const SupportTicketAIAction = (props: AIActionProps) => {
                 ? 'Using project "' + selectedProject.name + '". The agent works in an isolated git worktree of this repository.'
                 : 'The agent works in an isolated git worktree of this repository. Remembered for next time.'
             }
-            InputProps={{
-              sx: { fontFamily: 'monospace', fontSize: '0.85rem' },
-              // The shared browser requires ADMIN/DEVELOPER; for everyone else the
-              // field itself is the only (and sufficient) way to set the workdir.
-              endAdornment: canBrowseFolders ? (
-                <Button size="small" startIcon={<Icon>folder_open</Icon>} onClick={openPicker}>
-                  Browse
-                </Button>
-              ) : null,
-            }}
             sx={{ mb: pickerNotice ? 0.5 : 2 }}
+            slotProps={{
+              input: {
+                sx: { fontFamily: 'monospace', fontSize: '0.85rem' },
+                // The shared browser requires ADMIN/DEVELOPER; for everyone else the
+                // field itself is the only (and sufficient) way to set the workdir.
+                endAdornment: canBrowseFolders ? (
+                  <Button size="small" startIcon={<Icon>folder_open</Icon>} onClick={openPicker}>
+                    Browse
+                  </Button>
+                ) : null,
+              }
+            }}
           />
 
           {pickerNotice && (
@@ -958,8 +962,10 @@ const SupportTicketAIAction = (props: AIActionProps) => {
             value={context}
             onChange={(event: any) => setContext(event.target.value)}
             helperText="Pre-filled with the acceptance criteria and the machine-read report/verdict contract. Edit freely."
-            InputProps={{ sx: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
             sx={{ mb: 1 }}
+            slotProps={{
+              input: { sx: { fontFamily: 'monospace', fontSize: '0.8rem' } }
+            }}
           />
 
           {/*
@@ -1027,13 +1033,19 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               }
             >
               <Typography variant="subtitle2">AI run started</Typography>
-              <Typography variant="caption" display="block">
+              <Typography variant="caption" sx={{
+                display: "block"
+              }}>
                 Instance <Link component="span" sx={{ fontFamily: 'monospace' }}>{result.instanceId}</Link> • Status: {result.status}
               </Typography>
-              <Typography variant="caption" display="block">
+              <Typography variant="caption" sx={{
+                display: "block"
+              }}>
                 Workflow {result.workflowId || resolvedWorkflowId} · brief {(context || "").trim().length} characters included.
               </Typography>
-              <Typography variant="caption" display="block">
+              <Typography variant="caption" sx={{
+                display: "block"
+              }}>
                 The agent's conversation is in your chat history. A pull request approval task will appear in your
                 task list when the review passes.
               </Typography>

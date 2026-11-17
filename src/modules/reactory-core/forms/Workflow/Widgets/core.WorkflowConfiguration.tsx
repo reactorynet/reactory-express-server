@@ -15,7 +15,7 @@ const WorkflowConfiguration = (props: WorkflowConfigurationProps) => {
   ]);
 
   const { MaterialCore } = Material;
-  const { Box, Typography, Icon, Grid, Paper, Divider } = MaterialCore;
+  const { Box, Typography, Icon, Grid2: Grid, Paper, Divider } = MaterialCore;
 
   const ConfigItem = ({ label, value, icon }: any) => (
     <Box sx={{ mb: 2 }}>
@@ -40,7 +40,11 @@ const WorkflowConfiguration = (props: WorkflowConfigurationProps) => {
 
       <Grid container spacing={3}>
         {/* Basic Configuration */}
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
             <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
               Basic Settings
@@ -73,7 +77,11 @@ const WorkflowConfiguration = (props: WorkflowConfigurationProps) => {
         </Grid>
 
         {/* Runtime Configuration */}
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
             <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
               Runtime Settings
@@ -107,7 +115,10 @@ const WorkflowConfiguration = (props: WorkflowConfigurationProps) => {
 
         {/* Dependencies */}
         {workflow.dependencies && workflow.dependencies.length > 0 && (
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Paper variant="outlined" sx={{ p: 2 }}>
               <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Icon>link</Icon>
@@ -116,7 +127,13 @@ const WorkflowConfiguration = (props: WorkflowConfigurationProps) => {
 
               <Grid container spacing={2}>
                 {workflow.dependencies.map((dep: any, index: number) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
+                  <Grid
+                    key={index}
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                      md: 4
+                    }}>
                     <Box 
                       sx={{ 
                         p: 2, 
@@ -144,12 +161,24 @@ const WorkflowConfiguration = (props: WorkflowConfigurationProps) => {
                         )}
                       </Box>
 
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{
+                          display: "block",
+                          mb: 0.5
+                        }}>
                         Type: {dep.type}
                       </Typography>
 
                       {dep.version && (
-                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            display: "block",
+                            mb: 0.5
+                          }}>
                           Version: {dep.version}
                         </Typography>
                       )}
@@ -172,7 +201,10 @@ const WorkflowConfiguration = (props: WorkflowConfigurationProps) => {
 
         {/* Environment Variables */}
         {workflow.configuration?.environment && Object.keys(workflow.configuration.environment).length > 0 && (
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Paper variant="outlined" sx={{ p: 2 }}>
               <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
                 Environment Variables

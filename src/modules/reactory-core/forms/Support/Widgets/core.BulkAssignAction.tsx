@@ -234,8 +234,10 @@ const BulkAssignAction = (props: BulkAssignActionProps) => {
               onChange={(e) => setSearchText(e.target.value)}
               disabled={processing}
               placeholder="Search by name or email..."
-              InputProps={{
-                startAdornment: <Icon sx={{ mr: 1 }}>search</Icon>,
+              slotProps={{
+                input: {
+                  startAdornment: <Icon sx={{ mr: 1 }}>search</Icon>,
+                }
               }}
             />
 
