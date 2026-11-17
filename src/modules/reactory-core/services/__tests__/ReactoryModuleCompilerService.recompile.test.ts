@@ -124,6 +124,25 @@ describe('ReactoryModuleCompilerService recompile-after-failure', () => {
     expect(compileSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('writes a failure stub that parses and runs when the compiler message has quotes and newlines', async () => {
+    const message = 'Unexpected token "<"\n  at `entry.tsx` (3:7)\u001b[39m \'quoted\'';
+    compileSpy.mockResolvedValue({ success: false, messages: [message] });
+
+    await service.compileModule(baseModule('export default 1;'));
+
+    const stub = fs.readFileSync(compiledFile, 'utf8');
+    const api = { log: jest.fn(), createNotification: jest.fn() };
+    // eslint-disable-next-line no-new-func
+    const run = new Function('window', stub);
+    expect(() => run({ reactory: { api } })).not.toThrow();
+    expect(api.createNotification).toHaveBeenCalledTimes(1);
+    expect(api.log).toHaveBeenCalledWith(
+      `Compilation Failure for ${moduleId} --> [${message}]`,
+      expect.objectContaining({ module: expect.objectContaining({ id: moduleId }) }),
+      'error',
+    );
+  });
+
   it('rebuilds once the source changes after a failed attempt', async () => {
     fs.mkdirSync(path.dirname(compiledFile), { recursive: true });
     fs.writeFileSync(compiledFile, 'stale');
