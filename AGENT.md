@@ -282,8 +282,8 @@ Rules:
   `src/express/middleware/__tests__/ordering.test.ts` is excluded).
 - Results must not depend on the machine. A test that relies on wall-clock timing makes mutants
   flip between Killed and Survived; pin time with a mocked clock instead.
-- Stryker is pinned to 9.6.1 (the latest that supports Node 20); upgrading it changes mutant
-  counts, so upgrade and refresh the baseline in one change.
+- Stryker is pinned to an exact version (10.1.1); upgrading it changes mutant counts, so upgrade
+  and refresh the baseline in one change.
 - A full scope run takes a few minutes and uses one jest process per core (less one); pass
   `--concurrency <n>` on a smaller machine. Re-runs are incremental (`--force` for a clean run).
 - **Modules** (separate repositories under `src/modules`) opt in with a `mutation.config.json`

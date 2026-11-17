@@ -1,12 +1,12 @@
 {
   "_comment": [
     "Per-file allowance of undetected (Survived + NoCoverage) mutants. The gate fails when a file exceeds its allowance.",
-    "Written by `yarn test:mutation:update-baseline`; see docs/MUTATION_TESTING.md. `score` and `mutants` are informational."
+    "Written by `yarn test:mutation:update-baseline`; see docs/MUTATION_TESTING.md in reactory-express-server. `score` and `mutants` are informational."
   ],
-  "stryker": "9.6.1",
-  "score": 56.77,
-  "mutants": 2089,
-  "undetected": 903,
+  "stryker": "10.1.1",
+  "score": 56.85,
+  "mutants": 2118,
+  "undetected": 914,
   "files": {
     "src/application/decorators/audit/audit.ts": {
       "mutants": 162,
@@ -39,14 +39,14 @@
       "score": 75
     },
     "src/application/decorators/telemetry/metric.ts": {
-      "mutants": 144,
-      "undetected": 30,
-      "score": 79.17
+      "mutants": 153,
+      "undetected": 34,
+      "score": 77.78
     },
     "src/application/decorators/telemetry/traced.ts": {
-      "mutants": 22,
+      "mutants": 24,
       "undetected": 3,
-      "score": 86.36
+      "score": 87.5
     },
     "src/authentication/oauth/state.ts": {
       "mutants": 23,
@@ -69,34 +69,34 @@
       "score": 64.41
     },
     "src/exceptions/index.ts": {
-      "mutants": 369,
-      "undetected": 153,
-      "score": 58.54
+      "mutants": 373,
+      "undetected": 155,
+      "score": 58.45
     },
     "src/express/cors.ts": {
-      "mutants": 247,
-      "undetected": 207,
-      "score": 16.19
+      "mutants": 249,
+      "undetected": 208,
+      "score": 16.47
     },
     "src/express/middleware/ReactoryClient.ts": {
-      "mutants": 250,
-      "undetected": 175,
-      "score": 30
+      "mutants": 256,
+      "undetected": 178,
+      "score": 30.47
     },
     "src/express/middleware/ReactoryCors.ts": {
-      "mutants": 48,
+      "mutants": 50,
       "undetected": 18,
-      "score": 62.5
+      "score": 64
     },
     "src/utils/graph/mergeResolver.ts": {
-      "mutants": 131,
+      "mutants": 134,
       "undetected": 61,
-      "score": 53.44
+      "score": 54.48
     },
     "src/utils/hash.ts": {
-      "mutants": 60,
-      "undetected": 23,
-      "score": 61.67
+      "mutants": 61,
+      "undetected": 24,
+      "score": 60.66
     },
     "src/utils/string.ts": {
       "mutants": 69,

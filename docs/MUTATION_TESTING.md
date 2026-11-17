@@ -101,20 +101,20 @@ elsewhere, and a new survivor in a file somebody is improving would be lost
 in the noise. Stryker's own `thresholds.break` is therefore off; `high` and
 `low` only colour the report.
 
-### Baseline (2026-11-14, Stryker 9.6.1)
+### Baseline (2026-11-17, Stryker 10.1.1)
 
-The first full run measured 2,089 mutants. 1,186 were detected (1,176 killed, 10 timed out); 579 survived and 324 had no coverage. The same commit gives the same result mutant for mutant on a developer machine (17 workers) and in a CI-shaped checkout (3 workers). Sorted weakest first, so the top rows are where new tests pay off most:
+The full run measures 2,118 mutants. 1,204 were detected (1,193 killed, 11 timed out); 582 survived and 332 had no coverage. The same commit gives the same result mutant for mutant on a developer machine (17 workers) and in a CI-shaped checkout (3 workers). Moving from Stryker 9.6.1 to 10.1.1 changed no mutant's status; it added 29 `CallExpression` mutants, 11 of them undetected. Sorted weakest first, so the top rows are where new tests pay off most:
 
 | File | Mutants | Undetected (allowance) | Score |
 |---|---:|---:|---:|
-| `src/express/cors.ts` | 247 | 207 | 16.19% |
-| `src/express/middleware/ReactoryClient.ts` | 250 | 175 | 30.00% |
+| `src/express/cors.ts` | 249 | 208 | 16.47% |
+| `src/express/middleware/ReactoryClient.ts` | 256 | 178 | 30.47% |
 | `src/application/decorators/telemetry/gauge.ts` | 63 | 30 | 52.38% |
-| `src/utils/graph/mergeResolver.ts` | 131 | 61 | 53.44% |
-| `src/exceptions/index.ts` | 369 | 153 | 58.54% |
+| `src/utils/graph/mergeResolver.ts` | 134 | 61 | 54.48% |
+| `src/exceptions/index.ts` | 373 | 155 | 58.45% |
 | `src/authentication/oauth/token-crypto.ts` | 32 | 13 | 59.38% |
-| `src/utils/hash.ts` | 60 | 23 | 61.67% |
-| `src/express/middleware/ReactoryCors.ts` | 48 | 18 | 62.50% |
+| `src/utils/hash.ts` | 61 | 24 | 60.66% |
+| `src/express/middleware/ReactoryCors.ts` | 50 | 18 | 64.00% |
 | `src/application/decorators/cache/cached.ts` | 78 | 28 | 64.10% |
 | `src/authentication/password/PasswordHasher.ts` | 118 | 42 | 64.41% |
 | `src/application/decorators/rateLimit/rateLimit.ts` | 147 | 43 | 70.75% |
@@ -122,14 +122,14 @@ The first full run measured 2,089 mutants. 1,186 were detected (1,176 killed, 10
 | `src/application/decorators/telemetry/histogram.ts` | 4 | 1 | 75.00% |
 | `src/utils/url/subresourceIntegrity.ts` | 87 | 21 | 75.86% |
 | `src/application/decorators/audit/audit.ts` | 162 | 37 | 77.16% |
-| `src/application/decorators/telemetry/metric.ts` | 144 | 30 | 79.17% |
+| `src/application/decorators/telemetry/metric.ts` | 153 | 34 | 77.78% |
 | `src/utils/string.ts` | 69 | 11 | 84.06% |
-| `src/application/decorators/telemetry/traced.ts` | 22 | 3 | 86.36% |
 | `src/authentication/oauth/token-store.ts` | 31 | 4 | 87.10% |
+| `src/application/decorators/telemetry/traced.ts` | 24 | 3 | 87.50% |
 | `src/authentication/oauth/state.ts` | 23 | 2 | 91.30% |
-| **All 20 files** | **2,089** | **903** | **56.77%** |
+| **All 20 files** | **2,118** | **914** | **56.85%** |
 
-The weak spots are the request pipeline. `cors.ts` and `ReactoryClient.ts` account for 382 of the 903 undetected mutants, many of them NoCoverage (code paths no unit suite reaches), followed by the error sanitiser in `exceptions/index.ts`. `token-crypto.ts` has 12 NoCoverage mutants, almost all in `resolveMasterKey` (the env-var fallback chain and the "no key configured" error): the suite always passes a key explicitly, so the code that picks one in production is never run.
+The weak spots are the request pipeline. `cors.ts` and `ReactoryClient.ts` account for 386 of the 914 undetected mutants, many of them NoCoverage (code paths no unit suite reaches), followed by the error sanitiser in `exceptions/index.ts`. `token-crypto.ts` has 12 NoCoverage mutants, almost all in `resolveMasterKey` (the env-var fallback chain and the "no key configured" error): the suite always passes a key explicitly, so the code that picks one in production is never run.
 
 ### Refreshing the baseline
 
@@ -247,7 +247,7 @@ does for the state TTL).
 | `incremental` | on | a re-run only re-tests mutants whose code or covering tests changed; `--force` or deleting `reports/mutation/stryker-incremental.json` gives a clean run |
 | `jest.config.detectOpenHandles` | off | several suites leave timers behind; detection stalls the run |
 | `timeoutMS` | 10000 | headroom for the slower crypto suites (PBKDF2) under full parallel load |
-| version | 9.6.1 | the latest Stryker that supports Node 20 (`.nvmrc`); Stryker 10 needs Node 22 |
+| version | 10.1.1, exact | mutant counts depend on the mutators, so the version moves only with a refreshed baseline |
 
 ## Modules
 
