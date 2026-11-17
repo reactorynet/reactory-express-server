@@ -83,7 +83,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     Chip,
     CircularProgress,
     List,
-    ListItem,
+    ListItemButton,
     ListItemAvatar,
     ListItemText,
     Avatar,
@@ -632,9 +632,8 @@ const SupportTicketOverview = (props: OverviewProps) => {
           {userSearchResults.length > 0 && !selectedUser && (
             <List dense sx={{ maxHeight: 200, overflow: 'auto' }}>
               {userSearchResults.map((user: UserSearchResult) => (
-                <ListItem
+                <ListItemButton
                   key={user.id}
-                  button
                   selected={selectedUser?.id === user.id}
                   onClick={() => {
                     setSelectedUser(user);
@@ -649,7 +648,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
                     primary={`${user.firstName} ${user.lastName}`}
                     secondary={user.email}
                   />
-                </ListItem>
+                </ListItemButton>
               ))}
             </List>
           )}
