@@ -1,5 +1,4 @@
 import Reactory from '@reactorynet/reactory-core';
-import { minmalExtendedOptions } from '../froala';
 
 export const splitPreviewEditor: Reactory.Schema.IFormUISchema = {
   'ui:options': {
@@ -31,7 +30,6 @@ export const splitPreviewEditor: Reactory.Schema.IFormUISchema = {
     'ui:widget': 'RichEditorWidget',
     'ui:title': null,
     'ui:options': {
-      froalaOptions: minmalExtendedOptions,
       splitPreview: true,
     },
   },

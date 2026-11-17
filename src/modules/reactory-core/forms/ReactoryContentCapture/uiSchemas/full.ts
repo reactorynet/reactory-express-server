@@ -1,7 +1,6 @@
 
 import { DatePickerProps } from '@mui/lab';
 import { FilledInputProps, InputProps } from '@mui/material';
-import { minmalExtendedOptions } from '../froala';
 
 const datePickerProps: Partial<DatePickerProps> = {
   mask: '____-__-__'
@@ -52,7 +51,6 @@ export const fullEditor: Reactory.Schema.IFormUISchema = {
     'ui:widget': 'RichEditorWidget',
     'ui:title': null,
     'ui:options': {
-      froalaOptions: minmalExtendedOptions,
     },
   },
   topics: {

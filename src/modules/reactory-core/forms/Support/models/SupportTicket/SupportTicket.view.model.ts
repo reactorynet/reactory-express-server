@@ -22,24 +22,6 @@ import ReactorySupportTicketModel from '@reactory/server-core/modules/reactory-c
 import { ObjectId } from 'mongodb';
 import GridUISchema from './GridUISchema';
 
-const {
-  API_ROOT
-} = process.env as Reactory.Server.ReactoryEnvironment;
-
-const FroalaOptions = (context: Reactory.Server.IReactoryContext) => ({
-  imageManagerLoadMethod: 'GET',
-  imageDefaultWidth: 300,
-  imageDefaultDisplay: 'inline',
-  imageUploadMethod: 'POST',
-  fileUploadURL: `${API_ROOT}/froala/upload/file`,
-  videoUploadURL: `${API_ROOT}/froala/upload/video`,
-  imageUploadURL: `${API_ROOT}/froala/upload/image`,
-  requestHeaders: {
-     'x-client-key': `${context.partner.key}`,
-     'x-client-public-key': `${(context.partner as any).publicKey}`,
-    }
-});
-
 @fqn("core.SupportTicketDocumentViewModel@1.0.0")
 class SupportTicketDocument {
   @id(true)
@@ -211,7 +193,7 @@ class SupportTicketModel {
   @title("reactory:support-ticket.model.description.title")
   @min(10, "reactory:support-ticket.model.description.minLength")
   @max(1000, "reactory:support-ticket.model.description.maxLength")
-  @widget('FroalaWidget', FroalaOptions)
+  @widget('RichEditorWidget', {})
   description: string;
 
   @title("reactory:support-ticket.model.status.title")
