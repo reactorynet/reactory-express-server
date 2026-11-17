@@ -66,3 +66,7 @@ coverage/coverage-final.json
 # Fixture tree created at test time by test/setup/testEnvironment.ts (APP_DATA_ROOT)
 src/reactory/test-data/
 backups/*
+
+# Stryker mutation testing (see docs/MUTATION_TESTING.md)
+.stryker-tmp/
+reports/mutation/
