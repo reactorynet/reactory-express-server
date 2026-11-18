@@ -84,8 +84,10 @@ const BulkDeleteAction = (props: BulkDeleteActionProps) => {
             <ListItem key={index}>
               <ListItemText
                 primary={`${workflow.nameSpace}.${workflow.name}@${workflow.version}`}
-                primaryTypographyProps={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
                 secondary={`Executions: ${workflow.statistics?.totalExecutions || 0}`}
+                slotProps={{
+                  primary: { fontFamily: 'monospace', fontSize: '0.875rem' }
+                }}
               />
             </ListItem>
           ))}
@@ -102,7 +104,9 @@ const BulkDeleteAction = (props: BulkDeleteActionProps) => {
           label={
             <Typography variant="body2">
               Also delete all execution instances
-              <Typography variant="caption" display="block" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{
+                display: "block"
+              }}>
                 This will remove all execution history
               </Typography>
             </Typography>

@@ -1,4 +1,3 @@
-import { inlineFroalaOptions } from '../froala'
 
 
 
@@ -23,7 +22,6 @@ export const inlineEditor: Reactory.Schema.IFormUISchema = {
     'ui:title': null,
     'ui:options': {
       showLabel: false,
-      options: inlineFroalaOptions,
     },
   },
   title: {

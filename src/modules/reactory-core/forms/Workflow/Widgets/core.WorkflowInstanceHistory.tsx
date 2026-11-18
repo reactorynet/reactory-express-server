@@ -617,7 +617,9 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                   <Typography variant="caption">
                     {formatRelativeTime(instance.startTime)}
                   </Typography>
-                  <Typography variant="caption" display="block" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary" sx={{
+                    display: "block"
+                  }}>
                     {formatDateTime(instance.startTime)}
                   </Typography>
                 </TableCell>
@@ -803,7 +805,9 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                       <Typography variant="caption">
                         {formatRelativeTime(execution.createTime)}
                       </Typography>
-                      <Typography variant="caption" display="block" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary" sx={{
+                        display: "block"
+                      }}>
                         {formatDateTime(execution.createTime)}
                       </Typography>
                     </TableCell>
@@ -813,7 +817,9 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                           <Typography variant="caption">
                             {formatRelativeTime(execution.completeTime)}
                           </Typography>
-                          <Typography variant="caption" display="block" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" sx={{
+                            display: "block"
+                          }}>
                             {formatDateTime(execution.completeTime)}
                           </Typography>
                         </>
@@ -1103,7 +1109,9 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
         onClose={closeInspector}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { maxHeight: '90vh' } }}
+        slotProps={{
+          paper: { sx: { maxHeight: '90vh' } }
+        }}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

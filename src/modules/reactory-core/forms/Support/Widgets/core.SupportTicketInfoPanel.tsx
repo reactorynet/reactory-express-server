@@ -33,7 +33,7 @@ const TicketInfoPanel = (props: StatusWidgetProps) => {
   if(ticket === null || ticket === undefined) return (<>NO TICKET DATA</>)
 
   const { MaterialCore, MaterialStyles } = Material;
-  const { Typography, Grid } = MaterialCore;
+  const { Typography, Grid2: Grid } = MaterialCore;
   const [modal, setModal] = React.useState<boolean>(false)
 
   const onMenuSelect = (evt: React.SyntheticEvent, menu: Reactory.Client.Components.IDropDownMenuItem) => {
@@ -59,21 +59,51 @@ const TicketInfoPanel = (props: StatusWidgetProps) => {
 
   return (
     <Grid container>
-      <Grid alignItems={'center'} item xs={12} sm={12} md={6} lg={4} xl={3}>        
+      <Grid
+        size={{
+          xs: 12,
+          sm: 12,
+          md: 6,
+          lg: 4,
+          xl: 3
+        }}
+        sx={{
+          alignItems: 'center'
+        }}>        
         <Typography variant="body2">
           {ticket.reference || "NO REFERENCE NO"}          
         </Typography>
       </Grid>
-      <Grid alignItems={'center'} item xs={12} sm={12} md={6} lg={4} xl={3}>        
+      <Grid
+        size={{
+          xs: 12,
+          sm: 12,
+          md: 6,
+          lg: 4,
+          xl: 3
+        }}
+        sx={{
+          alignItems: 'center'
+        }}>        
         <Typography variant='body2'>
           {new Date(ticket.createdDate).toISOString()}
         </Typography>                
       </Grid>
-      <Grid alignItems={'center'} item xs={12} sm={12} md={6} lg={4} xl={3}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 12,
+          md: 6,
+          lg: 4,
+          xl: 3
+        }}
+        sx={{
+          alignItems: 'center'
+        }}>
         <Typography variant='body2'>
           Assigned To: {assignedTo.firstName} {assignedTo.lastName}
         </Typography>        
-      </Grid>      
+      </Grid>
     </Grid>
   );
 };

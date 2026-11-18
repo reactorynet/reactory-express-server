@@ -130,7 +130,7 @@ const STATUS_LABEL: Record<string, string> = {
   REGISTRY_ERROR: 'Registry error',
 };
 
-// Rich text editors (Froala / Quill) create heavyweight DOM structures per
+// Rich text editors (Quill) create heavyweight DOM structures per
 // line.  Above this threshold we fall back to a plain <pre> to avoid OOM
 // crashes and infinite onChange re-render loops.
 const LARGE_CONTENT_THRESHOLD = 200 * 1024; // 200 KB
@@ -574,16 +574,6 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
               fullWidth
               value={yamlSource}
               onChange={(e: any) => handleEditorChange(e.target.value)}
-              InputProps={{
-                readOnly: readonly,
-                style: {
-                  fontFamily: '"Courier New", Courier, monospace',
-                  fontSize: '0.8125rem',
-                  lineHeight: 1.6,
-                  padding: '12px 16px',
-                },
-                disableUnderline: true,
-              }}
               variant="standard"
               sx={{
                 height: editorHeight,
@@ -596,6 +586,18 @@ const WorkflowYamlView = (props: WorkflowYamlViewProps) => {
                   height: '100% !important',
                   overflowY: 'auto !important',
                 },
+              }}
+              slotProps={{
+                input: {
+                  readOnly: readonly,
+                  style: {
+                    fontFamily: '"Courier New", Courier, monospace',
+                    fontSize: '0.8125rem',
+                    lineHeight: 1.6,
+                    padding: '12px 16px',
+                  },
+                  disableUnderline: true,
+                }
               }}
             />
           </Box>

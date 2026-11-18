@@ -637,19 +637,21 @@ const SupportTicketsToolbar = (props: SupportTicketsToolbarProps) => {
             value={searchInput}
             onChange={handleSearchInputChange}
             onKeyPress={handleKeyPress}
-            InputProps={{
-              startAdornment: SearchIcon && (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-              endAdornment: searchInput && ClearIcon && (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={handleClearSearch}>
-                    <ClearIcon />
-                  </IconButton>
-                </InputAdornment>
-              )
+            slotProps={{
+              input: {
+                startAdornment: SearchIcon && (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+                endAdornment: searchInput && ClearIcon && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={handleClearSearch}>
+                      <ClearIcon />
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }
             }}
           />
           <Button

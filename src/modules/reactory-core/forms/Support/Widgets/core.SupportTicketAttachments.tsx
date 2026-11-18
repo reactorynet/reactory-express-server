@@ -62,7 +62,7 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
     Icon,
     IconButton,
     Tooltip,
-    Grid,
+    Grid2: Grid,
     Card,
     CardMedia,
     CardContent,
@@ -364,7 +364,13 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
       ) : (
         <Grid container spacing={2}>
           {documents.map((doc) => (
-            <Grid item xs={12} sm={6} md={4} key={doc.id}>
+            <Grid
+              key={doc.id}
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 4
+              }}>
               <Card variant="outlined">
                 {isImage(doc.mimetype) && doc.link ? (
                   <CardMedia

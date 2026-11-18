@@ -111,7 +111,13 @@ const BulkTagAction = (props: BulkTagActionProps) => {
 
         {tags.length > 0 && (
           <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: "block",
+                mb: 1
+              }}>
               Tags to {operation}:
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>

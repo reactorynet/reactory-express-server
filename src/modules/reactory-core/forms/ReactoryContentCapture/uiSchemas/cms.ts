@@ -1,5 +1,4 @@
 import Reactory from '@reactorynet/reactory-core';
-import { minmalExtendedOptions } from '../froala';
 
 export const cmsEditor: Reactory.Schema.IFormUISchema = {
   'ui:options': {
@@ -57,7 +56,6 @@ export const cmsEditor: Reactory.Schema.IFormUISchema = {
     'ui:widget': 'RichEditorWidget',
     'ui:title': null,
     'ui:options': {
-      froalaOptions: minmalExtendedOptions,
     },
   },
   topics: {
