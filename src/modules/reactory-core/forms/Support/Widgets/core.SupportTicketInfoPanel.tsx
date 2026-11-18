@@ -33,7 +33,7 @@ const TicketInfoPanel = (props: StatusWidgetProps) => {
   if(ticket === null || ticket === undefined) return (<>NO TICKET DATA</>)
 
   const { MaterialCore, MaterialStyles } = Material;
-  const { Typography, Grid2: Grid } = MaterialCore;
+  const { Typography, Grid } = MaterialCore;
   const [modal, setModal] = React.useState<boolean>(false)
 
   const onMenuSelect = (evt: React.SyntheticEvent, menu: Reactory.Client.Components.IDropDownMenuItem) => {

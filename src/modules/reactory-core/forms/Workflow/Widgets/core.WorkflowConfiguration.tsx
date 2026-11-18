@@ -15,7 +15,7 @@ const WorkflowConfiguration = (props: WorkflowConfigurationProps) => {
   ]);
 
   const { MaterialCore } = Material;
-  const { Box, Typography, Icon, Grid2: Grid, Paper, Divider } = MaterialCore;
+  const { Box, Typography, Icon, Grid, Paper, Divider } = MaterialCore;
 
   const ConfigItem = ({ label, value, icon }: any) => (
     <Box sx={{ mb: 2 }}>
