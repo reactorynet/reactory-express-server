@@ -89,3 +89,62 @@ jobs:
 
       - name: Build server image
         run: bin/build-image.sh reactory podman
+
+      # bin/build-image.sh BUILDS the image but never RUNS it, so a broken entrypoint, a missing
+      # file: dependency or an unprovisioned browser is invisible to this workflow.
+      #
+      # playwright ships no browser; the Dockerfile provisions one with `playwright install`. This
+      # runs the launch gate baked into the image, so a browser/package mismatch - the exact
+      # failure that made playwright 1.59.1 -> 1.65.1 look safe on a developer machine and break in
+      # production - fails HERE instead of at first browser macro.
+      - name: Verify the built image can launch a browser
+        run: |
+          set -euo pipefail
+          if command -v podman >/dev/null 2>&1; then RUNTIME=podman; else RUNTIME=docker; fi
+          IMAGE="localhost/reactory/reactory-express-server:$(node -p "require('./package.json').version")"
+          echo "Running the image launch gate against ${IMAGE} with ${RUNTIME}"
+          "${RUNTIME}" run --rm "${IMAGE}" node /usr/local/bin/reactory-playwright-smoke.js
+
+      # A launch is necessary but not sufficient: navigate, read the title and render a real PNG,
+      # which is what ReactorPlaywrightService and the playwright workflow steps do.
+      - name: Verify a real navigation and screenshot inside the image
+        run: |
+          set -euo pipefail
+          if command -v podman >/dev/null 2>&1; then RUNTIME=podman; else RUNTIME=docker; fi
+          IMAGE="localhost/reactory/reactory-express-server:$(node -p "require('./package.json').version")"
+          "${RUNTIME}" run --rm "${IMAGE}" node /usr/local/bin/reactory-playwright-smoke.js \
+            --navigate "data:text/html,<title>reactory-image-smoke</title><h1>navigation ok</h1>" \
+            --screenshot /tmp/image-smoke.png
+          echo "navigation + screenshot produced a PNG inside the image"
+
+      # The operator-facing record of what provisioning costs, so a future change that starts
+      # pulling firefox or webkit is visible in the log.
+      - name: Report image size and provisioned browser
+        run: |
+          set -euo pipefail
+          if command -v podman >/dev/null 2>&1; then RUNTIME=podman; else RUNTIME=docker; fi
+          IMAGE="localhost/reactory/reactory-express-server:$(node -p "require('./package.json').version")"
+          echo "image size: $("${RUNTIME}" image inspect "${IMAGE}" --format '{{.Size}}') bytes"
+          "${RUNTIME}" run --rm "${IMAGE}" node -e "
+            const path = require('path');
+            const { chromium } = require(path.join(process.cwd(), 'node_modules', 'playwright'));
+            console.log('  PLAYWRIGHT_BROWSERS_PATH =', process.env.PLAYWRIGHT_BROWSERS_PATH);
+            console.log('  executablePath           =', chromium.executablePath());
+          "
+
+      # The image COPYs bin/verify/playwright-browser-smoke.js; the module repo keeps its own copy
+      # at scripts/verify/ for jest and local runs. They must stay byte-identical or the gate that
+      # guards the image stops guarding what the module tests. src/modules is absent in this
+      # workflow (the modules are separate repos), so this reports SKIPPED there rather than
+      # claiming a pass it did not verify.
+      - name: Check the two copies of the smoke test agree
+        run: |
+          set -euo pipefail
+          MODULE_COPY="src/modules/reactory-reactor/scripts/verify/playwright-browser-smoke.js"
+          if [ -f "$MODULE_COPY" ]; then
+            diff -u "$MODULE_COPY" bin/verify/playwright-browser-smoke.js
+            echo "identical: $MODULE_COPY == bin/verify/playwright-browser-smoke.js"
+          else
+            echo "SKIPPED (not passed): $MODULE_COPY is absent - src/modules is gitignored in this"
+            echo "checkout, so the drift check can only run in a checkout that has the module."
+          fi
