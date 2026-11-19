@@ -86,7 +86,7 @@ const BulkDeleteAction = (props: BulkDeleteActionProps) => {
                 primary={`${workflow.nameSpace}.${workflow.name}@${workflow.version}`}
                 secondary={`Executions: ${workflow.statistics?.totalExecutions || 0}`}
                 slotProps={{
-                  primary: { fontFamily: 'monospace', fontSize: '0.875rem' }
+                  primary: { sx: { fontFamily: 'monospace', fontSize: '0.875rem' } }
                 }}
               />
             </ListItem>

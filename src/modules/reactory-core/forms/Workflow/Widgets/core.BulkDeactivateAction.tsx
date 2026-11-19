@@ -78,7 +78,7 @@ const BulkDeactivateAction = (props: BulkDeactivateActionProps) => {
                 primary={`${workflow.nameSpace}.${workflow.name}@${workflow.version}`}
                 secondary={workflow.description || 'No description'}
                 slotProps={{
-                  primary: { fontFamily: 'monospace', fontSize: '0.875rem' }
+                  primary: { sx: { fontFamily: 'monospace', fontSize: '0.875rem' } }
                 }}
               />
             </ListItem>
