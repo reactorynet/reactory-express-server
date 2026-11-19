@@ -778,7 +778,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               label="Agent"
               value={agentId}
               onChange={(event: any) => setAgentId(String(event.target.value))}
-              MenuProps={{ PaperProps: { sx: { maxHeight: 420 } } }}
+              MenuProps={{ slotProps: { paper: { sx: { maxHeight: 420 } } } }}
             >
               {agentOptions.length === 0 && (
                 <MenuItem value={agentId}>{agentId}</MenuItem>
@@ -846,7 +846,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               label="Project"
               value={selectedProjectId}
               onChange={(event: any) => chooseProject(String(event.target.value))}
-              MenuProps={{ PaperProps: { sx: { maxHeight: 380 } } }}
+              MenuProps={{ slotProps: { paper: { sx: { maxHeight: 380 } } } }}
             >
               <MenuItem value="">
                 <em>Custom path (set the repository field below)</em>
@@ -943,7 +943,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               label="Reviewer"
               value={reviewerId}
               onChange={(event: any) => setReviewerId(String(event.target.value))}
-              MenuProps={{ PaperProps: { sx: { maxHeight: 380 } } }}
+              MenuProps={{ slotProps: { paper: { sx: { maxHeight: 380 } } } }}
             >
               {reviewerOptions.length === 0 && (
                 <MenuItem value={reviewerId}>{reviewerId}</MenuItem>
