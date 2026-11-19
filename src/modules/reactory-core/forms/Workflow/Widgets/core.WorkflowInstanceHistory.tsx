@@ -757,7 +757,7 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                     indeterminate={numSelected > 0 && numSelected < rowCount}
                     checked={rowCount > 0 && numSelected === rowCount}
                     onChange={handleSelectAll}
-                    inputProps={{ 'aria-label': 'select all' }}
+                    slotProps={{ input: { 'aria-label': 'select all' } }}
                   />
                 </TableCell>
                 <TableCell>Status</TableCell>
@@ -790,7 +790,7 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                           e.stopPropagation();
                           handleSelectOne(execution.id);
                         }}
-                        inputProps={{ 'aria-labelledby': `select-${execution.id}` }}
+                        slotProps={{ input: { 'aria-labelledby': `select-${execution.id}` } }}
                       />
                     </TableCell>
                     <TableCell onClick={() => viewInstance(execution.id)}>

@@ -15,7 +15,7 @@ const WorkflowOverview = (props: WorkflowOverviewProps) => {
   ]);
 
   const { MaterialCore } = Material;
-  const { Box, Typography, Grid2: Grid, Chip, Divider, Icon, Paper } = MaterialCore;
+  const { Box, Typography, Grid, Chip, Divider, Icon, Paper } = MaterialCore;
 
   const InfoItem = ({ label, value, icon }: any) => (
     <Box sx={{ mb: 2 }}>

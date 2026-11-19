@@ -62,7 +62,7 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
     Icon,
     IconButton,
     Tooltip,
-    Grid2: Grid,
+    Grid,
     Card,
     CardMedia,
     CardContent,

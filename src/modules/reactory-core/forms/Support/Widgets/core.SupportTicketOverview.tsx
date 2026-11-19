@@ -64,7 +64,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
   const { 
     Box, 
     Typography, 
-    Grid2: Grid, 
+    Grid, 
     Paper,
     Divider,
     Button,

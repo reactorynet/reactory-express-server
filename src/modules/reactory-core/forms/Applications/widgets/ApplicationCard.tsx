@@ -55,7 +55,7 @@ const ApplicationCard = (props: IApplicationCardProps) => {
 
   const { 
     Paper,
-    Grid2,
+    Grid,
     Avatar,
     Card,
     CardMedia,
