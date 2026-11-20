@@ -1,0 +1,112 @@
+{
+  "_comment": [
+    "Per-file allowance of undetected (Survived + NoCoverage) mutants. The gate fails when a file exceeds its allowance.",
+    "Written by `yarn test:mutation:update-baseline`; see docs/MUTATION_TESTING.md in reactory-express-server. `score` and `mutants` are informational."
+  ],
+  "stryker": "10.1.1",
+  "score": 56.85,
+  "mutants": 2118,
+  "undetected": 914,
+  "files": {
+    "src/application/decorators/audit/audit.ts": {
+      "mutants": 162,
+      "undetected": 37,
+      "score": 77.16
+    },
+    "src/application/decorators/cache/cached.ts": {
+      "mutants": 78,
+      "undetected": 28,
+      "score": 64.1
+    },
+    "src/application/decorators/rateLimit/rateLimit.ts": {
+      "mutants": 147,
+      "undetected": 43,
+      "score": 70.75
+    },
+    "src/application/decorators/telemetry/counter.ts": {
+      "mutants": 4,
+      "undetected": 1,
+      "score": 75
+    },
+    "src/application/decorators/telemetry/gauge.ts": {
+      "mutants": 63,
+      "undetected": 30,
+      "score": 52.38
+    },
+    "src/application/decorators/telemetry/histogram.ts": {
+      "mutants": 4,
+      "undetected": 1,
+      "score": 75
+    },
+    "src/application/decorators/telemetry/metric.ts": {
+      "mutants": 153,
+      "undetected": 34,
+      "score": 77.78
+    },
+    "src/application/decorators/telemetry/traced.ts": {
+      "mutants": 24,
+      "undetected": 3,
+      "score": 87.5
+    },
+    "src/authentication/oauth/state.ts": {
+      "mutants": 23,
+      "undetected": 2,
+      "score": 91.3
+    },
+    "src/authentication/oauth/token-crypto.ts": {
+      "mutants": 32,
+      "undetected": 13,
+      "score": 59.38
+    },
+    "src/authentication/oauth/token-store.ts": {
+      "mutants": 31,
+      "undetected": 4,
+      "score": 87.1
+    },
+    "src/authentication/password/PasswordHasher.ts": {
+      "mutants": 118,
+      "undetected": 42,
+      "score": 64.41
+    },
+    "src/exceptions/index.ts": {
+      "mutants": 373,
+      "undetected": 155,
+      "score": 58.45
+    },
+    "src/express/cors.ts": {
+      "mutants": 249,
+      "undetected": 208,
+      "score": 16.47
+    },
+    "src/express/middleware/ReactoryClient.ts": {
+      "mutants": 256,
+      "undetected": 178,
+      "score": 30.47
+    },
+    "src/express/middleware/ReactoryCors.ts": {
+      "mutants": 50,
+      "undetected": 18,
+      "score": 64
+    },
+    "src/utils/graph/mergeResolver.ts": {
+      "mutants": 134,
+      "undetected": 61,
+      "score": 54.48
+    },
+    "src/utils/hash.ts": {
+      "mutants": 61,
+      "undetected": 24,
+      "score": 60.66
+    },
+    "src/utils/string.ts": {
+      "mutants": 69,
+      "undetected": 11,
+      "score": 84.06
+    },
+    "src/utils/url/subresourceIntegrity.ts": {
+      "mutants": 87,
+      "undetected": 21,
+      "score": 75.86
+    }
+  }
+}
