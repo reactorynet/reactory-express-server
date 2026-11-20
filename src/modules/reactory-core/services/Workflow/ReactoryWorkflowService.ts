@@ -1465,7 +1465,14 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
         // out meant a typo (e.g. "COMPLETED") produced an empty list, which then
         // fell back to the default [COMPLETE, TERMINATED] - so a caller who asked
         // for something narrow got the widest possible sweep instead of an error.
-        const unknown = normalised.filter((name) => !Object.prototype.hasOwnProperty.call(WorkflowESStatus, name));
+        // `hasOwnProperty` alone also accepts numeric strings ("2"), because a
+        // numeric enum carries a reverse mapping: WorkflowESStatus['2'] === 'COMPLETE'.
+        // Those resolve to a NAME rather than a number and would later be rejected
+        // by the lifecycle manager with a confusing "only COMPLETE and TERMINATED"
+        // message. Require a forward, numeric-valued mapping instead.
+        const unknown = normalised.filter(
+          (name) => typeof (WorkflowESStatus as any)[name] !== 'number'
+        );
         if (unknown.length > 0) {
           const valid = Object.keys(WorkflowESStatus).filter((k) => Number.isNaN(Number(k)));
           return {
