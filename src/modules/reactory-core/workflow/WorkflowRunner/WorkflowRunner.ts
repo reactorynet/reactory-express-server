@@ -265,6 +265,8 @@ export class WorkflowRunner {
 
   /** Handle for the periodic retention sweep (WORKFLOW_RETENTION_DAYS). */
   private retentionTimer: NodeJS.Timeout | null = null;
+  /** One-shot handle for the first post-boot sweep; cleared by stop(). */
+  private retentionKickoff: NodeJS.Timeout | null = null;
   private retentionRunning: boolean = false;
 
   constructor(props: IWorkflowRunnerProps, context: Reactory.Server.IReactoryContext) {
@@ -628,7 +630,10 @@ export class WorkflowRunner {
         // Same TLS / retryWrites settings as Mongoose (WP-B4).
         const mongoPersistence = new MongoDBPersistence(MONGOOSE, mongoClientOptions());
         await mongoPersistence.connect;
-        await this.ensureWorkflowQueryIndexes();
+        // The provider MUST be passed in: this runs before getPersistenceProvider()
+        // returns, and `initialize()` only assigns `this.persistence` from the
+        // return value - so `this.persistence` is still null here.
+        await this.ensureWorkflowQueryIndexes(mongoPersistence);
         return mongoPersistence;
       }
 
@@ -693,13 +698,25 @@ export class WorkflowRunner {
    * Index creation is idempotent (same key spec = no-op), so this is safe on every
    * boot. Failure is logged and ignored: a missing index degrades performance, it
    * must never prevent the runner from starting.
+   *
+   * @param provider The provider to index. Passed explicitly rather than read from
+   *   `this.persistence`: this is awaited inside `getPersistenceProvider()` before
+   *   that function returns, and `initialize()` only assigns `this.persistence`
+   *   from the return value - so reading the field here silently saw `null` on
+   *   every real boot and the index was never created.
    */
-  private async ensureWorkflowQueryIndexes(): Promise<void> {
+  private async ensureWorkflowQueryIndexes(provider: any): Promise<void> {
     try {
-      const collection: any = (this.persistence as any)?.workflowCollection;
+      const collection: any = provider?.workflowCollection;
 
       if (!collection || typeof collection.createIndex !== 'function') {
-        logger.debug('Workflow index bootstrap skipped: persistence provider exposes no Mongo collection');
+        // Mongo is the only provider that has this collection, so reaching here
+        // with the Mongo provider means something is wrong - not a benign skip.
+        // warn, not debug: at debug level the index silently never existed.
+        logger.warn(
+          'Workflow index bootstrap could not find a MongoDB collection on the persistence provider; ' +
+          'the failed-execution-pointer rollup will run as a collection scan'
+        );
         return;
       }
 
@@ -750,9 +767,13 @@ export class WorkflowRunner {
       try {
         // Drain in bounded passes so one window does not scan forever.
         for (let pass = 0; pass < 10; pass += 1) {
+          // Smaller batch than the API default: each batch loads whole documents
+          // (~65KB each) just to collect ids, so 500 would mean ~33MB resident per
+          // batch. 100 keeps the sweep's footprint well below a registry read while
+          // still draining a backlog in bounded passes.
           const result = await this.lifecycleManager.sweepExpiredInstances({
             olderThanDays: days,
-            batchSize: 500,
+            batchSize: 100,
             maxBatches: 20,
           });
 
@@ -780,8 +801,10 @@ export class WorkflowRunner {
     );
 
     // First pass shortly after boot, not immediately, so startup is not perturbed.
-    const kickoff = setTimeout(() => { void runSweep(); }, 60_000);
-    if (typeof kickoff.unref === 'function') kickoff.unref();
+    // Held on the instance so stop() can cancel it: a stop within the first minute
+    // would otherwise fire a sweep against a stopped lifecycle manager.
+    this.retentionKickoff = setTimeout(() => { void runSweep(); }, 60_000);
+    if (typeof this.retentionKickoff.unref === 'function') this.retentionKickoff.unref();
   }
 
   /**
@@ -790,9 +813,16 @@ export class WorkflowRunner {
   public async stop(): Promise<void> {
     try {
       // Stop the retention sweeper before touching the lifecycle manager it uses.
+      // Both the interval AND the one-shot kickoff must be cancelled - the kickoff
+      // fires 60s after boot, so a stop inside that window would otherwise sweep
+      // against a stopped lifecycle manager.
       if (this.retentionTimer) {
         clearInterval(this.retentionTimer);
         this.retentionTimer = null;
+      }
+      if (this.retentionKickoff) {
+        clearTimeout(this.retentionKickoff);
+        this.retentionKickoff = null;
       }
 
       // Stop lifecycle manager

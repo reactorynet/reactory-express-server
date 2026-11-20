@@ -593,6 +593,12 @@ export class WorkflowLifecycleManager extends EventEmitter {
   // a registry list; they are not used to drive execution.
   private statsSnapshot: { at: number; value: IInstanceStatsSnapshot } | null = null;
   private statsSnapshotInFlight: Promise<IInstanceStatsSnapshot> | null = null;
+  /**
+   * Incremented by invalidateInstanceStatsCache(). A scan that started BEFORE an
+   * invalidation must not write its (now stale) result back into the cache - see
+   * the guard in the `.then` below.
+   */
+  private statsCacheGeneration: number = 0;
 
   /**
    * Snapshot of instance statistics, coalesced and cached.
@@ -654,9 +660,17 @@ export class WorkflowLifecycleManager extends EventEmitter {
       };
     };
 
+    // Capture the generation this scan belongs to. If invalidateInstanceStatsCache()
+    // runs while it is in flight (e.g. a retention sweep deleted rows mid-scan), the
+    // result reflects pre-delete counts and must NOT be cached - otherwise the stale
+    // numbers are served for the whole TTL.
+    const generation = this.statsCacheGeneration;
+
     const inFlight = build()
       .then((value) => {
-        this.statsSnapshot = { at: Date.now(), value };
+        if (generation === this.statsCacheGeneration) {
+          this.statsSnapshot = { at: Date.now(), value };
+        }
         return value;
       })
       .finally(() => {
@@ -667,9 +681,15 @@ export class WorkflowLifecycleManager extends EventEmitter {
     return inFlight;
   }
 
-  /** Invalidate the cached instance-stats snapshot (e.g. after a delete sweep). */
+  /**
+   * Invalidate the cached instance-stats snapshot (e.g. after a delete sweep).
+   *
+   * Also bumps the generation so any scan already in flight cannot re-cache its
+   * pre-delete result when it resolves.
+   */
   public invalidateInstanceStatsCache(): void {
     this.statsSnapshot = null;
+    this.statsCacheGeneration += 1;
   }
 
   /**
@@ -1003,7 +1023,7 @@ export class WorkflowLifecycleManager extends EventEmitter {
     for (let batch = 0; batch < maxBatches; batch += 1) {
       // Always page from 0: the previous batch was deleted, so the next-oldest
       // window slides up. Skipping would skip rows we just removed.
-      const { instances } = await this.persistence.queryWorkflowInstances({
+      const { instances, total } = await this.persistence.queryWorkflowInstances({
         status: statuses as any,
         createdBefore: cutoff,
         take: batchSize,
@@ -1012,19 +1032,26 @@ export class WorkflowLifecycleManager extends EventEmitter {
         sortOrder: 'asc',
       });
 
+      batches += 1;
+
+      if (dryRun) {
+        // A dry run deletes nothing, so one page would come back forever. Report
+        // the EXACT match count from the provider's `total` (Mongo's is a
+        // countDocuments on the same filter, SQLite/Postgres return total too) -
+        // paging would cap `matched` at batchSize and under-report a backlog.
+        matched = typeof total === 'number' && total >= 0
+          ? Math.max(total, instances?.length ?? 0)
+          : (instances?.length ?? 0);
+        hasMore = false;
+        break;
+      }
+
       if (!instances || instances.length === 0) {
         hasMore = false;
         break;
       }
 
-      batches += 1;
       matched += instances.length;
-
-      if (dryRun) {
-        // Nothing was removed, so the same page would come back forever.
-        hasMore = instances.length >= batchSize;
-        break;
-      }
 
       const ids = instances.map((i: any) => String(i.id || i._id)).filter(Boolean);
       if (ids.length === 0) {

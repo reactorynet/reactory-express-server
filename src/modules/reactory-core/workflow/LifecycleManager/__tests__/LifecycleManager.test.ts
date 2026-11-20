@@ -719,6 +719,37 @@ describe('WorkflowLifecycleManager', () => {
       expect(result.deleted).toBe(0);
     });
 
+    // R2 regression. The dry run used to stop after one page and report that
+    // page's length, so a 67k backlog sized as `matched: 500`. It must report the
+    // provider's exact `total`, which the same query already computes.
+    it('dryRun reports the EXACT backlog from the provider total, not one page', async () => {
+      mockQuery.mockResolvedValue({ instances: [{ id: 'a' }, { id: 'b' }], total: 67246 });
+
+      const result = await lifecycleManager.sweepExpiredInstances({
+        olderThanDays: 30,
+        batchSize: 2,
+        dryRun: true,
+      });
+
+      expect(mockDeleteMany).not.toHaveBeenCalled();
+      expect(result.matched).toBe(67246);
+      expect(result.deleted).toBe(0);
+      // A dry run deletes nothing, so there is nothing to continue.
+      expect(result.hasMore).toBe(false);
+      expect(result.batches).toBe(1);
+    });
+
+    it('dryRun falls back to the page length when no total is reported', async () => {
+      mockQuery.mockResolvedValue({ instances: [{ id: 'a' }] });
+
+      const result = await lifecycleManager.sweepExpiredInstances({
+        olderThanDays: 30,
+        dryRun: true,
+      });
+
+      expect(result.matched).toBe(1);
+    });
+
     it('invalidates the cached stats snapshot after a real delete', async () => {
       await lifecycleManager.getInstanceStatsSnapshot();
       expect(mockGetStats).toHaveBeenCalledTimes(1);
@@ -733,6 +764,41 @@ describe('WorkflowLifecycleManager', () => {
 
       // A second scan proves the cache was dropped.
       expect(mockGetStats).toHaveBeenCalledTimes(2);
+    });
+
+    // A scan that STARTED before a sweep's delete must not re-cache its
+    // pre-delete counts when it finally resolves. The generation counter guards
+    // the `.then`, so the stale result is returned to its caller but never cached.
+    it('does not cache a scan that was invalidated while it was in flight', async () => {
+      let resolveSlowScan: (value: any) => void = () => {};
+      const slowScan = new Promise((resolve) => { resolveSlowScan = resolve; });
+
+      mockGetStats
+        .mockReturnValueOnce(slowScan as any)
+        .mockResolvedValue({
+          total: 5, byStatus: { 2: 5 }, averageCompletionTimeMs: null,
+          byDefinition: [], instancesWithFailedSteps: {},
+        });
+
+      // Start a scan and leave it pending.
+      const pending = lifecycleManager.getInstanceStatsSnapshot({ maxAgeMs: 0 });
+
+      // A sweep deletes rows and invalidates mid-scan.
+      mockQuery
+        .mockResolvedValueOnce({ instances: [{ id: 'a' }], total: 1 })
+        .mockResolvedValueOnce({ instances: [], total: 0 });
+      mockDeleteMany.mockResolvedValue(1);
+      await lifecycleManager.sweepExpiredInstances({ olderThanDays: 30 });
+
+      // The stale scan now resolves - its result must be discarded, not cached.
+      resolveSlowScan({
+        total: 999, byStatus: { 2: 999 }, averageCompletionTimeMs: null,
+        byDefinition: [], instancesWithFailedSteps: {},
+      });
+      await pending;
+
+      const fresh = await lifecycleManager.getInstanceStatsSnapshot();
+      expect(fresh.stats.total).toBe(5);
     });
 
     it('reports hasMore when a full batch was consumed', async () => {

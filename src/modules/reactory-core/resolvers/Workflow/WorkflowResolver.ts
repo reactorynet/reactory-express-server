@@ -86,9 +86,30 @@ class WorkflowResolver {
     context: Reactory.Server.IReactoryContext
   ) {
     const workflowService = getWorkflowService(context);
+
+    // Floor the cache-lifetime override. `statsMaxAgeMs: 0` means "rescan", and a
+    // single rescan of a large instance collection costs ~50s. Coalescing limits
+    // that to one at a time, but a caller could still drive back-to-back full
+    // aggregations deliberately. Clamp the floor (and allow 0 only for an
+    // administrator, who is expected to be diagnosing) so a routine WORKFLOW_OPERATOR
+    // cannot turn one query into a sustained scan.
+    const STATS_MIN_CACHE_MS = 5000;
+    const requested = params.statsMaxAgeMs;
+    let statsMaxAgeMs: number | undefined = requested;
+
+    if (typeof requested === 'number') {
+      // hasRole(clientId, role, organizationId?) - a single role per call.
+      const partnerId = (context as any)?.partner?._id;
+      const canForceRescan = typeof context?.user?.hasRole === 'function' && !!partnerId && (
+        context.user.hasRole(partnerId, 'ADMIN') === true ||
+        context.user.hasRole(partnerId, 'WORKFLOW_ADMIN') === true
+      );
+      statsMaxAgeMs = canForceRescan ? Math.max(requested, 0) : Math.max(requested, STATS_MIN_CACHE_MS);
+    }
+
     return workflowService.getWorkflows(params.filter, params.pagination, {
       includeStatistics: params.includeStatistics === true,
-      statsMaxAgeMs: params.statsMaxAgeMs,
+      statsMaxAgeMs,
     });
   }
 

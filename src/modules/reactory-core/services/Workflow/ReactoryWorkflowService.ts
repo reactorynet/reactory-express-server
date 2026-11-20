@@ -1456,12 +1456,34 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       }
 
       const statusNames = input?.statuses;
-      const statuses = Array.isArray(statusNames) && statusNames.length > 0
-        ? statusNames
-            .map((s) => String(s).toUpperCase())
-            .map((s) => (WorkflowESStatus as any)[s])
-            .filter((s): s is number => typeof s === 'number')
-        : undefined;
+      let statuses: number[] | undefined;
+
+      if (Array.isArray(statusNames) && statusNames.length > 0) {
+        const normalised = statusNames.map((s) => String(s).trim().toUpperCase());
+
+        // Reject unknown names instead of silently dropping them. Filtering them
+        // out meant a typo (e.g. "COMPLETED") produced an empty list, which then
+        // fell back to the default [COMPLETE, TERMINATED] - so a caller who asked
+        // for something narrow got the widest possible sweep instead of an error.
+        const unknown = normalised.filter((name) => !Object.prototype.hasOwnProperty.call(WorkflowESStatus, name));
+        if (unknown.length > 0) {
+          const valid = Object.keys(WorkflowESStatus).filter((k) => Number.isNaN(Number(k)));
+          return {
+            success: false,
+            message: `Unknown workflow status name(s): ${unknown.join(', ')}. Valid values: ${valid.join(', ')}.`,
+            matched: 0,
+            deleted: 0,
+            batches: 0,
+            hasMore: false,
+            cutoff: new Date().toISOString(),
+            statuses: [],
+            dryRun: input?.dryRun === true,
+            durationMs: Date.now() - startedAt,
+          };
+        }
+
+        statuses = normalised.map((name) => (WorkflowESStatus as any)[name] as number);
+      }
 
       const result = await lifecycleManager.sweepExpiredInstances({
         olderThanDays: input.olderThanDays,
@@ -1471,11 +1493,20 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
         dryRun: input.dryRun,
       });
 
+      // Word the message for the MODE. A dry run always has deleted === 0, so the
+      // old `deleted > 0 ? Deleted : "No ... were found"` ternary told an operator
+      // sizing the sweep that nothing matched when matched could be 67,000 - the
+      // worst possible message just before enabling a deleting job.
+      const isDryRun = input?.dryRun === true;
+      const message = isDryRun
+        ? `Dry run: ${result.matched} terminal instance(s) older than ${result.cutoff.toISOString()} would be deleted`
+        : result.deleted > 0
+          ? `Deleted ${result.deleted} terminal instances older than ${result.cutoff.toISOString()}`
+          : `No terminal instances older than ${result.cutoff.toISOString()} were found`;
+
       return {
         success: true,
-        message: result.deleted > 0
-          ? `Deleted ${result.deleted} terminal instances older than ${result.cutoff.toISOString()}`
-          : `No terminal instances older than ${result.cutoff.toISOString()} were found`,
+        message,
         matched: result.matched,
         deleted: result.deleted,
         batches: result.batches,
