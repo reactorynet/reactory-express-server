@@ -2,6 +2,7 @@ import {
   WorkflowLifecycleManager, 
   WorkflowStatus, 
   WorkflowPriority,
+  WorkflowESStatus,
   type IWorkflowInstance,
   type IWorkflowDependency,
   type IWorkflowLifecycleConfig
@@ -550,6 +551,201 @@ describe('WorkflowLifecycleManager', () => {
         id: instance.id,
         status: WorkflowStatus.RUNNING,
       }));
+    });
+  });
+
+  describe('instance stats snapshot (coalescing + caching)', () => {
+    // One provider scan must serve BOTH the status rollup and the failed-pointer
+    // counts. Before this existed the registry list called the provider twice per
+    // request, which on a large instance collection doubled an already-slow query.
+    const mockGetWorkflowInstanceStats = jest.fn();
+
+    const mockPersistence: any = {
+      getWorkflowInstanceStats: mockGetWorkflowInstanceStats,
+      queryWorkflowInstances: jest.fn().mockResolvedValue({ instances: [], total: 0 }),
+      deleteWorkflowInstances: jest.fn().mockResolvedValue(0),
+    };
+
+    const providerStats = {
+      total: 10,
+      // engine statuses: 0=Runnable 1=Suspended 2=Complete 3=Terminated 4=DeadLettered
+      byStatus: { 0: 1, 2: 7, 3: 2 },
+      averageCompletionTimeMs: 1234,
+      byDefinition: [
+        { workflowDefinitionId: 'core.X@1.0.0', total: 10, complete: 7, terminated: 2 },
+      ],
+      instancesWithFailedSteps: { 'core.X@1.0.0': 3 },
+    };
+
+    beforeEach(async () => {
+      jest.clearAllMocks();
+      // mockReset (not mockClear): a leftover mockResolvedValueOnce queue from a
+      // previous test would otherwise be consumed by this one.
+      mockGetWorkflowInstanceStats.mockReset();
+      mockGetWorkflowInstanceStats.mockResolvedValue(providerStats);
+      lifecycleManager = new WorkflowLifecycleManager(mockConfig);
+      await lifecycleManager.initialize({ persistence: mockPersistence });
+    });
+
+    it('serves status stats AND failed-step counts from a single provider scan', async () => {
+      const stats = await lifecycleManager.getWorkflowExecutionStats();
+      const failed = await lifecycleManager.getInstancesWithFailedSteps();
+
+      expect(mockGetWorkflowInstanceStats).toHaveBeenCalledTimes(1);
+      expect(stats.complete).toBe(7);
+      expect(stats.terminated).toBe(2);
+      expect(stats.total).toBe(10);
+      expect(failed['core.X@1.0.0']).toBe(3);
+    });
+
+    it('coalesces concurrent callers into one in-flight scan', async () => {
+      await Promise.all([
+        lifecycleManager.getWorkflowExecutionStats(),
+        lifecycleManager.getInstancesWithFailedSteps(),
+        lifecycleManager.getInstanceStatsSnapshot(),
+      ]);
+
+      expect(mockGetWorkflowInstanceStats).toHaveBeenCalledTimes(1);
+    });
+
+    it('reuses the cached snapshot for a second sequential read', async () => {
+      await lifecycleManager.getInstanceStatsSnapshot();
+      await lifecycleManager.getInstanceStatsSnapshot();
+
+      expect(mockGetWorkflowInstanceStats).toHaveBeenCalledTimes(1);
+    });
+
+    it('rescans when maxAgeMs is 0', async () => {
+      await lifecycleManager.getInstanceStatsSnapshot({ maxAgeMs: 0 });
+      await lifecycleManager.getInstanceStatsSnapshot({ maxAgeMs: 0 });
+
+      expect(mockGetWorkflowInstanceStats).toHaveBeenCalledTimes(2);
+    });
+
+    it('returns zeroed stats when no persistence provider is configured', async () => {
+      const bare = new WorkflowLifecycleManager(mockConfig);
+      await bare.initialize({ persistence: null });
+
+      const stats = await bare.getWorkflowExecutionStats();
+
+      expect(stats.total).toBe(0);
+      expect(stats.complete).toBe(0);
+    });
+  });
+
+  describe('retention sweep', () => {
+    const mockQuery = jest.fn();
+    const mockDeleteMany = jest.fn();
+    const mockGetStats = jest.fn();
+
+    const mockPersistence: any = {
+      queryWorkflowInstances: mockQuery,
+      deleteWorkflowInstances: mockDeleteMany,
+      getWorkflowInstanceStats: mockGetStats,
+    };
+
+    beforeEach(async () => {
+      jest.clearAllMocks();
+      // mockReset (not mockClear): mockResolvedValueOnce queues survive
+      // clearAllMocks and would leak into the next test.
+      mockQuery.mockReset();
+      mockDeleteMany.mockReset();
+      mockGetStats.mockReset();
+      mockGetStats.mockResolvedValue({
+        total: 0, byStatus: {}, averageCompletionTimeMs: null, byDefinition: [], instancesWithFailedSteps: {},
+      });
+      lifecycleManager = new WorkflowLifecycleManager(mockConfig);
+      await lifecycleManager.initialize({ persistence: mockPersistence });
+    });
+
+    it('rejects a non-positive olderThanDays', async () => {
+      await expect(lifecycleManager.sweepExpiredInstances({ olderThanDays: 0 }))
+        .rejects.toThrow(/positive number/);
+      await expect(lifecycleManager.sweepExpiredInstances({ olderThanDays: -5 }))
+        .rejects.toThrow(/positive number/);
+    });
+
+    // Live work must never be swept, even if a caller explicitly asks.
+    it('refuses to sweep Runnable or Suspended instances', async () => {
+      await expect(
+        lifecycleManager.sweepExpiredInstances({
+          olderThanDays: 30,
+          statuses: [WorkflowESStatus.RUNNABLE],
+        })
+      ).rejects.toThrow(/only COMPLETE and TERMINATED/);
+
+      await expect(
+        lifecycleManager.sweepExpiredInstances({
+          olderThanDays: 30,
+          statuses: [WorkflowESStatus.SUSPENDED],
+        })
+      ).rejects.toThrow(/only COMPLETE and TERMINATED/);
+
+      expect(mockDeleteMany).not.toHaveBeenCalled();
+    });
+
+    it('deletes terminal instances older than the cutoff', async () => {
+      mockQuery
+        .mockResolvedValueOnce({ instances: [{ id: 'a' }, { id: 'b' }], total: 2 })
+        .mockResolvedValueOnce({ instances: [], total: 0 });
+      mockDeleteMany.mockResolvedValue(2);
+
+      const result = await lifecycleManager.sweepExpiredInstances({ olderThanDays: 30 });
+
+      expect(mockDeleteMany).toHaveBeenCalledWith(['a', 'b']);
+      expect(result.matched).toBe(2);
+      expect(result.deleted).toBe(2);
+      expect(result.hasMore).toBe(false);
+
+      // The predicate must be expressed in terms of terminal statuses + createTime.
+      const queryArg = mockQuery.mock.calls[0][0];
+      expect(queryArg.createdBefore).toBeInstanceOf(Date);
+      expect(queryArg.status).toEqual([
+        WorkflowESStatus.COMPLETE,
+        WorkflowESStatus.TERMINATED,
+      ]);
+    });
+
+    it('dryRun reports the match count without deleting', async () => {
+      mockQuery.mockResolvedValue({ instances: [{ id: 'a' }], total: 1 });
+
+      const result = await lifecycleManager.sweepExpiredInstances({
+        olderThanDays: 30,
+        dryRun: true,
+      });
+
+      expect(mockDeleteMany).not.toHaveBeenCalled();
+      expect(result.matched).toBe(1);
+      expect(result.deleted).toBe(0);
+    });
+
+    it('invalidates the cached stats snapshot after a real delete', async () => {
+      await lifecycleManager.getInstanceStatsSnapshot();
+      expect(mockGetStats).toHaveBeenCalledTimes(1);
+
+      mockQuery
+        .mockResolvedValueOnce({ instances: [{ id: 'a' }], total: 1 })
+        .mockResolvedValueOnce({ instances: [], total: 0 });
+      mockDeleteMany.mockResolvedValue(1);
+
+      await lifecycleManager.sweepExpiredInstances({ olderThanDays: 30 });
+      await lifecycleManager.getInstanceStatsSnapshot();
+
+      // A second scan proves the cache was dropped.
+      expect(mockGetStats).toHaveBeenCalledTimes(2);
+    });
+
+    it('reports hasMore when a full batch was consumed', async () => {
+      mockQuery.mockResolvedValue({ instances: [{ id: 'a' }], total: 1 });
+      mockDeleteMany.mockResolvedValue(1);
+
+      const result = await lifecycleManager.sweepExpiredInstances({
+        olderThanDays: 30,
+        batchSize: 1,
+        maxBatches: 1,
+      });
+
+      expect(result.hasMore).toBe(true);
     });
   });
 

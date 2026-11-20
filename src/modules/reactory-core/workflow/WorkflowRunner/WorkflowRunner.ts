@@ -263,6 +263,10 @@ export class WorkflowRunner {
   /** Shared interval that finalizes instance logs once a YAML run reaches a terminal state. */
   private yamlFinalizeTimer: NodeJS.Timeout | null = null;
 
+  /** Handle for the periodic retention sweep (WORKFLOW_RETENTION_DAYS). */
+  private retentionTimer: NodeJS.Timeout | null = null;
+  private retentionRunning: boolean = false;
+
   constructor(props: IWorkflowRunnerProps, context: Reactory.Server.IReactoryContext) {
     this.state = {
       workflows: props?.workflows || getDefaultWorkflows(),
@@ -394,6 +398,11 @@ export class WorkflowRunner {
       await this.securityManager.initialize({
         host,
       });
+
+      // Retention: keep the instance collection bounded so read latency does not
+      // grow with every run the platform has ever executed. No-op unless
+      // WORKFLOW_RETENTION_DAYS is configured.
+      this.startRetentionSweeper();
 
       logger.info('WorkflowRunner initialized successfully');
     } catch (error) {
@@ -619,6 +628,7 @@ export class WorkflowRunner {
         // Same TLS / retryWrites settings as Mongoose (WP-B4).
         const mongoPersistence = new MongoDBPersistence(MONGOOSE, mongoClientOptions());
         await mongoPersistence.connect;
+        await this.ensureWorkflowQueryIndexes();
         return mongoPersistence;
       }
 
@@ -671,10 +681,120 @@ export class WorkflowRunner {
   }
 
   /**
+   * Create the access-path indexes the registry and ops queries depend on.
+   *
+   * The provider creates its own four mandatory indexes on connect, but none of
+   * them covers the failed-execution-pointer rollup used by the registry list and
+   * the dashboard (`$match: { status: {$ne: Terminated}, 'executionPointers.status': Failed }`).
+   * Without an index that aggregation is a collection scan, and because instances
+   * embed their full executionPointers array (~65KB/row) that scan dominated the
+   * query - it was measured contributing to a ~150s registry read.
+   *
+   * Index creation is idempotent (same key spec = no-op), so this is safe on every
+   * boot. Failure is logged and ignored: a missing index degrades performance, it
+   * must never prevent the runner from starting.
+   */
+  private async ensureWorkflowQueryIndexes(): Promise<void> {
+    try {
+      const collection: any = (this.persistence as any)?.workflowCollection;
+
+      if (!collection || typeof collection.createIndex !== 'function') {
+        logger.debug('Workflow index bootstrap skipped: persistence provider exposes no Mongo collection');
+        return;
+      }
+
+      // Multikey over the embedded pointers array.
+      await collection.createIndex(
+        { status: 1, 'executionPointers.status': 1 },
+        { name: 'idx_workflows_status_pointer_status', background: true }
+      );
+
+      logger.debug('Workflow query indexes verified');
+    } catch (error) {
+      logger.warn('Failed to create workflow query indexes (performance only, continuing)', error);
+    }
+  }
+
+  /**
+   * Periodic retention sweep of terminal workflow instances.
+   *
+   * DISABLED BY DEFAULT. Enable with WORKFLOW_RETENTION_DAYS=<n>; the sweep then
+   * removes COMPLETE/TERMINATED instances older than n days, in bounded batches.
+   * Once per sweep window (`WORKFLOW_RETENTION_SWEEP_INTERVAL_MS`, default 6h) it
+   * repeats until `hasMore` is false, so a large backlog drains without holding
+   * the database for one long transaction.
+   *
+   * This is what stops read latency from growing with every run the platform has
+   * ever executed - the instance collection is otherwise append-only.
+   */
+  private startRetentionSweeper(): void {
+    const days = Number(process.env.WORKFLOW_RETENTION_DAYS);
+
+    if (!Number.isFinite(days) || days <= 0) {
+      logger.debug('Workflow retention sweeper disabled (set WORKFLOW_RETENTION_DAYS to enable)');
+      return;
+    }
+
+    const configuredInterval = Number(process.env.WORKFLOW_RETENTION_SWEEP_INTERVAL_MS);
+    const intervalMs = Number.isFinite(configuredInterval) && configuredInterval >= 60_000
+      ? configuredInterval
+      : 6 * 60 * 60 * 1000;
+
+    const runSweep = async (): Promise<void> => {
+      if (this.retentionRunning) {
+        logger.debug('Workflow retention sweep skipped: previous run still in progress');
+        return;
+      }
+
+      this.retentionRunning = true;
+      try {
+        // Drain in bounded passes so one window does not scan forever.
+        for (let pass = 0; pass < 10; pass += 1) {
+          const result = await this.lifecycleManager.sweepExpiredInstances({
+            olderThanDays: days,
+            batchSize: 500,
+            maxBatches: 20,
+          });
+
+          if (result.deleted > 0) {
+            logger.info(
+              `Workflow retention: removed ${result.deleted} terminal instances older than ${result.cutoff.toISOString()}`
+            );
+          }
+
+          if (!result.hasMore) break;
+        }
+      } catch (error) {
+        logger.error('Workflow retention sweep failed', error);
+      } finally {
+        this.retentionRunning = false;
+      }
+    };
+
+    this.retentionTimer = setInterval(() => { void runSweep(); }, intervalMs);
+    // Never hold the process open just for housekeeping.
+    if (typeof this.retentionTimer.unref === 'function') this.retentionTimer.unref();
+
+    logger.info(
+      `Workflow retention enabled: ${days} day(s), sweeping every ${Math.round(intervalMs / 60000)} minute(s)`
+    );
+
+    // First pass shortly after boot, not immediately, so startup is not perturbed.
+    const kickoff = setTimeout(() => { void runSweep(); }, 60_000);
+    if (typeof kickoff.unref === 'function') kickoff.unref();
+  }
+
+  /**
    * Stop the workflow runner
    */
   public async stop(): Promise<void> {
     try {
+      // Stop the retention sweeper before touching the lifecycle manager it uses.
+      if (this.retentionTimer) {
+        clearInterval(this.retentionTimer);
+        this.retentionTimer = null;
+      }
+
       // Stop lifecycle manager
       if (this.lifecycleManager) {
         await this.lifecycleManager.stop();

@@ -16,6 +16,9 @@ import {
   IScheduleConfigInput,
   IUpdateScheduleInput,
   IWorkflowFilterInput,
+  IWorkflowQueryOptions,
+  IWorkflowRetentionInput,
+  IWorkflowRetentionResult,
   IInstanceFilterInput,
   IAuditFilterInput,
   IPaginationInput,
@@ -336,30 +339,51 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   }
 
   // Workflow Registry
-  async getWorkflows(filter?: IWorkflowFilterInput, pagination?: IPaginationInput): Promise<IPaginatedWorkflows> {
+  async getWorkflows(
+    filter?: IWorkflowFilterInput,
+    pagination?: IPaginationInput,
+    options?: IWorkflowQueryOptions
+  ): Promise<IPaginatedWorkflows> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
 
       // Get registered workflows from WorkflowRunner
       const allWorkflows = await workflowRunner?.getRegisteredWorkflows() as any as RegisteredWorkflow[] || [];
 
-      // Get execution stats from MongoDB
-      const executionStats = await this.getWorkflowExecutionStats();
+      // Statistics are OPT-IN.
+      //
+      // Computing them requires an aggregation over the entire workflow-instance
+      // collection (instances embed their executionPointers, ~65KB/row), which was
+      // measured at ~50s on a 4.4GB collection - and the enrichment below used to
+      // request it TWICE (once for byStatus, once for failed pointers). Callers
+      // that only need identity - the support-ticket AI action just picks the
+      // newest version to launch - must not pay for a scan whose result they drop.
+      //
+      // Filters defined in terms of statistics force the extra work on, otherwise
+      // they would filter on a value nobody computed.
+      const filterNeedsStatistics =
+        filter?.hasErrors !== undefined || filter?.neverRun !== undefined;
+      const includeStatistics = options?.includeStatistics === true || filterNeedsStatistics;
 
       // Get scheduler and lifecycle manager for active status
       const scheduler = workflowRunner?.getScheduler();
       const lifecycleManager = workflowRunner?.getLifecycleManager();
 
-      // Get counts of non-terminated instances with failed execution pointers
-      // This captures step-level failures that workflow-es hasn't marked as TERMINATED
-      const failedStepCounts = await lifecycleManager?.getInstancesWithFailedSteps() || {};
+      // ONE provider scan, shared by both halves, coalesced and cached.
+      const snapshot = includeStatistics
+        ? await lifecycleManager?.getInstanceStatsSnapshot({ maxAgeMs: options?.statsMaxAgeMs })
+        : null;
+      const executionStats = snapshot?.stats ?? null;
+      // Counts of non-terminated instances with failed execution pointers - these
+      // capture step-level failures that workflow-es hasn't marked TERMINATED.
+      const failedStepCounts = snapshot?.instancesWithFailedSteps ?? {};
 
       // Enrich workflows with execution stats and active status
       const enrichedWorkflows = await Promise.all(allWorkflows.map(async (workflow: any) => {
         const workflowId = `${workflow.nameSpace}.${workflow.name}@${workflow.version}`;
 
-        // Get execution statistics from MongoDB
-        const stats = executionStats.byWorkflowDefinition.find(
+        // Per-definition rollup (null when statistics were not requested).
+        const stats = executionStats?.byWorkflowDefinition.find(
           s => s.workflowDefinitionId === workflowId
         );
 
@@ -400,12 +424,18 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
           status: isActive ? 'ACTIVE' : 'INACTIVE',
           workflowType: workflow.workflowType || 'CODE',
           location: workflow.location || undefined,
-          statistics: {
-            totalExecutions,
-            successfulExecutions,
-            failedExecutions,
-            averageExecutionTime: executionStats.averageCompletionTime || 0
-          }
+          // Omitted entirely when statistics were not requested, so the resolver
+          // returns null and the client sees no fabricated zeros.
+          ...(includeStatistics
+            ? {
+                statistics: {
+                  totalExecutions,
+                  successfulExecutions,
+                  failedExecutions,
+                  averageExecutionTime: executionStats?.averageCompletionTime || 0
+                }
+              }
+            : {}),
         };
       }));
 
@@ -1391,6 +1421,87 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   // ============================================
   // Workflow History Management
   // ============================================
+
+  /**
+   * Sweep terminal workflow instances older than a cutoff.
+   *
+   * The persistence collection is append-only: every run leaves a document that
+   * embeds its full executionPointers array. Left unbounded, registry and
+   * dashboard reads get slower with every run the platform has ever executed.
+   * This is the time-scoped counterpart that keeps the working set bounded.
+   *
+   * Only COMPLETE and TERMINATED instances are eligible - Runnable and Suspended
+   * instances are live work and are refused by the lifecycle manager even if a
+   * caller asks for them.
+   */
+  async sweepWorkflowInstances(input: IWorkflowRetentionInput): Promise<IWorkflowRetentionResult> {
+    const startedAt = Date.now();
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+
+      if (!lifecycleManager) {
+        return {
+          success: false,
+          message: 'No lifecycle manager available - the workflow persistence provider is not configured.',
+          matched: 0,
+          deleted: 0,
+          batches: 0,
+          hasMore: false,
+          cutoff: new Date().toISOString(),
+          statuses: [],
+          dryRun: input?.dryRun === true,
+          durationMs: Date.now() - startedAt,
+        };
+      }
+
+      const statusNames = input?.statuses;
+      const statuses = Array.isArray(statusNames) && statusNames.length > 0
+        ? statusNames
+            .map((s) => String(s).toUpperCase())
+            .map((s) => (WorkflowESStatus as any)[s])
+            .filter((s): s is number => typeof s === 'number')
+        : undefined;
+
+      const result = await lifecycleManager.sweepExpiredInstances({
+        olderThanDays: input.olderThanDays,
+        statuses: statuses as any,
+        batchSize: input.batchSize,
+        maxBatches: input.maxBatches,
+        dryRun: input.dryRun,
+      });
+
+      return {
+        success: true,
+        message: result.deleted > 0
+          ? `Deleted ${result.deleted} terminal instances older than ${result.cutoff.toISOString()}`
+          : `No terminal instances older than ${result.cutoff.toISOString()} were found`,
+        matched: result.matched,
+        deleted: result.deleted,
+        batches: result.batches,
+        hasMore: result.hasMore,
+        cutoff: result.cutoff.toISOString(),
+        statuses: (statuses && statuses.length > 0 ? statuses : [WorkflowESStatus.COMPLETE, WorkflowESStatus.TERMINATED])
+          .map((s: number) => WorkflowESStatus[s]),
+        dryRun: input?.dryRun === true,
+        durationMs: Date.now() - startedAt,
+      };
+    } catch (error) {
+      this.context.log('Error sweeping workflow instances', { error, input }, 'error');
+      return {
+        success: false,
+        message: `Retention sweep failed: ${error?.message || String(error)}`,
+        matched: 0,
+        deleted: 0,
+        batches: 0,
+        hasMore: false,
+        cutoff: new Date().toISOString(),
+        statuses: [],
+        dryRun: input?.dryRun === true,
+        durationMs: Date.now() - startedAt,
+      };
+    }
+  }
 
   /**
    * Delete a single workflow execution history item

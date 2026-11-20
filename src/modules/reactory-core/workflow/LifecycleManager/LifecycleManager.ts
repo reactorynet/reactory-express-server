@@ -217,6 +217,38 @@ export interface IWorkflowExecutionStats {
   }[];
 }
 
+/**
+ * One provider scan, split into the two views callers actually want.
+ *
+ * Both halves come from the SAME `getWorkflowInstanceStats()` call - they were
+ * previously fetched independently, which doubled the cost of every registry
+ * read.
+ */
+export interface IInstanceStatsSnapshot {
+  stats: IWorkflowExecutionStats;
+  /** workflowDefinitionId -> count of non-terminated instances with failed pointers. */
+  instancesWithFailedSteps: Record<string, number>;
+  fetchedAt: Date;
+}
+
+/** Zeroed snapshot used when no persistence provider is configured. */
+export function emptyInstanceStatsSnapshot(): IInstanceStatsSnapshot {
+  return {
+    stats: {
+      total: 0,
+      pending: 0,
+      runnable: 0,
+      complete: 0,
+      terminated: 0,
+      suspended: 0,
+      averageCompletionTime: undefined,
+      byWorkflowDefinition: [],
+    },
+    instancesWithFailedSteps: {},
+    fetchedAt: new Date(),
+  };
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ──────────────────────────────────────────────────────────────────────────────
@@ -542,32 +574,64 @@ export class WorkflowLifecycleManager extends EventEmitter {
     return this.getWorkflowHistory({ status }, pagination);
   }
 
+  // ── Instance-stats snapshot ────────────────────────────────────────────────
+  //
+  // getWorkflowInstanceStats() is the most expensive read in the platform: it
+  // runs four aggregations over the workflow-instance collection, three of which
+  // touch whole documents (instances embed their full executionPointers array,
+  // so the collection averages ~65KB per row). Calling it twice per request - as
+  // the registry list did, once for byStatus and once for failed pointers - turned
+  // a 50s query into a 150s query on a 4.4GB collection.
+  //
+  // Two mitigations, both needed:
+  //   1. COALESCE - concurrent callers share one in-flight promise, so a request
+  //      that needs both halves performs exactly one scan.
+  //   2. CACHE - results are reused for a short window, so opening the registry
+  //      twice (or the dashboard polling) does not rescan.
+  //
+  // Staleness is acceptable because these are operational counters displayed in
+  // a registry list; they are not used to drive execution.
+  private statsSnapshot: { at: number; value: IInstanceStatsSnapshot } | null = null;
+  private statsSnapshotInFlight: Promise<IInstanceStatsSnapshot> | null = null;
+
   /**
-   * Get workflow execution statistics through the active provider.
+   * Snapshot of instance statistics, coalesced and cached.
+   *
+   * Single source of truth for BOTH `getWorkflowExecutionStats()` and
+   * `getInstancesWithFailedSteps()`, which are derived from the same provider
+   * call. Never call `persistence.getWorkflowInstanceStats()` directly.
+   *
+   * @param options.maxAgeMs Cache lifetime. Defaults to WORKFLOW_STATS_CACHE_MS
+   *   (30000). Pass 0 to bypass the cache read (in-flight coalescing still applies).
    */
-  public async getWorkflowExecutionStats(): Promise<IWorkflowExecutionStats> {
-    if (!this.persistence) {
-      logger.debug('getWorkflowExecutionStats: no persistence provider — returning zero stats');
-      return {
-        total: 0,
-        pending: 0,
-        runnable: 0,
-        complete: 0,
-        terminated: 0,
-        suspended: 0,
-        averageCompletionTime: undefined,
-        byWorkflowDefinition: [],
-      };
+  public async getInstanceStatsSnapshot(options?: { maxAgeMs?: number }): Promise<IInstanceStatsSnapshot> {
+    const configured = Number(process.env.WORKFLOW_STATS_CACHE_MS);
+    const defaultMaxAge = Number.isFinite(configured) && configured >= 0 ? configured : 30_000;
+    const maxAgeMs = options?.maxAgeMs ?? defaultMaxAge;
+
+    const now = Date.now();
+    if (maxAgeMs > 0 && this.statsSnapshot && (now - this.statsSnapshot.at) < maxAgeMs) {
+      return this.statsSnapshot.value;
     }
 
-    try {
+    // Coalesce: a second caller arriving while a scan is running waits for the
+    // same promise instead of starting another aggregation.
+    if (this.statsSnapshotInFlight) {
+      return this.statsSnapshotInFlight;
+    }
+
+    const build = async (): Promise<IInstanceStatsSnapshot> => {
+      if (!this.persistence) {
+        return emptyInstanceStatsSnapshot();
+      }
+
       const stats = await this.persistence.getWorkflowInstanceStats();
 
       // byStatus maps engine WorkflowStatus values:
       // 0=Runnable, 1=Suspended, 2=Complete, 3=Terminated, 4=DeadLettered
       const byStatus = stats.byStatus;
 
-      return {
+      const executionStats: IWorkflowExecutionStats = {
         total: stats.total,
         pending: (byStatus[0] ?? 0),    // Runnable → displayed as Pending/Running
         runnable: (byStatus[0] ?? 0),
@@ -582,6 +646,44 @@ export class WorkflowLifecycleManager extends EventEmitter {
           terminated: d.terminated,
         })),
       };
+
+      return {
+        stats: executionStats,
+        instancesWithFailedSteps: stats.instancesWithFailedSteps || {},
+        fetchedAt: new Date(),
+      };
+    };
+
+    const inFlight = build()
+      .then((value) => {
+        this.statsSnapshot = { at: Date.now(), value };
+        return value;
+      })
+      .finally(() => {
+        this.statsSnapshotInFlight = null;
+      });
+
+    this.statsSnapshotInFlight = inFlight;
+    return inFlight;
+  }
+
+  /** Invalidate the cached instance-stats snapshot (e.g. after a delete sweep). */
+  public invalidateInstanceStatsCache(): void {
+    this.statsSnapshot = null;
+  }
+
+  /**
+   * Get workflow execution statistics through the active provider.
+   */
+  public async getWorkflowExecutionStats(): Promise<IWorkflowExecutionStats> {
+    if (!this.persistence) {
+      logger.debug('getWorkflowExecutionStats: no persistence provider — returning zero stats');
+      return emptyInstanceStatsSnapshot().stats;
+    }
+
+    try {
+      const snapshot = await this.getInstanceStatsSnapshot();
+      return snapshot.stats;
     } catch (error) {
       logger.error('Failed to get workflow execution stats', error);
       throw error;
@@ -597,8 +699,8 @@ export class WorkflowLifecycleManager extends EventEmitter {
     }
 
     try {
-      const stats = await this.persistence.getWorkflowInstanceStats();
-      return stats.instancesWithFailedSteps;
+      const snapshot = await this.getInstanceStatsSnapshot();
+      return snapshot.instancesWithFailedSteps;
     } catch (error) {
       logger.error('Failed to get instances with failed steps', error);
       return {};
@@ -817,6 +919,134 @@ export class WorkflowLifecycleManager extends EventEmitter {
       logger.error('Failed to clear workflow execution history', error);
       throw error;
     }
+  }
+
+  // ============================================
+  // Retention — time-scoped sweeping of terminal instances
+  // ============================================
+
+  /**
+   * Delete terminal workflow instances older than a cutoff, in bounded batches.
+   *
+   * WHY THIS EXISTS
+   * ---------------
+   * The `workflows` collection is append-only by nature: every run adds a document
+   * that embeds its full executionPointers array (average ~65KB). At the time of
+   * writing it held ~67,000 instances / 4.4GB, and every dashboard statistic or
+   * registry read has to traverse it. Without retention the read cost grows
+   * monotonically with the number of runs ever executed - the platform gets
+   * slower every day it is used.
+   *
+   * SAFETY
+   * ------
+   *  - Only TERMINAL statuses are eligible (default Complete + Terminated).
+   *    Runnable/Suspended instances are live work and are refused even if the
+   *    caller asks for them.
+   *  - Work is bounded per call (`batchSize` x `maxBatches`), so a sweep can never
+   *    monopolise the database. `hasMore` reports whether to run again.
+   *  - `dryRun` reports the match count without deleting, so an operator can size
+   *    the impact before committing.
+   *  - The stats cache is invalidated on a real delete so counters are not stale.
+   *
+   * Provider-agnostic: uses only queryWorkflowInstances + deleteWorkflowInstances,
+   * so it works for Mongo, SQLite and Postgres alike.
+   */
+  public async sweepExpiredInstances(options: {
+    olderThanDays: number;
+    statuses?: WorkflowESStatus[];
+    batchSize?: number;
+    maxBatches?: number;
+    dryRun?: boolean;
+  }): Promise<{
+    matched: number;
+    deleted: number;
+    batches: number;
+    hasMore: boolean;
+    cutoff: Date;
+  }> {
+    const startedAt = Date.now();
+    const olderThanDays = Number(options?.olderThanDays);
+
+    if (!Number.isFinite(olderThanDays) || olderThanDays <= 0) {
+      throw new Error('sweepExpiredInstances: olderThanDays must be a positive number');
+    }
+
+    const cutoff = new Date(startedAt - olderThanDays * 24 * 60 * 60 * 1000);
+    const batchSize = Math.min(Math.max(Math.trunc(options?.batchSize ?? 500) || 500, 1), 500);
+    const maxBatches = Math.min(Math.max(Math.trunc(options?.maxBatches ?? 20) || 20, 1), 200);
+    const dryRun = options?.dryRun === true;
+
+    // Terminal-only. Runnable(0) and Suspended(1) are live and never swept.
+    const requested = Array.isArray(options?.statuses) && options.statuses.length > 0
+      ? options.statuses
+      : [WorkflowESStatus.COMPLETE, WorkflowESStatus.TERMINATED];
+    const statuses = requested.filter(
+      (s) => s === WorkflowESStatus.COMPLETE || s === WorkflowESStatus.TERMINATED
+    );
+
+    if (statuses.length === 0) {
+      throw new Error(
+        'sweepExpiredInstances: only COMPLETE and TERMINATED instances may be swept ' +
+        '(Runnable/Suspended instances are live work)'
+      );
+    }
+
+    if (!this.persistence) {
+      return { matched: 0, deleted: 0, batches: 0, hasMore: false, cutoff };
+    }
+
+    let matched = 0;
+    let deleted = 0;
+    let batches = 0;
+    let hasMore = false;
+
+    for (let batch = 0; batch < maxBatches; batch += 1) {
+      // Always page from 0: the previous batch was deleted, so the next-oldest
+      // window slides up. Skipping would skip rows we just removed.
+      const { instances } = await this.persistence.queryWorkflowInstances({
+        status: statuses as any,
+        createdBefore: cutoff,
+        take: batchSize,
+        skip: 0,
+        sortField: 'createTime',
+        sortOrder: 'asc',
+      });
+
+      if (!instances || instances.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      batches += 1;
+      matched += instances.length;
+
+      if (dryRun) {
+        // Nothing was removed, so the same page would come back forever.
+        hasMore = instances.length >= batchSize;
+        break;
+      }
+
+      const ids = instances.map((i: any) => String(i.id || i._id)).filter(Boolean);
+      if (ids.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      deleted += await this.persistence.deleteWorkflowInstances(ids);
+      hasMore = instances.length >= batchSize;
+
+      if (!hasMore) break;
+    }
+
+    if (deleted > 0) {
+      this.invalidateInstanceStatsCache();
+      logger.info(
+        `Workflow retention sweep removed ${deleted} terminal instances older than ${cutoff.toISOString()} ` +
+        `in ${batches} batch(es) (${Date.now() - startedAt}ms)`
+      );
+    }
+
+    return { matched, deleted, batches, hasMore, cutoff };
   }
 
   // ============================================

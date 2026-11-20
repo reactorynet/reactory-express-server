@@ -43,7 +43,15 @@ const graphql: Reactory.Forms.IFormGraphDefinition = {
     registeredWorkflows: {
       name: 'workflows',
       text: `query RegisteredWorkflows($filter: WorkflowFilterInput, $pagination: PaginationInput) {
-        workflows(filter: $filter, pagination: $pagination) {
+        workflows(
+          filter: $filter
+          pagination: $pagination
+          # This screen renders per-workflow execution statistics, so it opts in.
+          # Statistics are OFF by default everywhere else because they require an
+          # aggregation over the entire instance collection. The server serves them
+          # from a short-lived cached snapshot, so repeated renders are cheap.
+          includeStatistics: true
+        ) {
           workflows {
             id
             name
