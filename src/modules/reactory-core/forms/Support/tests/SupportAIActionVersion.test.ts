@@ -40,7 +40,9 @@ describe('support ticket AI action — workflow version resolution', () => {
 
   it('resolves the version from the workflow registry instead', () => {
     expect(code).toContain('WORKFLOW_NAME');
-    expect(code).toContain('workflows(filter');
+    // Whitespace-tolerant: the registry query is formatted across lines, so
+    // asserting the exact single-line shape made this brittle for no benefit.
+    expect(code).toMatch(/workflows\(\s*filter:\s*\$filter/);
     expect(code).toContain('pickLatestWorkflowId');
   });
 

@@ -336,6 +336,86 @@ describe('ReactoryWorkflowService', () => {
     });
   });
 
+  describe('sweepWorkflowInstances (retention)', () => {
+    const sweepMock = jest.fn();
+
+    beforeEach(async () => {
+      await service.onStartup();
+      getMockRunner().getLifecycleManager.mockReturnValue({ sweepExpiredInstances: sweepMock });
+    });
+
+    // R2: a dry run has deleted === 0, so a "deleted > 0 ? … : none found" message
+    // told an operator sizing the sweep that nothing matched. Word it for the mode.
+    it('words a dry run as "would be deleted", not "none found"', async () => {
+      sweepMock.mockResolvedValue({
+        matched: 67246, deleted: 0, batches: 1, hasMore: false,
+        cutoff: new Date('2024-01-01T00:00:00Z'),
+      });
+
+      const result = await service.sweepWorkflowInstances({ olderThanDays: 90, dryRun: true });
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('Dry run');
+      expect(result.message).toContain('67246');
+      expect(result.message).toContain('would be deleted');
+      expect(result.message).not.toContain('were found');
+      expect(result.deleted).toBe(0);
+      expect(result.dryRun).toBe(true);
+    });
+
+    it('reports a real delete with the deleted count', async () => {
+      sweepMock.mockResolvedValue({
+        matched: 10, deleted: 10, batches: 2, hasMore: false,
+        cutoff: new Date('2024-01-01T00:00:00Z'),
+      });
+
+      const result = await service.sweepWorkflowInstances({ olderThanDays: 90 });
+
+      expect(result.message).toContain('Deleted 10');
+    });
+
+    it('says so plainly when a real sweep matched nothing', async () => {
+      sweepMock.mockResolvedValue({
+        matched: 0, deleted: 0, batches: 1, hasMore: false,
+        cutoff: new Date('2024-01-01T00:00:00Z'),
+      });
+
+      const result = await service.sweepWorkflowInstances({ olderThanDays: 90 });
+
+      expect(result.message).toContain('were found');
+    });
+
+    // R7: unknown names used to be filtered out, leaving an empty list that then
+    // fell back to the DEFAULT [COMPLETE, TERMINATED] - so a typo produced the
+    // widest possible sweep instead of an error.
+    it('rejects unknown status names instead of falling back to the default', async () => {
+      const result = await service.sweepWorkflowInstances({
+        olderThanDays: 90,
+        statuses: ['COMPLETED'],
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Unknown workflow status name');
+      expect(result.message).toContain('COMPLETED');
+      expect(sweepMock).not.toHaveBeenCalled();
+    });
+
+    it('accepts valid status names', async () => {
+      sweepMock.mockResolvedValue({
+        matched: 0, deleted: 0, batches: 1, hasMore: false,
+        cutoff: new Date('2024-01-01T00:00:00Z'),
+      });
+
+      const result = await service.sweepWorkflowInstances({
+        olderThanDays: 90,
+        statuses: ['COMPLETE', 'TERMINATED'],
+      });
+
+      expect(result.success).toBe(true);
+      expect(sweepMock).toHaveBeenCalled();
+    });
+  });
+
   describe('getWorkflowWithId', () => {
     beforeEach(async () => {
       await service.onStartup();
