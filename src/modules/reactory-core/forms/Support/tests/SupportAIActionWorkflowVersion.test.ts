@@ -124,10 +124,21 @@ describe('support ticket AI action — launcher plumbing', () => {
   });
 
   it('delegates the version decision to the shared resolver', () => {
-    expect(action).toContain('workflows(filter');
+    // Whitespace-tolerant: the query is formatted across lines for readability,
+    // so asserting on the exact single-line shape made this test brittle.
+    expect(action).toMatch(/workflows\(\s*filter:\s*\$filter/);
     expect(action).toContain("from './aiWorkflowVersion'");
     expect(action).toContain('pickLatestWorkflowId');
     expect(action).toContain('registeredWorkflowVersions');
+  });
+
+  // The registry query this dialog runs must NOT ask for per-workflow statistics.
+  // Statistics require an aggregation over the entire workflow-instance
+  // collection, which is what made the dialog sit on "resolving registry…" for
+  // minutes. This dialog only needs the list of versions, so the flag must be
+  // pinned off - adding it back silently reintroduces the hang.
+  it('never requests execution statistics it does not use', () => {
+    expect(action).toMatch(/includeStatistics:\s*false/);
   });
 
   it('shows the exact definition it will run, not just a caption', () => {

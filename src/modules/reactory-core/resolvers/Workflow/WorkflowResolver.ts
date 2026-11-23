@@ -14,6 +14,7 @@ import {
   IWorkflowHistoryPagination,
   WorkflowESStatus,
   IWorkflowDefinitionInput,
+  IWorkflowRetentionInput,
 } from '../../services/Workflow/types';
 import { IWorkflowInstanceDocument } from '@reactory/server-modules/reactory-core/workflow/LifecycleManager';
 import { IScheduleConfig, IScheduledWorkflow } from '@reactory/server-modules/reactory-core/workflow';
@@ -69,12 +70,47 @@ class WorkflowResolver {
     obj: any,
     params: {
       filter?: IWorkflowFilterInput,
-      pagination?: IPaginationInput
+      pagination?: IPaginationInput,
+      /**
+       * Opt in to per-workflow execution statistics.
+       *
+       * Defaults to false because computing them aggregates the entire
+       * workflow-instance collection. Callers that only need identity (id, name,
+       * version) - e.g. the support-ticket AI action resolving the newest
+       * definition to launch - must leave this off.
+       */
+      includeStatistics?: boolean,
+      /** Override the stats cache lifetime in ms (0 disables caching). */
+      statsMaxAgeMs?: number,
     },
     context: Reactory.Server.IReactoryContext
   ) {
     const workflowService = getWorkflowService(context);
-    return workflowService.getWorkflows(params.filter, params.pagination);
+
+    // Floor the cache-lifetime override. `statsMaxAgeMs: 0` means "rescan", and a
+    // single rescan of a large instance collection costs ~50s. Coalescing limits
+    // that to one at a time, but a caller could still drive back-to-back full
+    // aggregations deliberately. Clamp the floor (and allow 0 only for an
+    // administrator, who is expected to be diagnosing) so a routine WORKFLOW_OPERATOR
+    // cannot turn one query into a sustained scan.
+    const STATS_MIN_CACHE_MS = 5000;
+    const requested = params.statsMaxAgeMs;
+    let statsMaxAgeMs: number | undefined = requested;
+
+    if (typeof requested === 'number') {
+      // hasRole(clientId, role, organizationId?) - a single role per call.
+      const partnerId = (context as any)?.partner?._id;
+      const canForceRescan = typeof context?.user?.hasRole === 'function' && !!partnerId && (
+        context.user.hasRole(partnerId, 'ADMIN') === true ||
+        context.user.hasRole(partnerId, 'WORKFLOW_ADMIN') === true
+      );
+      statsMaxAgeMs = canForceRescan ? Math.max(requested, 0) : Math.max(requested, STATS_MIN_CACHE_MS);
+    }
+
+    return workflowService.getWorkflows(params.filter, params.pagination, {
+      includeStatistics: params.includeStatistics === true,
+      statsMaxAgeMs,
+    });
   }
 
   @roles(["ADMIN", "WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
@@ -674,6 +710,40 @@ class WorkflowResolver {
       return {
         success: false,
         message: `Failed to delete workflow execution history: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Time-scoped retention sweep of terminal workflow instances.
+   *
+   * Deliberately ADMIN/WORKFLOW_ADMIN only: it removes history. `dryRun` reports
+   * the impact without deleting, which is the intended first call in an
+   * unfamiliar environment.
+   */
+  @roles(["ADMIN", "WORKFLOW_ADMIN"], 'args.context')
+  @mutation("sweepWorkflowInstances")
+  async sweepWorkflowInstances(
+    obj: any,
+    params: { input: IWorkflowRetentionInput },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      return await workflowService.sweepWorkflowInstances(params.input);
+    } catch (error: any) {
+      context.log('Error sweeping workflow instances', { error, params }, 'error', 'WorkflowResolver');
+      return {
+        success: false,
+        message: `Retention sweep failed: ${error?.message || String(error)}`,
+        matched: 0,
+        deleted: 0,
+        batches: 0,
+        hasMore: false,
+        cutoff: new Date().toISOString(),
+        statuses: [],
+        dryRun: params?.input?.dryRun === true,
+        durationMs: 0,
       };
     }
   }

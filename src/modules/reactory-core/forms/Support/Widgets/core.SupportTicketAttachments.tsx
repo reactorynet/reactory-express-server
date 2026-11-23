@@ -403,7 +403,7 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
                       noWrap
                       sx={{ fontWeight: 600, mb: 0.5 }}
                     >
-                      {doc.name}
+                      {doc.name as string}
                     </Typography>
                   </Tooltip>
                   

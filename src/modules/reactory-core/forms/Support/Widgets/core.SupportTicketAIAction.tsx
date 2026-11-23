@@ -106,7 +106,19 @@ const AGENT_STORAGE_KEY = 'reactory.support.aiAction.agentId';
  */
 const WORKFLOWS_QUERY = `
   query SupportAIActionWorkflowVersions($filter: WorkflowFilterInput) {
-    workflows(filter: $filter, pagination: { page: 1, limit: 50 }) {
+    workflows(
+      filter: $filter
+      pagination: { page: 1, limit: 50 }
+      # Statistics are deliberately NOT requested.
+      #
+      # This dialog only needs the list of registered versions so it can pick the
+      # newest one to launch. Asking for per-workflow statistics makes the server
+      # aggregate the entire workflow-instance collection, which is both wasteful
+      # and (before the opt-in flag existed) the reason this dialog sat on
+      # "resolving registry…" for minutes. Stated explicitly so a future edit does
+      # not silently reintroduce the cost.
+      includeStatistics: false
+    ) {
       workflows {
         id
         nameSpace
@@ -115,6 +127,26 @@ const WORKFLOWS_QUERY = `
       }
     }
   }`;
+
+/**
+ * How long to wait for the workflow registry before giving up.
+ *
+ * The resolution step previously had NO timeout: if the query stalled (which it
+ * did - a registry read could take minutes on a large instance collection) the
+ * chip spun forever and the dialog looked broken, with no error and no retry.
+ * A bounded wait converts an indefinite hang into an actionable message.
+ */
+const WORKFLOW_RESOLVE_TIMEOUT_MS = 20000;
+
+/** Reject if `promise` does not settle within `timeoutMs`. */
+const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (error) => { clearTimeout(timer); reject(error); },
+    );
+  });
 
 const DEFAULT_AGENT_ID = 'ReactorAIPersona';
 const DEFAULT_REVIEWER_ID = 'QualityQuinn';
@@ -380,9 +412,16 @@ const SupportTicketAIAction = (props: AIActionProps) => {
     setWorkflowLoading(true);
     setWorkflowError(null);
     try {
-      const response: any = await reactory.graphqlQuery(WORKFLOWS_QUERY, {
-        filter: { nameSpace: WORKFLOW_NAME_SPACE, name: WORKFLOW_NAME },
-      }).then();
+      const response: any = await withTimeout(
+        Promise.resolve(
+          reactory.graphqlQuery(WORKFLOWS_QUERY, {
+            filter: { nameSpace: WORKFLOW_NAME_SPACE, name: WORKFLOW_NAME },
+          }),
+        ),
+        WORKFLOW_RESOLVE_TIMEOUT_MS,
+        `The workflow registry did not respond within ${Math.round(WORKFLOW_RESOLVE_TIMEOUT_MS / 1000)}s. ` +
+        'It may be slow or unavailable - retry, or start the run from the Workflows screen.',
+      );
       const rows = response?.data?.workflows?.workflows || [];
       const versions = registeredWorkflowVersions(rows);
       const latest = pickLatestWorkflowId(rows);
@@ -731,7 +770,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               Action with AI
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {ticket?.reference || ticket?.id}
+              {(ticket?.reference || ticket?.id) as React.ReactNode}
             </Typography>
           </Box>
         </DialogTitle>

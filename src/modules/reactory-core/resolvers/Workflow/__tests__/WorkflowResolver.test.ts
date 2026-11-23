@@ -149,7 +149,11 @@ describe('WorkflowResolver', () => {
         const result = await resolver.getWorkflows({}, { filter, pagination }, mockContext);
 
         expect(result).toEqual(mockResult);
-        expect(mockWorkflowService.getWorkflows).toHaveBeenCalledWith(filter, pagination);
+        expect(mockWorkflowService.getWorkflows).toHaveBeenCalledWith(
+          filter,
+          pagination,
+          expect.objectContaining({ includeStatistics: false })
+        );
       });
 
       it('should work without filters', async () => {
@@ -162,7 +166,50 @@ describe('WorkflowResolver', () => {
         const result = await resolver.getWorkflows({}, {}, mockContext);
 
         expect(result).toEqual(mockResult);
-        expect(mockWorkflowService.getWorkflows).toHaveBeenCalledWith(undefined, undefined);
+        expect(mockWorkflowService.getWorkflows).toHaveBeenCalledWith(
+          undefined,
+          undefined,
+          expect.objectContaining({ includeStatistics: false })
+        );
+      });
+
+      // Statistics are opt-in: the resolver must forward the flag explicitly so the
+      // service never performs the expensive instance aggregation unless asked. The
+      // default MUST be false - the support-ticket AI action calls this query just to
+      // discover the newest registered version, and paying for statistics there is
+      // what made that dialog spin for minutes.
+      it('does NOT request statistics by default', async () => {
+        mockWorkflowService.getWorkflows.mockResolvedValue({
+          workflows: [],
+          pagination: { page: 1, pages: 0, limit: 10, total: 0 }
+        });
+
+        await resolver.getWorkflows({}, {}, mockContext);
+
+        expect(mockWorkflowService.getWorkflows).toHaveBeenCalledWith(
+          undefined,
+          undefined,
+          expect.objectContaining({ includeStatistics: false })
+        );
+      });
+
+      it('forwards includeStatistics: true when the caller opts in', async () => {
+        mockWorkflowService.getWorkflows.mockResolvedValue({
+          workflows: [],
+          pagination: { page: 1, pages: 0, limit: 10, total: 0 }
+        });
+
+        await resolver.getWorkflows(
+          {},
+          { includeStatistics: true, statsMaxAgeMs: 5000 },
+          mockContext
+        );
+
+        expect(mockWorkflowService.getWorkflows).toHaveBeenCalledWith(
+          undefined,
+          undefined,
+          { includeStatistics: true, statsMaxAgeMs: 5000 }
+        );
       });
     });
 

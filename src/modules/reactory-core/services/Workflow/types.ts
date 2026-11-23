@@ -176,6 +176,75 @@ export interface IWorkflowStatistics {
   averageExecutionTime: number;
 }
 
+/**
+ * Options controlling how much work `getWorkflows` does to build its result.
+ *
+ * Enrichment is not free: `statistics` requires an aggregation over the whole
+ * workflow-instance collection, which is the single most expensive read in the
+ * platform. Callers that only need identity (id / name / version) - such as the
+ * support-ticket AI action, which just picks the newest version to launch -
+ * must be able to say so explicitly instead of paying for a scan they discard.
+ */
+export interface IWorkflowQueryOptions {
+  /**
+   * Include per-workflow execution `statistics`. Defaults to FALSE.
+   *
+   * When false no instance aggregation is performed at all and `statistics` is
+   * omitted from the result. Filters that are *defined in terms of* statistics
+   * (`hasErrors`, `neverRun`) force this on, because otherwise they would
+   * silently filter on a value that was never computed.
+   */
+  includeStatistics?: boolean;
+
+  /**
+   * Maximum age of the cached instance-stats snapshot, in milliseconds.
+   *
+   * Defaults to WORKFLOW_STATS_CACHE_MS (30s). Only used when statistics are
+   * included. 0 disables caching.
+   */
+  statsMaxAgeMs?: number;
+}
+
+/**
+ * A retention sweep request.
+ *
+ * Retention is expressed in days rather than dates so that a scheduled sweep
+ * does not have to compute cutoffs itself, and so the intent is visible in the
+ * caller.
+ */
+export interface IWorkflowRetentionInput {
+  /** Delete terminal instances created more than this many days ago. */
+  olderThanDays: number;
+  /**
+   * Statuses eligible for sweeping. Defaults to Complete + Terminated.
+   * Runnable/Suspended instances are NEVER swept - they are live work.
+   */
+  statuses?: string[];
+  /** Max instances to process in a single call. Defaults to 500. */
+  batchSize?: number;
+  /** Max batches to process. Defaults to 20 (caps one run's work). */
+  maxBatches?: number;
+  /** Report what would be deleted without deleting. */
+  dryRun?: boolean;
+}
+
+export interface IWorkflowRetentionResult {
+  success: boolean;
+  message?: string;
+  /** Instances matched by the retention predicate across all batches. */
+  matched: number;
+  /** Instances actually deleted (0 when dryRun). */
+  deleted: number;
+  /** Batches executed. */
+  batches: number;
+  /** True when more work remains (hit maxBatches). */
+  hasMore: boolean;
+  cutoff: string;
+  statuses: string[];
+  dryRun: boolean;
+  durationMs: number;
+}
+
 export interface RegisteredWorkflow {
   id: string;
   name: string;
@@ -474,7 +543,11 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
   getWorkflowConfigurations(): Promise<IWorkflowConfigurationResponse>;
   
   // Workflow Registry
-  getWorkflows(filter?: IWorkflowFilterInput, pagination?: IPaginationInput): Promise<IPaginatedWorkflows>;
+  getWorkflows(
+    filter?: IWorkflowFilterInput,
+    pagination?: IPaginationInput,
+    options?: IWorkflowQueryOptions
+  ): Promise<IPaginatedWorkflows>;
   getWorkflowRegistry(): Promise<IWorkflowRegistryResponse>;
   getWorkflow(nameSpace: string, name: string): Promise<RegisteredWorkflow>;
   getWorkflowWithId(id: string): Promise<RegisteredWorkflow>;
@@ -540,6 +613,9 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
   deleteWorkflowHistory(instanceId: string): Promise<IWorkflowOperationResult>;
   deleteWorkflowHistoryBatch(instanceIds: string[]): Promise<IWorkflowOperationResult>;
   clearWorkflowHistory(workflowDefinitionId: string): Promise<IWorkflowOperationResult>;
+
+  /** Time-scoped retention sweep of terminal instances (COMPLETE / TERMINATED only). */
+  sweepWorkflowInstances(input: IWorkflowRetentionInput): Promise<IWorkflowRetentionResult>;
   
   // Workflow Schedules
   getWorkflowSchedules(pagination?: IPaginationInput): Promise<IPaginatedSchedules>;

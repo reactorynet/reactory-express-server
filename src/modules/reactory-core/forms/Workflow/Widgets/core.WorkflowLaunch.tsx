@@ -26,7 +26,7 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
   const [error, setError] = React.useState<string | null>(null);
 
   const targetWorkflowFormInputId: string = `${workflow.nameSpace}.${workflow.name}InputForm@${workflow.version}`;
-  const InputForm = reactory.getComponent(targetWorkflowFormInputId);
+  const InputForm = reactory.getComponent<React.FC<any>>(targetWorkflowFormInputId);
   const executeWorkflow = async (data: any) => {
     setExecuting(true);
     setError(null);
