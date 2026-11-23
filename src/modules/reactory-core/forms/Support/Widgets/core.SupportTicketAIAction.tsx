@@ -770,7 +770,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               Action with AI
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {ticket?.reference || ticket?.id}
+              {(ticket?.reference || ticket?.id) as React.ReactNode}
             </Typography>
           </Box>
         </DialogTitle>
