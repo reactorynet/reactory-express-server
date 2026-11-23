@@ -855,6 +855,46 @@ input WorkflowHistoryFilterInput {
 }
 
 """
+Retention sweep request. Expressed in days so a scheduled sweep does not have to
+compute cutoffs, and so the intent is visible at the call site.
+"""
+input WorkflowRetentionInput {
+  """Delete terminal instances created more than this many days ago."""
+  olderThanDays: Int!
+  """
+  Statuses eligible for sweeping. Defaults to [COMPLETE, TERMINATED].
+  Runnable and Suspended are rejected - they are live work.
+  """
+  statuses: [String!]
+  """Max instances processed per batch. Defaults to 500, capped at 500."""
+  batchSize: Int
+  """Max batches per call. Defaults to 20. Caps how much one run can do."""
+  maxBatches: Int
+  """Report the match count without deleting."""
+  dryRun: Boolean = false
+}
+
+"""Outcome of a retention sweep."""
+type WorkflowRetentionResult {
+  success: Boolean!
+  message: String
+  """Instances matched by the retention predicate."""
+  matched: Int!
+  """Instances actually deleted (0 when dryRun)."""
+  deleted: Int!
+  """Batches executed."""
+  batches: Int!
+  """True when work remains (hit maxBatches) - run again to continue."""
+  hasMore: Boolean!
+  """The computed cutoff timestamp."""
+  cutoff: String!
+  """Statuses that were eligible."""
+  statuses: [String!]!
+  dryRun: Boolean!
+  durationMs: Int!
+}
+
+"""
 Pagination input for workflow history queries
 """
 input WorkflowHistoryPaginationInput {
@@ -1112,9 +1152,25 @@ extend type Query {
   workflowSystemStatus: SystemStatus
 
   # Workflow Registry
+  """
+  Registered workflow definitions.
+
+  `includeStatistics` is OPT-IN because per-workflow execution statistics require
+  an aggregation over the entire workflow-instance collection (instances embed
+  their execution pointers, so the collection is large). Callers that only need
+  identity - id / name / version - should leave it off: when false no instance
+  scan is performed at all and `statistics` comes back null.
+
+  Filters that are defined in terms of statistics (`hasErrors`, `neverRun`)
+  implicitly turn it on, since they would otherwise filter on a null value.
+  """
   workflows(
     filter: WorkflowFilterInput
     pagination: PaginationInput
+    """Include per-workflow execution statistics. Defaults to false."""
+    includeStatistics: Boolean = false
+    """Stats cache lifetime in ms. 0 disables caching. Defaults to WORKFLOW_STATS_CACHE_MS (30000)."""
+    statsMaxAgeMs: Int
   ): PaginatedWorkflows
 
   workflowRegistry: WorkflowRegistryResponse
@@ -1291,6 +1347,18 @@ extend type Mutation {
   Use with caution - this operation cannot be undone.
   """
   clearWorkflowExecutionHistory(workflowDefinitionId: String!): WorkflowOperationResult @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
+
+  """
+  Time-scoped retention sweep: delete terminal (COMPLETE / TERMINATED) instances
+  created more than `olderThanDays` ago, in bounded batches.
+
+  Runnable and Suspended instances are live work and are never swept, even if
+  requested. Use `dryRun: true` first to size the impact.
+
+  This exists because the instance collection is append-only: without retention,
+  registry and dashboard reads get slower with every run ever executed.
+  """
+  sweepWorkflowInstances(input: WorkflowRetentionInput!): WorkflowRetentionResult @auth(roles: ["ADMIN", "WORKFLOW_ADMIN"])
 
   # Legacy compatibility
   startWorkflowLegacy(name: String!, data: WorkflowInput): Boolean @auth(roles: ["USER"])
