@@ -265,7 +265,7 @@ const SupportTicketActivity = (props: ActivityProps) => {
           {filteredEvents.map((event, index) => (
             <TimelineItem key={event.id}>
               {/* Timestamp on opposite side */}
-              <TimelineOppositeContent color="text.secondary" sx={{ flex: 0.2, pt: 2 }}>
+              <TimelineOppositeContent sx={{ color: 'text.secondary', flex: 0.2, pt: 2 }}>
                 {RelativeTime && (
                   <RelativeTime
                     date={event.timestamp}
