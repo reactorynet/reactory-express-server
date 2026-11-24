@@ -31,6 +31,10 @@ const mockRunnerInstance = {
   pauseWorkflowInstance: jest.fn(),
   resumeWorkflowInstance: jest.fn(),
   cancelWorkflowInstance: jest.fn(),
+  // Salvage surface (REACTORY-302016408): declared on the literal so the tests
+  // type-check against the same shape the service actually calls.
+  recordWorktreeSalvage: jest.fn(),
+  acknowledgeWorktreeSalvage: jest.fn(),
   getWorkflowStats: jest.fn().mockReturnValue({ status: 'running' }),
   // Also reached by the service; without these the calls threw
   // "... is not a function".
@@ -1455,6 +1459,259 @@ describe('ReactoryWorkflowService', () => {
 
       const targetFile = path.join(tmpDir, 'workflows', 'catalog', 'test', 'RawWaitEventWF', '1.0.0', 'RawWaitEventWF.yaml');
       expect(fs.existsSync(targetFile)).toBe(false);
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // REACTORY-302016408 — salvage / hydration / cancel-with-reason
+  //
+  // These are the claim-bearing paths the review found untouched by tests:
+  // (a) an engine instance with no in-memory lifecycle entry must still be
+  //     readable, with terminationReason/lastActivity/salvage present — that is
+  //     the R5/N1 claim, and nothing else proves it;
+  // (b) the two salvage service methods;
+  // (c) cancel forwarding the operator's reason while the one-argument contract
+  //     stays intact for existing callers.
+  // ════════════════════════════════════════════════════════════════════════════
+  describe('termination reason / salvage service surface (REACTORY-302016408)', () => {
+    let lifecycleManager: any;
+
+    beforeEach(async () => {
+      await service.onStartup();
+
+      lifecycleManager = {
+        // No in-memory entry: engine instances are never registered here.
+        getWorkflowInstance: jest.fn().mockReturnValue(undefined),
+        getWorkflowHistoryById: jest.fn(),
+      };
+      mockRunnerInstance.getLifecycleManager.mockReturnValue(lifecycleManager);
+      mockRunnerInstance.recordWorktreeSalvage = jest.fn();
+      mockRunnerInstance.acknowledgeWorktreeSalvage = jest.fn();
+    });
+
+    describe('getWorkflowInstance hydration', () => {
+      it('hydrates an engine instance from persistence with the new fields present', async () => {
+        const terminationReason = {
+          code: 'provider-error',
+          message: 'Dead-lettered (retries-exhausted): 503 Service Unavailable',
+          time: new Date('2026-11-03T08:22:35.000Z'),
+          source: 'dead-letter',
+          recorded: true,
+        };
+        const lastActivity = new Date('2026-11-03T10:53:00.000Z');
+        const salvage = {
+          required: true,
+          worktreePath: '/tmp/wt',
+          branch: 'bug/REACTORY-302016408',
+          headSha: '4856720',
+          dirty: true,
+          changedFileCount: 15,
+          recordedAt: new Date('2026-11-03T11:00:00.000Z'),
+        };
+
+        lifecycleManager.getWorkflowHistoryById.mockResolvedValue({
+          id: 'inst-engine',
+          workflowDefinitionId: 'ai.ProcessAITicket@1.4.8',
+          version: '1.4.8',
+          status: 3,
+          statusLabel: 'Terminated',
+          createTime: new Date('2026-11-03T08:22:26.000Z'),
+          completeTime: new Date('2026-11-03T08:22:34.000Z'),
+          duration: 8000,
+          data: { inputs: { ticketRef: 'T-1' }, outputs: { ok: true } },
+          executionPointers: [{ id: 'p-43', stepId: 43 }],
+          stepCount: 1,
+          completedStepCount: 0,
+          failedStepCount: 0,
+          terminationReason,
+          lastActivity,
+          salvage,
+        });
+
+        const instance: any = await service.getWorkflowInstance('inst-engine');
+
+        // This is the assertion that makes the WorkflowInstance claim true.
+        expect(instance.terminationReason).toEqual(terminationReason);
+        expect(instance.lastActivity).toEqual(lastActivity);
+        expect(instance.salvage).toEqual(salvage);
+
+        // ... and the rest of the row is described, not dropped.
+        expect(instance.id).toBe('inst-engine');
+        expect(instance.status).toBe(3);
+        expect(instance.completeTime).toEqual(new Date('2026-11-03T08:22:34.000Z'));
+        expect(instance.duration).toBe(8000);
+        expect(instance.input).toEqual({ ticketRef: 'T-1' });
+        expect(instance.output).toEqual({ ok: true });
+        expect(instance.steps).toHaveLength(1);
+      });
+
+      it('keeps a COMPLETE row null rather than inventing a reason', async () => {
+        lifecycleManager.getWorkflowHistoryById.mockResolvedValue({
+          id: 'inst-complete',
+          workflowDefinitionId: 'ai.ProcessAITicket@1.4.8',
+          version: '1.4.8',
+          status: 2,
+          createTime: new Date('2026-11-03T08:22:26.000Z'),
+          completeTime: new Date('2026-11-03T08:24:00.000Z'),
+          duration: 94000,
+          data: {},
+          executionPointers: [],
+          terminationReason: null,
+          lastActivity: new Date('2026-11-03T08:24:00.000Z'),
+          salvage: null,
+        });
+
+        const instance: any = await service.getWorkflowInstance('inst-complete');
+
+        expect(instance.terminationReason).toBeNull();
+        expect(instance.salvage).toBeNull();
+        expect(instance.lastActivity).toBeInstanceOf(Date);
+      });
+
+      it('prefers an in-memory instance when one exists', async () => {
+        const inMemory = { id: 'inst-legacy', status: 'running' };
+        lifecycleManager.getWorkflowInstance.mockReturnValue(inMemory);
+
+        await expect(service.getWorkflowInstance('inst-legacy')).resolves.toBe(inMemory);
+        expect(lifecycleManager.getWorkflowHistoryById).not.toHaveBeenCalled();
+      });
+
+      it('throws when the instance exists nowhere', async () => {
+        lifecycleManager.getWorkflowHistoryById.mockResolvedValue(null);
+
+        await expect(service.getWorkflowInstance('inst-missing')).rejects.toThrow(/not found/i);
+      });
+    });
+
+    describe('recordWorkflowSalvage', () => {
+      it('forwards the worktree facts and returns the record', async () => {
+        const record = { worktreePath: '/tmp/wt', branch: 'bug/x', required: true };
+        mockRunnerInstance.recordWorktreeSalvage.mockResolvedValue(record);
+
+        const result = await service.recordWorkflowSalvage('inst-123', {
+          worktreePath: '/tmp/wt',
+          branch: 'bug/x',
+          headSha: '4856720',
+          dirty: true,
+          changedFileCount: 15,
+        });
+
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual(record);
+        expect(mockRunnerInstance.recordWorktreeSalvage).toHaveBeenCalledWith('inst-123', {
+          worktreePath: '/tmp/wt',
+          branch: 'bug/x',
+          headSha: '4856720',
+          dirty: true,
+          changedFileCount: 15,
+        });
+      });
+
+      it('rejects a missing worktreePath without touching the runner', async () => {
+        const result = await service.recordWorkflowSalvage('inst-123', {});
+
+        expect(result.success).toBe(false);
+        expect(result.message).toMatch(/worktreePath is required/i);
+        expect(mockRunnerInstance.recordWorktreeSalvage).not.toHaveBeenCalled();
+      });
+
+      it('rejects a missing instanceId', async () => {
+        const result = await service.recordWorkflowSalvage('', { worktreePath: '/tmp/wt' });
+
+        expect(result.success).toBe(false);
+        expect(result.message).toMatch(/instanceId is required/i);
+      });
+
+      it('reports failure when the runner cannot record it', async () => {
+        mockRunnerInstance.recordWorktreeSalvage.mockResolvedValue(null);
+
+        const result = await service.recordWorkflowSalvage('inst-123', { worktreePath: '/tmp/wt' });
+
+        expect(result.success).toBe(false);
+        expect(result.message).toMatch(/Could not record salvage/i);
+      });
+
+      it('returns a failure result instead of throwing when the runner rejects', async () => {
+        mockRunnerInstance.recordWorktreeSalvage.mockRejectedValue(new Error('provider down'));
+
+        const result = await service.recordWorkflowSalvage('inst-123', { worktreePath: '/tmp/wt' });
+
+        expect(result.success).toBe(false);
+        expect(result.message).toContain('provider down');
+      });
+    });
+
+    describe('acknowledgeWorkflowSalvage', () => {
+      it('forwards the resolution and returns the updated record', async () => {
+        const record = { worktreePath: '/tmp/wt', salvageSha: '4856720' };
+        mockRunnerInstance.acknowledgeWorktreeSalvage.mockResolvedValue(record);
+
+        const result = await service.acknowledgeWorkflowSalvage('inst-123', {
+          acknowledgedBy: 'operator@reactory.net',
+          salvageSha: '4856720',
+        });
+
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual(record);
+        expect(mockRunnerInstance.acknowledgeWorktreeSalvage).toHaveBeenCalledWith('inst-123', {
+          acknowledgedBy: 'operator@reactory.net',
+          salvageSha: '4856720',
+        });
+      });
+
+      it('reports failure when no record exists for the instance', async () => {
+        mockRunnerInstance.acknowledgeWorktreeSalvage.mockResolvedValue(null);
+
+        const result = await service.acknowledgeWorkflowSalvage('inst-123');
+
+        expect(result.success).toBe(false);
+        expect(result.message).toMatch(/No salvage record/i);
+      });
+
+      it('returns a failure result instead of throwing when the runner rejects', async () => {
+        mockRunnerInstance.acknowledgeWorktreeSalvage.mockRejectedValue(new Error('write failed'));
+
+        const result = await service.acknowledgeWorkflowSalvage('inst-123');
+
+        expect(result.success).toBe(false);
+        expect(result.message).toContain('write failed');
+      });
+    });
+
+    describe('cancelWorkflowInstance with a reason', () => {
+      it('forwards the operator reason to the runner', async () => {
+        mockRunnerInstance.cancelWorkflowInstance.mockResolvedValue(undefined);
+
+        const result = await service.cancelWorkflowInstance('inst-123', 'runaway agent step');
+
+        expect(result.success).toBe(true);
+        expect(mockRunnerInstance.cancelWorkflowInstance)
+          .toHaveBeenCalledWith('inst-123', 'runaway agent step');
+      });
+    });
+
+    describe('clearWorkflowHistory reporting', () => {
+      it('surfaces the salvage-blocked rows to the operator', async () => {
+        lifecycleManager.clearWorkflowHistory = jest.fn().mockResolvedValue({
+          success: true,
+          deletedCount: 3,
+          skippedSalvage: 1,
+          blockedInstanceIds: ['inst-blocked'],
+          hasMore: false,
+          message: 'Cleared 3; 1 blocked pending salvage acknowledgement: inst-blocked',
+        });
+
+        const result = await service.clearWorkflowHistory('ai.ProcessAITicket@1.4.8');
+
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual({
+          deletedCount: 3,
+          skippedSalvage: 1,
+          blockedInstanceIds: ['inst-blocked'],
+          hasMore: false,
+        });
+        expect(result.message).toMatch(/blocked pending salvage acknowledgement/i);
+      });
     });
   });
 });

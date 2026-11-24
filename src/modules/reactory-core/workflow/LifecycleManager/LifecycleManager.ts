@@ -11,6 +11,20 @@ import {
   getStatusLabel,
   getExecutionPointerStatusLabel,
 } from './models';
+import {
+  describeTerminationForStatus,
+  hasUnresolvedSalvage,
+  isEngineTerminalStatus,
+  isTerminationReasonStatus,
+  readLastActivity,
+  readReportedWorktree,
+  readSalvageRecord,
+  readTerminationReason,
+  toDateOrNull,
+  type ITerminationReasonDto,
+  type IWorkflowSalvageRecord,
+} from '../termination/TerminationReason';
+import { UnresolvedSalvageError } from '../termination/TerminationRecorder';
 
 export enum WorkflowStatus {
   PENDING = 'pending',
@@ -196,6 +210,30 @@ export interface IWorkflowHistoryItem {
   stepCount: number;
   completedStepCount: number;
   failedStepCount: number;
+  /**
+   * WHY the instance was TERMINATED.
+   *
+   * Non-null for EVERY terminated row (status 3, and status 4 "DeadLettered"
+   * which is displayed as TERMINATED): an unattributed row is reported as
+   * `unknown` with an explanatory message rather than as silence — see
+   * `describeTerminationForStatus`. Null while the instance is live AND for
+   * COMPLETE instances: a successful run has no termination reason, so
+   * `terminationReason != null` is a reliable filter for "this run did not
+   * finish".
+   */
+  terminationReason?: ITerminationReasonDto | null;
+  /**
+   * The last moment the ENGINE made progress (newest of the persisted heartbeat,
+   * every pointer start/end time, and `createTime`).
+   *
+   * Compare with wall-clock `now`: a run whose `lastActivity` is hours old while
+   * files are still being written is exactly the "engine lost track while the
+   * agent kept working" case from the incident — `completedStepCount` alone could
+   * not express it.
+   */
+  lastActivity?: Date | null;
+  /** Unpublished work left behind by a terminated run, when one was recorded. */
+  salvage?: IWorkflowSalvageRecord | null;
 }
 
 /**
@@ -295,20 +333,55 @@ function mapPointerStatus(engineStatus: number): ExecutionPointerStatus {
 
 function transformToHistoryItem(instance: WorkflowInstance): IWorkflowHistoryItem {
   const status = mapProviderStatus(instance.status);
-
-  const completeTime = instance.completeTime instanceof Date
-    ? instance.completeTime
-    : instance.completeTime
-      ? new Date(instance.completeTime as any)
-      : null;
+  const isTerminal = isEngineTerminalStatus(instance.status);
 
   const createTime = instance.createTime instanceof Date
     ? instance.createTime
     : new Date(instance.createTime as any);
 
+  const lastActivity = readLastActivity(instance);
+
+  // `completeTime` is NULL on several terminal paths in the engine today:
+  //   - WorkflowHost.terminateWorkflow() only sets status = Terminated;
+  //   - the dead-letter paths only set status = DeadLettered;
+  //   - onError(Terminate) only sets status = Terminated.
+  // Nothing set completeTime on those paths, which is why four of six recent
+  // terminated instances had completeTime: null and duration: null. New writes
+  // set it (WorkflowInstanceLifecycleRecorder.recordTermination); for the rows
+  // that predate the fix, and for any path we have not reached yet, derive it
+  // from the last engine activity so duration and every "never finished" query
+  // stay meaningful. A terminal instance IS finished.
+  const recordedCompleteTime = toDateOrNull(instance.completeTime);
+  const completeTime = recordedCompleteTime || (isTerminal ? (lastActivity || createTime) : null);
+
   const duration = completeTime && createTime
     ? completeTime.getTime() - createTime.getTime()
     : null;
+
+  // Termination reason: a recorded cause wins; otherwise a TERMINATED row gets an
+  // explicit `unknown` (recorded: false) instead of silence.
+  //
+  // Deliberately gated on `isTerminationReasonStatus` (3/4), NOT on
+  // `isEngineTerminalStatus` (2/3/4): a successful run has no "why did it not
+  // finish", and synthesising one made 100% of COMPLETE rows claim "the process
+  // may have died" — which also destroyed the field's use as a filter. A stale
+  // recorded reason on a COMPLETE row (written by a drain that ran while the run
+  // was live, before the engine resumed it) is likewise not surfaced: the run
+  // did complete, so there is nothing to explain.
+  const recordedReason = readTerminationReason(instance);
+  const terminationReason: ITerminationReasonDto | null = isTerminationReasonStatus(instance.status)
+    ? (recordedReason
+      ? {
+        code: recordedReason.code,
+        message: recordedReason.message,
+        time: recordedReason.time,
+        source: recordedReason.source || 'derived',
+        recorded: true,
+      }
+      : describeTerminationForStatus(instance.status, completeTime, lastActivity, createTime))
+    : null;
+
+  const salvage = readSalvageRecord(instance);
 
   const executionPointers: IExecutionPointerSummary[] = (instance.executionPointers || []).map(pointer => {
     const startTime = pointer.startTime instanceof Date
@@ -376,6 +449,9 @@ function transformToHistoryItem(instance: WorkflowInstance): IWorkflowHistoryIte
     stepCount: executionPointers.length,
     completedStepCount,
     failedStepCount,
+    terminationReason,
+    lastActivity,
+    salvage,
   };
 }
 
@@ -428,6 +504,32 @@ export class WorkflowLifecycleManager extends EventEmitter {
   private _isInitialized: boolean = false;
   /** Active IPersistenceProvider (null when using in-memory / not set) */
   private persistence: IPersistenceProvider | null = null;
+
+  /**
+   * Hook that lets the guard CAPTURE a missing salvage record before deciding.
+   *
+   * WHY: auto-capture used to run only from the in-memory YAML finalize watch, so
+   * a run started by a PREVIOUS process (the live incident's exact case), a
+   * DeadLettered row, or a code workflow never got a record — and therefore had
+   * no protection at all when someone cleared its history.
+   *
+   * The guard is the right place to close that: it always re-reads persisted
+   * state, and the workflow's own `data.__reactory.worktree` survives the process.
+   * So before answering "is this row blocked?", try to derive a record from the
+   * persisted instance. Set by WorkflowRunner to
+   * `terminationRecorder.captureSalvageForTerminatedInstance`.
+   */
+  /**
+   * Optional hook that derives a salvage record from a row's own persisted
+   * worktree facts (installed by WorkflowRunner as
+   * `rec.captureSalvageForTerminatedInstance`).
+   *
+   * It receives the row the caller already holds, so it can skip its own read
+   * (review R1 on REACTORY-302016408/20261103/4082245933).
+   */
+  private salvageCaptureHook:
+    | ((instanceId: string, instance?: WorkflowInstance | null) => Promise<unknown>)
+    | null = null;
 
   constructor(config: Partial<IWorkflowLifecycleConfig> = {}) {
     super();
@@ -493,6 +595,42 @@ export class WorkflowLifecycleManager extends EventEmitter {
     this.persistence = provider;
   }
 
+  /**
+   * Install the salvage-capture hook (see the field comment).
+   *
+   * Without it the guards still work for records that already exist; with it they
+   * can also derive one from a persisted `data.__reactory.worktree`, which is what
+   * protects runs this process never started.
+   */
+  public setSalvageCaptureHook(
+    hook: ((instanceId: string, instance?: WorkflowInstance | null) => Promise<unknown>) | null,
+  ): void {
+    this.salvageCaptureHook = hook;
+  }
+
+  /**
+   * Try to derive a salvage record for an instance from its persisted data.
+   * Best-effort: never throws, never blocks the caller's decision.
+   *
+   * Returns the hook's record (or null) so the caller does NOT need a second
+   * read to see what the capture produced.
+   */
+  private async attemptSalvageCapture(
+    instanceId: string,
+    instance?: WorkflowInstance | null,
+  ): Promise<IWorkflowSalvageRecord | null> {
+    if (!this.salvageCaptureHook || !instanceId) return null;
+    try {
+      const captured = await this.salvageCaptureHook(instanceId, instance);
+      return (captured as IWorkflowSalvageRecord) || null;
+    } catch (error) {
+      logger.debug(`Salvage capture attempt failed for ${instanceId} (non-fatal)`, {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+  }
+
   // ============================================
   // Provider-backed Persistence Methods (M9)
   // ============================================
@@ -552,6 +690,52 @@ export class WorkflowLifecycleManager extends EventEmitter {
       logger.error('Failed to get workflow history by ID', error);
       return null;
     }
+  }
+
+  /**
+   * Guard for destructive cleanup of a terminated run's artefacts.
+   *
+   * A terminated run that left a dirty worktree with unpublishable work must not
+   * be silently discarded. The engine deliberately knows nothing about `git`:
+   * whoever owns the worktree records it with
+   * `WorkflowRunner.recordWorktreeSalvage()` (path, branch, HEAD, dirty flag) and
+   * cleanup code calls this guard before removing anything. Retention/delete are
+   * guarded too (`deleteWorkflowHistory`, `sweepExpiredInstances`), so the record
+   * cannot be destroyed by an automated sweep either.
+   *
+   * @throws UnresolvedSalvageError when the run owes salvage work.
+   * @returns the record, or null when none was ever written.
+   */
+  public async assertSalvageClear(instanceId: string): Promise<IWorkflowSalvageRecord | null> {
+    if (!this.persistence || !instanceId) return null;
+
+    let instance: WorkflowInstance | null = null;
+    try {
+      instance = await this.persistence.getWorkflowInstance(instanceId);
+    } catch (error) {
+      logger.warn(`assertSalvageClear(${instanceId}): failed to load instance`, error);
+      return null;
+    }
+
+    let record = readSalvageRecord(instance);
+
+    // Same capture attempt as the other guards: a run whose record was never
+    // written (previous process, DeadLettered, code workflow) is still protected
+    // as long as its persisted data reports a worktree.
+    if (!hasUnresolvedSalvage(record)) {
+      await this.attemptSalvageCapture(instanceId);
+      try {
+        const refreshed = await this.persistence.getWorkflowInstance(instanceId);
+        record = readSalvageRecord(refreshed) || record;
+      } catch {
+        /* keep the original answer */
+      }
+    }
+
+    if (hasUnresolvedSalvage(record)) {
+      throw new UnresolvedSalvageError(instanceId, record as IWorkflowSalvageRecord);
+    }
+    return record;
   }
 
   /**
@@ -857,6 +1041,60 @@ export class WorkflowLifecycleManager extends EventEmitter {
   }
 
   /**
+   * Return the salvage record for an instance IFF it still blocks cleanup.
+   *
+   * Load failures are treated as "nothing to block on": the guard exists to
+   * protect work, and an unreadable row cannot be protected by refusing every
+   * delete (that would wedge retention).
+   */
+  private async getUnresolvedSalvageFor(
+    instanceOrId: string | WorkflowInstance | null | undefined,
+  ): Promise<IWorkflowSalvageRecord | null> {
+    if (!this.persistence || !instanceOrId) return null;
+
+    // Callers that already hold the row (sweep, clear-by-definition) pass it in:
+    // the record is embedded in the document, so there is no need to re-read it.
+    const provided = typeof instanceOrId === 'string' ? null : instanceOrId;
+    const instanceId = typeof instanceOrId === 'string'
+      ? instanceOrId
+      : String((instanceOrId as any).id || (instanceOrId as any)._id || '');
+    if (!instanceId) return null;
+
+    let instance: WorkflowInstance | null = provided;
+    if (!instance) {
+      try {
+        instance = await this.persistence.getWorkflowInstance(instanceId);
+      } catch {
+        return null;
+      }
+    }
+    // A row that does not exist cannot owe salvage work.
+    if (!instance) return null;
+
+    const existing = readSalvageRecord(instance);
+    if (hasUnresolvedSalvage(existing)) {
+      return existing as IWorkflowSalvageRecord;
+    }
+
+    // R1 (REACTORY-302016408/20261103/4082245933). Decide from the row we ALREADY
+    // hold. A salvage record can only be derived for a terminated row that carries
+    // worktree facts, so anything else is a definitive "nothing to block on" and
+    // must not touch the database at all.
+    //
+    // Before this guard the sweep/clear paths did TWO more serial single-document
+    // reads per row (the hook's own load, then a refresh) for rows that could never
+    // yield a record — up to 20,000 rows x 2 reads of ~65 KB documents per sweep.
+    // Today that was EVERY row, because nothing writes worktree facts yet.
+    if (!isTerminationReasonStatus((instance as any).status)) return null;
+    if (!readReportedWorktree(instance)) return null;
+
+    // The hook is given the row we already hold, so it performs no read of its own,
+    // and its RETURN VALUE is the answer — there is no second re-read.
+    const captured = await this.attemptSalvageCapture(instanceId, instance);
+    return hasUnresolvedSalvage(captured) ? captured : null;
+  }
+
+  /**
    * Delete a single workflow execution history item by instance ID.
    */
   public async deleteWorkflowHistory(instanceId: string): Promise<{ success: boolean; deletedCount: number; message?: string }> {
@@ -865,6 +1103,21 @@ export class WorkflowLifecycleManager extends EventEmitter {
     }
 
     try {
+      // Salvage guard: a terminated run that owes unpublished work must not have
+      // its instance row (the only pointer to the worktree) deleted out from under
+      // the operator. Acknowledge or record the salvage SHA first.
+      const salvage = await this.getUnresolvedSalvageFor(instanceId);
+      if (salvage) {
+        return {
+          success: false,
+          deletedCount: 0,
+          message:
+            `Workflow instance ${instanceId} is blocked pending salvage acknowledgement: ` +
+            `${salvage.worktreePath || 'unknown worktree'}` +
+            `${salvage.branch ? ` on branch ${salvage.branch}` : ''} still holds unpublished work.`,
+        };
+      }
+
       const deleted = await this.persistence.deleteWorkflowInstance(instanceId);
 
       if (!deleted) {
@@ -900,13 +1153,37 @@ export class WorkflowLifecycleManager extends EventEmitter {
     }
 
     try {
-      const deletedCount = await this.persistence.deleteWorkflowInstances(instanceIds);
+      // Salvage guard (batch): delete the rows we are allowed to delete and
+      // report the ones held back, rather than failing the whole batch.
+      const blocked: string[] = [];
+      const deletable: string[] = [];
+      for (const instanceId of instanceIds) {
+        if (await this.getUnresolvedSalvageFor(instanceId)) {
+          blocked.push(instanceId);
+        } else {
+          deletable.push(instanceId);
+        }
+      }
+
+      if (deletable.length === 0) {
+        return {
+          success: false,
+          deletedCount: 0,
+          message:
+            `All ${blocked.length} instance(s) are blocked pending salvage acknowledgement: ` +
+            blocked.join(', '),
+        };
+      }
+
+      const deletedCount = await this.persistence.deleteWorkflowInstances(deletable);
 
       logger.info(`Deleted ${deletedCount} workflow execution history items`);
       return {
         success: true,
         deletedCount,
-        message: `Successfully deleted ${deletedCount} workflow instances`,
+        message: blocked.length > 0
+          ? `Deleted ${deletedCount}; ${blocked.length} blocked pending salvage acknowledgement: ${blocked.join(', ')}`
+          : `Successfully deleted ${deletedCount} workflow instances`,
       };
     } catch (error) {
       logger.error('Failed to delete workflow execution history batch', error);
@@ -916,8 +1193,36 @@ export class WorkflowLifecycleManager extends EventEmitter {
 
   /**
    * Clear all workflow execution history for a specific workflow definition.
+   *
+   * SALVAGE-GUARDED. This is the fourth deletion route (the other three are
+   * `deleteWorkflowHistory`, `deleteWorkflowHistoryBatch` and
+   * `sweepExpiredInstances`) and it is reachable from the
+   * `clearWorkflowExecutionHistory` mutation. It used to call
+   * `deleteWorkflowInstancesByDefinitionId` unconditionally, so an operator
+   * clearing one definition's history silently destroyed any unresolved salvage
+   * record — and with it the only pointer to a worktree holding unpublished work.
+   * That was the exact hole the guard exists to prevent, so the wipe is now
+   * partitioned the same way the other routes are.
+   *
+   * Rows are listed first (bounded), then the allowed ones are deleted by id. A
+   * definition with more instances than the page bound keeps its oldest rows for
+   * a later pass rather than risking an unguarded mass delete, and `hasMore`
+   * reports that.
    */
-  public async clearWorkflowHistory(workflowDefinitionId: string): Promise<{ success: boolean; deletedCount: number; message?: string }> {
+  public async clearWorkflowHistory(
+    workflowDefinitionId: string,
+    options: { batchSize?: number; maxBatches?: number } = {},
+  ): Promise<{
+    success: boolean;
+    deletedCount: number;
+    message?: string;
+    /** Instances held back because they still owe salvage work. */
+    skippedSalvage?: number;
+    /** Ids held back, so an operator knows exactly what to resolve. */
+    blockedInstanceIds?: string[];
+    /** True when more rows remain (hit the page bound) — run again to continue. */
+    hasMore?: boolean;
+  }> {
     if (!this.persistence) {
       return { success: false, deletedCount: 0, message: 'No persistence provider configured' };
     }
@@ -926,14 +1231,74 @@ export class WorkflowLifecycleManager extends EventEmitter {
       return { success: false, deletedCount: 0, message: 'Workflow definition ID is required' };
     }
 
-    try {
-      const deletedCount = await this.persistence.deleteWorkflowInstancesByDefinitionId(workflowDefinitionId);
+    const batchSize = Math.min(Math.max(Math.trunc(options?.batchSize ?? 500) || 500, 1), 500);
+    const maxBatches = Math.min(Math.max(Math.trunc(options?.maxBatches ?? 20) || 20, 1), 200);
 
-      logger.info(`Cleared ${deletedCount} workflow execution history items for ${workflowDefinitionId}`);
+    try {
+      let deletedCount = 0;
+      let skippedSalvage = 0;
+      let hasMore = false;
+      const blockedInstanceIds: string[] = [];
+
+      for (let batch = 0; batch < maxBatches; batch += 1) {
+        // Always page from 0: the previous batch was deleted, so the next window
+        // slides up. Rows held back for salvage are skipped by id, not by paging.
+        const { instances } = await this.persistence.queryWorkflowInstances({
+          workflowDefinitionId,
+          take: batchSize,
+          skip: 0,
+          sortField: 'createTime',
+          sortOrder: 'asc',
+        });
+
+        if (!instances || instances.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        const deletable: string[] = [];
+        for (const instance of instances) {
+          const instanceId = String((instance as any).id || (instance as any)._id || '');
+          if (!instanceId) continue;
+
+          if (await this.getUnresolvedSalvageFor(instance)) {
+            skippedSalvage += 1;
+            blockedInstanceIds.push(instanceId);
+            continue;
+          }
+          deletable.push(instanceId);
+        }
+
+        if (deletable.length === 0) {
+          // Every row on this page is held back. Paging from 0 would return the
+          // same rows forever, so stop and report the backlog.
+          hasMore = false;
+          break;
+        }
+
+        deletedCount += await this.persistence.deleteWorkflowInstances(deletable);
+        hasMore = instances.length >= batchSize;
+        if (!hasMore) break;
+      }
+
+      if (deletedCount > 0) {
+        this.invalidateInstanceStatsCache();
+      }
+
+      logger.info(
+        `Cleared ${deletedCount} workflow execution history items for ${workflowDefinitionId}` +
+        (skippedSalvage > 0 ? ` — ${skippedSalvage} held back pending salvage acknowledgement` : '')
+      );
+
       return {
         success: true,
         deletedCount,
-        message: `Successfully cleared ${deletedCount} workflow instances for ${workflowDefinitionId}`,
+        skippedSalvage,
+        blockedInstanceIds,
+        hasMore,
+        message: skippedSalvage > 0
+          ? `Cleared ${deletedCount}; ${skippedSalvage} blocked pending salvage acknowledgement: ${blockedInstanceIds.join(', ')}`
+          : `Successfully cleared ${deletedCount} workflow instances for ${workflowDefinitionId}`,
       };
     } catch (error) {
       logger.error('Failed to clear workflow execution history', error);
@@ -966,6 +1331,9 @@ export class WorkflowLifecycleManager extends EventEmitter {
    *    monopolise the database. `hasMore` reports whether to run again.
    *  - `dryRun` reports the match count without deleting, so an operator can size
    *    the impact before committing.
+   *  - Instances that still owe salvage work (a terminated run that left
+   *    unpublished changes behind) are skipped and counted in `skippedSalvage`:
+   *    the instance row is the only pointer to that worktree.
    *  - The stats cache is invalidated on a real delete so counters are not stale.
    *
    * Provider-agnostic: uses only queryWorkflowInstances + deleteWorkflowInstances,
@@ -980,6 +1348,8 @@ export class WorkflowLifecycleManager extends EventEmitter {
   }): Promise<{
     matched: number;
     deleted: number;
+    /** Rows held back because they still owe salvage work. */
+    skippedSalvage: number;
     batches: number;
     hasMore: boolean;
     cutoff: Date;
@@ -1012,13 +1382,14 @@ export class WorkflowLifecycleManager extends EventEmitter {
     }
 
     if (!this.persistence) {
-      return { matched: 0, deleted: 0, batches: 0, hasMore: false, cutoff };
+      return { matched: 0, deleted: 0, skippedSalvage: 0, batches: 0, hasMore: false, cutoff };
     }
 
     let matched = 0;
     let deleted = 0;
     let batches = 0;
     let hasMore = false;
+    let skippedSalvage = 0;
 
     for (let batch = 0; batch < maxBatches; batch += 1) {
       // Always page from 0: the previous batch was deleted, so the next-oldest
@@ -1053,27 +1424,41 @@ export class WorkflowLifecycleManager extends EventEmitter {
 
       matched += instances.length;
 
-      const ids = instances.map((i: any) => String(i.id || i._id)).filter(Boolean);
+      // Salvage guard: never delete the only pointer to unpublished work. Rows
+      // held back stay in the collection (and are reported) until the salvage
+      // record is acknowledged or a salvage/published SHA is recorded.
+      const ids: string[] = [];
+      for (const instance of instances) {
+        const instanceId = String((instance as any).id || (instance as any)._id || '');
+        if (!instanceId) continue;
+        if (await this.getUnresolvedSalvageFor(instance)) {
+          skippedSalvage += 1;
+          continue;
+        }
+        ids.push(instanceId);
+      }
+
       if (ids.length === 0) {
+        // Every row on this page is held back. Paging from 0 would return the
+        // same rows forever, so stop and let the caller see the backlog.
         hasMore = false;
         break;
       }
 
       deleted += await this.persistence.deleteWorkflowInstances(ids);
       hasMore = instances.length >= batchSize;
-
-      if (!hasMore) break;
-    }
+      if (!hasMore) break;    }
 
     if (deleted > 0) {
       this.invalidateInstanceStatsCache();
       logger.info(
         `Workflow retention sweep removed ${deleted} terminal instances older than ${cutoff.toISOString()} ` +
-        `in ${batches} batch(es) (${Date.now() - startedAt}ms)`
+        `in ${batches} batch(es) (${Date.now() - startedAt}ms)` +
+        (skippedSalvage > 0 ? ` — ${skippedSalvage} held back pending salvage acknowledgement` : '')
       );
     }
 
-    return { matched, deleted, batches, hasMore, cutoff };
+    return { matched, deleted, skippedSalvage, batches, hasMore, cutoff };
   }
 
   // ============================================

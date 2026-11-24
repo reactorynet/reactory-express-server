@@ -44,15 +44,23 @@ import {
 } from '../YamlFlow/YamlFlowBuilder';
 import { configureYamlFlowRuntime } from '../YamlFlow/execution/YamlFlowRuntime';
 import { finalizeInstanceIfTerminal } from '../YamlFlow/execution/YamlStepBody';
+import {
+  WorkflowInstanceLifecycleRecorder,
+  type ISalvageRecordInput,
+} from '../termination/TerminationRecorder';
+import {
+  classifyDeadLetterReason,
+  classifyTerminationError,
+  isEngineTerminalStatus,
+  TerminationReasonCode,
+  type IWorkflowSalvageRecord,
+} from '../termination/TerminationReason';
 
 const {
-  MONGOOSE,
-  // Persistence backend for the workflow-es host:
-  //   'mongo'    — MongoDBPersistence (requires MONGOOSE env var)
-  //   'sqlite'   — SqlitePersistence  (requires WORKFLOW_SQLITE_PATH or defaults under APP_DATA_ROOT)
-  //   'postgres' — PostgresPersistence (requires WORKFLOW_POSTGRES_URL or falls back to REACTORY_POSTGRES_* / POSTGRES_*)
-  //   'memory'   — in-process only, no durability (default when no provider matched)
-  WORKFLOW_PERSISTENCE_PROVIDER = 'mongo',
+  // NOTE: MONGOOSE and WORKFLOW_PERSISTENCE_PROVIDER are deliberately NOT read
+  // here. They are resolved per call in getPersistenceProvider() (see the note
+  // there) so the provider can be chosen without a restart and so a test can
+  // pin it instead of inheriting whatever the shell happens to export.
   // SQLite: absolute path to the database file.
   // Defaults to $APP_DATA_ROOT/workflows/workflow.db when APP_DATA_ROOT is set.
   WORKFLOW_SQLITE_PATH,
@@ -239,6 +247,16 @@ const getDefaultWorkflows = (): IWorkflow[] => {
 let instance: WorkflowRunner | null = null;
 
 /**
+ * The runner that currently owns the process-level fatal handlers.
+ *
+ * Exactly one runner may own them: `initialize()` can legitimately be called by
+ * a second runner in-process (tests, or a re-initialised singleton), and
+ * blindly prepending another pair of listeners on every init would leak
+ * listeners and eventually print MaxListenersExceededWarning.
+ */
+let fatalHandlerOwner: WorkflowRunner | null = null;
+
+/**
  * Workflow runner is a singleton class that manages the workflow engine and the workflow host.
  */
 export class WorkflowRunner {  
@@ -269,6 +287,27 @@ export class WorkflowRunner {
   private retentionKickoff: NodeJS.Timeout | null = null;
   private retentionRunning: boolean = false;
 
+  /**
+   * Writes termination reasons, `completeTime` backfills, last-activity-adjacent
+   * salvage records. See workflow/termination/TerminationRecorder.ts.
+   */
+  private readonly terminationRecorder: WorkflowInstanceLifecycleRecorder;
+
+  /**
+   * Engine instance ids this process is currently running.
+   *
+   * Bounded by concurrency (not by the size of the `workflows` collection), so a
+   * signal/crash handler can record a reason for each in O(running), not O(all).
+   * Populated on start, cleared when the instance reaches a terminal state.
+   */
+  private readonly inFlightInstances: Map<string, { workflowId: string; startedAt: Date }> = new Map();
+
+  /** Process-level handlers installed for the fatal paths; removed by stop(). */
+  private fatalErrorHandlers: {
+    uncaught: (error: any) => void;
+    rejection: (error: any) => void;
+  } | null = null;
+
   constructor(props: IWorkflowRunnerProps, context: Reactory.Server.IReactoryContext) {
     this.state = {
       workflows: props?.workflows || getDefaultWorkflows(),
@@ -277,6 +316,7 @@ export class WorkflowRunner {
     this.context = context;
     this.stepRegistry = new YamlStepRegistry();
     this.errorHandler = new ErrorHandler();
+    this.terminationRecorder = new WorkflowInstanceLifecycleRecorder({ logger });
     this.lifecycleManager = new WorkflowLifecycleManager();
     this.configurationManager = new ConfigurationManager({
       configPath: process.env.APP_DATA_ROOT ? `${process.env.APP_DATA_ROOT}/workflows/config` : './data/workflows/config',
@@ -391,6 +431,20 @@ export class WorkflowRunner {
         persistence: this.persistence,
       });
 
+      // Let the cleanup guards derive a salvage record from a persisted
+      // `data.__reactory.worktree` before deciding a row is deletable. Without
+      // this, auto-capture only ran from the in-memory finalize watch, so a run
+      // started by a PREVIOUS process (the live incident), a DeadLettered row or
+      // a code workflow had no record — and was therefore deletable.
+      // Pass the row THROUGH. The guard already holds it, so forwarding it keeps the
+      // recorder from re-reading the same document — the difference between 0 and 1
+      // extra reads per terminated row once reactory-reactor starts writing
+      // `data.__reactory.worktree` (review round 2, non-blocking).
+      this.lifecycleManager.setSalvageCaptureHook(
+        (instanceId: string, instance?: any) =>
+          this.terminationRecorder.captureSalvageForTerminatedInstance(instanceId, instance),
+      );
+
       // Initialize configuration manager
       await this.configurationManager.initialize({
         host,
@@ -400,6 +454,23 @@ export class WorkflowRunner {
       await this.securityManager.initialize({
         host,
       });
+
+      // ── Termination-reason recording ──────────────────────────────────────
+      // A Terminated instance used to carry no reason at all: status 3, zero
+      // failed steps, no error, completeTime null. Wire every path that can
+      // reach a terminal state to the recorder, then flush anything a previous
+      // process queued on its way down.
+      this.terminationRecorder.setPersistence(this.persistence);
+      this.subscribeToEngineLifecycleEvents(host);
+      this.installFatalErrorHandlers();
+      try {
+        const drained = await this.terminationRecorder.drainOutbox();
+        if (drained.applied + drained.interrupted + drained.requeued > 0) {
+          logger.warn('Termination-reason outbox drained at startup', drained);
+        }
+      } catch (error) {
+        logger.warn('Failed to drain the termination-reason outbox (records are kept for the next boot)', error);
+      }
 
       // Retention: keep the instance collection bounded so read latency does not
       // grow with every run the platform has ever executed. No-op unless
@@ -615,11 +686,21 @@ export class WorkflowRunner {
    */
   private async getPersistenceProvider(): Promise<IPersistenceProvider | null> {
     try {
-      const provider = (WORKFLOW_PERSISTENCE_PROVIDER || 'mongo').toLowerCase();
+      // Read these PER CALL rather than snapshotting them into module constants
+      // at import time. Two reasons:
+      //  1. The snapshot made the backend impossible to choose without a
+      //     restart, and silently froze whatever the process started with.
+      //  2. It made the test suite depend on the developer's shell: with no
+      //     MONGOOSE exported, the mongo branch returned null (in-memory) and
+      //     the suite's jest-mocked provider was never constructed, so the
+      //     persisted-state assertions had nowhere to write. CI has no MONGOOSE,
+      //     so they failed there while passing locally.
+      const provider = (process.env.WORKFLOW_PERSISTENCE_PROVIDER || 'mongo').toLowerCase();
+      const mongoUri = process.env.MONGOOSE;
 
       // ── Mongo ──────────────────────────────────────────────────────────────
       if (provider === 'mongo') {
-        if (!MONGOOSE) {
+        if (!mongoUri) {
           logger.warn(
             'WORKFLOW_PERSISTENCE_PROVIDER=mongo but MONGOOSE is not set — falling back to in-memory ' +
             '(workflow state will NOT survive a restart). Set MONGOOSE or WORKFLOW_PERSISTENCE_PROVIDER=memory.'
@@ -628,7 +709,7 @@ export class WorkflowRunner {
         }
         logger.debug('Using MongoDB for Workflow Persistence');
         // Same TLS / retryWrites settings as Mongoose (WP-B4).
-        const mongoPersistence = new MongoDBPersistence(MONGOOSE, mongoClientOptions());
+        const mongoPersistence = new MongoDBPersistence(mongoUri, mongoClientOptions());
         await mongoPersistence.connect;
         // The provider MUST be passed in: this runs before getPersistenceProvider()
         // returns, and `initialize()` only assigns `this.persistence` from the
@@ -861,6 +942,36 @@ export class WorkflowRunner {
         this.setState({ host: null });
       }
 
+      // GRACEFUL SHUTDOWN PATH (SIGTERM / SIGINT / explicit stop).
+      //
+      // An instance still in flight after the host drained was INTERRUPTED, not
+      // terminated: the engine resumes Runnable instances on the next boot. So
+      // this records an interruption note, never a termination reason — a
+      // `shutdown` reason left on a run that later completes would be exactly the
+      // kind of false attribution this ticket exists to remove.
+      //
+      // Before writing anything the registry is pruned against persisted state:
+      // every entry is re-read and dropped if it is no longer live. That is the
+      // guarantee that a deploy never re-labels a run that finished hours ago,
+      // even if the registry still holds its id (CODE workflows are only removed
+      // by the terminal sweep, which may lag or be mid-tick).
+      if (this.inFlightInstances.size > 0) {
+        try {
+          const live = await this.pruneInFlightInstances();
+          if (live.length > 0) {
+            await this.terminationRecorder.recordInterruptionForMany(live, {
+              code: TerminationReasonCode.SHUTDOWN,
+              message: 'Process shutdown while the instance was running (SIGTERM/SIGINT or explicit stop).',
+              source: 'shutdown',
+              signal: 'shutdown',
+            });
+          }
+        } catch (error) {
+          logger.warn('Failed to record shutdown interruptions for in-flight instances (continuing)', error);
+        }
+        this.inFlightInstances.clear();
+      }
+
       if (this.persistence) {
         // MongoDBPersistence exposes a close() method; other providers (SQLite,
         // Postgres, memory) do not, so we only call it when present.
@@ -879,6 +990,10 @@ export class WorkflowRunner {
       this._isInitialized = false;
       // Clear the coalesced init promise so a subsequent initialize() re-runs.
       this._initPromise = null;
+      // Remove the process-level fatal handlers: a stopped runner must not keep
+      // recording against a closed persistence provider (or leak listeners).
+      this.removeFatalErrorHandlers();
+      this.inFlightInstances.clear();
       logger.info('WorkflowRunner stopped');
     } catch (error) {
       logger.error('Failed to stop WorkflowRunner', error);
@@ -998,6 +1113,16 @@ export class WorkflowRunner {
         async () => {
           const startResult = await this.state.host!.startWorkflow(id, version, data);
           logger.debug(`Workflow ${id}@${version} started successfully`, startResult);
+          // Type-guard: the engine returns an instance id, but a mocked/older host
+          // may return a non-string. Never let bookkeeping break a workflow start.
+          if (typeof startResult === 'string') {
+            // CODE workflows were previously only ADDED to the in-flight map and
+            // never removed (the finalize sweep only watched YAML instances), so
+            // the map grew for the process lifetime and every deploy re-labelled
+            // long-finished runs. trackInFlightInstance now also schedules the
+            // terminal sweep, which prunes either kind.
+            this.trackInFlightInstance(startResult, id);
+          }
           return startResult;
         },
         errorContext
@@ -1130,8 +1255,9 @@ export class WorkflowRunner {
     logger.info(`YAML workflow ${engineId} started via engine (instance: ${instanceId})`);
 
     // Ensure the per-instance log manager is finalized when the run ends —
-    // including failures (the in-graph FinalizeStepBody only covers success).
-    this.scheduleYamlFinalize(instanceId);
+    // including failures (the in-graph FinalizeStepBody only covers success) —
+    // and that the in-flight entry is dropped as soon as the run is terminal.
+    this.trackInFlightInstance(instanceId, engineId);
 
     return instanceId;
   }
@@ -1162,9 +1288,14 @@ export class WorkflowRunner {
   }
 
   /**
-   * Sweep watched YAML instances; finalize the log manager for any that have
-   * reached a terminal state and drop them from the watch set. Stops the timer
-   * when nothing remains to watch.
+   * Sweep watched instances; finalize the YAML log manager for any that have
+   * reached a terminal state and drop them from BOTH the watch set and the
+   * in-flight registry.
+   *
+   * Despite the historical name this is not YAML-only: `trackInFlightInstance()`
+   * schedules every started instance (CODE workflows included), because a
+   * registry entry that is never removed is how a deploy came to re-label
+   * long-finished runs as SHUTDOWN. Stops the timer when nothing remains.
    */
   private async sweepYamlFinalize(): Promise<void> {
     if (this.yamlFinalizeWatch.size === 0) {
@@ -1180,11 +1311,321 @@ export class WorkflowRunner {
         const finalized = await finalizeInstanceIfTerminal(this.persistence, instanceId);
         if (finalized) {
           this.yamlFinalizeWatch.delete(instanceId);
+          this.inFlightInstances.delete(instanceId);
+          // A terminated publish-path run that reported a worktree gets a salvage
+          // record, so its work is recoverable instead of silently discarded.
+          try {
+            await this.terminationRecorder.captureSalvageForTerminatedInstance(instanceId);
+          } catch (error) {
+            logger.debug(`Salvage capture failed for ${instanceId} (non-fatal): ${error instanceof Error ? error.message : error}`);
+          }
         }
       } catch (err) {
         logger.debug(`YAML finalize sweep error for ${instanceId}: ${err instanceof Error ? err.message : err}`);
       }
     }
+  }
+
+  // ============================================
+  // Termination reasons, salvage and last activity
+  // ============================================
+
+  /**
+   * Remember that this process is running an engine instance, so a signal or a
+   * fatal error can record a reason for it. O(1); bounded by concurrency.
+   *
+   * Also schedules the terminal sweep for the id, so a run that COMPLETES is
+   * removed from the registry promptly instead of lingering until the process
+   * exits. That was the gap that let a deploy rewrite finished runs as SHUTDOWN.
+   */
+  private trackInFlightInstance(instanceId: string, workflowId: string): void {
+    if (!instanceId) return;
+    try {
+      this.inFlightInstances.set(instanceId, { workflowId, startedAt: new Date() });
+      this.scheduleYamlFinalize(instanceId);
+    } catch {
+      /* bookkeeping must never break a workflow start */
+    }
+  }
+
+  /**
+   * Re-read every registered in-flight instance and drop the ones that are no
+   * longer live (Complete / Terminated / DeadLettered / gone).
+   *
+   * Bounded by concurrency — one read per tracked instance — and only used on the
+   * paths that are about to write something (shutdown, crash). It makes the
+   * registry's accuracy irrelevant to correctness: even if a completed run is
+   * still registered, it is never re-labelled.
+   */
+  private async pruneInFlightInstances(): Promise<string[]> {
+    const live: string[] = [];
+    for (const instanceId of Array.from(this.inFlightInstances.keys())) {
+      let instance: any = null;
+      try {
+        instance = this.persistence ? await this.persistence.getWorkflowInstance(instanceId) : null;
+      } catch (error) {
+        // Unreadable: we cannot write anything for it anyway, so drop it — but say
+        // so, because swallowing this silently is how a missing import turns into
+        // "no reason was recorded" instead of a loud failure.
+        logger.warn(`Could not re-read in-flight instance ${instanceId}; dropping it from the shutdown set`, error);
+        this.inFlightInstances.delete(instanceId);
+        continue;
+      }
+
+      if (!instance) {
+        this.inFlightInstances.delete(instanceId);
+        continue;
+      }
+
+      if (isEngineTerminalStatus(instance.status)) {
+        // The run is finished; the terminal sweep / read layer owns it now.
+        this.inFlightInstances.delete(instanceId);
+        this.yamlFinalizeWatch.delete(instanceId);
+        continue;
+      }
+
+      live.push(instanceId);
+    }
+    return live;
+  }
+
+  /** Engine instance ids currently in flight in this process (for metrics/tests). */
+  public getInFlightInstanceIds(): string[] {
+    return Array.from(this.inFlightInstances.keys());
+  }
+
+  /**
+   * Record a termination reason for an instance from outside the engine (a
+   * workflow step that knows it is about to give up, an orchestrator, an
+   * operator). Best-effort: returns false when nothing could be written.
+   */
+  public async recordTerminationReason(
+    instanceId: string,
+    input: {
+      code: TerminationReasonCode | string;
+      message?: string | null;
+      time?: Date | string | number | null;
+    },
+  ): Promise<boolean> {
+    const outcome = await this.terminationRecorder.recordTermination(
+      instanceId,
+      { code: input.code, message: input.message, time: input.time, source: 'owner' },
+      // A workflow step calling this knows it is giving up on the run, i.e. it is
+      // the transition. A COMPLETE instance is still never relabelled.
+      { force: true, terminal: true },
+    );
+    return outcome.applied;
+  }
+
+  /**
+   * Subscribe to the engine's lifecycle events.
+   *
+   * `workflow.dead-lettered` is the ONLY terminal transition the engine
+   * announces, and a DeadLettered instance (status 4) is displayed as
+   * TERMINATED. Before this subscription that path recorded nothing at all —
+   * one of the two silent paths named in the ticket.
+   *
+   * Handlers run synchronously and must not throw (the engine swallows, but a
+   * throw here would hide the event). The persistence write is fire-and-forget:
+   * the engine emits BEFORE it persists the dead-lettered status, so the recorder
+   * is told `terminal: true` and handles the optimistic-concurrency retry.
+   */
+  private subscribeToEngineLifecycleEvents(host: IWorkflowHost): void {
+    try {
+      if (!host || typeof (host as any).onLifecycleEvent !== 'function') {
+        logger.debug('Workflow host does not expose lifecycle events; dead-letter reasons will be derived on read');
+        return;
+      }
+
+      (host as any).onLifecycleEvent((event: any) => {
+        try {
+          if (!event || event.event !== 'workflow.dead-lettered') return;
+          const instanceId = event.workflowId;
+          if (!instanceId) return;
+
+          this.inFlightInstances.delete(instanceId);
+          const { code, message } = classifyDeadLetterReason(event.reason, event.errorMessage);
+
+          void this.terminationRecorder
+            .recordTermination(
+              instanceId,
+              { code, message, time: event.deadLetteredAt || new Date(), source: 'dead-letter' },
+              // The engine emits BEFORE persisting the dead-lettered status, so
+              // the reload may still show Runnable: this caller IS the transition.
+              { force: true, terminal: true },
+            )
+            .catch(() => undefined);
+        } catch (error) {
+          logger.debug(`Failed to handle a workflow lifecycle event: ${error instanceof Error ? error.message : error}`);
+        }
+      });
+    } catch (error) {
+      logger.warn('Failed to subscribe to engine lifecycle events (dead-letter reasons will be derived on read)', error);
+    }
+  }
+
+  /**
+   * Install the process-level fatal handlers.
+   *
+   * WHY: `grep -rn 'uncaughtException|unhandledRejection' src/` found exactly one
+   * handler in the server (`unhandledRejection` -> log -> `process.exit(0)`), and
+   * none for `uncaughtException`. An agent step whose promise rejected therefore
+   * killed the process with exit code 0 and left a Terminated instance with no
+   * reason, no completeTime and no error. This is the most likely mechanism
+   * behind the incident.
+   *
+   * EXIT CONTRACT — deliberately unchanged:
+   *  - listeners are added with `prependListener`, so this runs BEFORE the
+   *    server's existing handler and can record while the event loop is alive;
+   *  - nothing here calls `process.exit()` when another listener exists: that
+   *    listener owns the outcome (server.ts exits 0 on an unhandled rejection,
+   *    and under Electron it deliberately does not exit);
+   *  - if this is the ONLY listener, Node's default behaviour (print the stack,
+   *    exit non-zero) is reproduced exactly, so a crash can never become a hang;
+   *  - the recording itself is a synchronous file append (see
+   *    TerminationOutbox) because no asynchronous write survives `process.exit()`.
+   */
+  private installFatalErrorHandlers(): void {
+    if (this.fatalErrorHandlers) return;
+    if (typeof process === 'undefined' || typeof process.prependListener !== 'function') return;
+
+    // Exactly one owner at a time (see fatalHandlerOwner).
+    if (fatalHandlerOwner && fatalHandlerOwner !== this) {
+      fatalHandlerOwner.removeFatalErrorHandlers();
+    }
+
+    const uncaught = (error: any) => this.handleFatalError('uncaughtException', error);
+    const rejection = (error: any) => this.handleFatalError('unhandledRejection', error);
+
+    try {
+      process.prependListener('uncaughtException', uncaught);
+      process.prependListener('unhandledRejection', rejection);
+      this.fatalErrorHandlers = { uncaught, rejection };
+      fatalHandlerOwner = this;
+      logger.debug('Installed workflow process-level fatal error handlers');
+    } catch (error) {
+      logger.warn('Failed to install workflow fatal error handlers', error);
+    }
+  }
+
+  /** Remove the process-level handlers (called from stop()). */
+  private removeFatalErrorHandlers(): void {
+    if (!this.fatalErrorHandlers) return;
+    try {
+      process.removeListener('uncaughtException', this.fatalErrorHandlers.uncaught);
+      process.removeListener('unhandledRejection', this.fatalErrorHandlers.rejection);
+    } catch {
+      /* best-effort */
+    }
+    this.fatalErrorHandlers = null;
+    if (fatalHandlerOwner === this) fatalHandlerOwner = null;
+  }
+
+  /**
+   * Body of the fatal handlers. Public and parameterised so a test can drive the
+   * crash path without taking the test runner down with it.
+   *
+   * @param options.exit Injection point for the process-exit step (defaults to
+   *   `process.exit`). Tests pass a jest mock.
+   */
+  public handleFatalError(
+    kind: 'uncaughtException' | 'unhandledRejection',
+    error: any,
+    options: { exit?: (code: number) => void } = {},
+  ): void {
+    let queued = 0;
+
+    try {
+      const code = classifyTerminationError(error);
+      const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+      const ids = Array.from(this.inFlightInstances.keys());
+
+      // Queue for EVERY registered id — the drain re-reads each instance and
+      // discards the ones that turned out to be finished, so a stale registry
+      // entry cannot become a false reason. Nothing is written here because no
+      // async write survives the process.exit() that follows.
+      if (ids.length > 0) {
+        queued = this.terminationRecorder.queueProcessTermination(ids, {
+          code,
+          message: `${kind}: ${detail}`,
+          source: 'process',
+          signal: kind,
+        });
+      }
+
+      logger.error(
+        `Fatal ${kind} observed by the workflow engine; queued ${queued}/${ids.length} termination reason(s)`,
+        { code, instanceIds: ids },
+      );
+    } catch (recordingError) {
+      // A failure to RECORD must never replace the failure being recorded.
+      try {
+        logger.error('Failed to queue termination reasons for a fatal error', recordingError);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // Preserve the exit contract — see installFatalErrorHandlers().
+    try {
+      if (process.listenerCount(kind) <= 1) {
+        const exit = options.exit || ((code: number) => process.exit(code));
+        // eslint-disable-next-line no-console
+        console.error(error);
+        exit(1);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /**
+   * Record work that a terminated run may have left behind in a worktree.
+   *
+   * The engine does not run `git` (layering): the workflow that owns the worktree
+   * reports the facts, the engine persists them and refuses to let the record be
+   * deleted until it is resolved.
+   */
+  public async recordWorktreeSalvage(
+    instanceId: string,
+    input: ISalvageRecordInput,
+  ): Promise<IWorkflowSalvageRecord | null> {
+    return this.terminationRecorder.recordSalvage(instanceId, input);
+  }
+
+  /**
+   * Resolve a salvage record: either the work was committed (`salvageSha`) or
+   * published (`publishedSha`), or an operator explicitly accepts its loss.
+   */
+  public async acknowledgeWorktreeSalvage(
+    instanceId: string,
+    input: {
+      acknowledgedBy?: string | null;
+      note?: string | null;
+      salvageSha?: string | null;
+      publishedSha?: string | null;
+    } = {},
+  ): Promise<IWorkflowSalvageRecord | null> {
+    return this.terminationRecorder.acknowledgeSalvage(instanceId, input);
+  }
+
+  /** Read the salvage record for an instance (null when there is none). */
+  public async getSalvageRecord(instanceId: string): Promise<IWorkflowSalvageRecord | null> {
+    return this.terminationRecorder.getSalvage(instanceId);
+  }
+
+  /**
+   * Guard to call before removing a worktree (or otherwise discarding a
+   * terminated run's artefacts). Throws `UnresolvedSalvageError` while the record
+   * is unresolved.
+   */
+  public async assertSalvageClear(instanceId: string): Promise<IWorkflowSalvageRecord | null> {
+    return this.terminationRecorder.assertSalvageClear(instanceId);
+  }
+
+  /** The underlying recorder (used by tests and by the service layer). */
+  public getTerminationRecorder(): WorkflowInstanceLifecycleRecorder {
+    return this.terminationRecorder;
   }
 
   /**
@@ -1502,6 +1943,25 @@ export class WorkflowRunner {
    * for any non-engine/legacy instance it tracks (best-effort).
    */
   public async cancelWorkflowInstance(instanceId: string, reason?: string): Promise<void> {
+    // R2 (REACTORY-302016408/20261103/4082245933). Read the status BEFORE
+    // terminating. `host.terminateWorkflow()` -> `mutateWorkflowStatus` sets
+    // Terminated from ANY status and returns true, so once it has run a COMPLETE
+    // row already reads as 3 — the recorder's "COMPLETE is never relabelled" guard
+    // can never fire — and `force` then overwrites a DeadLettered row's recorded
+    // `provider-error`. Cancelling from the history list would therefore destroy
+    // exactly the attribution this work exists to record.
+    const statusBefore = await this.terminationRecorder.getInstanceStatus(instanceId);
+    if (isEngineTerminalStatus(statusBefore)) {
+      // Already finished (Complete / Terminated / DeadLettered): there is nothing
+      // to stop and nothing to attribute. Leave the row untouched so a successful
+      // or already-attributed run keeps its history.
+      logger.info(
+        `Cancel ignored for workflow instance ${instanceId}: already finished (status ${statusBefore})`
+      );
+      this.inFlightInstances.delete(instanceId);
+      return;
+    }
+
     let terminated = false;
     if (this.state.host) {
       try {
@@ -1513,6 +1973,32 @@ export class WorkflowRunner {
         );
       }
     }
+    this.inFlightInstances.delete(instanceId);
+
+    // THE CANCELLED PATH. `host.terminateWorkflow()` only sets status =
+    // Terminated: no completeTime, no error, no reason. An operator cancel was
+    // therefore indistinguishable from a crash or an OOM in the history view.
+    if (terminated) {
+      try {
+        await this.terminationRecorder.recordTermination(
+          instanceId,
+          {
+            code: TerminationReasonCode.CANCELLED,
+            message: reason ? `Cancelled: ${reason}` : 'Cancelled by an operator.',
+            source: 'cancel',
+          },
+          // `host.terminateWorkflow()` has just set Terminated, so this caller IS
+          // the transition — but ONLY for a run that was live when we read its
+          // status above. When the status was unreadable we cannot prove that, so
+          // stay unforced and let the recorder's own guards decide
+          // (REACTORY-302016408/20261103/4082245933, review R2).
+          { force: statusBefore !== null, terminal: true },
+        );
+      } catch (error) {
+        logger.warn(`Failed to record cancellation reason for ${instanceId}`, error);
+      }
+    }
+
     // Best-effort lifecycle-manager update (no-op / not-found for engine instances).
     try {
       this.lifecycleManager.cancelWorkflow(instanceId, reason);
