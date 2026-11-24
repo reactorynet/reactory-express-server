@@ -436,8 +436,13 @@ export class WorkflowRunner {
       // this, auto-capture only ran from the in-memory finalize watch, so a run
       // started by a PREVIOUS process (the live incident), a DeadLettered row or
       // a code workflow had no record — and was therefore deletable.
+      // Pass the row THROUGH. The guard already holds it, so forwarding it keeps the
+      // recorder from re-reading the same document — the difference between 0 and 1
+      // extra reads per terminated row once reactory-reactor starts writing
+      // `data.__reactory.worktree` (review round 2, non-blocking).
       this.lifecycleManager.setSalvageCaptureHook(
-        (instanceId: string) => this.terminationRecorder.captureSalvageForTerminatedInstance(instanceId),
+        (instanceId: string, instance?: any) =>
+          this.terminationRecorder.captureSalvageForTerminatedInstance(instanceId, instance),
       );
 
       // Initialize configuration manager

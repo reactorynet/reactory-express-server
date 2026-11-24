@@ -520,6 +520,32 @@ describe('WorkflowRunner', () => {
       expect(stored.data.__reactory && stored.data.__reactory.termination).toBeUndefined();
     });
 
+    it('stays unforced when the status cannot be read, instead of asserting a transition (R2)', async () => {
+      mockHost.terminateWorkflow.mockClear();
+      mockHost.terminateWorkflow.mockResolvedValue(true);
+
+      // The fixture has to be a row that EXISTS with a NON-NUMERIC status and a
+      // completeTime. That is what drives the recorder's 'already settled' guard,
+      // which is the only place `force` changes the outcome on this path. (An
+      // absent row cannot discriminate: recordTermination bails as 'not-found'
+      // whatever `force` says, so the first version of this test passed under
+      // both — a test that claimed coverage it did not have.)
+      seedInstance('inst-odd-status', {
+        status: null,
+        completeTime: new Date('2026-11-03T10:00:00.000Z'),
+      });
+
+      await workflowRunner.cancelWorkflowInstance('inst-odd-status', 'operator tidying the list');
+      await awaitFlush();
+
+      // The pre-read could not prove it had finished, so the stop is attempted...
+      expect(mockHost.terminateWorkflow).toHaveBeenCalled();
+      // ...but nothing may be forced onto a row whose transition we cannot evidence.
+      const stored = fakePersistence.store.get('inst-odd-status');
+      expect(stored.data.__reactory && stored.data.__reactory.termination).toBeUndefined();
+      expect(stored.completeTime).toBeTruthy();
+    });
+
     it('records a provider-error reason when the engine dead-letters a run', async () => {
       expect(lifecycleHandlers.length).toBe(1);
 
