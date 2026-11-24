@@ -42,7 +42,6 @@
  */
 
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import {
   TerminationReasonCode,
@@ -81,44 +80,96 @@ const DRAINING_PREFIX = '.draining.';
 /**
  * Resolve the outbox path.
  *
- * `WORKFLOW_TERMINATION_OUTBOX` exists so tests (and an operator diagnosing a
- * crash loop) can point at a scratch file; otherwise it sits beside the other
- * workflow state under APP_DATA_ROOT, falling back to the OS temp directory when
- * APP_DATA_ROOT is unset (local dev).
+ * `WORKFLOW_TERMINATION_OUTBOX` wins so tests (and an operator diagnosing a crash
+ * loop) can point at a scratch file; otherwise the journal sits beside the other
+ * workflow state under the platform data root.
+ *
+ * The fallback chain deliberately mirrors the rest of the server
+ * (src/express/i18n/language.ts): APP_DATA_ROOT, then REACTORY_DATA, then the
+ * sibling `reactory-data` checkout. It must NOT fall back to the OS temp
+ * directory — /tmp is world-writable, and it is cleared on reboot or by
+ * tmp-cleaners, i.e. exactly when the boot-time drain needs to recover the
+ * records a dying process left behind.
  */
 export function resolveOutboxPath(): string {
   const explicit = process.env.WORKFLOW_TERMINATION_OUTBOX;
   if (explicit && explicit.trim() !== '') {
     return explicit;
   }
-  const root = process.env.APP_DATA_ROOT || path.join(os.tmpdir(), 'reactory');
+  const root =
+    process.env.APP_DATA_ROOT ||
+    process.env.REACTORY_DATA ||
+    path.resolve(process.cwd(), '../reactory-data');
   return path.join(root, 'workflows', 'termination-outbox.jsonl');
 }
 
-/** Ensure the outbox directory exists. Best-effort: never throws. */
+/**
+ * Ensure the outbox directory exists. Best-effort: never throws.
+ *
+ * `mode: 0o700` is defence in depth: the journal holds instance ids and the
+ * error text that killed the process, so other local users have no business
+ * reading it. `recursive: true` does not chmod a directory that already exists,
+ * so this hardens new roots without fighting an operator's existing layout.
+ */
 function ensureOutboxDirectory(filePath: string): boolean {
   try {
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.mkdirSync(path.dirname(filePath), { recursive: true, mode: 0o700 });
     return true;
   } catch {
     return false;
   }
 }
 
-/** Trim the outbox to its newest records when it exceeds the size bound. */
+/**
+ * Trim the outbox to its newest records when it exceeds the size bound.
+ *
+ * Check, read and rewrite all go through ONE descriptor. Re-resolving the path
+ * between them was both a time-of-check/time-of-use window and a real data-loss
+ * bug: two processes sharing a data root could interleave here and drop a
+ * concurrent append from a process that was in the middle of dying — the one
+ * record this journal exists to keep. `O_NOFOLLOW` refuses to operate through a
+ * symlink, and 0o600 keeps the file readable only by its owner.
+ *
+ * Still best-effort: a failure here must never escape into the fatal-handler path.
+ */
 function pruneIfOversized(filePath: string): void {
+  let fd: number | null = null;
   try {
-    const stat = fs.statSync(filePath);
+    fd = fs.openSync(filePath, fs.constants.O_RDWR | (fs.constants.O_NOFOLLOW ?? 0), 0o600);
+
+    const stat = fs.fstatSync(fd);
     if (stat.size <= MAX_OUTBOX_BYTES) return;
-    const lines = fs.readFileSync(filePath, 'utf8').split('\n').filter((line) => line.trim() !== '');
+
+    const lines = fs.readFileSync(fd, 'utf8').split('\n').filter((line) => line.trim() !== '');
     const keep = lines.slice(-MAX_RECORDS_PER_APPEND);
-    fs.writeFileSync(filePath, `${keep.join('\n')}\n`, 'utf8');
+    const payload = `${keep.join('\n')}\n`;
+
+    // Truncate first so a shorter payload cannot leave a stale tail behind, then
+    // write at an explicit position (ftruncate does not rewind the descriptor).
+    fs.ftruncateSync(fd, 0);
+    fs.writeSync(fd, payload, 0, 'utf8');
   } catch {
     /* best-effort only */
+  } finally {
+    if (fd !== null) {
+      try {
+        fs.closeSync(fd);
+      } catch {
+        /* best-effort only */
+      }
+    }
   }
 }
 
-function writeLines(filePath: string, records: ITerminationOutboxRecord[], mode: 'append' | 'overwrite'): number {
+/**
+ * Append serialised records to the journal. There is intentionally no
+ * "overwrite" mode: every caller appends, and a truncating write on this path
+ * would be a way to lose a dying process's last record.
+ *
+ * `mode: 0o600` applies when the file is created; the journal carries instance
+ * ids and fatal error text and must not be world-readable.
+ */
+function writeLines(filePath: string, records: ITerminationOutboxRecord[]): number {
   if (!Array.isArray(records) || records.length === 0) return 0;
   try {
     if (!ensureOutboxDirectory(filePath)) return 0;
@@ -126,11 +177,7 @@ function writeLines(filePath: string, records: ITerminationOutboxRecord[], mode:
     const payload = bounded
       .map((record) => JSON.stringify({ ...record, message: truncateReasonMessage(record.message) }))
       .join('\n');
-    if (mode === 'append') {
-      fs.appendFileSync(filePath, `${payload}\n`, 'utf8');
-    } else {
-      fs.writeFileSync(filePath, `${payload}\n`, 'utf8');
-    }
+    fs.appendFileSync(filePath, `${payload}\n`, { encoding: 'utf8', mode: 0o600 });
     pruneIfOversized(filePath);
     return bounded.length;
   } catch {
@@ -147,7 +194,7 @@ function writeLines(filePath: string, records: ITerminationOutboxRecord[], mode:
  * @returns the number of records written (0 when the outbox is unusable).
  */
 export function appendOutboxRecords(records: ITerminationOutboxRecord[]): number {
-  return writeLines(resolveOutboxPath(), records, 'append');
+  return writeLines(resolveOutboxPath(), records);
 }
 
 /**
@@ -155,7 +202,7 @@ export function appendOutboxRecords(records: ITerminationOutboxRecord[]): number
  * in intent — the durability guarantee is the same synchronous append.
  */
 export function requeueOutboxRecords(records: ITerminationOutboxRecord[]): number {
-  return writeLines(resolveOutboxPath(), records, 'append');
+  return writeLines(resolveOutboxPath(), records);
 }
 
 function parseRecord(line: string): ITerminationOutboxRecord | null {

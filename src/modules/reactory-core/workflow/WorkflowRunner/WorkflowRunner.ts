@@ -46,7 +46,6 @@ import { configureYamlFlowRuntime } from '../YamlFlow/execution/YamlFlowRuntime'
 import { finalizeInstanceIfTerminal } from '../YamlFlow/execution/YamlStepBody';
 import {
   WorkflowInstanceLifecycleRecorder,
-  UnresolvedSalvageError,
   type ISalvageRecordInput,
 } from '../termination/TerminationRecorder';
 import {
