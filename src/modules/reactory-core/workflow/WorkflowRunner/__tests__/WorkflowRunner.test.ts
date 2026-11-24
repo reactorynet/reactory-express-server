@@ -357,6 +357,9 @@ describe('WorkflowRunner', () => {
     const outboxPath = '/tmp/reactor-runner-termination-outbox-test.jsonl';
     let fakePersistence: any;
     let lifecycleHandlers: Array<(event: any) => void>;
+    /** Ambient persistence env this suite overrides, restored in afterEach. */
+    let savedMongoose: string | undefined;
+    let savedProvider: string | undefined;
 
     const awaitFlush = () => new Promise((resolve) => setTimeout(resolve, 25));
 
@@ -378,6 +381,17 @@ describe('WorkflowRunner', () => {
     beforeEach(async () => {
       process.env.WORKFLOW_TERMINATION_OUTBOX = outboxPath;
       clearOutbox();
+
+      // PIN THE PERSISTENCE PROVIDER. These tests assert that a reason reaches
+      // the PERSISTED instance row, so a provider must exist. Without MONGOOSE
+      // the runner deliberately falls back to in-memory and there is nowhere to
+      // write, which made the suite depend on whatever the developer's shell
+      // exported: green locally, 5 red in CI. MongoDBPersistence is jest.mock'ed
+      // above, so no connection is attempted.
+      savedMongoose = process.env.MONGOOSE;
+      savedProvider = process.env.WORKFLOW_PERSISTENCE_PROVIDER;
+      process.env.WORKFLOW_PERSISTENCE_PROVIDER = 'mongo';
+      process.env.MONGOOSE = 'mongodb://127.0.0.1:27017/reactory-test';
 
       lifecycleHandlers = [];
       fakePersistence = {
@@ -411,6 +425,12 @@ describe('WorkflowRunner', () => {
       await workflowRunner.stop();
       clearOutbox();
       delete process.env.WORKFLOW_TERMINATION_OUTBOX;
+
+      // Restore the ambient env so this suite cannot leak into its siblings.
+      if (savedMongoose === undefined) delete process.env.MONGOOSE;
+      else process.env.MONGOOSE = savedMongoose;
+      if (savedProvider === undefined) delete process.env.WORKFLOW_PERSISTENCE_PROVIDER;
+      else process.env.WORKFLOW_PERSISTENCE_PROVIDER = savedProvider;
     });
 
     it('records `cancelled` with the operator message and a completeTime', async () => {

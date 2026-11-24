@@ -57,13 +57,10 @@ import {
 } from '../termination/TerminationReason';
 
 const {
-  MONGOOSE,
-  // Persistence backend for the workflow-es host:
-  //   'mongo'    — MongoDBPersistence (requires MONGOOSE env var)
-  //   'sqlite'   — SqlitePersistence  (requires WORKFLOW_SQLITE_PATH or defaults under APP_DATA_ROOT)
-  //   'postgres' — PostgresPersistence (requires WORKFLOW_POSTGRES_URL or falls back to REACTORY_POSTGRES_* / POSTGRES_*)
-  //   'memory'   — in-process only, no durability (default when no provider matched)
-  WORKFLOW_PERSISTENCE_PROVIDER = 'mongo',
+  // NOTE: MONGOOSE and WORKFLOW_PERSISTENCE_PROVIDER are deliberately NOT read
+  // here. They are resolved per call in getPersistenceProvider() (see the note
+  // there) so the provider can be chosen without a restart and so a test can
+  // pin it instead of inheriting whatever the shell happens to export.
   // SQLite: absolute path to the database file.
   // Defaults to $APP_DATA_ROOT/workflows/workflow.db when APP_DATA_ROOT is set.
   WORKFLOW_SQLITE_PATH,
@@ -684,11 +681,21 @@ export class WorkflowRunner {
    */
   private async getPersistenceProvider(): Promise<IPersistenceProvider | null> {
     try {
-      const provider = (WORKFLOW_PERSISTENCE_PROVIDER || 'mongo').toLowerCase();
+      // Read these PER CALL rather than snapshotting them into module constants
+      // at import time. Two reasons:
+      //  1. The snapshot made the backend impossible to choose without a
+      //     restart, and silently froze whatever the process started with.
+      //  2. It made the test suite depend on the developer's shell: with no
+      //     MONGOOSE exported, the mongo branch returned null (in-memory) and
+      //     the suite's jest-mocked provider was never constructed, so the
+      //     persisted-state assertions had nowhere to write. CI has no MONGOOSE,
+      //     so they failed there while passing locally.
+      const provider = (process.env.WORKFLOW_PERSISTENCE_PROVIDER || 'mongo').toLowerCase();
+      const mongoUri = process.env.MONGOOSE;
 
       // ── Mongo ──────────────────────────────────────────────────────────────
       if (provider === 'mongo') {
-        if (!MONGOOSE) {
+        if (!mongoUri) {
           logger.warn(
             'WORKFLOW_PERSISTENCE_PROVIDER=mongo but MONGOOSE is not set — falling back to in-memory ' +
             '(workflow state will NOT survive a restart). Set MONGOOSE or WORKFLOW_PERSISTENCE_PROVIDER=memory.'
@@ -697,7 +704,7 @@ export class WorkflowRunner {
         }
         logger.debug('Using MongoDB for Workflow Persistence');
         // Same TLS / retryWrites settings as Mongoose (WP-B4).
-        const mongoPersistence = new MongoDBPersistence(MONGOOSE, mongoClientOptions());
+        const mongoPersistence = new MongoDBPersistence(mongoUri, mongoClientOptions());
         await mongoPersistence.connect;
         // The provider MUST be passed in: this runs before getPersistenceProvider()
         // returns, and `initialize()` only assigns `this.persistence` from the
