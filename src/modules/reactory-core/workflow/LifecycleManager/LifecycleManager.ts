@@ -17,6 +17,7 @@ import {
   isEngineTerminalStatus,
   isTerminationReasonStatus,
   readLastActivity,
+  readReportedWorktree,
   readSalvageRecord,
   readTerminationReason,
   toDateOrNull,
@@ -518,7 +519,17 @@ export class WorkflowLifecycleManager extends EventEmitter {
    * persisted instance. Set by WorkflowRunner to
    * `terminationRecorder.captureSalvageForTerminatedInstance`.
    */
-  private salvageCaptureHook: ((instanceId: string) => Promise<unknown>) | null = null;
+  /**
+   * Optional hook that derives a salvage record from a row's own persisted
+   * worktree facts (installed by WorkflowRunner as
+   * `rec.captureSalvageForTerminatedInstance`).
+   *
+   * It receives the row the caller already holds, so it can skip its own read
+   * (review R1 on REACTORY-302016408/20261103/4082245933).
+   */
+  private salvageCaptureHook:
+    | ((instanceId: string, instance?: WorkflowInstance | null) => Promise<unknown>)
+    | null = null;
 
   constructor(config: Partial<IWorkflowLifecycleConfig> = {}) {
     super();
@@ -591,22 +602,32 @@ export class WorkflowLifecycleManager extends EventEmitter {
    * can also derive one from a persisted `data.__reactory.worktree`, which is what
    * protects runs this process never started.
    */
-  public setSalvageCaptureHook(hook: ((instanceId: string) => Promise<unknown>) | null): void {
+  public setSalvageCaptureHook(
+    hook: ((instanceId: string, instance?: WorkflowInstance | null) => Promise<unknown>) | null,
+  ): void {
     this.salvageCaptureHook = hook;
   }
 
   /**
    * Try to derive a salvage record for an instance from its persisted data.
    * Best-effort: never throws, never blocks the caller's decision.
+   *
+   * Returns the hook's record (or null) so the caller does NOT need a second
+   * read to see what the capture produced.
    */
-  private async attemptSalvageCapture(instanceId: string): Promise<void> {
-    if (!this.salvageCaptureHook || !instanceId) return;
+  private async attemptSalvageCapture(
+    instanceId: string,
+    instance?: WorkflowInstance | null,
+  ): Promise<IWorkflowSalvageRecord | null> {
+    if (!this.salvageCaptureHook || !instanceId) return null;
     try {
-      await this.salvageCaptureHook(instanceId);
+      const captured = await this.salvageCaptureHook(instanceId, instance);
+      return (captured as IWorkflowSalvageRecord) || null;
     } catch (error) {
       logger.debug(`Salvage capture attempt failed for ${instanceId} (non-fatal)`, {
         error: error instanceof Error ? error.message : String(error),
       });
+      return null;
     }
   }
 
@@ -1047,24 +1068,30 @@ export class WorkflowLifecycleManager extends EventEmitter {
         return null;
       }
     }
+    // A row that does not exist cannot owe salvage work.
+    if (!instance) return null;
 
     const existing = readSalvageRecord(instance);
     if (hasUnresolvedSalvage(existing)) {
       return existing as IWorkflowSalvageRecord;
     }
 
-    // No blocking record yet. Ask the hook whether one can be derived from the
-    // persisted worktree facts — this is what protects a run started by another
-    // process, a DeadLettered row, or a code workflow.
-    await this.attemptSalvageCapture(instanceId);
+    // R1 (REACTORY-302016408/20261103/4082245933). Decide from the row we ALREADY
+    // hold. A salvage record can only be derived for a terminated row that carries
+    // worktree facts, so anything else is a definitive "nothing to block on" and
+    // must not touch the database at all.
+    //
+    // Before this guard the sweep/clear paths did TWO more serial single-document
+    // reads per row (the hook's own load, then a refresh) for rows that could never
+    // yield a record — up to 20,000 rows x 2 reads of ~65 KB documents per sweep.
+    // Today that was EVERY row, because nothing writes worktree facts yet.
+    if (!isTerminationReasonStatus((instance as any).status)) return null;
+    if (!readReportedWorktree(instance)) return null;
 
-    try {
-      const refreshed = await this.persistence.getWorkflowInstance(instanceId);
-      const record = readSalvageRecord(refreshed);
-      return hasUnresolvedSalvage(record) ? (record as IWorkflowSalvageRecord) : null;
-    } catch {
-      return null;
-    }
+    // The hook is given the row we already hold, so it performs no read of its own,
+    // and its RETURN VALUE is the answer — there is no second re-read.
+    const captured = await this.attemptSalvageCapture(instanceId, instance);
+    return hasUnresolvedSalvage(captured) ? captured : null;
   }
 
   /**

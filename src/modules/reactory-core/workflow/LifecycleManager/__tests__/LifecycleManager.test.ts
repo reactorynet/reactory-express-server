@@ -1030,6 +1030,12 @@ describe('WorkflowLifecycleManager', () => {
 class FakePersistence {
   public store: Map<string, any> = new Map();
   public persistCount = 0;
+  /**
+   * Number of single-document reads. The salvage guard must not contribute any
+   * when a page of rows carries no worktree facts (review R1 on
+   * REACTORY-302016408/20261103/4082245933), so tests assert on this directly.
+   */
+  public readCount = 0;
   public failNextPersist: Error | null = null;
   public failAllPersists: Error | null = null;
 
@@ -1050,6 +1056,7 @@ class FakePersistence {
   }
 
   public async getWorkflowInstance(id: string): Promise<any> {
+    this.readCount += 1;
     return this.clone(this.store.get(id));
   }
 
@@ -1854,6 +1861,110 @@ describe('WorkflowLifecycleManager — salvage guard completeness (REACTORY-3020
       expect(result.deletedCount).toBe(1);
       expect(persistence.raw('inst-target')).toBeFalsy();
       expect(persistence.raw('inst-other')).toBeTruthy();
+    });
+  });
+
+  describe('guard read cost (review R1, REACTORY-302016408/20261103/4082245933)', () => {
+    const worktreeFacts = (path: string) => ({
+      ...makeInstance({}).data,
+      __reactory: { worktree: { path, branch: 'bug/X', dirty: true, changedFileCount: 3 } },
+    });
+
+    it('performs ZERO single-document reads for a page of rows with no worktree facts', async () => {
+      const def = 'ai.ProcessAITicket@1.4.8';
+      const persistence = new FakePersistence([
+        makeInstance({ id: 'c-1', workflowDefinitionId: def, status: 2 }),
+        makeInstance({ id: 'c-2', workflowDefinitionId: def, status: 2 }),
+        makeInstance({ id: 't-1', workflowDefinitionId: def, status: 3 }),
+        makeInstance({ id: 't-2', workflowDefinitionId: def, status: 4 }),
+        makeInstance({ id: 'r-1', workflowDefinitionId: def, status: 1 }),
+      ]);
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+
+      const hookCalls: string[] = [];
+      manager.setSalvageCaptureHook(async (id: string) => {
+        hookCalls.push(id);
+        return null;
+      });
+
+      const result = await manager.clearWorkflowHistory(def);
+
+      expect(result.deletedCount).toBe(5);
+      // The whole point of R1: a row that cannot yield a record must not cost a
+      // database round trip. Before this guard each row cost TWO serial reads.
+      expect(persistence.readCount).toBe(0);
+      expect(hookCalls).toHaveLength(0);
+    });
+
+    it('derives a record from the row it already holds, with no re-read', async () => {
+      const def = 'ai.ProcessAITicket@1.4.8';
+      const persistence = new FakePersistence([
+        makeInstance({
+          id: 't-facts',
+          workflowDefinitionId: def,
+          status: 3,
+          data: worktreeFacts('/tmp/wt-facts'),
+        }),
+      ]);
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+
+      const hookCalls: string[] = [];
+      // Deliberately RETURNS a record without persisting anything: under the old
+      // code the follow-up re-read would find nothing and the row would be deleted.
+      manager.setSalvageCaptureHook(async (id: string) => {
+        hookCalls.push(id);
+        return {
+          required: true,
+          worktreePath: '/tmp/wt-facts',
+          branch: 'bug/X',
+          dirty: true,
+          recordedAt: new Date('2026-11-03T11:00:00.000Z'),
+        };
+      });
+
+      const result = await manager.clearWorkflowHistory(def);
+
+      expect(hookCalls).toEqual(['t-facts']);
+      expect(result.deletedCount).toBe(0);
+      expect(result.skippedSalvage).toBe(1);
+      expect(result.blockedInstanceIds).toEqual(['t-facts']);
+      expect(persistence.raw('t-facts')).toBeTruthy();
+      // The hook was handed the row so it needed no load, and there is no
+      // post-capture refresh.
+      expect(persistence.readCount).toBe(0);
+    });
+
+    it('skips capture entirely for a LIVE row that carries worktree facts', async () => {
+      // Only statuses 3/4 can produce a salvage record, so a live run must not pay
+      // for a capture attempt even when facts are present.
+      const def = 'ai.ProcessAITicket@1.4.8';
+      const persistence = new FakePersistence([
+        makeInstance({
+          id: 'live',
+          workflowDefinitionId: def,
+          status: 1,
+          data: worktreeFacts('/tmp/wt-live'),
+        }),
+      ]);
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+
+      const hookCalls: string[] = [];
+      manager.setSalvageCaptureHook(async (id: string) => {
+        hookCalls.push(id);
+        return null;
+      });
+
+      const result = await manager.clearWorkflowHistory(def);
+
+      expect(result.deletedCount).toBe(1);
+      expect(hookCalls).toHaveLength(0);
+      expect(persistence.readCount).toBe(0);
     });
   });
 

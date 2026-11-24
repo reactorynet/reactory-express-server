@@ -43,6 +43,7 @@ import {
   hasUnresolvedSalvage,
   isEngineTerminalStatus,
   isTerminationReasonStatus,
+  readReportedWorktree,
   readSalvageRecord,
   readTerminationReason,
   TerminationReasonCode,
@@ -749,49 +750,48 @@ export class WorkflowInstanceLifecycleRecorder {
    * Returns null when the instance is not terminated or reported no worktree
    * (nothing to protect).
    */
-  public async captureSalvageForTerminatedInstance(instanceId: string): Promise<IWorkflowSalvageRecord | null> {
-    if (!this.persistence || !instanceId) return null;
+  public async captureSalvageForTerminatedInstance(
+    instanceId: string,
+    providedInstance?: WorkflowInstance | null,
+  ): Promise<IWorkflowSalvageRecord | null> {
+    if (!instanceId) return null;
 
-    let instance: any;
-    try {
-      instance = await this.persistence.getWorkflowInstance(instanceId);
-    } catch {
-      return null;
+    // R1 (REACTORY-302016408/20261103/4082245933). A caller that already holds the
+    // row (the retention sweep and clear-history both do) passes it in, so the
+    // guard costs ZERO extra reads. Only load when nobody supplied the row.
+    let instance: any = providedInstance || null;
+    if (!instance) {
+      if (!this.persistence) return null;
+      try {
+        instance = await this.persistence.getWorkflowInstance(instanceId);
+      } catch {
+        return null;
+      }
     }
     if (!instance || !isTerminationReasonStatus((instance as any).status)) return null;
 
     const existing = readSalvageRecord(instance);
     if (existing) return existing;
 
-    const data = instance.data && typeof instance.data === 'object' ? instance.data : {};
-    const meta = data.__reactory && typeof data.__reactory === 'object' ? data.__reactory : {};
-    const reported = meta.worktree || data.worktree || data.__worktree || null;
-    if (!reported || typeof reported !== 'object') return null;
+    // One shared definition of "the owner reported worktree facts" — the same
+    // predicate the read guard uses to skip capture entirely.
+    const reported = readReportedWorktree(instance);
+    if (!reported) return null;
 
-    const worktreePath = reported.path || reported.worktreePath || null;
-    if (!worktreePath) return null;
-
-    const publish = meta.publish || data.publish || null;
-    const publishedSha = publish && typeof publish.mergedSha === 'string' ? publish.mergedSha : null;
-
-    const dirty = typeof reported.dirty === 'boolean'
-      ? reported.dirty
-      : typeof reported.changedFileCount === 'number'
-        ? reported.changedFileCount > 0
-        : null;
+    const publishedSha = reported.publishedSha;
 
     return this.recordSalvage(instanceId, {
-      worktreePath,
-      branch: reported.branch || null,
-      headSha: reported.headSha || reported.sha || null,
-      dirty,
-      changedFileCount: typeof reported.changedFileCount === 'number' ? reported.changedFileCount : null,
+      worktreePath: reported.path,
+      branch: reported.branch,
+      headSha: reported.headSha,
+      dirty: reported.dirty,
+      changedFileCount: reported.changedFileCount,
       message: publishedSha
         ? `Work published as ${publishedSha}.`
         : 'Instance terminated before the publish path completed; the worktree may hold unpublished work.',
       publishedSha,
       // Only unpublished work with actual changes needs protecting.
-      required: !publishedSha && dirty !== false,
+      required: !publishedSha && reported.dirty !== false,
     });
   }
 
@@ -799,6 +799,20 @@ export class WorkflowInstanceLifecycleRecorder {
   public async getSalvage(instanceId: string): Promise<IWorkflowSalvageRecord | null> {
     const instance = await this.loadInstance(instanceId);
     return readSalvageRecord(instance);
+  }
+
+  /**
+   * Read the PERSISTED engine status of an instance (null when unavailable).
+   *
+   * Needed by the cancel path (review R2 on REACTORY-302016408/20261103/4082245933):
+   * `host.terminateWorkflow()` sets Terminated from ANY status and returns true, so
+   * the status must be read BEFORE terminating — afterwards a COMPLETE row already
+   * reads as 3 and the "never relabel a COMPLETE run" guard can never fire.
+   */
+  public async getInstanceStatus(instanceId: string): Promise<number | null> {
+    const instance = await this.loadInstance(instanceId);
+    const status = instance ? (instance as any).status : null;
+    return typeof status === 'number' ? status : null;
   }
 
   /**

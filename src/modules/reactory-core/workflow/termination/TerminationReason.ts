@@ -311,6 +311,74 @@ export function hasUnresolvedSalvage(record: IWorkflowSalvageRecord | null | und
 }
 
 /**
+ * The worktree facts an owner (reactory-reactor) may have reported on the row.
+ *
+ * Accepts the canonical `data.__reactory.worktree` plus the legacy
+ * `data.worktree` / `data.__worktree` spellings, because a producer that lands
+ * later must not have to guess which one this build reads.
+ */
+export interface IReportedWorktree {
+  /** Absolute path of the worktree. The only field that makes a report usable. */
+  path: string;
+  branch: string | null;
+  headSha: string | null;
+  /** True/false when the producer said so; null when it did not. */
+  dirty: boolean | null;
+  changedFileCount: number | null;
+  /** Set when the producer reported the work as already published. */
+  publishedSha: string | null;
+}
+
+/**
+ * Parse the worktree facts carried by a row. PURE — no I/O, no persistence.
+ *
+ * Returns null when the owner reported nothing usable (no container, no object,
+ * or no path). Callers use this to decide **from the row they already hold**
+ * whether a salvage record could possibly be derived, which is what keeps the
+ * retention sweep from re-reading every row in the database (review R1 on
+ * REACTORY-302016408/20261103/4082245933).
+ */
+export function readReportedWorktree(instance: any): IReportedWorktree | null {
+  const data = instance && typeof instance === 'object' && instance.data && typeof instance.data === 'object'
+    ? instance.data
+    : null;
+  if (!data) return null;
+
+  const meta = readMetaContainer(data);
+  const candidates: any[] = [];
+  if (meta) candidates.push(meta.worktree);
+  candidates.push(data.worktree, data.__worktree);
+
+  const reported = candidates.find((candidate) => candidate && typeof candidate === 'object');
+  if (!reported) return null;
+
+  const rawPath = reported.path || reported.worktreePath || null;
+  if (typeof rawPath !== 'string' || rawPath.trim() === '') return null;
+
+  const publish = (meta && meta.publish) || data.publish || null;
+  const publishedSha = publish && typeof publish.mergedSha === 'string' ? publish.mergedSha : null;
+
+  const dirty = typeof reported.dirty === 'boolean'
+    ? reported.dirty
+    : typeof reported.changedFileCount === 'number'
+      ? reported.changedFileCount > 0
+      : null;
+
+  return {
+    path: rawPath.trim(),
+    branch: typeof reported.branch === 'string' ? reported.branch : null,
+    headSha: typeof reported.headSha === 'string'
+      ? reported.headSha
+      : typeof reported.sha === 'string'
+        ? reported.sha
+        : null,
+    dirty,
+    changedFileCount: typeof reported.changedFileCount === 'number' ? reported.changedFileCount : null,
+    publishedSha,
+  };
+}
+
+/**
  * Read the salvage record persisted on an instance. Tolerant of absence and of
  * partial/legacy shapes.
  */

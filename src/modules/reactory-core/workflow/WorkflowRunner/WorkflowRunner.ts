@@ -1938,6 +1938,25 @@ export class WorkflowRunner {
    * for any non-engine/legacy instance it tracks (best-effort).
    */
   public async cancelWorkflowInstance(instanceId: string, reason?: string): Promise<void> {
+    // R2 (REACTORY-302016408/20261103/4082245933). Read the status BEFORE
+    // terminating. `host.terminateWorkflow()` -> `mutateWorkflowStatus` sets
+    // Terminated from ANY status and returns true, so once it has run a COMPLETE
+    // row already reads as 3 — the recorder's "COMPLETE is never relabelled" guard
+    // can never fire — and `force` then overwrites a DeadLettered row's recorded
+    // `provider-error`. Cancelling from the history list would therefore destroy
+    // exactly the attribution this work exists to record.
+    const statusBefore = await this.terminationRecorder.getInstanceStatus(instanceId);
+    if (isEngineTerminalStatus(statusBefore)) {
+      // Already finished (Complete / Terminated / DeadLettered): there is nothing
+      // to stop and nothing to attribute. Leave the row untouched so a successful
+      // or already-attributed run keeps its history.
+      logger.info(
+        `Cancel ignored for workflow instance ${instanceId}: already finished (status ${statusBefore})`
+      );
+      this.inFlightInstances.delete(instanceId);
+      return;
+    }
+
     let terminated = false;
     if (this.state.host) {
       try {
@@ -1964,9 +1983,11 @@ export class WorkflowRunner {
             source: 'cancel',
           },
           // `host.terminateWorkflow()` has just set Terminated, so this caller IS
-          // the transition. A COMPLETE run is still never relabelled (the guard
-          // checks status 2 first).
-          { force: true, terminal: true },
+          // the transition — but ONLY for a run that was live when we read its
+          // status above. When the status was unreadable we cannot prove that, so
+          // stay unforced and let the recorder's own guards decide
+          // (REACTORY-302016408/20261103/4082245933, review R2).
+          { force: statusBefore !== null, terminal: true },
         );
       } catch (error) {
         logger.warn(`Failed to record cancellation reason for ${instanceId}`, error);

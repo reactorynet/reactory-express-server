@@ -411,6 +411,31 @@ describe('WorkflowRunner', () => {
       seedInstance('inst-terminated', { status: 3 });
       seedInstance('inst-deadlettered', { status: 0 });
 
+      // Cancel-path fixtures (review R2 on REACTORY-302016408/20261103/4082245933).
+      // An operator cancels a RUNNING run, so the live row is the realistic case;
+      // the terminal rows exist to prove a cancel can neither relabel nor
+      // overwrite a run that had already finished.
+      seedInstance('inst-live', { status: 1 });
+      seedInstance('inst-complete', {
+        status: 2,
+        completeTime: new Date('2026-11-03T09:00:00.000Z'),
+      });
+      seedInstance('inst-dl-reason', {
+        status: 4,
+        completeTime: new Date('2026-11-03T09:30:00.000Z'),
+        data: {
+          inputs: {}, variables: {}, stepResults: {}, env: {}, outputs: {},
+          __reactory: {
+            termination: {
+              code: 'provider-error',
+              message: '503 from provider',
+              source: 'dead-letter',
+              time: '2026-11-03T09:30:00.000Z',
+            },
+          },
+        },
+      });
+
       const { MongoDBPersistence } = require('@reactorynet/workflow-es-mongodb');
       MongoDBPersistence.mockImplementation(() => fakePersistence);
 
@@ -434,15 +459,65 @@ describe('WorkflowRunner', () => {
     });
 
     it('records `cancelled` with the operator message and a completeTime', async () => {
+      // A LIVE run is the realistic cancel target: an operator cancels a running
+      // workflow. (The previous fixture seeded status 3, which modelled the state
+      // AFTER terminateWorkflow and hid the R2 defect.)
       mockHost.terminateWorkflow.mockResolvedValue(true);
 
-      await workflowRunner.cancelWorkflowInstance('inst-terminated', 'runaway agent step');
+      await workflowRunner.cancelWorkflowInstance('inst-live', 'runaway agent step');
       await awaitFlush();
 
-      const stored = fakePersistence.store.get('inst-terminated');
+      const stored = fakePersistence.store.get('inst-live');
       expect(stored.data.__reactory.termination.code).toBe('cancelled');
       expect(stored.data.__reactory.termination.message).toMatch(/runaway agent step/);
       expect(stored.completeTime).toBeTruthy();
+    });
+
+    it('leaves a COMPLETE run untouched instead of relabelling it as cancelled (R2)', async () => {
+      mockHost.terminateWorkflow.mockClear();
+      mockHost.terminateWorkflow.mockResolvedValue(true);
+
+      await workflowRunner.cancelWorkflowInstance('inst-complete', 'operator tidying the list');
+      await awaitFlush();
+
+      // `host.terminateWorkflow()` would flip status 2 -> 3 from ANY status, after
+      // which the recorder's "COMPLETE is never relabelled" guard can never fire.
+      // Reading the status first is the only thing that prevents it.
+      expect(mockHost.terminateWorkflow).not.toHaveBeenCalled();
+      const stored = fakePersistence.store.get('inst-complete');
+      expect(stored.status).toBe(2);
+      expect(stored.data.__reactory && stored.data.__reactory.termination).toBeUndefined();
+      expect(new Date(stored.completeTime).toISOString()).toBe('2026-11-03T09:00:00.000Z');
+    });
+
+    it('preserves a DeadLettered run\'s recorded reason instead of overwriting it (R2)', async () => {
+      mockHost.terminateWorkflow.mockClear();
+      mockHost.terminateWorkflow.mockResolvedValue(true);
+
+      await workflowRunner.cancelWorkflowInstance('inst-dl-reason', 'operator tidying the list');
+      await awaitFlush();
+
+      expect(mockHost.terminateWorkflow).not.toHaveBeenCalled();
+      const stored = fakePersistence.store.get('inst-dl-reason');
+      expect(stored.status).toBe(4);
+      // The attribution this ticket exists to record survives an unrelated cancel.
+      expect(stored.data.__reactory.termination.code).toBe('provider-error');
+      expect(stored.data.__reactory.termination.message).toBe('503 from provider');
+      expect(new Date(stored.completeTime).toISOString()).toBe('2026-11-03T09:30:00.000Z');
+    });
+
+    it('does not fabricate a reason for an already-Terminated row it did not terminate (R2)', async () => {
+      mockHost.terminateWorkflow.mockClear();
+      mockHost.terminateWorkflow.mockResolvedValue(true);
+
+      await workflowRunner.cancelWorkflowInstance('inst-terminated', 'operator tidying the list');
+      await awaitFlush();
+
+      expect(mockHost.terminateWorkflow).not.toHaveBeenCalled();
+      const stored = fakePersistence.store.get('inst-terminated');
+      expect(stored.status).toBe(3);
+      // Nothing was cancelled, so nothing may claim it was.
+      expect(stored.data.__reactory && stored.data.__reactory.termination).toBeUndefined();
     });
 
     it('records a provider-error reason when the engine dead-letters a run', async () => {
