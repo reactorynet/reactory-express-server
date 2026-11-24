@@ -7,6 +7,12 @@ import {
   type IWorkflowDependency,
   type IWorkflowLifecycleConfig
 } from '../LifecycleManager';
+import { TerminationReasonCode, hasUnresolvedSalvage } from '../../termination/TerminationReason';
+import {
+  WorkflowInstanceLifecycleRecorder,
+  UnresolvedSalvageError,
+} from '../../termination/TerminationRecorder';
+import { clearOutbox, readOutboxRecords } from '../../termination/TerminationOutbox';
 
 // Mock dependencies
 jest.mock('../../../../../logging', () => ({
@@ -909,15 +915,31 @@ describe('WorkflowLifecycleManager', () => {
     });
 
     describe('clearWorkflowHistory', () => {
+      // The wipe is salvage-guarded now: it lists the definition's instances and
+      // deletes only the rows that owe no salvage work, so these drive
+      // queryWorkflowInstances + deleteWorkflowInstances (not the unguarded
+      // delete-by-definition call, which is exactly what the guard replaced).
+      const seedDefinitionRows = (ids: string[]) => {
+        (mockPersistence.queryWorkflowInstances as jest.Mock).mockResolvedValue({
+          instances: ids.map((id) => ({ id, workflowDefinitionId: 'core.CleanCacheWorkflow@1.0.0', data: {} })),
+          total: ids.length,
+        });
+      };
+
       it('should clear all history for a workflow definition', async () => {
-        mockDeleteWorkflowInstancesByDefinitionId.mockResolvedValue(100);
+        const ids = Array.from({ length: 10 }, (_, i) => `inst-${i}`);
+        seedDefinitionRows(ids);
+        mockDeleteWorkflowInstances.mockResolvedValue(ids.length);
 
         const result = await lifecycleManager.clearWorkflowHistory('core.CleanCacheWorkflow@1.0.0');
 
         expect(result.success).toBe(true);
-        expect(result.deletedCount).toBe(100);
-        expect(result.message).toContain('Successfully cleared 100');
-        expect(mockDeleteWorkflowInstancesByDefinitionId).toHaveBeenCalledWith('core.CleanCacheWorkflow@1.0.0');
+        expect(result.deletedCount).toBe(ids.length);
+        expect(result.skippedSalvage).toBe(0);
+        expect(result.message).toContain('Successfully cleared 10');
+        expect(mockDeleteWorkflowInstances).toHaveBeenCalledWith(ids);
+        // The unguarded by-definition wipe must not be used any more.
+        expect(mockDeleteWorkflowInstancesByDefinitionId).not.toHaveBeenCalled();
       });
 
       it('should return failure when workflowDefinitionId is not provided', async () => {
@@ -929,7 +951,7 @@ describe('WorkflowLifecycleManager', () => {
       });
 
       it('should handle case when no history exists', async () => {
-        mockDeleteWorkflowInstancesByDefinitionId.mockResolvedValue(0);
+        (mockPersistence.queryWorkflowInstances as jest.Mock).mockResolvedValue({ instances: [], total: 0 });
 
         const result = await lifecycleManager.clearWorkflowHistory('core.NonExistent@1.0.0');
 
@@ -937,8 +959,26 @@ describe('WorkflowLifecycleManager', () => {
         expect(result.deletedCount).toBe(0);
       });
 
+      it('should hold back rows that still owe salvage work', async () => {
+        (mockPersistence.queryWorkflowInstances as jest.Mock).mockResolvedValue({
+          instances: [
+            { id: 'inst-blocked', workflowDefinitionId: 'core.CleanCacheWorkflow@1.0.0', data: { __reactory: { salvage: { required: true, worktreePath: '/tmp/wt', recordedAt: '2026-11-03T11:00:00.000Z' } } } },
+            { id: 'inst-free', workflowDefinitionId: 'core.CleanCacheWorkflow@1.0.0', data: {} },
+          ],
+          total: 2,
+        });
+        mockDeleteWorkflowInstances.mockResolvedValue(1);
+
+        const result = await lifecycleManager.clearWorkflowHistory('core.CleanCacheWorkflow@1.0.0');
+
+        expect(result.deletedCount).toBe(1);
+        expect(result.skippedSalvage).toBe(1);
+        expect(result.blockedInstanceIds).toEqual(['inst-blocked']);
+        expect(mockDeleteWorkflowInstances).toHaveBeenCalledWith(['inst-free']);
+      });
+
       it('should handle provider errors', async () => {
-        mockDeleteWorkflowInstancesByDefinitionId.mockRejectedValue(new Error('Permission denied'));
+        (mockPersistence.queryWorkflowInstances as jest.Mock).mockRejectedValue(new Error('Permission denied'));
 
         await expect(lifecycleManager.clearWorkflowHistory('core.TestWorkflow@1.0.0'))
           .rejects.toThrow('Permission denied');
@@ -965,3 +1005,933 @@ describe('WorkflowLifecycleManager', () => {
     });
   });
 }); 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REACTORY-302016408 — termination reasons, completeTime, last activity, salvage
+//
+// The incident: instance 6ae999c2738d66f0ebd7a2b5 was Terminated (status 3) with
+// 41/43 steps complete, 0 failed steps, completeTime null, zero recorded errors
+// and no reason anywhere.
+//
+// The FIXTURES matter as much as the assertions. Every case here is explicit
+// about engine status, because the first cut of this change only ever exercised
+// status 3 — which hid two real defects: COMPLETE rows were given a fabricated
+// "the process died" reason, and already-finished rows could be re-labelled by a
+// deploy or a crash. There is now a fixture at status 0, 2, 3 and 4.
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Minimal in-memory IPersistenceProvider.
+ *
+ * `persistWorkflow` implements the compare-and-set contract the real providers
+ * honour (expected token must match, then the stored token advances), so the
+ * recorder's concurrency retry is exercised for real rather than mocked away.
+ */
+class FakePersistence {
+  public store: Map<string, any> = new Map();
+  public persistCount = 0;
+  public failNextPersist: Error | null = null;
+  public failAllPersists: Error | null = null;
+
+  constructor(instances: any[] = []) {
+    instances.forEach((instance) => this.seed(instance));
+  }
+
+  private clone<T>(value: T): T {
+    return value == null ? value : JSON.parse(JSON.stringify(value));
+  }
+
+  public seed(instance: any): void {
+    this.store.set(instance.id, this.clone({ concurrencyToken: 0, ...instance }));
+  }
+
+  public raw(id: string): any {
+    return this.store.get(id) || null;
+  }
+
+  public async getWorkflowInstance(id: string): Promise<any> {
+    return this.clone(this.store.get(id));
+  }
+
+  public async persistWorkflow(instance: any): Promise<void> {
+    if (this.failAllPersists) throw this.failAllPersists;
+    if (this.failNextPersist) {
+      const error = this.failNextPersist;
+      this.failNextPersist = null;
+      throw error;
+    }
+    const current = this.store.get(instance.id);
+    if (!current) throw new Error(`missing instance ${instance.id}`);
+    const expected = instance.concurrencyToken ?? 0;
+    if ((current.concurrencyToken ?? 0) !== expected) {
+      const error: any = new Error('concurrency conflict');
+      error.name = 'WorkflowConcurrencyError';
+      throw error;
+    }
+    this.persistCount += 1;
+    instance.concurrencyToken = expected + 1;
+    this.store.set(instance.id, this.clone({ ...instance, concurrencyToken: instance.concurrencyToken }));
+  }
+
+  public async queryWorkflowInstances(query: any = {}): Promise<{ instances: any[]; total: number }> {
+    const statuses = query.status === undefined
+      ? null
+      : (Array.isArray(query.status) ? query.status : [query.status]);
+    const matched = Array.from(this.store.values())
+      .filter((instance) => !statuses || statuses.indexOf(instance.status) !== -1)
+      .filter((instance) => !query.workflowDefinitionId
+        || instance.workflowDefinitionId === query.workflowDefinitionId)
+      .filter((instance) => !query.createdBefore
+        || new Date(instance.createTime).getTime() < new Date(query.createdBefore).getTime())
+      .sort((a, b) => new Date(a.createTime).getTime() - new Date(b.createTime).getTime());
+    return { instances: this.clone(matched), total: matched.length };
+  }
+
+  public async deleteWorkflowInstance(id: string): Promise<boolean> {
+    return this.store.delete(id);
+  }
+
+  public async deleteWorkflowInstances(ids: string[]): Promise<number> {
+    let deleted = 0;
+    ids.forEach((id) => { if (this.store.delete(id)) deleted += 1; });
+    return deleted;
+  }
+
+  public async deleteWorkflowInstancesByDefinitionId(workflowDefinitionId: string): Promise<number> {
+    let deleted = 0;
+    Array.from(this.store.entries()).forEach(([id, instance]) => {
+      if (instance.workflowDefinitionId === workflowDefinitionId) {
+        this.store.delete(id);
+        deleted += 1;
+      }
+    });
+    return deleted;
+  }
+}
+
+/**
+ * The exact shape the incident left behind: status 3, completeTime null, engine
+ * progress stopped at 08:22:34, no reason, no error.
+ *
+ * `status` is overridable so the same instance can be modelled as live (0),
+ * Complete (2), Terminated (3) or DeadLettered (4).
+ */
+const makeInstance = (overrides: any = {}): any => ({
+  id: 'inst-incident',
+  workflowDefinitionId: 'ai.ProcessAITicket@1.4.8',
+  tenantId: 'reactory',
+  version: '1.4.8',
+  status: 3, // Terminated
+  createTime: '2026-11-03T08:22:26.000Z',
+  completeTime: null,
+  data: {
+    inputs: { ticketRef: 'REACTORY-302016408/20261103/1119821180' },
+    variables: {},
+    stepResults: {},
+    env: {},
+    outputs: {},
+  },
+  executionPointers: [
+    { id: 'p-42', stepId: 42, stepName: 'Log baseline accepted', status: 3, active: false, retryCount: 0, startTime: '2026-11-03T08:22:33.000Z', endTime: '2026-11-03T08:22:34.000Z' },
+    { id: 'p-43', stepId: 43, stepName: '(start)', status: 2, active: true, retryCount: 0, startTime: '2026-11-03T08:22:34.000Z' },
+  ],
+  ...overrides,
+});
+
+/** A run that finished successfully: status 2, completeTime set, nothing else. */
+const makeCompletedInstance = (overrides: any = {}): any => makeInstance({
+  id: 'inst-complete',
+  status: 2,
+  completeTime: '2026-11-03T08:24:00.000Z',
+  ...overrides,
+});
+
+describe('WorkflowLifecycleManager — termination reasons (REACTORY-302016408)', () => {
+  let manager: WorkflowLifecycleManager;
+
+  afterEach(async () => {
+    if (manager && manager.isInitialized()) {
+      await manager.stop();
+    }
+  });
+
+  const historyFor = async (persistence: FakePersistence, id: string) => {
+    manager = new WorkflowLifecycleManager();
+    await manager.initialize({ persistence: persistence as any });
+    const item = await manager.getWorkflowHistoryById(id);
+    if (!item) throw new Error(`no history item for ${id}`);
+    return item;
+  };
+
+  describe('read layer', () => {
+    it('gives a silent Terminated row a reason, a completeTime and a duration', async () => {
+      const persistence = new FakePersistence([makeInstance()]);
+      const item = await historyFor(persistence, 'inst-incident');
+
+      expect(item.status).toBe(WorkflowESStatus.TERMINATED);
+      // Silence is not an acceptable answer.
+      expect(item.terminationReason).not.toBeNull();
+      expect(item.terminationReason!.code).toBe(TerminationReasonCode.UNKNOWN);
+      expect(item.terminationReason!.recorded).toBe(false);
+      expect(item.terminationReason!.message).toMatch(/without a recorded termination reason/i);
+
+      // A terminated instance is finished: completeTime (and therefore duration)
+      // must not be null.
+      expect(item.completeTime).toBeInstanceOf(Date);
+      expect(item.completeTime!.toISOString()).toBe('2026-11-03T08:22:34.000Z');
+      expect(item.duration).toBe(8000);
+    });
+
+    it('reports the recorded reason when one exists', async () => {
+      const instance = makeInstance({
+        data: {
+          __reactory: {
+            termination: {
+              code: 'provider-error',
+              message: 'Dead-lettered (retries-exhausted): 503 Service Unavailable',
+              time: '2026-11-03T08:22:35.000Z',
+              source: 'dead-letter',
+            },
+          },
+        },
+      });
+      const item = await historyFor(new FakePersistence([instance]), 'inst-incident');
+
+      expect(item.terminationReason!.code).toBe(TerminationReasonCode.PROVIDER_ERROR);
+      expect(item.terminationReason!.source).toBe('dead-letter');
+      expect(item.terminationReason!.recorded).toBe(true);
+      expect(item.terminationReason!.time.toISOString()).toBe('2026-11-03T08:22:35.000Z');
+    });
+
+    it('does not invent a reason for an instance that is still live', async () => {
+      const persistence = new FakePersistence([makeInstance({ status: 0, completeTime: null })]);
+      const item = await historyFor(persistence, 'inst-incident');
+
+      expect(item.terminationReason).toBeNull();
+      expect(item.completeTime).toBeNull();
+      expect(item.duration).toBeNull();
+    });
+
+    it('gives a COMPLETE row no termination reason (a success needs no explanation)', async () => {
+      // Regression: the first cut branched on "terminal", which includes status 2,
+      // so EVERY successful run reported `unknown` — "It predates
+      // termination-reason recording, or the process died before the reason could
+      // be written" — on the happy path, and `terminationReason != null` stopped
+      // being a usable filter.
+      const item = await historyFor(new FakePersistence([makeCompletedInstance()]), 'inst-complete');
+
+      expect(item.status).toBe(WorkflowESStatus.COMPLETE);
+      expect(item.terminationReason).toBeNull();
+      // The completion itself is still fully described.
+      expect(item.completeTime!.toISOString()).toBe('2026-11-03T08:24:00.000Z');
+      expect(item.duration).toBe(94000);
+    });
+
+    it('does not surface a stale recorded reason on a COMPLETE row', async () => {
+      // A crash reason can be recorded while a run is still live; the engine then
+      // resumes it and it completes. The run DID finish, so the stale record must
+      // never be reported.
+      const instance = makeCompletedInstance({
+        data: {
+          __reactory: {
+            termination: { code: 'crash', message: 'uncaughtException: boom', time: '2026-11-03T08:23:00.000Z', source: 'process' },
+          },
+        },
+      });
+      const item = await historyFor(new FakePersistence([instance]), 'inst-complete');
+
+      expect(item.terminationReason).toBeNull();
+    });
+
+    it('reports a DeadLettered row (displayed as Terminated) with a reason', async () => {
+      const persistence = new FakePersistence([makeInstance({ status: 4, completeTime: null })]);
+      const item = await historyFor(persistence, 'inst-incident');
+
+      expect(item.terminationReason).not.toBeNull();
+      expect(item.terminationReason!.code).toBe(TerminationReasonCode.UNKNOWN);
+      expect(item.terminationReason!.message).toMatch(/DeadLettered/);
+    });
+
+    it('tolerates legacy rows with no data at all', async () => {
+      const persistence = new FakePersistence([makeInstance({ data: undefined })]);
+      await expect(historyFor(persistence, 'inst-incident')).resolves.toBeTruthy();
+      const item = await manager.getWorkflowHistoryById('inst-incident');
+      expect(item!.terminationReason!.code).toBe(TerminationReasonCode.UNKNOWN);
+      expect(item!.lastActivity).toBeInstanceOf(Date);
+    });
+
+    it('reports lastActivity from pointer times and prefers a newer heartbeat', async () => {
+      const fromPointers = await historyFor(new FakePersistence([makeInstance()]), 'inst-incident');
+      expect(fromPointers.lastActivity!.toISOString()).toBe('2026-11-03T08:22:34.000Z');
+
+      // A persisted heartbeat from a long step must win over the last pointer.
+      const withHeartbeat = makeInstance({
+        data: { __reactory: { lastActivity: '2026-11-03T10:53:00.000Z' } },
+      });
+      const item = await historyFor(new FakePersistence([withHeartbeat]), 'inst-incident');
+      expect(item.lastActivity!.toISOString()).toBe('2026-11-03T10:53:00.000Z');
+      // The engine recorded no completeTime on this path, so the read layer
+      // derives it from the newest known activity — 10:53, not the stale pointer.
+      expect(item.completeTime!.toISOString()).toBe('2026-11-03T10:53:00.000Z');
+    });
+
+    it('exposes the recorded salvage record', async () => {
+      const instance = makeInstance({
+        data: {
+          __reactory: {
+            salvage: {
+              required: true,
+              worktreePath: '/tmp/wt',
+              branch: 'bug/REACTORY-302016408',
+              headSha: '4856720',
+              dirty: true,
+              changedFileCount: 15,
+              recordedAt: '2026-11-03T11:00:00.000Z',
+            },
+          },
+        },
+      });
+      const item = await historyFor(new FakePersistence([instance]), 'inst-incident');
+      expect(item.salvage!.branch).toBe('bug/REACTORY-302016408');
+      expect(item.salvage!.headSha).toBe('4856720');
+      expect(hasUnresolvedSalvage(item.salvage)).toBe(true);
+    });
+  });
+
+  describe('recorder', () => {
+    it('writes the reason and sets completeTime on a terminated instance', async () => {
+      const persistence = new FakePersistence([makeInstance()]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const outcome = await recorder.recordTermination('inst-incident', {
+        code: TerminationReasonCode.CANCELLED,
+        message: 'Cancelled: operator stopped a runaway agent',
+        source: 'cancel',
+      });
+
+      expect(outcome.applied).toBe(true);
+      expect(outcome.outcome).toBe('applied');
+      const stored = persistence.raw('inst-incident');
+      expect(stored.data.__reactory.termination.code).toBe('cancelled');
+      expect(stored.data.__reactory.termination.message).toMatch(/runaway agent/);
+      expect(stored.completeTime).toBeTruthy();
+    });
+
+    it('never re-labels a COMPLETE instance — not even when forced', async () => {
+      // B1 regression: stop()/a crash used to overwrite finished runs with
+      // SHUTDOWN/CRASH on every deploy.
+      const persistence = new FakePersistence([makeCompletedInstance()]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const forced = await recorder.recordTermination(
+        'inst-complete',
+        { code: TerminationReasonCode.SHUTDOWN, message: 'stop()', source: 'shutdown' },
+        { force: true, terminal: true },
+      );
+      const unforced = await recorder.recordTermination(
+        'inst-complete',
+        { code: TerminationReasonCode.CRASH, message: 'boom', source: 'process' },
+      );
+
+      expect(forced.outcome).toBe('already-complete');
+      expect(unforced.outcome).toBe('already-complete');
+      const stored = persistence.raw('inst-complete');
+      expect(stored.data.__reactory?.termination).toBeUndefined();
+      expect(stored.completeTime).toBe('2026-11-03T08:24:00.000Z');
+    });
+
+    it('clears a stale reason it finds on a COMPLETE instance', async () => {
+      const instance = makeCompletedInstance({
+        data: {
+          __reactory: {
+            termination: { code: 'crash', message: 'stale', time: '2026-11-03T08:23:00.000Z', source: 'process' },
+          },
+        },
+      });
+      const persistence = new FakePersistence([instance]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const outcome = await recorder.recordTermination(
+        'inst-complete',
+        { code: TerminationReasonCode.CRASH, message: 'boom' },
+      );
+
+      expect(outcome.outcome).toBe('already-complete');
+      expect(persistence.raw('inst-complete').data.__reactory.termination).toBeUndefined();
+    });
+
+    it('leaves an already-settled terminated row alone unless the caller is the transition', async () => {
+      const instance = makeInstance({
+        completeTime: '2026-11-03T08:22:34.000Z',
+        data: {
+          __reactory: {
+            termination: { code: 'provider-error', message: 'original', time: '2026-11-03T08:22:34.000Z', source: 'dead-letter' },
+          },
+        },
+      });
+      const persistence = new FakePersistence([instance]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const kept = await recorder.recordTermination(
+        'inst-incident',
+        { code: TerminationReasonCode.SHUTDOWN, message: 'deploy' },
+      );
+      expect(kept.outcome).toBe('already-settled');
+      expect(persistence.raw('inst-incident').data.__reactory.termination.code).toBe('provider-error');
+
+      const forced = await recorder.recordTermination(
+        'inst-incident',
+        { code: TerminationReasonCode.CANCELLED, message: 'operator stopped it' },
+        { force: true },
+      );
+      expect(forced.applied).toBe(true);
+      expect(persistence.raw('inst-incident').data.__reactory.termination.code).toBe('cancelled');
+    });
+
+    it('refuses to write a termination reason onto a live instance', async () => {
+      const persistence = new FakePersistence([makeInstance({ status: 0, completeTime: null })]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const outcome = await recorder.recordTermination('inst-incident', {
+        code: TerminationReasonCode.CRASH,
+        message: 'x',
+      });
+
+      expect(outcome.outcome).toBe('not-terminal');
+      expect(persistence.raw('inst-incident').data.__reactory?.termination).toBeUndefined();
+      expect(persistence.raw('inst-incident').completeTime).toBeNull();
+    });
+
+    it('records an interruption (not a termination) for a live instance', async () => {
+      const persistence = new FakePersistence([makeInstance({ status: 0, completeTime: null })]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const outcome = await recorder.recordInterruption('inst-incident', {
+        code: TerminationReasonCode.SHUTDOWN,
+        message: 'deploy',
+        source: 'shutdown',
+      });
+
+      expect(outcome.applied).toBe(true);
+      const stored = persistence.raw('inst-incident');
+      expect(stored.data.__reactory.interrupted.code).toBe('shutdown');
+      expect(stored.data.__reactory.termination).toBeUndefined();
+      expect(stored.completeTime).toBeNull();
+    });
+
+    it('never throws when persistence fails, and reports the failure as retryable', async () => {
+      const persistence = new FakePersistence([makeInstance()]);
+      persistence.failNextPersist = new Error('mongo is down');
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const outcome = await recorder.recordTermination('inst-incident', {
+        code: TerminationReasonCode.CRASH,
+        message: 'boom',
+      });
+
+      expect(outcome.applied).toBe(false);
+      expect(outcome.outcome).toBe('write-failed');
+      expect(outcome.retryable).toBe(true);
+    });
+
+    it('retries once on an optimistic-concurrency conflict', async () => {
+      const persistence = new FakePersistence([makeInstance()]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const original = persistence.persistWorkflow.bind(persistence);
+      let attempts = 0;
+      (persistence as any).persistWorkflow = async (instance: any) => {
+        attempts += 1;
+        if (attempts === 1) {
+          const current = persistence.raw(instance.id);
+          persistence.store.set(instance.id, { ...current, concurrencyToken: (current.concurrencyToken ?? 0) + 1 });
+        }
+        return original(instance);
+      };
+
+      const outcome = await recorder.recordTermination('inst-incident', {
+        code: TerminationReasonCode.SHUTDOWN,
+        message: 'stop()',
+      });
+
+      expect(attempts).toBe(2);
+      expect(outcome.applied).toBe(true);
+      expect(persistence.raw('inst-incident').data.__reactory.termination.code).toBe('shutdown');
+    });
+  });
+
+  describe('crash outbox — killed mid-agent_conversation', () => {
+    const outboxPath = '/tmp/reactor-termination-outbox-test.jsonl';
+
+    beforeEach(() => {
+      process.env.WORKFLOW_TERMINATION_OUTBOX = outboxPath;
+      clearOutbox();
+    });
+
+    afterEach(() => {
+      clearOutbox();
+      delete process.env.WORKFLOW_TERMINATION_OUTBOX;
+    });
+
+    it('records the reason for a run that was left Terminated with no completeTime', async () => {
+      // The incident shape: the engine's last write left status 3 with no
+      // completeTime; the process then died on an unhandled rejection.
+      const persistence = new FakePersistence([makeInstance()]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const queued = recorder.queueProcessTermination(['inst-incident'], {
+        code: TerminationReasonCode.PROVIDER_ERROR,
+        message: 'unhandledRejection: Error: 503 Service Unavailable from provider',
+        source: 'process',
+        signal: 'unhandledRejection',
+      });
+
+      expect(queued).toBe(1);
+      // Written synchronously: nothing asynchronous survives process.exit().
+      expect(readOutboxRecords()).toHaveLength(1);
+
+      const drained = await recorder.drainOutbox();
+
+      expect(drained.applied).toBe(1);
+      const stored = persistence.raw('inst-incident');
+      expect(stored.data.__reactory.termination.code).toBe('provider-error');
+      expect(stored.data.__reactory.termination.message).toMatch(/unhandledRejection/);
+      expect(stored.completeTime).toBeTruthy();
+      expect(readOutboxRecords()).toHaveLength(0);
+    });
+
+    it('records an interruption, not a termination, when the run is still live at drain', async () => {
+      // The engine WILL resume this instance, so a `crash` termination reason
+      // would be a stale lie the moment the run completes.
+      const persistence = new FakePersistence([makeInstance({ status: 0, completeTime: null })]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      recorder.queueProcessTermination(['inst-incident'], {
+        code: TerminationReasonCode.CRASH,
+        message: 'uncaughtException: Error: boom',
+        source: 'process',
+        signal: 'uncaughtException',
+      });
+      const drained = await recorder.drainOutbox();
+
+      expect(drained.interrupted).toBe(1);
+      expect(drained.applied).toBe(0);
+      const stored = persistence.raw('inst-incident');
+      expect(stored.data.__reactory.termination).toBeUndefined();
+      expect(stored.data.__reactory.interrupted.code).toBe('crash');
+      expect(stored.completeTime).toBeNull();
+    });
+
+    it('does not re-label a run that completed before the drain', async () => {
+      // B1 through the crash path: the registry was stale, the run had finished.
+      const persistence = new FakePersistence([makeCompletedInstance()]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      recorder.queueProcessTermination(['inst-complete'], {
+        code: TerminationReasonCode.CRASH,
+        message: 'uncaughtException: Error: boom',
+        source: 'process',
+      });
+      const drained = await recorder.drainOutbox();
+
+      expect(drained.applied).toBe(0);
+      expect(drained.dropped).toBe(1);
+      const stored = persistence.raw('inst-complete');
+      expect(stored.data.__reactory?.termination).toBeUndefined();
+      expect(stored.completeTime).toBe('2026-11-03T08:24:00.000Z');
+      expect(readOutboxRecords()).toHaveLength(0);
+    });
+
+    it('does not leave a stale crash reason on a resumed instance', async () => {
+      const persistence = new FakePersistence([makeInstance({ status: 0, completeTime: null })]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      recorder.queueProcessTermination(['inst-incident'], {
+        code: TerminationReasonCode.CRASH,
+        message: 'boom',
+        source: 'process',
+      });
+      await recorder.drainOutbox();
+
+      // While live: nothing about a termination.
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+      expect((await manager.getWorkflowHistoryById('inst-incident'))!.terminationReason).toBeNull();
+
+      // The engine resumes it and it completes: still nothing.
+      persistence.seed({
+        ...persistence.raw('inst-incident'),
+        status: 2,
+        completeTime: '2026-11-03T09:00:00.000Z',
+      });
+      expect((await manager.getWorkflowHistoryById('inst-incident'))!.terminationReason).toBeNull();
+    });
+
+    it('keeps the queued reason when the apply fails, then applies it on the next drain', async () => {
+      // B3: a transient database outage at boot must not discard the reason the
+      // crash was supposed to capture.
+      const persistence = new FakePersistence([makeInstance()]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      recorder.queueProcessTermination(['inst-incident'], {
+        code: TerminationReasonCode.OOM,
+        message: 'JavaScript heap out of memory',
+        source: 'process',
+      });
+
+      persistence.failNextPersist = new Error('mongo unavailable');
+      const failed = await recorder.drainOutbox();
+
+      expect(failed.applied).toBe(0);
+      expect(failed.requeued).toBe(1);
+      // The record is still on disk, so the next boot can apply it.
+      const stillQueued = readOutboxRecords();
+      expect(stillQueued).toHaveLength(1);
+      expect(stillQueued[0].instanceId).toBe('inst-incident');
+      expect(persistence.raw('inst-incident').data.__reactory?.termination).toBeUndefined();
+
+      const retried = await recorder.drainOutbox();
+
+      expect(retried.applied).toBe(1);
+      expect(persistence.raw('inst-incident').data.__reactory.termination.code).toBe('oom');
+      expect(persistence.raw('inst-incident').completeTime).toBeTruthy();
+      expect(readOutboxRecords()).toHaveLength(0);
+    });
+
+    it('keeps only the newest record per instance across a crash loop', async () => {
+      const persistence = new FakePersistence([makeInstance()]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      recorder.queueProcessTermination(['inst-incident'], { code: 'unknown', message: 'first', source: 'process' });
+      recorder.queueProcessTermination(['inst-incident'], { code: 'oom', message: 'second', source: 'process' });
+
+      expect(readOutboxRecords()).toHaveLength(2);
+      await recorder.drainOutbox();
+      expect(persistence.raw('inst-incident').data.__reactory.termination.message).toMatch(/second/);
+    });
+  });
+
+  describe('salvage', () => {
+    it('blocks the cleanup guard until the work is committed or acknowledged', async () => {
+      const persistence = new FakePersistence([makeInstance()]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const record = await recorder.recordSalvage('inst-incident', {
+        worktreePath: '/Users/wernerw/Projects/reactory/reactory-worktrees/ai-reactory-302016408',
+        branch: 'bug/REACTORY-302016408-20261103-4082245933',
+        headSha: '4856720',
+        dirty: true,
+        changedFileCount: 15,
+      });
+
+      expect(record!.branch).toBe('bug/REACTORY-302016408-20261103-4082245933');
+      await expect(recorder.assertSalvageClear('inst-incident')).rejects.toBeInstanceOf(UnresolvedSalvageError);
+
+      // Recording the commit that preserved the work unblocks it.
+      await recorder.acknowledgeSalvage('inst-incident', {
+        acknowledgedBy: 'reactor',
+        salvageSha: '4856720',
+        note: 'recovered onto the ticket branch',
+      });
+      await expect(recorder.assertSalvageClear('inst-incident')).resolves.toBeTruthy();
+    });
+
+    it('refuses to delete a history row that still owes salvage work', async () => {
+      const instance = makeInstance({
+        data: {
+          __reactory: {
+            salvage: {
+              required: true,
+              worktreePath: '/tmp/wt',
+              branch: 'bug/x',
+              dirty: true,
+              recordedAt: '2026-11-03T11:00:00.000Z',
+            },
+          },
+        },
+      });
+      const persistence = new FakePersistence([instance]);
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+
+      const blocked = await manager.deleteWorkflowHistory('inst-incident');
+      expect(blocked.success).toBe(false);
+      expect(blocked.message).toMatch(/blocked pending salvage acknowledgement/i);
+      expect(persistence.raw('inst-incident')).toBeTruthy();
+
+      const batch = await manager.deleteWorkflowHistoryBatch(['inst-incident']);
+      expect(batch.success).toBe(false);
+      expect(persistence.raw('inst-incident')).toBeTruthy();
+    });
+
+    it('skips unresolved-salvage rows in the retention sweep and reports them', async () => {
+      const old = '2020-01-01T00:00:00.000Z';
+      const salvaged = makeInstance({
+        id: 'inst-salvaged',
+        createTime: old,
+        data: {
+          __reactory: {
+            salvage: { required: true, worktreePath: '/tmp/wt', dirty: true, recordedAt: old },
+          },
+        },
+      });
+      const clean = makeInstance({ id: 'inst-clean', createTime: old });
+      const persistence = new FakePersistence([salvaged, clean]);
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+
+      const result = await manager.sweepExpiredInstances({ olderThanDays: 30 });
+
+      expect(result.deleted).toBe(1);
+      expect(result.skippedSalvage).toBe(1);
+      expect(persistence.raw('inst-salvaged')).toBeTruthy();
+      expect(persistence.raw('inst-clean')).toBeFalsy();
+    });
+
+    it('auto-captures salvage from the worktree facts a publish-path run reported', async () => {
+      const instance = makeInstance({
+        data: {
+          __reactory: {
+            worktree: {
+              path: '/tmp/wt-ai',
+              branch: 'bug/REACTORY-302016408-20261103-4082245933',
+              headSha: '4856720',
+              dirty: true,
+              changedFileCount: 15,
+            },
+          },
+        },
+      });
+      const persistence = new FakePersistence([instance]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const record = await recorder.captureSalvageForTerminatedInstance('inst-incident');
+
+      expect(record).not.toBeNull();
+      expect(record!.required).toBe(true);
+      expect(record!.branch).toBe('bug/REACTORY-302016408-20261103-4082245933');
+      expect(record!.headSha).toBe('4856720');
+      expect(record!.changedFileCount).toBe(15);
+      await expect(recorder.assertSalvageClear('inst-incident')).rejects.toBeInstanceOf(UnresolvedSalvageError);
+    });
+
+    it('does not require salvage when the run already published', async () => {
+      const instance = makeInstance({
+        data: {
+          __reactory: {
+            worktree: { path: '/tmp/wt-ai', branch: 'bug/x', dirty: true },
+            publish: { mergedSha: 'deadbeef', prUrl: 'https://example/pr/15' },
+          },
+        },
+      });
+      const persistence = new FakePersistence([instance]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      const record = await recorder.captureSalvageForTerminatedInstance('inst-incident');
+      expect(record!.publishedSha).toBe('deadbeef');
+      expect(record!.required).toBe(false);
+      await expect(recorder.assertSalvageClear('inst-incident')).resolves.toBeTruthy();
+    });
+
+    it('does not create a salvage record for a COMPLETE run', async () => {
+      const persistence = new FakePersistence([makeCompletedInstance({
+        data: { __reactory: { worktree: { path: '/tmp/wt', dirty: true } } },
+      })]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      await expect(recorder.captureSalvageForTerminatedInstance('inst-complete')).resolves.toBeNull();
+    });
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REACTORY-302016408 — salvage guard completeness (review Q1)
+//
+// The guard existed on delete / batch-delete / retention-sweep but NOT on
+// clearWorkflowHistory, which is reachable from the clearWorkflowExecutionHistory
+// mutation and wiped a definition's rows unconditionally — destroying the only
+// pointer to a worktree holding unpublished work. And auto-capture only ran from
+// the in-memory YAML finalize watch, so a run from a previous process (the live
+// incident), a DeadLettered row or a code workflow had no record to guard.
+// ══════════════════════════════════════════════════════════════════════════════
+
+describe('WorkflowLifecycleManager — salvage guard completeness (REACTORY-302016408)', () => {
+  let manager: WorkflowLifecycleManager;
+
+  afterEach(async () => {
+    if (manager && manager.isInitialized()) {
+      await manager.stop();
+    }
+  });
+
+  const salvageRecord = (worktreePath: string) => ({
+    __reactory: {
+      salvage: {
+        required: true,
+        worktreePath,
+        branch: 'bug/REACTORY-302016408',
+        dirty: true,
+        recordedAt: '2026-11-03T11:00:00.000Z',
+      },
+    },
+  });
+
+  describe('clearWorkflowHistory', () => {
+    it('refuses to clear a definition history that contains unresolved salvage', async () => {
+      const def = 'ai.ProcessAITicket@1.4.8';
+      const protectedRow = makeInstance({
+        id: 'inst-protected',
+        workflowDefinitionId: def,
+        data: salvageRecord('/tmp/wt-protected'),
+      });
+      const freeRow = makeInstance({ id: 'inst-free', workflowDefinitionId: def });
+      const persistence = new FakePersistence([protectedRow, freeRow]);
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+
+      const result = await manager.clearWorkflowHistory(def);
+
+      // The deletable row goes; the salvage row survives.
+      expect(result.success).toBe(true);
+      expect(result.deletedCount).toBe(1);
+      expect(result.skippedSalvage).toBe(1);
+      expect(result.blockedInstanceIds).toEqual(['inst-protected']);
+      expect(result.message).toMatch(/blocked pending salvage acknowledgement/i);
+
+      expect(persistence.raw('inst-protected')).toBeTruthy();
+      expect(persistence.raw('inst-free')).toBeFalsy();
+    });
+
+    it('reports success with nothing deleted when every row owes salvage', async () => {
+      const def = 'ai.ProcessAITicket@1.4.8';
+      const persistence = new FakePersistence([
+        makeInstance({ id: 'inst-a', workflowDefinitionId: def, data: salvageRecord('/tmp/wt-a') }),
+        makeInstance({ id: 'inst-b', workflowDefinitionId: def, data: salvageRecord('/tmp/wt-b') }),
+      ]);
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+
+      const result = await manager.clearWorkflowHistory(def);
+
+      expect(result.deletedCount).toBe(0);
+      expect(result.skippedSalvage).toBe(2);
+      expect(persistence.raw('inst-a')).toBeTruthy();
+      expect(persistence.raw('inst-b')).toBeTruthy();
+    });
+
+    it('clears everything when no row owes salvage', async () => {
+      const def = 'core.OtherWorkflow@2.0.0';
+      const persistence = new FakePersistence([
+        makeInstance({ id: 'inst-1', workflowDefinitionId: def }),
+        makeInstance({ id: 'inst-2', workflowDefinitionId: def }),
+      ]);
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+
+      const result = await manager.clearWorkflowHistory(def);
+
+      expect(result.success).toBe(true);
+      expect(result.deletedCount).toBe(2);
+      expect(result.skippedSalvage).toBe(0);
+      expect(persistence.raw('inst-1')).toBeFalsy();
+      expect(persistence.raw('inst-2')).toBeFalsy();
+    });
+
+    it('only touches rows of the requested definition', async () => {
+      const persistence = new FakePersistence([
+        makeInstance({ id: 'inst-target', workflowDefinitionId: 'a.One@1.0.0' }),
+        makeInstance({ id: 'inst-other', workflowDefinitionId: 'b.Two@1.0.0' }),
+      ]);
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+
+      const result = await manager.clearWorkflowHistory('a.One@1.0.0');
+
+      expect(result.deletedCount).toBe(1);
+      expect(persistence.raw('inst-target')).toBeFalsy();
+      expect(persistence.raw('inst-other')).toBeTruthy();
+    });
+  });
+
+  describe('auto-capture via the guard hook', () => {
+    it('protects a terminated run from a previous process that never got a record', async () => {
+      // The incident's exact shape: the row was written by a process that has
+      // since died, so it is in no in-memory watch. Only the persisted worktree
+      // facts can save it.
+      const instance = makeInstance({
+        id: 'inst-prior-process',
+        status: 3,
+        data: {
+          __reactory: {
+            worktree: {
+              path: '/tmp/wt-prior',
+              branch: 'bug/REACTORY-302016408-20261103-4082245933',
+              headSha: '4856720',
+              dirty: true,
+              changedFileCount: 15,
+            },
+          },
+        },
+      });
+      const persistence = new FakePersistence([instance]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+      manager.setSalvageCaptureHook((id) => recorder.captureSalvageForTerminatedInstance(id));
+
+      const result = await manager.deleteWorkflowHistory('inst-prior-process');
+
+      expect(result.success).toBe(false);
+      expect(persistence.raw('inst-prior-process')).toBeTruthy();
+      // ... and the record is now on the row, so the work is discoverable.
+      expect(persistence.raw('inst-prior-process').data.__reactory.salvage.branch)
+        .toBe('bug/REACTORY-302016408-20261103-4082245933');
+    });
+
+    it('protects a DeadLettered row (status 4), which the finalize sweep never captured', async () => {
+      const instance = makeInstance({
+        id: 'inst-deadlettered',
+        status: 4,
+        data: { __reactory: { worktree: { path: '/tmp/wt-dl', dirty: true } } },
+      });
+      const persistence = new FakePersistence([instance]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+      manager.setSalvageCaptureHook((id) => recorder.captureSalvageForTerminatedInstance(id));
+
+      await expect(manager.assertSalvageClear('inst-deadlettered'))
+        .rejects.toBeInstanceOf(UnresolvedSalvageError);
+    });
+
+    it('still allows deletion when there is nothing to capture', async () => {
+      const persistence = new FakePersistence([makeInstance({ id: 'inst-plain', data: {} })]);
+      const recorder = new WorkflowInstanceLifecycleRecorder({ persistence: persistence as any });
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+      manager.setSalvageCaptureHook((id) => recorder.captureSalvageForTerminatedInstance(id));
+
+      const result = await manager.deleteWorkflowHistory('inst-plain');
+      expect(result.success).toBe(true);
+    });
+
+    it('survives a throwing capture hook', async () => {
+      const persistence = new FakePersistence([makeInstance({ id: 'inst-x', data: {} })]);
+
+      manager = new WorkflowLifecycleManager();
+      await manager.initialize({ persistence: persistence as any });
+      manager.setSalvageCaptureHook(async () => { throw new Error('capture exploded'); });
+
+      // Best-effort by contract: a broken hook must never block cleanup.
+      const result = await manager.deleteWorkflowHistory('inst-x');
+      expect(result.success).toBe(true);
+    });
+  });
+});

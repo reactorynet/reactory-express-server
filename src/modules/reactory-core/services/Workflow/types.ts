@@ -562,7 +562,40 @@ export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefa
   startWorkflow(workflowId: string, input?: IWorkflowExecutionInput): Promise<IWorkflowInstance>;
   pauseWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
   resumeWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
-  cancelWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult>;
+  /**
+   * Cancel a running instance. `reason` (optional) is persisted as the
+   * instance's termination reason so a cancelled run can be told apart from a
+   * crash / OOM / provider failure in the history view.
+   */
+  cancelWorkflowInstance(instanceId: string, reason?: string): Promise<IWorkflowOperationResult>;
+
+  /**
+   * Record worktree salvage facts for a terminated run (path, branch, HEAD,
+   * dirty state). While the record is unresolved the instance cannot be deleted.
+   */
+  recordWorkflowSalvage(
+    instanceId: string,
+    input: {
+      worktreePath?: string;
+      branch?: string;
+      headSha?: string;
+      dirty?: boolean;
+      changedFileCount?: number;
+      message?: string;
+      required?: boolean;
+    },
+  ): Promise<IWorkflowOperationResult>;
+
+  /** Resolve a salvage record (commit SHA, published SHA, or acknowledgement). */
+  acknowledgeWorkflowSalvage(
+    instanceId: string,
+    input?: {
+      acknowledgedBy?: string;
+      note?: string;
+      salvageSha?: string;
+      publishedSha?: string;
+    },
+  ): Promise<IWorkflowOperationResult>;
 
   // Workflow Events (signal / continue steps that are waiting for an event)
   /**

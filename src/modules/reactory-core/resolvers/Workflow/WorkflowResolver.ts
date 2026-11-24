@@ -34,6 +34,68 @@ const getWorkflowService = (context: Reactory.Server.IReactoryContext): IReactor
   return context.getService("core.ReactoryWorkflowService@1.0.0") as IReactoryWorkflowService;
 }
 
+/**
+ * The persisted termination code is a lower-case kebab token ('provider-error')
+ * because it is also written to the instance document; the GraphQL enum exposes
+ * SCREAMING_SNAKE. Map explicitly rather than relying on a default resolver —
+ * an unknown token would otherwise become an invalid enum value and null out the
+ * whole field.
+ */
+const TERMINATION_CODE_TO_ENUM: Record<string, string> = {
+  crash: 'CRASH',
+  oom: 'OOM',
+  cancelled: 'CANCELLED',
+  timeout: 'TIMEOUT',
+  'provider-error': 'PROVIDER_ERROR',
+  shutdown: 'SHUTDOWN',
+  unknown: 'UNKNOWN',
+};
+
+const TERMINATION_SOURCE_TO_ENUM: Record<string, string> = {
+  cancel: 'CANCEL',
+  timeout: 'TIMEOUT',
+  'dead-letter': 'DEAD_LETTER',
+  provider: 'PROVIDER',
+  step: 'STEP',
+  process: 'PROCESS',
+  shutdown: 'SHUTDOWN',
+  owner: 'OWNER',
+  derived: 'DERIVED',
+};
+
+/** Tolerant of absent/legacy values: never throw, always return null or a valid shape. */
+const mapTerminationReason = (value: any): any => {
+  if (!value || typeof value !== 'object' || !value.code) return null;
+  return {
+    code: TERMINATION_CODE_TO_ENUM[String(value.code)] || 'UNKNOWN',
+    message: typeof value.message === 'string' ? value.message : '',
+    time: value.time || null,
+    source: TERMINATION_SOURCE_TO_ENUM[String(value.source)] || 'DERIVED',
+    recorded: value.recorded !== false,
+  };
+};
+
+/** Adds the derived `unresolved` flag the schema exposes. */
+const mapSalvage = (value: any): any => {
+  if (!value || typeof value !== 'object') return null;
+  const resolved = !!value.publishedSha || !!value.salvageSha || !!value.acknowledgedAt;
+  return {
+    required: value.required === true,
+    worktreePath: value.worktreePath ?? null,
+    branch: value.branch ?? null,
+    headSha: value.headSha ?? null,
+    dirty: value.dirty ?? null,
+    changedFileCount: value.changedFileCount ?? null,
+    message: value.message ?? null,
+    recordedAt: value.recordedAt || null,
+    acknowledgedAt: value.acknowledgedAt ?? null,
+    acknowledgedBy: value.acknowledgedBy ?? null,
+    salvageSha: value.salvageSha ?? null,
+    publishedSha: value.publishedSha ?? null,
+    unresolved: value.required === true && !resolved,
+  };
+};
+
 // @ts-ignore - this has to be called without the () as this throws an error in the decorator
 @resolver
 class WorkflowResolver {
@@ -525,16 +587,68 @@ class WorkflowResolver {
     }
   }
 
+  /**
+   * Record worktree salvage facts for a terminated run. The engine never runs
+   * `git`; the owner of the worktree reports the facts here and the instance row
+   * is then protected from deletion until the record is resolved.
+   */
   @roles(["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
-  @mutation("cancelWorkflowInstance")
-  async cancelWorkflowInstance(
+  @mutation("recordWorkflowInstanceSalvage")
+  async recordWorkflowInstanceSalvage(
     obj: any,
-    params: { instanceId: string },
+    params: { instanceId: string; input: any },
     context: Reactory.Server.IReactoryContext
   ) {
     const workflowService = getWorkflowService(context);
     try {
-      return await workflowService.cancelWorkflowInstance(params.instanceId);
+      return await workflowService.recordWorkflowSalvage(params.instanceId, params.input || {});
+    } catch (error: any) {
+      context.log('Error recording workflow salvage', { error, params }, 'error', 'WorkflowResolver');
+      return { success: false, message: `Failed to record salvage: ${error.message}` };
+    }
+  }
+
+  /**
+   * Resolve a salvage record (commit SHA, published SHA, or explicit
+   * acknowledgement) so the instance can be cleaned up.
+   */
+  @roles(["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
+  @mutation("acknowledgeWorkflowInstanceSalvage")
+  async acknowledgeWorkflowInstanceSalvage(
+    obj: any,
+    params: { instanceId: string; note?: string; salvageSha?: string; publishedSha?: string },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      return await workflowService.acknowledgeWorkflowSalvage(params.instanceId, {
+        acknowledgedBy: (context as any)?.user?.email || 'unknown',
+        note: params.note,
+        salvageSha: params.salvageSha,
+        publishedSha: params.publishedSha,
+      });
+    } catch (error: any) {
+      context.log('Error acknowledging workflow salvage', { error, params }, 'error', 'WorkflowResolver');
+      return { success: false, message: `Failed to acknowledge salvage: ${error.message}` };
+    }
+  }
+
+  @roles(["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"], 'args.context')
+  @mutation("cancelWorkflowInstance")
+  async cancelWorkflowInstance(
+    obj: any,
+    params: { instanceId: string; reason?: string },
+    context: Reactory.Server.IReactoryContext
+  ) {
+    const workflowService = getWorkflowService(context);
+    try {
+      // The reason is persisted as the instance's termination reason, so an
+      // operator cancel carries the operator's explanation into the history.
+      // Kept as a one-argument call when no reason is supplied, so the existing
+      // calling contract (and every caller that asserts on it) is unchanged.
+      return params.reason
+        ? await workflowService.cancelWorkflowInstance(params.instanceId, params.reason)
+        : await workflowService.cancelWorkflowInstance(params.instanceId);
     } catch (error) {
       context.log('Error cancelling workflow instance', { error, params }, 'error', 'WorkflowResolver');
       return {
@@ -966,6 +1080,38 @@ class WorkflowResolver {
     const end = obj.endTime || obj.completedAt || obj.completeTime;
     if (start && end) return new Date(end).getTime() - new Date(start).getTime();
     return null;
+  }
+
+  // ─── Termination reason / last activity / salvage ──────────────────────────
+
+  @property("WorkflowInstance", "terminationReason")
+  instanceTerminationReason(obj: any) {
+    return mapTerminationReason(obj?.terminationReason);
+  }
+
+  @property("WorkflowInstance", "lastActivity")
+  instanceLastActivity(obj: any) {
+    return obj?.lastActivity || null;
+  }
+
+  @property("WorkflowInstance", "salvage")
+  instanceSalvage(obj: any) {
+    return mapSalvage(obj?.salvage);
+  }
+
+  @property("WorkflowExecutionHistory", "terminationReason")
+  historyTerminationReason(obj: any) {
+    return mapTerminationReason(obj?.terminationReason);
+  }
+
+  @property("WorkflowExecutionHistory", "lastActivity")
+  historyLastActivity(obj: any) {
+    return obj?.lastActivity || null;
+  }
+
+  @property("WorkflowExecutionHistory", "salvage")
+  historySalvage(obj: any) {
+    return mapSalvage(obj?.salvage);
   }
 
   @property("WorkflowSchedule", "id")

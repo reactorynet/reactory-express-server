@@ -65,7 +65,9 @@ describe('WorkflowResolver', () => {
       filterSchedulesByWorkflowProperties: jest.fn(),
       getWorkflowAuditLog: jest.fn(),
       getWorkflowStatus: jest.fn(),
-      startWorkflowLegacy: jest.fn()
+      startWorkflowLegacy: jest.fn(),
+      recordWorkflowSalvage: jest.fn(),
+      acknowledgeWorkflowSalvage: jest.fn(),
     } as any;
 
     // Create mock context
@@ -751,6 +753,282 @@ describe('WorkflowResolver', () => {
         );
 
         expect(result.success).toBe(false);
+      });
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // REACTORY-302016408 — termination reason / lastActivity / salvage surface
+  //
+  // This is new public API, and the enum mapping is exactly where a silent
+  // production bug would land: one wrong token downgrades a real cause to
+  // UNKNOWN, or nulls the whole field. The mappings are therefore table-driven
+  // and exhaustive rather than spot-checked.
+  // ════════════════════════════════════════════════════════════════════════════
+  describe('termination reason surface (REACTORY-302016408)', () => {
+    const reason = (overrides: any = {}) => ({
+      code: 'provider-error',
+      message: 'Dead-lettered (retries-exhausted): 503 Service Unavailable',
+      time: '2026-11-03T08:22:35.000Z',
+      source: 'dead-letter',
+      recorded: true,
+      ...overrides,
+    });
+
+    describe('WorkflowInstance property resolvers', () => {
+      it('maps every persisted termination code to its GraphQL enum member', () => {
+        const cases: Array<[string, string]> = [
+          ['crash', 'CRASH'],
+          ['oom', 'OOM'],
+          ['cancelled', 'CANCELLED'],
+          ['timeout', 'TIMEOUT'],
+          ['provider-error', 'PROVIDER_ERROR'],
+          ['shutdown', 'SHUTDOWN'],
+          ['unknown', 'UNKNOWN'],
+        ];
+
+        for (const [code, expected] of cases) {
+          const resolved = resolver.instanceTerminationReason({ terminationReason: reason({ code }) });
+          expect([code, resolved.code]).toEqual([code, expected]);
+        }
+      });
+
+      it('maps every termination source to its GraphQL enum member', () => {
+        const cases: Array<[string, string]> = [
+          ['cancel', 'CANCEL'],
+          ['timeout', 'TIMEOUT'],
+          ['dead-letter', 'DEAD_LETTER'],
+          ['provider', 'PROVIDER'],
+          ['step', 'STEP'],
+          ['process', 'PROCESS'],
+          ['shutdown', 'SHUTDOWN'],
+          ['owner', 'OWNER'],
+          ['derived', 'DERIVED'],
+        ];
+
+        for (const [source, expected] of cases) {
+          const resolved = resolver.instanceTerminationReason({ terminationReason: reason({ source }) });
+          expect([source, resolved.source]).toEqual([source, expected]);
+        }
+      });
+
+      it('degrades an unrecognised token to UNKNOWN / DERIVED without throwing', () => {
+        const resolved = resolver.instanceTerminationReason({
+          terminationReason: reason({ code: 'brand-new-cause', source: 'brand-new-source' }),
+        });
+
+        // A future engine code must never null the field or crash the query.
+        expect(resolved.code).toBe('UNKNOWN');
+        expect(resolved.source).toBe('DERIVED');
+        expect(resolved.message).toBe(reason().message);
+      });
+
+      it('keeps a COMPLETE row null (no reason is not an error)', () => {
+        expect(resolver.instanceTerminationReason({ terminationReason: null })).toBeNull();
+        expect(resolver.instanceTerminationReason({})).toBeNull();
+        expect(resolver.instanceTerminationReason(null)).toBeNull();
+      });
+
+      it('reports recorded:false for a synthesised reason and true for a recorded one', () => {
+        expect(resolver.instanceTerminationReason({
+          terminationReason: reason({ code: 'unknown', source: 'derived', recorded: false }),
+        }).recorded).toBe(false);
+        expect(resolver.instanceTerminationReason({ terminationReason: reason() }).recorded).toBe(true);
+      });
+
+      it('resolves lastActivity, tolerating absence', () => {
+        const when = new Date('2026-11-03T10:53:00.000Z');
+        expect(resolver.instanceLastActivity({ lastActivity: when })).toBe(when);
+        expect(resolver.instanceLastActivity({})).toBeNull();
+        expect(resolver.instanceLastActivity(null)).toBeNull();
+      });
+
+      it('derives `unresolved` from the salvage record', () => {
+        const base = {
+          required: true,
+          worktreePath: '/tmp/wt',
+          branch: 'bug/REACTORY-302016408',
+          headSha: '4856720',
+          dirty: true,
+          changedFileCount: 15,
+          message: 'terminated before publish',
+          recordedAt: '2026-11-03T11:00:00.000Z',
+        };
+
+        expect(resolver.instanceSalvage({ salvage: base }).unresolved).toBe(true);
+        expect(resolver.instanceSalvage({ salvage: { ...base, acknowledgedAt: '2026-11-03T12:00:00.000Z' } }).unresolved).toBe(false);
+        expect(resolver.instanceSalvage({ salvage: { ...base, salvageSha: '4856720' } }).unresolved).toBe(false);
+        expect(resolver.instanceSalvage({ salvage: { ...base, publishedSha: 'deadbeef' } }).unresolved).toBe(false);
+        // A record that is not required never blocks, even with no resolution.
+        expect(resolver.instanceSalvage({ salvage: { ...base, required: false } }).unresolved).toBe(false);
+        expect(resolver.instanceSalvage({})).toBeNull();
+      });
+
+      it('passes salvage fields through, filling absent optional values with null', () => {
+        const resolved = resolver.instanceSalvage({
+          salvage: { required: true, worktreePath: '/tmp/wt', recordedAt: '2026-11-03T11:00:00.000Z' },
+        });
+
+        expect(resolved.worktreePath).toBe('/tmp/wt');
+        expect(resolved.branch).toBeNull();
+        expect(resolved.salvageSha).toBeNull();
+        expect(resolved.publishedSha).toBeNull();
+        expect(resolved.acknowledgedAt).toBeNull();
+      });
+    });
+
+    describe('WorkflowExecutionHistory property resolvers', () => {
+      it('maps the history row the same way as the instance', () => {
+        const withCode = resolver.historyTerminationReason({ terminationReason: reason({ code: 'oom' }) });
+        expect(withCode.code).toBe('OOM');
+        expect(withCode.source).toBe('DEAD_LETTER');
+
+        expect(resolver.historyTerminationReason({ terminationReason: null })).toBeNull();
+      });
+
+      it('resolves lastActivity and salvage on the history row', () => {
+        const when = new Date('2026-11-03T10:53:00.000Z');
+        expect(resolver.historyLastActivity({ lastActivity: when })).toBe(when);
+        expect(resolver.historyLastActivity({})).toBeNull();
+
+        expect(resolver.historySalvage({
+          salvage: { required: true, worktreePath: '/tmp/wt', recordedAt: '2026-11-03T11:00:00.000Z' },
+        }).unresolved).toBe(true);
+        expect(resolver.historySalvage({})).toBeNull();
+      });
+    });
+
+    describe('cancel with a reason', () => {
+      it('forwards the operator reason as a two-argument call', async () => {
+        mockWorkflowService.cancelWorkflowInstance.mockResolvedValue({ success: true } as any);
+
+        await resolver.cancelWorkflowInstance(
+          {},
+          { instanceId: 'inst-123', reason: 'runaway agent step' },
+          mockContext,
+        );
+
+        expect(mockWorkflowService.cancelWorkflowInstance)
+          .toHaveBeenCalledWith('inst-123', 'runaway agent step');
+      });
+
+      it('keeps the one-argument call when no reason is supplied', async () => {
+        mockWorkflowService.cancelWorkflowInstance.mockResolvedValue({ success: true } as any);
+
+        await resolver.cancelWorkflowInstance({}, { instanceId: 'inst-123' }, mockContext);
+
+        expect(mockWorkflowService.cancelWorkflowInstance).toHaveBeenCalledWith('inst-123');
+      });
+    });
+
+    describe('recordWorkflowInstanceSalvage', () => {
+      it('records the worktree facts through the service', async () => {
+        mockWorkflowService.recordWorkflowSalvage = jest.fn().mockResolvedValue({
+          success: true,
+          message: 'Recorded salvage for instance inst-123',
+          data: { worktreePath: '/tmp/wt' },
+        });
+
+        const result = await resolver.recordWorkflowInstanceSalvage(
+          {},
+          {
+            instanceId: 'inst-123',
+            input: {
+              worktreePath: '/tmp/wt',
+              branch: 'bug/REACTORY-302016408-20261103-4082245933',
+              headSha: '4856720',
+              dirty: true,
+              changedFileCount: 15,
+            },
+          },
+          mockContext,
+        );
+
+        expect(result.success).toBe(true);
+        expect(mockWorkflowService.recordWorkflowSalvage).toHaveBeenCalledWith('inst-123', {
+          worktreePath: '/tmp/wt',
+          branch: 'bug/REACTORY-302016408-20261103-4082245933',
+          headSha: '4856720',
+          dirty: true,
+          changedFileCount: 15,
+        });
+      });
+
+      it('returns a failure result (not a throw) when the service rejects', async () => {
+        mockWorkflowService.recordWorkflowSalvage = jest.fn().mockRejectedValue(new Error('instance not found'));
+
+        const result = await resolver.recordWorkflowInstanceSalvage(
+          {},
+          { instanceId: 'inst-404', input: { worktreePath: '/tmp/wt' } },
+          mockContext,
+        );
+
+        expect(result.success).toBe(false);
+        expect(result.message).toContain('instance not found');
+        expect(mockContext.log).toHaveBeenCalled();
+      });
+
+      it('tolerates a missing input object', async () => {
+        mockWorkflowService.recordWorkflowSalvage = jest.fn().mockResolvedValue({ success: true });
+
+        await resolver.recordWorkflowInstanceSalvage({}, { instanceId: 'inst-123' } as any, mockContext);
+
+        expect(mockWorkflowService.recordWorkflowSalvage).toHaveBeenCalledWith('inst-123', {});
+      });
+    });
+
+    describe('acknowledgeWorkflowInstanceSalvage', () => {
+      it('resolves the record with the commit SHA and the caller identity', async () => {
+        mockWorkflowService.acknowledgeWorkflowSalvage = jest.fn().mockResolvedValue({
+          success: true,
+          message: 'Salvage acknowledged for instance inst-123',
+          data: { salvageSha: '4856720' },
+        });
+
+        const operator = { ...mockContext, user: { id: 'u-1', email: 'operator@reactory.net', roles: ['WORKFLOW_ADMIN'] } };
+
+        const result = await resolver.acknowledgeWorkflowInstanceSalvage(
+          {},
+          { instanceId: 'inst-123', salvageSha: '4856720', note: 'recovered onto the ticket branch' },
+          operator as any,
+        );
+
+        expect(result.success).toBe(true);
+        // The actor is recorded: an acknowledgement is a human decision and the
+        // history must say who took it.
+        expect(mockWorkflowService.acknowledgeWorkflowSalvage).toHaveBeenCalledWith('inst-123', {
+          acknowledgedBy: 'operator@reactory.net',
+          note: 'recovered onto the ticket branch',
+          salvageSha: '4856720',
+          publishedSha: undefined,
+        });
+      });
+
+      it('defaults the actor when the context carries no user', async () => {
+        mockWorkflowService.acknowledgeWorkflowSalvage = jest.fn().mockResolvedValue({ success: true });
+        const anonymousContext = { ...mockContext, user: undefined };
+
+        await resolver.acknowledgeWorkflowInstanceSalvage(
+          {},
+          { instanceId: 'inst-123' },
+          anonymousContext as any,
+        );
+
+        expect(mockWorkflowService.acknowledgeWorkflowSalvage)
+          .toHaveBeenCalledWith('inst-123', expect.objectContaining({ acknowledgedBy: 'unknown' }));
+      });
+
+      it('returns a failure result (not a throw) when the service rejects', async () => {
+        mockWorkflowService.acknowledgeWorkflowSalvage = jest.fn().mockRejectedValue(new Error('no salvage record'));
+
+        const result = await resolver.acknowledgeWorkflowInstanceSalvage(
+          {},
+          { instanceId: 'inst-123' },
+          mockContext,
+        );
+
+        expect(result.success).toBe(false);
+        expect(result.message).toContain('no salvage record');
       });
     });
   });
