@@ -360,6 +360,17 @@ type WorkflowInstance {
   createdBy: User
   launchedFrom: String
   tags: [String!]
+  """
+  Why this instance was terminated. Null while it is live and for COMPLETE runs.
+
+  Served from persistence (the history read path), so it is populated for engine
+  instances too — not just lifecycle-manager-tracked ones.
+  """
+  terminationReason: WorkflowTerminationReason
+  """Last moment the engine made progress on this instance."""
+  lastActivity: DateTime
+  """Unpublished work left behind by a terminated run, when recorded."""
+  salvage: WorkflowSalvageRecord
 }
 
 enum WorkflowInstanceStatus {
@@ -726,6 +737,23 @@ type WorkflowExecutionHistory {
   Returns null when no log file exists for this instance.
   """
   logFileUrl: String
+  """
+  Why this instance was terminated. Non-null for every TERMINATED row (incl.
+  DeadLettered, displayed as TERMINATED); null for COMPLETE and live instances.
+  """
+  terminationReason: WorkflowTerminationReason
+  """
+  Last moment the ENGINE made progress (persisted heartbeat, pointer start/end
+  times and createTime, whichever is latest).
+
+  Compare against wall-clock time: a run whose lastActivity is hours old while
+  the agent is still writing files is "the engine lost track", not "the engine is
+  idle". This is the signal the incident lacked: 41 completed steps, then 2.5
+  hours of file writes that nothing surfaced.
+  """
+  lastActivity: DateTime
+  """Unpublished work left behind, when a terminated run recorded any."""
+  salvage: WorkflowSalvageRecord
 }
 
 """
@@ -916,6 +944,111 @@ enum WorkflowHistorySortField {
   completeTime
   workflowDefinitionId
   status
+}
+
+# ─── Termination reason / salvage (REACTORY-302016408) ────────────────────────
+
+"""
+Machine-readable cause of a terminal transition.
+
+`UNKNOWN` is a value, not a failure: it means the engine reached a terminal
+status without an attributed cause (a row written before reasons were recorded,
+or a process that died before it could write one). Silence is no longer possible.
+"""
+enum TerminationReasonCode {
+  CRASH
+  OOM
+  CANCELLED
+  TIMEOUT
+  PROVIDER_ERROR
+  SHUTDOWN
+  UNKNOWN
+}
+
+"""Where a termination reason was captured (cancel, dead-letter, process, ...)."""
+enum TerminationReasonSource {
+  CANCEL
+  TIMEOUT
+  DEAD_LETTER
+  PROVIDER
+  STEP
+  PROCESS
+  SHUTDOWN
+  OWNER
+  DERIVED
+}
+
+"""
+Why an instance was TERMINATED.
+
+Present on every TERMINATED row — including the DeadLettered status that is
+displayed as TERMINATED — and null while the instance is live. Null for COMPLETE
+instances as well: a successful run has no termination reason, so
+`terminationReason != null` is a reliable filter for "this run did not finish".
+"""
+type WorkflowTerminationReason {
+  """Machine-readable cause."""
+  code: TerminationReasonCode!
+  """Human-readable detail, including the step error when there was one."""
+  message: String!
+  """When the cause was observed."""
+  time: DateTime!
+  """How the reason was captured."""
+  source: TerminationReasonSource!
+  """
+  False when the reason was synthesised on read because the instance terminated
+  without a recorded reason (legacy row / pre-fix path). The answer is still a
+  real one — "the engine does not know" — but it was not attributed.
+  """
+  recorded: Boolean!
+}
+
+"""
+Work left behind by a terminated run, recorded so it can be salvaged instead of
+silently discarded.
+
+The workflow engine never runs `git`: the owner reports the worktree facts, the
+engine persists them and refuses to delete the instance row until the record is
+resolved (committed SHA, published SHA, or an explicit acknowledgement).
+"""
+type WorkflowSalvageRecord {
+  """True when unpublished work is believed to still exist."""
+  required: Boolean!
+  """Absolute path of the worktree, when reported."""
+  worktreePath: String
+  """Branch the work should live on, when reported."""
+  branch: String
+  """HEAD SHA of the worktree when the record was taken."""
+  headSha: String
+  """Whether the worktree had uncommitted changes."""
+  dirty: Boolean
+  """Number of changed files observed."""
+  changedFileCount: Int
+  """Operator-facing detail (e.g. why it could not be published)."""
+  message: String
+  """When the record was taken."""
+  recordedAt: DateTime!
+  """When a consumer acknowledged the record (allows cleanup)."""
+  acknowledgedAt: DateTime
+  """Who acknowledged it."""
+  acknowledgedBy: String
+  """Commit that preserved the work, when it was salvaged by committing."""
+  salvageSha: String
+  """Merge/PR SHA, when the work was published."""
+  publishedSha: String
+  """True while the record still blocks cleanup."""
+  unresolved: Boolean!
+}
+
+"""Input for recording worktree salvage facts against a terminated instance."""
+input WorkflowSalvageInput {
+  worktreePath: String!
+  branch: String
+  headSha: String
+  dirty: Boolean
+  changedFileCount: Int
+  message: String
+  required: Boolean
 }
 
 # Response Types
@@ -1301,7 +1434,40 @@ extend type Mutation {
   # Instance Management
   pauseWorkflowInstance(instanceId: String!): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
   resumeWorkflowInstance(instanceId: String!): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
-  cancelWorkflowInstance(instanceId: String!): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
+  """
+  Cancel a running instance.
+
+  `reason` is persisted as the instance's termination reason (code CANCELLED) and
+  is shown in the execution history, so an operator cancel is distinguishable
+  from a crash, an OOM or a provider failure.
+  """
+  cancelWorkflowInstance(
+    instanceId: String!
+    reason: String
+  ): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
+
+  """
+  Record worktree salvage facts for a terminated run (path, branch, HEAD, dirty
+  state). Owners of the worktree call this; the engine never runs git. While the
+  record is unresolved the instance cannot be deleted by history cleanup or the
+  retention sweep.
+  """
+  recordWorkflowInstanceSalvage(
+    instanceId: String!
+    input: WorkflowSalvageInput!
+  ): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
+
+  """
+  Resolve a salvage record: a commit that preserved the work (`salvageSha`), a
+  published merge (`publishedSha`), or an explicit acknowledgement that the work
+  is intentionally discarded. Unblocks deletion/cleanup.
+  """
+  acknowledgeWorkflowInstanceSalvage(
+    instanceId: String!
+    note: String
+    salvageSha: String
+    publishedSha: String
+  ): WorkflowOperationResult @auth(roles: ["WORKFLOW_ADMIN", "WORKFLOW_OPERATOR"])
 
   # Event signalling (continue steps waiting for an event)
   publishWorkflowEvent(

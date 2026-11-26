@@ -27,6 +27,7 @@ import { InstanceResourceManager } from '@reactory/server-modules/reactory-core/
 import { getYamlStepRegistry, createWorkflowContext, WorkflowIdentity } from './YamlFlowRuntime';
 import { StepCreationParams } from '../types/WorkflowDefinition';
 import { StepControlDirective, StepExecutionResult } from '../steps/interfaces/IYamlStep';
+import { stampLastActivity } from '../../termination/TerminationReason';
 
 /**
  * The serializable workflow-instance state (TData) for engine-run YAML
@@ -409,6 +410,16 @@ export class YamlStepBody extends StepBody {
   public indexVariable?: string;
 
   public async run(context: StepExecutionContext): Promise<ExecutionResult> {
+    // LAST-ACTIVITY HEARTBEAT.
+    //
+    // Stamped on the server-side instance object the engine is about to persist
+    // anyway, so it costs ZERO extra writes: the next engine persist carries it.
+    // A consumer can then distinguish "the engine is stuck" (no progress, but a
+    // recent heartbeat) from "the engine lost track of a run that kept working"
+    // (lastActivity hours old while files are still being written — exactly the
+    // 41-completed-steps-then-2.5-hours-of-writes incident).
+    stampLastActivity(context.workflow);
+
     const data = ensureYamlWorkflowData(context.workflow?.data || {});
     const def = this.def;
 
@@ -562,6 +573,11 @@ export class YamlStepBody extends StepBody {
         logger.error(`Step "${def.id}" (${def.type}) error: ${msg}`);
       }
       throw err;
+    } finally {
+      // Step boundary: the engine made progress (success, failure or suspend).
+      // Stamped here as well as at entry so a long step is visible as "started at
+      // T, finished at T+n" rather than only "started".
+      stampLastActivity(context.workflow);
     }
   }
 }

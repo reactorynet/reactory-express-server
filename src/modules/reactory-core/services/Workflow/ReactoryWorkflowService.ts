@@ -1075,13 +1075,45 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
   async getWorkflowInstance(instanceId: string): Promise<IWorkflowInstance> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
-      const instance = await workflowRunner?.getLifecycleManager()?.getWorkflowInstance(instanceId);
-      
-      if (!instance) {
+      const lifecycleManager = workflowRunner?.getLifecycleManager();
+
+      // In-memory instances (legacy / lifecycle-manager-tracked) win.
+      const inMemory = lifecycleManager?.getWorkflowInstance(instanceId);
+      if (inMemory) {
+        return inMemory;
+      }
+
+      // Engine instances (every YAML workflow, including ProcessAITicket) are
+      // never registered with the lifecycle manager — it only tracks instances it
+      // created itself. Reading the in-memory map alone therefore made the
+      // `workflowInstance` query throw for exactly the runs this platform
+      // executes, and would have made the terminationReason / lastActivity /
+      // salvage fields permanently null. Hydrate the persisted instance through
+      // the history read path (the one that carries those fields) instead.
+      const persisted = await lifecycleManager?.getWorkflowHistoryById(instanceId);
+      if (!persisted) {
         throw new Error(`Workflow instance ${instanceId} not found`);
       }
 
-      return instance;
+      const data = (persisted.data || {}) as Record<string, any>;
+      return {
+        id: persisted.id,
+        workflowDefinitionId: persisted.workflowDefinitionId,
+        version: persisted.version,
+        // Numeric engine status: the GraphQL instanceStatus resolver maps it.
+        status: persisted.status,
+        createTime: persisted.createTime,
+        completeTime: persisted.completeTime,
+        startTime: persisted.createTime,
+        endTime: persisted.completeTime,
+        duration: persisted.duration,
+        input: data.inputs ?? null,
+        output: data.outputs ?? null,
+        steps: persisted.executionPointers || [],
+        terminationReason: persisted.terminationReason ?? null,
+        lastActivity: persisted.lastActivity ?? null,
+        salvage: persisted.salvage ?? null,
+      } as unknown as IWorkflowInstance;
     } catch (error) {
       this.context.log('Error getting workflow instance', { error }, 'error');
       throw error;
@@ -1163,10 +1195,18 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
     }
   }
 
-  async cancelWorkflowInstance(instanceId: string): Promise<IWorkflowOperationResult> {
+  async cancelWorkflowInstance(instanceId: string, reason?: string): Promise<IWorkflowOperationResult> {
     try {
       const workflowRunner = await this.getWorkflowRunner();
-      await workflowRunner?.cancelWorkflowInstance(instanceId);
+      // `reason` is persisted as the instance's termination reason
+      // (code: cancelled). Without it a cancelled run was indistinguishable from
+      // a crash in the history view. Kept as a one-argument call when no reason is
+      // supplied so existing callers/mocks see the unchanged signature.
+      if (reason) {
+        await workflowRunner?.cancelWorkflowInstance(instanceId, reason);
+      } else {
+        await workflowRunner?.cancelWorkflowInstance(instanceId);
+      }
       
       return {
         success: true,
@@ -1177,6 +1217,85 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       return {
         success: false,
         message: `Failed to cancel workflow instance: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Record worktree salvage facts for a terminated run.
+   *
+   * The engine deliberately knows nothing about git: the workflow that owns the
+   * worktree reports { path, branch, headSha, dirty, changedFileCount } and the
+   * engine persists it and refuses to let the instance be deleted until the
+   * record is resolved. See WorkflowInstanceLifecycleRecorder.
+   */
+  async recordWorkflowSalvage(
+    instanceId: string,
+    input: {
+      worktreePath?: string;
+      branch?: string;
+      headSha?: string;
+      dirty?: boolean;
+      changedFileCount?: number;
+      message?: string;
+      required?: boolean;
+    },
+  ): Promise<IWorkflowOperationResult> {
+    try {
+      if (!instanceId) {
+        return { success: false, message: 'instanceId is required' };
+      }
+      if (!input || !input.worktreePath) {
+        return { success: false, message: 'worktreePath is required to record salvage' };
+      }
+      const workflowRunner = await this.getWorkflowRunner();
+      const record = await workflowRunner?.recordWorktreeSalvage(instanceId, input);
+      if (!record) {
+        return { success: false, message: `Could not record salvage for instance ${instanceId}` };
+      }
+      return {
+        success: true,
+        message: `Recorded salvage for instance ${instanceId}`,
+        data: record,
+      };
+    } catch (error) {
+      this.context.log('Error recording workflow salvage', { error, instanceId }, 'error');
+      return {
+        success: false,
+        message: `Failed to record salvage: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+   * Resolve a salvage record so the instance can be cleaned up: a commit that
+   * preserved the work, a published merge, or an explicit acknowledgement.
+   */
+  async acknowledgeWorkflowSalvage(
+    instanceId: string,
+    input: {
+      acknowledgedBy?: string;
+      note?: string;
+      salvageSha?: string;
+      publishedSha?: string;
+    } = {},
+  ): Promise<IWorkflowOperationResult> {
+    try {
+      const workflowRunner = await this.getWorkflowRunner();
+      const record = await workflowRunner?.acknowledgeWorktreeSalvage(instanceId, input);
+      if (!record) {
+        return { success: false, message: `No salvage record found for instance ${instanceId}` };
+      }
+      return {
+        success: true,
+        message: `Salvage acknowledged for instance ${instanceId}`,
+        data: record,
+      };
+    } catch (error) {
+      this.context.log('Error acknowledging workflow salvage', { error, instanceId }, 'error');
+      return {
+        success: false,
+        message: `Failed to acknowledge salvage: ${error.message}`,
       };
     }
   }
@@ -1604,11 +1723,18 @@ class ReactoryWorkflowService implements IReactoryWorkflowService {
       const lifecycleManager = workflowRunner?.getLifecycleManager();
       
       const result = await lifecycleManager.clearWorkflowHistory(workflowDefinitionId);
-      
+
       return {
         success: result.success,
         message: result.message,
-        data: { deletedCount: result.deletedCount }
+        // `skippedSalvage`/`blockedInstanceIds` are surfaced so an operator can
+        // see exactly which runs were held back instead of silently losing them.
+        data: {
+          deletedCount: result.deletedCount,
+          skippedSalvage: result.skippedSalvage ?? 0,
+          blockedInstanceIds: result.blockedInstanceIds ?? [],
+          hasMore: result.hasMore ?? false,
+        },
       };
     } catch (error) {
       this.context.log('Error clearing workflow history', { error, workflowDefinitionId }, 'error');

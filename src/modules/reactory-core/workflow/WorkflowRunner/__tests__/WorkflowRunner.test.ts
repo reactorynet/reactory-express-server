@@ -1,4 +1,5 @@
 import { WorkflowRunner, IWorkflow, IWorkflowState } from '../WorkflowRunner';
+import { clearOutbox, readOutboxRecords } from '../../termination/TerminationOutbox';
 import { WorkflowHost } from '@reactorynet/workflow-es';
 import { MongoDBPersistence } from '@reactorynet/workflow-es-mongodb';
 
@@ -343,4 +344,447 @@ describe('WorkflowRunner', () => {
       expect(workflowRunner.isInitialized()).toBe(true);
     });
   });
-}); 
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // REACTORY-302016408 — every path to Terminated records a reason
+  //
+  // These drive the REAL runner paths (startWorkflow / cancelWorkflowInstance /
+  // the lifecycle-event subscription / handleFatalError / stop) against a fake
+  // persistence provider, so the guarantee is tested where it is produced rather
+  // than at a private helper.
+  // ────────────────────────────────────────────────────────────────────────────
+  describe('termination reason recording', () => {
+    const outboxPath = '/tmp/reactor-runner-termination-outbox-test.jsonl';
+    let fakePersistence: any;
+    let lifecycleHandlers: Array<(event: any) => void>;
+    /** Ambient persistence env this suite overrides, restored in afterEach. */
+    let savedMongoose: string | undefined;
+    let savedProvider: string | undefined;
+
+    const awaitFlush = () => new Promise((resolve) => setTimeout(resolve, 25));
+
+    const seedInstance = (id: string, overrides: any = {}) => {
+      fakePersistence.store.set(id, {
+        id,
+        workflowDefinitionId: 'ai.ProcessAITicket@1.4.8',
+        version: '1.4.8',
+        status: 0,
+        createTime: new Date('2026-11-03T08:22:26.000Z'),
+        completeTime: null,
+        data: { inputs: {}, variables: {}, stepResults: {}, env: {}, outputs: {} },
+        executionPointers: [],
+        concurrencyToken: 0,
+        ...overrides,
+      });
+    };
+
+    beforeEach(async () => {
+      process.env.WORKFLOW_TERMINATION_OUTBOX = outboxPath;
+      clearOutbox();
+
+      // PIN THE PERSISTENCE PROVIDER. These tests assert that a reason reaches
+      // the PERSISTED instance row, so a provider must exist. Without MONGOOSE
+      // the runner deliberately falls back to in-memory and there is nowhere to
+      // write, which made the suite depend on whatever the developer's shell
+      // exported: green locally, 5 red in CI. MongoDBPersistence is jest.mock'ed
+      // above, so no connection is attempted.
+      savedMongoose = process.env.MONGOOSE;
+      savedProvider = process.env.WORKFLOW_PERSISTENCE_PROVIDER;
+      process.env.WORKFLOW_PERSISTENCE_PROVIDER = 'mongo';
+      process.env.MONGOOSE = 'mongodb://127.0.0.1:27017/reactory-test';
+
+      lifecycleHandlers = [];
+      fakePersistence = {
+        store: new Map<string, any>(),
+        connect: jest.fn(),
+        close: jest.fn(),
+        getWorkflowInstance: jest.fn(async (id: string) => {
+          const stored = fakePersistence.store.get(id);
+          return stored ? JSON.parse(JSON.stringify(stored)) : undefined;
+        }),
+        persistWorkflow: jest.fn(async (instance: any) => {
+          fakePersistence.store.set(instance.id, JSON.parse(JSON.stringify(instance)));
+        }),
+      };
+
+      // The incident shape: engine left it Terminated with no completeTime.
+      seedInstance('inst-terminated', { status: 3 });
+      seedInstance('inst-deadlettered', { status: 0 });
+
+      // Cancel-path fixtures (review R2 on REACTORY-302016408/20261103/4082245933).
+      // An operator cancels a RUNNING run, so the live row is the realistic case;
+      // the terminal rows exist to prove a cancel can neither relabel nor
+      // overwrite a run that had already finished.
+      seedInstance('inst-live', { status: 1 });
+      seedInstance('inst-complete', {
+        status: 2,
+        completeTime: new Date('2026-11-03T09:00:00.000Z'),
+      });
+      seedInstance('inst-dl-reason', {
+        status: 4,
+        completeTime: new Date('2026-11-03T09:30:00.000Z'),
+        data: {
+          inputs: {}, variables: {}, stepResults: {}, env: {}, outputs: {},
+          __reactory: {
+            termination: {
+              code: 'provider-error',
+              message: '503 from provider',
+              source: 'dead-letter',
+              time: '2026-11-03T09:30:00.000Z',
+            },
+          },
+        },
+      });
+
+      const { MongoDBPersistence } = require('@reactorynet/workflow-es-mongodb');
+      MongoDBPersistence.mockImplementation(() => fakePersistence);
+
+      (mockHost as any).onLifecycleEvent = jest.fn((handler: (event: any) => void) => {
+        lifecycleHandlers.push(handler);
+      });
+
+      await workflowRunner.initialize();
+    });
+
+    afterEach(async () => {
+      await workflowRunner.stop();
+      clearOutbox();
+      delete process.env.WORKFLOW_TERMINATION_OUTBOX;
+
+      // Restore the ambient env so this suite cannot leak into its siblings.
+      if (savedMongoose === undefined) delete process.env.MONGOOSE;
+      else process.env.MONGOOSE = savedMongoose;
+      if (savedProvider === undefined) delete process.env.WORKFLOW_PERSISTENCE_PROVIDER;
+      else process.env.WORKFLOW_PERSISTENCE_PROVIDER = savedProvider;
+    });
+
+    it('records `cancelled` with the operator message and a completeTime', async () => {
+      // A LIVE run is the realistic cancel target: an operator cancels a running
+      // workflow. (The previous fixture seeded status 3, which modelled the state
+      // AFTER terminateWorkflow and hid the R2 defect.)
+      mockHost.terminateWorkflow.mockResolvedValue(true);
+
+      await workflowRunner.cancelWorkflowInstance('inst-live', 'runaway agent step');
+      await awaitFlush();
+
+      const stored = fakePersistence.store.get('inst-live');
+      expect(stored.data.__reactory.termination.code).toBe('cancelled');
+      expect(stored.data.__reactory.termination.message).toMatch(/runaway agent step/);
+      expect(stored.completeTime).toBeTruthy();
+    });
+
+    it('leaves a COMPLETE run untouched instead of relabelling it as cancelled (R2)', async () => {
+      mockHost.terminateWorkflow.mockClear();
+      mockHost.terminateWorkflow.mockResolvedValue(true);
+
+      await workflowRunner.cancelWorkflowInstance('inst-complete', 'operator tidying the list');
+      await awaitFlush();
+
+      // `host.terminateWorkflow()` would flip status 2 -> 3 from ANY status, after
+      // which the recorder's "COMPLETE is never relabelled" guard can never fire.
+      // Reading the status first is the only thing that prevents it.
+      expect(mockHost.terminateWorkflow).not.toHaveBeenCalled();
+      const stored = fakePersistence.store.get('inst-complete');
+      expect(stored.status).toBe(2);
+      expect(stored.data.__reactory && stored.data.__reactory.termination).toBeUndefined();
+      expect(new Date(stored.completeTime).toISOString()).toBe('2026-11-03T09:00:00.000Z');
+    });
+
+    it('preserves a DeadLettered run\'s recorded reason instead of overwriting it (R2)', async () => {
+      mockHost.terminateWorkflow.mockClear();
+      mockHost.terminateWorkflow.mockResolvedValue(true);
+
+      await workflowRunner.cancelWorkflowInstance('inst-dl-reason', 'operator tidying the list');
+      await awaitFlush();
+
+      expect(mockHost.terminateWorkflow).not.toHaveBeenCalled();
+      const stored = fakePersistence.store.get('inst-dl-reason');
+      expect(stored.status).toBe(4);
+      // The attribution this ticket exists to record survives an unrelated cancel.
+      expect(stored.data.__reactory.termination.code).toBe('provider-error');
+      expect(stored.data.__reactory.termination.message).toBe('503 from provider');
+      expect(new Date(stored.completeTime).toISOString()).toBe('2026-11-03T09:30:00.000Z');
+    });
+
+    it('does not fabricate a reason for an already-Terminated row it did not terminate (R2)', async () => {
+      mockHost.terminateWorkflow.mockClear();
+      mockHost.terminateWorkflow.mockResolvedValue(true);
+
+      await workflowRunner.cancelWorkflowInstance('inst-terminated', 'operator tidying the list');
+      await awaitFlush();
+
+      expect(mockHost.terminateWorkflow).not.toHaveBeenCalled();
+      const stored = fakePersistence.store.get('inst-terminated');
+      expect(stored.status).toBe(3);
+      // Nothing was cancelled, so nothing may claim it was.
+      expect(stored.data.__reactory && stored.data.__reactory.termination).toBeUndefined();
+    });
+
+    it('stays unforced when the status cannot be read, instead of asserting a transition (R2)', async () => {
+      mockHost.terminateWorkflow.mockClear();
+      mockHost.terminateWorkflow.mockResolvedValue(true);
+
+      // The fixture has to be a row that EXISTS with a NON-NUMERIC status and a
+      // completeTime. That is what drives the recorder's 'already settled' guard,
+      // which is the only place `force` changes the outcome on this path. (An
+      // absent row cannot discriminate: recordTermination bails as 'not-found'
+      // whatever `force` says, so the first version of this test passed under
+      // both — a test that claimed coverage it did not have.)
+      seedInstance('inst-odd-status', {
+        status: null,
+        completeTime: new Date('2026-11-03T10:00:00.000Z'),
+      });
+
+      await workflowRunner.cancelWorkflowInstance('inst-odd-status', 'operator tidying the list');
+      await awaitFlush();
+
+      // The pre-read could not prove it had finished, so the stop is attempted...
+      expect(mockHost.terminateWorkflow).toHaveBeenCalled();
+      // ...but nothing may be forced onto a row whose transition we cannot evidence.
+      const stored = fakePersistence.store.get('inst-odd-status');
+      expect(stored.data.__reactory && stored.data.__reactory.termination).toBeUndefined();
+      expect(stored.completeTime).toBeTruthy();
+    });
+
+    it('records a provider-error reason when the engine dead-letters a run', async () => {
+      expect(lifecycleHandlers.length).toBe(1);
+
+      lifecycleHandlers[0]({
+        event: 'workflow.dead-lettered',
+        workflowId: 'inst-deadlettered',
+        workflowDefinitionId: 'ai.ProcessAITicket@1.4.8',
+        version: '1.4.8',
+        pointerId: 'p-43',
+        stepId: 43,
+        retryCount: 3,
+        maxRetries: 3,
+        errorMessage: 'agent_conversation failed: 503 Service Unavailable',
+        deadLetteredAt: '2026-11-03T08:22:35.000Z',
+        reason: 'retries-exhausted',
+      });
+      await awaitFlush();
+
+      const stored = fakePersistence.store.get('inst-deadlettered');
+      expect(stored.data.__reactory.termination.code).toBe('provider-error');
+      expect(stored.data.__reactory.termination.source).toBe('dead-letter');
+      // The engine emits BEFORE it persists the dead-lettered status, so the
+      // reload still shows Runnable — completeTime is still stamped.
+      expect(stored.completeTime).toBeTruthy();
+    });
+
+    it('a real started run is registered, queued on a fatal error, and attributed on the next boot', async () => {
+      // Requirement: register through the REAL start path, not the private
+      // helper — the earlier test proved the queue/drain mechanics but not that a
+      // live run is ever in the registry.
+      const instanceId = 'inst-real-start';
+      seedInstance(instanceId, { status: 3 }); // what the engine leaves after a terminate
+      mockHost.startWorkflow.mockResolvedValue(instanceId);
+
+      const started = await workflowRunner.startWorkflow('ai.ProcessAITicket@1.4.8', instanceId, { ticketRef: 'T-1' });
+
+      expect(started).toBe(instanceId);
+      expect(workflowRunner.getInFlightInstanceIds()).toContain(instanceId);
+
+      // The process dies on an unhandled rejection while that run is in flight.
+      const exit = jest.fn();
+      const other = (): void => { /* noop listener */ };
+      process.on('unhandledRejection', other);
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      try {
+        workflowRunner.handleFatalError(
+          'unhandledRejection',
+          new Error('agent_conversation provider died: 503 Service Unavailable'),
+          { exit },
+        );
+      } finally {
+        process.removeListener('unhandledRejection', other);
+        consoleError.mockRestore();
+      }
+
+      // Another listener owns the exit (server.ts does exactly this).
+      expect(exit).not.toHaveBeenCalled();
+      const queued = readOutboxRecords();
+      expect(queued.map((r) => r.instanceId)).toContain(instanceId);
+      expect(queued.find((r) => r.instanceId === instanceId)!.code).toBe('provider-error');
+
+      // Next boot: the reason reaches the instance row.
+      const drained = await workflowRunner.getTerminationRecorder().drainOutbox();
+      expect(drained.applied).toBe(1);
+
+      const stored = fakePersistence.store.get(instanceId);
+      expect(stored.data.__reactory.termination.code).toBe('provider-error');
+      expect(stored.data.__reactory.termination.message).toMatch(/unhandledRejection/);
+      expect(stored.completeTime).toBeTruthy();
+    });
+
+    it('never re-labels a completed run on stop()', async () => {
+      // B1 regression: every deploy used to rewrite runs that had already
+      // completed successfully as SHUTDOWN.
+      const instanceId = 'inst-completed-run';
+      seedInstance(instanceId, {
+        status: 2,
+        completeTime: new Date('2026-11-03T08:24:00.000Z'),
+      });
+      mockHost.startWorkflow.mockResolvedValue(instanceId);
+      await workflowRunner.startWorkflow('ai.ProcessAITicket@1.4.8', instanceId, {});
+      expect(workflowRunner.getInFlightInstanceIds()).toContain(instanceId);
+
+      await workflowRunner.stop();
+
+      const stored = fakePersistence.store.get(instanceId);
+      expect(stored.data.__reactory?.termination).toBeUndefined();
+      expect(stored.data.__reactory?.interrupted).toBeUndefined();
+      expect(new Date(stored.completeTime).toISOString()).toBe('2026-11-03T08:24:00.000Z');
+      // ... and the registry was pruned rather than grown for the process lifetime.
+      expect(workflowRunner.getInFlightInstanceIds()).not.toContain(instanceId);
+
+      await workflowRunner.initialize();
+    });
+
+    it('records an interruption (not a termination) for a run still live at stop()', async () => {
+      const instanceId = 'inst-live-run';
+      seedInstance(instanceId, { status: 0 });
+      mockHost.startWorkflow.mockResolvedValue(instanceId);
+      const started = await workflowRunner.startWorkflow('ai.ProcessAITicket@1.4.8', instanceId, {});
+      expect(started).toBe(instanceId);
+      expect(workflowRunner.getInFlightInstanceIds()).toContain(instanceId);
+
+      const live = await (workflowRunner as any).pruneInFlightInstances();
+      expect(live).toEqual([instanceId]);
+      expect((workflowRunner as any).persistence).toBeTruthy();
+
+      await workflowRunner.stop();
+      expect(fakePersistence.persistWorkflow).toHaveBeenCalled();
+
+      const stored = fakePersistence.store.get(instanceId);
+      // The engine resumes this run on the next boot, so it must not be accused
+      // of having terminated.
+      expect(stored.data.__reactory?.termination).toBeUndefined();
+      expect(stored.data.__reactory.interrupted.code).toBe('shutdown');
+      expect(stored.completeTime).toBeNull();
+
+      await workflowRunner.initialize();
+    });
+
+    it('queues a crash reason for in-flight runs without changing the exit contract', async () => {
+      const instanceId = 'inst-in-flight';
+      seedInstance(instanceId, { status: 0 });
+      mockHost.startWorkflow.mockResolvedValue(instanceId);
+      await workflowRunner.startWorkflow('ai.ProcessAITicket@1.4.8', instanceId, {});
+
+      const exit = jest.fn();
+      const other = (): void => { /* noop listener */ };
+      process.on('uncaughtException', other);
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      try {
+        workflowRunner.handleFatalError('uncaughtException', new Error('boom'), { exit });
+      } finally {
+        process.removeListener('uncaughtException', other);
+        consoleError.mockRestore();
+      }
+
+      expect(exit).not.toHaveBeenCalled();
+      const queued = readOutboxRecords();
+      expect(queued).toHaveLength(1);
+      expect(queued[0].instanceId).toBe(instanceId);
+      expect(queued[0].code).toBe('crash');
+      expect(queued[0].message).toMatch(/uncaughtException: Error: boom/);
+    });
+
+    it('records an interruption (no terminationReason) when the crash leaves the row Runnable', async () => {
+      // THE REALISTIC CRASH SHAPE, and the one the earlier revision never
+      // exercised: the process dies while a step is still in flight, so the
+      // persisted row is Runnable with an ACTIVE agent_conversation pointer — not
+      // a pre-seeded Terminated document. The engine resumes Runnable instances on
+      // the next boot, so the drain must record an interruption and must NOT claim
+      // the run terminated.
+      const instanceId = 'inst-mid-agent-conversation';
+      seedInstance(instanceId, {
+        status: 0, // Runnable: the engine has not terminated it
+        completeTime: null,
+        executionPointers: [{
+          id: 'p-agent',
+          stepId: 41,
+          stepName: 'agent_conversation',
+          status: 2, // PointerStatus.Running
+          active: true,
+          retryCount: 0,
+          startTime: new Date('2026-11-03T08:22:34.000Z'),
+        }],
+      });
+      mockHost.startWorkflow.mockResolvedValue(instanceId);
+      await workflowRunner.startWorkflow('ai.ProcessAITicket@1.4.8', instanceId, {});
+      expect(workflowRunner.getInFlightInstanceIds()).toContain(instanceId);
+
+      // The agent step's provider promise rejects and nothing handles it.
+      const exit = jest.fn();
+      const other = (): void => { /* noop listener */ };
+      process.on('unhandledRejection', other);
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      try {
+        workflowRunner.handleFatalError(
+          'unhandledRejection',
+          new Error('agent_conversation aborted: 503 Service Unavailable'),
+          { exit },
+        );
+      } finally {
+        process.removeListener('unhandledRejection', other);
+        consoleError.mockRestore();
+      }
+
+      expect(exit).not.toHaveBeenCalled();
+      expect(readOutboxRecords().map((r) => r.instanceId)).toContain(instanceId);
+
+      const drained = await workflowRunner.getTerminationRecorder().drainOutbox();
+      expect(drained.interrupted).toBe(1);
+      expect(drained.applied).toBe(0);
+
+      const stored = fakePersistence.store.get(instanceId);
+      // Recorded, but as an interruption: the run has not terminated.
+      expect(stored.data.__reactory.interrupted.code).toBe('provider-error');
+      expect(stored.data.__reactory.interrupted.signal).toBe('unhandledRejection');
+      expect(stored.data.__reactory.termination).toBeUndefined();
+      expect(stored.completeTime).toBeNull();
+      // The engine's own pointer is untouched — we only annotate the instance.
+      expect(stored.executionPointers[0].active).toBe(true);
+
+      // The read layer therefore still reports no termination reason: a live run
+      // that was interrupted has not "terminated", and saying so would be the
+      // false attribution this ticket removed.
+      const lifecycle = workflowRunner.getLifecycleManager();
+      const history = await lifecycle.getWorkflowHistoryById(instanceId);
+      expect(history!.terminationReason).toBeNull();
+    });
+
+    it('reproduces Node default exit behaviour when it is the only listener (never hangs)', () => {
+      (workflowRunner as any).trackInFlightInstance('inst-in-flight-2', 'ai.ProcessAITicket@1.4.8');
+
+      const saved = process.listeners('uncaughtException');
+      process.removeAllListeners('uncaughtException');
+      const exit = jest.fn();
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      try {
+        workflowRunner.handleFatalError('uncaughtException', new Error('boom'), { exit });
+      } finally {
+        saved.forEach((listener) => process.on('uncaughtException', listener as any));
+        consoleError.mockRestore();
+      }
+
+      expect(exit).toHaveBeenCalledWith(1);
+    });
+
+    it('removes its process listeners on stop()', async () => {
+      const before = process.listenerCount('unhandledRejection');
+      await workflowRunner.stop();
+      const after = process.listenerCount('unhandledRejection');
+      expect(after).toBeLessThan(before);
+
+      // Re-registering must not accumulate listeners either: a second runner
+      // takes ownership from the first rather than adding to it.
+      await workflowRunner.initialize();
+      expect(process.listenerCount('unhandledRejection')).toBeLessThanOrEqual(before);
+    });
+  });
+});

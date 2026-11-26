@@ -35,6 +35,8 @@ export {
   type IConfigurationChangeEvent
 } from './ConfigurationManager/ConfigurationManager';
 
+export * from './termination';
+
 export {
   SecurityManager,
   type IUser,
