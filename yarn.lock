@@ -8120,7 +8120,7 @@ __metadata:
     "@opentelemetry/sdk-metrics": "npm:^1.30.0"
     "@opentelemetry/sdk-node": "npm:^0.55.0"
     "@opentelemetry/semantic-conventions": "npm:^1.28.0"
-    "@reactorynet/reactory-core": "npm:1.1.10"
+    "@reactorynet/reactory-core": "npm:1.2.0"
     "@reactorynet/workflow-es": "npm:3.0.0"
     "@reactorynet/workflow-es-azure": "npm:3.0.0"
     "@reactorynet/workflow-es-mongodb": "npm:2.0.0"
@@ -8370,16 +8370,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@reactorynet/reactory-core@npm:1.1.10":
-  version: 1.1.10
-  resolution: "@reactorynet/reactory-core@npm:1.1.10"
+"@reactorynet/reactory-core@npm:1.2.0":
+  version: 1.2.0
+  resolution: "@reactorynet/reactory-core@npm:1.2.0"
   dependencies:
     reflect-annotations: "npm:4.0.0-beta.1"
     reflect-args: "npm:2.0.0"
     reflect-metadata: "npm:0.1.13"
   peerDependencies:
-    react: 17.0.2
-  checksum: 10c0/1f67d0bdf642621ccff6060ef5680c2a080355889d0dfdac24b03bae504fdbdc7891ea8d1e65f2e943fa1bf55cebe141e41c959d2a6482594076d6098eb05fd7
+    react: ^17.0.2 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/993bd6b10896a1c105942db9e66242bfe24108844135df19ff6f826a708551a51a2f15e6c60ddc37045f77b63148aaa3f919fb8e707d7e6e2c2d731ca5a8105e
   languageName: node
   linkType: hard
 
