@@ -59,21 +59,51 @@ const TicketInfoPanel = (props: StatusWidgetProps) => {
 
   return (
     <Grid container>
-      <Grid alignItems={'center'} item xs={12} sm={12} md={6} lg={4} xl={3}>        
+      <Grid
+        size={{
+          xs: 12,
+          sm: 12,
+          md: 6,
+          lg: 4,
+          xl: 3
+        }}
+        sx={{
+          alignItems: 'center'
+        }}>        
         <Typography variant="body2">
           {ticket.reference || "NO REFERENCE NO"}          
         </Typography>
       </Grid>
-      <Grid alignItems={'center'} item xs={12} sm={12} md={6} lg={4} xl={3}>        
+      <Grid
+        size={{
+          xs: 12,
+          sm: 12,
+          md: 6,
+          lg: 4,
+          xl: 3
+        }}
+        sx={{
+          alignItems: 'center'
+        }}>        
         <Typography variant='body2'>
           {new Date(ticket.createdDate).toISOString()}
         </Typography>                
       </Grid>
-      <Grid alignItems={'center'} item xs={12} sm={12} md={6} lg={4} xl={3}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 12,
+          md: 6,
+          lg: 4,
+          xl: 3
+        }}
+        sx={{
+          alignItems: 'center'
+        }}>
         <Typography variant='body2'>
           Assigned To: {assignedTo.firstName} {assignedTo.lastName}
         </Typography>        
-      </Grid>      
+      </Grid>
     </Grid>
   );
 };

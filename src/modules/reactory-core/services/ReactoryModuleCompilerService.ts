@@ -651,10 +651,12 @@ class ReactoryModuleCompilerService
           );
         }
       } else {
-        const notification = `$reactory.createNotification("Compilation error on module ${module.id}, see console log for details", { type: 'warning' });`;
+        // Compiler messages carry quotes, newlines and backticks; interpolating
+        // them raw produced a stub that was itself a SyntaxError in the browser.
+        const notification = `$reactory.createNotification(${JSON.stringify(`Compilation error on module ${module.id}, see console log for details`)}, { type: 'warning' });`;
         const errorLogs = result.messages.map((msg) => {
           that.context.log("Error compiling module", { message: msg }, "error");
-          return `$reactory.log("Compilation Failure for ${module.id} --> [${msg}]", { module: ${JSON.stringify(module)} }, 'error');`;
+          return `$reactory.log(${JSON.stringify(`Compilation Failure for ${module.id} --> [${msg}]`)}, { module: ${JSON.stringify(module)} }, 'error');`;
         });
 
         const failureScript = `

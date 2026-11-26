@@ -607,8 +607,10 @@ const SupportTicketRelated = (props: RelatedProps) => {
                 setSearchQuery(e.target.value);
                 handleSearch(e.target.value);
               }}
-              InputProps={{
-                startAdornment: <Icon sx={{ mr: 1, color: 'text.secondary' }}>search</Icon>
+              slotProps={{
+                input: {
+                  startAdornment: <Icon sx={{ mr: 1, color: 'text.secondary' }}>search</Icon>
+                }
               }}
             />
           </Box>

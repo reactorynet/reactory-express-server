@@ -1038,7 +1038,9 @@ const WorkflowInstanceInspector = (props: WorkflowInstanceInspectorProps) => {
             minRows={4}
             fullWidth
             disabled={signalling}
-            InputProps={{ sx: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
+            slotProps={{
+              input: { sx: { fontFamily: 'monospace', fontSize: '0.8rem' } }
+            }}
           />
         </DialogContent>
         <DialogActions>

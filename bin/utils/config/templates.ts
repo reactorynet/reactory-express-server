@@ -33,10 +33,6 @@ REACT_APP_THEME_BG=${configuration.theme_bg || '#f5f5f5'}
 # the client to a CDN using the reactory server
 # as the deployment server.
 REACT_APP_WEBROOT=${configuration.webroot || '/var/www/reactory'}
-# The Froala key - Froala is used for wysiwyg editing in the
-# client application. You can get a key from https://froala.com/wysiwyg-editor/pricing 
-# and then set it here. (You can get a free key for development)
-REACT_APP_FROALA_KEY=${configuration.froala_key || ''}
 # The environment for the client
 # NB. this environment must match one of the
 # environments defined in the browserslist key

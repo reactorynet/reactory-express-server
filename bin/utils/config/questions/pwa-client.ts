@@ -20,7 +20,6 @@ export const DEFAULT_CLIENT_CONFIG: IClientConfiguration = {
   babel_env: 'development',
   node_env: 'development',
   ci: false,
-  froala_key: 'disabled',
 }
 
 export const clientConfigQuestions = (rl: ReadLine, next?: QuestionHandlerResponse) => ({
@@ -298,7 +297,7 @@ export const clientConfigQuestions = (rl: ReadLine, next?: QuestionHandlerRespon
       question: `Provide the webroot for your client configuration: default is ${DEFAULT_CLIENT_CONFIG.webroot}`,
       handler: (response: string, configuration: IClientConfiguration) => {
         if (response.length === 0) {
-          return { next: clientConfigQuestions(rl).required.froala_key, configuration };
+          return { next: clientConfigQuestions(rl).required.node_env, configuration };
         }
 
         if (isHelpRequest(response)) {
@@ -309,26 +308,6 @@ export const clientConfigQuestions = (rl: ReadLine, next?: QuestionHandlerRespon
         }
 
         configuration.webroot = response;
-        return { next: clientConfigQuestions(rl).required.froala_key, configuration };
-      }
-    },
-    froala_key: {
-      question: `Provide the froala key for your client configuration: default is ${DEFAULT_CLIENT_CONFIG.froala_key}`,
-      handler: (response: string, configuration: IClientConfiguration) => {
-        if (response.length === 0) {
-          return { next: clientConfigQuestions(rl).required.node_env, configuration };
-        }
-
-        if (isHelpRequest(response)) {
-          rl.write(colors.grey(`
-            Provide the froala key for your client configuration. This is required. 
-            If you don't know what to put here, just hit enter and the default will be used.
-            `));
-
-          return { next: clientConfigQuestions(rl).required.froala_key, configuration };
-        }
-
-        configuration.froala_key = response;
         return { next: clientConfigQuestions(rl).required.node_env, configuration };
       }
     },

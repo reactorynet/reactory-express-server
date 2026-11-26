@@ -26,7 +26,7 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
   const [error, setError] = React.useState<string | null>(null);
 
   const targetWorkflowFormInputId: string = `${workflow.nameSpace}.${workflow.name}InputForm@${workflow.version}`;
-  const InputForm = reactory.getComponent(targetWorkflowFormInputId);
+  const InputForm = reactory.getComponent<React.FC<any>>(targetWorkflowFormInputId);
   const executeWorkflow = async (data: any) => {
     setExecuting(true);
     setError(null);
@@ -99,11 +99,11 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
             Launch Workflow
           </Typography>
         </Box>
-  
+
         <Alert severity="info" sx={{ mb: 3 }}>
           Execute this workflow with custom input parameters. The workflow will run asynchronously.
         </Alert>
-  
+
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Workflow ID
@@ -119,7 +119,7 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
             {workflow.nameSpace}.{workflow.name}@{workflow.version}
           </Typography>
         </Box>
-  
+
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Input Parameters (JSON)
@@ -141,13 +141,13 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
             Enter workflow input as JSON. Leave empty for no input parameters.
           </Typography>
         </Box>
-  
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-  
+
         {result && (
           <Alert 
             severity="success" 
@@ -159,15 +159,19 @@ const WorkflowLaunch = (props: WorkflowLaunchProps) => {
             }
           >
             <Typography variant="subtitle2">Workflow Started</Typography>
-            <Typography variant="caption" display="block">
+            <Typography variant="caption" sx={{
+              display: "block"
+            }}>
               Instance ID: {result.id}
             </Typography>
-            <Typography variant="caption" display="block">
+            <Typography variant="caption" sx={{
+              display: "block"
+            }}>
               Status: {result.status}
             </Typography>
           </Alert>
         )}
-  
+
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="contained"

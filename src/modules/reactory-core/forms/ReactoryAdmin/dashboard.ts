@@ -32,7 +32,7 @@ export const ReactoryDashboard = {
       },
     ],
     description: {
-      'ui:widget': 'FroalaWidget',
+      'ui:widget': 'RichEditorWidget',
     },
   },
 };

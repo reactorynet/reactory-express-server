@@ -617,7 +617,9 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                   <Typography variant="caption">
                     {formatRelativeTime(instance.startTime)}
                   </Typography>
-                  <Typography variant="caption" display="block" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary" sx={{
+                    display: "block"
+                  }}>
                     {formatDateTime(instance.startTime)}
                   </Typography>
                 </TableCell>
@@ -755,7 +757,7 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                     indeterminate={numSelected > 0 && numSelected < rowCount}
                     checked={rowCount > 0 && numSelected === rowCount}
                     onChange={handleSelectAll}
-                    inputProps={{ 'aria-label': 'select all' }}
+                    slotProps={{ input: { 'aria-label': 'select all' } }}
                   />
                 </TableCell>
                 <TableCell>Status</TableCell>
@@ -788,7 +790,7 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                           e.stopPropagation();
                           handleSelectOne(execution.id);
                         }}
-                        inputProps={{ 'aria-labelledby': `select-${execution.id}` }}
+                        slotProps={{ input: { 'aria-labelledby': `select-${execution.id}` } }}
                       />
                     </TableCell>
                     <TableCell onClick={() => viewInstance(execution.id)}>
@@ -803,7 +805,9 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                       <Typography variant="caption">
                         {formatRelativeTime(execution.createTime)}
                       </Typography>
-                      <Typography variant="caption" display="block" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary" sx={{
+                        display: "block"
+                      }}>
                         {formatDateTime(execution.createTime)}
                       </Typography>
                     </TableCell>
@@ -813,7 +817,9 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
                           <Typography variant="caption">
                             {formatRelativeTime(execution.completeTime)}
                           </Typography>
-                          <Typography variant="caption" display="block" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" sx={{
+                            display: "block"
+                          }}>
                             {formatDateTime(execution.completeTime)}
                           </Typography>
                         </>
@@ -1103,7 +1109,9 @@ const WorkflowInstanceHistory = (props: WorkflowInstanceHistoryProps) => {
         onClose={closeInspector}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { maxHeight: '90vh' } }}
+        slotProps={{
+          paper: { sx: { maxHeight: '90vh' } }
+        }}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

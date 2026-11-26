@@ -17,7 +17,6 @@ REACT_APP_CLIENT_PASSWORD=hbelLE5g7T4xlJUWzajIprVt3tT2X62j
 REACT_APP_THEME_PRIMARY=#1a2049
 REACT_APP_THEME_BG=#464775
 REACT_APP_WEBROOT=/var/reactory/reactory-cdn/html
-REACT_APP_FROALA_KEY=FroalaKey
 NODE_ENV=development
 BABEL_ENV=development
 CI=false
@@ -38,7 +37,6 @@ export interface IClientConfiguration {
   theme_primary: string,
   theme_bg: string,
   webroot: string,
-  froala_key: string,
   node_env: string,
   babel_env: string,
   ci: boolean

@@ -1,4 +1,3 @@
-import { minmalOptions } from '../froala';
 
 export const minimalEditor = {
   'ui:options': {
@@ -49,7 +48,6 @@ export const minimalEditor = {
     'ui:title': null,
     'ui:options': {
       showLabel: false,
-      froalaOptions: minmalOptions,
     },
   },
   published: {

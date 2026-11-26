@@ -770,7 +770,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               Action with AI
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {ticket?.reference || ticket?.id}
+              {(ticket?.reference || ticket?.id) as React.ReactNode}
             </Typography>
           </Box>
         </DialogTitle>
@@ -817,7 +817,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               label="Agent"
               value={agentId}
               onChange={(event: any) => setAgentId(String(event.target.value))}
-              MenuProps={{ PaperProps: { sx: { maxHeight: 420 } } }}
+              MenuProps={{ slotProps: { paper: { sx: { maxHeight: 420 } } } }}
             >
               {agentOptions.length === 0 && (
                 <MenuItem value={agentId}>{agentId}</MenuItem>
@@ -870,8 +870,10 @@ const SupportTicketAIAction = (props: AIActionProps) => {
                 const parsed = Number(event.target.value);
                 setMaxReviewCycles(Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1);
               }}
-              inputProps={{ min: 1, max: 10 }}
               sx={{ width: 180 }}
+              slotProps={{
+                htmlInput: { min: 1, max: 10 }
+              }}
             />
           </Box>
 
@@ -883,7 +885,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               label="Project"
               value={selectedProjectId}
               onChange={(event: any) => chooseProject(String(event.target.value))}
-              MenuProps={{ PaperProps: { sx: { maxHeight: 380 } } }}
+              MenuProps={{ slotProps: { paper: { sx: { maxHeight: 380 } } } }}
             >
               <MenuItem value="">
                 <em>Custom path (set the repository field below)</em>
@@ -929,17 +931,19 @@ const SupportTicketAIAction = (props: AIActionProps) => {
                 ? 'Using project "' + selectedProject.name + '". The agent works in an isolated git worktree of this repository.'
                 : 'The agent works in an isolated git worktree of this repository. Remembered for next time.'
             }
-            InputProps={{
-              sx: { fontFamily: 'monospace', fontSize: '0.85rem' },
-              // The shared browser requires ADMIN/DEVELOPER; for everyone else the
-              // field itself is the only (and sufficient) way to set the workdir.
-              endAdornment: canBrowseFolders ? (
-                <Button size="small" startIcon={<Icon>folder_open</Icon>} onClick={openPicker}>
-                  Browse
-                </Button>
-              ) : null,
-            }}
             sx={{ mb: pickerNotice ? 0.5 : 2 }}
+            slotProps={{
+              input: {
+                sx: { fontFamily: 'monospace', fontSize: '0.85rem' },
+                // The shared browser requires ADMIN/DEVELOPER; for everyone else the
+                // field itself is the only (and sufficient) way to set the workdir.
+                endAdornment: canBrowseFolders ? (
+                  <Button size="small" startIcon={<Icon>folder_open</Icon>} onClick={openPicker}>
+                    Browse
+                  </Button>
+                ) : null,
+              }
+            }}
           />
 
           {pickerNotice && (
@@ -978,7 +982,7 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               label="Reviewer"
               value={reviewerId}
               onChange={(event: any) => setReviewerId(String(event.target.value))}
-              MenuProps={{ PaperProps: { sx: { maxHeight: 380 } } }}
+              MenuProps={{ slotProps: { paper: { sx: { maxHeight: 380 } } } }}
             >
               {reviewerOptions.length === 0 && (
                 <MenuItem value={reviewerId}>{reviewerId}</MenuItem>
@@ -997,8 +1001,10 @@ const SupportTicketAIAction = (props: AIActionProps) => {
             value={context}
             onChange={(event: any) => setContext(event.target.value)}
             helperText="Pre-filled with the acceptance criteria and the machine-read report/verdict contract. Edit freely."
-            InputProps={{ sx: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
             sx={{ mb: 1 }}
+            slotProps={{
+              input: { sx: { fontFamily: 'monospace', fontSize: '0.8rem' } }
+            }}
           />
 
           {/*
@@ -1066,13 +1072,19 @@ const SupportTicketAIAction = (props: AIActionProps) => {
               }
             >
               <Typography variant="subtitle2">AI run started</Typography>
-              <Typography variant="caption" display="block">
+              <Typography variant="caption" sx={{
+                display: "block"
+              }}>
                 Instance <Link component="span" sx={{ fontFamily: 'monospace' }}>{result.instanceId}</Link> • Status: {result.status}
               </Typography>
-              <Typography variant="caption" display="block">
+              <Typography variant="caption" sx={{
+                display: "block"
+              }}>
                 Workflow {result.workflowId || resolvedWorkflowId} · brief {(context || "").trim().length} characters included.
               </Typography>
-              <Typography variant="caption" display="block">
+              <Typography variant="caption" sx={{
+                display: "block"
+              }}>
                 The agent's conversation is in your chat history. A pull request approval task will appear in your
                 task list when the review passes.
               </Typography>

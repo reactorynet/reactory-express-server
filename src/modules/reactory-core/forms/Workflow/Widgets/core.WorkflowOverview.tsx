@@ -35,7 +35,11 @@ const WorkflowOverview = (props: WorkflowOverviewProps) => {
     <Box sx={{ p: 3 }}>
       <Grid container spacing={3}>
         {/* Left Column - Basic Info */}
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Icon>info</Icon>
             Basic Information
@@ -100,7 +104,11 @@ const WorkflowOverview = (props: WorkflowOverviewProps) => {
         </Grid>
 
         {/* Right Column - Statistics & Status */}
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Icon>analytics</Icon>
             Statistics & Status
@@ -162,7 +170,10 @@ const WorkflowOverview = (props: WorkflowOverviewProps) => {
 
         {/* Dependencies Section */}
         {workflow.dependencies && workflow.dependencies.length > 0 && (
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Divider sx={{ my: 2 }} />
             <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
               <Icon>link</Icon>
@@ -171,7 +182,13 @@ const WorkflowOverview = (props: WorkflowOverviewProps) => {
 
             <Grid container spacing={2}>
               {workflow.dependencies.map((dep: any, index: number) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
+                <Grid
+                  key={index}
+                  size={{
+                    xs: 12,
+                    sm: 6,
+                    md: 4
+                  }}>
                   <Paper variant="outlined" sx={{ p: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                       <Icon sx={{ fontSize: 16, color: 'primary.main' }}>

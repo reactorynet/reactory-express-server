@@ -364,7 +364,13 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
       ) : (
         <Grid container spacing={2}>
           {documents.map((doc) => (
-            <Grid item xs={12} sm={6} md={4} key={doc.id}>
+            <Grid
+              key={doc.id}
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 4
+              }}>
               <Card variant="outlined">
                 {isImage(doc.mimetype) && doc.link ? (
                   <CardMedia
@@ -397,7 +403,7 @@ const SupportTicketAttachments = (props: AttachmentsProps) => {
                       noWrap
                       sx={{ fontWeight: 600, mb: 0.5 }}
                     >
-                      {doc.name}
+                      {doc.name as string}
                     </Typography>
                   </Tooltip>
                   

@@ -55,7 +55,6 @@ const uiSchema: Reactory.Schema.IFormUISchema = {
         spacing: 2,
         rowSpacing: 2,
         columnSpacing: 2,
-        item: true,
         sx: {
           alignItems: 'stretch',
           justifyContent: 'flex-start', 

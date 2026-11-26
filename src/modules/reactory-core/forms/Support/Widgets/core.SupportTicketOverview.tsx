@@ -83,7 +83,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
     Chip,
     CircularProgress,
     List,
-    ListItem,
+    ListItemButton,
     ListItemAvatar,
     ListItemText,
     Avatar,
@@ -324,7 +324,12 @@ const SupportTicketOverview = (props: OverviewProps) => {
 
       {/* Key Information Grid */}
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 4
+          }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
@@ -342,7 +347,12 @@ const SupportTicketOverview = (props: OverviewProps) => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 4
+          }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
@@ -362,7 +372,12 @@ const SupportTicketOverview = (props: OverviewProps) => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 4
+          }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
@@ -386,7 +401,12 @@ const SupportTicketOverview = (props: OverviewProps) => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 4
+          }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
@@ -404,7 +424,12 @@ const SupportTicketOverview = (props: OverviewProps) => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 4
+          }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
@@ -422,7 +447,12 @@ const SupportTicketOverview = (props: OverviewProps) => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 4
+          }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
@@ -448,7 +478,10 @@ const SupportTicketOverview = (props: OverviewProps) => {
         </Grid>
 
         {currentTicket.tags && currentTicket.tags.length > 0 && (
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
@@ -599,9 +632,8 @@ const SupportTicketOverview = (props: OverviewProps) => {
           {userSearchResults.length > 0 && !selectedUser && (
             <List dense sx={{ maxHeight: 200, overflow: 'auto' }}>
               {userSearchResults.map((user: UserSearchResult) => (
-                <ListItem
+                <ListItemButton
                   key={user.id}
-                  button
                   selected={selectedUser?.id === user.id}
                   onClick={() => {
                     setSelectedUser(user);
@@ -616,7 +648,7 @@ const SupportTicketOverview = (props: OverviewProps) => {
                     primary={`${user.firstName} ${user.lastName}`}
                     secondary={user.email}
                   />
-                </ListItem>
+                </ListItemButton>
               ))}
             </List>
           )}

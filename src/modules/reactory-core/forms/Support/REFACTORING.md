@@ -38,7 +38,7 @@ Complete overhaul of the support ticket system spanning model, service, resolver
 |---|---|---|---|
 | 9 | **Typos throughout** | ✅ DONE | Fixed `optios` → `options` in Admin uiSchema; fixed "does not have Insufficient permissions" error message |
 | 10 | **Admin UI Schema typed as `any`** | ✅ DONE | Changed `const uiSchema: any` to `Reactory.Schema.IFormUISchema` |
-| 11 | **Froala credentials potentially exposed to client** | ⏸ DEFERRED | `context.partner.password` passed to Froala widget — needs architectural decision: use scoped tokens instead |
+| 11 | **Froala credentials potentially exposed to client** | ✅ RESOLVED | Froala was removed; the `description` field now uses `RichEditorWidget` with no options, so no partner credentials reach the client |
 | 12 | **Missing i18n strings** | TODO | Keys referenced but may not exist: tooltip, delete confirmation strings |
 | 13 | **Test file is a stub** | TODO | All test code commented out — tests nothing |
 | 14 | **`@ts-ignore` usage in widget** | TODO | 5 `@ts-ignore` comments mask real type errors — needs proper typing for `window.reactory` |
