@@ -138,7 +138,7 @@
     "graphql-tools": "9.0.1",
     "graphql-upload": "16.0.2",
     "graphql-ws": "5.16.0",
-    "handlebars": "^4.7.9",
+    "handlebars": "^4.7.10",
     "http-proxy-middleware": "3.0.0",
     "human-number": "2.0.4",
     "i18next": "^21.6.5",
