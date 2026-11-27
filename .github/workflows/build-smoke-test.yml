@@ -28,20 +28,39 @@ on:
       - ".github/workflows/build-smoke-test.yml"
   workflow_dispatch: {}
 
+# Optional GitHub App for the private config/reactory submodule (see "Submodule checkout token").
+# Set the SUBMODULE_APP_CLIENT_ID and SUBMODULE_APP_PRIVATE_KEY secrets to enable it.
+env:
+  SUBMODULE_APP_CLIENT_ID: ${{ secrets.SUBMODULE_APP_CLIENT_ID }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # GITHUB_TOKEN only reads this repo, so a clone whose config/reactory submodule
+      # resolves to a private repo can't check it out with it. When the app secrets
+      # are set, mint a read-only token scoped to this repo and the devops submodule;
+      # otherwise skip this and check out with the default token.
+      - name: Submodule checkout token
+        id: submodule-token
+        if: env.SUBMODULE_APP_CLIENT_ID != ''
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ env.SUBMODULE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.SUBMODULE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            ${{ github.event.repository.name }}
+            reactory-express-server-devops
+          permission-contents: read
+
       - uses: actions/checkout@v4
         with:
           # config/reactory is a submodule (reactory-express-server-devops) —
           # the Dockerfile actually being built lives there, not in this repo.
-          # SUBMODULE_TOKEN is optional. A mirror whose config/reactory submodule
-          # is private sets it to a read-only token for that repository; without
-          # it the default GITHUB_TOKEN is used, which reads public submodules.
           # No later step needs git credentials, so they are not persisted.
           submodules: true
-          token: ${{ secrets.SUBMODULE_TOKEN || github.token }}
+          token: ${{ steps.submodule-token.outputs.token || github.token }}
           persist-credentials: false
 
       # Corepack first: setup-node's Yarn cache lookup runs `yarn`, and the
