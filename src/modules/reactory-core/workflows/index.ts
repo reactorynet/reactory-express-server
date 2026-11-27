@@ -3,6 +3,7 @@ import { loadYamlWorkflow } from '@reactory/server-modules/reactory-core/workflo
 import exampleWorkflows from './examples';
 import devWorkflows from './dev';
 import supportWorkflows from './Support';
+import retentionWorkflows from './Retention';
 
 // ─────────────────────────────────────────────
 // Load all YAML workflow definitions
@@ -30,5 +31,7 @@ workflows.push(...devWorkflows);
 // Support ticket triage & escalation workflows (core namespace)
 workflows.push(...supportWorkflows);
 
+// Archive retention / purge workflows (core namespace, Ticket C)
+workflows.push(...retentionWorkflows);
 export default workflows;
 
