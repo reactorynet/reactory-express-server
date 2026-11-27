@@ -36,7 +36,13 @@ jobs:
         with:
           # config/reactory is a submodule (reactory-express-server-devops) —
           # the Dockerfile actually being built lives there, not in this repo.
+          # SUBMODULE_TOKEN is optional. A mirror whose config/reactory submodule
+          # is private sets it to a read-only token for that repository; without
+          # it the default GITHUB_TOKEN is used, which reads public submodules.
+          # No later step needs git credentials, so they are not persisted.
           submodules: true
+          token: ${{ secrets.SUBMODULE_TOKEN || github.token }}
+          persist-credentials: false
 
       # Corepack first: setup-node's Yarn cache lookup runs `yarn`, and the
       # runner's global Yarn 1 refuses this repo's packageManager (yarn@4).
