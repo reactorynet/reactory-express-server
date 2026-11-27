@@ -117,6 +117,76 @@ jobs:
           path: coverage/
           if-no-files-found: ignore
 
+  # Mutation testing (docs/MUTATION_TESTING.md): Stryker on the slice of the
+  # core listed in stryker.config.mjs, gated per file against
+  # mutation-baseline.json. Fails only when a file has more undetected mutants
+  # than its allowance, never on the pre-existing ones.
+  #
+  # A full run is ~50 CPU-minutes, so pull requests run incrementally: they
+  # restore the Stryker incremental file saved by the latest master run and
+  # re-test only mutants whose code or covering tests changed. Pushes to master
+  # (and manual runs) re-test everything with --force, which keeps that cache
+  # authoritative, and save it for the pull requests that follow.
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      # Corepack first: setup-node's Yarn cache lookup runs `yarn`, and the
+      # runner's global Yarn 1 refuses this repo's packageManager (yarn@4).
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "yarn"
+
+      - name: Enable Corepack for the selected Node
+        run: corepack enable
+
+      # Core-only: the modules under src/modules are separate repos and absent here, so yarn.lock (written with them) cannot match; resolve afresh.
+      - name: Install dependencies
+        run: yarn install --no-immutable
+
+      # Pull requests only. The key never matches exactly (it carries the
+      # SHA); restore-keys picks the newest cache, which a PR can read from
+      # its base branch. A miss just means a full run.
+      - name: Restore Stryker incremental results
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: reports/mutation/stryker-incremental.json
+          key: stryker-incremental-${{ github.sha }}
+          restore-keys: stryker-incremental-
+
+      - name: Run mutation tests (ratchet)
+        env:
+          STRYKER_ARGS: ${{ github.event_name != 'pull_request' && '--force' || '' }}
+        run: yarn test:mutation $STRYKER_ARGS
+
+      # Saved even when the gate fails: the results are still valid, and the
+      # next pull request should not pay for a full run because of it.
+      - name: Save Stryker incremental results
+        if: always() && github.event_name != 'pull_request' && hashFiles('reports/mutation/stryker-incremental.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: reports/mutation/stryker-incremental.json
+          key: stryker-incremental-${{ github.sha }}
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: |
+            reports/mutation/mutation.html
+            reports/mutation/mutation.json
+          if-no-files-found: ignore
+
   # The integration suites (test/integrationSuites.js): they boot the full
   # ReactoryServer or read and write a live database, so they need real services
   # and cannot run in the `test` job. Run on demand (Actions -> CI -> Run

@@ -359,6 +359,14 @@ The `/bin` folder contains comprehensive utilities for managing your Reactory in
 check on the total error count. Read [TYPECHECK_RATCHET.md](./TYPECHECK_RATCHET.md)
 before refreshing the baseline or interpreting a red job.
 
+### Mutation testing
+
+`yarn test:mutation` runs [StrykerJS](https://stryker-mutator.io/docs/stryker-js/introduction/)
+on a slice of the core and gates the result per file against `mutation-baseline.json`.
+It shows which behaviours the tests actually assert on, not just which lines they run.
+Read [MUTATION_TESTING.md](./MUTATION_TESTING.md) for the workflow, the scope and how to
+refresh the baseline.
+
 ---
 
 ## Production / Other

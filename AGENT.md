@@ -14,7 +14,7 @@ The Reactory Express Server (`@reactory/server-core`) is the main backend for th
 - **Database**: MongoDB (Mongoose), PostgreSQL/MySQL/MSSQL (TypeORM, Tedious), Redis (ioredis), MeiliSearch
 - **Authentication**: Passport.js (local, JWT, OAuth, Azure AD, Google, etc.)
 - **Build**: Babel transpilation, Rollup (dev), Docker containerization
-- **Testing**: Jest (via `bin/jest.sh`)
+- **Testing**: Jest (via `bin/jest.sh`); StrykerJS mutation testing on a core slice (`yarn test:mutation`)
 - **Containerization**: Docker (Dockerfile present)
 
 ## Project Structure
@@ -237,6 +237,69 @@ importers - in that order, in one change, with the sign-in walk-through recorded
 - Minimum 80% code coverage target for new code
 - Test file structure: `src/feature/__tests__/feature.test.ts` + `feature_plan.md`
 - ALWAYS Validate file typescript changes using by `npx tsc --noEmit`
+
+### Mutation testing (Stryker)
+
+Coverage says a line ran; mutation testing says whether the tests would notice if it were
+wrong. StrykerJS (`stryker.config.mjs`) mutates the source (flips conditions, swaps operators,
+empties blocks) and re-runs the covering tests; a mutant the tests still pass on has
+**survived** and marks an assertion gap. Full guide: `docs/MUTATION_TESTING.md`.
+
+```bash
+yarn test:mutation                              # Stryker on the configured scope + baseline gate
+yarn test:mutation --mutate src/path/file.ts    # one file
+yarn test:mutation:check                        # re-check the last report, no Stryker run
+yarn test:mutation:update-baseline              # rewrite mutation-baseline.json from the last report
+```
+
+The report to read is `reports/mutation/mutation.html` (survivors shown inline as diffs).
+
+When to use it:
+
+- **After writing or changing tests for a file in the scope** (`mutate` in `stryker.config.mjs`):
+  run `yarn test:mutation --mutate <file>`. The gate fails if the file now has more undetected
+  mutants (Survived + NoCoverage) than its entry in `mutation-baseline.json`.
+- **To judge a new suite you wrote**: `--mutate <the source file>` shows which behaviours the
+  suite asserts on and which it only executes. `--mutate` does not pick tests: a file outside
+  the scope needs its suite added to `jest.config.testMatch` in `stryker.config.mjs` first,
+  or every mutant reports NoCoverage (and, having no baseline entry, fails the gate). Treat each survivor as a missing
+  test case and add the test; do not change the source to make a mutant die.
+- **Before adding a file to the scope**: add the source to `mutate` and its suite to
+  `jest.config.testMatch` together, kill what survivors you reasonably can, then refresh the
+  baseline and say so in the commit message.
+
+Rules:
+
+- The gate is a **per-file ratchet**, like `yarn typecheck` (`docs/TYPECHECK_RATCHET.md`).
+  Refresh the baseline only after a file improved, the scope changed, or survivors are accepted
+  deliberately (equivalent mutants), and say which in the commit message. Never refresh from a
+  line-range run (`--mutate file.ts:10-20`): its counts are partial.
+- Suppress an equivalent mutant only with a reason:
+  `// Stryker disable next-line <Mutator>: <why it cannot change behaviour>`.
+- Suites in the scope must be unit suites that pass in a server-only checkout. Stryker's sandbox
+  leaves out everything git ignores (all modules but `reactory-core`, local client configs), so a
+  suite that imports another module fails the initial run (that is why
+  `src/express/middleware/__tests__/ordering.test.ts` is excluded).
+- Results must not depend on the machine. A test that relies on wall-clock timing makes mutants
+  flip between Killed and Survived; pin time with a mocked clock instead.
+- Stryker is pinned to an exact version (10.1.1); upgrading it changes mutant counts, so upgrade
+  and refresh the baseline in one change.
+- A full scope run takes a few minutes and uses one jest process per core (less one); pass
+  `--concurrency <n>` on a smaller machine. Re-runs are incremental (`--force` for a clean run).
+- **Modules** (separate repositories under `src/modules`) opt in with a `mutation.config.json`
+  (`mutate`, `tests`, `needs`, paths relative to the module) and keep their own
+  `mutation-baseline.json`, both committed to the module's repository. Run them from the server
+  root: `yarn test:mutation:module <name>`, `yarn test:mutation:module:update-baseline <name>`.
+  `needs` lists other modules the suites load at runtime; it is usually empty because modules
+  reach each other through `getService` and type imports. See "Modules" in
+  `docs/MUTATION_TESTING.md`. In CI a module calls the shared workflow
+  `reactorynet/.github/.github/workflows/server-module-tests.yml@master` (unit suites + mutation
+  gate inside a server checkout); `reactory-temporal` is the first caller.
+- CI runs the same gate in the `mutation` job (`.github/workflows/ci.yml`): incrementally on pull
+  requests from the cache the last `master` run saved, fully (`--force`) on pushes to `master`.
+  When it is red, download the `mutation-report` artifact and read `mutation.html` for the new
+  survivors in the failing file; fix them with tests, or refresh the baseline in the PR with the
+  reason in the commit message.
 
 ## Dependencies on Other Projects
 
