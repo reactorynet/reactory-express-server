@@ -32,7 +32,7 @@ jobs:
             reactory-express-server-devops
           permission-contents: read
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # No later step needs git credentials, so they are not persisted.
           submodules: true
@@ -81,7 +81,7 @@ jobs:
             reactory-express-server-devops
           permission-contents: read
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: true
           token: ${{ steps.submodule-token.outputs.token || github.token }}
@@ -129,7 +129,7 @@ jobs:
             reactory-express-server-devops
           permission-contents: read
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: true
           token: ${{ steps.submodule-token.outputs.token || github.token }}
@@ -242,7 +242,7 @@ jobs:
             reactory-express-server-devops
           permission-contents: read
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: true
           token: ${{ steps.submodule-token.outputs.token || github.token }}
@@ -310,7 +310,7 @@ jobs:
             reactory-express-server-devops
           permission-contents: read
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: true
           token: ${{ steps.submodule-token.outputs.token || github.token }}
