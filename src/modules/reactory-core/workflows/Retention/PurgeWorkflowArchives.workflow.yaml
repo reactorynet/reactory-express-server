@@ -1,0 +1,164 @@
+# core.PurgeWorkflowArchives@1.0.0
+#
+# TICKET C — delete archive buckets produced by the archive workflow once they
+# are older than a configurable window (default 180 days), so archived data does
+# not grow without bound on the host.
+#
+# FILESYSTEM ONLY. This workflow never touches MongoDB.
+#
+# ── The two clocks (C1) ─────────────────────────────────────────────────────
+#   archive workflow : 30 days   (MongoDB -> disk)   REACTORY_WORKFLOW_ARCHIVE_DAYS
+#   purge workflow   : 180 days  (disk  -> deleted)  input.olderThanDays
+# The purge window MUST be strictly greater than the archive window; the service
+# refuses to run otherwise, before it touches a single file.
+#
+# ── Why there is no cli_command / for_each / file_operation here (C5) ───────
+# The ticket allows a shell (`cli_command rm -rf`) but explicitly prefers a
+# dedicated service. Recursive deletion through a shell with a configurable root
+# is exactly where a path bug becomes data loss, so ALL of the work lives in
+# `core.WorkflowArchiveService.purgeArchives`:
+#   - candidate enumeration (dry-run capable, JSON-shaped result),
+#   - per-bucket guards + recursive deletion (no shell, no interpolation),
+#   - bottom-up directory removal and the audit log.
+# This definition is therefore the thin, auditable driver: announce, resolve the
+# window, invoke, record the outcome, end.
+#
+# ── Scheduling (C6) ─────────────────────────────────────────────────────────
+# Run this LESS often than the archive workflow (e.g. archive daily, purge
+# monthly) and never concurrently with an archive writing the same bucket. The
+# service takes `archive/.purge.lock` for the run and skips any bucket that holds
+# `.lock` / `.archive.lock`.
+#
+# ── Safety ──────────────────────────────────────────────────────────────────
+# `dryRun` defaults to TRUE. A run that deletes must say `dryRun: false`
+# explicitly. Deletion is irreversible: there is no recycle bin.
+#
+# Before enabling the deleting mode, confirm with whoever owns backups whether
+# `reactory-data/backups/` includes the archive tree — purging locally does not
+# free backup space, and a restore would resurrect the purged buckets.
+
+nameSpace: core
+name: PurgeWorkflowArchives
+version: 1.0.0
+description: >-
+  Deletes workflow archive buckets (archive/<ns>/<name>/<ver>/<YYYY-MM>) older
+  than a configurable window (default 180 days). Dry run by default; refuses to
+  run when the purge window is not strictly greater than the archive window.
+author: Reactory
+tags: [core, workflow, retention, archive, purge, maintenance, filesystem, destructive]
+
+metadata:
+  timeout: 3600000
+
+inputs:
+  olderThanDays:
+    type: number
+    required: false
+    default: 180
+    description: >-
+      Delete archive buckets whose data is older than this many days. Must be
+      strictly greater than the archive workflow's window (default 30 days).
+  dryRun:
+    type: boolean
+    required: false
+    default: true
+    description: >-
+      Report what would be deleted and delete nothing. Default TRUE — a deleting
+      run must be requested explicitly with dryRun: false.
+  archiveRoot:
+    type: string
+    required: false
+    description: >-
+      Absolute archive root. Defaults to <REACTORY_DATA>/workflows/archive and
+      must resolve strictly inside <REACTORY_DATA>/workflows (path-traversal
+      guard). REACTORY_WORKFLOW_ARCHIVE_ROOT is the environment fallback.
+  purgeOrphanedLiveLogs:
+    type: boolean
+    required: false
+    default: false
+    description: >-
+      Opt-in (C4): also delete catalog/<ns>/<name>/<ver>/logs directories that
+      have NO YAML definition and whose newest log is older than the cutoff.
+      Destructive for a live-but-temporarily-unregistered definition — off by
+      default.
+  archiveWindowDays:
+    type: number
+    required: false
+    description: >-
+      The archive workflow's own window, used by the ordering assertion.
+      Defaults to REACTORY_WORKFLOW_ARCHIVE_DAYS (30). Raising it can only make
+      the purge more careful.
+
+steps:
+  - id: start
+    name: Start
+    type: start
+
+  - id: logStart
+    name: Announce the run
+    type: log
+    dependsOn: start
+    config:
+      level: info
+      message: >-
+        Purge workflow archives: dryRun=${input.dryRun}, olderThanDays=${input.olderThanDays},
+        purgeOrphanedLiveLogs=${input.purgeOrphanedLiveLogs}
+
+  # Resolve the purge window once, so the value the service receives is the one
+  # the run announced (and so a scheduled run without inputs still gets 180).
+  - id: resolveCutoff
+    name: Resolve the purge window
+    type: set_variable
+    dependsOn: logStart
+    config:
+      action: set
+      key: purgeWindowDays
+      value: "${input.olderThanDays || 180}"
+
+  # The service owns candidate enumeration, the per-bucket guards, the recursive
+  # deletion and the audit log. `service_invoke` passes ONE params object.
+  - id: purge
+    name: Purge archives (dry run unless explicitly disabled)
+    type: service_invoke
+    dependsOn: resolveCutoff
+    config:
+      service: core.WorkflowArchiveService@1.0.0
+      method: purgeArchives
+      params:
+        olderThanDays: "${variables.purgeWindowDays}"
+        # NOTE: no `||` fallback on a boolean — `false || true` would flip a
+        # deliberate dryRun:false back into a dry run. The input default (true)
+        # is applied by the runner.
+        dryRun: "${input.dryRun}"
+        purgeOrphanedLiveLogs: "${input.purgeOrphanedLiveLogs}"
+        archiveRoot: "${input.archiveRoot || env.REACTORY_WORKFLOW_ARCHIVE_ROOT}"
+        archiveWindowDays: "${input.archiveWindowDays || env.REACTORY_WORKFLOW_ARCHIVE_DAYS}"
+
+  # Observability only: this engine executes steps linearly, so the branch is
+  # recorded in the step outputs rather than driving nested steps. The service
+  # already iterated the buckets it reports.
+  - id: anyCandidates
+    name: Did any bucket match?
+    type: condition
+    dependsOn: purge
+    config:
+      condition: "step.purge.outputs.result.buckets.length > 0"
+
+  - id: logSummary
+    name: Log the summary
+    type: log
+    dependsOn: purge
+    config:
+      level: warn
+      message: "${steps.purge.result.message}"
+      data:
+        cutoff: "${steps.purge.result.cutoff}"
+        archiveRoot: "${steps.purge.result.archiveRoot}"
+        bytes: "${steps.purge.result.bytes}"
+        deletedBuckets: "${steps.purge.result.deletedBuckets}"
+        purgeLog: "${steps.purge.result.purgeLog}"
+
+  - id: end
+    name: End
+    type: end
+    dependsOn: logSummary

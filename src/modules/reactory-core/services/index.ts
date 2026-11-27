@@ -11,6 +11,7 @@ import Processors from './ETL/Processors';
 import ReactoryPackageManager from './ETL/ReactoryPackageManager';
 import UserService from './UserService';
 import WorkflowService from './Workflow/ReactoryWorkflowService';
+import WorkflowArchiveService from './Workflow/WorkflowArchiveService';
 import FetchService from './FetchService';
 import PdfService from './PdfService';
 import ReactorySupportService from "./ReactorySupportService";
@@ -50,6 +51,7 @@ const services = [
   ReactoryPackageManager.reactory,
   UserService,
   WorkflowService,
+  WorkflowArchiveService,
   FetchService.reactory,
   PdfService.reactory,
   ReactorySupportService,
